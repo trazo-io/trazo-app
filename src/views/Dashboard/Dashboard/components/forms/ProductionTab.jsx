@@ -77,26 +77,22 @@ import { offersSummaryMode, unrenderedProductionKeys } from 'utils/productionPay
 import { harvestGradeOptions, MAX_GRADE_LENGTH, OTHER_GRADE } from 'config/harvestGrades';
 
 // Sprint 2 Epic 2.1: Equipment operation types (merged from EquipmentTab)
-const EQUIPMENT_OPERATION_TYPES = [
-  { value: 'FC', label: 'Fuel Consumption - Regular operation' },
-  { value: 'MN', label: 'Maintenance - Routine maintenance' },
-  { value: 'RE', label: 'Repair - Equipment repair' },
-  { value: 'CA', label: 'Calibration - Equipment calibration' },
-  { value: 'BD', label: 'Breakdown - Equipment failure' },
-  { value: 'EI', label: 'Inspection - Equipment inspection' },
-  { value: 'CL', label: 'Cleaning - Equipment cleaning (NOP 205.272)' }
-];
+// Labels live in the catalogues (recordkeeping review S8: the crew's screens were half English).
+const EQUIPMENT_OPERATION_TYPES = ['FC', 'MN', 'RE', 'CA', 'BD', 'EI', 'CL'].map((value) => ({
+  value,
+  labelKey: `events.equipmentOperation.${value}`
+}));
 
 // Sprint 2 Epic 2.1: Equipment types (merged from EquipmentTab)
 const EQUIPMENT_TYPES = [
-  { value: 'tractor', label: 'Tractor' },
-  { value: 'harvester', label: 'Harvester/Combine' },
-  { value: 'sprayer', label: 'Sprayer' },
-  { value: 'truck', label: 'Truck/Transport' },
-  { value: 'generator', label: 'Generator' },
-  { value: 'pump', label: 'Irrigation Pump' },
-  { value: 'other', label: 'Other Equipment' }
-];
+  'tractor',
+  'harvester',
+  'sprayer',
+  'truck',
+  'generator',
+  'pump',
+  'other'
+].map((value) => ({ value, labelKey: `events.equipmentTypes.${value}` }));
 
 // Sprint 2 Epic 2.1: Fuel types with EPA-verified emission factors (merged from EquipmentTab)
 // UPDATED 2026-02-15: All factors corrected to match EPA 40 CFR Part 98 Table C-1
@@ -135,6 +131,28 @@ const PRODUCTION_TYPE_NAMES = {
   TP: 'Transport',
   BU: 'Buffer Use',
   SS: 'Seed Search'
+};
+
+// The record's auto-name in the farmer's language (recordkeeping review S8, F-18: "Harvesting"
+// and "Equipment Maintenance" landed as the name of Spanish records). Same keys the subtype
+// picker shows (config/events/productionEvent.ts).
+const PRODUCTION_TYPE_LABEL_KEYS = {
+  PL: 'events.production.subtypes.planting',
+  HA: 'events.production.subtypes.harvesting',
+  IR: 'events.production.subtypes.irrigation',
+  PR: 'events.production.subtypes.pruning',
+  TR: 'events.production.subtypes.transplanting',
+  CU: 'events.production.subtypes.cultivation',
+  TH: 'events.production.subtypes.thinning',
+  EM: 'events.production.subtypes.equipmentMaintenance',
+  PO: 'events.production.subtypes.pollination',
+  PH: 'events.production.subtypes.postHarvest',
+  CM: 'events.production.subtypes.canopyManagement',
+  FP: 'events.production.subtypes.frostProtection',
+  MO: 'events.production.subtypes.mowing',
+  TP: 'events.production.subtypes.transport',
+  BU: 'events.production.subtypes.bufferUse',
+  SS: 'events.production.subtypes.seedSearch'
 };
 
 /**
@@ -691,10 +709,10 @@ const ProductionTab = forwardRef(
         equipment_type: initialValues.equipment_type || '',
         equipment_operation_type: initialValues.equipment_operation_type || '',
         operation_efficiency:
-          initialValues.operation_efficiency || initialValues.production_efficiency || 'normal',
+          initialValues.operation_efficiency || initialValues.production_efficiency || '',
         transportation_distance: initialValues.transportation_distance?.toString() || '',
         transportation_unit: initialValues.transportation_unit || 'km',
-        production_efficiency: initialValues.production_efficiency || 'normal',
+        production_efficiency: initialValues.production_efficiency || '',
         // Phase 2: Target market fields
         harvest_quality_grade: initialValues.harvest_quality_grade || '',
         harvest_lot_code: initialValues.harvest_lot_code || '',
@@ -874,7 +892,6 @@ const ProductionTab = forwardRef(
             )();
           })
       }),
-      // eslint-disable-next-line react-hooks/exhaustive-deps
       [onDataChange]
     );
 
@@ -902,10 +919,10 @@ const ProductionTab = forwardRef(
           equipment_type: initialValues.equipment_type || '',
           equipment_operation_type: initialValues.equipment_operation_type || '',
           operation_efficiency:
-            initialValues.operation_efficiency || initialValues.production_efficiency || 'normal',
+            initialValues.operation_efficiency || initialValues.production_efficiency || '',
           transportation_distance: initialValues.transportation_distance?.toString() || '',
           transportation_unit: initialValues.transportation_unit || 'km',
-          production_efficiency: initialValues.production_efficiency || 'normal',
+          production_efficiency: initialValues.production_efficiency || '',
           observation: initialValues.observation || '',
           private_note: initialValues.private_note || '',
           reviewed:
@@ -1125,19 +1142,28 @@ const ProductionTab = forwardRef(
     // read. The verb's own label is the name, in the farmer's language.
     const equipmentOperationType = watch('equipment_operation_type');
     const cleanoutName = intl.formatMessage({ id: 'activities.verb.cleanout' });
+    const localizedTypeName = (code) =>
+      PRODUCTION_TYPE_LABEL_KEYS[code]
+        ? intl.formatMessage({ id: PRODUCTION_TYPE_LABEL_KEYS[code] })
+        : PRODUCTION_TYPE_NAMES[code];
     useEffect(() => {
       if (productionType && PRODUCTION_TYPE_NAMES[productionType]) {
         const currentName = methods.getValues('name');
-        const autoNames = [...Object.values(PRODUCTION_TYPE_NAMES), cleanoutName];
+        // Every name this effect may have written, in either language, counts as auto.
+        const autoNames = [
+          ...Object.values(PRODUCTION_TYPE_NAMES),
+          ...Object.keys(PRODUCTION_TYPE_LABEL_KEYS).map(localizedTypeName),
+          cleanoutName
+        ];
         if (!currentName || !currentName.trim() || autoNames.includes(currentName)) {
           const autoGeneratedName =
             productionType === 'EM' && equipmentOperationType === 'CL'
               ? cleanoutName
-              : PRODUCTION_TYPE_NAMES[productionType];
+              : localizedTypeName(productionType);
           methods.setValue('name', autoGeneratedName, { shouldDirty: false });
         }
       }
-    }, [productionType, equipmentOperationType, cleanoutName, methods]);
+    }, [productionType, equipmentOperationType, cleanoutName, methods, intl]);
 
     // ELECTRIC EQUIPMENT FIX (2025-12-14): Auto-switch fuel unit based on fuel type
     // - Electric → kWh (only valid unit for electricity)
@@ -1158,7 +1184,6 @@ const ProductionTab = forwardRef(
     // Phase 2.3: Sync custom fields with form state
     useEffect(() => {
       methods.setValue('custom_fields', customFields);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [customFields]);
 
     // Production events carbon calculation - LIMITED SCOPE to avoid double-counting
@@ -1951,12 +1976,12 @@ const ProductionTab = forwardRef(
                   {/* Event Name - Optional, auto-generated from production type if empty */}
                   <StandardField
                     label={intl.formatMessage({ id: 'production.field.eventName' })}
-                    helpText="Auto-generated from production type. Customize for multi-pass harvests, etc.">
+                    helpText={intl.formatMessage({ id: 'events.production.help.eventName' })}>
                     <StandardInput
                       type="text"
-                      placeholder={`e.g., ${
-                        PRODUCTION_TYPE_NAMES[productionType] || 'Harvesting'
-                      } - Pass 1`}
+                      placeholder={`${
+                        localizedTypeName(productionType) || localizedTypeName('HA')
+                      } - 1`}
                       {...methods.register('name')}
                     />
                   </StandardField>
@@ -1972,7 +1997,7 @@ const ProductionTab = forwardRef(
                         <StandardField
                           label={intl.formatMessage({ id: 'events.common.fields.areaCovered' })}
                           error={errors.area_covered?.message}
-                          helpText="Essential for calculating carbon emissions per hectare">
+                          helpText={intl.formatMessage({ id: 'quickAdd.fields.areaCoveredHelp' })}>
                           <Controller
                             name="area_covered"
                             control={methods.control}
@@ -1999,10 +2024,18 @@ const ProductionTab = forwardRef(
                             control={methods.control}
                             render={({ field }) => (
                               <StandardSelect {...field}>
-                                <option value="ha">Hectares</option>
-                                <option value="acres">Acres</option>
-                                <option value="m2">Square Meters</option>
-                                <option value="km2">Square Kilometers</option>
+                                <option value="ha">
+                                  {intl.formatMessage({ id: 'events.units.hectares' })}
+                                </option>
+                                <option value="acres">
+                                  {intl.formatMessage({ id: 'events.units.acres' })}
+                                </option>
+                                <option value="m2">
+                                  {intl.formatMessage({ id: 'events.units.squareMeters' })}
+                                </option>
+                                <option value="km2">
+                                  {intl.formatMessage({ id: 'events.units.squareKilometers' })}
+                                </option>
                               </StandardSelect>
                             )}
                           />
@@ -2021,7 +2054,9 @@ const ProductionTab = forwardRef(
                     icon={FaTools}
                     title={intl.formatMessage({ id: 'events.section.production.equipment' })}
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
-                    description="Specify equipment operation type and equipment used for accurate carbon emission calculations."
+                    description={intl.formatMessage({
+                      id: 'events.production.help.equipmentSection'
+                    })}
                   />
                   <VStack spacing={4} align="stretch">
                     <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
@@ -2036,10 +2071,14 @@ const ProductionTab = forwardRef(
                           name="equipment_operation_type"
                           control={methods.control}
                           render={({ field }) => (
-                            <StandardSelect {...field} placeholder="Select operation type...">
+                            <StandardSelect
+                              {...field}
+                              placeholder={intl.formatMessage({
+                                id: 'events.production.help.operationTypePlaceholder'
+                              })}>
                               {EQUIPMENT_OPERATION_TYPES.map((type) => (
                                 <option key={type.value} value={type.value}>
-                                  {type.label}
+                                  {intl.formatMessage({ id: type.labelKey })}
                                 </option>
                               ))}
                             </StandardSelect>
@@ -2050,15 +2089,21 @@ const ProductionTab = forwardRef(
                       <StandardField
                         label={intl.formatMessage({ id: 'events.production.fields.equipmentType' })}
                         error={errors.equipment_type?.message}
-                        helpText="Select the type of equipment used">
+                        helpText={intl.formatMessage({
+                          id: 'events.production.help.equipmentType'
+                        })}>
                         <Controller
                           name="equipment_type"
                           control={methods.control}
                           render={({ field }) => (
-                            <StandardSelect {...field} placeholder="Select equipment type...">
+                            <StandardSelect
+                              {...field}
+                              placeholder={intl.formatMessage({
+                                id: 'events.production.help.equipmentTypePlaceholder'
+                              })}>
                               {EQUIPMENT_TYPES.map((type) => (
                                 <option key={type.value} value={type.value}>
-                                  {type.label}
+                                  {intl.formatMessage({ id: type.labelKey })}
                                 </option>
                               ))}
                             </StandardSelect>
@@ -2078,12 +2123,17 @@ const ProductionTab = forwardRef(
                         control={methods.control}
                         render={({ field }) => (
                           <StandardSelect {...field}>
-                            <option value="high">
-                              High Efficiency (well-maintained, optimal conditions)
+                            <option value="">
+                              {intl.formatMessage({ id: 'events.production.help.efficiencyUnset' })}
                             </option>
-                            <option value="normal">Normal Efficiency (standard operation)</option>
+                            <option value="high">
+                              {intl.formatMessage({ id: 'events.productionEfficiency.high' })}
+                            </option>
+                            <option value="normal">
+                              {intl.formatMessage({ id: 'events.productionEfficiency.normal' })}
+                            </option>
                             <option value="low">
-                              Low Efficiency (needs maintenance, suboptimal conditions)
+                              {intl.formatMessage({ id: 'events.productionEfficiency.low' })}
                             </option>
                           </StandardSelect>
                         )}
@@ -2105,7 +2155,9 @@ const ProductionTab = forwardRef(
                       id: 'events.section.production.equipmentCleaning'
                     })}
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
-                    description="Document equipment cleaning per NOP 7 CFR 205.272. Required when equipment is shared between organic and conventional operations."
+                    description={intl.formatMessage({
+                      id: 'events.production.help.cleaningSection'
+                    })}
                   />
                   <VStack spacing={4} align="stretch">
                     <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
@@ -2174,7 +2226,7 @@ const ProductionTab = forwardRef(
 
                       <StandardField
                         label={intl.formatMessage({ id: 'events.production.fields.cleanedBy' })}
-                        helpText="Person who performed or verified the cleaning">
+                        helpText={intl.formatMessage({ id: 'events.production.help.cleanedBy' })}>
                         <Controller
                           name="cleaned_by"
                           control={methods.control}
@@ -2207,7 +2259,9 @@ const ProductionTab = forwardRef(
                       label={intl.formatMessage({
                         id: 'events.production.fields.cleaningMaterialsUsed'
                       })}
-                      helpText="Cleaning agents used (must be NOP-approved for organic operations)">
+                      helpText={intl.formatMessage({
+                        id: 'events.production.help.cleaningMaterials'
+                      })}>
                       <Controller
                         name="cleaning_materials_used"
                         control={methods.control}
@@ -2520,13 +2574,27 @@ const ProductionTab = forwardRef(
                             control={methods.control}
                             render={({ field }) => (
                               <StandardSelect {...field}>
-                                <option value="kg">Kilograms</option>
-                                <option value="tons">Tonnes</option>
-                                <option value="lbs">Pounds</option>
-                                <option value="boxes">Boxes</option>
-                                <option value="bins">Bins</option>
-                                <option value="plants">Plants</option>
-                                <option value="seeds">Seeds</option>
+                                <option value="kg">
+                                  {intl.formatMessage({ id: 'events.units.kilograms' })}
+                                </option>
+                                <option value="tons">
+                                  {intl.formatMessage({ id: 'events.units.tonnes' })}
+                                </option>
+                                <option value="lbs">
+                                  {intl.formatMessage({ id: 'events.units.pounds' })}
+                                </option>
+                                <option value="boxes">
+                                  {intl.formatMessage({ id: 'events.units.boxes' })}
+                                </option>
+                                <option value="bins">
+                                  {intl.formatMessage({ id: 'events.units.bins' })}
+                                </option>
+                                <option value="plants">
+                                  {intl.formatMessage({ id: 'events.units.plants' })}
+                                </option>
+                                <option value="seeds">
+                                  {intl.formatMessage({ id: 'events.units.seeds' })}
+                                </option>
                               </StandardSelect>
                             )}
                           />
@@ -2697,21 +2765,35 @@ const ProductionTab = forwardRef(
                             id: 'events.production.fields.harvestMethod'
                           })}
                           error={errors.harvest_method?.message}
-                          helpText="How the crop was harvested (consumer trust indicator)">
+                          helpText={intl.formatMessage({
+                            id: 'events.production.help.harvestMethod'
+                          })}>
                           <Controller
                             name="harvest_method"
                             control={methods.control}
                             render={({ field }) => (
                               <StandardSelect
                                 {...field}
-                                placeholder="Select harvest method (optional)">
-                                <option value="hand_picking">Hand Picking</option>
-                                <option value="selective_hand_picking">
-                                  Selective Hand Picking
+                                placeholder={intl.formatMessage({
+                                  id: 'events.production.help.harvestMethodPlaceholder'
+                                })}>
+                                <option value="hand_picking">
+                                  {intl.formatMessage({ id: 'app.harvestMethod.handPicking' })}
                                 </option>
-                                <option value="mechanical">Mechanical Harvester</option>
-                                <option value="shake_and_catch">Shake and Catch</option>
-                                <option value="strip_picking">Strip Picking</option>
+                                <option value="selective_hand_picking">
+                                  {intl.formatMessage({
+                                    id: 'app.harvestMethod.selectiveHandPicking'
+                                  })}
+                                </option>
+                                <option value="mechanical">
+                                  {intl.formatMessage({ id: 'app.harvestMethod.mechanical' })}
+                                </option>
+                                <option value="shake_and_catch">
+                                  {intl.formatMessage({ id: 'app.harvestMethod.shakeAndCatch' })}
+                                </option>
+                                <option value="strip_picking">
+                                  {intl.formatMessage({ id: 'app.harvestMethod.stripPicking' })}
+                                </option>
                               </StandardSelect>
                             )}
                           />
@@ -3240,7 +3322,9 @@ const ProductionTab = forwardRef(
                     icon={FaBalanceScale}
                     title={intl.formatMessage({ id: 'events.section.production.harvestSummary' })}
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
-                    description="Log multiple harvest picks as one summary record to reduce logging burden while maintaining full transparency."
+                    description={intl.formatMessage({
+                      id: 'events.production.help.harvestSummary'
+                    })}
                   />
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                     {/* Sprint 5: Aggregate Harvest Toggle */}
@@ -3255,7 +3339,9 @@ const ProductionTab = forwardRef(
                         <VStack align="start" spacing={0}>
                           <HStack>
                             <Text fontWeight="semibold" fontSize="sm">
-                              Harvest Summary Mode
+                              {intl.formatMessage({
+                                id: 'events.section.production.harvestSummary'
+                              })}
                             </Text>
                             {isSummaryMode && (
                               <Badge colorScheme="blue" size="sm">
@@ -3346,11 +3432,21 @@ const ProductionTab = forwardRef(
                               control={methods.control}
                               render={({ field }) => (
                                 <StandardSelect {...field} flex={1}>
-                                  <option value="lbs">Pounds</option>
-                                  <option value="kg">Kilograms</option>
-                                  <option value="tons">Tonnes</option>
-                                  <option value="boxes">Boxes</option>
-                                  <option value="bins">Bins</option>
+                                  <option value="lbs">
+                                    {intl.formatMessage({ id: 'events.units.pounds' })}
+                                  </option>
+                                  <option value="kg">
+                                    {intl.formatMessage({ id: 'events.units.kilograms' })}
+                                  </option>
+                                  <option value="tons">
+                                    {intl.formatMessage({ id: 'events.units.tonnes' })}
+                                  </option>
+                                  <option value="boxes">
+                                    {intl.formatMessage({ id: 'events.units.boxes' })}
+                                  </option>
+                                  <option value="bins">
+                                    {intl.formatMessage({ id: 'events.units.bins' })}
+                                  </option>
                                 </StandardSelect>
                               )}
                             />
@@ -4223,7 +4319,11 @@ const ProductionTab = forwardRef(
                           name="fuel_type"
                           control={methods.control}
                           render={({ field }) => (
-                            <StandardSelect {...field} placeholder="Select fuel type...">
+                            <StandardSelect
+                              {...field}
+                              placeholder={intl.formatMessage({
+                                id: 'events.chemical.form.fuelTypePlaceholder'
+                              })}>
                               {FUEL_TYPES.map((type) => (
                                 <option key={type.value} value={type.value}>
                                   {type.label} ({type.factor})
@@ -4317,9 +4417,15 @@ const ProductionTab = forwardRef(
                                           <option value="kWh">Kilowatt-hours</option>
                                         ) : (
                                           <>
-                                            <option value="L">Liters</option>
-                                            <option value="gal">Gallons</option>
-                                            <option value="kg">Kilograms</option>
+                                            <option value="L">
+                                              {intl.formatMessage({ id: 'events.units.liters' })}
+                                            </option>
+                                            <option value="gal">
+                                              {intl.formatMessage({ id: 'events.units.gallons' })}
+                                            </option>
+                                            <option value="kg">
+                                              {intl.formatMessage({ id: 'events.units.kilograms' })}
+                                            </option>
                                           </>
                                         )}
                                       </StandardSelect>
@@ -4452,9 +4558,15 @@ const ProductionTab = forwardRef(
                             control={methods.control}
                             render={({ field }) => (
                               <StandardSelect {...field}>
-                                <option value="km">Kilometers</option>
-                                <option value="miles">Miles</option>
-                                <option value="m">Meters</option>
+                                <option value="km">
+                                  {intl.formatMessage({ id: 'events.units.kilometers' })}
+                                </option>
+                                <option value="miles">
+                                  {intl.formatMessage({ id: 'events.units.miles' })}
+                                </option>
+                                <option value="m">
+                                  {intl.formatMessage({ id: 'events.units.meters' })}
+                                </option>
                               </StandardSelect>
                             )}
                           />
@@ -4476,12 +4588,19 @@ const ProductionTab = forwardRef(
                           control={methods.control}
                           render={({ field }) => (
                             <StandardSelect {...field}>
-                              <option value="high">
-                                High Efficiency (optimal conditions, planned operations)
+                              <option value="">
+                                {intl.formatMessage({
+                                  id: 'events.production.help.efficiencyUnset'
+                                })}
                               </option>
-                              <option value="normal">Normal Efficiency (standard operation)</option>
+                              <option value="high">
+                                {intl.formatMessage({ id: 'events.productionEfficiency.high' })}
+                              </option>
+                              <option value="normal">
+                                {intl.formatMessage({ id: 'events.productionEfficiency.normal' })}
+                              </option>
                               <option value="low">
-                                Low Efficiency (adverse conditions, unplanned operations)
+                                {intl.formatMessage({ id: 'events.productionEfficiency.low' })}
                               </option>
                             </StandardSelect>
                           )}
@@ -5012,9 +5131,15 @@ const ProductionTab = forwardRef(
                                   control={methods.control}
                                   render={({ field }) => (
                                     <StandardSelect {...field} flex={1}>
-                                      <option value="gallons">Gallons</option>
-                                      <option value="liters">Liters</option>
-                                      <option value="acre_feet">Acre-feet</option>
+                                      <option value="gallons">
+                                        {intl.formatMessage({ id: 'events.units.gallons' })}
+                                      </option>
+                                      <option value="liters">
+                                        {intl.formatMessage({ id: 'events.units.liters' })}
+                                      </option>
+                                      <option value="acre_feet">
+                                        {intl.formatMessage({ id: 'events.units.acreFeet' })}
+                                      </option>
                                       <option value="cubic_meters">Cubic Meters</option>
                                     </StandardSelect>
                                   )}

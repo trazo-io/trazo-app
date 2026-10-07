@@ -3553,13 +3553,19 @@ const ChemicalTab = forwardRef(
                       <StandardField
                         label={
                           chemicalType === 'FE'
-                            ? 'NPK Ratio'
+                            ? intl.formatMessage({ id: 'quickAdd.fields.concentration.npkRatio' })
                             : chemicalType === 'PE'
-                            ? 'Pesticide Concentration'
+                            ? intl.formatMessage({
+                                id: 'quickAdd.fields.concentration.pesticideConcentration'
+                              })
                             : chemicalType === 'HE'
-                            ? 'Herbicide Concentration'
+                            ? intl.formatMessage({
+                                id: 'quickAdd.fields.concentration.herbicideConcentration'
+                              })
                             : chemicalType === 'FU'
-                            ? 'Fungicide Concentration'
+                            ? intl.formatMessage({
+                                id: 'quickAdd.fields.concentration.fungicideConcentration'
+                              })
                             : // ⛔ NOT "Concentration / Application Rate". `validateConcentration`
                               // accepts an NPK analysis or a percentage and rejects everything
                               // else, so a grower reading "application rate" types the number off
@@ -3568,22 +3574,22 @@ const ChemicalTab = forwardRef(
                               // Applied over Area Treated, which is what the packet divides to print
                               // "4.00 gal/acre" and what a reviewer checks a label maximum
                               // against. This field is the product's strength, nothing else.
-                              'Product Concentration'
+                              intl.formatMessage({
+                                id: 'events.chemical.concentration.productConcentration'
+                              })
                         }
                         required
                         error={errors.concentration?.message}
-                        helpText={
-                          chemicalType
-                            ? `Enter ${
-                                chemicalType === 'FE'
-                                  ? watch('micronutrient_type')
-                                    ? // §E-3: a single-nutrient product has no NPK analysis.
-                                      'NPK format (e.g., "10-10-10") or the nutrient percentage (e.g., "36%")'
-                                    : 'NPK format (e.g., "10-10-10")'
-                                  : 'percentage (e.g., "2.5%")'
-                              } — the format your certifier expects for this input type`
-                            : 'Select chemical type first for format guidance'
-                        }>
+                        helpText={intl.formatMessage({
+                          id: !chemicalType
+                            ? 'events.chemical.concentration.help.pickType'
+                            : chemicalType === 'FE'
+                            ? watch('micronutrient_type')
+                              ? // §E-3: a single-nutrient product has no NPK analysis.
+                                'events.chemical.concentration.help.npkOrPercent'
+                              : 'events.chemical.concentration.help.npk'
+                            : 'events.chemical.concentration.help.percent'
+                        })}>
                         <Controller
                           name="concentration"
                           control={methods.control}
@@ -3600,7 +3606,9 @@ const ChemicalTab = forwardRef(
                                     ? getFormatExamples('HE')[0]
                                     : chemicalType === 'FU'
                                     ? getFormatExamples('FU')[0]
-                                    : 'Select chemical type first...'
+                                    : intl.formatMessage({
+                                        id: 'events.chemical.concentration.placeholder.pickType'
+                                      })
                                 }
                                 isDisabled={!chemicalType}
                                 borderColor={

@@ -3032,8 +3032,13 @@ function NewEvent({ isEdit = false, eventId = null }) {
             : intl.formatMessage({ id: 'app.errorCreatingEvent' }) ||
               'Failed to create event. Please try again.');
 
+      // Offline is not an error of the farmer's making: the title says what happened to the
+      // record (recordkeeping review S8, F-24: the toast was titled "Error").
+      const wentOffline =
+        error?.status === 'FETCH_ERROR' ||
+        (typeof navigator !== 'undefined' && navigator.onLine === false);
       toast({
-        title: intl.formatMessage({ id: 'app.error' }) || 'Error',
+        title: intl.formatMessage({ id: wentOffline ? 'app.notSavedYet' : 'app.error' }),
         description: errorDescription,
         status: 'error',
         duration: 7000,
@@ -3425,7 +3430,11 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                       defaultMessage: 'What did you do?'
                                     })
                               }
-                              badge={isEdit ? undefined : 'Required'}
+                              badge={
+                                isEdit
+                                  ? undefined
+                                  : intl.formatMessage({ id: 'events.section.badge.required' })
+                              }
                               description={
                                 isEdit
                                   ? intl.formatMessage({
@@ -3536,7 +3545,11 @@ function NewEvent({ isEdit = false, eventId = null }) {
                               title={intl.formatMessage({ id: 'activities.subtype.title' })}
                               /* Required on the ASK only, same rule as the verb grid above:
                                  edit RESTATES a saved answer and has nothing to fill in. */
-                              badge={isEdit ? undefined : 'Required'}
+                              badge={
+                                isEdit
+                                  ? undefined
+                                  : intl.formatMessage({ id: 'events.section.badge.required' })
+                              }
                               description={intl.formatMessage({ id: 'activities.subtype.hint' })}
                             />
                             {/* One chooser, two clearing contracts. Create wipes the fields
@@ -3609,7 +3622,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                             badge={intl.formatMessage({
                               id: 'events.section.badge.certifierRecord'
                             })}
-                            description="When did this activity occur and who performed it?"
+                            description={intl.formatMessage({ id: 'events.wizard.timingHint' })}
                           />
                           <VStack spacing={4} align="stretch">
                             {/* Date Selection */}
@@ -4274,7 +4287,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                           leftIcon={<FaEye />}
                           size={{ base: 'md', md: 'lg' }}
                           flex={{ base: 1, md: 'none' }}>
-                          Preview
+                          {intl.formatMessage({ id: 'events.wizard.preview' })}
                         </StandardButton>
                         <StandardButton
                           variant="primary"
@@ -4432,7 +4445,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                             leftIcon={<FaEye />}
                             size={{ base: 'md', md: 'lg' }}
                             flex={{ base: 1, md: 'none' }}>
-                            Preview
+                            {intl.formatMessage({ id: 'events.wizard.preview' })}
                           </StandardButton>
                           <StandardButton
                             variant="primary"

@@ -160,9 +160,7 @@ export const PREFILLABLE_FIELDS = new Set<string>([
   'equipment_type',
   'equipment_operation_type',
   'amendment_type',
-  'seeds_source',
-  'production_efficiency',
-  'operation_efficiency'
+  'seeds_source'
 ]);
 
 export const templatePrefillValues = (tpl: TemplateAccelerator): Record<string, unknown> => {
