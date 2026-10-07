@@ -29,7 +29,7 @@ const META = {
   seasons: []
 };
 
-const READINESS = {
+const READINESS: any = {
   total_findings: 1,
   total_not_assessed: 2,
   total_productions: 1,
@@ -82,6 +82,32 @@ afterEach(() => {
 });
 
 describe('the certifier page and the rows not assessed', () => {
+  it('never shows the green all-clear when rows were not assessed and nothing was found', async () => {
+    READINESS.productions[0].findings = [];
+    READINESS.total_findings = 0;
+    try {
+      renderPage();
+      await waitFor(() =>
+        expect(screen.getByTestId('certifier-no-findings-some-not-assessed')).toBeInTheDocument()
+      );
+      expect(screen.queryByText(/No outstanding items/)).toBeNull();
+      expect(screen.getByTestId('certifier-no-findings-some-not-assessed')).toHaveTextContent(
+        '2 rows were not assessed'
+      );
+    } finally {
+      READINESS.productions[0].findings = [
+        {
+          label: 'Input traceability (§ 205.103)',
+          row_key: 'input_traceability',
+          status: 'FAIL',
+          detail: '3/5 inputs have supplier',
+          section_hint: 'Input Material Application Records section'
+        }
+      ];
+      READINESS.total_findings = 1;
+    }
+  });
+
   it('shows findings only, and the rest behind a toggle', async () => {
     renderPage();
     await waitFor(() =>

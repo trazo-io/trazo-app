@@ -313,7 +313,28 @@ const CertifierReview: React.FC = () => {
                 })}
               </Text>
 
-              {productionsWithFindings.length === 0 ? (
+              {productionsWithFindings.length === 0 && notAssessedTotal > 0 ? (
+                /* No finding, but rows were not assessed: a fact about scope, never the
+                   green all-clear (review of app #95). The rows are listed by the toggle below. */
+                <Box bg={rowBg} border="1px solid" borderColor={rowBorder} borderRadius="lg" p={4}>
+                  <HStack spacing={2}>
+                    <Icon as={FaInfoCircle} color={mutedColor} boxSize={4} />
+                    <Text
+                      fontSize="sm"
+                      color={textColor}
+                      data-testid="certifier-no-findings-some-not-assessed">
+                      {intl.formatMessage(
+                        {
+                          id: 'certifierReview.readinessNoFindingsSomeNotAssessed',
+                          defaultMessage:
+                            'No finding across {count, plural, one {# season} other {# seasons}} in this window; {notAssessed, plural, one {# row was} other {# rows were}} not assessed'
+                        },
+                        { count: readiness.total_productions, notAssessed: notAssessedTotal }
+                      )}
+                    </Text>
+                  </HStack>
+                </Box>
+              ) : productionsWithFindings.length === 0 ? (
                 <Box
                   bg={clearBg}
                   border="1px solid"

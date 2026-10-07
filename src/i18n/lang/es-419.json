@@ -2132,6 +2132,7 @@
   "certifierReview.progressLayout": "Componiendo las páginas…",
   "certifierReview.progressProduction": "Producción {current} de {total}",
   "certifierReview.readinessAllClear": "Sin pendientes en {count, plural, one {# temporada} other {# temporadas}} dentro de este período",
+  "certifierReview.readinessNoFindingsSomeNotAssessed": "Sin hallazgos en {count, plural, one {# temporada} other {# temporadas}} de este período; {notAssessed, plural, one {# fila quedó} other {# filas quedaron}} sin evaluar",
   "certifierReview.readinessDisclaimer": "Estas son verificaciones de documentación sobre los registros en Trazo, no una decisión de cumplimiento.",
   "certifierReview.readinessTitle": "Estado de los registros",
   "certifierReview.status.missing": "Falta",

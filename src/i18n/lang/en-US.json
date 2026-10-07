@@ -2132,6 +2132,7 @@
   "certifierReview.progressLayout": "Laying out the pages…",
   "certifierReview.progressProduction": "Production {current} of {total}",
   "certifierReview.readinessAllClear": "No outstanding items across {count, plural, one {# season} other {# seasons}} in this window",
+  "certifierReview.readinessNoFindingsSomeNotAssessed": "No finding across {count, plural, one {# season} other {# seasons}} in this window; {notAssessed, plural, one {# row was} other {# rows were}} not assessed",
   "certifierReview.readinessDisclaimer": "These are documentation checks on the records in Trazo, not a compliance decision.",
   "certifierReview.readinessTitle": "Record readiness",
   "certifierReview.status.missing": "Missing",
