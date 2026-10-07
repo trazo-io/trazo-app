@@ -42,15 +42,7 @@ import { getConsumerEventDescription } from '../eventDescriptions';
  * "Nurseries and varieties are logged", the exact direct-seeding defect this file exists to
  * catch. The guard passed while the defect was live.
  */
-const EVIDENCE_GATED_STEMS = [
-  'tree',
-  'fruit',
-  'orchard',
-  'branch',
-  'nurser',
-  'vine',
-  'seedling'
-];
+const EVIDENCE_GATED_STEMS = ['tree', 'fruit', 'orchard', 'branch', 'nurser', 'vine', 'seedling'];
 
 function containsGatedTerm(text: string): string | null {
   for (const stem of EVIDENCE_GATED_STEMS) {
@@ -88,22 +80,64 @@ function allText(result: ReturnType<typeof getConsumerEventDescription>): string
  * fails if the map grows a key this list does not carry.
  */
 const PRODUCTION_TYPE_KEYS = [
-  'event.production.planting', 'planting', 'PL',
-  'production.general', 'production', 'production.planting',
-  'production.harvesting', 'production.irrigation', 'production.pruning',
-  'production.transplanting', 'production.TR', 'production.operation',
-  'event.production.harvesting', 'harvesting', 'HA',
-  'event.production.irrigation', 'irrigation', 'IR',
-  'event.production.pruning', 'pruning', 'transplanting', 'TR',
-  'PR', 'CU', 'TH', 'EM', 'EQ', 'equipment',
-  'production.CU', 'production.cultivation', 'event.production.cultivation',
-  'production.TH', 'production.thinning', 'event.production.thinning',
-  'production.EM', 'production.EQ', 'production.equipment', 'event.production.equipment',
-  'PO', 'production.PO', 'event.production.pollination', 'pollination',
-  'PH', 'production.PH', 'event.production.post_harvest', 'post_harvest',
-  'CM', 'production.CM', 'event.production.canopy_management', 'canopy_management',
-  'FP', 'production.FP', 'event.production.frost_protection', 'frost_protection',
-  'MO', 'production.MO', 'event.production.mowing', 'mowing'
+  'event.production.planting',
+  'planting',
+  'PL',
+  'production.general',
+  'production',
+  'production.planting',
+  'production.harvesting',
+  'production.irrigation',
+  'production.pruning',
+  'production.transplanting',
+  'production.TR',
+  'production.operation',
+  'event.production.harvesting',
+  'harvesting',
+  'HA',
+  'event.production.irrigation',
+  'irrigation',
+  'IR',
+  'event.production.pruning',
+  'pruning',
+  'transplanting',
+  'TR',
+  'PR',
+  'CU',
+  'TH',
+  'EM',
+  'EQ',
+  'equipment',
+  'production.CU',
+  'production.cultivation',
+  'event.production.cultivation',
+  'production.TH',
+  'production.thinning',
+  'event.production.thinning',
+  'production.EM',
+  'production.EQ',
+  'production.equipment',
+  'event.production.equipment',
+  'PO',
+  'production.PO',
+  'event.production.pollination',
+  'pollination',
+  'PH',
+  'production.PH',
+  'event.production.post_harvest',
+  'post_harvest',
+  'CM',
+  'production.CM',
+  'event.production.canopy_management',
+  'canopy_management',
+  'FP',
+  'production.FP',
+  'event.production.frost_protection',
+  'frost_protection',
+  'MO',
+  'production.MO',
+  'event.production.mowing',
+  'mowing'
 ];
 
 describe('the key list stays in step with the map it tests', () => {
@@ -130,19 +164,16 @@ describe('the key list stays in step with the map it tests', () => {
 });
 
 describe('generated descriptions are crop-independent', () => {
-  it.each(PRODUCTION_TYPE_KEYS)(
-    'produces the same copy for %s whatever the crop is',
-    (subtype) => {
-      const base = { event_type: 1, production_type: subtype, date: '2025-09-12T15:00:00Z' };
-      const asCarrot = getConsumerEventDescription(subtype, { ...base, crop: 'Carrots' });
-      const asApple = getConsumerEventDescription(subtype, { ...base, crop: 'Apples' });
+  it.each(PRODUCTION_TYPE_KEYS)('produces the same copy for %s whatever the crop is', (subtype) => {
+    const base = { event_type: 1, production_type: subtype, date: '2025-09-12T15:00:00Z' };
+    const asCarrot = getConsumerEventDescription(subtype, { ...base, crop: 'Carrots' });
+    const asApple = getConsumerEventDescription(subtype, { ...base, crop: 'Apples' });
 
-      // ⚠️ When crop-aware copy ships, THIS is the assertion that must be changed, deliberately,
-      // together with a decision about the Spanish dictionary (interpolated sentences fall
-      // through to English). Do not delete it quietly.
-      expect(allText(asCarrot)).toBe(allText(asApple));
-    }
-  );
+    // ⚠️ When crop-aware copy ships, THIS is the assertion that must be changed, deliberately,
+    // together with a decision about the Spanish dictionary (interpolated sentences fall
+    // through to English). Do not delete it quietly.
+    expect(allText(asCarrot)).toBe(allText(asApple));
+  });
 });
 
 describe('generated descriptions assert nothing the record does not establish', () => {
@@ -263,6 +294,51 @@ describe('generated descriptions claim no outcome', () => {
     return [...src.matchAll(/(["'`])((?:\\.|(?!\1)[^\\\n])*)\1/g)].map((m) => m[2]);
   };
 
+  /**
+   * P1b (manual 375px pass, 2026-10-06): the list above only named the phrases of the last
+   * incident, and ~100 sentences survived in other words ("protects soil health", "reduces the
+   * need for herbicides", "is what keeps an organic block organic", "supports sustainable
+   * farming"). These are general environmental-benefit claims (16 CFR 260.4) made from an event
+   * TYPE. This list names the benefit vocabulary itself; the names of standards and certificates
+   * are the only strings allowed to carry it.
+   */
+  const BENEFIT =
+    /\bsustainab\w*|\bhealth(y|ier)\b|\bimprov(es?|ing|ed)\b|\breduc(es?|ing)\b|\bprotects?\b|to protect\b|\bpreventing\b|\befficient\b|\bcommitment\b|\bstewardship\b|\bnaturally\b|\bbuilds\b|\bpreserves?\b|\bpromot(es?|ing)\b|\benhanc\w*|\bso the crop\b|\bis why\b|is what (keeps|stops|makes a targeted)|instead of (chemistry|spraying|chemicals)|\bsostenib\w*|\bsaludabl\w*|\bmejora(r)?\b|\breduce\b|\bprotege(r)?\b/i;
+  const STANDARD_NAMES = new Set([
+    'Sustainable Agriculture',
+    'Sustainable Agriculture Standard',
+    'Sustainable Agriculture Standard, as recorded by this operation',
+    'Sustainability Audit',
+    'Sustainability Assessment',
+    'Soil Health Assessment',
+    'Water Stewardship Certification',
+    'Water stewardship certification: a standard covering water use, catchment impact and water quality at the site',
+    'Verification process identified areas for improvement',
+    'Agricultura sostenible',
+    'Norma de agricultura sostenible',
+    'Evaluación de la salud del suelo',
+    'Soil health work recorded',
+    'Trabajo de salud del suelo registrado',
+    'Certified Naturally Grown',
+    'Certified Naturally Grown: a peer-reviewed certification for farms following practices modelled on the National Organic Program',
+    'Certified Naturally Grown: una certificación revisada por pares para establecimientos que siguen prácticas basadas en el National Organic Program',
+    'Water Stewardship',
+    'Evaluación de sostenibilidad',
+    'Norma de agricultura sostenible, según lo registrado por este establecimiento'
+  ]);
+
+  it.each(['src/utils/eventDescriptions.ts', 'src/utils/eventDescriptions.es.ts'])(
+    '%s states no benefit from an event type',
+    (file) => {
+      // Template literals carrying a field value (`${event.sustainability_practice}`) are code.
+      const all = literals(file).filter(
+        (l) => / /.test(l) && !l.includes('${') && !STANDARD_NAMES.has(l)
+      );
+      expect(all.length).toBeGreaterThan(100);
+      expect(all.filter((l) => BENEFIT.test(l))).toEqual([]);
+    }
+  );
+
   it.each(['src/utils/eventDescriptions.ts', 'src/utils/eventDescriptions.es.ts'])(
     '%s has no outcome claim in any string',
     (file) => {
@@ -275,7 +351,11 @@ describe('generated descriptions claim no outcome', () => {
   it('a harvest reads "graded" nowhere, whatever was recorded', () => {
     for (const key of ['HA', 'harvesting', 'event.production.harvesting']) {
       const text = allText(
-        getConsumerEventDescription(key, { event_type: 1, production_type: key, date: '2025-09-12T15:00:00Z' })
+        getConsumerEventDescription(key, {
+          event_type: 1,
+          production_type: key,
+          date: '2025-09-12T15:00:00Z'
+        })
       );
       expect(text, key).not.toMatch(/graded|weighed/i);
     }

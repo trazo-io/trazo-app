@@ -98,7 +98,7 @@ describe('contamination incident copy', () => {
       activity_type: 'emergency',
       is_contamination_incident: false
     });
-    expect(info.shortDescription).toMatch(/cleanup and damage repair/i);
+    expect(info.shortDescription).toMatch(/cleanup and repair/i);
   });
 
   it('translates the incident copy for es-419', () => {

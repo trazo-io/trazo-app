@@ -64,8 +64,9 @@ describe('specific copy still renders', () => {
     // COLLAPSED card (above the fold) rather than under a "What This Means For You" heading
     // inside the expander, because on most cards it is the only line that answers a
     // shopper's question and a tap was losing it.
-    expect(screen.getByText(/nothing carried over from another field/i)).toBeTruthy();
-    expect(screen.getByText(/keeps an organic block organic/i)).toBeTruthy();
+    // P1b (2026-10-06): what the record holds, not what the cleaning achieved.
+    expect(screen.getByText(/Equipment cleaning was recorded before this work/i)).toBeTruthy();
+    expect(screen.getByText(/The cleaning step is dated and on record/i)).toBeTruthy();
   });
 
   it('keeps a long-standing specific sentence (harvest)', () => {
@@ -151,7 +152,7 @@ describe('specific copy still renders', () => {
       date: '2026-04-10T08:00:00Z'
     });
     // Calibration is an accuracy story, not an organic-integrity one.
-    expect(screen.getByText(/lands where it should/i)).toBeTruthy();
-    expect(screen.queryByText(/nothing carried over/i)).toBeNull();
+    expect(screen.getByText(/Spray equipment calibration was recorded/i)).toBeTruthy();
+    expect(screen.queryByText(/Equipment cleaning was recorded/i)).toBeNull();
   });
 });

@@ -29,7 +29,7 @@ describe('C9 — production sub-types have dedicated consumer copy', () => {
     // the record does not establish (carrot lots read "no fruit from this block"). The stake is
     // unchanged; only the noun moved.
     ['FP', /frost|cold night|no crop from this block/i],
-    ['CM', /canopy/i],
+    ['CM', /leaves/i],
     // 2026-08-01: MO copy was re-voiced (short = what happened, impact = why it matters), so
     // the impact line now talks about mechanical weed control rather than repeating "orchard
     // floor" from the description. Widened to the concept, not the old wording.
@@ -67,8 +67,9 @@ describe('C9 — production sub-types have dedicated consumer copy', () => {
       date: '2026-05-01'
     });
 
-    expect(flame.consumerImpact).toMatch(/heat instead of chemicals/i);
-    expect(mow.consumerImpact).not.toMatch(/heat instead of chemicals/i);
+    // P1b (2026-10-06): the method, not a no-chemicals claim the record does not establish.
+    expect(flame.consumerImpact).toMatch(/flamed with a propane burner/i);
+    expect(mow.consumerImpact).not.toMatch(/flamed/i);
   });
 });
 

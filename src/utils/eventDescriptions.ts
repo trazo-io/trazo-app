@@ -19,36 +19,33 @@ export interface EventDescriptionData {
  */
 export const eventDescriptions: Record<string, string> = {
   'fertilizer application': 'Nutrients were applied to feed the crop',
-  'pesticide application': 'Applied targeted pest control to protect plants from harmful insects',
+  'pesticide application': 'A treatment was applied against a pest',
   'fungicide application': 'A treatment was applied against a plant disease',
   'herbicide application': 'A treatment was applied to control weeds',
-  'chemical application':
-    'Applied agricultural treatment as part of integrated crop management program',
+  'chemical application': 'A crop treatment was applied',
 
   // Pest Management Event Types
-  'pest scouting':
-    'Monitored crops for pest populations and damage levels to inform management decisions',
+  'pest scouting': 'The crop was checked for pests and damage',
   'trap monitoring': 'Pest traps around the block were checked and the counts written down',
   'beneficial release': 'Beneficial insects were released into the block',
   'pest identification': 'The pest was identified before any decision about treating it',
-  'threshold assessment':
-    'Evaluated pest population levels against economic thresholds to determine treatment needs',
+  'threshold assessment': 'Pest counts were compared with a treatment threshold',
   'ipm implementation':
     'Several pest-control methods were used together rather than relying on one',
   irrigation: 'Water applied',
   planting: 'Planted seeds or seedlings to establish the crop',
   harvesting: 'Crop harvested',
   'soil preparation': 'Soil prepared',
-  'weather monitoring': 'Monitored weather conditions to inform farming decisions',
-  'equipment maintenance': 'Maintained farming equipment for efficient operations',
-  'pest monitoring': 'Monitored for pests to inform protection strategies',
+  'weather monitoring': 'Weather conditions were recorded',
+  'equipment maintenance': 'Farm equipment was maintained',
+  'pest monitoring': 'The crop was checked for pests',
   'farm maintenance': 'Farm infrastructure or equipment maintained',
-  'equipment setup': 'Configured and prepared equipment for farming activities',
-  'infrastructure work': 'Improved farm infrastructure and facility maintenance',
+  'equipment setup': 'Equipment was set up for field work',
+  'infrastructure work': 'Farm infrastructure or facility work was recorded',
   'planning activity': 'Farm activities planned',
-  documentation: 'Documented farming practices for transparency and compliance',
-  training: 'Conducted training activities to improve farming knowledge and skills',
-  'safety inspection': 'Inspected farm facilities and equipment for safety compliance',
+  documentation: 'Farming practices were documented',
+  training: 'A training session was held',
+  'safety inspection': 'Farm facilities and equipment were inspected for safety',
   'general maintenance': 'General maintenance recorded',
   default: 'A farming activity was recorded on this date'
 };
@@ -646,12 +643,12 @@ export function getConsumerEventDescription(
       'event.production.planting': {
         title: 'Planting',
         icon: '🌱',
-        description: 'Seeds planted to establish healthy crop growth'
+        description: 'Seeds were planted'
       },
       planting: {
         title: 'Planting',
         icon: '🌱',
-        description: 'Seeds planted to establish healthy crop growth'
+        description: 'Seeds were planted'
       },
       PL: {
         title: 'Planting',
@@ -661,17 +658,17 @@ export function getConsumerEventDescription(
       'production.general': {
         title: 'General Farm Operation',
         icon: '🚜',
-        description: 'General agricultural activity completed as part of farm operations'
+        description: 'A farm activity was recorded'
       },
       production: {
         title: 'Farm Operation',
         icon: '🚜',
-        description: 'Agricultural activity completed as part of sustainable farming'
+        description: 'A farm activity was recorded'
       },
       'production.planting': {
         title: 'Planting',
         icon: '🌱',
-        description: 'Seeds planted to establish healthy crop growth'
+        description: 'Seeds were planted'
       },
       'production.harvesting': {
         title: 'Harvest Operation',
@@ -681,12 +678,12 @@ export function getConsumerEventDescription(
       'production.irrigation': {
         title: 'Irrigation Operation',
         icon: '💧',
-        description: 'Water applied to support healthy plant growth'
+        description: 'Water was applied to the crop'
       },
       'production.pruning': {
         title: 'Pruning Operation',
         icon: '✂️',
-        description: 'Plants pruned to manage growth and crop quality'
+        description: 'The plants were pruned'
       },
       'production.transplanting': {
         title: 'Transplanting Operation',
@@ -721,12 +718,12 @@ export function getConsumerEventDescription(
       'event.production.irrigation': {
         title: 'Irrigation Event',
         icon: '💧',
-        description: 'Water applied to support healthy plant growth'
+        description: 'Water was applied to the crop'
       },
       irrigation: {
         title: 'Irrigation Event',
         icon: '💧',
-        description: 'Water applied to support healthy plant growth'
+        description: 'Water was applied to the crop'
       },
       IR: {
         title: 'Irrigation Event',
@@ -736,12 +733,12 @@ export function getConsumerEventDescription(
       'event.production.pruning': {
         title: 'Pruning Operation',
         icon: '✂️',
-        description: 'Plants pruned to manage growth and crop quality'
+        description: 'The plants were pruned'
       },
       pruning: {
         title: 'Pruning Operation',
         icon: '✂️',
-        description: 'Plants pruned to manage growth and crop quality'
+        description: 'The plants were pruned'
       },
       transplanting: {
         title: 'Transplanting Operation',
@@ -756,7 +753,7 @@ export function getConsumerEventDescription(
       PR: {
         title: 'Pruning Operation',
         icon: '✂️',
-        description: 'Growth was cut back to let light and air into the crop'
+        description: 'Growth was cut back in the canopy'
       },
       // CRITICAL FIX (2025-12-11): Added CU (Cultivation) - Sprint 2 production subtype
       CU: {
@@ -768,7 +765,7 @@ export function getConsumerEventDescription(
       TH: {
         title: 'Thinning',
         icon: '🌿',
-        description: 'Some of the developing crop was taken off so the rest could size up'
+        description: 'Some of the developing crop was taken off'
       },
       // CRITICAL FIX (2025-01-21): Added EM (Equipment Maintenance) - correct Production subtype
       EM: {
@@ -780,8 +777,7 @@ export function getConsumerEventDescription(
       EQ: {
         title: 'Equipment Operations (Legacy)',
         icon: '🔧',
-        description:
-          'Farm equipment use or maintenance recorded (Legacy: use EM for new events)'
+        description: 'Farm equipment use or maintenance recorded (Legacy: use EM for new events)'
       },
       equipment: {
         title: 'Equipment Operations',
@@ -792,33 +788,33 @@ export function getConsumerEventDescription(
       'production.CU': {
         title: 'Cultivation',
         icon: '🚜',
-        description: 'Mechanical cultivation for weed control and soil aeration'
+        description: 'The soil was cultivated mechanically'
       },
       'production.cultivation': {
         title: 'Cultivation',
         icon: '🚜',
-        description: 'Mechanical cultivation for weed control and soil aeration'
+        description: 'The soil was cultivated mechanically'
       },
       'event.production.cultivation': {
         title: 'Cultivation',
         icon: '🚜',
-        description: 'Mechanical cultivation for weed control and soil aeration'
+        description: 'The soil was cultivated mechanically'
       },
       // CRITICAL FIX (2025-12-11): Added TH (Thinning) entries
       'production.TH': {
         title: 'Thinning',
         icon: '🌿',
-        description: 'Thinning to improve size and quality'
+        description: 'Part of the developing crop was thinned'
       },
       'production.thinning': {
         title: 'Thinning',
         icon: '🌿',
-        description: 'Thinning to improve size and quality'
+        description: 'Part of the developing crop was thinned'
       },
       'event.production.thinning': {
         title: 'Thinning',
         icon: '🌿',
-        description: 'Thinning to improve size and quality'
+        description: 'Part of the developing crop was thinned'
       },
       // CRITICAL FIX (2025-01-21): Added EM (Equipment Maintenance) entries
       'production.EM': {
@@ -887,47 +883,43 @@ export function getConsumerEventDescription(
       CM: {
         title: 'Canopy Management',
         icon: '✂️',
-        description: 'Canopy shaped to support crop development and quality'
+        description: 'The canopy was shaped'
       },
       'production.CM': {
         title: 'Canopy Management',
         icon: '✂️',
-        description: 'Canopy shaped to support crop development and quality'
+        description: 'The canopy was shaped'
       },
       'event.production.canopy_management': {
         title: 'Canopy Management',
         icon: '✂️',
-        description: 'Canopy shaped to support crop development and quality'
+        description: 'The canopy was shaped'
       },
       canopy_management: {
         title: 'Canopy Management',
         icon: '✂️',
-        description: 'Canopy shaped to support crop development and quality'
+        description: 'The canopy was shaped'
       },
       // FP (Frost Protection) — Batch 3 (2026-06)
       FP: {
         title: 'Frost Protection',
         icon: '❄️',
-        description:
-          'Wind machines, heaters or sprinklers ran through a cold night to hold frost off the crop'
+        description: 'Wind machines, heaters or sprinklers ran through a cold night on this block'
       },
       'production.FP': {
         title: 'Frost Protection',
         icon: '❄️',
-        description:
-          'Wind machines, heaters or sprinklers ran through a cold night to hold frost off the crop'
+        description: 'Wind machines, heaters or sprinklers ran through a cold night on this block'
       },
       'event.production.frost_protection': {
         title: 'Frost Protection',
         icon: '❄️',
-        description:
-          'Wind machines, heaters or sprinklers ran through a cold night to hold frost off the crop'
+        description: 'Wind machines, heaters or sprinklers ran through a cold night on this block'
       },
       frost_protection: {
         title: 'Frost Protection',
         icon: '❄️',
-        description:
-          'Wind machines, heaters or sprinklers ran through a cold night to hold frost off the crop'
+        description: 'Wind machines, heaters or sprinklers ran through a cold night on this block'
       },
       // MO (Mowing / Orchard-Floor) — Batch 3 (2026-06)
       MO: {
@@ -1065,10 +1057,8 @@ export function getConsumerEventDescription(
     const fullDescription = buildProductionDescription(event, typeInfo, productionDetails);
 
     // 🌱 TRANSPARENCY-FIRST: Create personalized consumer messages based on actual event data
-    let consumerImpact =
-      'This practice is recorded by the farm.';
-    let sustainabilityBenefit =
-      'Part of responsible farming practices that support environmental stewardship and long-term agricultural sustainability.';
+    let consumerImpact = 'This practice is recorded by the farm.';
+    let sustainabilityBenefit = 'This practice is part of the season record of the farm.';
 
     if (eventType.includes('transplant') || eventType === 'TR') {
       // Before PL on purpose: the legacy string 'transplanting' contains 'planting'.
@@ -1091,46 +1081,39 @@ export function getConsumerEventDescription(
         'You can see where the irrigation water came from and how it reached the crop.';
       sustainabilityBenefit = `Recording the source and method makes water use checkable instead of assumed.`;
     } else if (eventType.includes('pruning') || eventType === 'PR') {
-      consumerImpact =
-        'An open canopy dries faster after rain, so the crop needs less spraying to stay healthy.';
+      consumerImpact = 'You can see when this lot was shaped.';
       // Was: "Prunings are chipped back onto the orchard floor, returning the material to the
       // soil instead of hauling it away." Nothing on a pruning record says what happened to
       // the brush — chipped, burned or hauled — so the page asserted a practice from an event
       // that cannot hold it. Same shape as the cultivation line below: describe the record.
       sustainabilityBenefit = `Each pruning pass is dated and on record, which is how canopy work is evidenced rather than asserted.`;
     } else if (eventType.includes('cultivation') || eventType === 'CU') {
-      consumerImpact =
-        'Weeds pulled under by a machine are weeds not sprayed: the same job done with steel instead of chemistry.';
+      consumerImpact = 'You can see the weed work on this block was done by machine, and when.';
       sustainabilityBenefit = `Each cultivation pass is on record, which is how mechanical weed control is evidenced rather than asserted.`;
     } else if (eventType.includes('thinning') || eventType === 'TH') {
-      consumerImpact =
-        'Thinning is why the crop is the size it is. Fewer per plant means more of everything for each one.';
+      consumerImpact = 'You can see the day the crop load on this lot was adjusted.';
       sustainabilityBenefit = `Thinning dates and volumes are on record, which is what lets a size grade be traced back to a decision in the field.`;
     } else if (eventType.includes('pollination') || eventType === 'PO') {
       // The bee story is the strongest consumer content in the product and had no copy at
       // all — PO fell through to the family default. UC Davis organic-almond practice: two
       // hives per acre, set in the orchard in February before bloom.
-      consumerImpact =
-        'Honey bee hives were brought into this block during bloom so the crop could set.';
+      consumerImpact = 'Honey bee hives were brought into this block during bloom.';
       sustainabilityBenefit =
         'Hive placement is on record beside the spray log, so applications can be checked against the days bees were on the block.';
     } else if (eventType.includes('post_harvest') || eventType === 'PH') {
-      consumerImpact =
-        'After picking, the farm recorded how the crop was hulled, dried or cooled.';
+      consumerImpact = 'After picking, the farm recorded how the crop was hulled, dried or cooled.';
       sustainabilityBenefit =
         'The handling record holds the temperature and sanitation steps the farm entered for the crop.';
     } else if (eventType.includes('frost') || eventType === 'FP') {
-      consumerImpact = 'Work through a cold night on this block is part of its season record.';
+      consumerImpact = 'You can see the frost work done for this lot.';
       // Was: "avoids the far larger footprint of losing a harvest and regrowing it" — a
       // comparative environmental claim with no substantiation behind it, on a record whose own
       // fuel field commonly holds tens of gallons of propane. 16 CFR 260.6 governs exactly this.
       sustainabilityBenefit =
         'The night, the method and the low temperature are on record, so frost protection is documented rather than assumed.';
     } else if (eventType.includes('canopy') || eventType === 'CM') {
-      consumerImpact =
-        'Canopy management was recorded for this block.';
-      sustainabilityBenefit =
-        'An open canopy dries faster after rain, lowering disease pressure and the need for fungicide applications.';
+      consumerImpact = 'You can see when the leaves around this crop were pulled or hedged.';
+      sustainabilityBenefit = 'Canopy work on this block is dated and on record.';
     } else if (eventType.includes('mowing') || eventType === 'MO') {
       // Orchard-floor management is the organic answer to weeds, so the copy splits on
       // HOW: flame weeding is the visible "no herbicide" story a shopper understands,
@@ -1139,15 +1122,11 @@ export function getConsumerEventDescription(
       const floorType =
         (event as any).floor_management_type || (event as any).extra_data?.floor_management_type;
       if (floorType === 'flame_weed') {
-        consumerImpact =
-          'Weeds were controlled with heat instead of chemicals, using a propane flamer.';
-        sustainabilityBenefit =
-          'Flame weeding removes weeds without synthetic herbicides, leaving no chemical residue in the soil or on the crop.';
+        consumerImpact = 'Weeds were flamed with a propane burner.';
+        sustainabilityBenefit = 'The weeding method and the date are on record.';
       } else {
-        consumerImpact =
-          'Cutting ground cover is mechanical weed control rather than a herbicide application.';
-        sustainabilityBenefit =
-          'Managed ground cover protects soil from erosion, feeds pollinators and beneficial insects, and reduces the need for herbicides.';
+        consumerImpact = 'You can see when the ground under this crop was mowed.';
+        sustainabilityBenefit = 'Ground-cover work on this block is dated and on record.';
       }
     } else if (eventType.includes('equipment') || eventType === 'EM') {
       // EM had NO branch at all, so all 40 equipment events on published productions fell
@@ -1165,19 +1144,14 @@ export function getConsumerEventDescription(
       ).toLowerCase();
 
       if (opType === 'cl' || opType === 'cleaning') {
-        consumerImpact =
-          'Equipment was cleaned before it touched this crop, so nothing carried over from another field.';
-        sustainabilityBenefit =
-          'Cleaning shared equipment between fields is what keeps an organic block organic, and the step is documented rather than assumed.';
+        consumerImpact = 'Equipment cleaning was recorded before this work on the crop.';
+        sustainabilityBenefit = 'The cleaning step is dated and on record.';
       } else if (opType === 'ca' || opType === 'calibration') {
-        consumerImpact =
-          'Spray equipment was calibrated so each application lands where it should, in the amount intended.';
-        sustainabilityBenefit =
-          'Equipment calibration was recorded before application.';
+        consumerImpact = 'Spray equipment calibration was recorded.';
+        sustainabilityBenefit = 'Equipment calibration was recorded before application.';
       } else {
         consumerImpact = 'Which machine was used or serviced, and on what day, is on record.';
-        sustainabilityBenefit =
-          'Well-maintained equipment uses less fuel, applies inputs more accurately, and is documented alongside the field records.';
+        sustainabilityBenefit = 'Machine work is filed with the crop it served.';
       }
     }
 
@@ -1345,8 +1319,7 @@ export function getConsumerEventDescription(
       TS: {
         title: 'Storm & Wind Event',
         icon: '🌪️',
-        description:
-          'Storm conditions and wind damage assessed to evaluate crop impact and recovery needs',
+        description: 'Storm conditions and wind damage were recorded',
         impact: 'HIGH'
       },
       HW: {
@@ -1358,15 +1331,13 @@ export function getConsumerEventDescription(
       HH: {
         title: 'High Humidity Monitoring',
         icon: '💧',
-        description:
-          'High humidity conditions recorded',
+        description: 'High humidity conditions recorded',
         impact: 'LOW'
       },
       LH: {
         title: 'Low Humidity Monitoring',
         icon: '🏜️',
-        description:
-          'Low humidity conditions monitored to assess plant stress and adjust irrigation strategies',
+        description: 'Low humidity conditions were recorded',
         impact: 'LOW'
       }
     };
@@ -1422,40 +1393,32 @@ export function getConsumerEventDescription(
     // ConsumerEventCard's GENERIC_FALLBACK_COPY, so the block is suppressed entirely rather
     // than filled with something truer but still empty. The per-type `consumerImpact` lines
     // stay — those describe what the weather did to the crop, which the record does support.
-    let sustainabilityBenefit =
-      'Conditions on the day are logged beside the work done that day.';
+    let sustainabilityBenefit = 'Conditions on the day are logged beside the work done that day.';
 
     if (weatherTypeCode === 'FR') {
-      consumerImpact =
-        'Cold nights decide how much of the crop sets, so this is the weather the crop actually grew in.';
+      consumerImpact = 'You can ask the farm how this lot came through the cold.';
     } else if (weatherTypeCode === 'DR') {
-      consumerImpact =
-        'Water is the scarcest input in California agriculture, so what a crop needed in a dry year is worth knowing.';
+      consumerImpact = 'A dry year shows up in this record rather than being left out.';
     } else if (weatherTypeCode === 'HL') {
-      consumerImpact =
-        'Hail leaves marks and reduced size rather than a safety problem, and the farm logged the storm instead of quietly dropping it.';
+      consumerImpact = 'You can ask the farm how this lot came through the hail.';
     } else if (weatherTypeCode === 'HT') {
-      consumerImpact = 'Extreme heat shows up later as reduced size or sunburn marks on the crop.';
+      consumerImpact = 'You can ask the farm how this lot came through the heat.';
     } else if (weatherTypeCode === 'TS') {
       // Was "Storm damage assessment ensures only healthy, undamaged produce reaches consumers"
       // — a food-quality GUARANTEE derived from a weather observation. Nothing on this record
       // sorts fruit or assesses damage; the same 2026-08-31 sweep that emptied the benefit lines
       // below applies to the impact line above them.
-      consumerImpact =
-        'Storms damage and drop crop, so a season with one in it looks different by harvest.';
+      consumerImpact = 'You can ask the farm how this lot came through the storm.';
     } else if (weatherTypeCode === 'HW') {
-      consumerImpact =
-        'A rough weather day is in this record rather than left out of it, so you are seeing the season as it actually went.';
+      consumerImpact = 'A rough weather day is in this record rather than left out of it.';
     } else if (weatherTypeCode === 'HH') {
       // Was "Humidity monitoring helps prevent fungal diseases…" — asserts a prevention outcome
       // from a record that contains a humidity reading.
-      consumerImpact =
-        'Long humid spells are when fungal disease gets its chance, which is why the farm logs them.';
+      consumerImpact = 'The humid spell is on record with its dates.';
     } else if (weatherTypeCode === 'LH') {
       // Was "Low humidity management ensures crops receive adequate moisture…" — asserts both a
       // management practice and its outcome. A weather event records neither.
-      consumerImpact =
-        'Dry air pulls moisture out of a crop faster, so it changes how much water the block needed.';
+      consumerImpact = 'The dry spell is on record with its dates.';
     }
 
     // For weather events, use the standardized description without prepending user observations
@@ -1473,8 +1436,7 @@ export function getConsumerEventDescription(
       shortDescription: description, // Use the same concatenated description for both fields
       icon: weatherInfo.icon,
       impact: weatherInfo.impact,
-      consumerMessage:
-        'Environmental monitoring practice following sustainable agriculture principles',
+      consumerMessage: 'Environmental conditions were recorded',
       consumerImpact,
       sustainabilityBenefit
     };
@@ -1595,8 +1557,7 @@ export function getConsumerEventDescription(
 
     // Create consumer impact and sustainability benefit messages based on chemical type
     let consumerImpact = 'What was applied, where and when is on record for this crop.';
-    let sustainabilityBenefit =
-      'Part of integrated farming approach that balances productivity with environmental responsibility.';
+    let sustainabilityBenefit = 'This application is part of the season record for this crop.';
 
     if (chemicalType === 'fertilizer application') {
       consumerImpact =
@@ -1642,19 +1603,17 @@ export function getConsumerEventDescription(
         baseDescription = 'A treatment was applied against a specific pest';
         consumerImpact = 'The pest, the product aimed at it and the amount used are recorded here.';
         sustainabilityBenefit =
-          'Recording the target pest shows the treatment answered a specific problem rather than a calendar.';
+          'A certifier can compare the treatment with the problem it answered.';
       }
     } else if (chemicalType === 'fungicide application') {
       // Special case for copper-based organic fungicides
       if (productName.toLowerCase().includes('copper')) {
-        consumerImpact =
-          'Copper is one of the few disease treatments allowed on certified organic farms, and it was used here against a specific disease.';
+        consumerImpact = 'A copper-based treatment was applied against a disease.';
         sustainabilityBenefit =
-          'Copper is tightly limited under organic rules because it builds up in soil, so the amount and timing are recorded.';
+          'Organic rules allow copper only where it does not build up in the soil, so the amount and timing are recorded.';
       } else {
         consumerImpact = 'Both the target and the material are on file here, with the date.';
-        sustainabilityBenefit =
-          'Treating a known disease early generally takes less product than treating an outbreak later.';
+        sustainabilityBenefit = 'The disease and the product used against it are on record.';
       }
     } else if (chemicalType === 'herbicide application') {
       // Special case for glyphosate products
@@ -1664,8 +1623,7 @@ export function getConsumerEventDescription(
       ) {
         consumerImpact =
           'This is a synthetic weedkiller. It is not permitted on certified organic ground, and the date and area treated are recorded.';
-        sustainabilityBenefit =
-          'Weed control without tillage leaves soil structure intact, though it relies on a synthetic input to do it.';
+        sustainabilityBenefit = 'The product and the area treated are on record.';
       } else {
         consumerImpact = 'Weed control is logged with the product used and the area it covered.';
         sustainabilityBenefit =
@@ -1699,7 +1657,7 @@ export function getConsumerEventDescription(
       shortDescription: baseDescription,
       icon,
       impact: impactLevel,
-      consumerMessage: `Professional agricultural treatment applied according to sustainable farming practices`,
+      consumerMessage: `A crop treatment was applied`,
       consumerImpact,
       sustainabilityBenefit
     };
@@ -1797,7 +1755,7 @@ export function getConsumerEventDescription(
         title: 'Independent Laboratory Analysis',
         icon: '🔬',
         description:
-          'A sample of leaf, soil, compost or irrigation water sent to an outside laboratory, so nutrient decisions rest on measurements rather than guesswork',
+          'A sample of leaf, soil, compost or irrigation water was sent to an outside laboratory',
         impact: 'LOW'
       }
     };
@@ -1854,45 +1812,33 @@ export function getConsumerEventDescription(
     const fullDescription = typeInfo.description + detailsText;
 
     // Create personalized consumer messages based on soil management type
-    let consumerImpact =
-      'This soil management practice supports healthy growing conditions and sustainable farming.';
-    let sustainabilityBenefit =
-      'Documented soil management demonstrates commitment to soil health and environmental stewardship.';
+    let consumerImpact = 'This soil work is part of the season record for this crop.';
+    let sustainabilityBenefit = 'The soil work, its date and its area are on record.';
 
     // Specific messages for each soil management type
     if (soilType === 'LA') {
-      consumerImpact =
-        'You can see that the farm sent samples to a lab and recorded the results, rather than guessing at what the soil needs.';
+      consumerImpact = 'You can see that the farm sent samples to a lab and recorded the results.';
       sustainabilityBenefit =
-        'Lab results give the fertility decisions on this block a measured starting point, so inputs follow numbers instead of habit.';
+        'The lab results are on record beside the inputs applied to this block.';
     } else if (soilType === 'ST' || soilType.includes('Testing')) {
-      consumerImpact =
-        'A lab measured what the soil actually needed, so nutrients were added on evidence rather than habit.';
+      consumerImpact = 'A lab analysis is on record for this block.';
       sustainabilityBenefit =
-        'Testing before feeding means only what the soil is short of gets added.';
+        'The test and the inputs that followed are on record, so one can be checked against the other.';
     } else if (soilType === 'PA' || soilType.includes('pH')) {
-      consumerImpact =
-        'Soil chemistry decides how much of what a farm applies the crop can actually take up.';
+      consumerImpact = 'You can see what the farm added to this ground, and how much.';
       sustainabilityBenefit =
         'The amendment, the amount and the area are on record, so the correction can be checked against the soil test that prompted it.';
     } else if (soilType === 'OM' || soilType.includes('Organic')) {
-      consumerImpact =
-        'Feeding the soil itself, rather than only the plant, is the slower and more durable way to keep ground productive.';
-      sustainabilityBenefit =
-        'Organic matter addition improves soil structure, water retention, and long-term soil health naturally.';
+      consumerImpact = 'You can see what went into the ground this lot grew in.';
+      sustainabilityBenefit = 'The material, the amount and the area are on record.';
     } else if (soilType === 'CC' || soilType.includes('Cover')) {
-      consumerImpact =
-        'Living roots hold the soil between harvests, so the ground this crop grows in stays put over winter.';
-      sustainabilityBenefit =
-        'A cover crop feeds the soil and crowds out weeds, which reduces the need to spray or cultivate for them.';
+      consumerImpact = 'You can see what grew on this ground before this crop.';
+      sustainabilityBenefit = 'The cover crop work is dated and on record.';
     } else if (soilType === 'TI' || soilType.includes('Tillage')) {
-      consumerImpact =
-        'How often soil gets turned is one of the things that decides whether it stays put, so each pass is logged rather than left unrecorded.';
-      sustainabilityBenefit =
-        'Tillage recorded.';
+      consumerImpact = 'You can see how many passes went over this field.';
+      sustainabilityBenefit = 'Tillage recorded.';
     } else if (soilType === 'CO' || soilType.includes('Compost')) {
-      consumerImpact =
-        'Compost feeds the soil this crop grows in, rather than feeding the plant directly.';
+      consumerImpact = 'You can see what went onto this ground before the crop.';
       // Was: "Composting turns orchard waste back into soil…". The event carries
       // `compost_feedstock`, and on real records it reads "green waste, yard trimmings and horse
       // bedding" from a supplier — so the copy asserted an origin the record often refutes. The
@@ -1900,18 +1846,13 @@ export function getConsumerEventDescription(
       sustainabilityBenefit =
         'Recording the amount, the area and the composting process is what makes soil building checkable rather than asserted.';
     } else if (soilType === 'GR' || soilType.includes('Grazing')) {
-      consumerImpact =
-        'Animals eat the weeds and leave manure behind, which is weed control and fertiliser in one pass.';
-      sustainabilityBenefit =
-        'Managed grazing recycles nutrients, stimulates root growth, and reduces the need for mowing and herbicides.';
+      consumerImpact = 'You can see when animals were on this ground.';
+      sustainabilityBenefit = 'The grazing dates and the block are on record.';
     } else if (soilType === 'HD' || soilType.includes('Habitat')) {
-      consumerImpact =
-        'Field edges left in permanent planting are acres the farm chose not to crop, kept for the insects and birds instead.';
-      sustainabilityBenefit =
-        'Documented habitat builds biodiversity and natural pest control, reducing reliance on chemical inputs.';
+      consumerImpact = 'You can see what grows around this block besides the crop.';
+      sustainabilityBenefit = 'The habitat, where it is and when it was planted are on record.';
     } else if (soilType === 'NS' || soilType.includes('Nesting') || soilType.includes('Shelter')) {
-      consumerImpact =
-        'Habitat is a long-term commitment rather than a one-off treatment. The owls and bees stay, so it keeps working season after season.';
+      consumerImpact = 'You can see what was put up for birds and bees here.';
       sustainabilityBenefit =
         'Structures and their locations are on record, so the habitat can be checked on the ground.';
     }
@@ -1956,7 +1897,7 @@ export function getConsumerEventDescription(
       shortDescription: typeInfo.description,
       icon,
       impact: impactLevel,
-      consumerMessage: 'Soil management supporting sustainable farming practices',
+      consumerMessage: 'Soil work recorded',
       consumerImpact,
       sustainabilityBenefit
     };
@@ -1982,8 +1923,7 @@ export function getConsumerEventDescription(
       SC: {
         title: 'Pest Scouting',
         icon: '🔍',
-        description:
-          'Monitored crops for pest populations and damage levels to inform management decisions',
+        description: 'The crop was checked for pests and damage',
         impact: 'LOW'
       },
       TM: {
@@ -2007,8 +1947,7 @@ export function getConsumerEventDescription(
       TA: {
         title: 'Threshold Assessment',
         icon: '📊',
-        description:
-          'Evaluated pest population levels against economic thresholds to determine treatment needs',
+        description: 'Pest counts were compared with a treatment threshold',
         impact: 'MEDIUM'
       },
       IP: {
@@ -2022,15 +1961,13 @@ export function getConsumerEventDescription(
       CU: {
         title: 'Winter Sanitation & Cultural Control',
         icon: '🍂',
-        description:
-          'Overwintering pest sites were physically removed from this block, the preventive practice used here instead of spraying',
+        description: 'Overwintering pest sites were physically removed from this block',
         impact: 'HIGH'
       },
       scouting: {
         title: 'Pest Scouting',
         icon: '🔍',
-        description:
-          'Monitored crops for pest populations and damage levels to inform management decisions',
+        description: 'The crop was checked for pests and damage',
         impact: 'LOW'
       },
       beneficial_release: {
@@ -2054,8 +1991,7 @@ export function getConsumerEventDescription(
       threshold_assessment: {
         title: 'Threshold Assessment',
         icon: '📊',
-        description:
-          'Evaluated pest population levels against economic thresholds to determine treatment needs',
+        description: 'Pest counts were compared with a treatment threshold',
         impact: 'MEDIUM'
       },
       ipm_implementation: {
@@ -2121,44 +2057,32 @@ export function getConsumerEventDescription(
     // Create personalized consumer messages based on pest management type
     let consumerImpact =
       'The method used against the pest is on record, alongside the counts that prompted it.';
-    let sustainabilityBenefit =
-      'Part of integrated pest management approach that reduces reliance on synthetic pesticides and promotes ecological balance.';
+    let sustainabilityBenefit = 'The pest management method is on record with its date.';
 
     if (eventPestType === 'CU') {
-      consumerImpact =
-        'Prevention work like sanitation and habitat choices is logged here, the part of pest control that avoids sprays entirely.';
+      consumerImpact = 'Prevention work like sanitation and habitat choices is logged here.';
       sustainabilityBenefit =
         'Organic pest management is built on prevention first, and this record is what puts that work on paper.';
     } else if (eventPestType === 'SC' || eventPestType === 'scouting') {
-      consumerImpact =
-        'Regular pest monitoring helps detect issues early, preventing damage and reducing the need for chemical interventions.';
+      consumerImpact = 'You can see how often someone walked this block looking for pests.';
       sustainabilityBenefit =
         'Counts and dates are on record, so a decision to treat, or not to treat, can be checked against what was actually found.';
     } else if (eventPestType === 'TM' || eventPestType === 'trap_monitoring') {
-      consumerImpact =
-        'Counting first is what lets a farm treat only when the numbers call for it, instead of on a fixed calendar.';
-      sustainabilityBenefit =
-        'Trap monitoring reduces pesticide applications by providing precise timing for control measures only when needed.';
+      consumerImpact = 'You can see how many insects turned up here, and when.';
+      sustainabilityBenefit = 'Trap counts are on record with their dates.';
     } else if (eventPestType === 'BR' || eventPestType === 'beneficial_release') {
-      consumerImpact =
-        'Predator insects do the work a spray would otherwise do, and they stay on afterwards.';
+      consumerImpact = 'You can see a living control was used here, and when.';
       sustainabilityBenefit =
         'Releases are recorded by species and date, so the approach can be followed across the season.';
     } else if (eventPestType === 'PI' || eventPestType === 'pest_identification') {
-      consumerImpact =
-        'Knowing exactly which insect is present is what makes a targeted response possible instead of a broad one.';
-      sustainabilityBenefit =
-        'Species-specific pest management reduces unnecessary treatments and supports integrated approaches that preserve beneficial organisms.';
+      consumerImpact = 'The pest identification is on record.';
+      sustainabilityBenefit = 'The species identified is on record with the date.';
     } else if (eventPestType === 'TA' || eventPestType === 'threshold_assessment') {
-      consumerImpact =
-        'Pest damage assessment recorded.';
-      sustainabilityBenefit =
-        'A counted threshold is the difference between treating because the numbers say so and treating on a hunch.';
+      consumerImpact = 'Pest damage assessment recorded.';
+      sustainabilityBenefit = 'The count and the threshold it was compared with are on record.';
     } else if (eventPestType === 'IP' || eventPestType === 'ipm_implementation') {
-      consumerImpact =
-        'Mixing traps, beneficial insects and targeted treatment is what stops pests building resistance to any single product.';
-      sustainabilityBenefit =
-        'Integrated pest management reduces chemical dependency through biological controls, monitoring, and targeted interventions.';
+      consumerImpact = 'Each method used against the pest is on record.';
+      sustainabilityBenefit = 'A certifier can follow each method through the season.';
     }
 
     // Use farmer's actual event name when available
@@ -2170,8 +2094,7 @@ export function getConsumerEventDescription(
       shortDescription: typeInfo.description,
       icon,
       impact: impactLevel,
-      consumerMessage:
-        'Sustainable pest management practice following integrated pest management principles',
+      consumerMessage: 'Pest management was recorded',
       consumerImpact,
       sustainabilityBenefit
     };
@@ -2202,49 +2125,49 @@ export function getConsumerEventDescription(
       training: {
         title: 'Training Activity',
         icon: '🎓',
-        description: 'Conducted training activities to improve farming knowledge and skills',
+        description: 'A training session was held',
         impact: 'MEDIUM'
       },
       documentation: {
         title: 'Farm Documentation',
         icon: '📝',
-        description: 'Documented farming practices for transparency and compliance',
+        description: 'Farming practices were documented',
         impact: 'LOW'
       },
       inspection: {
         title: 'Safety Inspection',
         icon: '🛡️',
-        description: 'Inspected farm facilities and equipment for safety compliance',
+        description: 'Farm facilities and equipment were inspected for safety',
         impact: 'HIGH'
       },
       meeting: {
         title: 'Team Meeting',
         icon: '👥',
-        description: 'Coordinated team activities and planning sessions',
+        description: 'Team planning was recorded',
         impact: 'LOW'
       },
       community: {
         title: 'Community Engagement',
         icon: '🤝',
-        description: 'Engaged with the community through farm tours and outreach',
+        description: 'Community outreach was recorded',
         impact: 'LOW'
       },
       precision_ag: {
         title: 'Precision Agriculture',
         icon: '🛰️',
-        description: 'Conducted precision agriculture activities for data-driven farming',
+        description: 'Precision agriculture work was recorded',
         impact: 'LOW'
       },
       emergency: {
         title: 'Emergency/Storm Response',
         icon: '⚠️',
-        description: 'Responded to emergency conditions with cleanup and damage repair',
+        description: 'Emergency cleanup and repair were recorded',
         impact: 'MEDIUM'
       },
       other: {
         title: 'General Farm Activity',
         icon: '🔧',
-        description: 'Completed general farming activity as part of farm operations',
+        description: 'A farm activity was recorded',
         impact: 'LOW'
       }
     };
@@ -2336,56 +2259,36 @@ export function getConsumerEventDescription(
     const fullDescription = (incidentShortDescription ?? typeInfo.description) + detailsText;
 
     // Create personalized consumer messages based on activity type
-    let consumerImpact =
-      'This farm management activity supports efficient operations and sustainable farming practices.';
-    let sustainabilityBenefit =
-      'Farm management activity recorded.';
+    let consumerImpact = 'This management work is part of the season record of the farm.';
+    let sustainabilityBenefit = 'Farm management activity recorded.';
 
     if (eventActivityType === 'maintenance') {
-      consumerImpact =
-        'Farm maintenance recorded.';
-      sustainabilityBenefit =
-        'Preventive maintenance recorded.';
+      consumerImpact = 'Farm maintenance recorded.';
+      sustainabilityBenefit = 'Preventive maintenance recorded.';
     } else if (eventActivityType === 'planning') {
-      consumerImpact =
-        'Farm planning recorded.';
-      sustainabilityBenefit =
-        'Planning session recorded.';
+      consumerImpact = 'Farm planning recorded.';
+      sustainabilityBenefit = 'Planning session recorded.';
     } else if (eventActivityType === 'training') {
-      consumerImpact =
-        'Training session recorded.';
-      sustainabilityBenefit =
-        'Ongoing education promotes adoption of sustainable techniques and improves overall farming practices.';
+      consumerImpact = 'Training session recorded.';
+      sustainabilityBenefit = 'The training session is on record.';
     } else if (eventActivityType === 'documentation') {
-      consumerImpact =
-        'Detailed farm documentation provides transparency and traceability that builds consumer trust in food production.';
-      sustainabilityBenefit =
-        'Thorough record-keeping enables continuous improvement and demonstrates commitment to sustainable practices.';
+      consumerImpact = 'The documentation of this work is on record.';
+      sustainabilityBenefit = 'This record is part of the documentation of the farm.';
     } else if (eventActivityType === 'inspection') {
-      consumerImpact =
-        'Safety inspection recorded.';
-      sustainabilityBenefit =
-        'Safety protocols protect workers and the environment while maintaining sustainable operational standards.';
+      consumerImpact = 'Safety inspection recorded.';
+      sustainabilityBenefit = 'The safety inspection is on record.';
     } else if (eventActivityType === 'emergency') {
-      consumerImpact =
-        'Emergency response recorded.';
-      sustainabilityBenefit =
-        'Damage repair recorded.';
+      consumerImpact = 'Emergency response recorded.';
+      sustainabilityBenefit = 'Damage repair recorded.';
     } else if (eventActivityType === 'precision_ag') {
-      consumerImpact =
-        'Precision agriculture work recorded.';
-      sustainabilityBenefit =
-        'Data-driven farming reduces input waste, targets treatments precisely, and supports sustainable resource management.';
+      consumerImpact = 'Precision agriculture work recorded.';
+      sustainabilityBenefit = 'The precision agriculture work is on record.';
     } else if (eventActivityType === 'community') {
-      consumerImpact =
-        'Community engagement builds connections between farmers and consumers, strengthening local food systems.';
-      sustainabilityBenefit =
-        'Agricultural outreach promotes understanding of sustainable farming and supports local community resilience.';
+      consumerImpact = 'The outreach is on record.';
+      sustainabilityBenefit = 'The outreach event is on record.';
     } else if (eventActivityType === 'meeting') {
-      consumerImpact =
-        'Team coordination recorded.';
-      sustainabilityBenefit =
-        'Planning meeting recorded.';
+      consumerImpact = 'Team coordination recorded.';
+      sustainabilityBenefit = 'Planning meeting recorded.';
     }
 
     // Last, so it overrides whichever activity branch ran above (see the incident note near
@@ -2446,8 +2349,7 @@ export function getConsumerEventDescription(
       // Fallback Equipment handling when specific fields are undefined
       return {
         title: equipmentName,
-        description:
-          'Equipment operation recorded.',
+        description: 'Equipment operation recorded.',
         shortDescription: 'Equipment operation completed as part of farm activities',
         icon: '🚜',
         impact: 'MEDIUM' as 'HIGH' | 'MEDIUM' | 'LOW',
@@ -2462,8 +2364,7 @@ export function getConsumerEventDescription(
         // made from an empty record. Describe what the record is, and explain why equipment
         // upkeep matters in general; the badge and the farmer's own notes carry the specifics.
         consumerImpact: 'The farm logged work on its equipment as part of this crop’s record.',
-        sustainabilityBenefit:
-          'Equipment that is maintained and calibrated uses less fuel and applies less product to do the same job.'
+        sustainabilityBenefit: 'Equipment maintenance and calibration are on record.'
       };
     }
 
@@ -2480,72 +2381,62 @@ export function getConsumerEventDescription(
       FC: {
         title: 'Fuel Consumption', // 🚨 CRITICAL FIX: Use exact same name as eventPreviewUtils
         icon: '⛽',
-        description:
-          'Documented fuel consumption for field operations with transparent tracking of equipment efficiency',
+        description: 'Fuel used for field operations was recorded',
         impact: 'MEDIUM'
       },
       MN: {
         title: 'Maintenance', // 🚨 CRITICAL FIX: Use exact same name as eventPreviewUtils
         icon: '🔧',
-        description:
-          'Preventive equipment maintenance recorded',
+        description: 'Preventive equipment maintenance recorded',
         impact: 'LOW'
       },
       RE: {
         title: 'Repair', // 🚨 CRITICAL FIX: Use exact same name as eventPreviewUtils
         icon: '🛠️',
-        description:
-          'Equipment repair operations to restore functionality and maintain operational efficiency',
+        description: 'Equipment repair recorded',
         impact: 'MEDIUM'
       },
       CA: {
         title: 'Calibration', // 🚨 CRITICAL FIX: Use exact same name as eventPreviewUtils
         icon: '⚙️',
-        description:
-          'Equipment calibration recorded',
+        description: 'Equipment calibration recorded',
         impact: 'LOW'
       },
       BD: {
         title: 'Breakdown', // 🚨 CRITICAL FIX: Use exact same name as eventPreviewUtils
         icon: '🚨',
-        description:
-          'Emergency breakdown response and troubleshooting to restore equipment functionality',
+        description: 'Equipment breakdown and repair recorded',
         impact: 'HIGH'
       },
       EI: {
         title: 'Inspection', // 🚨 CRITICAL FIX: Use exact same name as eventPreviewUtils
         icon: '🔍',
-        description:
-          'Equipment inspection recorded',
+        description: 'Equipment inspection recorded',
         impact: 'LOW'
       },
       // Legacy full text versions (for backward compatibility)
       'Fuel Consumption - Field Operations': {
         title: 'Fuel Consumption - Field Operations',
         icon: '⛽',
-        description:
-          'Documented fuel consumption for field operations with transparent tracking of equipment efficiency',
+        description: 'Fuel used for field operations was recorded',
         impact: 'MEDIUM'
       },
       'Maintenance & Service': {
         title: 'Maintenance & Service',
         icon: '🔧',
-        description:
-          'Equipment maintenance and service recorded',
+        description: 'Equipment maintenance and service recorded',
         impact: 'LOW'
       },
       'Transportation & Logistics': {
         title: 'Transportation & Logistics',
         icon: '🚛',
-        description:
-          'Transportation and logistics operations with documented fuel usage and efficiency tracking',
+        description: 'Transport and logistics work recorded',
         impact: 'MEDIUM'
       },
       'Storage & Handling': {
         title: 'Storage & Handling',
         icon: '📦',
-        description:
-          'Storage and handling operations with complete documentation of equipment usage',
+        description: 'Storage and handling work recorded',
         impact: 'LOW'
       }
     };
@@ -2555,7 +2446,7 @@ export function getConsumerEventDescription(
     const typeInfo = operationTypeMap[operationType] || {
       title: 'Equipment work',
       icon: '🚜',
-      description: 'Agricultural equipment operation with transparent operational tracking',
+      description: 'Equipment operation recorded',
       impact: 'MEDIUM' as 'HIGH' | 'MEDIUM' | 'LOW'
     };
 
@@ -2595,10 +2486,8 @@ export function getConsumerEventDescription(
     const fullDescription = typeInfo.description + detailsText;
 
     // Create personalized consumer messages based on operation type
-    let consumerImpact =
-      'This equipment operation supports efficient and sustainable farming practices.';
-    let sustainabilityBenefit =
-      'Documented equipment operations demonstrate transparent farming practices and operational efficiency.';
+    let consumerImpact = 'This equipment work is part of the season record for this crop.';
+    let sustainabilityBenefit = 'The machine, the work and the date are on record.';
 
     // FIXED: Specific messages for each operation type code matching EquipmentTab.jsx
     // Review of app #79: the run-8 rewrite left the title, the impact line and the benefit line
@@ -2659,7 +2548,7 @@ export function getConsumerEventDescription(
       shortDescription: typeInfo.description,
       icon,
       impact: impactLevel,
-      consumerMessage: 'Equipment operation following sustainable farming practices',
+      consumerMessage: 'Equipment operation recorded',
       consumerImpact,
       sustainabilityBenefit
     };
@@ -2696,14 +2585,13 @@ export function getConsumerEventDescription(
       compliance: {
         title: 'Regulatory Compliance',
         icon: '📜',
-        description: 'Compliance with environmental regulations and agricultural safety standards',
+        description: 'Regulatory compliance record',
         impact: 'MEDIUM'
       },
       transparency: {
         title: 'Transparency Initiative',
         icon: '👁️',
-        description:
-          'Consumer transparency initiative providing visibility into agricultural practices',
+        description: 'A note on what the farm makes public',
         impact: 'LOW'
       }
     };
@@ -2799,17 +2687,14 @@ export function getConsumerEventDescription(
     // Add sustainability practice details with consumer-friendly explanations
     if (event.sustainability_practice) {
       const practiceDescriptions: Record<string, string> = {
-        cover_cropping: 'Cover cropping protects soil health and reduces erosion naturally',
-        no_till: 'No-till farming preserves soil structure and captures carbon underground',
-        integrated_pest:
-          'Integrated pest management reduces chemical use through natural pest control',
-        water_conservation:
-          'Water conservation measures protect this precious resource for future generations',
-        renewable_energy:
-          'Renewable energy installation reduces farm carbon footprint and operational costs',
-        composting: 'On-farm composting turns organic waste into natural fertilizer',
-        biodiversity: 'Biodiversity conservation protects native species and ecosystem health',
-        soil_health: 'Soil health improvement enhances crop quality and carbon capture'
+        cover_cropping: 'Cover cropping recorded',
+        no_till: 'No-till practice recorded',
+        integrated_pest: 'Integrated pest management recorded',
+        water_conservation: 'Water conservation measure recorded',
+        renewable_energy: 'Renewable energy installation recorded',
+        composting: 'On-farm composting recorded',
+        biodiversity: 'Biodiversity conservation work recorded',
+        soil_health: 'Soil health work recorded'
       };
       const practiceDesc =
         practiceDescriptions[event.sustainability_practice] ||
@@ -2821,7 +2706,7 @@ export function getConsumerEventDescription(
     }
 
     // Consumer impact messaging (static so it localizes via the dict)
-    let consumerImpact = 'Supporting agricultural transparency and sustainability';
+    let consumerImpact = 'Business record';
     if (businessType === 'certification') {
       // A certification is the strongest evidence on the page, and it was running on filler
       // ("Certified products ensuring quality and environmental standards", shared by all
@@ -2879,7 +2764,7 @@ export function getConsumerEventDescription(
       // Kept generic (what certification IS) rather than asserting this farm passed one —
       // see the attribution note on consumerImpact above.
       sustainabilityBenefit =
-        'Certifications are re-checked on a schedule, so they reflect an ongoing review rather than a one-time claim.';
+        'The certification and its dates are on record as the farm reported them.';
     } else if (businessType === 'verification') {
       sustainabilityBenefit =
         'An audit checks conformance to a written standard on the day it is carried out; the record here says which standard and when.';
@@ -3019,7 +2904,7 @@ export function getConsumerEventDescription(
       shortDescription: typeInfo.description,
       icon,
       impact: impactLevel,
-      consumerMessage: 'Business activity enhancing agricultural transparency and sustainability',
+      consumerMessage: 'Business activity recorded',
       consumerImpact,
       sustainabilityBenefit
     };
@@ -3141,8 +3026,7 @@ export function getConsumerEventDescription(
     // (FTC 16 CFR 260.4) attached to an event we know nothing about, and unlike the per-family
     // fallbacks it is NOT in ConsumerEventCard's suppression list, so it actually rendered.
     consumerImpact: 'The farm logged this alongside the rest of the season.',
-    sustainabilityBenefit:
-      'Part of responsible farming practices that support environmental stewardship and long-term agricultural sustainability.'
+    sustainabilityBenefit: 'This practice is part of the season record of the farm.'
   };
 }
 
