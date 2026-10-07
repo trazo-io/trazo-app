@@ -244,11 +244,12 @@ export class PasswordValidator {
   /**
    * Get password strength color for UI
    */
-  public getStrengthColor(score: number): string {
+  public getStrengthColor(score: number, warnings: string[] = []): string {
     if (score < 20) return 'red.500';
     if (score < 40) return 'orange.500';
     if (score < 60) return 'yellow.500';
-    if (score < 80) return 'blue.500';
+    // Colour follows the verdict (review of app #98): an open warning caps both at "Good".
+    if (score < 80 || warnings.length > 0) return 'blue.500';
     return 'green.500';
   }
 

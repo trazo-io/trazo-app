@@ -1645,7 +1645,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                     !planSuggestions.some((event) => event.enabled) && (
                       <Text
                         fontSize="sm"
-                        color="amber.800"
+                        color="gray.700"
                         mb={2}
                         data-testid="quickstart-plan-nothing-ticked">
                         {intl.formatMessage({ id: 'quickStart.plan.nothingTicked' })}

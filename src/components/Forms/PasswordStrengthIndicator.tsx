@@ -44,7 +44,7 @@ export const PasswordStrengthIndicator: React.FC<PasswordStrengthIndicatorProps>
   if (!password || !validation) return null;
 
   const score = validation.score;
-  const colorScheme = passwordValidator.getStrengthColor(score).split('.')[0];
+  const colorScheme = passwordValidator.getStrengthColor(score, validation.warnings).split('.')[0];
   const label = passwordValidator.getStrengthLabel(score, validation.warnings);
 
   return (

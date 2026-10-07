@@ -23,7 +23,12 @@ const src = (p: string) => readFileSync(resolve(__dirname, '../../', p), 'utf8')
 describe('onboarding says what it holds', () => {
   it('the Getting Started panel stays off the parcel and production pages', () => {
     expect(isRecordOrFormRoute('/admin/dashboard/farm/2/parcel/12')).toBe(true);
-    expect(isRecordOrFormRoute('/admin/dashboard/farm/2/parcel/12/production/23')).toBe(true);
+    // The production segment is the season's public_id (a UUID), as HistoryCard navigates.
+    expect(
+      isRecordOrFormRoute(
+        '/admin/dashboard/farm/2/parcel/12/production/027804d7-17ba-468a-a210-e1279e92e165'
+      )
+    ).toBe(true);
     expect(isRecordOrFormRoute('/admin/dashboard/farm/2/parcel/12/event/add')).toBe(true);
     expect(isRecordOrFormRoute('/admin/dashboard/farm/2')).toBe(false);
   });
@@ -31,6 +36,11 @@ describe('onboarding says what it holds', () => {
   it('a password with an open warning is never called Strong', () => {
     expect(passwordValidator.getStrengthLabel(95, [])).toBe('Strong');
     expect(passwordValidator.getStrengthLabel(95, ['Password contains common words'])).toBe('Good');
+    // The bar's colour follows the verdict.
+    expect(passwordValidator.getStrengthColor(95, [])).toBe('green.500');
+    expect(passwordValidator.getStrengthColor(95, ['Password contains common words'])).toBe(
+      'blue.500'
+    );
   });
 
   it('the terms links sit outside the checkbox label', () => {

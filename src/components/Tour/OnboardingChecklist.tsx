@@ -37,7 +37,8 @@ const FORM_ROUTE_SUFFIXES = ['/add', '/edit', '/finish'];
  * parcel page it sat over the production card, so a new farm could not open the season it
  * had just created. The panel is a guide to the next step, never a lid on the current one.
  */
-const RECORD_ROUTE_PATTERNS = [/\/parcel\/\d+$/, /\/parcel\/\d+\/production\/\d+$/];
+// The production segment is the season's public_id (a UUID), never a number (review of app #98).
+const RECORD_ROUTE_PATTERNS = [/\/parcel\/\d+$/, /\/parcel\/\d+\/production\/[^/]+$/];
 
 /** Trailing slashes appear on some routes (e.g. after finalize redirects), so normalise. */
 export const isRecordOrFormRoute = (pathname: string): boolean => {
