@@ -69,6 +69,33 @@ import {
 } from 'store/api/dashboardMetricsApi';
 import { useGetOperationReadinessQuery, type ReadinessItem } from 'store/api/certifierLinkApi';
 
+/**
+ * The season row's name in the reader's language, or the server's English label when the
+ * catalogue has none (the certifier page does the same; recordkeeping review F-01 found the
+ * farm card printing the English label and detail on the Spanish dashboard).
+ */
+export function readinessFindingLabel(
+  intl: ReturnType<typeof useIntl>,
+  finding: Pick<CertifierReadinessFinding, 'label' | 'row_key'>
+): string {
+  const id = finding.row_key ? `certifierReview.row.${finding.row_key}` : '';
+  return id && (intl.messages as Record<string, unknown>)[id]
+    ? intl.formatMessage({ id })
+    : finding.label;
+}
+
+/** The detail sentence, written from the row's data when a translation exists for the row. */
+export function readinessFindingDetail(
+  intl: ReturnType<typeof useIntl>,
+  finding: Pick<CertifierReadinessFinding, 'detail' | 'row_key' | 'params'>
+): string {
+  const id = finding.row_key ? `certifierReadiness.detail.${finding.row_key}` : '';
+  if (id && finding.params && (intl.messages as Record<string, unknown>)[id]) {
+    return intl.formatMessage({ id }, finding.params as Record<string, string | number>);
+  }
+  return finding.detail;
+}
+
 const MAX_VISIBLE_FINDINGS = 5;
 
 /**
@@ -548,7 +575,7 @@ export default function CertifierReadinessCard({
                       <VStack align="start" spacing={1} flex={1} minW={0}>
                         <HStack spacing={2} flexWrap="wrap">
                           <Text fontSize="sm" fontWeight="semibold" color={textColor}>
-                            {finding.label}
+                            {readinessFindingLabel(intl, finding)}
                           </Text>
                           <Badge variant={style.badgeVariant} fontSize="xs" borderRadius="full">
                             {intl.formatMessage({
@@ -560,7 +587,7 @@ export default function CertifierReadinessCard({
                           </Badge>
                         </HStack>
                         <Text fontSize="xs" color={mutedColor} lineHeight="1.5">
-                          {finding.detail}
+                          {readinessFindingDetail(intl, finding)}
                         </Text>
                         {finding.section_hint && (
                           <Text fontSize="xs" color={mutedColor} fontStyle="italic">

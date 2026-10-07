@@ -841,6 +841,18 @@ const OSPMaterialIdentityPanel: React.FC<Props> = ({ companyId, farmId, osp }) =
   const { data } = useGetMaterialIdentitiesQuery({ companyId, farmId, ospId: osp.id });
   const editable = osp.status === 'draft' || osp.status === 'active';
   const identities = useMemo(() => data?.identities ?? [], [data]);
+  // The drift banner links here as `#logged-names` (recordkeeping review F-01). The wizard
+  // renders this panel after its data loads, so a plain anchor jump lands before it exists;
+  // scroll once the list is in.
+  const anchorRef = React.useRef<HTMLDivElement | null>(null);
+  React.useEffect(() => {
+    // `window.location` rather than the router's location: this panel is also rendered in
+    // tests and tools without a <Router>, and a hash is a fact about the page either way.
+    const hash = typeof window !== 'undefined' ? window.location.hash : '';
+    if (hash === '#logged-names' && identities.length && anchorRef.current) {
+      anchorRef.current.scrollIntoView({ block: 'start' });
+    }
+  }, [identities.length]);
   if (!identities.length) return null;
   // Open work first: a to-do list reads top-down. Server order within each group is kept.
   const isSettled = (i: MaterialIdentity) =>
@@ -851,40 +863,42 @@ const OSPMaterialIdentityPanel: React.FC<Props> = ({ companyId, farmId, osp }) =
     return s === 'identified' || s === 'different';
   }).length;
   return (
-    <StandardCard
-      title={intl.formatMessage({
-        id: 'osp.identity.title',
-        defaultMessage: 'Logged names not on the plan'
-      })}>
-      <Text fontSize="sm" mb={1}>
-        {intl.formatMessage({
-          id: 'osp.identity.intro',
-          defaultMessage:
-            'Trazo never decides that two names are one product. For each name below, say what it is for the events you have checked. A decision changes no record and adds nothing to the plan.'
-        })}
-      </Text>
-      <Text fontSize="sm" color={muted} mb={3} data-testid="identity-summary-line">
-        {intl.formatMessage(
-          {
-            id: 'osp.identity.ux.summary',
+    <Box id="logged-names" ref={anchorRef}>
+      <StandardCard
+        title={intl.formatMessage({
+          id: 'osp.identity.title',
+          defaultMessage: 'Logged names not on the plan'
+        })}>
+        <Text fontSize="sm" mb={1}>
+          {intl.formatMessage({
+            id: 'osp.identity.intro',
             defaultMessage:
-              '{total, plural, one {# name} other {# names}} · {settled} decided · {open} to review'
-          },
-          { total: identities.length, settled, open: identities.length - settled }
-        )}
-      </Text>
-      <Stack spacing={2}>
-        {ordered.map((identity) => (
-          <IdentityItem
-            key={`${identity.source}:${identity.name_key}`}
-            identity={identity}
-            targets={data?.targets ?? []}
-            scope={{ companyId, farmId, ospId: osp.id }}
-            editable={editable}
-          />
-        ))}
-      </Stack>
-    </StandardCard>
+              'Trazo never decides that two names are one product. For each name below, say what it is for the events you have checked. A decision changes no record and adds nothing to the plan.'
+          })}
+        </Text>
+        <Text fontSize="sm" color={muted} mb={3} data-testid="identity-summary-line">
+          {intl.formatMessage(
+            {
+              id: 'osp.identity.ux.summary',
+              defaultMessage:
+                '{total, plural, one {# name} other {# names}} · {settled} decided · {open} to review'
+            },
+            { total: identities.length, settled, open: identities.length - settled }
+          )}
+        </Text>
+        <Stack spacing={2}>
+          {ordered.map((identity) => (
+            <IdentityItem
+              key={`${identity.source}:${identity.name_key}`}
+              identity={identity}
+              targets={data?.targets ?? []}
+              scope={{ companyId, farmId, ospId: osp.id }}
+              editable={editable}
+            />
+          ))}
+        </Stack>
+      </StandardCard>
+    </Box>
   );
 };
 
