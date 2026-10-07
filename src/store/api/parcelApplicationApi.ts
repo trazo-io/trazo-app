@@ -107,6 +107,8 @@ export type CertifiedItemState =
 export type CertifiedReviewKind =
   | 'prohibited_input'
   | 'unknown_input'
+  // A basis recorded as "not yet confirmed" (recordkeeping review S4, F-08).
+  | 'unconfirmed_input'
   | 'conventional_year'
   | 'no_lapse_answered_no'
   | 'operation_name_not_on_file'
