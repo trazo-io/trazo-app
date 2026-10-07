@@ -69,6 +69,22 @@ describe('the grower-reported chip', () => {
     expect(screen.getByLabelText(/No OMRI, WSDA or National List entry is linked/)).toBeTruthy();
   });
 
+  it('a partial or differently based link falls back to the plain record wording', () => {
+    // Review of app #91: `{ basis: 'confirmed' }` alone is truthy and printed "(, 7 CFR § )".
+    for (const link of [
+      { basis: 'confirmed' },
+      { substance: 'Lime sulfur' },
+      { substance: 'Lime sulfur', cfr_section: '205.601', basis: 'exact' }
+    ]) {
+      const { unmount } = renderCard(
+        limeSulfur({ status: 'organic_approved', label: 'x', national_list_link: link })
+      );
+      const chip = screen.getByLabelText(/No OMRI, WSDA or National List entry is linked/);
+      expect(chip.getAttribute('aria-label')).not.toContain('7 CFR §');
+      unmount();
+    }
+  });
+
   it('reads the same in Spanish, with finca', () => {
     renderCard(
       limeSulfur({

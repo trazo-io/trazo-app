@@ -1288,16 +1288,26 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 const organicTooltipKey =
                   (serverInput?.status && ORGANIC_TOOLTIP_KEYS[serverInput.status]) ??
                   'consumer.eventCard.organic.tooltipGrowerReported';
-                const nationalListLink =
+                // Only a complete link with the one basis the copy states (review of app #91):
+                // a partial object must not print "(, 7 CFR § )", and a basis the sentence does
+                // not describe must fall back to the plain record wording.
+                const candidateLink =
                   serverInput?.status === 'organic_approved'
                     ? serverInput.national_list_link
+                    : undefined;
+                const nationalListLink =
+                  candidateLink &&
+                  candidateLink.substance &&
+                  candidateLink.cfr_section &&
+                  candidateLink.basis === 'not_confirmed'
+                    ? candidateLink
                     : undefined;
                 const organicTooltip = nationalListLink
                   ? intl.formatMessage(
                       { id: 'consumer.eventCard.organic.tooltipGrowerReportedNationalListLink' },
                       {
-                        substance: nationalListLink.substance || '',
-                        cfr: nationalListLink.cfr_section || ''
+                        substance: nationalListLink.substance,
+                        cfr: nationalListLink.cfr_section
                       }
                     )
                   : intl.formatMessage({ id: organicTooltipKey });
