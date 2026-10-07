@@ -1654,7 +1654,9 @@ const ChemicalTab = forwardRef(
                             {product.commercial_name}
                           </Text>
                           {ORGANIC_APPROVED_VALUES.includes(product.organic_approved) && (
-                            <Badge colorScheme="green" fontSize="11px" borderRadius="full" px={1.5}>
+                            // Run 8 (R8-26 class, manual pass 2026-10-06): the grower's own
+                            // earlier answer, not an approval. Neutral, and said as recorded.
+                            <Badge colorScheme="gray" fontSize="11px" borderRadius="full" px={1.5}>
                               {intl.formatMessage({ id: 'chemical.recentInputs.organicBadge' })}
                             </Badge>
                           )}
@@ -5726,7 +5728,9 @@ const ChemicalTab = forwardRef(
                     render={({ field }) => (
                       <StandardTextarea
                         {...field}
-                        placeholder={intl.formatMessage({ id: 'events.common.placeholders.privateNote' })}
+                        placeholder={intl.formatMessage({
+                          id: 'events.common.placeholders.privateNote'
+                        })}
                         rows={3}
                       />
                     )}
