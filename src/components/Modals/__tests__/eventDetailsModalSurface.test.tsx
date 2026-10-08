@@ -321,8 +321,8 @@ describe('EventDetailsModal — every string goes through intl', () => {
       ).toBeNull();
     }
 
-    expect(screen.getByText('Impacto de Carbono')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Editar Evento' })).toBeInTheDocument();
+    expect(screen.getByText('Impacto de carbono')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Editar evento' })).toBeInTheDocument();
   });
 
   it('names the event category with the same words the activity feed uses', () => {

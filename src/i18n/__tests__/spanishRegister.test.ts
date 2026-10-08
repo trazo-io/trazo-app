@@ -349,3 +349,57 @@ describe('every es-419 string is tuteo, not usted', () => {
     expect(USTED.test('Necesita Mejora')).toBe(false);
   });
 });
+
+/**
+ * Spanish capitalises the first word of a title and proper names, not every word (Oscar,
+ * 2026-10-08: "Perfil de la Finca", "Eventos Registrados", "Compartir Tus Códigos QR" on the
+ * farm page). 1,334 es-419 strings were English-style Title Case. Flags a string whose every
+ * content word after the first is capitalised, unless the capitals are proper names or
+ * acronyms. Example placeholders ("ej., Smith Family Orchards LLC") and the English names of
+ * third-party certifications ("Rainforest Alliance") are names, so they are left out.
+ */
+describe('es-419 titles use Spanish sentence case', () => {
+  const STOP = new Set(
+    'de del la las el los y o en para por con a al tu tus su sus un una e u sin se'.split(' ')
+  );
+  // Proper names and product words that keep their capital in a Spanish sentence.
+  const PROPER = new Set(
+    (
+      'Trazo Starter Premium Compliance Operation Pilot Facebook Instagram California Corea ' +
+      'Kosher Brix Humboldt Mount Diablo San Bernardino Township Lal Audsley Certified ' +
+      'Naturally Grown Fair Trade Non Project Verified Rainforest Alliance Salmon Safe ' +
+      'Regenerative Organic Real Oregon Washington Tilth Integrity Database Seed Finder ' +
+      'Google Stripe WhatsApp Excel Plan Sistema Orgánico Lista Nacional'
+    ).split(' ')
+  );
+  const SKIP_KEY = /placeholder|Placeholder|^certification\.type\.|^transparency\.cert|Example$/;
+  const WORD = /[A-Za-zÁÉÍÓÚÜáéíóúüñÑ]+/g;
+
+  const isTitleCase = (key: string, value: string): boolean => {
+    if (SKIP_KEY.test(key) || /\b[Ee]j\.|p\. ej/.test(value)) return false;
+    if (value.toUpperCase() === value) return false;
+    const words = value.replace(/\{[^{}]*\}/g, ' ').match(WORD) ?? [];
+    if (words.length < 2 || words.length > 12) return false;
+    const content = words.slice(1).filter((w) => !STOP.has(w.toLowerCase()) && w.length > 2);
+    const ordinary = content.filter(
+      (w) => !PROPER.has(w) && w.toUpperCase() !== w && !/[A-Z]/.test(w.slice(1))
+    );
+    return ordinary.length > 0 && ordinary.every((w) => w[0] === w[0].toUpperCase());
+  };
+
+  it('has no English-style Title Case', () => {
+    const offenders = Object.entries(MESSAGES).filter(
+      ([k, v]) => typeof v === 'string' && isTitleCase(k, v)
+    );
+    expect(offenders.map(([k, v]) => `${k}: ${v}`)).toEqual([]);
+  });
+
+  it('the check catches Title Case and leaves sentence case and names alone', () => {
+    expect(isTitleCase('app.establishmentProfile', 'Perfil de la Finca')).toBe(true);
+    expect(isTitleCase('dashboard.shareQRCodes', 'Compartir Tus Códigos QR')).toBe(true);
+    expect(isTitleCase('app.establishmentProfile', 'Perfil de la finca')).toBe(false);
+    expect(isTitleCase('x', 'Cómo funciona Trazo')).toBe(false);
+    expect(isTitleCase('x', 'Tu Plan del Sistema Orgánico en Trazo')).toBe(false);
+    expect(isTitleCase('certification.type.rainforestAlliance', 'Rainforest Alliance')).toBe(false);
+  });
+});
