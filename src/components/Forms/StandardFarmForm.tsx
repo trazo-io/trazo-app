@@ -547,7 +547,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
       title={isEdit ? t('farm.form.page.editTitle') : t('farm.form.page.addTitle')}
       description={
         // Two messages, not a concatenated template: Spanish does not put the company
-        // name where English does ("Registre su finca de X" vs "Register your farm under
+        // name where English does ("Registra tu finca de X" vs "Register your farm under
         // X"), so the sentence has to be translatable as a whole rather than assembled
         // from an English-ordered stem plus a suffix.
         companyName
