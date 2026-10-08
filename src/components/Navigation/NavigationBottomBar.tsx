@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Box, HStack, VStack, Text, Icon, useColorModeValue, Center } from '@chakra-ui/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaLeaf, FaShieldAlt, FaHome } from 'react-icons/fa';
+import { FaClipboardList, FaHome } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
 const MotionBox = motion(Box);
@@ -21,12 +21,20 @@ interface NavigationBottomBarProps {
   onScrollEnd?: () => void;
 }
 
+/**
+ * Two tabs, named for what they scroll to. Until 2026-10-08 the bar carried the old buyer-page
+ * framing: "Story" with a shield (a verification mark on a self-reported record) and "Impact"
+ * with a leaf (carbon given the hero position the transparency-first rule keeps it out of, and a
+ * general-benefit word). The record is the page; carbon stays in its expandable card inside it;
+ * the farm profile is the other destination. The "Reviews" tab left on 2026-08-06 with the
+ * review section (sign-in-gated stars for a consumer account that no longer registers).
+ */
 const navigationItems: NavigationItem[] = [
   {
-    id: 'transparency',
-    labelId: 'consumer.nav.story',
-    defaultLabel: 'Story',
-    icon: FaShieldAlt,
+    id: 'record',
+    labelId: 'consumer.nav.record',
+    defaultLabel: 'Record',
+    icon: FaClipboardList,
     targetSection: 'transparency-section'
   },
   {
@@ -35,25 +43,11 @@ const navigationItems: NavigationItem[] = [
     defaultLabel: 'Farm',
     icon: FaHome,
     targetSection: 'farm-section'
-  },
-  // Run 8 (R8-14, review of app #79): the emissions card moved below the farm section, so the
-  // tab points at it there and comes after "Farm", in page order.
-  {
-    id: 'carbon',
-    labelId: 'consumer.nav.impact',
-    defaultLabel: 'Impact',
-    icon: FaLeaf,
-    targetSection: 'emissions-section'
   }
-  // The "Reviews" tab was removed on 2026-08-06 with the consumer review section it pointed
-  // at (`reviews-section`). Star ratings were sign-in-gated for anti-gaming reasons, and the
-  // authenticated consumer account product is being retired — so the review CTA had become a
-  // funnel into a sign-up that no longer accepts registrations. A nav tab that scrolls to a
-  // section which no longer exists is worse than no tab.
 ];
 
 export const NavigationBottomBar: React.FC<NavigationBottomBarProps> = ({
-  activeSection = 'transparency',
+  activeSection = 'record',
   onSectionChange,
   onScrollStart,
   onScrollEnd

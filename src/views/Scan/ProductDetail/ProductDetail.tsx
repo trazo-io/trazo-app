@@ -718,7 +718,7 @@ function ProductDetail() {
   // remain in src/components/Notifications for producer-side use.
 
   // Navigation state - TRANSPARENCY FIRST
-  const [activeSection, setActiveSection] = useState('transparency');
+  const [activeSection, setActiveSection] = useState('record');
   const [isUserScrolling, setIsUserScrolling] = useState(false);
 
   const handleEducationOpen = (topic: string) => {
@@ -734,9 +734,8 @@ function ProductDetail() {
 
       const sections = [
         // Page order (the loop below walks it backwards). Run 8: emissions sit after the farm.
-        { id: 'transparency', element: document.getElementById('transparency-section') },
-        { id: 'farm', element: document.getElementById('farm-section') },
-        { id: 'carbon', element: document.getElementById('emissions-section') }
+        { id: 'record', element: document.getElementById('transparency-section') },
+        { id: 'farm', element: document.getElementById('farm-section') }
       ];
 
       const scrollPosition = window.scrollY + 200; // Offset for header
