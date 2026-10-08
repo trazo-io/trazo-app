@@ -740,13 +740,19 @@ function ProductDetail() {
 
       const scrollPosition = window.scrollY + 200; // Offset for header
 
+      let matched = false;
       for (let i = sections.length - 1; i >= 0; i--) {
         const section = sections[i];
         if (section.element && section.element.offsetTop <= scrollPosition) {
           setActiveSection(section.id);
+          matched = true;
           break;
         }
       }
+      // Above the journey (hero, summary cards, photos) the page is still the record: without
+      // this default the tab last tapped stayed lit while the shopper read the top of the page
+      // (review of app #101).
+      if (!matched) setActiveSection('record');
     };
 
     window.addEventListener('scroll', handleScroll);

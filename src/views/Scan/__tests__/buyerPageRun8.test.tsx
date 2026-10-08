@@ -128,6 +128,8 @@ describe('review of app #79', () => {
       /id: 'carbon'|consumer\.nav\.impact|consumer\.nav\.story|FaShieldAlt|FaLeaf/
     );
     expect(page).toContain('id="emissions-section"');
+    // The scroll spy falls back to the record above the journey (review of app #101).
+    expect(page).toMatch(/if \(!matched\) setActiveSection\('record'\)/);
   });
 
   it.each(['FC', 'MN', 'RE', 'CA', 'BD', 'EI'])(
