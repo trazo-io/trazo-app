@@ -51,6 +51,17 @@
 
 name: CI
 
+# SPEND (2026-10-07). GitHub's billing report puts this repo at 28% of 7,064 Linux minutes in
+# the first week of October, on a Free plan with 2,000 a month. Per-job durations say where:
+#
+#   unit tests ............ 46%
+#   push-to-main re-run ... 33%   the SAME tree had just gone green on the PR
+#   npm audit ............. 15%   274 runs in 30 days reading the same advisory list
+#
+# So: the test and static jobs run on pull_request and workflow_dispatch only; a push to main
+# runs ONE job, `warm-cache`, so the next PR finds node_modules for the merged lockfile (a
+# cache saved on a PR branch is invisible to sibling branches; one saved on main is visible to
+# all); npm audit moved to `dependency-audit.yml`, weekly.
 on:
   push:
     branches: [main, master]
@@ -64,7 +75,9 @@ concurrency:
 jobs:
   frontend:
     name: Frontend unit tests
+    if: github.event_name != 'push'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       # PINNED HERE, NOT IN vitest.config.ts. That file already sets `env: { TZ }`, and on a UTC
       # runner it does not take: `calendarDateRendering.test.ts` opens with its own self-check,
@@ -134,7 +147,9 @@ jobs:
   # this job does not check it out.
   static:
     name: Frontend lint and typecheck (non-blocking gates)
+    if: github.event_name != 'push'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/node-deps
@@ -184,44 +199,16 @@ jobs:
         continue-on-error: true
         run: npm run typecheck
 
-  # Dependency currency. Non-blocking on arrival for the same reason the backend audit is:
-  # a job that is red the day it lands is a job people learn to scroll past. The count is
-  # printed either way, which is the point — drift becomes visible before it becomes a
-  # failure. Flip `continue-on-error` off once the backlog is triaged to zero HIGH/CRITICAL.
-  audit:
-    name: Dependency audit (non-blocking)
+  # PUSH TO MAIN RUNS ONLY THIS (2026-10-07). The tests already ran on the PR against this
+  # exact tree. What a merge changes is which caches the NEXT PR can see: `actions/cache` lets
+  # a branch read its base branch's caches but never a sibling's. The composite action below
+  # restores node_modules by lockfile hash and runs `npm ci` only on a miss, so this is a
+  # one-minute no-op unless the merge changed package-lock.json.
+  warm-cache:
+    name: Warm the node_modules cache for the next PR
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
-    continue-on-error: true
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/node-deps
-      # Production dependencies only. A dev-only advisory in a build tool is real but is not
-      # the same risk as one in code that ships to a farmer's browser, and mixing them is how
-      # the number becomes noise nobody reads.
-      - name: npm audit (production deps)
-        run: |
-          npm audit --omit=dev --audit-level=high 2>&1 | tee audit.txt || true
-          echo "=== full count, all severities, including dev ==="
-          npm audit --json > audit-full.json 2>/dev/null || true
-          # Distinguish "audit ran and found N" from "audit could not run". An audit that
-          # errored out (registry 4xx, offline runner) otherwise prints a benign-looking
-          # message and the step goes green — the same shape as a clean result, which is how
-          # a dependency check quietly stops checking anything.
-          node -e "
-            let j;
-            try { j = require('./audit-full.json'); }
-            catch (e) { console.log('::warning title=npm audit unreadable::' + e.message); process.exit(0); }
-            if (j && j.metadata && j.metadata.vulnerabilities) {
-              console.log('vulnerabilities:', JSON.stringify(j.metadata.vulnerabilities));
-            } else {
-              console.log('::warning title=npm audit did not run::' + (j && j.message ? j.message : 'unexpected JSON shape - no metadata.vulnerabilities'));
-            }
-          "
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: npm-audit-report
-          path: |
-            audit.txt
-            audit-full.json
-          if-no-files-found: ignore
