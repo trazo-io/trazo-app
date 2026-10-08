@@ -33,7 +33,14 @@ describe('R8-14: carbon is secondary', () => {
             <CarbonImpactExplainer
               totalCO2e={412.37}
               productName="Blueberries"
-              consumerContext={{ kg_per_kg: 0.077, per_kg_miles: 0.2, per_kg_phone_charges: 9, has_per_kg_data: true } as any}
+              consumerContext={
+                {
+                  kg_per_kg: 0.077,
+                  per_kg_miles: 0.2,
+                  per_kg_phone_charges: 9,
+                  has_per_kg_data: true
+                } as any
+              }
             />
           </IntlProvider>
         </MemoryRouter>
@@ -69,9 +76,12 @@ describe('R8-14: carbon is secondary', () => {
   });
 });
 
-describe('R8-15: the farm\'s own filings are stated as the farm\'s', () => {
+describe("R8-15: the farm's own filings are stated as the farm's", () => {
   const journey = src('views/Scan/ProductDetail/components/UltraMobileProductionJourney.tsx');
-  const defs = journey.slice(journey.indexOf('const CHAPTER_DEFS'), journey.indexOf('\n  ];', journey.indexOf('const CHAPTER_DEFS')));
+  const defs = journey.slice(
+    journey.indexOf('const CHAPTER_DEFS'),
+    journey.indexOf('\n  ];', journey.indexOf('const CHAPTER_DEFS'))
+  );
 
   it('is the last chapter, neutral, and claims no independence', () => {
     const keys = [...defs.matchAll(/key: '(\w+)'/g)].map((m) => m[1]);
@@ -81,7 +91,9 @@ describe('R8-15: the farm\'s own filings are stated as the farm\'s', () => {
     expect(trust).not.toMatch(/FaCertificate|purple/);
     for (const cat of [enUS, es419] as Record<string, string>[]) {
       expect(cat['consumer.journey.chapterFarmRecordsSubtitle']).toBeTruthy();
-      expect(cat['consumer.journey.chapterFarmRecordsTitle']).not.toMatch(/independ|audit|auditor/i);
+      expect(cat['consumer.journey.chapterFarmRecordsTitle']).not.toMatch(
+        /independ|audit|auditor/i
+      );
     }
     expect(journey).toMatch(/CHAPTER_PRIORITY: ChapterKey\[\] = \[[^\]]*'trust'\]/);
   });
@@ -102,14 +114,19 @@ describe('R8-16: no completeness promise', () => {
 });
 
 describe('review of app #79', () => {
-  it('every bottom-nav tab targets a section the page renders, Impact the emissions card', () => {
+  it('every bottom-nav tab targets a section the page renders; carbon has no tab of its own', () => {
+    // 2026-10-08: the bar names the record and the farm. "Story" (a shield on a self-reported
+    // record) and "Impact" (carbon in the hero position, a general-benefit word) were the old
+    // buyer-page framing. The emissions card stays on the page, inside the record's flow.
     const nav = src('components/Navigation/NavigationBottomBar.tsx');
     const page = src('views/Scan/ProductDetail/ProductDetail.tsx');
     const targets = [...nav.matchAll(/targetSection: '([\w-]+)'/g)].map((m) => m[1]);
-    expect(targets.length).toBeGreaterThan(1);
+    expect(targets).toEqual(['transparency-section', 'farm-section']);
     for (const id of targets) expect(page, id).toContain(`id="${id}"`);
-    expect(nav).toMatch(/id: 'carbon',[\s\S]*?targetSection: 'emissions-section'/);
-    expect(page).toMatch(/getElementById\('emissions-section'\)/);
+    expect(nav).not.toMatch(
+      /id: 'carbon'|consumer\.nav\.impact|consumer\.nav\.story|FaShieldAlt|FaLeaf/
+    );
+    expect(page).toContain('id="emissions-section"');
   });
 
   it.each(['FC', 'MN', 'RE', 'CA', 'BD', 'EI'])(
@@ -123,7 +140,11 @@ describe('review of app #79', () => {
         date: '2026-05-01'
       } as any) as any;
       const norm = (t?: string) => (t || '').toLowerCase().replace(/[.\s]+$/, '');
-      const lines = [d.shortDescription || d.description, d.consumerImpact, d.sustainabilityBenefit].map(norm);
+      const lines = [
+        d.shortDescription || d.description,
+        d.consumerImpact,
+        d.sustainabilityBenefit
+      ].map(norm);
       expect(new Set(lines).size, lines.join(' | ')).toBe(3);
     }
   );
