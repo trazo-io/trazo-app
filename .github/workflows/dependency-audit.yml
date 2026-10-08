@@ -16,12 +16,15 @@ jobs:
   # Dependency currency. Non-blocking on arrival for the same reason the backend audit is:
   # a job that is red the day it lands is a job people learn to scroll past. The count is
   # printed either way, which is the point — drift becomes visible before it becomes a
-  # failure. Flip `continue-on-error` off once the backlog is triaged to zero HIGH/CRITICAL.
+  # failure. The non-blocking part is the `|| true` on the audit commands themselves, so an
+  # advisory count never fails the run. There is deliberately NO job-level `continue-on-error`:
+  # on a scheduled run nobody is watching a PR check, and the only signal left is GitHub's
+  # failure email, which fires only on a `failure` conclusion. A job-level flag would turn a
+  # broken `npm ci` (registry outage, lockfile integrity error) into a green, silent run.
   audit:
     name: Dependency audit (non-blocking)
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/node-deps
