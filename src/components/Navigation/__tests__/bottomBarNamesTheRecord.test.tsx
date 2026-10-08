@@ -27,16 +27,16 @@ const renderBar = (locale: 'en-US' | 'es-419') =>
   );
 
 describe('the buyer page bottom bar', () => {
-  it('offers Record and Farm, nothing else', () => {
+  it('offers Lot, Record and Farm, nothing else', () => {
     renderBar('en-US');
     const tabs = screen.getAllByRole('button').map((b) => b.textContent?.trim());
-    expect(tabs).toEqual(['Record', 'Farm']);
+    expect(tabs).toEqual(['Lot', 'Record', 'Farm']);
     expect(screen.queryByText(/Story|Impact/)).toBeNull();
   });
 
-  it('reads Registro and Finca in Spanish', () => {
+  it('reads Lote, Registro and Finca in Spanish', () => {
     renderBar('es-419');
     const tabs = screen.getAllByRole('button').map((b) => b.textContent?.trim());
-    expect(tabs).toEqual(['Registro', 'Finca']);
+    expect(tabs).toEqual(['Lote', 'Registro', 'Finca']);
   });
 });
