@@ -718,7 +718,7 @@ function ProductDetail() {
   // remain in src/components/Notifications for producer-side use.
 
   // Navigation state - TRANSPARENCY FIRST
-  const [activeSection, setActiveSection] = useState('record');
+  const [activeSection, setActiveSection] = useState('lot');
   const [isUserScrolling, setIsUserScrolling] = useState(false);
 
   const handleEducationOpen = (topic: string) => {
@@ -734,6 +734,7 @@ function ProductDetail() {
 
       const sections = [
         // Page order (the loop below walks it backwards). Run 8: emissions sit after the farm.
+        { id: 'lot', element: document.getElementById('transparency-section') },
         { id: 'record', element: document.getElementById('journey-section') },
         { id: 'farm', element: document.getElementById('farm-section') }
       ];
@@ -749,10 +750,9 @@ function ProductDetail() {
           break;
         }
       }
-      // Above the journey (hero, summary cards, photos) the page is still the record: without
-      // this default the tab last tapped stayed lit while the shopper read the top of the page
-      // (review of app #101).
-      if (!matched) setActiveSection('record');
+      // At the very top (above the lot summary's offset) nothing matches; the page is the lot.
+      // Without this default the tab last tapped stayed lit (review of app #101).
+      if (!matched) setActiveSection('lot');
     };
 
     window.addEventListener('scroll', handleScroll);

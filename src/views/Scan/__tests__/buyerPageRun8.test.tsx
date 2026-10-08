@@ -121,15 +121,15 @@ describe('review of app #79', () => {
     const nav = src('components/Navigation/NavigationBottomBar.tsx');
     const page = src('views/Scan/ProductDetail/ProductDetail.tsx');
     const targets = [...nav.matchAll(/targetSection: '([\w-]+)'/g)].map((m) => m[1]);
-    // Record lands on the journey itself, not on the summary cards above it (2026-10-08).
-    expect(targets).toEqual(['journey-section', 'farm-section']);
+    // Lot: the summary at the top. Record: the journey itself. Farm: the profile (2026-10-08).
+    expect(targets).toEqual(['transparency-section', 'journey-section', 'farm-section']);
     for (const id of targets) expect(page, id).toContain(`id="${id}"`);
     expect(nav).not.toMatch(
       /id: 'carbon'|consumer\.nav\.impact|consumer\.nav\.story|FaShieldAlt|FaLeaf/
     );
     expect(page).toContain('id="emissions-section"');
     // The scroll spy falls back to the record above the journey (review of app #101).
-    expect(page).toMatch(/if \(!matched\) setActiveSection\('record'\)/);
+    expect(page).toMatch(/if \(!matched\) setActiveSection\('lot'\)/);
   });
 
   it.each(['FC', 'MN', 'RE', 'CA', 'BD', 'EI'])(

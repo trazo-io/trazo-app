@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Box, HStack, VStack, Text, Icon, useColorModeValue, Center } from '@chakra-ui/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaClipboardList, FaHome } from 'react-icons/fa';
+import { FaClipboardList, FaHome, FaTag } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
 const MotionBox = motion(Box);
@@ -30,6 +30,16 @@ interface NavigationBottomBarProps {
  * review section (sign-in-gated stars for a consumer account that no longer registers).
  */
 const navigationItems: NavigationItem[] = [
+  // Three destinations, the page's three reading zones (2026-10-08; a two-tab bottom bar read
+  // as unfinished, and bottom navigation is for three to five). Lot: what you hold (crop, lot,
+  // harvest dates, certification, inputs summary). Record: the dated timeline. Farm: who grew it.
+  {
+    id: 'lot',
+    labelId: 'consumer.nav.lot',
+    defaultLabel: 'Lot',
+    icon: FaTag,
+    targetSection: 'transparency-section'
+  },
   {
     id: 'record',
     labelId: 'consumer.nav.record',
@@ -47,7 +57,7 @@ const navigationItems: NavigationItem[] = [
 ];
 
 export const NavigationBottomBar: React.FC<NavigationBottomBarProps> = ({
-  activeSection = 'record',
+  activeSection = 'lot',
   onSectionChange,
   onScrollStart,
   onScrollEnd
