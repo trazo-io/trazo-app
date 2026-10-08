@@ -241,3 +241,100 @@ describe('core logging flow is tuteo, not usted', () => {
     expect(USTED_IMPERATIVE.test('Selecciona la fecha')).toBe(false);
   });
 });
+
+/**
+ * The same rule across the WHOLE file (Oscar, 2026-10-08, on the farm page: "Comparta la página
+ * de su finca" under "Compartir con tu certificadora"). The block above covered four key
+ * prefixes and fifteen verbs, so 137 usted strings sat elsewhere: the farm page, the plan, the
+ * education pages, the tours, even `events.` strings whose verb was not on the list ("Comparta",
+ * "Marque"). Imperatives are matched at the start of a sentence only, where an English word
+ * inside a Spanish string ("Pesticide Use Report") cannot be one. "su" stays unchecked, for the
+ * reason above.
+ */
+describe('every es-419 string is tuteo, not usted', () => {
+  const VERBS = [
+    'Abra',
+    'Active',
+    'Actualice',
+    'Adjunte',
+    'Agregue',
+    'Aplique',
+    'Arrastre',
+    'Asegúrese',
+    'Cambie',
+    'Cargue',
+    'Cierre',
+    'Comience',
+    'Comparta',
+    'Complete',
+    'Configure',
+    'Confirme',
+    'Considere',
+    'Consulte',
+    'Contacte',
+    'Continúe',
+    'Cree',
+    'Cuente',
+    'Deje',
+    'Descargue',
+    'Describa',
+    'Dibuje',
+    'Documente',
+    'Edite',
+    'Elija',
+    'Elimine',
+    'Empiece',
+    'Envíe',
+    'Escanee',
+    'Escriba',
+    'Especifique',
+    'Explique',
+    'Genere',
+    'Guarde',
+    'Haga',
+    'Imprima',
+    'Incluya',
+    'Indique',
+    'Ingrese',
+    'Inicie',
+    'Intente',
+    'Inténtelo',
+    'Introduzca',
+    'Mantenga',
+    'Marque',
+    'Monitoree',
+    'Pruebe',
+    'Pulse',
+    'Registre',
+    'Revise',
+    'Seleccione',
+    'Siga',
+    'Suba',
+    'Tome',
+    'Toque',
+    'Utilice',
+    'Verifique',
+    'Vuelva'
+  ];
+  const USTED = new RegExp(
+    `(?:^|[.!?:;¿¡]\\s*|\\(\\s*)(${VERBS.join('|')})(?![A-Za-zÁÉÍÓÚáéíóúñÑ])` +
+      `|(?<![A-Za-zÁÉÍÓÚáéíóúñÑ])(usted|ustedes|inténtelo|envíeselo)(?![A-Za-zÁÉÍÓÚáéíóúñÑ])`,
+    'i'
+  );
+
+  it('has no usted imperative or "usted" anywhere', () => {
+    const offenders = Object.entries(MESSAGES).filter(
+      ([, v]) => typeof v === 'string' && USTED.test(v)
+    );
+    expect(offenders.map(([k, v]) => `${k}: ${v.slice(0, 70)}`)).toEqual([]);
+  });
+
+  it('the pattern catches usted and leaves tuteo and English alone', () => {
+    expect(USTED.test('Comparta la página de su finca')).toBe(true);
+    expect(USTED.test('Error al subir. Toque para reintentar.')).toBe(true);
+    expect(USTED.test('el número está aquí para que usted pueda hacerlo')).toBe(true);
+    expect(USTED.test('Comparte la página de tu finca')).toBe(false);
+    expect(USTED.test('Pesticide Use Report (PUR) de California')).toBe(false);
+    expect(USTED.test('Necesita Mejora')).toBe(false);
+  });
+});
