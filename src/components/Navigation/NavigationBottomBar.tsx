@@ -35,7 +35,7 @@ const navigationItems: NavigationItem[] = [
     labelId: 'consumer.nav.record',
     defaultLabel: 'Record',
     icon: FaClipboardList,
-    targetSection: 'transparency-section'
+    targetSection: 'journey-section'
   },
   {
     id: 'farm',

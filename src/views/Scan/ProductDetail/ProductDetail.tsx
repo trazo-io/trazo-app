@@ -734,19 +734,25 @@ function ProductDetail() {
 
       const sections = [
         // Page order (the loop below walks it backwards). Run 8: emissions sit after the farm.
-        { id: 'record', element: document.getElementById('transparency-section') },
+        { id: 'record', element: document.getElementById('journey-section') },
         { id: 'farm', element: document.getElementById('farm-section') }
       ];
 
       const scrollPosition = window.scrollY + 200; // Offset for header
 
+      let matched = false;
       for (let i = sections.length - 1; i >= 0; i--) {
         const section = sections[i];
         if (section.element && section.element.offsetTop <= scrollPosition) {
           setActiveSection(section.id);
+          matched = true;
           break;
         }
       }
+      // Above the journey (hero, summary cards, photos) the page is still the record: without
+      // this default the tab last tapped stayed lit while the shopper read the top of the page
+      // (review of app #101).
+      if (!matched) setActiveSection('record');
     };
 
     window.addEventListener('scroll', handleScroll);
@@ -1635,8 +1641,10 @@ function ProductDetail() {
 
               <Divider borderColor="gray.200" />
 
-              {/* Production Journey. Run 8 (R8-14): the carbon card moved below the farm section. */}
-              <Box id="carbon-section">
+              {/* Production Journey: the record itself, and where the bottom bar's "Record" tab
+                  lands (2026-10-08). The id read "carbon-section" from before run 8 moved the
+                  carbon card below the farm; the tab landed on the summary cards above instead. */}
+              <Box id="journey-section">
                 <VStack spacing={4} align="stretch">
                   {(() => {
                     // PRIORITY 1: Use complete API timeline (includes transparency fields) if it has events
