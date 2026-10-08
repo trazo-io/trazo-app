@@ -40,7 +40,21 @@ const serverCodes = (): string[] => {
         `that emits the codes, so it needs the trazo-back checkout beside trazo-app.`
     );
   }
-  return [...new Set([...source.matchAll(/\bsaid\(\s*"([a-z_.]+)"/g)].map((m) => m[1]))];
+  // Every call must parse, or the guard says so: a code the pattern skipped would otherwise pass
+  // as "no missing sentence" (review of app #105). `def said(` and a `said(` quoted in a comment are not calls.
+  const calls = [...source.matchAll(/(?<!def |`)\bsaid\(/g)].length;
+  const codes = [...source.matchAll(/(?<!def |`)\bsaid\(\s*['"]([A-Za-z0-9_.]+)['"]/g)].map(
+    (m) => m[1]
+  );
+  if (codes.length !== calls) {
+    throw new Error(
+      `${
+        calls - codes.length
+      } said(...) call(s) in audit_export_service.py have a first argument ` +
+        `this guard cannot read; pass the code as a string literal.`
+    );
+  }
+  return [...new Set(codes)];
 };
 
 const findings = [
