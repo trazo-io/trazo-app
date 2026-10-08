@@ -734,7 +734,7 @@ function ProductDetail() {
 
       const sections = [
         // Page order (the loop below walks it backwards). Run 8: emissions sit after the farm.
-        { id: 'record', element: document.getElementById('transparency-section') },
+        { id: 'record', element: document.getElementById('journey-section') },
         { id: 'farm', element: document.getElementById('farm-section') }
       ];
 
@@ -1635,8 +1635,10 @@ function ProductDetail() {
 
               <Divider borderColor="gray.200" />
 
-              {/* Production Journey. Run 8 (R8-14): the carbon card moved below the farm section. */}
-              <Box id="carbon-section">
+              {/* Production Journey: the record itself, and where the bottom bar's "Record" tab
+                  lands (2026-10-08). The id read "carbon-section" from before run 8 moved the
+                  carbon card below the farm; the tab landed on the summary cards above instead. */}
+              <Box id="journey-section">
                 <VStack spacing={4} align="stretch">
                   {(() => {
                     // PRIORITY 1: Use complete API timeline (includes transparency fields) if it has events
