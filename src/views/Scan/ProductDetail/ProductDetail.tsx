@@ -286,6 +286,11 @@ function ProductDetail() {
   // buyer link. It widens WHICH productions this page can open (in-season,
   // unpublished — consented by the farmer when minting), never WHAT is shown.
   const reviewToken = proofSearchParams.get('rt');
+  // Owner preview (2026-10-08): the auth cookies reach this subdomain, so a signed-in grower
+  // used to see an UNPUBLISHED lot here in full and conclude the Public toggle was broken.
+  // The page now asks for the shopper's view unless the dashboard's preview button opened it
+  // with `?preview=1`; without that, an unpublished lot is "Product Not Found" for everyone.
+  const isOwnerPreview = proofSearchParams.get('preview') === '1';
 
   // Get authentication state from Redux store (same as Authenticated component)
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
@@ -327,7 +332,7 @@ function ProductDetail() {
     isLoading: isCompleteLoading,
     refetch: refetchTransparency
   } = useGetTransparencyDetailsQuery(
-    { productionId: productionId || '', reviewToken },
+    { productionId: productionId || '', reviewToken, publicView: !isOwnerPreview },
     {
       skip: !productionId,
       refetchOnMountOrArgChange: false,

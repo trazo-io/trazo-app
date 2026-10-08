@@ -86,7 +86,6 @@ export interface TransparencyResponse {
   response_timestamp: string;
 }
 
-
 // Buyer/retailer documentation request (public endpoint, no auth)
 export interface BuyerDocRequestPayload {
   production_id: string; // production public UUID
@@ -125,19 +124,26 @@ const transparencyQrApi = baseApi.injectEndpoints({
     // Complete transparency data with progressive loading structure
     getTransparencyDetails: build.query<
       TransparencyResponse,
-      string | { productionId: string; reviewToken?: string | null }
+      string | { productionId: string; reviewToken?: string | null; publicView?: boolean }
     >({
       // Accepts a bare id (every pre-2026-08-25 caller) or {productionId, reviewToken}.
       // `review_token` lets a BUYER review link open an unpublished, in-season
       // production — the payload itself is unchanged (same claim-safe serializers);
       // the token only changes which productions resolve.
+      // `publicView` (2026-10-08) sends `public_view=1`, which drops the backend's owner
+      // exemption: the consumer page sets it so a signed-in grower gets the same 404 a
+      // shopper gets for an unpublished lot. Dashboard callers pass a bare id and keep
+      // their preview of in-season and unpublished lots.
       query: (arg) => {
         const productionId = typeof arg === 'string' ? arg : arg.productionId;
         const reviewToken = typeof arg === 'string' ? null : arg.reviewToken;
+        const publicView = typeof arg === 'string' ? false : Boolean(arg.publicView);
+        const params = new URLSearchParams();
+        if (reviewToken) params.set('review_token', reviewToken);
+        if (publicView) params.set('public_view', '1');
+        const qs = params.toString();
         return {
-          url: `/transparency/${productionId}/${
-            reviewToken ? `?review_token=${encodeURIComponent(reviewToken)}` : ''
-          }`,
+          url: `/transparency/${productionId}/${qs ? `?${qs}` : ''}`,
           method: 'GET'
         };
       },
