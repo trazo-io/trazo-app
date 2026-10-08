@@ -62,6 +62,7 @@ import {
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import { resolveReadinessItem } from 'components/Certifications/readinessMessages';
+import { seasonRowDetail } from 'components/Certifications/seasonRowMessages';
 import { STATUS_URGENCY_TOKENS } from 'components/Design/StandardComponents';
 import {
   CertifierReadinessFinding,
@@ -84,16 +85,12 @@ export function readinessFindingLabel(
     : finding.label;
 }
 
-/** The detail sentence, written from the row's data when a translation exists for the row. */
+/** The detail sentence, written from the row's code and data when the catalogue has it. */
 export function readinessFindingDetail(
   intl: ReturnType<typeof useIntl>,
-  finding: Pick<CertifierReadinessFinding, 'detail' | 'row_key' | 'params'>
+  finding: Pick<CertifierReadinessFinding, 'detail' | 'row_key' | 'detail_code' | 'params'>
 ): string {
-  const id = finding.row_key ? `certifierReadiness.detail.${finding.row_key}` : '';
-  if (id && finding.params && (intl.messages as Record<string, unknown>)[id]) {
-    return intl.formatMessage({ id }, finding.params as Record<string, string | number>);
-  }
-  return finding.detail;
+  return seasonRowDetail(intl, finding);
 }
 
 /**

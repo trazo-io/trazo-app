@@ -85,8 +85,10 @@ export interface CertifierReadinessFinding {
   label: string;
   // Stable key of the row (run 8, R8-27), so the card can name it in the reader's language.
   row_key?: string | null;
-  // The data behind `detail` when the row carries any (a count), so the card can write the
-  // sentence itself (recordkeeping review F-01).
+  // The sentence `detail` says, as a code, and the data behind it, so the card can write the
+  // sentence in the reader's language (recordkeeping review F-01; every REVIEW/FAIL row since
+  // 2026-10-08). `detail` stays the packet's English.
+  detail_code?: string | null;
   params?: Record<string, unknown> | null;
   // REVIEW = the record exists but needs attention. FAIL = a required record appears missing.
   // Both describe the RECORD in Trazo — the certifying agent makes the compliance decision.
