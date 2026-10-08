@@ -28,6 +28,7 @@
 import { describe, expect, it } from 'vitest';
 
 import es419 from '../lang/es-419.json';
+import { PHOTO_GUIDANCE_ES } from '../../utils/photoGuidance.es';
 
 const MESSAGES = es419 as Record<string, string>;
 
@@ -262,6 +263,7 @@ describe('every es-419 string is tuteo, not usted', () => {
     'Arrastre',
     'Asegúrese',
     'Cambie',
+    'Capture',
     'Cargue',
     'Cierre',
     'Comience',
@@ -303,6 +305,7 @@ describe('every es-419 string is tuteo, not usted', () => {
     'Mantenga',
     'Marque',
     'Monitoree',
+    'Muestre',
     'Pruebe',
     'Pulse',
     'Registre',
@@ -327,6 +330,14 @@ describe('every es-419 string is tuteo, not usted', () => {
       ([, v]) => typeof v === 'string' && USTED.test(v)
     );
     expect(offenders.map(([k, v]) => `${k}: ${v.slice(0, 70)}`)).toEqual([]);
+  });
+
+  it('photo guidance, translated outside the JSON, is tuteo too', () => {
+    // `photoGuidance.es.ts` maps the English guidance to Spanish by exact string, so the JSON
+    // check above never saw it: 30 usted imperatives lived there ("Capture", "Muestre").
+    const offenders = Object.entries(PHOTO_GUIDANCE_ES).filter(([, v]) => USTED.test(v));
+    expect(Object.keys(PHOTO_GUIDANCE_ES).length).toBeGreaterThan(100);
+    expect(offenders.map(([k, v]) => `${k.slice(0, 40)}: ${v.slice(0, 60)}`)).toEqual([]);
   });
 
   it('the pattern catches usted and leaves tuteo and English alone', () => {
