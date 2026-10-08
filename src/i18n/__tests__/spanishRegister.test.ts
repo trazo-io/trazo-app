@@ -368,7 +368,7 @@ describe('es-419 titles use Spanish sentence case', () => {
       'Trazo Starter Premium Compliance Operation Pilot Facebook Instagram California Corea ' +
       'Kosher Brix Humboldt Mount Diablo San Bernardino Township Lal Audsley Certified ' +
       'Naturally Grown Fair Trade Non Project Verified Rainforest Alliance Salmon Safe ' +
-      'Regenerative Organic Real Oregon Washington Tilth Integrity Database Seed Finder ' +
+      'Regenerative Organic Oregon Washington Tilth Integrity Database Seed Finder ' +
       'Google Stripe WhatsApp Excel Plan Sistema Orgánico Lista Nacional'
     ).split(' ')
   );
@@ -387,9 +387,35 @@ describe('es-419 titles use Spanish sentence case', () => {
     return ordinary.length > 0 && ordinary.every((w) => w[0] === w[0].toUpperCase());
   };
 
+  // A capitalised article or preposition inside a title ("Realizado Por") is Title Case even
+  // when the content words around it are fine (review of app #110). Only mid-sentence: after a
+  // full stop, colon or opening mark a capital is ordinary.
+  const capitalisedSmallWord = (key: string, value: string): boolean => {
+    if (SKIP_KEY.test(key) || /\b[Ee]j\.|p\. ej/.test(value)) return false;
+    const text = value.replace(/\{[^{}]*\}/g, ' ');
+    if (text.toUpperCase() === text) return false;
+    for (const m of text.matchAll(WORD)) {
+      const w = m[0];
+      // Single letters are grades, codes and section letters ("Grado A", "N₂O", "sección E").
+      // Acronyms and shouted warnings ("NO ENVIAR AL CERTIFICADOR") are not Title Case.
+      if (w.length < 2 || w.toUpperCase() === w || !STOP.has(w.toLowerCase())) continue;
+      if (w[0] !== w[0].toUpperCase()) continue;
+      if (/(^|[.!?:;¿¡({—–·“«'"-]|\.\))\s*$/.test(text.slice(0, m.index))) continue;
+      return true;
+    }
+    return false;
+  };
+
   it('has no English-style Title Case', () => {
     const offenders = Object.entries(MESSAGES).filter(
       ([k, v]) => typeof v === 'string' && isTitleCase(k, v)
+    );
+    expect(offenders.map(([k, v]) => `${k}: ${v}`)).toEqual([]);
+  });
+
+  it('has no capitalised article or preposition mid-sentence', () => {
+    const offenders = Object.entries(MESSAGES).filter(
+      ([k, v]) => typeof v === 'string' && capitalisedSmallWord(k, v)
     );
     expect(offenders.map(([k, v]) => `${k}: ${v}`)).toEqual([]);
   });
@@ -400,6 +426,10 @@ describe('es-419 titles use Spanish sentence case', () => {
     expect(isTitleCase('app.establishmentProfile', 'Perfil de la finca')).toBe(false);
     expect(isTitleCase('x', 'Cómo funciona Trazo')).toBe(false);
     expect(isTitleCase('x', 'Tu Plan del Sistema Orgánico en Trazo')).toBe(false);
+    // "Real" is a name only inside "Real Organic Project"; elsewhere it is the adjective.
+    expect(isTitleCase('x', 'Documentación en Tiempo Real')).toBe(true);
+    expect(capitalisedSmallWord('x', 'Realizado Por')).toBe(true);
+    expect(capitalisedSmallWord('x', 'Realizado por')).toBe(false);
     expect(isTitleCase('certification.type.rainforestAlliance', 'Rainforest Alliance')).toBe(false);
   });
 });
