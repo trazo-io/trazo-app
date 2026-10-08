@@ -96,6 +96,30 @@ export function readinessFindingDetail(
   return finding.detail;
 }
 
+/**
+ * Where the row's full detail sits in the audit export. The export is an English document, so a
+ * Spanish line quotes the English heading the reader will find there and gives its name in
+ * Spanish (Oscar, 2026-10-08: the card printed "Input Material Application Records section" inside
+ * a Spanish sentence). A row the catalogue does not name yet keeps the server's English hint.
+ */
+export function readinessFindingSection(
+  intl: ReturnType<typeof useIntl>,
+  finding: Pick<CertifierReadinessFinding, 'row_key' | 'section_hint'>
+): string | null {
+  if (!finding.section_hint) return null;
+  const nameId = finding.row_key ? `certifierReadiness.sectionName.${finding.row_key}` : '';
+  if (nameId && (intl.messages as Record<string, unknown>)[nameId]) {
+    return intl.formatMessage(
+      { id: 'certifierReadiness.seeSectionNamed' },
+      { name: intl.formatMessage({ id: nameId }) }
+    );
+  }
+  return intl.formatMessage(
+    { id: 'certifierReadiness.seeSection' },
+    { section: finding.section_hint }
+  );
+}
+
 const MAX_VISIBLE_FINDINGS = 5;
 
 /**
@@ -163,7 +187,11 @@ const FINDING_ROUTES: Record<string, (farmId: string | number) => string> = {
   ofpp: (farmId) => `/admin/dashboard/farm/${farmId}/profile`,
   osp: (farmId) => `/admin/dashboard/farm/${farmId}/osp`,
   attestation_support: (farmId) => `/admin/dashboard/farm/${farmId}/osp`,
-  records: (farmId) => `/admin/dashboard/farm/${farmId}`
+  records: (farmId) => `/admin/dashboard/farm/${farmId}`,
+  // Logged products missing from the materials list are confirmed on the plan's identity panel,
+  // the same place the season row and the drift banner send them.
+  unmatched_materials: (farmId) =>
+    `/admin/dashboard/farm/${farmId}/osp/module/materials_application#logged-names`
 };
 
 export default function CertifierReadinessCard({
@@ -530,6 +558,7 @@ export default function CertifierReadinessCard({
                           <Link
                             as={RouterLink}
                             to={FINDING_ROUTES[item.key](farmId)}
+                            data-testid={`readiness-operation-link-${item.key}`}
                             fontSize="xs"
                             fontWeight="semibold"
                             color="green.700"
@@ -632,10 +661,7 @@ export default function CertifierReadinessCard({
                         </Text>
                         {finding.section_hint && (
                           <Text fontSize="xs" color={mutedColor} fontStyle="italic">
-                            {intl.formatMessage(
-                              { id: 'certifierReadiness.seeSection' },
-                              { section: finding.section_hint }
-                            )}
+                            {readinessFindingSection(intl, finding)}
                           </Text>
                         )}
                         {rowHref && (
