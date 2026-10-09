@@ -281,7 +281,13 @@ export const productApi = baseApi.injectEndpoints({
           'pump_test_date',
           'pump_test_provider',
           // CA DPR Site ID (PUR box 8) — parcel-level; the PUR export falls back to it.
-          'ca_site_id'
+          'ca_site_id',
+          // Schoolsite proximity (3 CCR 6691). NOTE: this list is an ALLOWLIST, so a key
+          // missing from it is dropped in silence — the card still shows a success toast and
+          // nothing persists. Any new field on the compliance card has to be added here too.
+          // '' is the deliberate third state (never asked); the serializer coerces it to None
+          // via _BLANKABLE_MULTIPART_FIELDS, because multipart cannot carry a real null.
+          'ca_near_schoolsite'
         ]) {
           if (key in compliance) fd.append(key, compliance[key] ?? '');
         }

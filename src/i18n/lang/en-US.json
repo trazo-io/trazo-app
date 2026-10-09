@@ -6326,7 +6326,7 @@
   "parcel.disclosureSetting.saving": "Saving",
   "parcel.disclosureSetting.title": "Location on your public page",
   "parcel.dpr.help": "The Site ID your County Agricultural Commissioner issued for this parcel (box 8 on the Pesticide Use Report, 1–8 characters exactly as issued). Saved once here; every spray on this parcel uses it unless the record carries its own.",
-  "parcel.dpr.save": "Save Site ID",
+  "parcel.dpr.save": "Save PUR details",
   "parcel.dpr.siteId": "CA DPR Site ID",
   "parcel.dpr.siteIdPlaceholder": "e.g., 0001A",
   "parcel.dpr.title": "California Pesticide Use Report identifiers",
@@ -8295,5 +8295,13 @@
   "events.production.equipment.sharedHelp": "Is this equipment shared between organic and conventional operations?",
   "events.production.equipment.requiresCleaning": "Requires cleaning",
   "events.production.sanitation.concentrationPlaceholder": "e.g., 150",
-  "events.production.sanitation.residualPlaceholder": "e.g., 3.5"
+  "events.production.sanitation.residualPlaceholder": "e.g., 3.5",
+  "app.pur.flag.quantity_rate_mismatch": "Box 24 reads {logged} {unit}, but the rate you logged works out to about {expected} {unit} over the treated area, roughly {factor} times apart. Worth a second look before filing.",
+  "app.pur.flag.schoolsite_method_code_required": "Within 1/4 mile of a schoolsite, so this application needs a DPR method code on the PUR (3 CCR 6691). {suggested, select, none {Pick the code matching how it was applied.} other {For {method} that is code {suggested}.}}",
+  "app.pur.flag.schoolsite_proximity_unknown": "This parcel has not been marked as within 1/4 mile of a schoolsite or not. If any part of it is, this application needs a DPR method code (3 CCR 6691).",
+  "parcel.dpr.nearSchoolsite": "Within 1/4 mile of a schoolsite?",
+  "parcel.dpr.nearSchoolsite.no": "No",
+  "parcel.dpr.nearSchoolsite.unknown": "Not answered yet",
+  "parcel.dpr.nearSchoolsite.yes": "Yes",
+  "parcel.dpr.nearSchoolsiteHelp": "Applications on ground within 1/4 mile of a schoolsite need a DPR method code on the Pesticide Use Report (3 CCR 6691, in force since 1 January 2026). Leave blank if you are not sure and we will flag it rather than assume."
 }
