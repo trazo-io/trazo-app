@@ -112,7 +112,8 @@ import {
   verbForEvent,
   verbForKey
 } from 'config/activityVerbs';
-import { getFieldConfig, getSubtypes } from 'config/events';
+import { formatFieldValue, getFieldConfig, getSubtypes } from 'config/events';
+import { localizeFieldValue } from 'utils/fieldDisplayUtils';
 import { buildVoiceFieldRequests } from 'config/events/voiceFields';
 import { ActivitySubtypeChooser } from 'components/Events/ActivitySubtypeChooser';
 import { VerbPickerGrid } from 'components/Events/VerbPickerGrid';
@@ -559,12 +560,17 @@ function NewEvent({ isEdit = false, eventId = null }) {
     if (seededFromNoteRef.current === activeFieldNote.public_id) return;
     seededFromNoteRef.current = activeFieldNote.public_id;
     setVoiceSeedText(activeFieldNote.words);
+    setVoiceSeedIsCrewNote(true);
     setShowVoiceCapture(true);
     // Here, not only when the parse returns. MEASURED in a browser 2026-09-26: the panel that holds
     // the seed mounts on step 2, so landing from the inbox showed step 1 with today's date already
     // filled in and nothing about the note on screen. The supervisor answered a date before they
     // had been told which message they were answering it for.
     reclaimGuessedDate();
+    // Whatever date the form holds from here on was entered by the operator, with the note in
+    // front of them. Marked here as well as inside the reclaim, because the reclaim records the
+    // decision only when it found a date to judge.
+    dateGuessReclaimedRef.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeFieldNote]);
 
@@ -630,11 +636,19 @@ function NewEvent({ isEdit = false, eventId = null }) {
   const [pasteOpen, setPasteOpen] = useState(false);
   const [pasteDraft, setPasteDraft] = useState('');
   const [voiceSeedText, setVoiceSeedText] = useState('');
+  // Is the seed in the panel the crew note this page was opened for, or a note the operator
+  // pasted by hand while on that page? "Paste a note" stays available on a crew-note URL, and a
+  // pasted note is not the crew note: it must not be parsed under the note's id, recorded as the
+  // note's proposal, or called "the crew message" on the banner.
+  const [voiceSeedIsCrewNote, setVoiceSeedIsCrewNote] = useState(false);
   // One-shot, keyed on the note's id. The panel consumes the seed and clears it (so the mic works
   // again and the same words are never re-billed to a second parse), so without this guard the
   // effect would immediately re-seed from the still-present query and the offer could never be
   // dismissed.
   const seededFromNoteRef = useRef(null);
+  // Set once the wizard's guessed date has been taken back (see reclaimGuessedDate). From then on
+  // any date on the form was typed by the operator, even one that happens to equal the default.
+  const dateGuessReclaimedRef = useRef(false);
   const [voiceBanner, setVoiceBanner] = useState(null);
   const [voiceSeq, setVoiceSeq] = useState(0);
   // WS-4 template accelerator: picking a template is an explicit practice choice —
@@ -1637,6 +1651,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
         // accepts or refuses, so keying copy on it relabels a pasted note as "Voice input applied"
         // one tap later. This survives both.
         seeded: Boolean(eventData.seeded),
+        // Which kind of seed: the crew note itself, or a note pasted by hand. Read off the result
+        // (the panel sets it from `seedNoteId`), so every rebuild from `raw` keeps it.
+        fromCrewNote: Boolean(eventData.from_crew_note),
         raw: eventData
       }
     };
@@ -1687,7 +1704,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // Labels for the fields voice actually wrote, resolved through the display registry so the
   // banner uses the same words the form does. A field with no registry label (or one whose
   // labelKey is missing from the catalogue) is skipped rather than printed as a raw key.
-  const voiceFilledLabels = useMemo(() => {
+  const voiceFilledEntries = useMemo(() => {
     // Unit companions (`area_unit`, `fuel_unit`, `yield_unit`…) are excluded from BOTH the
     // count and the names, and they have to be excluded from the same place or the banner
     // contradicts itself: they have no display-registry entry of their own, so counting them
@@ -1717,10 +1734,36 @@ function NewEvent({ isEdit = false, eventId = null }) {
         const cfg = getFieldConfig(activeEventType, name);
         if (!cfg?.labelKey) return null;
         const label = intl.formatMessage({ id: cfg.labelKey, defaultMessage: '' });
-        return label || null;
+        return label ? { name, label } : null;
       })
       .filter(Boolean);
   }, [voiceBanner, activeEventType, intl]);
+  const voiceFilledLabels = useMemo(
+    () => voiceFilledEntries.map((entry) => entry.label),
+    [voiceFilledEntries]
+  );
+
+  // What an OFFER would write, value included: "Equipment Hours: 2 hours", not "Equipment Hours".
+  //
+  // MEASURED 2026-10-08 on a crew note ("regamos el bloque 4 esta mañana 2 horas"): the banner
+  // said "Would fill: Equipment Hours" and the operator could not tell what number was behind it,
+  // or that the 2 hours had landed there at all. A field name alone asks them to accept a value
+  // they cannot see, which is the opposite of what the hold is for. Formatted by the registry, the
+  // same words the record will print, with unit companions carried in the event so "5" reads
+  // "5 acres" and not a bare number.
+  const voiceOfferedSummary = useMemo(() => {
+    const offered = voiceBanner?.seededPending?.kept;
+    if (!offered) return voiceFilledLabels.join(', ');
+    return voiceFilledEntries
+      .map(({ name, label }) => {
+        const formatted =
+          formatFieldValue(activeEventType, name, { ...eventFormData, ...offered }) ??
+          (offered[name] == null ? '' : String(offered[name]));
+        const value = localizeFieldValue(formatted, intl.locale);
+        return value ? `${label}: ${value}` : label;
+      })
+      .join(', ');
+  }, [voiceBanner, voiceFilledEntries, voiceFilledLabels, activeEventType, eventFormData, intl]);
 
   const handleVoiceEventDetected = (eventData) => {
     const subtype = eventFormData.type;
@@ -1747,13 +1790,17 @@ function NewEvent({ isEdit = false, eventId = null }) {
     // nobody performed reaches a certifier packet. That is the backdated-template class, one
     // channel over.
     if (eventData.seeded) {
-      fieldNoteProposalRef.current = {
-        ...fieldNoteProposalRef.current,
-        offered: { ...(kept || {}) },
-        model: String(eventData.model_used || eventData.source || ''),
-        language: String(activeFieldNote?.transcript_language || ''),
-        negation: String(eventData.negation || '')
-      };
+      // The crew note's proposal records what was read from THE NOTE. A note pasted by hand on the
+      // same page is other words, and must not overwrite it.
+      if (eventData.from_crew_note) {
+        fieldNoteProposalRef.current = {
+          ...fieldNoteProposalRef.current,
+          offered: { ...(kept || {}) },
+          model: String(eventData.model_used || eventData.source || ''),
+          language: String(activeFieldNote?.transcript_language || ''),
+          negation: String(eventData.negation || '')
+        };
+      }
       // MANUAL REVIEW (audit T29). The message denies all or part of what it describes, or could not
       // be read: nothing is offered and nothing is guessed, including "nothing happened". The
       // confirmer reads the message and types what they decide.
@@ -1791,7 +1838,13 @@ function NewEvent({ isEdit = false, eventId = null }) {
       // picking a verb tile nulls the banner, and a re-offer with no quoted words would ask the
       // farmer to accept values from a note they can no longer read.
       pendingVoiceRef.current = holding
-        ? { detected, eventType: activeEventType, seeded: true, transcript: banner.transcript }
+        ? {
+            detected,
+            eventType: activeEventType,
+            seeded: true,
+            transcript: banner.transcript,
+            fromCrewNote: banner.fromCrewNote
+          }
         : null;
 
       // A PASTED NOTE DESCRIBES WORK ALREADY DONE, so today is a guess (plan rule 5.5.1).
@@ -1881,9 +1934,19 @@ function NewEvent({ isEdit = false, eventId = null }) {
     // yet (it is written when step 0 is submitted) while the input on screen already shows the
     // wizard's seeded default. Testing only `eventFormData.date` returned early and cleared
     // nothing, so the operator was still looking at today.
+    //
+    // ONCE per wizard, and that is the other half of its correctness. MEASURED in a browser
+    // 2026-10-08: arriving from a crew note cleared the guess, the operator typed today at the
+    // current minute on step 0, and the parse called this again. Their date equalled the
+    // mount-time default to the minute, so it was taken for the guess and wiped, and the banner
+    // asked "Which day did this happen?" about a day they had just entered. After the first
+    // reclaim the guess no longer exists; there is nothing left to take back.
+    if (dateGuessReclaimedRef.current) return;
     const onScreen = basicMethods.getValues('date');
     const inherited = eventFormData.date || onScreen;
-    if (!inherited || isOperatorChosenDate(inherited, wizardDefaultDate)) return;
+    if (!inherited) return;
+    dateGuessReclaimedRef.current = true;
+    if (isOperatorChosenDate(inherited, wizardDefaultDate)) return;
     setEventFormData((prev) => {
       const next = { ...prev };
       delete next.date;
@@ -1892,6 +1955,10 @@ function NewEvent({ isEdit = false, eventId = null }) {
     basicMethods.setValue('date', '');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventFormData.date, wizardDefaultDate]);
+
+  // A crew message is not a pasted note: it arrived through WhatsApp and the operator never pasted
+  // anything. Same hold, same rules, the banner just names where the words came from.
+  const seededFromCrewNote = Boolean(voiceBanner?.fromCrewNote);
 
   // ONE source of truth: the form's own date field. Answering on step 0 ends the question by
   // itself, `handleVoiceSwitchType` rebuilding the banner cannot lose it, and there is no flag to
@@ -1905,7 +1972,11 @@ function NewEvent({ isEdit = false, eventId = null }) {
             ? 'events.voice.crewNoteManualReviewHeadline'
             : voiceBanner.seeded
             ? voiceBanner.seededPending
-              ? 'events.voice.pastedNoteOffered'
+              ? seededFromCrewNote
+                ? 'events.voice.crewNoteOffered'
+                : 'events.voice.pastedNoteOffered'
+              : seededFromCrewNote
+              ? 'events.voice.crewNoteApplied'
               : 'events.voice.pastedNoteApplied'
             : 'events.voice.applied'
         },
@@ -1961,12 +2032,15 @@ function NewEvent({ isEdit = false, eventId = null }) {
     // packets. Recomputed from the merge result, the same way the late-subtype re-offer below
     // builds its own `keptFields` from `fresh` rather than from what was proposed.
     const written = mergeOfferedValues(eventFormData, kept);
-    fieldNoteProposalRef.current = {
-      ...fieldNoteProposalRef.current,
-      applied: Array.from(
-        new Set([...(fieldNoteProposalRef.current.applied || []), ...Object.keys(written)])
-      )
-    };
+    // Only values read from the crew note count as applied FROM it (see `voiceSeedIsCrewNote`).
+    if (voiceBanner?.fromCrewNote) {
+      fieldNoteProposalRef.current = {
+        ...fieldNoteProposalRef.current,
+        applied: Array.from(
+          new Set([...(fieldNoteProposalRef.current.applied || []), ...Object.keys(written)])
+        )
+      };
+    }
 
     setEventFormData((prev) => withListingAttachmentChecked(prev, { ...prev, ...written }));
 
@@ -2024,7 +2098,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
     if (pending.seeded) {
       setVoiceBanner((prev) => ({
         ...(prev || {}),
-        ...(prev ? {} : { seeded: true, transcript: pending.transcript }),
+        ...(prev
+          ? {}
+          : { seeded: true, transcript: pending.transcript, fromCrewNote: pending.fromCrewNote }),
         seeded: true,
         droppedCount: dropped.length,
         // RECOMPUTED, not inherited. `keptFields` is what `voiceFilledLabels` reads, and Apply
@@ -3727,8 +3803,13 @@ function NewEvent({ isEdit = false, eventId = null }) {
                           autoStart={true}
                           seedTranscript={voiceSeedText || undefined}
                           /* Parse the note in its own language, not the app's (audit T29). */
-                          seedLanguage={activeFieldNote?.transcript_language || undefined}
-                          seedNoteId={activeFieldNote?.public_id || undefined}
+                          seedLanguage={
+                            (voiceSeedIsCrewNote && activeFieldNote?.transcript_language) ||
+                            undefined
+                          }
+                          seedNoteId={
+                            (voiceSeedIsCrewNote && activeFieldNote?.public_id) || undefined
+                          }
                           onClose={() => {
                             setShowVoiceCapture(false);
                             setVoiceSeedText('');
@@ -3795,6 +3876,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                               isDisabled={!pasteDraft.trim()}
                               onClick={() => {
                                 setVoiceSeedText(pasteDraft.trim());
+                                setVoiceSeedIsCrewNote(false);
                                 setPasteOpen(false);
                                 setPasteDraft('');
                                 setShowVoiceCapture(true);
@@ -3914,6 +3996,15 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                 }>
                                 {voiceBannerHeadline}
                               </Text>
+                              {/* The words first, then what was read from them. Below the buttons
+                                  (where it sat until 2026-10-08) the quote split the field offer
+                                  from the block offer, so the operator decided on values before
+                                  seeing the sentence they came from. */}
+                              {voiceBanner.transcript ? (
+                                <Text fontSize="xs" color="gray.600" noOfLines={2}>
+                                  “{voiceBanner.transcript}”
+                                </Text>
+                              ) : null}
                               {/* Name them. The count on its own is unverifiable: when the
                                   only field voice could keep is `observation`, the farmer
                                   reads "1 field filled", looks at the form, and sees nothing
@@ -3929,9 +4020,52 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                         ? 'events.voice.pastedNoteWouldFill'
                                         : 'events.voice.filledFields'
                                     },
-                                    { fields: voiceFilledLabels.join(', ') }
+                                    {
+                                      fields: voiceBanner.seededPending
+                                        ? voiceOfferedSummary
+                                        : voiceFilledLabels.join(', ')
+                                    }
                                   )}
                                 </Text>
+                              )}
+                              {/* The block the farmer named, as an offer. A block is the lot a
+                                  record belongs to (CA PUR box 22), so voice never writes one
+                                  it had to work out — the tap does. Sits with the other offered
+                                  values, ahead of the date question and the Fill/Discard row, so
+                                  everything read from the note is in one place. */}
+                              {voiceBanner.blockSuggestion && (
+                                <VStack align="start" spacing={2} pt={1}>
+                                  <Text fontSize="xs" color="gray.700">
+                                    {voiceBanner.blockSuggestion.kind === 'new'
+                                      ? intl.formatMessage(
+                                          { id: 'events.voice.blockNew' },
+                                          { block: voiceBanner.blockSuggestion.value }
+                                        )
+                                      : intl.formatMessage(
+                                          { id: 'events.voice.blockKnown' },
+                                          {
+                                            spoken: voiceBanner.blockSuggestion.spoken,
+                                            block: voiceBanner.blockSuggestion.value
+                                          }
+                                        )}
+                                  </Text>
+                                  <Button
+                                    size="xs"
+                                    variant="outline"
+                                    colorScheme="green"
+                                    minH="44px"
+                                    onClick={handleVoiceBlockAccept}>
+                                    {intl.formatMessage(
+                                      {
+                                        id:
+                                          voiceBanner.blockSuggestion.kind === 'new'
+                                            ? 'events.voice.blockAddNew'
+                                            : 'events.voice.blockUseKnown'
+                                      },
+                                      { block: voiceBanner.blockSuggestion.value }
+                                    )}
+                                  </Button>
+                                </VStack>
                               )}
                               {/* WHICH DAY. Asked before the values, because it is the one fact a
                                   pasted note almost never carries and the wizard was happy to
@@ -3953,7 +4087,11 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                     {intl.formatMessage({ id: 'events.voice.pastedNoteDateAsk' })}
                                   </Text>
                                   <Text fontSize="xs" color="gray.700">
-                                    {intl.formatMessage({ id: 'events.voice.pastedNoteDateWhy' })}
+                                    {intl.formatMessage({
+                                      id: seededFromCrewNote
+                                        ? 'events.voice.crewNoteDateWhy'
+                                        : 'events.voice.pastedNoteDateWhy'
+                                    })}
                                   </Text>
                                   <Stack
                                     direction={{ base: 'column', smd: 'row' }}
@@ -4051,11 +4189,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                   </Button>
                                 </Stack>
                               )}
-                              {voiceBanner.transcript ? (
-                                <Text fontSize="xs" color="gray.600" noOfLines={2}>
-                                  “{voiceBanner.transcript}”
-                                </Text>
-                              ) : null}
                               {/* Say out loud what was NOT written. A value the farmer spoke
                                   and cannot see on the form has to be accounted for, or the
                                   banner's own count becomes the misleading part. */}
@@ -4096,43 +4229,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                   </Button>
                                 </VStack>
                               )}
-                              {/* The block the farmer named, as an offer. A block is the lot a
-                                  record belongs to (CA PUR box 22), so voice never writes one
-                                  it had to work out — the tap does. */}
-                              {voiceBanner.blockSuggestion && (
-                                <VStack align="start" spacing={2} pt={1}>
-                                  <Text fontSize="xs" color="gray.700">
-                                    {voiceBanner.blockSuggestion.kind === 'new'
-                                      ? intl.formatMessage(
-                                          { id: 'events.voice.blockNew' },
-                                          { block: voiceBanner.blockSuggestion.value }
-                                        )
-                                      : intl.formatMessage(
-                                          { id: 'events.voice.blockKnown' },
-                                          {
-                                            spoken: voiceBanner.blockSuggestion.spoken,
-                                            block: voiceBanner.blockSuggestion.value
-                                          }
-                                        )}
-                                  </Text>
-                                  <Button
-                                    size="xs"
-                                    variant="outline"
-                                    colorScheme="green"
-                                    minH="44px"
-                                    onClick={handleVoiceBlockAccept}>
-                                    {intl.formatMessage(
-                                      {
-                                        id:
-                                          voiceBanner.blockSuggestion.kind === 'new'
-                                            ? 'events.voice.blockAddNew'
-                                            : 'events.voice.blockUseKnown'
-                                      },
-                                      { block: voiceBanner.blockSuggestion.value }
-                                    )}
-                                  </Button>
-                                </VStack>
-                              )}
                             </VStack>
                             {/* 24px and unlabelled until 2026-09-25: under the 44px touch floor
                                 and announced as "button" with no name, on the control that
@@ -4144,7 +4240,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
                               minH="44px"
                               aria-label={intl.formatMessage({
                                 id: voiceBanner.seeded
-                                  ? 'events.voice.dismissPastedNote'
+                                  ? seededFromCrewNote
+                                    ? 'events.voice.dismissCrewNote'
+                                    : 'events.voice.dismissPastedNote'
                                   : 'events.voice.dismissVoiceInput'
                               })}
                               onClick={dismissVoiceBanner}>

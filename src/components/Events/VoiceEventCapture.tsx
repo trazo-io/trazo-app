@@ -570,7 +570,11 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
         note_opt_in: addTranscriptToNotes,
         // Rides along the same way, and for a sharper reason: the wizard must not merge values
         // extracted from words the confirmer did not say. See the `seedTranscript` prop note.
-        seeded: Boolean(seedTranscript)
+        seeded: Boolean(seedTranscript),
+        // A seed that IS a crew note (the wizard passes its id only then), as opposed to a note
+        // pasted by hand. Decides the banner's wording and whether the result is the note's
+        // proposal; `seeded` alone cannot tell the two apart.
+        from_crew_note: Boolean(seedTranscript && seedNoteId)
       });
       if (useDeepgram) {
         deepgramReset();
@@ -582,21 +586,22 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
     }
   };
 
-  const handleTryAgain = () => {
-    // A SEEDED panel has nothing to try again: the text is fixed, and re-parsing identical
-    // words spends a second billed call to answer the same question. Opening a mic here is worse:
-    // this panel is documented never to do that, and it would record the orchard while still
-    // quoting the pasted note under "Listening…", with the seeded result gone. So on a pasted
-    // note this button means "go back and paste a different one", which is the only coherent
-    // retry, and the label says exactly that. Closing clears the seed (see the parent's onClose),
-    // so the paste box comes back empty rather than re-parsing the old note.
-    if (seedTranscript) {
-      setParsedData(null);
-      setAddTranscriptToNotes(false);
-      onClose?.();
-      return;
-    }
+  // A SEEDED result goes straight to the wizard, with no "Use these details" tap.
+  //
+  // That tap was a second confirmation of the same thing. MEASURED 2026-10-08 on a crew note: the
+  // panel quoted the message under "What we heard" with no values beside it (an irrigation note
+  // carries no chip-shaped fact), the operator tapped "Use these details", and the wizard then
+  // showed the SAME quote again with "Fill in 1 value". Nothing reaches the form on the first tap
+  // anyway, because `seeded: true` makes the wizard hold the result as an offer; the decision the
+  // operator actually makes is on that offer. So the panel hands over and the offer is the one
+  // place to decide. The spoken path is unchanged: there the tap DOES write to the form.
+  useEffect(() => {
+    if (!seedTranscript || !parsedData) return;
+    handleContinueToReview();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [parsedData, seedTranscript]);
 
+  const handleTryAgain = () => {
     // Clear AND start listening again. This used to only clear, which was half an action: the
     // farmer pressed "Try again", the result vanished, and the thing that actually re-records
     // was a second button ("Start voice input") sitting above it. Two controls for one
@@ -871,7 +876,9 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
             Names are ENDONYMS ("Español" in the English app too): a switch is for the person who
             cannot use the current language, so each option has to be readable to its speakers.
             Hidden when the server has recognition detect the language itself. */}
-        {!detectSpokenLanguage && (
+        {/* Not on a seeded parse: nobody is going to speak, and the note is read in its own
+            language (`seedLanguage`), so the switch would change nothing it claims to. */}
+        {!detectSpokenLanguage && !seedTranscript && (
           <HStack justify="center" spacing={3} flexWrap="wrap">
             <Text fontSize="sm" color="gray.700">
               {intl.formatMessage({ id: 'voice.speakIn' })}
@@ -908,7 +915,9 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
             Not full-width past mobile either. A 1500px button with a centred label is a phone
             pattern rendered on a laptop; the size of a control should track its importance,
             not the width of its container. */}
-        {!parsedData && (
+        {/* Never on a seeded parse: the panel is documented never to open a mic over text it was
+            given, and a disabled "Start voice input" under a crew message read as broken. */}
+        {!parsedData && !seedTranscript && (
           <Flex justify="center">
             <StandardButton
               variant={listening ? 'secondary' : 'primary'}
@@ -934,11 +943,17 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
         {/* Run 8 (R8-24): a disabled start button said nothing about why. Each cause gets a
             line; a blocked microphone already has its own alert above. */}
         {/* Not while reading: the processing panel below already says so (review of app #80). */}
-        {!parsedData && !listening && !micBlocked && !isProcessing && !isProcessingVoice && disabledReasonId && (
-          <Text fontSize="sm" color="gray.600" textAlign="center" role="status">
-            {intl.formatMessage({ id: disabledReasonId })}
-          </Text>
-        )}
+        {!parsedData &&
+          !seedTranscript &&
+          !listening &&
+          !micBlocked &&
+          !isProcessing &&
+          !isProcessingVoice &&
+          disabledReasonId && (
+            <Text fontSize="sm" color="gray.600" textAlign="center" role="status">
+              {intl.formatMessage({ id: disabledReasonId })}
+            </Text>
+          )}
 
         {/* Why the last recording was not read — said, never swallowed. Directly under the
             button that fixes it. "Nothing" names the language it listened for and points at the
@@ -1004,8 +1019,9 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
           </VStack>
         )}
 
-        {/* Result */}
-        {parsedData && mapping && (
+        {/* Result. Spoken only: a seeded result is handed to the wizard as soon as it exists
+            (see the effect after handleContinueToReview), so it never waits here. */}
+        {parsedData && mapping && !seedTranscript && (
           <VStack spacing={3} align="stretch" borderTopWidth="1px" borderColor="gray.200" pt={4}>
             {/* No check icon and no latency badge.
                 - The check asserted CORRECTNESS the parser cannot claim; it was rendered in
@@ -1237,9 +1253,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                 leftIcon={<Icon as={FaRedo} />}
                 onClick={handleTryAgain}
                 w={{ base: 'full', smd: 'auto' }}>
-                {intl.formatMessage({
-                  id: seedTranscript ? 'events.voice.pasteDifferentNote' : 'voice.tryAgain'
-                })}
+                {intl.formatMessage({ id: 'voice.tryAgain' })}
               </StandardButton>
             </Stack>
           </VStack>

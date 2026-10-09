@@ -105,6 +105,24 @@ describe('a pasted note is not dated for the farmer', () => {
     expect(src.match(/delete next\.date/g), 'more than one place clears the date').toHaveLength(1);
   });
 
+  it('takes the guess back ONCE, so a date typed afterwards is never mistaken for it', () => {
+    // MEASURED in a browser 2026-10-08: arriving from a crew note cleared the guess, the operator
+    // typed today at the current minute on step 0, and the parse ran the reclaim again. The typed
+    // value equalled the mount-time default to the minute, so it was wiped and the banner asked
+    // "Which day did this happen?" about the day just entered. Deleting either the early return
+    // or the arrival-side mark brings that back.
+    const reclaim = blockAfter('const reclaimGuessedDate = useCallback(() => {');
+    expect(reclaim).toMatch(/if \(dateGuessReclaimedRef\.current\) return;/);
+    expect(reclaim).toMatch(/dateGuessReclaimedRef\.current = true/);
+    // The early return comes BEFORE the comparison, or it guards nothing.
+    expect(reclaim.indexOf('if (dateGuessReclaimedRef.current) return;')).toBeLessThan(
+      reclaim.indexOf('isOperatorChosenDate(')
+    );
+    expect(src).toMatch(
+      /reclaimGuessedDate\(\);\n(?:\s*\/\/.*\n)*\s*dateGuessReclaimedRef\.current = true;/
+    );
+  });
+
   it('derives the date question from the form, so answering it anywhere ends it', () => {
     // The defect this replaces: the question was banner state (`dateSuggestion`), so answering on
     // step 0 left the flag set. The question came back with "It happened today" live over the day
@@ -262,5 +280,70 @@ describe('the offer is announced once, and dismissable by thumb', () => {
     const dismiss = src.slice(src.indexOf('events.voice.dismissPastedNote') - 600);
     expect(dismiss.slice(0, 800)).toMatch(/minH="44px"/);
     expect(dismiss.slice(0, 800)).toMatch(/aria-label=/);
+  });
+});
+
+describe('the offer says what it would write, and where the words came from', () => {
+  it('names each offered VALUE, not only the field', () => {
+    // MEASURED 2026-10-08: "Would fill: Equipment Hours" over a crew note that said "2 horas".
+    // The operator was asked to accept a number they could not see.
+    expect(src).toMatch(
+      /fields: voiceBanner\.seededPending\s*\?\s*voiceOfferedSummary\s*:\s*voiceFilledLabels\.join\(', '\)/
+    );
+    const summary = blockAfter('const voiceOfferedSummary = useMemo(() => {');
+    expect(summary).toMatch(
+      /formatFieldValue\(activeEventType, name, \{ \.\.\.eventFormData, \.\.\.offered \}\)/
+    );
+    expect(summary).toMatch(/localizeFieldValue\(formatted, intl\.locale\)/);
+  });
+
+  it('calls a crew message a crew message, not a pasted note', () => {
+    // Keyed on the BANNER's provenance, not on "a crew note is loaded": "Paste a note" stays
+    // available on a crew-note URL, and a hand-pasted note there is not the crew message.
+    expect(src).toMatch(/const seededFromCrewNote = Boolean\(voiceBanner\?\.fromCrewNote\)/);
+    expect(src).toMatch(/fromCrewNote: Boolean\(eventData\.from_crew_note\)/);
+    for (const key of [
+      'events.voice.crewNoteOffered',
+      'events.voice.crewNoteApplied',
+      'events.voice.crewNoteDateWhy',
+      'events.voice.dismissCrewNote'
+    ]) {
+      expect(src, `${key} is not rendered`).toContain(`'${key}'`);
+    }
+  });
+
+  it('quotes the words ABOVE the offered values, not between two offers', () => {
+    const quote = src.indexOf('“{voiceBanner.transcript}”');
+    expect(src.split('“{voiceBanner.transcript}”')).toHaveLength(2);
+    expect(quote).toBeLessThan(src.indexOf("'events.voice.pastedNoteWouldFill'"));
+    expect(src.indexOf('onClick={handleVoiceBlockAccept}')).toBeLessThan(
+      src.indexOf('onClick={handleVoiceSeededApply}')
+    );
+  });
+});
+
+describe('a note pasted by hand on a crew-note page is not the crew note', () => {
+  it('gives the panel the note id and language only while the seed is the note itself', () => {
+    expect(src).toMatch(/\(voiceSeedIsCrewNote && activeFieldNote\?\.public_id\) \|\| undefined/);
+    expect(src).toMatch(
+      /\(voiceSeedIsCrewNote && activeFieldNote\?\.transcript_language\) \|\|\s*undefined/
+    );
+    expect(src).toMatch(
+      /setVoiceSeedText\(pasteDraft\.trim\(\)\);\n\s*setVoiceSeedIsCrewNote\(false\);/
+    );
+    expect(src).toMatch(
+      /setVoiceSeedText\(activeFieldNote\.words\);\n\s*setVoiceSeedIsCrewNote\(true\);/
+    );
+  });
+
+  it("records only the crew note's own reading as its proposal", () => {
+    const seeded = blockAfter('if (eventData.seeded) {');
+    expect(seeded).toMatch(
+      /if \(eventData\.from_crew_note\) \{\s*fieldNoteProposalRef\.current = \{/
+    );
+    const apply = blockAfter('const handleVoiceSeededApply = () => {');
+    expect(apply).toMatch(
+      /if \(voiceBanner\?\.fromCrewNote\) \{\s*fieldNoteProposalRef\.current = \{/
+    );
   });
 });

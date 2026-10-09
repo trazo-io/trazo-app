@@ -543,6 +543,9 @@ export const FIELD_VALUE_ES: Record<string, string> = {
   'Chlorine — the same treatment used in drinking water, and permitted for washing organic produce':
     'Cloro — el mismo tratamiento que se usa en el agua potable, y permitido para lavar productos orgánicos',
   '1 hour': '1 hora',
+  // The unit half of formatDurationHours' "<n> hours", which localizeFieldValue translates by
+  // suffix. Without it every duration above one hour read "2 hours" on the Spanish page.
+  hours: 'horas',
 
   // --- Tillage practice values (soilEvent.ts, TI). Added 2026-09-06 with the four tillage
   // fields, which had no display declaration at all until then. `Cultivator` is deliberately
