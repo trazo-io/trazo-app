@@ -172,49 +172,50 @@ describe('a pasted note is parsed, never recorded over', () => {
     expect(mocks.process).toHaveBeenCalledTimes(1);
   });
 
-  it('quotes the pasted note back, so the farmer confirms against words they can see', async () => {
-    renderPanel({ seedTranscript: NOTE });
-    await waitFor(() => expect(screen.getByText(`“${NOTE}”`)).toBeInTheDocument());
-  });
-
-  it('labels what it emits `seeded`, which is what makes the wizard hold it', async () => {
+  it('hands its result to the wizard labelled `seeded`, with no second tap', async () => {
+    // `seeded: true` is what makes the wizard HOLD the values as an offer, so the decision lives
+    // on that offer. A "Use these details" tap here confirmed nothing the offer does not ask again
+    // (measured on a crew note 2026-10-08: the same quote, twice, one tap apart).
     const { onEventDetected } = renderPanel({ seedTranscript: NOTE });
 
-    await waitFor(() => expect(mocks.process).toHaveBeenCalledTimes(1));
-    const useThese = await screen.findByRole('button', { name: 'Use these details' });
-    fireEvent.click(useThese);
-
-    expect(onEventDetected).toHaveBeenCalledTimes(1);
-    expect(onEventDetected.mock.calls[0][0]).toMatchObject({ seeded: true });
+    await waitFor(() => expect(onEventDetected).toHaveBeenCalledTimes(1));
+    expect(onEventDetected.mock.calls[0][0]).toMatchObject({
+      seeded: true,
+      original_transcript: NOTE
+    });
+    expect(screen.queryByRole('button', { name: 'Use these details' })).toBeNull();
   });
 
-  it('never opens a mic from "Try again" either: the retry is a different note', async () => {
-    const onClose = vi.fn();
-    renderPanel({ seedTranscript: NOTE, onClose });
+  it('says whether the seed IS a crew note, which a hand-pasted note is not', async () => {
+    // `seeded` alone cannot tell them apart, and the wizard needs to: only the crew note's own
+    // words may be recorded as its proposal or called "the crew message".
+    const crew = renderPanel({ seedTranscript: NOTE, seedNoteId: 'note-uuid' });
+    await waitFor(() => expect(crew.onEventDetected).toHaveBeenCalledTimes(1));
+    expect(crew.onEventDetected.mock.calls[0][0]).toMatchObject({ from_crew_note: true });
+    crew.unmount();
 
+    const pasted = renderPanel({ seedTranscript: NOTE });
+    await waitFor(() => expect(pasted.onEventDetected).toHaveBeenCalledTimes(1));
+    expect(pasted.onEventDetected.mock.calls[0][0]).toMatchObject({ from_crew_note: false });
+  });
+
+  it('shows no microphone control and no language switch over text it was given', async () => {
+    renderPanel({ seedTranscript: NOTE });
     await waitFor(() => expect(mocks.process).toHaveBeenCalledTimes(1));
-    // The label itself must not promise a recording.
-    const retry = await screen.findByRole('button', { name: 'Paste a different note' });
-    fireEvent.click(retry);
 
-    expect(mocks.start).not.toHaveBeenCalled();
-    expect(vi.mocked(SpeechRecognition.startListening)).not.toHaveBeenCalled();
-    // Closing is what clears the seed in the parent, so the paste box comes back empty
-    // instead of re-parsing the note that was just refused.
-    expect(onClose).toHaveBeenCalled();
-    // And it must not spend a second call answering the identical question.
-    expect(mocks.process).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('button', { name: enUS['voice.start'] })).toBeNull();
+    expect(screen.queryByText(enUS['voice.speakIn'])).toBeNull();
   });
 
   it("does not offer to publish a pasted note as the farmer's own field notes", async () => {
-    renderPanel({ seedTranscript: NOTE });
-    await waitFor(() => expect(mocks.process).toHaveBeenCalledTimes(1));
-    await screen.findByRole('button', { name: 'Use these details' });
+    const { onEventDetected } = renderPanel({ seedTranscript: NOTE });
+    await waitFor(() => expect(onEventDetected).toHaveBeenCalledTimes(1));
 
     // `observation` reaches the anonymous buyer page in quotation marks under "Farmer's Field
     // Notes". On a pasted note those are a crew member's words, unredacted, and the grower
     // cannot consent on their behalf, so the tick is withheld, not relabelled.
     expect(screen.queryByRole('checkbox')).toBeNull();
+    expect(onEventDetected.mock.calls[0][0]).toMatchObject({ note_opt_in: false });
   });
 
   it('DOES offer it on a spoken parse: the farmer owns their own words', async () => {
@@ -254,8 +255,18 @@ describe('a crew note is parsed in its own language and never by the local fallb
 
   it('offers nothing when the parse fails, rather than reading the note with local keywords', async () => {
     mocks.process = vi.fn(() => ({ unwrap: () => Promise.reject(new Error('down')) }));
-    renderPanel({ seedTranscript: 'sprayed 2 gallons of copper on block 4' });
-    await waitFor(() => expect(screen.queryByTestId('voice-manual-review')).not.toBeNull());
+    const { onEventDetected } = renderPanel({
+      seedTranscript: 'sprayed 2 gallons of copper on block 4'
+    });
+    // Handed over as MANUAL REVIEW with nothing detected: the wizard's banner says a person must
+    // read it (crewNoteManualReview.*) and offers no values.
+    await waitFor(() => expect(onEventDetected).toHaveBeenCalledTimes(1));
+    expect(onEventDetected.mock.calls[0][0]).toMatchObject({
+      seeded: true,
+      manual_review: true,
+      detected_amounts: [],
+      detected_products: []
+    });
   });
 
   it('says a negated message needs a person', async () => {
@@ -268,7 +279,15 @@ describe('a crew note is parsed in its own language and never by the local fallb
           detected_amounts: []
         })
     }));
-    renderPanel({ seedTranscript: 'no apliqué nada hoy', seedLanguage: 'es-419' });
-    await waitFor(() => expect(screen.queryByTestId('voice-manual-review')).not.toBeNull());
+    const { onEventDetected } = renderPanel({
+      seedTranscript: 'no apliqué nada hoy',
+      seedLanguage: 'es-419'
+    });
+    await waitFor(() => expect(onEventDetected).toHaveBeenCalledTimes(1));
+    expect(onEventDetected.mock.calls[0][0]).toMatchObject({
+      seeded: true,
+      manual_review: true,
+      negation: 'all'
+    });
   });
 });

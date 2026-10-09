@@ -37,6 +37,6 @@ describe('the voice panel says why it cannot start', () => {
 describe('review of app #80', () => {
   it('the reason line yields to the processing panel instead of repeating it', () => {
     const block = src.slice(src.indexOf('disabledReasonId && (') - 160, src.indexOf('disabledReasonId && ('));
-    expect(block).toMatch(/!isProcessing && !isProcessingVoice/);
+    expect(block).toMatch(/!isProcessing &&\s+!isProcessingVoice/);
   });
 });
