@@ -43,7 +43,6 @@ import {
   Flex,
   HStack,
   Icon,
-  Input,
   Skeleton,
   Stack,
   Text,
@@ -55,7 +54,13 @@ import { FaDownload, FaFileAlt, FaInfoCircle } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import { useNavigate } from 'react-router-dom';
 
-import { StandardAlert, StandardButton, StandardCard } from 'components/Design/StandardComponents';
+import {
+  StandardAlert,
+  StandardButton,
+  StandardCard,
+  StandardInput,
+  StandardTextarea
+} from 'components/Design/StandardComponents';
 import config from 'config/environment';
 import { OSP_ATTACHMENTS_URL } from 'config';
 import {
@@ -64,6 +69,7 @@ import {
 } from 'components/Guards/ComplianceExportsGuard';
 import {
   useConfirmOSPRecordTypesMutation,
+  useMarkOSPRecordTypeNotKeptMutation,
   useGetOSPAttachmentsQuery,
   useGetOSPRecordTypesQuery
 } from 'store/api/ospApi';
@@ -139,6 +145,10 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
     ospId: osp.id
   });
   const [confirmRecordTypes, { isLoading: isConfirming }] = useConfirmOSPRecordTypesMutation();
+  const [markNotKept, { isLoading: isMarkingNotKept }] = useMarkOSPRecordTypeNotKeptMutation();
+  // One "we don't keep this" form at a time, opened on a required row the operator has not confirmed.
+  const [notKeptFor, setNotKeptFor] = useState<string | null>(null);
+  const [notKeptReason, setNotKeptReason] = useState('');
   const { data: attachments } = useGetOSPAttachmentsQuery({ companyId, farmId, ospId: osp.id });
   // The workbooks stream from a route the compliance gate covers (`subscriptions/gating.py`
   // lists `attachments` among its seven doors). Without this the Starter grower got the generic
@@ -333,7 +343,7 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
             {row.cfr_cite}
           </Text>
           {isEditable ? (
-            <Input
+            <StandardInput
               size="sm"
               value={draft}
               maxLength={FREE_TEXT_MAX_LENGTH}
@@ -602,6 +612,29 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
                                     )}
                               </Text>
                             )}
+                            {row.required && (
+                              <Text fontSize="xs" color="gray.700" fontWeight="medium">
+                                {intl.formatMessage(
+                                  {
+                                    id: 'osp.recordTypes.requiredBecause',
+                                    defaultMessage: 'Required by your plan: {because}'
+                                  },
+                                  { because: row.required_because ?? '' }
+                                )}
+                              </Text>
+                            )}
+                            {row.not_kept && (
+                              <Text fontSize="xs" color="gray.700">
+                                {intl.formatMessage(
+                                  {
+                                    id: 'osp.recordTypes.notKeptStated',
+                                    defaultMessage:
+                                      'You state this record is not kept: {reason}. Your packet lists it as missing.'
+                                  },
+                                  { reason: row.not_kept_reason ?? '' }
+                                )}
+                              </Text>
+                            )}
                             {row.status === 'evidence_check_failed' && (
                               <Tooltip
                                 label={intl.formatMessage({
@@ -630,9 +663,84 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
                           })}
                         </StandardButton>
                       )}
+                      {row.required && !isConfirmed && !row.not_kept && isEditable && (
+                        <StandardButton
+                          size="xs"
+                          variant="ghost"
+                          flexShrink={0}
+                          onClick={() => {
+                            setNotKeptFor(row.key);
+                            setNotKeptReason('');
+                          }}>
+                          {intl.formatMessage({
+                            id: 'osp.recordTypes.notKeptAction',
+                            defaultMessage: "We don't keep this"
+                          })}
+                        </StandardButton>
+                      )}
                     </Flex>
                   );
                 })}
+                {notKeptFor && rows.some((r) => r.key === notKeptFor) && (
+                  <Stack
+                    spacing={2}
+                    px={3}
+                    py={2}
+                    borderWidth="1px"
+                    borderColor={borderColor}
+                    borderRadius="md">
+                    <Text fontSize="xs" color="gray.700">
+                      {intl.formatMessage({
+                        id: 'osp.recordTypes.notKeptHelp',
+                        defaultMessage:
+                          'Say why the operation does not keep this record. Your plan still requires it, so the records statement below cannot be answered Yes and the packet lists it as missing.'
+                      })}
+                    </Text>
+                    <StandardTextarea
+                      rows={2}
+                      aria-label={intl.formatMessage({
+                        id: 'osp.recordTypes.notKeptReason',
+                        defaultMessage: 'Why this record is not kept'
+                      })}
+                      value={notKeptReason}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                        setNotKeptReason(e.target.value)
+                      }
+                    />
+                    <HStack justify="flex-end" spacing={2}>
+                      <StandardButton size="xs" variant="ghost" onClick={() => setNotKeptFor(null)}>
+                        {intl.formatMessage({
+                          id: 'osp.recordTypes.cancel',
+                          defaultMessage: 'Cancel'
+                        })}
+                      </StandardButton>
+                      <StandardButton
+                        size="xs"
+                        isLoading={isMarkingNotKept}
+                        isDisabled={!notKeptReason.trim()}
+                        onClick={async () => {
+                          try {
+                            await markNotKept({
+                              companyId,
+                              farmId,
+                              ospId: osp.id,
+                              key: notKeptFor,
+                              reason: notKeptReason.trim()
+                            }).unwrap();
+                            setNotKeptFor(null);
+                          } catch {
+                            // Same as every other save on this panel: say it failed, keep the typed reason.
+                            showSaveError();
+                          }
+                        }}>
+                        {intl.formatMessage({
+                          id: 'osp.recordTypes.notKeptSave',
+                          defaultMessage: 'Record as not kept'
+                        })}
+                      </StandardButton>
+                    </HStack>
+                  </Stack>
+                )}
               </Stack>
               <Divider mt={3} />
             </Box>

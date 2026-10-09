@@ -67,8 +67,13 @@ describe('isProhibitedSuggestion', () => {
   it('leaves conventional operations untouched', () => {
     // A conventional grower applying glyphosate is a legitimate record.
     expect(isProhibitedSuggestion(glyphosate, 'conventional')).toBe(false);
-    expect(isProhibitedSuggestion(glyphosate, '')).toBe(false);
-    expect(isProhibitedSuggestion(glyphosate, undefined)).toBe(false);
+  });
+
+  it('fails closed while no production method has been chosen', () => {
+    // Empty used to mean "conventional" (the form preselected it). Since 2026-10-01 it means
+    // "not chosen yet", and the farm may be organic, so a prohibited input stays prohibited.
+    expect(isProhibitedSuggestion(glyphosate, '')).toBe(true);
+    expect(isProhibitedSuggestion(glyphosate, undefined)).toBe(true);
   });
 
   it('catches a synthetic subtype even when organic_approved is unset', () => {

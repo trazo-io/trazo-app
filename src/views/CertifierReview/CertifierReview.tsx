@@ -32,7 +32,8 @@ import {
   Spinner,
   Text,
   VStack,
-  useColorModeValue
+  useColorModeValue,
+  Link
 } from '@chakra-ui/react';
 import {
   FaCheckCircle,
@@ -67,9 +68,17 @@ interface ReviewMetadata {
 
 interface ReadinessFinding {
   label: string;
-  status: 'FAIL' | 'REVIEW';
+  /** Stable per row; names the row in the reader's language (run 8, R8-27). */
+  row_key?: string;
+  status: string;
   detail: string;
   section_hint: string | null;
+}
+
+interface NotAssessedRow {
+  label: string;
+  row_key?: string;
+  status: string;
 }
 
 interface ReadinessProduction {
@@ -77,11 +86,15 @@ interface ReadinessProduction {
   production_name: string;
   finish_date: string | null;
   findings: ReadinessFinding[];
+  // Rows that are facts about scope (NA, INFO, NOT ASSESSED), not findings. Folded behind a
+  // toggle (recordkeeping review S9, F-16: 25 such rows sat among 19 findings).
+  not_assessed?: NotAssessedRow[];
 }
 
 interface ReadinessResponse {
   productions: ReadinessProduction[];
   total_findings: number;
+  total_not_assessed?: number;
   total_productions: number;
 }
 
@@ -91,10 +104,30 @@ interface ReadinessResponse {
 // correct day, so the two disagreed in front of the certifier.
 const formatDate = (value?: string | null) => formatDateOnly(value) ?? null;
 
+/**
+ * Run 8 (R8-27, Astra 2026-10-05): this page showed red "FAIL" badges under an organic dossier
+ * title, with the not-a-compliance-decision disclaimer at the very bottom. A readiness row
+ * checks whether a record is present, so it says that: "Missing" or "For review", in neutral
+ * colours. Nothing here reads as a certifier's verdict.
+ */
 function findingStyle(status: ReadinessFinding['status']) {
-  return status === 'FAIL'
-    ? { colorScheme: 'red', icon: FaExclamationCircle, iconColor: 'red.500' }
-    : { colorScheme: 'orange', icon: FaInfoCircle, iconColor: 'orange.400' };
+  if (status === 'FAIL') {
+    return {
+      tone: 'gray.500',
+      icon: FaExclamationCircle,
+      labelId: 'certifierReview.status.missing'
+    };
+  }
+  if (status === 'REVIEW') {
+    return { tone: 'gray.400', icon: FaInfoCircle, labelId: 'certifierReview.status.forReview' };
+  }
+  return { tone: 'gray.300', icon: FaInfoCircle, labelId: 'certifierReview.status.notAssessed' };
+}
+
+/** The row's name in the reader's language, or the server's English label if it has none. */
+function findingLabel(intl: ReturnType<typeof useIntl>, finding: ReadinessFinding): string {
+  const id = finding.row_key ? `certifierReview.row.${finding.row_key}` : '';
+  return id && intl.messages[id] ? intl.formatMessage({ id }) : finding.label;
 }
 
 const CertifierReview: React.FC = () => {
@@ -102,6 +135,7 @@ const CertifierReview: React.FC = () => {
   const { token } = useParams<{ token: string }>();
   const [meta, setMeta] = useState<ReviewMetadata | null>(null);
   const [readiness, setReadiness] = useState<ReadinessResponse | null>(null);
+  const [showNotAssessed, setShowNotAssessed] = useState(false);
   const [failure, setFailure] = useState<ReviewLinkFailure | null>(null);
   const [loading, setLoading] = useState(true);
   // The dossier is built at most once per change of the records (backend:
@@ -225,6 +259,9 @@ const CertifierReview: React.FC = () => {
   const productionsWithFindings = (readiness?.productions ?? []).filter(
     (p) => p.findings.length > 0
   );
+  const notAssessedTotal =
+    readiness?.total_not_assessed ??
+    (readiness?.productions ?? []).reduce((n, p) => n + (p.not_assessed?.length ?? 0), 0);
 
   return (
     <Center minH="60vh" px={4} py={10}>
@@ -266,8 +303,38 @@ const CertifierReview: React.FC = () => {
                   defaultMessage: 'Record readiness'
                 })}
               </Text>
+              {/* Run 8 (R8-27): the scope comes first, before any finding is read. Trazo
+                  documents; the certifying agent decides. Not optional. */}
+              <Text fontSize="xs" color={mutedColor}>
+                {intl.formatMessage({
+                  id: 'certifierReview.readinessDisclaimer',
+                  defaultMessage:
+                    'These are documentation checks on the records in Trazo, not a compliance decision.'
+                })}
+              </Text>
 
-              {productionsWithFindings.length === 0 ? (
+              {productionsWithFindings.length === 0 && notAssessedTotal > 0 ? (
+                /* No finding, but rows were not assessed: a fact about scope, never the
+                   green all-clear (review of app #95). The rows are listed by the toggle below. */
+                <Box bg={rowBg} border="1px solid" borderColor={rowBorder} borderRadius="lg" p={4}>
+                  <HStack spacing={2}>
+                    <Icon as={FaInfoCircle} color={mutedColor} boxSize={4} />
+                    <Text
+                      fontSize="sm"
+                      color={textColor}
+                      data-testid="certifier-no-findings-some-not-assessed">
+                      {intl.formatMessage(
+                        {
+                          id: 'certifierReview.readinessNoFindingsSomeNotAssessed',
+                          defaultMessage:
+                            'No finding across {count, plural, one {# season} other {# seasons}} in this window; {notAssessed, plural, one {# row was} other {# rows were}} not assessed'
+                        },
+                        { count: readiness.total_productions, notAssessed: notAssessedTotal }
+                      )}
+                    </Text>
+                  </HStack>
+                </Box>
+              ) : productionsWithFindings.length === 0 ? (
                 <Box
                   bg={clearBg}
                   border="1px solid"
@@ -304,13 +371,13 @@ const CertifierReview: React.FC = () => {
                             border="1px solid"
                             borderColor={rowBorder}
                             borderLeft="4px solid"
-                            borderLeftColor={`${style.colorScheme}.400`}
+                            borderLeftColor={style.tone}
                             borderRadius="md"
                             p={3}>
                             <HStack spacing={2} align="start">
                               <Icon
                                 as={style.icon}
-                                color={style.iconColor}
+                                color={style.tone}
                                 boxSize={4}
                                 mt={0.5}
                                 flexShrink={0}
@@ -318,14 +385,10 @@ const CertifierReview: React.FC = () => {
                               <VStack align="start" spacing={1} flex={1} minW={0}>
                                 <HStack spacing={2} flexWrap="wrap">
                                   <Text fontSize="sm" fontWeight="semibold" color={textColor}>
-                                    {finding.label}
+                                    {findingLabel(intl, finding)}
                                   </Text>
-                                  <Badge
-                                    colorScheme={style.colorScheme}
-                                    variant="subtle"
-                                    fontSize="xs"
-                                    borderRadius="full">
-                                    {finding.status}
+                                  <Badge variant="neutral" fontSize="xs" borderRadius="full">
+                                    {intl.formatMessage({ id: style.labelId })}
                                   </Badge>
                                 </HStack>
                                 <Text fontSize="xs" color={mutedColor} lineHeight="1.5">
@@ -363,16 +426,49 @@ const CertifierReview: React.FC = () => {
                   </Box>
                 ))
               )}
-
-              {/* Same posture as the farmer-facing readiness card: Trazo documents, the
-                  certifying agent decides. Not optional. */}
-              <Text fontSize="xs" color={mutedColor}>
-                {intl.formatMessage({
-                  id: 'certifierReview.readinessDisclaimer',
-                  defaultMessage:
-                    'These are documentation checks on the records in Trazo, not a compliance decision.'
-                })}
-              </Text>
+              {notAssessedTotal > 0 && (
+                <Box>
+                  <Link
+                    as="button"
+                    type="button"
+                    fontSize="xs"
+                    color={mutedColor}
+                    data-testid="certifier-not-assessed-toggle"
+                    onClick={() => setShowNotAssessed((v) => !v)}>
+                    {intl.formatMessage(
+                      {
+                        id: showNotAssessed
+                          ? 'certifierReview.notAssessed.hide'
+                          : 'certifierReview.notAssessed.show',
+                        defaultMessage: showNotAssessed
+                          ? 'Hide the {count} rows not assessed'
+                          : 'Show the {count} rows not assessed'
+                      },
+                      { count: notAssessedTotal }
+                    )}
+                  </Link>
+                  {showNotAssessed && (
+                    <VStack
+                      align="stretch"
+                      spacing={1}
+                      mt={2}
+                      data-testid="certifier-not-assessed-rows">
+                      {(readiness?.productions ?? []).map((production) =>
+                        (production.not_assessed ?? []).map((row) => (
+                          <Text
+                            key={`${production.production_id}-${row.label}`}
+                            fontSize="xs"
+                            color={mutedColor}>
+                            {production.production_name} ·{' '}
+                            {findingLabel(intl, row as ReadinessFinding)} ·{' '}
+                            {intl.formatMessage({ id: 'certifierReview.status.notAssessed' })}
+                          </Text>
+                        ))
+                      )}
+                    </VStack>
+                  )}
+                </Box>
+              )}
             </VStack>
             <Divider />
           </>

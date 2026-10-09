@@ -47,6 +47,7 @@ import {
 } from 'components/Design/StandardComponents';
 import {
   answerValue,
+  effectiveValue,
   missingRequired,
   visiblePages,
   visibleQuestions
@@ -72,23 +73,12 @@ import { apiErrorMessage } from 'utils/apiErrorMessage';
 import { OSPLockedNotice, StartNewVersionButton } from './OSPLockedNotice';
 import OSPApprovedInputsPanel from './OSPApprovedInputsPanel';
 import OSPMaterialsListPanel from './OSPMaterialsListPanel';
+import OSPMaterialIdentityPanel from './OSPMaterialIdentityPanel';
+import OSPMaterialRestrictionsPanel from './OSPMaterialRestrictionsPanel';
 import OSPHandlerFacilitiesPanel from './OSPHandlerFacilitiesPanel';
 import OSPRecordTypesPanel from './OSPRecordTypesPanel';
 import { selectWorkingOsp } from './selectWorkingOsp';
-
-/** Apply exclusive-option semantics client-side (server refuses conflicts anyway). */
-const toggleCheckbox = (
-  question: ModuleQuestion,
-  current: string[],
-  optionValue: string
-): string[] => {
-  const option = question.options.find((o) => o.value === optionValue);
-  const has = current.includes(optionValue);
-  if (has) return current.filter((v) => v !== optionValue);
-  if (option?.exclusive) return [optionValue];
-  const exclusives = new Set(question.options.filter((o) => o.exclusive).map((o) => o.value));
-  return [...current.filter((v) => !exclusives.has(v)), optionValue];
-};
+import { holdsRetiredOption, offeredOptions, toggleCheckbox } from 'config/osp/optionChoices';
 
 /**
  * `isReadOnly` is the plan-is-locked state, and it should now never be true: a locked plan
@@ -118,26 +108,39 @@ const toggleCheckbox = (
  * Files land in the `organic_system_plan` folder tagged with this module's key, which is what
  * makes them findable from the module and from the packet's document index.
  */
-const ModuleUploadField = ({
+export const ModuleUploadField = ({
   companyId,
   farmId,
   moduleKey,
+  questionKey,
   isReadOnly
 }: {
   companyId: string;
   farmId: string;
   moduleKey: string;
+  questionKey: string;
   isReadOnly: boolean;
 }) => {
   const intl = useIntl();
   const toast = useToast();
   const fileInput = useRef<HTMLInputElement>(null);
   const canQuery = Boolean(companyId && farmId && moduleKey);
+  // The one attachment this question asks for (OSP alignment audit T19). Until 2026-10-01 a file
+  // was linked to the module only, so the certifier packet could never tell a label sample from
+  // a soil test uploaded to the same section, and the label question could never close.
+  const requirement = `${moduleKey}.${questionKey}`;
 
   const { data: attached = [] } = useGetFarmDocumentsQuery(
+    { companyId, farmId, requirement },
+    { skip: !canQuery }
+  );
+  const { data: sectionDocs = [] } = useGetFarmDocumentsQuery(
     { companyId, farmId, linkedSection: moduleKey },
     { skip: !canQuery }
   );
+  // Files uploaded to this section before uploads named their question. Shown so they are not
+  // lost, and said plainly: the packet does not count them as this attachment.
+  const unlinked = sectionDocs.filter((doc) => !doc.requirement);
   const [uploadDocument, { isLoading: uploading }] = useUploadFarmDocumentMutation();
 
   const onPick = async (file: File | undefined) => {
@@ -149,7 +152,8 @@ const ModuleUploadField = ({
         file,
         title: file.name.replace(/\.[^.]+$/, ''),
         folder: 'organic_system_plan',
-        linkedSection: moduleKey
+        linkedSection: moduleKey,
+        requirement
       }).unwrap();
       toast({
         title: intl.formatMessage({ id: 'osp.wizard.uploadDone' }),
@@ -176,6 +180,25 @@ const ModuleUploadField = ({
             <HStack key={doc.id} spacing={2}>
               <Box as={FaPaperclip} color="green.700" />
               <Text fontSize="sm">{doc.title}</Text>
+            </HStack>
+          ))}
+        </VStack>
+      )}
+      {unlinked.length > 0 && (
+        <VStack align="stretch" spacing={1}>
+          <Text fontSize="xs" color="gray.600">
+            {intl.formatMessage({
+              id: 'osp.wizard.uploadUnlinked',
+              defaultMessage:
+                'Uploaded to this section, not to this question. The certifier packet does not count these as this attachment; upload the file here to link it.'
+            })}
+          </Text>
+          {unlinked.map((doc) => (
+            <HStack key={doc.id} spacing={2}>
+              <Box as={FaPaperclip} color="gray.500" />
+              <Text fontSize="sm" color="gray.600">
+                {doc.title}
+              </Text>
             </HStack>
           ))}
         </VStack>
@@ -262,6 +285,8 @@ const QuestionField = ({
               <Stack spacing={4}>
                 <OSPApprovedInputsPanel companyId={companyId} farmId={farmId} osp={osp} />
                 <OSPMaterialsListPanel companyId={companyId} farmId={farmId} osp={osp} />
+                <OSPMaterialIdentityPanel companyId={companyId} farmId={farmId} osp={osp} />
+                <OSPMaterialRestrictionsPanel companyId={companyId} farmId={farmId} osp={osp} />
               </Stack>
             ) : question.embed === 's11_record_types' ? (
               <OSPRecordTypesPanel
@@ -282,6 +307,7 @@ const QuestionField = ({
           companyId={companyId}
           farmId={farmId}
           moduleKey={moduleKey}
+          questionKey={question.key}
           isReadOnly={isReadOnly}
         />
       );
@@ -310,8 +336,13 @@ const QuestionField = ({
           onChange={(v) => onChange(v)}
           isDisabled={isReadOnly}>
           <Stack spacing={2}>
-            {question.options.map((option) => (
-              <Radio key={option.value} value={option.value} minH="44px" alignItems="flex-start">
+            {offeredOptions(question, value).map((option) => (
+              <Radio
+                key={option.value}
+                value={option.value}
+                isDisabled={option.retired}
+                minH="44px"
+                alignItems="flex-start">
                 <Text fontSize="sm">{pickText(option.label, locale)}</Text>
               </Radio>
             ))}
@@ -323,12 +354,12 @@ const QuestionField = ({
       const current = Array.isArray(value) ? (value as string[]) : [];
       control = (
         <Stack spacing={2}>
-          {question.options.map((option) => (
+          {offeredOptions(question, current).map((option) => (
             <Checkbox
               key={option.value}
               isChecked={current.includes(option.value)}
               onChange={() => onChange(toggleCheckbox(question, current, option.value))}
-              isDisabled={isReadOnly}
+              isDisabled={isReadOnly || option.retired}
               minH="44px"
               alignItems="flex-start">
               <Text fontSize="sm">{pickText(option.label, locale)}</Text>
@@ -345,8 +376,8 @@ const QuestionField = ({
           onChange={(e: React.ChangeEvent<HTMLSelectElement>) => onChange(e.target.value || null)}
           isDisabled={isReadOnly}
           placeholder={intl.formatMessage({ id: 'osp.wizard.selectPlaceholder' })}>
-          {question.options.map((option) => (
-            <option key={option.value} value={option.value}>
+          {offeredOptions(question, value).map((option) => (
+            <option key={option.value} value={option.value} disabled={option.retired}>
               {pickText(option.label, locale)}
             </option>
           ))}
@@ -409,6 +440,11 @@ const QuestionField = ({
         </Text>
       ) : null}
       {control}
+      {holdsRetiredOption(question, value) ? (
+        <Text fontSize="xs" color="gray.700" mt={1}>
+          {intl.formatMessage({ id: 'osp.wizard.retiredOption' })}
+        </Text>
+      ) : null}
       {missing ? (
         <Text fontSize="xs" color="red.700" mt={1}>
           {intl.formatMessage({ id: 'osp.wizard.required' })}
@@ -505,6 +541,10 @@ const AnswerRow = ({ label, value }: { label: string; value: string }) => {
  * certifier reads them. The wizard's own review step already proved this shape works —
  * this is that shape, grouped by section and given the whole page.
  */
+/** Whether any question of the module carries the named embed. */
+const moduleHasEmbed = (definition: ModuleDefinition, embed: string): boolean =>
+  definition.pages.some((page) => page.questions.some((q) => q.embed === embed));
+
 const LockedModuleDocument = ({
   definition,
   answers,
@@ -942,6 +982,19 @@ const OSPModuleWizard = () => {
               answers={answers}
               notApplicable={notApplicable}
             />
+            {/* The identity panel is not part of the locked document (it is an embed on an
+                info question, and the document lists answers), but identity decisions are
+                made against the ACTIVE plan: that is the plan the drift findings were measured
+                against, and the one the banner's "Confirm names on the plan" link opens
+                (review of app #90). So it renders here too, read-write, under the read-only
+                answers. */}
+            {workingOsp && !notApplicable && moduleHasEmbed(definition, 'approved_inputs') ? (
+              <OSPMaterialIdentityPanel
+                companyId={companyId}
+                farmId={farmId || ''}
+                osp={workingOsp}
+              />
+            ) : null}
             {/* Where "Complete module" used to sit greyed out. A farmer who read the whole
                 module to the bottom arrived at a disabled button and nothing else, while the
                 one action actually available to them was described — not offered — in a
@@ -1031,7 +1084,11 @@ const OSPModuleWizard = () => {
                           const showSuggestion =
                             ospIsDraft &&
                             Boolean(suggestion) &&
-                            isUnanswered(answerValue(answers, question.key));
+                            // A retired option alone is not an answer, the same test
+                            // missingRequired applies, so the suggestion stays on offer.
+                            isUnanswered(
+                              effectiveValue(question, answerValue(answers, question.key))
+                            );
                           return (
                             <Box key={question.key}>
                               <QuestionField

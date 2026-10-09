@@ -115,6 +115,8 @@ export interface TourStoreState {
 
   // Restart flag (fast-start after Settings > Restart)
   restartRequested: boolean;
+  /** When the grower asked, ms since epoch. A request older than a few seconds is ignored. */
+  restartRequestedAt: number;
 
   // Actions
   startTour: (tourId: string) => void;

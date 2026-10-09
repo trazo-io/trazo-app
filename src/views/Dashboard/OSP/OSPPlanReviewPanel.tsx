@@ -61,7 +61,12 @@ const OSPPlanReviewPanel: React.FC<OSPPlanReviewPanelProps> = ({ companyId, farm
     return null;
   }
 
-  const total = data.findings.length + data.stale_modules.length + data.parcels_not_named.length;
+  // Items, not groups (recordkeeping review F-22, 2026-10-07): "2 to confirm" sat over two groups
+  // holding 22 and 9 records. Each finding carries the count of records behind it.
+  const total =
+    data.findings.reduce((sum, f) => sum + Math.max(1, (f as { count?: number }).count ?? 1), 0) +
+    data.stale_modules.length +
+    data.parcels_not_named.length;
 
   return (
     <StandardCard

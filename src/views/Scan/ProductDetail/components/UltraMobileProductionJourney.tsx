@@ -805,23 +805,6 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
     colorScheme: string;
   }> = [
     {
-      // Business events are third-party certifications, inspections and audits — the
-      // single strongest trust signal on the page and the only claim on it that is NOT
-      // farmer-self-reported. They used to return null from getChapterKey, so they were
-      // reachable only via "View the full record". First chapter, deliberately.
-      key: 'trust',
-      icon: FaCertificate,
-      title: intl.formatMessage({
-        id: 'consumer.journey.chapterTrustTitle',
-        defaultMessage: 'Certifications & Audits'
-      }),
-      subtitle: intl.formatMessage({
-        id: 'consumer.journey.chapterTrustSubtitle',
-        defaultMessage: 'Independent checks on how this farm operates'
-      }),
-      colorScheme: 'purple'
-    },
-    {
       key: 'soil',
       icon: FaLayerGroup,
       title: intl.formatMessage({
@@ -893,6 +876,25 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
         defaultMessage: 'Picking, quality, and handling'
       }),
       colorScheme: 'green'
+    },
+    {
+      // Run 8 (R8-15): business events are what the FARM entered: a certificate it holds, an
+      // inspection it reports, an OSP change notice it filed. This chapter used to be titled
+      // "Independent checks on how this farm operates", led the page and carried a purple seal,
+      // while its featured item was the grower's own notice. A confirmed third-party
+      // certification is shown, database-gated, in the certification card above; here the
+      // records are stated as the farm's, in neutral styling, after the crop's own story.
+      key: 'trust',
+      icon: FaClipboardList,
+      title: intl.formatMessage({
+        id: 'consumer.journey.chapterFarmRecordsTitle',
+        defaultMessage: 'Certificates and filings the farm recorded'
+      }),
+      subtitle: intl.formatMessage({
+        id: 'consumer.journey.chapterFarmRecordsSubtitle',
+        defaultMessage: 'Entered by the farm. Independent confirmation, where there is any, is shown with the certification above.'
+      }),
+      colorScheme: 'gray'
     }
   ];
 
@@ -1003,7 +1005,8 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
   const CARD_BUDGET = 9;
   // 'trust' leads: a third-party certification is the only non-self-reported claim on the
   // page, so extra budget goes there before anything the farmer asserts about themselves.
-  const CHAPTER_PRIORITY: ChapterKey[] = ['trust', 'inputs', 'harvest', 'soil', 'pest', 'care'];
+  // Run 8 (R8-15): the farm's own filings no longer outrank the crop's story.
+  const CHAPTER_PRIORITY: ChapterKey[] = ['inputs', 'harvest', 'soil', 'pest', 'care', 'trust'];
   const visibleCountByChapter: Record<string, number> = {};
   let budgetLeft = CARD_BUDGET;
   chapterData.forEach((ch) => {
@@ -1257,16 +1260,15 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                   </HStack>
                 </CardHeader>
 
+                {/* Run 8 (R8-15): a count of records, not an assurance. Neutral, no check icon. */}
                 <Badge
-                  colorScheme="green"
-                  variant="subtle"
+                  variant="neutral"
                   fontSize="xs"
                   px={3}
                   py={1}
                   borderRadius="full"
                   fontWeight="600">
                   <HStack spacing={1}>
-                    <Icon as={MdVerified} aria-hidden="true" boxSize={3} />
                     <Text>
                       {intl.formatMessage(
                         {

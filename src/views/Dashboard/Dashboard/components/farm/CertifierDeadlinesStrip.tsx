@@ -179,7 +179,13 @@ const CertifierDeadlinesStrip: React.FC<{
   // every page load, then quietly retract it. Telling a grower they are out of compliance is not
   // something to do from a loading state.
   const updateThisYear = (annualUpdates || []).find((u) => u.reporting_year === currentYear);
-  if (updatesLoaded && !updateThisYear) {
+  // `applicable` means organic INTENT (a plan, a certificate, or "organic" in the farming
+  // method). The continuation is owed only by an operation that holds a certificate; a farm on
+  // its first day was told "OSP annual update (2026) — Not filed" (recordkeeping review F-27).
+  const holdsCertificate = (certifications || []).some(
+    (c) => c.is_active || ['verified', 'self_reported'].includes(c.verification_status || '')
+  );
+  if (updatesLoaded && !updateThisYear && holdsCertificate) {
     deadlines.push({
       key: 'osp-annual-update',
       label: intl.formatMessage({ id: 'deadlines.ospAnnualUpdate' }, { year: currentYear }),

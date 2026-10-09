@@ -291,6 +291,8 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
                       presignedUrl={parcel.image ? presignedUrls[parcel.image] : undefined}
                       areaHa={parcel.area}
                       applicationStatus={parcel.application_status}
+                      evidenceStatus={(parcel as any).evidence_status}
+                      evidenceMissingCount={((parcel as any).evidence_missing || []).length}
                       hasCurrentProduction={parcel.has_current_production === true}
                     />
                   </Box>

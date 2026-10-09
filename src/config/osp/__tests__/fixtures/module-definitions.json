@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.09.12",
+  "content_version": "2026.09.30",
   "registry": {
-    "content_version": "2026.09.12",
+    "content_version": "2026.09.30",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -1072,7 +1072,7 @@
           "es": "Plántulas anuales"
         },
         "nop_cites": [
-          "§ 205.204(a)(2)"
+          "§ 205.204(a)(3)"
         ],
         "education": [
           {
@@ -3316,7 +3316,7 @@
                 "key": "conservation_plan_agency",
                 "kind": "checkbox_group",
                 "label": {
-                  "en": "Does this operation have a current conservation plan or agreement with a conservation agency or programme?",
+                  "en": "Does this operation have a current conservation plan or agreement with a conservation agency or program?",
                   "es": "¿Esta operación tiene un plan o acuerdo de conservación vigente con una agencia o programa de conservación?"
                 },
                 "coaching": {
@@ -3351,7 +3351,7 @@
                   {
                     "value": "stewardship_program",
                     "label": {
-                      "en": "Certification or stewardship programme",
+                      "en": "Certification or stewardship program",
                       "es": "Programa de certificación o custodia ambiental"
                     },
                     "exclusive": false
@@ -3379,7 +3379,7 @@
                 "key": "conservation_plan_detail",
                 "kind": "text",
                 "label": {
-                  "en": "Name the agency or programme and what the plan covers",
+                  "en": "Name the agency or program and what the plan covers",
                   "es": "Nombre la agencia o el programa y qué cubre el plan"
                 },
                 "coaching": null,
@@ -3452,7 +3452,7 @@
                   {
                     "value": "agency_program",
                     "label": {
-                      "en": "A state or county programme controls the species on or near this land",
+                      "en": "A state or county program controls the species on or near this land",
                       "es": "Un programa estatal o del condado controla la especie en o cerca de estas tierras"
                     },
                     "exclusive": false
@@ -3480,8 +3480,8 @@
                 "key": "wildlife_habitat_pressure",
                 "kind": "checkbox_group",
                 "label": {
-                  "en": "Does either of these apply to your operation?",
-                  "es": "¿Alguna de estas situaciones aplica a su operación?"
+                  "en": "Is wildlife kept out of your production areas, or has native habitat been brought into crop production since certification?",
+                  "es": "¿Mantiene la fauna fuera de sus áreas de producción, o ha incorporado hábitat nativo a la producción desde la certificación?"
                 },
                 "coaching": {
                   "en": "Buyers and food-safety schemes often push growers toward bare ground, fencing and wildlife exclusion, while § 205.200 requires the operation to maintain or improve its natural resources. The two pull against each other, and the certifier will ask how you resolve it — an honest answer with mitigation is stronger than claiming the tension does not exist.",
@@ -5198,7 +5198,7 @@
                 "key": "runoff_risk_present",
                 "kind": "boolean",
                 "label": {
-                  "en": "Is there a risk of runoff carrying prohibited materials onto your organic land from neighbouring ground?",
+                  "en": "Is there a risk of runoff carrying prohibited materials onto your organic land from neighboring ground?",
                   "es": "¿Existe riesgo de que la escorrentía arrastre materiales prohibidos hacia su tierra orgánica desde terrenos vecinos?"
                 },
                 "coaching": {
@@ -5224,7 +5224,7 @@
                   "es": "Describa su plan para evitar que la escorrentía llegue a los cultivos o al suelo orgánicos."
                 },
                 "coaching": {
-                  "en": "Diversion ditches, berms, vegetated filter strips, timing of irrigation relative to a neighbour's applications, and monitoring after storms are the usual measures.",
+                  "en": "Diversion ditches, berms, vegetated filter strips, timing of irrigation relative to a neighbor's applications, and monitoring after storms are the usual measures.",
                   "es": "Zanjas de desvío, bordos, franjas filtrantes con vegetación, el momento del riego respecto de las aplicaciones del vecino y el monitoreo tras las tormentas son las medidas habituales."
                 },
                 "options": [],
@@ -8535,8 +8535,8 @@
                 "key": "s11_records",
                 "kind": "info",
                 "label": {
-                  "en": "Record types (Common OSP § 11)",
-                  "es": "Tipos de registro (OSP Común § 11)"
+                  "en": "Record types (USDA Common OSP, section 11)",
+                  "es": "Tipos de registro (OSP Común de USDA, sección 11)"
                 },
                 "coaching": null,
                 "options": [],
@@ -8866,26 +8866,45 @@
                 "key": "import_export_activity",
                 "kind": "checkbox_group",
                 "label": {
-                  "en": "Does your operation import or export organic products?",
-                  "es": "¿Su operación importa o exporta productos orgánicos?"
+                  "en": "Does your operation import or export organic products, directly or indirectly, now or in plans?",
+                  "es": "¿Su operación importa o exporta productos orgánicos, directa o indirectamente, ahora o en sus planes?"
                 },
-                "coaching": null,
+                "coaching": {
+                  "en": "Indirect export counts: product a buyer, broker or trader ships abroad, or that leaves the country as an ingredient. Certifiers ask about it because the destination country's rules can reach your crop.",
+                  "es": "La exportación indirecta cuenta: el producto que un comprador, corredor o comerciante envía al exterior, o que sale del país como ingrediente. Los certificadores preguntan por ella porque las reglas del país de destino pueden alcanzar su cultivo."
+                },
                 "options": [
                   {
                     "value": "export",
                     "label": {
-                      "en": "We export organic product to other countries",
-                      "es": "Exportamos producto orgánico a otros países"
+                      "en": "We export, or plan to export, organic product to other countries",
+                      "es": "Exportamos, o planeamos exportar, producto orgánico a otros países"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "indirect_export",
+                    "label": {
+                      "en": "Our product is exported, or will be, by a buyer, broker or trader, or as an ingredient",
+                      "es": "Un comprador, corredor o comerciante exporta, o exportará, nuestro producto, o sale del país como ingrediente"
                     },
                     "exclusive": false
                   },
                   {
                     "value": "import",
                     "label": {
-                      "en": "We import organic product or ingredients into the United States",
-                      "es": "Importamos producto o ingredientes orgánicos a Estados Unidos"
+                      "en": "We import, or plan to import, organic product or ingredients into the United States",
+                      "es": "Importamos, o planeamos importar, producto o ingredientes orgánicos a Estados Unidos"
                     },
                     "exclusive": false
+                  },
+                  {
+                    "value": "none_no_known_export",
+                    "label": {
+                      "en": "Neither: all product is sold within the United States, and no buyer we know of exports it or plans to",
+                      "es": "Ninguna: todo el producto se vende dentro de Estados Unidos, y ningún comprador que conozcamos lo exporta ni planea hacerlo"
+                    },
+                    "exclusive": true
                   },
                   {
                     "value": "none",
@@ -8893,7 +8912,8 @@
                       "en": "Neither — all product is sold within the United States",
                       "es": "Ninguna — todo el producto se vende dentro de Estados Unidos"
                     },
-                    "exclusive": true
+                    "exclusive": true,
+                    "retired": true
                   }
                 ],
                 "required": true,
@@ -8910,17 +8930,23 @@
                 "key": "export_destinations",
                 "kind": "text",
                 "label": {
-                  "en": "Which countries do you export to?",
-                  "es": "¿A qué países exporta?"
+                  "en": "Which countries do you export to or plan to export to, directly or indirectly?",
+                  "es": "¿A qué países exporta o planea exportar, directa o indirectamente?"
                 },
-                "coaching": null,
+                "coaching": {
+                  "en": "For indirect export, name the countries your buyer, broker or trader ships to, as far as you know them.",
+                  "es": "Para la exportación indirecta, indique los países a los que envía su comprador, corredor o comerciante, en la medida en que los conozca."
+                },
                 "options": [],
                 "required": true,
                 "visible_when": [
                   {
                     "question": "import_export_activity",
-                    "op": "includes",
-                    "value": "export"
+                    "op": "includes_any",
+                    "value": [
+                      "export",
+                      "indirect_export"
+                    ]
                   }
                 ],
                 "nop_cite": null,
@@ -9355,7 +9381,7 @@
             },
             "education": [
               {
-                "en": "If a pest control company services your buildings, the certifier will want evidence that the company knows the site handles organic product. Their standard programme is usually built around synthetic materials, so an unnotified company is a common route to an unapproved application.",
+                "en": "If a pest control company services your buildings, the certifier will want evidence that the company knows the site handles organic product. Their standard program is usually built around synthetic materials, so an unnotified company is a common route to an unapproved application.",
                 "es": "Si una empresa de control de plagas atiende sus edificios, el certificador querrá evidencia de que la empresa sabe que el sitio maneja producto orgánico. Su programa estándar generalmente se basa en materiales sintéticos, por lo que una empresa no notificada es una vía común hacia una aplicación no aprobada."
               }
             ],
@@ -10072,7 +10098,6 @@
         "nop_cites": [
           "§ 205.105",
           "§ 205.601",
-          "§ 205.605",
           "§ 205.206(e)"
         ],
         "education": [
@@ -10446,8 +10471,8 @@
         "key": "certification_contract",
         "code": "",
         "title": {
-          "en": "Certification Contract",
-          "es": "Contrato de certificación"
+          "en": "Operation profile",
+          "es": "Perfil de la operación"
         },
         "nop_cites": [
           "§ 205.401"
@@ -10968,6 +10993,110 @@
         "primary_contact_records_access",
         "records_maintained_as",
         "import_export_activity"
+      ]
+    },
+    {
+      "module": "g8_0_record_keeping",
+      "label": "retired_none_only",
+      "answers": {
+        "import_export_activity": [
+          "none"
+        ]
+      },
+      "visible_questions": [
+        "s11_records",
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "audit_trail_exhibit",
+        "import_export_activity"
+      ],
+      "missing_required": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "import_export_activity"
+      ],
+      "missing_required_na": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "import_export_activity"
+      ]
+    },
+    {
+      "module": "g8_0_record_keeping",
+      "label": "indirect_export",
+      "answers": {
+        "import_export_activity": [
+          "indirect_export"
+        ]
+      },
+      "visible_questions": [
+        "s11_records",
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "audit_trail_exhibit",
+        "import_export_activity",
+        "export_destinations"
+      ],
+      "missing_required": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "export_destinations"
+      ],
+      "missing_required_na": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "export_destinations"
+      ]
+    },
+    {
+      "module": "g8_0_record_keeping",
+      "label": "no_known_export",
+      "answers": {
+        "import_export_activity": [
+          "none_no_known_export"
+        ]
+      },
+      "visible_questions": [
+        "s11_records",
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "audit_trail_exhibit",
+        "import_export_activity"
+      ],
+      "missing_required": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering"
+      ],
+      "missing_required_na": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering"
       ]
     }
   ]

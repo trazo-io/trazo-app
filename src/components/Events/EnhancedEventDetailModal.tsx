@@ -7,7 +7,6 @@ import {
   Badge,
   Icon,
   Divider,
-  Progress,
   Heading,
   Box,
   SimpleGrid,
@@ -43,6 +42,7 @@ import { useIntl } from 'react-intl';
 import { getReadableFieldValue } from '../../utils/fieldDisplayUtils';
 import { formatCO2e } from '../../utils/carbonDisplayUtils';
 import { getRecordProvenance, type VerificationLevel } from '../../utils/verificationTierHelpers';
+import { isNotEstimated, showsInputsBadge } from 'utils/carbonStatus';
 
 interface CarbonCalculation {
   co2e: number;
@@ -116,13 +116,6 @@ export const EnhancedEventDetailModal: React.FC<EnhancedEventDetailModalProps> =
     if (co2e <= 10) return 'yellow'; // Low impact
     if (co2e <= 25) return 'orange'; // Medium impact
     return 'red'; // High impact
-  };
-
-  const getEfficiencyColor = (score: number) => {
-    if (score >= 80) return 'green';
-    if (score >= 60) return 'blue';
-    if (score >= 40) return 'yellow';
-    return 'red';
   };
 
   const getConfidenceColor = (confidence: string) => {
@@ -332,7 +325,7 @@ export const EnhancedEventDetailModal: React.FC<EnhancedEventDetailModalProps> =
                 <Heading size="sm" color={textColor}>
                   Carbon Impact Analysis
                 </Heading>
-                {event.carbon_data.usda_factors_used && (
+                {showsInputsBadge(event.carbon_data) && (
                   <Tooltip label={intl.formatMessage({ id: 'carbon.badge.epaUsdaTooltip' })}>
                     <Badge colorScheme="blue" size="sm">
                       <HStack spacing={1}>
@@ -350,47 +343,32 @@ export const EnhancedEventDetailModal: React.FC<EnhancedEventDetailModalProps> =
                 <SimpleGrid columns={2} spacing={4}>
                   <Stat>
                     <StatLabel fontSize="xs">Carbon Impact</StatLabel>
-                    <StatNumber
-                      fontSize="xl"
-                      color={`${getCarbonImpactColor(event.carbon_data.co2e)}.500`}>
-                      {formatCO2e(event.carbon_data.co2e)} kg CO₂e
-                    </StatNumber>
-                    <StatHelpText fontSize="xs">
-                      {event.carbon_data.co2e === 0
-                        ? 'No direct emissions'
-                        : 'Carbon footprint estimate'}
-                    </StatHelpText>
-                  </Stat>
-
-                  <Stat>
-                    <StatLabel fontSize="xs">Efficiency Score</StatLabel>
-                    <StatNumber
-                      fontSize="xl"
-                      color={`${getEfficiencyColor(event.carbon_data.efficiency_score)}.500`}>
-                      {Math.round(event.carbon_data.efficiency_score)}%
-                    </StatNumber>
-                    <StatHelpText fontSize="xs">Application efficiency</StatHelpText>
+                    {isNotEstimated(event.carbon_data) ? (
+                      // Run 8 (R8-04): no figure, and why, never 0.
+                      <StatHelpText fontSize="sm">
+                        {intl.formatMessage({ id: 'carbon.notEstimated' })}
+                      </StatHelpText>
+                    ) : (
+                      <>
+                        <StatNumber
+                          fontSize="xl"
+                          color={`${getCarbonImpactColor(event.carbon_data.co2e)}.500`}>
+                          {formatCO2e(event.carbon_data.co2e)} kg CO₂e
+                        </StatNumber>
+                        <StatHelpText fontSize="xs">
+                          {event.carbon_data.co2e === 0
+                            ? 'No direct emissions'
+                            : 'Carbon footprint estimate'}
+                        </StatHelpText>
+                      </>
+                    )}
                   </Stat>
                 </SimpleGrid>
 
-                {/* Efficiency Progress Bar */}
-                <Box>
-                  <HStack justify="space-between" mb={1}>
-                    <Text fontSize="xs" color={mutedColor}>
-                      Application Efficiency
-                    </Text>
-                    <Text fontSize="xs" color={textColor}>
-                      {Math.round(event.carbon_data.efficiency_score)}%
-                    </Text>
-                  </HStack>
-                  <Progress
-                    value={event.carbon_data.efficiency_score}
-                    colorScheme={getEfficiencyColor(event.carbon_data.efficiency_score)}
-                    size="sm"
-                    borderRadius="md"
-                  />
-                </Box>
-
+                {/* No efficiency score or efficiency bar (removed 2026-09-30). The number was a
+                    0-100 grade, and on this consumer path it was built client-side from
+                    `completeData.carbonScore || 0`, so a missing value printed as a red 0%.
+                    Same removal as EventDetailsModal (2026-08-16). */}
                 {/* Data Confidence */}
                 <HStack justify="space-between">
                   <Text fontSize="sm" color={textColor}>

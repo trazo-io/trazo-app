@@ -65,9 +65,12 @@ describe('Spanish consumer prose keys still resolve', () => {
     // the English was reworded again without the key.
     const repaired = [
       'The block was irrigated',
-      'Ground cover between the rows was mown',
-      'Cutting ground cover is mechanical weed control rather than a herbicide application.',
-      'Weeds were controlled with heat instead of chemicals, using a propane flamer.'
+      // Reworded 2026-09-16: "between the rows" asserted a planting geometry no field records
+      // (see consumerDescriptionEvidence.test.ts). The key this test exists to protect moved
+      // with it; the sentence it protects is the CURRENT one.
+      'Vegetation on this block was mown',
+      'You can see when the ground under this crop was mowed.',
+      'Weeds were flamed with a propane burner.'
     ];
     for (const sentence of repaired) {
       expect(en, `${sentence} is no longer in the English module`).toContain(sentence);

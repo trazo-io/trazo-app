@@ -61,7 +61,7 @@ In this page the user can see all the scans that have been done to the QR code o
 
 ## Technologies
 
-React, Chakra UI for the UI, react-google-maps, React Router DOM, react-hook-form, Redux Toolkit, React JWT. The app is deployed in Netlify. The backend is deployed in AWS. You can find the backend repository [here](https://github.com/oscarmunoz1/trazo-back).
+React, Chakra UI for the UI, react-google-maps, React Router DOM, react-hook-form, Redux Toolkit, React JWT. The app is deployed in Netlify. The backend is deployed in AWS. You can find the backend repository [here](https://github.com/trazo-io/trazo-back).
 
 <!-- ## Setup
 

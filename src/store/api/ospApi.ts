@@ -16,6 +16,8 @@ import {
   OSP_ATTACHMENTS_URL,
   OSP_MATERIALS_LIST_ANSWER_URL,
   OSP_MATERIALS_LIST_URL,
+  OSP_MATERIAL_IDENTITIES_URL,
+  OSP_MATERIAL_RESTRICTIONS_URL,
   OSP_REVIEW_URL,
   OSP_MODULE_DEFINITIONS_URL,
   OSP_MODULE_URL,
@@ -39,6 +41,12 @@ import {
   OSPSummary,
   OSPMaterialAnswer,
   OSPMaterialsListResponse,
+  MaterialIdentitiesResponse,
+  MaterialIdentityDecision,
+  MaterialIdentityInput,
+  RestrictionMaterial,
+  RestrictionStatement,
+  RestrictionStatementInput,
   PlanMaterialEntry,
   PlanMaterialInput,
   UpdateOSPData
@@ -255,6 +263,93 @@ const ospApi = baseApi.injectEndpoints({
       ]
     }),
 
+    // OSP alignment T18 (Phase 5): the operator decides what a logged product name IS. A decision
+    // writes nothing on the record or the plan; it can change the materials list and drift findings.
+    getMaterialIdentities: build.query<MaterialIdentitiesResponse, OSPOne>({
+      query: ({ companyId, farmId, ospId }) => ({
+        url: OSP_MATERIAL_IDENTITIES_URL(companyId, farmId, ospId),
+        method: 'GET',
+        credentials: 'include'
+      }),
+      providesTags: (_r, _e, { ospId }) => [{ type: 'OSP', id: Number(ospId) }]
+    }),
+
+    decideMaterialIdentity: build.mutation<
+      MaterialIdentityDecision,
+      OSPOne & { body: MaterialIdentityInput }
+    >({
+      query: ({ companyId, farmId, ospId, body }) => ({
+        url: OSP_MATERIAL_IDENTITIES_URL(companyId, farmId, ospId),
+        method: 'POST',
+        body,
+        credentials: 'include'
+      }),
+      invalidatesTags: (_r, _e, { ospId }) => [
+        { type: 'OSP', id: Number(ospId) },
+        { type: 'OSPRecordTypes', id: Number(ospId) }
+      ]
+    }),
+
+    // T18 slice 2b: restriction statements. A statement approves nothing and clears no finding.
+    getMaterialRestrictions: build.query<{ materials: RestrictionMaterial[] }, OSPOne>({
+      query: ({ companyId, farmId, ospId }) => ({
+        url: OSP_MATERIAL_RESTRICTIONS_URL(companyId, farmId, ospId),
+        method: 'GET',
+        credentials: 'include'
+      }),
+      providesTags: (_r, _e, { ospId }) => [{ type: 'OSP', id: Number(ospId) }]
+    }),
+
+    recordRestrictionStatement: build.mutation<
+      RestrictionStatement,
+      OSPOne & { body: RestrictionStatementInput }
+    >({
+      query: ({ companyId, farmId, ospId, body }) => ({
+        url: OSP_MATERIAL_RESTRICTIONS_URL(companyId, farmId, ospId),
+        method: 'POST',
+        body,
+        credentials: 'include'
+      }),
+      invalidatesTags: (_r, _e, { ospId }) => [
+        { type: 'OSP', id: Number(ospId) },
+        { type: 'OSPRecordTypes', id: Number(ospId) }
+      ]
+    }),
+
+    // Browser test follow-up (2026-10-03): undo a decision or withdraw a statement made by mistake.
+    // Same routes as recording; the body names the row and the reason. Both stay in the history.
+    withdrawMaterialIdentity: build.mutation<
+      MaterialIdentityDecision,
+      OSPOne & { body: { withdraw: number; reason: string } }
+    >({
+      query: ({ companyId, farmId, ospId, body }) => ({
+        url: OSP_MATERIAL_IDENTITIES_URL(companyId, farmId, ospId),
+        method: 'POST',
+        body,
+        credentials: 'include'
+      }),
+      invalidatesTags: (_r, _e, { ospId }) => [
+        { type: 'OSP', id: Number(ospId) },
+        { type: 'OSPRecordTypes', id: Number(ospId) }
+      ]
+    }),
+
+    withdrawRestrictionStatement: build.mutation<
+      RestrictionStatement,
+      OSPOne & { body: { withdraw: number; reason: string } }
+    >({
+      query: ({ companyId, farmId, ospId, body }) => ({
+        url: OSP_MATERIAL_RESTRICTIONS_URL(companyId, farmId, ospId),
+        method: 'POST',
+        body,
+        credentials: 'include'
+      }),
+      invalidatesTags: (_r, _e, { ospId }) => [
+        { type: 'OSP', id: Number(ospId) },
+        { type: 'OSPRecordTypes', id: Number(ospId) }
+      ]
+    }),
+
     addApprovedInput: build.mutation<OSP, OSPApprovedInputArgs>({
       query: ({ companyId, farmId, ospId, kind, id, change_notification_reference, notes }) => ({
         url: OSP_ADD_APPROVED_INPUT_URL(companyId, farmId, ospId),
@@ -407,6 +502,24 @@ const ospApi = baseApi.injectEndpoints({
       ]
     }),
 
+    // The operator's statement that the operation does NOT keep one record type, with a reason
+    // (OSP alignment audit T17-F1). Never satisfies the records attestation for a required record.
+    markOSPRecordTypeNotKept: build.mutation<
+      OSPRecordTypesResponse,
+      OSPOne & { key: string; reason: string }
+    >({
+      query: ({ companyId, farmId, ospId, key, reason }) => ({
+        url: OSP_RECORD_TYPES_URL(companyId, farmId, ospId),
+        method: 'POST',
+        body: { keys: [key], not_kept: true, reason },
+        credentials: 'include'
+      }),
+      invalidatesTags: (_r, _e, { ospId }) => [
+        { type: 'OSPRecordTypes', id: Number(ospId) },
+        { type: 'OSP', id: Number(ospId) }
+      ]
+    }),
+
     // Common OSP required attachments — per-workbook row + blank-cell counts. The files
     // themselves download straight from OSP_ATTACHMENTS_URL with ?workbook=, not through RTK
     // Query, because the response is an .xlsx attachment rather than JSON.
@@ -496,6 +609,12 @@ export const {
   useAddPlanMaterialMutation,
   useDeletePlanMaterialMutation,
   useGetOSPMaterialsListQuery,
+  useGetMaterialIdentitiesQuery,
+  useGetMaterialRestrictionsQuery,
+  useRecordRestrictionStatementMutation,
+  useWithdrawMaterialIdentityMutation,
+  useWithdrawRestrictionStatementMutation,
+  useDecideMaterialIdentityMutation,
   useGetPlanMaterialsQuery,
   useRemoveApprovedInputMutation,
   useGetOSPChangeNotificationsQuery,
@@ -509,6 +628,7 @@ export const {
   useGetOSPAttachmentsQuery,
   useGetOSPReviewQuery,
   useConfirmOSPRecordTypesMutation,
+  useMarkOSPRecordTypeNotKeptMutation,
   useLazyVerifyInputQuery
 } = ospApi;
 

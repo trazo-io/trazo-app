@@ -79,6 +79,13 @@ const STATUS_STYLE: Record<
     border: 'gray.200',
     icon: FaLeaf,
     labelId: 'osp.claim.conventional'
+  },
+  specimen: {
+    colorScheme: 'gray',
+    bg: 'gray.50',
+    border: 'gray.200',
+    icon: FaLeaf,
+    labelId: 'osp.claim.specimen'
   }
 };
 

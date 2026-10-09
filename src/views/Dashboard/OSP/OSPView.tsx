@@ -25,7 +25,6 @@ import {
   HStack,
   Icon,
   Link as ChakraLink,
-  Progress,
   SimpleGrid,
   Spinner,
   Stack,
@@ -46,8 +45,10 @@ import {
   FaRegCircle
 } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
+import { ospStatusLabel } from './ospStatusLabel';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { useGetFarmQuery } from 'store/api/companyApi';
 
 import { config } from 'config/environment';
 import {
@@ -81,7 +82,7 @@ import OSPPlanReviewPanel from './OSPPlanReviewPanel';
 import StateOrganicRegistrationCard, {
   STATE_ORGANIC_PROGRAMS
 } from './StateOrganicRegistrationCard';
-import OSPAnnualUpdateCard from './OSPAnnualUpdateCard';
+import OSPAnnualUpdateCard, { OSPRenewalSummary } from './OSPAnnualUpdateCard';
 import { selectPlanOnFile } from './selectPlanOnFile';
 import { selectWorkingOsp } from './selectWorkingOsp';
 import { useFarm, useFarmState } from 'hooks/useMeasurementSystem';
@@ -267,6 +268,27 @@ const OSPView: React.FC = () => {
   const backToModules = () => navigate(`/admin/dashboard/farm/${farmId}/osp`);
   const currentCompany = useSelector((s: RootState) => s.company.currentCompany);
   const companyId = currentCompany?.id;
+  // The annual update's signer is the farm profile's responsible person; the account only
+  // records the signature (recordkeeping review F-23, 2026-10-07).
+  const sessionUser = useSelector(
+    (s: RootState) =>
+      (
+        s as unknown as {
+          userState?: { user?: { first_name?: string; last_name?: string; email?: string } };
+        }
+      ).userState?.user
+  );
+  const accountName =
+    `${sessionUser?.first_name || ''} ${sessionUser?.last_name || ''}`.trim() ||
+    sessionUser?.email ||
+    '';
+  const { data: farmProfile } = useGetFarmQuery(
+    { companyId: companyId || '', farmId: farmId || '' },
+    { skip: !companyId || !farmId }
+  );
+  const farmContactPerson = (
+    (farmProfile as { contact_person?: string } | undefined)?.contact_person || ''
+  ).trim();
   const farmState = useFarmState(farmId);
   const farm = useFarm(farmId);
 
@@ -738,7 +760,6 @@ const OSPView: React.FC = () => {
     }
     return acc + (isMaterialComplete ? 1 : 0);
   }, 0);
-  const completionPct = Math.round((completeSectionCount / OSP_SECTION_KEYS.length) * 100);
   // Mirrors `OrganicSystemPlanViewSet.perform_update` — only a draft accepts edits.
   const isEditable = editableOsp.status === 'draft';
   const statusBadgeProps = STATUS_BADGE[editableOsp.status] ?? { colorScheme: 'gray' };
@@ -779,11 +800,7 @@ const OSPView: React.FC = () => {
         // component's header slots — pulling the title out left the badge stranded on a line of
         // its own inside the body, reading as content rather than as the plan's state. Same slot
         // the CDFA and Annual cards use for theirs.
-        headerAction={
-          <Badge {...statusBadgeProps}>
-            {intl.formatMessage({ id: `osp.status.${editableOsp.status}` })}
-          </Badge>
-        }>
+        headerAction={<Badge {...statusBadgeProps}>{ospStatusLabel(intl, editableOsp)}</Badge>}>
         <VStack align="stretch" spacing={3}>
           <HStack justify="flex-end" flexWrap="wrap" gap={2}>
             <HStack spacing={2} flexWrap="wrap">
@@ -852,11 +869,7 @@ const OSPView: React.FC = () => {
                 <Text fontSize="xs" color={subtextColor}>
                   {intl.formatMessage(
                     { id: 'osp.completion.sectionsOfTotal' },
-                    {
-                      complete: completeSectionCount,
-                      total: OSP_SECTION_KEYS.length,
-                      pct: completionPct
-                    }
+                    { complete: completeSectionCount, total: OSP_SECTION_KEYS.length }
                   )}
                 </Text>
                 {registrySyncHasWarning && (
@@ -885,7 +898,11 @@ const OSPView: React.FC = () => {
                 </Text>
               )}
             </HStack>
-            <Progress value={completionPct} colorScheme="green" size="xs" borderRadius="full" />
+            {/* Run 8 (R8-10): no percentage and no green bar. The count says which sections
+                have text; it is not a review, an approval or readiness for renewal. */}
+            <Text fontSize="xs" color={subtextColor}>
+              {intl.formatMessage({ id: 'osp.completion.notAReview' })}
+            </Text>
           </Box>
 
           {/* P0-4 — Farmer-facing download for the snapshot PDF generated at
@@ -971,6 +988,13 @@ const OSPView: React.FC = () => {
               {intl.formatMessage({ id: 'osp.parcelReferenceHelp' })}
             </Text>
           </Box>
+        )}
+        {companyId && farmId && (
+          <OSPRenewalSummary
+            companyId={companyId}
+            farmId={farmId}
+            currentYear={new Date().getFullYear()}
+          />
         )}
         <Accordion allowMultiple defaultIndex={[0]}>
           {OSP_SECTION_KEYS.map((key) => {
@@ -1168,6 +1192,7 @@ const OSPView: React.FC = () => {
           planOnFile={annualUpdateTarget}
           producesDraft={annualUpdateProducesDraft}
           currentYear={new Date().getFullYear()}
+          signer={{ responsiblePerson: farmContactPerson, account: accountName }}
         />
       )}
 
@@ -1184,7 +1209,7 @@ const OSPView: React.FC = () => {
         <StandardCard
           mt={4}
           titleIcon={<Icon as={FaHistory} color="green.700" />}
-          title={`${intl.formatMessage({ id: 'osp.version' })}s`}>
+          title={intl.formatMessage({ id: 'osp.versionHistory' })}>
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={2}>
             {ospSummaries.map((s) => {
               const isSelected = s.id === editableOsp.id;

@@ -34,21 +34,33 @@ export const PHOTO_GUIDANCE_ES: Record<string, string> = {
   'Pruning/Trimming': 'Poda',
   Transplanting: 'Trasplante',
   'Equipment Maintenance': 'Mantenimiento de equipos',
+  'Document the maintenance or the cleanout. For a cleanout, show the cleaned equipment, bins or storage and the cleaning product label; for maintenance, the work and the hour meter.':
+    'Documenta el mantenimiento o la limpieza. Para una limpieza, muestra el equipo, los bins o el almacén ya limpios y la etiqueta del producto de limpieza; para un mantenimiento, el trabajo y el horómetro.',
+  'Bins, harvest equipment or storage after cleaning, with no residue or plant material':
+    'Bins, equipo de cosecha o almacén después de la limpieza, sin residuos ni restos vegetales',
+  'The label of the cleaning or sanitizing product used':
+    'La etiqueta del producto de limpieza o desinfección usado',
+  'Maintenance or repair work, with the hour meter reading visible':
+    'El mantenimiento o la reparación, con la lectura del horómetro visible',
+  'Photograph the cleaned surface before the next organic load goes in':
+    'Fotografía la superficie limpia antes de que entre la siguiente carga orgánica',
+  'A clear label photo records which cleaning product was used':
+    'Una foto clara de la etiqueta registra qué producto de limpieza se usó',
   'Equipment Operations (Legacy)': 'Operaciones de equipos (heredado)',
 
   // ---- Subtype guidance paragraphs ----
   'Capture seeding equipment in operation and planted rows showing seed placement. Photos should document the establishment of new crops with visible planting patterns.':
-    'Capture la sembradora en operación y los surcos sembrados mostrando la colocación de la semilla. Las fotos deben documentar el establecimiento del nuevo cultivo con patrones de siembra visibles.',
+    'Captura la sembradora en operación y los surcos sembrados mostrando la colocación de la semilla. Las fotos deben documentar el establecimiento del nuevo cultivo con patrones de siembra visibles.',
   'Document harvesting equipment collecting crops and harvested product. Show the active collection process and crop condition at harvest time.':
-    'Documente la cosechadora recolectando el cultivo y el producto cosechado. Muestre el proceso de recolección en curso y el estado del cultivo al momento de la cosecha.',
+    'Documenta la cosechadora recolectando el cultivo y el producto cosechado. Muestra el proceso de recolección en curso y el estado del cultivo al momento de la cosecha.',
   'Capture irrigation equipment in operation and water being applied to crops. Show active water delivery with visible spray patterns or water flow.':
-    'Capture el equipo de riego en operación y el agua aplicándose al cultivo. Muestre la entrega de agua en curso con patrones de aspersión o flujo visibles.',
+    'Captura el equipo de riego en operación y el agua aplicándose al cultivo. Muestra la entrega de agua en curso con patrones de aspersión o flujo visibles.',
   'Document pruning work in progress and plant condition before/after trimming. Show the maintenance activity improving plant structure and health.':
-    'Documente la poda en curso y el estado de la planta antes y después. Muestre la labor de mantenimiento que mejora la estructura y la salud de la planta.',
+    'Documenta la poda en curso y el estado de la planta antes y después. Muestra la labor de mantenimiento que mejora la estructura y la salud de la planta.',
   'Capture seedlings being moved and transplanted plants in new locations. Document careful handling and proper plant establishment.':
-    'Capture el traslado de las plántulas y las plantas trasplantadas en su nueva ubicación. Documente el manejo cuidadoso y el establecimiento correcto de la planta.',
+    'Captura el traslado de las plántulas y las plantas trasplantadas en su nueva ubicación. Documenta el manejo cuidadoso y el establecimiento correcto de la planta.',
   'Document equipment maintenance, repair work, or operation verification. Show maintenance activity with visible equipment components or hour meter readings.':
-    'Documente el mantenimiento, la reparación o la verificación de operación del equipo. Muestre la labor con los componentes del equipo o la lectura del horómetro visibles.',
+    'Documenta el mantenimiento, la reparación o la verificación de operación del equipo. Muestra la labor con los componentes del equipo o la lectura del horómetro visibles.',
 
   // ---- Weather examples + tips ----
   'Frost damage on crops or plants': 'Daño por helada en cultivos o plantas',
@@ -57,11 +69,11 @@ export const PHOTO_GUIDANCE_ES: Record<string, string> = {
     'Condiciones de sequía (plantas secas o estresadas)',
   'Heavy rain or flooding evidence': 'Evidencia de lluvia intensa o inundación',
   'Wind damage to crops or structures': 'Daño por viento en cultivos o estructuras',
-  'Include date/timestamp in photo if possible': 'Incluya la fecha u hora en la foto si es posible',
+  'Include date/timestamp in photo if possible': 'Incluye la fecha u hora en la foto si es posible',
   'Show plants or crops affected by the weather':
-    'Muestre las plantas o cultivos afectados por el clima',
+    'Muestra las plantas o cultivos afectados por el clima',
   'Include scale reference (hand, ruler) for damage assessment':
-    'Incluya una referencia de escala (mano, regla) para evaluar el daño',
+    'Incluye una referencia de escala (mano, regla) para evaluar el daño',
   'Multiple angles strengthen verification': 'Varios ángulos refuerzan la verificación',
 
   // ---- Production examples + tips ----
@@ -75,10 +87,10 @@ export const PHOTO_GUIDANCE_ES: Record<string, string> = {
     'Operación de equipos (tractor en el campo, riego funcionando)',
   'Field conditions before/after activity': 'Condiciones del lote antes y después de la labor',
   'Show equipment in operation, not just parked':
-    'Muestre el equipo en operación, no solo estacionado',
+    'Muestra el equipo en operación, no solo estacionado',
   'Include field context (rows, crop height, size reference)':
-    'Incluya contexto del lote (surcos, altura del cultivo, referencia de tamaño)',
-  'Time-stamp photos during the activity': 'Tome las fotos con marca de hora durante la labor',
+    'Incluye contexto del lote (surcos, altura del cultivo, referencia de tamaño)',
+  'Time-stamp photos during the activity': 'Toma las fotos con marca de hora durante la labor',
   'Different angles prove the activity actually occurred':
     'Distintos ángulos comprueban que la labor realmente ocurrió',
 
@@ -94,7 +106,7 @@ export const PHOTO_GUIDANCE_ES: Record<string, string> = {
   'Chemical label must be clearly readable (brand, active ingredient)':
     'La etiqueta debe leerse con claridad (marca, ingrediente activo)',
   'Show container size for dosage verification':
-    'Muestre el tamaño del envase para verificar la dosis',
+    'Muestra el tamaño del envase para verificar la dosis',
   'Photo of application equipment being used strengthens verification':
     'Una foto del equipo de aplicación en uso refuerza la verificación',
   'Field condition after application shows completion':
@@ -111,7 +123,7 @@ export const PHOTO_GUIDANCE_ES: Record<string, string> = {
   'Activity should be clearly identifiable in photos':
     'La labor debe identificarse con claridad en las fotos',
   'Include farm context (location, surroundings)':
-    'Incluya contexto de la finca (ubicación, entorno)',
+    'Incluye contexto de la finca (ubicación, entorno)',
   'People or equipment in photo adds credibility':
     'Incluir personas o equipos en la foto aporta credibilidad',
   'Sequential photos show progression of work':
@@ -141,11 +153,11 @@ export const PHOTO_GUIDANCE_ES: Record<string, string> = {
   'Soil amendment materials being applied': 'Aplicación de enmiendas al suelo',
   'Before/after soil condition photos': 'Fotos del suelo antes y después',
   'Soil sample: include scale reference (hand, ruler)':
-    'Muestra de suelo: incluya una referencia de escala (mano, regla)',
+    'Muestra de suelo: incluye una referencia de escala (mano, regla)',
   'Testing: show equipment being used or results displayed':
-    'Análisis: muestre el equipo en uso o los resultados a la vista',
+    'Análisis: muestra el equipo en uso o los resultados a la vista',
   'Depth: indicate depth if relevant to testing':
-    'Profundidad: indíquela si es relevante para el análisis',
+    'Profundidad: indícala si es relevante para el análisis',
   'Before/after: dramatically improves verification credibility':
     'Antes y después: mejora notablemente la credibilidad de la verificación',
 
@@ -161,7 +173,7 @@ export const PHOTO_GUIDANCE_ES: Record<string, string> = {
   'Pest damage: wide shot showing extent + close-up of damage':
     'Daño por plaga: toma amplia que muestre la extensión más un primer plano del daño',
   'Traps: show trap in field location with identifying context':
-    'Trampas: muestre la trampa en su ubicación con contexto que la identifique',
+    'Trampas: muestra la trampa en su ubicación con contexto que la identifique',
   'Insects: macro/close-up photo of actual pest':
     'Insectos: foto macro o primer plano de la plaga real',
   'Scouting: person examining plants with farm context':
@@ -177,7 +189,7 @@ export const PHOTO_GUIDANCE_ES: Record<string, string> = {
   'Document: certificate number and date clearly readable':
     'Documento: número y fecha del certificado claramente legibles',
   'Inspection: show inspector on farm or inspection documents':
-    'Inspección: muestre al inspector en la finca o los documentos de inspección',
+    'Inspección: muestra al inspector en la finca o los documentos de inspección',
   'Agency stamp: official seal or verification mark visible':
     'Sello de la agencia: sello oficial o marca de verificación visible',
   'Recent dates: current certifications strengthen verification':
@@ -190,27 +202,27 @@ export const PHOTO_GUIDANCE_ES: Record<string, string> = {
     'Surcos recién sembrados mostrando el espaciamiento de la semilla',
   'Close-up of seed placement in soil': 'Primer plano de la semilla colocada en el suelo',
   'Show seeding equipment actively working in the field':
-    'Muestre la sembradora trabajando activamente en el lote',
+    'Muestra la sembradora trabajando activamente en el lote',
   'Include wide shots of planted rows showing pattern':
-    'Incluya tomas amplias de los surcos sembrados mostrando el patrón',
+    'Incluye tomas amplias de los surcos sembrados mostrando el patrón',
   'Harvester equipment actively collecting crops':
     'Cosechadora recolectando activamente el cultivo',
   'Harvested product in bins or containers': 'Producto cosechado en bines o contenedores',
   'Field condition during harvest showing crop maturity':
     'Estado del lote durante la cosecha mostrando la madurez del cultivo',
   'Capture harvester in operation, not parked':
-    'Capture la cosechadora en operación, no estacionada',
+    'Captura la cosechadora en operación, no estacionada',
   'Show harvested product quantity for yield verification':
-    'Muestre la cantidad cosechada para verificar el rendimiento',
+    'Muestra la cantidad cosechada para verificar el rendimiento',
   'Irrigation system actively running (sprinklers, drip lines)':
     'Sistema de riego funcionando (aspersores, líneas de goteo)',
   'Water being applied to crops with visible moisture':
     'Agua aplicándose al cultivo con humedad visible',
   'Irrigation pump or control system showing operation':
     'Bomba o sistema de control de riego en operación',
-  'Show water actively flowing or spraying': 'Muestre el agua fluyendo o pulverizando activamente',
+  'Show water actively flowing or spraying': 'Muestra el agua fluyendo o pulverizando activamente',
   'Include irrigation timer or pump hour meter if available':
-    'Incluya el temporizador de riego o el horómetro de la bomba si está disponible',
+    'Incluye el temporizador de riego o el horómetro de la bomba si está disponible',
   'Worker actively pruning or trimming plants': 'Trabajador podando activamente las plantas',
   'Before/after comparison showing pruned branches':
     'Comparación antes y después mostrando las ramas podadas',
@@ -218,16 +230,16 @@ export const PHOTO_GUIDANCE_ES: Record<string, string> = {
   'Before/after shots dramatically improve verification':
     'Las tomas antes y después mejoran notablemente la verificación',
   'Show removed branches/material to document work completion':
-    'Muestre las ramas o el material retirado para documentar el trabajo terminado',
+    'Muestra las ramas o el material retirado para documentar el trabajo terminado',
   'Seedlings being prepared for transplanting': 'Plántulas preparadas para el trasplante',
   'Worker transplanting plants with visible roots':
     'Trabajador trasplantando plantas con las raíces visibles',
   'Newly transplanted rows showing spacing pattern':
     'Surcos recién trasplantados mostrando el patrón de espaciamiento',
   'Show seedling root systems for transparency':
-    'Muestre el sistema radicular de las plántulas para mayor transparencia',
+    'Muestra el sistema radicular de las plántulas para mayor transparencia',
   'Document transplanting technique and spacing':
-    'Documente la técnica de trasplante y el espaciamiento',
+    'Documenta la técnica de trasplante y el espaciamiento',
   'Maintenance or repair work being performed on equipment':
     'Mantenimiento o reparación realizándose sobre el equipo',
   'Equipment hour meter or odometer reading clearly visible':
@@ -236,7 +248,7 @@ export const PHOTO_GUIDANCE_ES: Record<string, string> = {
   'Hour meter readings provide strong verification':
     'Las lecturas del horómetro aportan una verificación sólida',
   'Show maintenance parts or fluids being replaced':
-    'Muestre las piezas o los fluidos que se están reemplazando',
+    'Muestra las piezas o los fluidos que se están reemplazando',
 
   // ---- toAchieveTier sentences (composed into the guidance line, one pair per event type) ----
   'One clear photo showing the weather impact (frost damage, hail damage, drought stress, etc.)':

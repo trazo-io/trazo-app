@@ -185,53 +185,53 @@ const SUMMARY_NOUN_DEFAULTS: Record<string, string> = {
 const GENERIC_FALLBACK_COPY: readonly string[] = [
   // ---- en-US (eventDescriptions.ts) ----
   // production
-  'This agricultural practice follows sustainable farming methods to ensure high-quality food production.',
-  'Part of responsible farming practices that support environmental stewardship and long-term agricultural sustainability.',
+  'This practice is recorded by the farm.',
+  'This practice is part of the season record of the farm.',
   // weather
   'Weather is the one thing a farm cannot control, and it is logged here beside everything it can.',
-  'Weather monitoring enables precise agricultural decisions that optimize resource use and minimize environmental impact.',
+  'Conditions on the day are logged beside the work done that day.',
   // chemical
   'What was applied, where and when is on record for this crop.',
-  'Part of integrated farming approach that balances productivity with environmental responsibility.',
+  'This application is part of the season record for this crop.',
   // soil
-  'This soil management practice supports healthy growing conditions and sustainable farming.',
-  'Documented soil management demonstrates commitment to soil health and environmental stewardship.',
+  'This soil work is part of the season record for this crop.',
+  'The soil work, its date and its area are on record.',
   // pest
   'The method used against the pest is on record, alongside the counts that prompted it.',
-  'Part of integrated pest management approach that reduces reliance on synthetic pesticides and promotes ecological balance.',
+  'The pest management method is on record with its date.',
   // general
-  'This farm management activity supports efficient operations and sustainable farming practices.',
-  'Part of comprehensive farm management that ensures operational efficiency and environmental responsibility.',
+  'This management work is part of the season record of the farm.',
+  'Farm management activity recorded.',
   // equipment
-  'This equipment operation supports efficient and sustainable farming practices.',
-  'Documented equipment operations demonstrate transparent farming practices and operational efficiency.',
+  'This equipment work is part of the season record for this crop.',
+  'The machine, the work and the date are on record.',
   // business
-  'Supporting agricultural transparency and sustainability',
+  'Business record',
   'The document, the issuer and the date are on record for this crop.',
   // ---- es-419 (eventDescriptions.es.ts) ----
   // production
-  'Esta práctica agrícola sigue métodos de agricultura sostenible para asegurar una producción de alimentos de alta calidad.',
-  'Parte de prácticas agrícolas responsables que apoyan el cuidado ambiental y la sostenibilidad agrícola a largo plazo.',
+  'Esta práctica figura en el registro de la finca.',
+  'Esta práctica forma parte del registro de la temporada de la finca.',
   // weather
   'El clima es lo único que una finca no puede controlar, y queda registrado aquí junto a todo lo que sí puede.',
-  'El monitoreo del clima permite tomar decisiones agrícolas precisas que optimizan el uso de recursos y minimizan el impacto ambiental.',
+  'Las condiciones del día quedan registradas junto al trabajo de ese día.',
   // chemical
   'Qué se aplicó, dónde y cuándo queda registrado para este cultivo.',
-  'Parte de un enfoque agrícola integrado que equilibra la productividad con la responsabilidad ambiental.',
+  'Esta aplicación forma parte del registro de la temporada del cultivo.',
   // soil
-  'Esta práctica de manejo del suelo favorece condiciones de cultivo saludables y la agricultura sostenible.',
-  'El manejo del suelo documentado demuestra el compromiso con la salud del suelo y el cuidado del medio ambiente.',
+  'Este trabajo en el suelo forma parte del registro de la temporada del cultivo.',
+  'El trabajo en el suelo, su fecha y su área quedan registrados.',
   // pest
   'El método usado contra la plaga queda registrado, junto con los conteos que lo motivaron.',
-  'Parte de un enfoque de manejo integrado de plagas que reduce la dependencia de pesticidas sintéticos y promueve el equilibrio ecológico.',
+  'El método de manejo de plagas queda registrado con su fecha.',
   // general
-  'Esta actividad de gestión agrícola respalda operaciones eficientes y prácticas agrícolas sostenibles.',
-  'Parte de un manejo integral de la finca que asegura la eficiencia operativa y la responsabilidad ambiental.',
+  'Este trabajo de gestión forma parte del registro de la temporada de la finca.',
+  'Actividad de gestión de la finca registrada.',
   // equipment
-  'Esta operación de equipo respalda prácticas agrícolas eficientes y sostenibles.',
-  'Las operaciones de equipo documentadas demuestran prácticas agrícolas transparentes y eficiencia operativa.',
+  'Este trabajo con equipo forma parte del registro de la temporada del cultivo.',
+  'La máquina, el trabajo y la fecha quedan registrados.',
   // business
-  'Apoyo a la transparencia y la sostenibilidad agrícola',
+  'Registro de la empresa',
   'El documento, el emisor y la fecha quedan registrados para este cultivo.',
   'Contribuye a la agricultura sostenible y al cuidado del medio ambiente'
 ];
@@ -1211,7 +1211,19 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 // the chip vocabulary has one source of truth. The client
                 // derivation below stays as fallback for older payloads.
                 const serverInput = (event as any).input_status as
-                  | { status?: string; label?: string }
+                  | {
+                      status?: string;
+                      label?: string;
+                      // Served only with `organic_approved`: a National List substance linked
+                      // to the record on an UNCONFIRMED basis. Not evidence for the chip, but
+                      // the tooltip that said Trazo found nothing was false for such a record
+                      // (recordkeeping review F-09).
+                      national_list_link?: {
+                        substance?: string;
+                        cfr_section?: string;
+                        basis?: string;
+                      };
+                    }
                   | undefined;
                 const organicStatus =
                   event.organic_approved ?? (event as any).extra_data?.organic_approved;
@@ -1233,7 +1245,10 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   : organicStatus &&
                     organicStatus !== 'not_organic' &&
                     organicStatus !== 'no' &&
-                    organicStatus !== 'not_applicable';
+                    organicStatus !== 'not_applicable' &&
+                    // Run 8 (review of app #85): "Not yet confirmed" is no basis at all, and the
+                    // gate is an exclusion list, so an unlisted value earned the "Organic" chip.
+                    organicStatus !== 'unverified';
                 // The server-resolved STATUS wins when present (claim_authority owns which
                 // tier of evidence exists); the wording is then localized here. Rendering
                 // `serverInput.label` directly — as this did until 2026-08-09 — printed the
@@ -1273,6 +1288,29 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 const organicTooltipKey =
                   (serverInput?.status && ORGANIC_TOOLTIP_KEYS[serverInput.status]) ??
                   'consumer.eventCard.organic.tooltipGrowerReported';
+                // Only a complete link with the one basis the copy states (review of app #91):
+                // a partial object must not print "(, 7 CFR § )", and a basis the sentence does
+                // not describe must fall back to the plain record wording.
+                const candidateLink =
+                  serverInput?.status === 'organic_approved'
+                    ? serverInput.national_list_link
+                    : undefined;
+                const nationalListLink =
+                  candidateLink &&
+                  candidateLink.substance &&
+                  candidateLink.cfr_section &&
+                  candidateLink.basis === 'not_confirmed'
+                    ? candidateLink
+                    : undefined;
+                const organicTooltip = nationalListLink
+                  ? intl.formatMessage(
+                      { id: 'consumer.eventCard.organic.tooltipGrowerReportedNationalListLink' },
+                      {
+                        substance: nationalListLink.substance,
+                        cfr: nationalListLink.cfr_section
+                      }
+                    )
+                  : intl.formatMessage({ id: organicTooltipKey });
                 // Server distinguishes "explicitly conventional" from
                 // "farmer didn't classify" — only the former may carry the
                 // conventional label (claim-safety: absence of classification
@@ -1284,9 +1322,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 return (
                   <HStack spacing={2} flexWrap="wrap">
                     {hasOrganicStatus && (
-                      <Tooltip
-                        label={intl.formatMessage({ id: organicTooltipKey })}
-                        placement="top">
+                      <Tooltip label={organicTooltip} placement="top">
                         {/* Solid green = a third-party catalog match (OMRI). A National List
                             citation or the grower's own record gets the same pill SHAPE — so
                             the statuses stay comparable rather than looking like different
@@ -1316,9 +1352,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                           // the surface it matters most. Every other claim on this page has a
                           // visible "What this means" affordance; this one now has its own.
                           tabIndex={0}
-                          aria-label={`${organicChipText} — ${intl.formatMessage({
-                            id: organicTooltipKey
-                          })}`}>
+                          aria-label={`${organicChipText} — ${organicTooltip}`}>
                           <HStack spacing={1}>
                             {isVerifiedListing && (
                               <Icon as={FaLeaf} aria-hidden="true" boxSize={3} />
@@ -1591,7 +1625,9 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   color={secondaryText}
                   fontStyle="italic"
                   lineHeight="1.5"
-                  noOfLines={slim && !isExpanded ? 2 : undefined}>
+                  // Run 8 (R8-17): long notes (regulation numbers, rates, ticket ids) took over
+                  // the lot story. Collapsed cards clamp them; "show more" opens the full note.
+                  noOfLines={!isExpanded ? (slim ? 2 : 3) : undefined}>
                   "{event.observation}"
                 </Text>
               </Box>

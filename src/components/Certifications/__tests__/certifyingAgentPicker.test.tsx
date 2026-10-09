@@ -123,9 +123,12 @@ describe('CertifyingAgentPicker', () => {
   it('says so when Trazo carries no register for the picked agent', () => {
     renderPicker();
     fireEvent.change(select(), { target: { value: 'Organic Certifiers, Inc.' } });
-    const line = screen.getByText(/doesn't carry OCI's form numbers yet/).textContent || '';
-    expect(line).toMatch(/Common OSP \(CCOF's forms\)/);
-    expect(line).toMatch(/coverage page tells your reviewer so/);
+    // Run 8 (R8-12): the packet borrows no agent's numbering for an agent with no register, and
+    // never says "the content is the same". The line says what the packet's coverage page says.
+    const line = screen.queryByText(/holds no form register for OCI/)?.textContent || '';
+    expect(line).toMatch(/borrows no agent's form numbers/);
+    expect(line).toMatch(/ask OCI which of its forms apply/);
+    expect(line).not.toMatch(/CCOF|same/);
   });
 
   it('opens a stored name that is not on the list in the Other box instead of dropping it', () => {

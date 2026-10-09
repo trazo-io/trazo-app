@@ -41,7 +41,8 @@ const ALL_IDS = [...new Set([...REFERENCED, ...INDIRECT])];
 describe('AddCompany i18n', () => {
   it('reads the component (guards the guard)', () => {
     expect(SOURCE.length).toBeGreaterThan(20_000);
-    expect(ALL_IDS.length).toBeGreaterThan(80);
+    // 63 ids after the goals step left (recordkeeping review F-11, 2026-10-07); was > 80.
+    expect(ALL_IDS.length).toBeGreaterThan(50);
   });
 
   it('every id it references exists in BOTH locales', () => {
@@ -102,25 +103,11 @@ describe('AddCompany i18n', () => {
     expect(validationIds.length).toBeGreaterThanOrEqual(12);
   });
 
-  it('the goal-count alert pluralises through ICU', () => {
-    // `${n} Goals Selected` could render "1 Goals Selected", and Spanish needs agreement on
-    // both the noun and the participle.
-    for (const [locale, catalogue] of [
-      ['en-US', EN],
-      ['es-419', ES]
-    ] as const) {
-      const value = catalogue['company.form.alert.goalsSelected.title'];
-      expect(value, `${locale} lost the plural`).toMatch(/\{count,\s*plural,/);
-      expect(value).toContain('one {');
-      expect(value).toContain('other {');
-    }
-  });
-
   it('wire values are NOT translated', () => {
     /*
-     * `legal_structure` and the sustainability goal ids are posted to the API and read back by
-     * `history/services/transparency_response_formatter.py`. Translating one would change what
-     * a shopper sees and orphan every row already stored.
+     * `legal_structure` is posted to the API. Translating it would orphan every row already
+     * stored. (The sustainability goal ids left this list with the goals step, recordkeeping
+     * review F-11, 2026-10-07.)
      */
     for (const wire of [
       'sole_proprietorship',
@@ -128,73 +115,10 @@ describe('AddCompany i18n', () => {
       'llc',
       'corporation',
       'cooperative',
-      'family_farm',
-      'full_transparency',
-      'water_conservation',
-      'soil_health',
-      'biodiversity',
-      'waste_reduction',
-      'renewable_energy'
+      'family_farm'
     ]) {
       expect(SOURCE).toContain(`'${wire}'`);
       expect(EN[wire], `${wire} must not be a message key`).toBeUndefined();
     }
-  });
-
-  it('goal tiles carry no per-goal colour at all', () => {
-    /*
-     * The tiles used to hold `color: 'green' | 'blue' | 'orange' | 'purple' | 'teal' |
-     * 'yellow'`, three of which this theme does not define — an `orange.*` token silently
-     * resolves to CHAKRA's orange (`.claude/rules/frontend.md`).
-     *
-     * MEASURED, amber could not carry the tile at ANY step (ramp tops out at #E65100):
-     *   amber.800 on amber.50 = 2.90:1  (text owes 4.5)
-     *   white on amber.700    = 2.70:1  (icon owes 3.0)
-     * And a multi-select's hue carries no meaning, which the colour rule forbids outright.
-     * So the assertion is not "no foreign palette" — it is "no per-goal palette".
-     */
-    const goalsBlock = SOURCE.slice(
-      SOURCE.indexOf('const SUSTAINABILITY_GOALS'),
-      SOURCE.indexOf('function AddCompany')
-    );
-
-    expect(goalsBlock.length).toBeGreaterThan(500); // anti-vacuity
-    expect(goalsBlock).not.toMatch(/color:\s*'/);
-    expect(SOURCE).not.toContain('goal.color');
-  });
-
-  it('the goal tile paints glyphs at .700 or darker', () => {
-    /*
-     * MEASURED on the theme's green ramp:
-     *   white on green.500 = 2.78:1 ⛔ (below even the 3.0 non-text floor) — what shipped
-     *   green.600 as text  = 4.00:1 ⛔ on green.50 — what shipped
-     *   green.800 on green.50 = 7.65 ✓ · white on green.700 = 5.13 ✓ · green.700 on
-     *   green.100 = 4.56 ✓ · green.600 border on white = 4.12 ✓ (boundary only)
-     */
-    const card = SOURCE.slice(
-      SOURCE.indexOf('const SustainabilityGoalCard'),
-      SOURCE.indexOf('return (\n    <StandardPage')
-    );
-
-    expect(card.length).toBeGreaterThan(800); // anti-vacuity
-
-    /*
-     * Line-scoped, not regex-over-the-blob. The first version of this check looked for
-     * `color={'green.600'` and so missed `color={isSelected ? 'green.600' : 'gray.600'}` —
-     * the exact shape the file actually uses, and the exact shape `.claude/rules/frontend.md`
-     * warns about: "the colour arrives through a variable, not a literal prop — grep the
-     * DECLARATION, not the call site."
-     */
-    const lines = card.split('\n');
-    const paintsGlyphs = (line: string) =>
-      /\b(color|bg)=/.test(line) && !/\bborderColor=/.test(line);
-    const tooLight = lines
-      .filter((line) => paintsGlyphs(line) && /'green\.[56]00'/.test(line))
-      .map((line) => line.trim());
-
-    expect(tooLight, 'green.500/600 paint glyphs here; both fail their floor').toEqual([]);
-    // And the boundary use IS still expected, so the scan is not passing by finding nothing.
-    expect(card).toMatch(/borderColor=\{isSelected \? 'green\.600'/);
-    expect(card).toContain('aria-pressed');
   });
 });

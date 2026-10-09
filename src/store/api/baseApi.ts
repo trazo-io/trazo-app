@@ -54,7 +54,6 @@ export const baseApi = createApi({
     'Media',
     'PresignedUrl',
     'DashboardComprehensive',
-    'CarbonScopeBreakdown',
     'CarbonAnalytics',
     'VoiceConfig',
     'Certification',
@@ -73,7 +72,9 @@ export const baseApi = createApi({
     'OSPReview',
     'OSPRecordTypes',
     'PostHarvestFacility',
-    'SeasonPlan'
+    'SeasonPlan',
+    'FieldNote',
+    'CrewSender'
   ]
 });
 

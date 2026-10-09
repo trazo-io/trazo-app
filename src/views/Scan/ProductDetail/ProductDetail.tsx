@@ -138,7 +138,7 @@ const CarbonExplainerLoader = () => (
 );
 // Navigation Components
 import { NavigationBottomBar } from '../../../components/Navigation/NavigationBottomBar';
-import { resolveHarvestDates } from '../../../utils/consumerDisplay';
+import { resolveProductionDisplayDates } from '../../../utils/consumerDisplay';
 
 // Educational modal content
 const EducationModal = ({
@@ -334,6 +334,50 @@ function ProductDetail() {
       refetchOnFocus: false
     }
   );
+
+  // The transparency payload exposes harvest completion as
+  // farm_context.production_period.end (transparency_response_formatter.py:198).
+  // Neither top-level finish_date nor product.end_date exist on this endpoint, which is
+  // why the hero never showed a harvest date.
+  //
+  // 🔴 2026-08-20 — but BOTH of those are the day the grower CLOSED the season, not the day
+  // the fruit came off. `resolveHarvestDates` reads the harvest records instead and only
+  // falls back to the close date when a lot has none. See the comment on that helper for
+  // why a three-day drift here is a real problem for a produce buyer rather than a
+  // cosmetic one.
+  const seasonClosedDate =
+    (completeData as any)?.farm_context?.production_period?.end ||
+    (completeData as any)?.finish_date;
+  // ONE derivation for every date this page prints, so the hero, the HARVEST pillar and the
+  // parcel card cannot disagree. See `resolveProductionDisplayDates`.
+  //
+  // 🔴 2026-09-18 — COMPONENT scope, deliberately. These consts lived inside the hero's
+  // IIFE, while the parcel card that reads `plantingDate` renders in a SECOND IIFE ~1200
+  // lines below: the identifier was out of scope there and every buyer page died on
+  // `ReferenceError: plantingDate is not defined` behind the error boundary ("We hit a
+  // snag loading this page"). A page-level crash, not a missing row.
+  const displayDates = resolveProductionDisplayDates(
+    (completeData as any)?.timeline,
+    seasonClosedDate
+  );
+  // ⛔ GATED HERE, not at each call site.
+  //
+  // 🔴 2026-09-24 — the first cut applied `harvestFromRecords` only where the parcel card is
+  // built and handed the hero and the HARVEST pillar the ungated value. Both label it
+  // "Harvested {date}" (`consumer.hero.harvestedLabel`, `consumer.trust.harvested`), and
+  // `resolveHarvestDates` falls back to the season-close date when a lot has no HA record — so
+  // such a lot read "Harvested Aug 12" at the top and "SEASON CLOSED Aug 12" with no harvest
+  // row below. The same date under two labels that contradict each other, which is the exact
+  // defect this change exists to remove, re-created by gating one consumer of three.
+  //
+  // There is one harvest date on this page, and it is undefined unless a harvest RECORD
+  // produced it. Season close is carried separately by `seasonClosedForDisplay`.
+  const harvestDate = displayDates.harvestFromRecords ? displayDates.harvestDate : undefined;
+  const harvestDateStart = displayDates.harvestFromRecords
+    ? displayDates.harvestDateStart
+    : undefined;
+  const seasonClosedForDisplay = displayDates.seasonClosedDate;
+  const plantingDate = displayDates.plantingDate;
 
   // Blockchain integrity check — runs whenever production is finalized (has finalization_hash)
   // OR has blockchain data (tx_hash). This closes the gap between finalization and
@@ -634,14 +678,19 @@ function ProductDetail() {
     return { score, isVerified, txHash: blockchainData?.tx_hash };
   };
 
-  // Helper function to get accurate carbon footprint
+  // Helper function to get the carbon figure shown to a SHOPPER.
+  //
+  // GROSS EMISSIONS ONLY. NEVER `net_impact`. This is the public QR page. Offsets are
+  // purchased, self-entered and self-marked verified (`create_secure_carbon_offset`), so
+  // subtracting them here manufactures an environmental benefit claim from the farm's own
+  // numbers: FTC 16 CFR 260.5 / 260.4, and EU ECGT 2024/825 (live 2026-09-27) bans
+  // self-created sustainability labels outright.
+  //
+  // Fixed 2026-09-23. This read `net_impact` first, so a farm with more recorded offsets
+  // than emissions handed CarbonImpactExplainer a NEGATIVE number, which it rendered as
+  // "Very Low Emissions" with a green "Carbon Stored" badge. `net_impact` stays on the
+  // payload for the farmer's own dashboard; it must not reach this page.
   const getAccurateCarbonFootprint = (): number => {
-    // Use transparency API carbon data (consolidated endpoint)
-    if (completeData?.carbon_impact?.net_impact !== undefined) {
-      return completeData.carbon_impact.net_impact;
-    }
-
-    // Fallback to total emissions
     if (completeData?.carbon_impact?.total_emissions !== undefined) {
       return completeData.carbon_impact.total_emissions;
     }
@@ -669,7 +718,7 @@ function ProductDetail() {
   // remain in src/components/Notifications for producer-side use.
 
   // Navigation state - TRANSPARENCY FIRST
-  const [activeSection, setActiveSection] = useState('transparency');
+  const [activeSection, setActiveSection] = useState('lot');
   const [isUserScrolling, setIsUserScrolling] = useState(false);
 
   const handleEducationOpen = (topic: string) => {
@@ -684,20 +733,26 @@ function ProductDetail() {
       if (isUserScrolling) return;
 
       const sections = [
-        { id: 'transparency', element: document.getElementById('transparency-section') },
-        { id: 'carbon', element: document.getElementById('carbon-section') },
+        // Page order (the loop below walks it backwards). Run 8: emissions sit after the farm.
+        { id: 'lot', element: document.getElementById('transparency-section') },
+        { id: 'record', element: document.getElementById('journey-section') },
         { id: 'farm', element: document.getElementById('farm-section') }
       ];
 
       const scrollPosition = window.scrollY + 200; // Offset for header
 
+      let matched = false;
       for (let i = sections.length - 1; i >= 0; i--) {
         const section = sections[i];
         if (section.element && section.element.offsetTop <= scrollPosition) {
           setActiveSection(section.id);
+          matched = true;
           break;
         }
       }
+      // At the very top (above the lot summary's offset) nothing matches; the page is the lot.
+      // Without this default the tab last tapped stayed lit (review of app #101).
+      if (!matched) setActiveSection('lot');
     };
 
     window.addEventListener('scroll', handleScroll);
@@ -799,31 +854,6 @@ function ProductDetail() {
             (farmerData?.city && farmerData?.state
               ? `${farmerData.city}, ${farmerData.state}`
               : undefined);
-          // The transparency payload exposes harvest completion as
-          // farm_context.production_period.end (transparency_response_formatter.py:198).
-          // Neither top-level finish_date nor product.end_date exist on this
-          // endpoint — which is why the hero never showed a harvest date.
-          //
-          // 🔴 2026-08-20 — but BOTH of those are the day the grower CLOSED the season, not
-          // the day the fruit came off. `resolveHarvestDates` reads the harvest records
-          // instead and only falls back to the close date when a lot has none. See the
-          // comment on that helper for why a three-day drift here is a real problem for a
-          // produce buyer rather than a cosmetic one.
-          const seasonClosedDate =
-            (completeData as any)?.farm_context?.production_period?.end ||
-            (completeData as any)?.finish_date;
-          const harvestWindow = resolveHarvestDates(
-            (completeData as any)?.timeline,
-            seasonClosedDate
-          );
-          // `?? undefined`: both consumers declare `harvestDate?: string`, and
-          // `resolveHarvestDates` returns null when a lot has neither a harvest record
-          // nor a close date. Passing null where the prop says optional-string works by
-          // accident today and stops working the moment strictNullChecks is turned on.
-          const harvestDate = harvestWindow.last ?? undefined;
-          const harvestDateStart = harvestWindow.isRange
-            ? harvestWindow.first ?? undefined
-            : undefined;
           // First production photo (S3 URL) — hero background. `images` is a
           // string[]; images[0] is the explicit cover (cover_image_url) when set,
           // else the first auto-collected photo. Tolerate the legacy {image}
@@ -1100,10 +1130,19 @@ function ProductDetail() {
                 // When OrganicClaimBadge is active for certified organic, the USDA Organic
                 // certification is already represented there — filter it out of the list
                 // to avoid redundant display. Show its certifier as an attribution line instead.
+                // 🔴 2026-09-24 — 'specimen' added to the exclusion list.
+                //
+                // Without it a fabricated operation kept this block, and the attribution line
+                // below printed "Certifier: <real accredited agent>" off the invented
+                // certificate row. The green "Verified via USDA Organic Integrity Database"
+                // line was already gated, but naming a real certifier is the OTHER half of the
+                // harm the specimen work was written to stop — the validator's own docstring
+                // says so in those words.
                 const showingOrganicClaim =
                   organicClaim &&
                   organicClaim.status !== 'conventional' &&
-                  organicClaim.status !== 'self_reported';
+                  organicClaim.status !== 'self_reported' &&
+                  organicClaim.status !== 'specimen';
                 const usdaOrganicCert = showingOrganicClaim
                   ? allCertifications.find(
                       (c: any) =>
@@ -1602,20 +1641,11 @@ function ProductDetail() {
 
               <Divider borderColor="gray.200" />
 
-              {/* Environmental Impact + Production Journey */}
-              <Box id="carbon-section">
+              {/* Production Journey: the record itself, and where the bottom bar's "Record" tab
+                  lands (2026-10-08). The id read "carbon-section" from before run 8 moved the
+                  carbon card below the farm; the tab landed on the summary cards above instead. */}
+              <Box id="journey-section">
                 <VStack spacing={4} align="stretch">
-                  {/* Consumer-Friendly Carbon Impact Explainer - Progressive Loading */}
-                  <Suspense fallback={<CarbonExplainerLoader />}>
-                    <CarbonImpactExplainer
-                      totalCO2e={getAccurateCarbonFootprint()}
-                      productName={completeData?.product?.name || completeData?.farmer?.name}
-                      relatableFootprint={completeData?.relatableFootprint}
-                      backendComparisons={completeData?.carbon_impact?.comparisons}
-                      consumerContext={completeData?.carbon_impact?.consumer_context}
-                    />
-                  </Suspense>
-
                   {(() => {
                     // PRIORITY 1: Use complete API timeline (includes transparency fields) if it has events
                     // Get timeline events from consolidated transparency API response
@@ -1779,6 +1809,9 @@ function ProductDetail() {
                             efficiency_score: completeData?.carbonScore || 0,
                             total_emissions: completeData?.totalEmissions || 0,
                             total_offsets: completeData?.totalOffsets || 0,
+                            // Carries GROSS emissions despite the legacy key name.
+                            // NEVER "correct" this to carbon_impact.net_impact: this is
+                            // a public surface and net smuggles in self-entered offsets.
                             net_footprint: getAccurateCarbonFootprint(),
                             verification_confidence: ((event as any).verification_confidence
                               ? 'high'
@@ -1926,11 +1959,10 @@ function ProductDetail() {
                   total_establishments: (completeData as any)?.farmer?.company
                     ?.total_establishments,
                   total_parcels: (completeData as any)?.farmer?.company?.total_parcels,
-                  // Sustainability data from company onboarding (transparency-first)
-                  // Maps from farm_context.company_sustainability in the transparency API response
-                  sustainability_goals:
-                    (completeData as any)?.farm_context?.company_sustainability?.goals ||
-                    (completeData as any)?.farmer?.company?.sustainability_goals,
+                  // Sustainability data from company onboarding (transparency-first).
+                  // Maps from farm_context.company_sustainability in the transparency API
+                  // response. The ticked sign-up goals are not mapped (recordkeeping review
+                  // F-11): the payload no longer serves them and the page no longer prints them.
                   crop_focus:
                     (completeData as any)?.farm_context?.company_sustainability?.crop_focus ||
                     (completeData as any)?.farmer?.company?.crop_focus,
@@ -2008,8 +2040,27 @@ function ProductDetail() {
                   areaUnit: 'acres',
                   soilType: (completeData as any)?.parcel?.soilType,
                   cropType: (completeData as any)?.product?.name,
-                  plantingDate: (completeData as any)?.start_date,
-                  harvestDate: (completeData as any)?.finish_date,
+                  // 🔴 2026-09-16 — these two lines used to read the payload directly, and both
+                  // were wrong.
+                  //
+                  // `harvestDate: finish_date` is the day the grower CLOSED the season, not the
+                  // day anything was picked, and `ParcelMapInfo` prints it under the label
+                  // "HARVEST DATE". On the audited blueberry lot the top of the page showed the
+                  // real pick window (Jul 20 - Aug 7) from the harvest records while this card
+                  // showed Aug 12; on the carrot lot, Sep 8-19 against Sep 30. Two different
+                  // facts, one label, on one page.
+                  //
+                  // `plantingDate: start_date` read a key that does not exist on this endpoint
+                  // at all — `farm_context` (which carries `production_period.start`) is popped
+                  // server-side before the response is returned — so the row rendered only from
+                  // a stale cached payload shape.
+                  //
+                  // Both now come from the SAME resolver the hero and the HARVEST pillar use,
+                  // so the three cannot disagree.
+                  plantingDate: plantingDate,
+                  harvestDate,
+                  harvestDateStart: harvestDateStart,
+                  seasonClosedDate: seasonClosedForDisplay,
                   elevation: (completeData as any)?.parcel?.elevation,
                   slope: (completeData as any)?.parcel?.slope,
                   irrigationType: (completeData as any)?.parcel?.irrigationType,
@@ -2056,6 +2107,20 @@ function ProductDetail() {
                 }}
               />
             </VStack>
+          </Box>
+
+          {/* Run 8 (R8-14): estimated emissions, after the lot's story and the farm, closed
+              until the shopper opens it. The scope statement travels inside the card. */}
+          <Box id="emissions-section" w="100%">
+            <Suspense fallback={<CarbonExplainerLoader />}>
+              <CarbonImpactExplainer
+                totalCO2e={getAccurateCarbonFootprint()}
+                productName={completeData?.product?.name || completeData?.farmer?.name}
+                relatableFootprint={completeData?.relatableFootprint}
+                backendComparisons={completeData?.carbon_impact?.comparisons}
+                consumerContext={completeData?.carbon_impact?.consumer_context}
+              />
+            </Suspense>
           </Box>
 
           <Divider borderColor="gray.200" />

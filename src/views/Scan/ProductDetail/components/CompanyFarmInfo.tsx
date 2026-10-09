@@ -25,7 +25,6 @@ import {
   FaStar,
   FaInfoCircle,
   FaTractor,
-  FaLeaf,
   FaFacebook,
   FaInstagram
 } from 'react-icons/fa';
@@ -73,7 +72,6 @@ interface CompanyFarmInfoProps {
       tier: string;
     };
     // Sustainability data from company onboarding (transparency-first)
-    sustainability_goals?: string[];
     crop_focus?: string;
     sustainability_commitment?: string;
   };
@@ -144,7 +142,18 @@ interface CompanyFarmInfoProps {
     soilType?: string;
     cropType?: string;
     plantingDate?: string;
+    /** LAST harvest record for the lot. ⛔ Never the season-close date — see `seasonClosedDate`. */
     harvestDate?: string;
+    /** FIRST harvest record, set only when the passes span more than one local day. */
+    harvestDateStart?: string;
+    /**
+     * The day the grower closed the season (`History.finish_date`).
+     *
+     * A different fact from the last pick and labelled as such. Passing it as `harvestDate` is
+     * what put Aug 12 under "HARVEST DATE" on a lot whose records ended Aug 7, three inches
+     * below the correct range.
+     */
+    seasonClosedDate?: string;
     elevation?: number;
     slope?: string;
     irrigationType?: string;
@@ -309,33 +318,10 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
               </Text>
             )}
 
-            {/* Sustainability Goals - From company onboarding (transparency-first) */}
-            {companyData.sustainability_goals && companyData.sustainability_goals.length > 0 && (
-              <VStack align="start" spacing={2}>
-                <HStack spacing={2}>
-                  <Icon as={FaLeaf} color="green.500" boxSize={4} />
-                  <Text fontSize="sm" fontWeight="semibold" color={textColor}>
-                    {intl.formatMessage({
-                      id: 'consumer.farm.sustainabilityCommitment',
-                      defaultMessage: 'Sustainability Commitment'
-                    })}
-                  </Text>
-                </HStack>
-                <HStack spacing={2} flexWrap="wrap">
-                  {companyData.sustainability_goals.map((goal, index) => (
-                    <Badge
-                      key={index}
-                      colorScheme="green"
-                      borderRadius="full"
-                      px={3}
-                      py={1}
-                      fontSize="xs">
-                      {goal}
-                    </Badge>
-                  ))}
-                </HStack>
-              </VStack>
-            )}
+            {/* The sign-up wizard's ticked "sustainability goals" are no longer printed here
+                (recordkeeping review F-11, 2026-10-07): a checkbox ticked at sign-up was a
+                public list of environmental-benefit claims with no record behind any of them.
+                The payload no longer carries them either. */}
 
             <Divider />
 

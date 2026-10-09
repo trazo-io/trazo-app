@@ -1654,7 +1654,9 @@ const ChemicalTab = forwardRef(
                             {product.commercial_name}
                           </Text>
                           {ORGANIC_APPROVED_VALUES.includes(product.organic_approved) && (
-                            <Badge colorScheme="green" fontSize="11px" borderRadius="full" px={1.5}>
+                            // Run 8 (R8-26 class, manual pass 2026-10-06): the grower's own
+                            // earlier answer, not an approval. Neutral, and said as recorded.
+                            <Badge colorScheme="gray" fontSize="11px" borderRadius="full" px={1.5}>
                               {intl.formatMessage({ id: 'chemical.recentInputs.organicBadge' })}
                             </Badge>
                           )}
@@ -1905,6 +1907,11 @@ const ChemicalTab = forwardRef(
                               {intl.formatMessage({
                                 id: 'events.organicApproved.certifierApproved'
                               })}
+                            </option>
+                            {/* Run 8 (R8-08): an honest answer when the listing is unknown.
+                                Never reads as allowed; the record lists the basis as missing. */}
+                            <option value="unverified">
+                              {intl.formatMessage({ id: 'events.organicApproved.unverified' })}
                             </option>
                             <option value="not_organic">
                               {intl.formatMessage({
@@ -3546,13 +3553,19 @@ const ChemicalTab = forwardRef(
                       <StandardField
                         label={
                           chemicalType === 'FE'
-                            ? 'NPK Ratio'
+                            ? intl.formatMessage({ id: 'quickAdd.fields.concentration.npkRatio' })
                             : chemicalType === 'PE'
-                            ? 'Pesticide Concentration'
+                            ? intl.formatMessage({
+                                id: 'quickAdd.fields.concentration.pesticideConcentration'
+                              })
                             : chemicalType === 'HE'
-                            ? 'Herbicide Concentration'
+                            ? intl.formatMessage({
+                                id: 'quickAdd.fields.concentration.herbicideConcentration'
+                              })
                             : chemicalType === 'FU'
-                            ? 'Fungicide Concentration'
+                            ? intl.formatMessage({
+                                id: 'quickAdd.fields.concentration.fungicideConcentration'
+                              })
                             : // ⛔ NOT "Concentration / Application Rate". `validateConcentration`
                               // accepts an NPK analysis or a percentage and rejects everything
                               // else, so a grower reading "application rate" types the number off
@@ -3561,22 +3574,22 @@ const ChemicalTab = forwardRef(
                               // Applied over Area Treated, which is what the packet divides to print
                               // "4.00 gal/acre" and what a reviewer checks a label maximum
                               // against. This field is the product's strength, nothing else.
-                              'Product Concentration'
+                              intl.formatMessage({
+                                id: 'events.chemical.concentration.productConcentration'
+                              })
                         }
                         required
                         error={errors.concentration?.message}
-                        helpText={
-                          chemicalType
-                            ? `Enter ${
-                                chemicalType === 'FE'
-                                  ? watch('micronutrient_type')
-                                    ? // §E-3: a single-nutrient product has no NPK analysis.
-                                      'NPK format (e.g., "10-10-10") or the nutrient percentage (e.g., "36%")'
-                                    : 'NPK format (e.g., "10-10-10")'
-                                  : 'percentage (e.g., "2.5%")'
-                              } — the format your certifier expects for this input type`
-                            : 'Select chemical type first for format guidance'
-                        }>
+                        helpText={intl.formatMessage({
+                          id: !chemicalType
+                            ? 'events.chemical.concentration.help.pickType'
+                            : chemicalType === 'FE'
+                            ? watch('micronutrient_type')
+                              ? // §E-3: a single-nutrient product has no NPK analysis.
+                                'events.chemical.concentration.help.npkOrPercent'
+                              : 'events.chemical.concentration.help.npk'
+                            : 'events.chemical.concentration.help.percent'
+                        })}>
                         <Controller
                           name="concentration"
                           control={methods.control}
@@ -3593,7 +3606,9 @@ const ChemicalTab = forwardRef(
                                     ? getFormatExamples('HE')[0]
                                     : chemicalType === 'FU'
                                     ? getFormatExamples('FU')[0]
-                                    : 'Select chemical type first...'
+                                    : intl.formatMessage({
+                                        id: 'events.chemical.concentration.placeholder.pickType'
+                                      })
                                 }
                                 isDisabled={!chemicalType}
                                 borderColor={
@@ -4094,31 +4109,6 @@ const ChemicalTab = forwardRef(
                       </StandardField>
                     )}
                   </SimpleGrid>
-
-                  <Box
-                    bg="teal.50"
-                    p={3}
-                    borderRadius="md"
-                    borderLeft="4px"
-                    borderLeftColor="teal.400"
-                    mt={2}>
-                    <HStack spacing={2} mb={1}>
-                      <Icon as={FaLeaf} color="teal.500" fontSize="sm" />
-                      <Text fontSize="sm" fontWeight="semibold" color="teal.700">
-                        {intl.formatMessage({
-                          id: 'events.chemical.consumerTrust.heading',
-                          defaultMessage: 'Consumer Trust Information'
-                        })}
-                      </Text>
-                    </HStack>
-                    <Text fontSize="xs" color="teal.600">
-                      {intl.formatMessage({
-                        id: 'events.chemical.consumerTrust.body',
-                        defaultMessage:
-                          'Consumers value knowing if products used on their food are organic-approved and what safety measures protect nearby waterways and ecosystems. This transparency builds trust in your farming practices.'
-                      })}
-                    </Text>
-                  </Box>
                 </VStack>
               </SectionBox>
 
@@ -4133,7 +4123,7 @@ const ChemicalTab = forwardRef(
                     description={intl.formatMessage({
                       id: 'events.section.desc.chemicalSupplier',
                       defaultMessage:
-                        'Document input suppliers and purchase records for organic mass-balance audits. The #1 non-conformance finding nationally is inadequate mass-balance documentation.'
+                        'Document input suppliers and purchase records for organic mass-balance audits.'
                     })}
                   />
 
@@ -5721,7 +5711,9 @@ const ChemicalTab = forwardRef(
                     render={({ field }) => (
                       <StandardTextarea
                         {...field}
-                        placeholder={intl.formatMessage({ id: 'events.common.placeholders.privateNote' })}
+                        placeholder={intl.formatMessage({
+                          id: 'events.common.placeholders.privateNote'
+                        })}
                         rows={3}
                       />
                     )}

@@ -13,6 +13,8 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { formatDateOnly } from 'utils/dateOnly';
+import { transitionState } from './transitionState';
+import CertifiedBranchCard from './CertifiedBranchCard';
 import {
   Badge,
   Box,
@@ -123,32 +125,35 @@ const TransitionCard = ({
   // twenty years opened its Parcel Application and saw its § 205.202(b) status rendered as a
   // bare "—". Wrong in both directions: an eligible parcel looked unassessed, and a parcel
   // genuinely in transition would have shown the same dash with no date. Read what is sent.
-  const eligible = (data as any).is_eligible === true;
-  const inTransition = (data as any).is_eligible === false;
-  const completeDate = (data as any).transition_complete_date as string | null | undefined;
-  const daysRemaining = (data as any).days_remaining as number | null | undefined;
-  const note = (data as any).note as string | undefined;
-  const badgeId = eligible
-    ? 'parcelApp.transition.status.eligible'
-    : inTransition
-    ? 'parcelApp.transition.status.inTransition'
-    : 'parcelApp.transition.status.unknown';
+  const state = transitionState(data);
+  const eligible = state === 'eligible';
+  const completeDate = data.transition_complete_date;
+  const daysRemaining = data.days_remaining;
+  const note = data.note;
+  // 🔴 2026-09-30 (OSP alignment audit, T21): `is_eligible` is true by ABSENCE of a prohibited
+  // record, so the badge said "Eligible" in green over a parcel with no history and no
+  // declaration. It now states the record, in a neutral colour; eligibility under § 205.202(b)
+  // is the certifying agent's determination, never a Trazo badge. 2026-10-01: "In transition"
+  // needs a running clock (see transitionState).
+  const badgeId = `parcelApp.transition.status.${state}`;
   return (
     <Box
       p={4}
-      bg={eligible ? 'green.50' : 'amber.50'}
+      bg={eligible ? 'gray.50' : 'amber.50'}
       borderWidth="1px"
-      borderColor={eligible ? 'green.200' : 'amber.200'}
+      borderColor={eligible ? 'gray.200' : 'amber.200'}
       borderRadius="md">
       <HStack justify="space-between" mb={2}>
         <Text fontWeight="semibold" fontSize="sm">
           {intl.formatMessage({ id: 'parcelApp.transition.computed' })}
         </Text>
-        <Badge variant={eligible ? 'brand' : 'warning'} fontSize="11px">
+        <Badge variant={eligible ? 'neutral' : 'warning'} fontSize="11px">
           {intl.formatMessage({ id: badgeId })}
         </Badge>
       </HStack>
-      {inTransition && completeDate ? (
+      {/* The recorded completion date shows whenever the server has one, whatever the badge
+          says: a date on record is a fact, and hiding it behind "Not established" lost it. */}
+      {completeDate ? (
         <Text fontSize="sm" color="gray.700">
           {intl.formatMessage(
             { id: 'parcelApp.transition.earliest' },
@@ -853,6 +858,8 @@ const ParcelApplicationWizard = () => {
         const cov = lh?.coverage;
         const coverageText = !cov
           ? null
+          : cov.not_asked
+          ? intl.formatMessage({ id: 'parcelApp.managers.coverage.notAsked' })
           : cov.complete === null
           ? intl.formatMessage({ id: 'parcelApp.managers.coverage.unknown' })
           : cov.complete && lh?.prior_managers.length === 0
@@ -928,6 +935,16 @@ const ParcelApplicationWizard = () => {
           </Box>
         );
       }
+      case 'certified_branch':
+        return (
+          <CertifiedBranchCard
+            branch={data?.land_history?.certified_branch}
+            companyId={companyId}
+            farmId={farmId || ''}
+            parcelId={parcelId || ''}
+            canWrite={canWrite}
+          />
+        );
       case 'certificate_of_record': {
         // Printed on the certifier packet from the operation's certificate on file; the card shows
         // that exact line (or that there is none) so the operator sees what the certifier will read.

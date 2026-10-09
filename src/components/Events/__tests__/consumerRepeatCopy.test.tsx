@@ -49,7 +49,7 @@ function renderCard({ event, ...props }: Record<string, unknown>) {
 
 /** The generated lines for the fixture, read from source so a copy edit cannot stale this. */
 const SHORT = 'Pest traps around the block were checked and the counts written down';
-const IMPACT = 'Counting first is what lets a farm treat only when the numbers call for it';
+const IMPACT = 'You can see how many insects turned up here, and when';
 
 describe('consumer card repeat-copy suppression', () => {
   it('shows both generated lines by default (no suppression flags)', () => {

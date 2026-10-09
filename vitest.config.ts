@@ -24,7 +24,13 @@ export default defineConfig({
     // America/Los_Angeles is the zone the ICP actually farms in (UTC-7/-8), and it is west of
     // UTC, which is the direction that exposes the "midnight UTC renders as yesterday" class.
     env: { TZ: 'America/Los_Angeles' },
-    environment: 'jsdom',
+    // 2026-10-02: jsdom only where a test can render. Booting jsdom costs every file it runs in,
+    // and 152 of 249 test files never touch a DOM: they scan source files or check pure logic.
+    // Measured at 2 threads: 128s -> ~100s. Rule: `.tsx`/`.jsx` get jsdom, `.ts`/`.js` get node.
+    // A `.ts` test that does need a DOM opts in with a `// @vitest-environment jsdom` docblock on
+    // line 1. Getting this wrong fails loudly (`window is not defined`), never vacuously.
+    environment: 'node',
+    environmentMatchGlobs: [['**/*.{tsx,jsx}', 'jsdom']],
     // 🔴 2026-09-08 — `e2e/` is PLAYWRIGHT's, not vitest's.
     //
     // Vitest was collecting the specs under `e2e/`, where `test()` is Playwright's and throws

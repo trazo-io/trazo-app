@@ -142,6 +142,15 @@ const companyApi = baseApi.injectEndpoints({
       }),
       providesTags: ['Farm', 'Company']
     }),
+    // Replaces the join code so a forwarded or leaked one stops working. Company admins only.
+    rotateCompanyCode: build.mutation<{ invitation_code: string }, { companyId: string | number }>({
+      query: ({ companyId }) => ({
+        url: `${COMPANY_URL(String(companyId))}rotate-invitation-code/`,
+        method: 'POST',
+        credentials: 'include'
+      }),
+      invalidatesTags: ['Company']
+    }),
     getCompanyMembers: build.query({
       query: ({ companyId }) => ({
         url: `${COMPANY_URL(companyId)}members/`,
@@ -462,6 +471,7 @@ export const {
   useEditFarmMutation,
   useGetFarmQuery,
   useGetCompanyMembersQuery,
+  useRotateCompanyCodeMutation,
   useGetCarbonEmissionSourcesQuery,
   useGetCarbonOffsetActionsQuery,
   useGetFarmCarbonFootprintsQuery,

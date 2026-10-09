@@ -51,6 +51,23 @@
 
 name: CI
 
+# SPEND (2026-10-07). GitHub's billing report puts this repo at 28% of 7,064 Linux minutes in
+# the first week of October, on a Free plan with 2,000 a month. Per-job durations say where:
+#
+#   unit tests ............ 46%
+#   push-to-main re-run ... 33%   the SAME tree had just gone green on the PR
+#   npm audit ............. 15%   274 runs in 30 days reading the same advisory list
+#
+# So: the test and static jobs run on pull_request and workflow_dispatch only; a push to main
+# runs ONE job, `warm-cache`, so the next PR finds node_modules for the merged lockfile (a
+# cache saved on a PR branch is invisible to sibling branches; one saved on main is visible to
+# all); npm audit moved to `dependency-audit.yml`, weekly.
+#
+# RUNNER (2026-10-08). Every job here runs on Blacksmith (`blacksmith-2vcpu-ubuntu-2404`: 2 vCPU,
+# 8 GB, Ubuntu 24.04) instead of GitHub's `ubuntu-latest`. Same vCPU count, faster cores,
+# $0.004/min after 3,000 free minutes a month on the org, against GitHub's $0.006/min. The unit
+# test job is CPU-bound (vitest: 110s collect + 114s tests), so a faster core cuts billed minutes
+# directly. The Claude review workflow stays on GitHub-hosted runners: it idles on the model.
 on:
   push:
     branches: [main, master]
@@ -63,16 +80,85 @@ concurrency:
 
 jobs:
   frontend:
-    name: Frontend — typecheck, lint, unit
-    runs-on: ubuntu-latest
+    name: Frontend unit tests
+    if: github.event_name != 'push'
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 15
+    env:
+      # PINNED HERE, NOT IN vitest.config.ts. That file already sets `env: { TZ }`, and on a UTC
+      # runner it does not take: `calendarDateRendering.test.ts` opens with its own self-check,
+      # "the test environment is actually west of UTC - is pinned, or every assertion below is
+      # meaningless", and that assertion FAILED in CI while passing locally. It passes locally for
+      # a reason that hides the hole: this project is developed from Montevideo (UTC-3), so the
+      # clock is already west of UTC whether or not the pin works.
+      #
+      # Date reads the zone when the process starts, so the only place that reliably decides it is
+      # the environment the runner hands to node. Six date tests were failing on that alone, and
+      # they are the ones guarding the defect where the packet printed 2025-03-15 while the
+      # dashboard printed "Mar 14, 2025" for the same record.
+      TZ: America/Los_Angeles
+      # Empty unless the secret exists; the sibling checkout below is skipped when it is.
+      TRAZO_BACK_READ_TOKEN: ${{ secrets.TRAZO_BACK_READ_TOKEN }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+
+      # THE PARITY GUARDS READ THE OTHER REPO BY RELATIVE PATH, and CI checked out one repo.
+      #
+      # `REPO_ROOT = join(__dirname, '../../../../..')` resolves to the PARENT of this repo, and
+      # the guards then read `trazo-back/history/models.py` from there. With no sibling they fail
+      # rather than skip, which is deliberate (`expect(existsSync(BACKEND_MODELS))` - a guard that
+      # quietly passes when it cannot see its subject is worse than none). That is roughly ten of
+      # the failures in every frontend run, including on a documentation-only PR.
+      #
+      # `actions/checkout` refuses a path outside the workspace, so it lands inside and is moved
+      # up one level afterwards. Out of the tree rather than in it, so it cannot be swept into a
+      # glob the way a worktree inside a repo once was.
+      - name: Check out trazo-back as a sibling
+        if: env.TRAZO_BACK_READ_TOKEN != ''
+        uses: actions/checkout@v4
         with:
-          node-version: '20'
-          cache: npm
-          cache-dependency-path: package-lock.json
-      - run: npm ci
+          repository: trazo-io/trazo-back
+          ref: main
+          token: ${{ env.TRAZO_BACK_READ_TOKEN }}
+          path: .sibling-trazo-back
+      - name: Move it beside the workspace
+        if: env.TRAZO_BACK_READ_TOKEN != ''
+        run: mv "$GITHUB_WORKSPACE/.sibling-trazo-back" "$(dirname "$GITHUB_WORKSPACE")/trazo-back"
+
+      - uses: ./.github/actions/node-deps
+
+      # BLOCKING as of 2026-09-27, and this is the first day it has ever been able to mean anything.
+      #
+      # It carried "non-blocking - 33 known failures" from 2026-08-11 and nobody triaged the 33.
+      # When they finally were, none were defects: every frontend PR showed about 17, including
+      # `docs/git-hygiene-shared-trees`, a documentation-only change that cannot break a test.
+      # Three environment holes, all fixed, each verified by reproducing it before and after:
+      #
+      #   no sibling trazo-back      -> the parity guards fail rather than skip, by design
+      #   TZ pin that never applied  -> vitest.config.ts `env: { TZ }` does not set the zone
+      #   VITE_APP_BASE_DOMAIN       -> lived only in .env.local, which is gitignored
+      #
+      # The run that earned this flip: 2431 passed, 8 skipped, 0 failed, matching a local run
+      # exactly. Turned on only after seeing that, because a gate that goes red the day it lands
+      # is one people learn to scroll past, which is how the old one got here.
+      #
+      # If this starts failing for an environment reason rather than a defect, fix the environment.
+      # Do not put `continue-on-error` back. That is what cost a year of signal.
+      - name: Unit tests
+        run: npx vitest run --watch=false
+
+  # Lint and typecheck run BESIDE the unit tests, not before them. Both gates are non-blocking,
+  # yet as steps in the unit-test job they sat on its critical path: ~80s of every run spent
+  # waiting on two checks that cannot fail the build. Neither reads the sibling trazo-back, so
+  # this job does not check it out.
+  static:
+    name: Frontend lint and typecheck (non-blocking gates)
+    if: github.event_name != 'push'
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/node-deps
 
       # 2026-08-12: the caveat that used to sit here — "this only checks 18 JS files" — is
       # now closed, because a gate quoted as evidence while checking 3.5% of the tree is a
@@ -97,60 +183,38 @@ jobs:
 
       # Per-FILE baseline, so "fixed 5 in A, added 5 in B" still fails. Never run
       # `npm run typecheck:update` to make this pass — that freezes the new errors in.
-      # Non-blocking until the last 5 land; the step still prints the full diff, so a
-      # regression from 4 to 40 is visible in the log even while it cannot fail the build.
-      - name: Typecheck gate (non-blocking — 5 new over baseline)
+      # Non-blocking, and the step still prints the full diff, so a regression is visible in
+      # the log even while it cannot fail the build.
+      #
+      # THE COUNT IN THIS LABEL WAS WRONG FOR MONTHS. It read "5 new over baseline", which was
+      # true when it was written and was never updated as the number grew. MEASURED 2026-09-29:
+      # 24 files, 54 errors over baseline. A non-blocking step nobody reads, carrying a stale
+      # number in its own name, is how 5 becomes 54 without anyone deciding that.
+      #
+      # The label now carries the measurement and its date. Whoever next takes the clean-up
+      # should re-measure and move it, or flip the step to blocking once it reaches zero.
+      # QUOTED, AND THAT IS LOAD-BEARING. A plain YAML scalar may not contain ": " (colon
+      # space): the scanner reads it as the start of a nested mapping, which is a FATAL error
+      # for the whole document, so GitHub refuses to load this file and NO job in it runs,
+      # including the blocking unit-test gate below. Parentheses escape nothing in YAML.
+      #
+      # This broke exactly that way on the first attempt, because the previous label used an
+      # em dash and stripping it for the repo's prose rule introduced a colon. The prose rule
+      # is about PROSE; a step name is a scalar with syntax. Quote it.
+      - name: "Typecheck gate (non-blocking: 54 over baseline in 24 files, measured 2026-09-29)"
         continue-on-error: true
         run: npm run typecheck
 
-      # Non-blocking: 33 of 895 failing as of 2026-08-11, pre-existing and untriaged.
-      - name: Unit tests (non-blocking — 33 known failures)
-        continue-on-error: true
-        run: npx vitest run --watch=false
-
-  # Dependency currency. Non-blocking on arrival for the same reason the backend audit is:
-  # a job that is red the day it lands is a job people learn to scroll past. The count is
-  # printed either way, which is the point — drift becomes visible before it becomes a
-  # failure. Flip `continue-on-error` off once the backlog is triaged to zero HIGH/CRITICAL.
-  audit:
-    name: Dependency audit (non-blocking)
-    runs-on: ubuntu-latest
-    continue-on-error: true
+  # PUSH TO MAIN RUNS ONLY THIS (2026-10-07). The tests already ran on the PR against this
+  # exact tree. What a merge changes is which caches the NEXT PR can see: `actions/cache` lets
+  # a branch read its base branch's caches but never a sibling's. The composite action below
+  # restores node_modules by lockfile hash and runs `npm ci` only on a miss, so this is a
+  # one-minute no-op unless the merge changed package-lock.json.
+  warm-cache:
+    name: Warm the node_modules cache for the next PR
+    if: github.event_name == 'push'
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: npm
-          cache-dependency-path: package-lock.json
-      - run: npm ci
-      # Production dependencies only. A dev-only advisory in a build tool is real but is not
-      # the same risk as one in code that ships to a farmer's browser, and mixing them is how
-      # the number becomes noise nobody reads.
-      - name: npm audit (production deps)
-        run: |
-          npm audit --omit=dev --audit-level=high 2>&1 | tee audit.txt || true
-          echo "=== full count, all severities, including dev ==="
-          npm audit --json > audit-full.json 2>/dev/null || true
-          # Distinguish "audit ran and found N" from "audit could not run". An audit that
-          # errored out (registry 4xx, offline runner) otherwise prints a benign-looking
-          # message and the step goes green — the same shape as a clean result, which is how
-          # a dependency check quietly stops checking anything.
-          node -e "
-            let j;
-            try { j = require('./audit-full.json'); }
-            catch (e) { console.log('::warning title=npm audit unreadable::' + e.message); process.exit(0); }
-            if (j && j.metadata && j.metadata.vulnerabilities) {
-              console.log('vulnerabilities:', JSON.stringify(j.metadata.vulnerabilities));
-            } else {
-              console.log('::warning title=npm audit did not run::' + (j && j.message ? j.message : 'unexpected JSON shape - no metadata.vulnerabilities'));
-            }
-          "
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: npm-audit-report
-          path: |
-            audit.txt
-            audit-full.json
-          if-no-files-found: ignore
+      - uses: ./.github/actions/node-deps

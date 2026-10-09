@@ -62,12 +62,60 @@ import {
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import { resolveReadinessItem } from 'components/Certifications/readinessMessages';
+import { seasonRowDetail } from 'components/Certifications/seasonRowMessages';
 import { STATUS_URGENCY_TOKENS } from 'components/Design/StandardComponents';
 import {
   CertifierReadinessFinding,
   useGetCertifierReadinessQuery
 } from 'store/api/dashboardMetricsApi';
 import { useGetOperationReadinessQuery, type ReadinessItem } from 'store/api/certifierLinkApi';
+
+/**
+ * The season row's name in the reader's language, or the server's English label when the
+ * catalogue has none (the certifier page does the same; recordkeeping review F-01 found the
+ * farm card printing the English label and detail on the Spanish dashboard).
+ */
+export function readinessFindingLabel(
+  intl: ReturnType<typeof useIntl>,
+  finding: Pick<CertifierReadinessFinding, 'label' | 'row_key'>
+): string {
+  const id = finding.row_key ? `certifierReview.row.${finding.row_key}` : '';
+  return id && (intl.messages as Record<string, unknown>)[id]
+    ? intl.formatMessage({ id })
+    : finding.label;
+}
+
+/** The detail sentence, written from the row's code and data when the catalogue has it. */
+export function readinessFindingDetail(
+  intl: ReturnType<typeof useIntl>,
+  finding: Pick<CertifierReadinessFinding, 'detail' | 'row_key' | 'detail_code' | 'params'>
+): string {
+  return seasonRowDetail(intl, finding);
+}
+
+/**
+ * Where the row's full detail sits in the audit export. The export is an English document, so a
+ * Spanish line quotes the English heading the reader will find there and gives its name in
+ * Spanish (Oscar, 2026-10-08: the card printed "Input Material Application Records section" inside
+ * a Spanish sentence). A row the catalogue does not name yet keeps the server's English hint.
+ */
+export function readinessFindingSection(
+  intl: ReturnType<typeof useIntl>,
+  finding: Pick<CertifierReadinessFinding, 'row_key' | 'section_hint'>
+): string | null {
+  if (!finding.section_hint) return null;
+  const nameId = finding.row_key ? `certifierReadiness.sectionName.${finding.row_key}` : '';
+  if (nameId && (intl.messages as Record<string, unknown>)[nameId]) {
+    return intl.formatMessage(
+      { id: 'certifierReadiness.seeSectionNamed' },
+      { name: intl.formatMessage({ id: nameId }) }
+    );
+  }
+  return intl.formatMessage(
+    { id: 'certifierReadiness.seeSection' },
+    { section: finding.section_hint }
+  );
+}
 
 const MAX_VISIBLE_FINDINGS = 5;
 
@@ -98,11 +146,49 @@ function statusStyle(status: CertifierReadinessFinding['status']) {
 }
 
 /** Editor that clears each operation-readiness finding, by finding key. */
+/**
+ * Where a SEASON row's record lives, by the server's `row_key` (Oscar, 2026-10-07: "a way to
+ * add direct links here to be easier to go completing the warnings and the missings"). The
+ * route is the page that holds the record to add or fix, never a verdict; a key with no entry
+ * keeps the "full detail in … your audit export" hint alone.
+ */
+type RowRouteContext = {
+  farmId: string | number;
+  parcelId?: number | null;
+  productionId?: number | null;
+};
+const productionPage = ({ farmId, parcelId, productionId }: RowRouteContext) =>
+  parcelId && productionId
+    ? `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/${productionId}`
+    : null;
+export const ROW_ROUTES: Record<string, (ctx: RowRouteContext) => string | null> = {
+  // The plan's identity panel is where a logged name is confirmed against the materials list.
+  inputs_not_confirmed_against_the_plan_s_inputs_list: ({ farmId }) =>
+    `/admin/dashboard/farm/${farmId}/osp/module/materials_application#logged-names`,
+  input_traceability: productionPage,
+  record_completeness_chemical: productionPage,
+  compost: productionPage,
+  raw_manure_interval: productionPage,
+  seed_sourcing: productionPage,
+  ipm_strategy: productionPage,
+  lot_traceability: productionPage,
+  sales_documentation: productionPage,
+  sales_records_on_file: productionPage,
+  yield_to_sales_reconciliation: productionPage,
+  organic_system_plan: ({ farmId }) => `/admin/dashboard/farm/${farmId}/osp/narratives`,
+  land_requirements: ({ farmId, parcelId }) =>
+    parcelId ? `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/application` : null
+};
+
 const FINDING_ROUTES: Record<string, (farmId: string | number) => string> = {
   ofpp: (farmId) => `/admin/dashboard/farm/${farmId}/profile`,
   osp: (farmId) => `/admin/dashboard/farm/${farmId}/osp`,
   attestation_support: (farmId) => `/admin/dashboard/farm/${farmId}/osp`,
-  records: (farmId) => `/admin/dashboard/farm/${farmId}`
+  records: (farmId) => `/admin/dashboard/farm/${farmId}`,
+  // Logged products missing from the materials list are confirmed on the plan's identity panel,
+  // the same place the season row and the drift banner send them.
+  unmatched_materials: (farmId) =>
+    `/admin/dashboard/farm/${farmId}/osp/module/materials_application#logged-names`
 };
 
 export default function CertifierReadinessCard({
@@ -469,6 +555,7 @@ export default function CertifierReadinessCard({
                           <Link
                             as={RouterLink}
                             to={FINDING_ROUTES[item.key](farmId)}
+                            data-testid={`readiness-operation-link-${item.key}`}
                             fontSize="xs"
                             fontWeight="semibold"
                             color="green.700"
@@ -527,6 +614,13 @@ export default function CertifierReadinessCard({
             <VStack align="stretch" spacing={2} divider={<Divider borderColor={rowBorder} />}>
               {visible.map((finding) => {
                 const style = statusStyle(finding.status);
+                const rowHref = finding.row_key
+                  ? ROW_ROUTES[finding.row_key]?.({
+                      farmId,
+                      parcelId: data.production?.parcel_id,
+                      productionId: data.production?.id
+                    }) ?? null
+                  : null;
                 return (
                   <Box
                     key={finding.label}
@@ -548,7 +642,7 @@ export default function CertifierReadinessCard({
                       <VStack align="start" spacing={1} flex={1} minW={0}>
                         <HStack spacing={2} flexWrap="wrap">
                           <Text fontSize="sm" fontWeight="semibold" color={textColor}>
-                            {finding.label}
+                            {readinessFindingLabel(intl, finding)}
                           </Text>
                           <Badge variant={style.badgeVariant} fontSize="xs" borderRadius="full">
                             {intl.formatMessage({
@@ -560,15 +654,23 @@ export default function CertifierReadinessCard({
                           </Badge>
                         </HStack>
                         <Text fontSize="xs" color={mutedColor} lineHeight="1.5">
-                          {finding.detail}
+                          {readinessFindingDetail(intl, finding)}
                         </Text>
                         {finding.section_hint && (
                           <Text fontSize="xs" color={mutedColor} fontStyle="italic">
-                            {intl.formatMessage(
-                              { id: 'certifierReadiness.seeSection' },
-                              { section: finding.section_hint }
-                            )}
+                            {readinessFindingSection(intl, finding)}
                           </Text>
+                        )}
+                        {rowHref && (
+                          <Link
+                            as={RouterLink}
+                            to={rowHref}
+                            fontSize="xs"
+                            fontWeight="semibold"
+                            color="green.700"
+                            data-testid={`readiness-row-link-${finding.row_key}`}>
+                            {intl.formatMessage({ id: 'certifierReadiness.openRecord' })} →
+                          </Link>
                         )}
                       </VStack>
                     </HStack>

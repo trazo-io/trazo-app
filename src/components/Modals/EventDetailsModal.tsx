@@ -47,6 +47,7 @@ import { formatCO2e, getImpactLevel } from '../../utils/carbonDisplayUtils';
 import { ResponsiveModal } from 'components/Design/ResponsiveModal';
 import { CorrectRecordModal } from 'components/Modals/CorrectRecordModal';
 import { StandardAlert, StandardButton } from 'components/Design/StandardComponents';
+import CrewNoteProvenance from './CrewNoteProvenance';
 import { eventTypeAppearance } from 'config/events/eventTypeAppearance';
 import { eventTitle, subtypeOf as sharedSubtypeOf } from 'config/events/narrative';
 import { buyerPageWithheldReasonId } from 'utils/consumerDisplay';
@@ -64,6 +65,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useUserRole } from 'hooks/useUserRole';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
+import { formatDateFromTimestamp } from 'utils/dateOnly';
+import { isNotEstimated, showsInputsBadge } from 'utils/carbonStatus';
 
 // Types
 interface Member {
@@ -993,10 +996,11 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
             <Icon as={FaCalendarAlt} boxSize={4} />
             <Text>
               {event.extra_data?.date_start && event.extra_data?.date_end
-                ? `${new Date(event.extra_data.date_start).toLocaleDateString()} - ${new Date(
-                    event.extra_data.date_end
-                  ).toLocaleDateString()}`
-                : new Date(event.date).toLocaleDateString()}
+                ? `${formatDateFromTimestamp(event.extra_data.date_start, intl.locale)} - ${formatDateFromTimestamp(
+                    event.extra_data.date_end,
+                    intl.locale
+                  )}`
+                : formatDateFromTimestamp(event.date, intl.locale)}
             </Text>
           </HStack>
         </WrapItem>
@@ -1050,6 +1054,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                 />
               );
             }
+
             return (
               <Text fontSize="xs" color="gray.500">
                 {intl.formatMessage({ id: 'producer.event.buyerPageFieldsHint' })}
@@ -1066,6 +1071,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
               the notice above already carries the certifier-reads-the-season story. */}
           {carbonData &&
             !carbonData.error &&
+            !isNotEstimated(carbonData) &&
             carbonData.co2e === 0 &&
             !buyerPageWithheldReasonId(event as Record<string, unknown>) && (
               <Text fontSize="sm" color="gray.600">
@@ -1080,6 +1086,9 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
               blocks above "Detailed Information", which is where every registry field
               actually renders: one section called Details containing none, another
               containing all of them. One heading, named for what is under it. */}
+          {/* Where the record came from, when a crew message is its source (audit T29). */}
+          <CrewNoteProvenance eventId={event.id} eventType={event.event_type} />
+
           <Box>
             <Text fontSize="lg" fontWeight="bold" mb={4} color={textColor}>
               {intl.formatMessage({ id: 'app.fieldNotes' })}
@@ -1090,11 +1099,52 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
             <VStack spacing={4} align="stretch">
               <Box p={4} bg={cardBg} borderRadius="lg">
                 <Text fontWeight="medium" whiteSpace="pre-wrap">
-                  {/* The farmer's own note. `description` is the system-generated
-                      summary ("Annual soil test") and rendered here it masqueraded
-                      as field notes; fall back to it only when no observation
-                      exists (legacy events wrote their note there). */}
-                  {(event as Record<string, unknown>).observation || event.description}
+                  {/*
+                    The farmer's own note. `description` is system-generated and rendered here it
+                    masqueraded as field notes, so it is a fallback for LEGACY rows only, whose note
+                    genuinely lives there.
+                    
+                    THE FALLBACK NOW SKIPS A GENERATED PLACEHOLDER, and the reason is new: an event
+                    confirmed from a crew field note has an intentionally EMPTY observation, because
+                    the sender's words must not be republished as the grower's own. Every one of
+                    those hit this fallback and printed the placeholder the backend stores to satisfy
+                    a non-blank column, so the modal showed "Production activity: Irrigation" under a
+                    heading that says Field Notes. The old comment's premise, that reaching the
+                    fallback means a legacy note, stopped being true the day that flow shipped.
+                  */}
+                  {(() => {
+                    // Through `unknown`: the compiler asks for it, and the two direct casts already
+                    // in this file are two of its standing errors. Copying them would make a third.
+                    const row = event as unknown as Record<string, unknown>;
+                    const observation = String(row.observation ?? '').trim();
+                    if (observation) return observation;
+
+                    const description = String(event.description ?? '').trim();
+                    if (!description) return intl.formatMessage({ id: 'events.noFieldNotes' });
+
+                    // `ensure_event_description` stores the event's own name when the notes box is
+                    // left empty, because the column is non-blank. A description equal to the name is
+                    // therefore a PLACEHOLDER, not prose. The `: name` suffix catches the older
+                    // "<Type activity>: <name>" shape still stored on every row written before the
+                    // generator stopped prefixing the internal type.
+                    //
+                    // ⚠️ KNOWN LIMITATION, accepted deliberately. A LEGACY row with no `observation`
+                    // whose note happens to be exactly the event name (a farmer who typed just
+                    // "Irrigation" back when description was the only notes field) is
+                    // indistinguishable from a placeholder and is suppressed with them. Nothing in
+                    // the row separates the two.
+                    //
+                    // The trade runs this way on purpose: today every event confirmed from a crew
+                    // voice note has an empty observation by design, so NOT suppressing means a
+                    // machine string presented as the farmer's words on every one of them, on a
+                    // record a certifier reads. A one-word legacy note is rarer and far less costly,
+                    // and it is still on the record, just not shown in this box.
+                    const name = String(row.name ?? '').trim();
+                    if (name && (description === name || description.endsWith(`: ${name}`))) {
+                      return intl.formatMessage({ id: 'events.noFieldNotes' });
+                    }
+                    return description;
+                  })()}
                 </Text>
               </Box>
 
@@ -1237,7 +1287,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                     {intl.formatMessage({ id: 'eventDetails.carbonImpact' })}
                   </Text>
                 </HStack>
-                {(carbonData.usda_factors_based || carbonData.usda_factors_used) && (
+                {showsInputsBadge(carbonData) && (
                   <Tooltip label={intl.formatMessage({ id: 'carbon.badge.epaUsdaTooltip' })}>
                     {/* A sourcing note is a FACT, not a status — `neutral`, per
                             `.claude/rules/frontend.md`. It was `colorScheme="blue"`, and blue
@@ -1283,6 +1333,12 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                   ⚠️ Still live in `components/Events/CarbonImpactPreview.tsx` and
                   `components/Events/EnhancedEventDetailModal.tsx`, both as hardcoded English,
                   both therefore invisible to the guard. */}
+              {isNotEstimated(carbonData) ? (
+                // Run 8 (R8-04): no figure, and why, instead of a 0.
+                <Text fontSize="md" color="gray.700">
+                  {intl.formatMessage({ id: 'carbon.notEstimated' })}
+                </Text>
+              ) : (
               <HStack justify="space-between" align="center">
                 <VStack spacing={0} align="start">
                   <HStack spacing={2}>
@@ -1309,6 +1365,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                   </Text>
                 </VStack>
               </HStack>
+              )}
             </Box>
           )}
         </VStack>

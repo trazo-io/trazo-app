@@ -97,7 +97,7 @@ const asCount = (value: unknown): number => (typeof value === 'number' && value 
  * conjunction and comma rules apply to it too. `Intl.ListFormat` is unavailable in a few older
  * WebViews; the comma join is a legible degradation, not a crash.
  */
-const joinList = (intl: IntlShape, items: string[], overflow: number): string => {
+export const joinList = (intl: IntlShape, items: string[], overflow: number): string => {
   const parts = [...items];
   if (overflow > 0) {
     parts.push(intl.formatMessage({ id: 'readinessItem.andMore' }, { count: overflow }));

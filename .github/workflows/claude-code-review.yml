@@ -33,7 +33,26 @@ jobs:
         with:
           fetch-depth: 1
 
+      # ALLOWLIST WIDENED (2026-10-08). Measured over the last 40 trazo-back review runs: 38 hit
+      # `Error: This command requires approval` at least once. The denied commands were all reads
+      # the review skill makes on its own: `gh api .../issues/<n>/comments` (has it already
+      # commented?), `gh api .../contents/<file>?ref=<sha>` (a file at a ref), and
+      # `python3 /tmp/parse_diff.py` (its own helper, writable through `--add-dir /tmp` but not
+      # runnable), sometimes behind a `cd <workspace> &&`. Most runs recovered after a few wasted
+      # turns; the 1-2 minute ones gave up and the check went GREEN with no comment, which reads
+      # as "reviewed" to anyone counting colours. `Bash(gh api:*)` is broader than the three
+      # reads, deliberately: the skill quotes the path (`gh api "repos/..."`), which a
+      # path-prefix pattern cannot match. The ceiling is the job token above: contents read,
+      # pull-requests write, which the inline-comment tool already has.
       - uses: anthropics/claude-code-action@4169884de317bc1b4cb1b47f4476d76fed92b384 # v1
+        env:
+          # The review skill delegates its gating checks and its 5 parallel reviewers to
+          # subagents. By default those run as BACKGROUND tasks, and a non-interactive turn
+          # ends without waiting for them: measured 2026-09-24, the run reported success in
+          # 16.5s for $0.09 after saying "I'll wait for those", with 2 task_started and
+          # 2 background_tasks_changed events and no review produced. This forces every
+          # subagent into the foreground so the turn waits for its own work.
+          CLAUDE_CODE_DISABLE_BACKGROUND_TASKS: "1"
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           plugin_marketplaces: "https://github.com/anthropics/claude-code.git"
@@ -54,6 +73,17 @@ jobs:
           # list and is denied too. Measured on 2026-09-24: 7 denials, 132s of model time,
           # zero findings posted. `Task`, `Read` and `Grep` are permitted by default and do
           # not need listing; only `Skill` and the comment-posting MCP tool do.
+          #
+          # 2026-10-07: on a large diff the reviewers write `gh pr diff` to a file and read it
+          # back. Redirection is checked against Edit permission and the working directories
+          # (code.claude.com/docs/en/permissions, "Redirections"), and none was granted, so app
+          # #87 (~1,200 changed lines) was refused 17 then 13 times and cancelled at the
+          # 20-minute timeout with no findings; back #123 stalled the same way.
+          # `acceptEdits` approves writes inside the checkout, `--add-dir /tmp` adds /tmp, and
+          # the two gh read commands are listed so a compound `gh pr diff ... > f` is approved.
+          # The job token is `contents: read`, so an accepted write cannot leave the runner.
           claude_args: >-
             --model claude-sonnet-5
-            --allowedTools "Skill,mcp__github_inline_comment__create_inline_comment"
+            --permission-mode acceptEdits
+            --add-dir /tmp
+            --allowedTools "Skill,mcp__github_inline_comment__create_inline_comment,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh api:*),Bash(cd:*),Bash(python3 /tmp/:*)"

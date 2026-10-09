@@ -206,9 +206,9 @@ export interface InputVerifyResult {
     product_name: string;
     manufacturer?: string | null;
     /**
-     * ISO date of the PUBLISHED EDITION this row was imported from. OMRI republishes its lists
-     * daily, so a listing rendered without its edition date can go stale on screen with nobody
-     * able to tell. Null for a row imported before the column was populated.
+     * Which daily OMRI edition this row came from. Typed HERE, not only inside the component
+     * helper that reads it: a local inline type let a candidate without the field pass, so a
+     * backend rename would silently stop showing the edition with no error and no failing test.
      */
     list_edition_date?: string | null;
   }[];
@@ -389,6 +389,14 @@ export interface OSPRecordType {
   /** Set when this answer came across from an earlier plan version and nobody has re-stated it
    *  on this one. The row is still confirmed — it is the FRESHNESS that is open. */
   carried_from_version: number | null;
+  /** The operator states the operation does NOT keep this record, with a reason. Never a way
+   *  out of a required record: it prints as missing (OSP alignment audit T17-F1). */
+  not_kept?: boolean;
+  not_kept_reason?: string;
+  /** This plan's own answers require this record type, and why. */
+  required?: boolean;
+  required_state?: 'confirmed' | 'not_confirmed' | 'not_kept' | 'unresolved' | '';
+  required_because?: string;
 }
 
 export interface OSPRecordTypesSummary {
@@ -510,4 +518,161 @@ export interface OSPReview {
 
 export interface OSPAttachmentsResponse {
   workbooks: OSPAttachmentSummary[];
+}
+
+/** OSP alignment T18 (Phase 5 slice 2). Mirrors `certifications/services/material_identity.py`. */
+export type MaterialIdentitySource = 'chemical' | 'amendment' | 'sanitizer';
+export type MaterialIdentityEventState = 'covered' | 'unreviewed' | 'stale' | 'excepted';
+export type MaterialIdentityTargetKind = 'plan_entry' | 'omri' | 'wsda';
+
+export interface MaterialIdentityDecision {
+  id: number;
+  decision: 'same_as' | 'different_product';
+  target_kind: MaterialIdentityTargetKind | '';
+  target_id: number | null;
+  target_name: string;
+  reviewed_event_ids: number[];
+  exceptions: Array<{ event_id: number; reason: string }>;
+  formulation_difference_acknowledged: boolean;
+  formulation_note: string;
+  note: string;
+  decided_by_name: string;
+  decided_at: string | null;
+  plan_version: number | null;
+  supersedes: number | null;
+  superseded_at: string | null;
+  /** Undone by the operator (a decision made by mistake), with a reason; kept in the history. */
+  withdrawn_at?: string | null;
+  withdrawal_reason?: string;
+  withdrawn_by_name?: string;
+  basis: string;
+}
+
+/** Slice 3: computed on read, never stored. A suggestion decides, clears and changes nothing. */
+export type MaterialIdentitySuggestion =
+  | {
+      kind: 'shared_brand';
+      target: MaterialIdentityTarget;
+      numbers_differ: boolean;
+      /** Matched on the product name after a leading maker or brand word ("Bayer Serenade Opti"). */
+      after_prefix?: boolean;
+    }
+  | {
+      kind: 'plan_answer_names';
+      module: string;
+      question: string;
+      product_name: string;
+      catalog: 'omri' | 'wsda';
+      catalog_id: number;
+      subtype: string;
+      approved_substance: string;
+      /** The section and question as the wizard shows them ("G6.4 On-Farm Handling"). */
+      module_label?: string;
+      question_label?: string;
+    }
+  | { kind: 'suggested_substance_on_plan'; substance_id: number; substance_name: string };
+
+export interface MaterialIdentity {
+  source: MaterialIdentitySource;
+  logged_name: string;
+  name_key: string;
+  events: Array<{
+    id: number;
+    date: string | null;
+    state: MaterialIdentityEventState;
+    /** Where, how much and what was logged, so a use can be judged without opening it. */
+    parcel?: string;
+    amount?: string;
+    as_logged?: string;
+  }>;
+  current: MaterialIdentityDecision | null;
+  history: MaterialIdentityDecision[];
+  suggestions?: MaterialIdentitySuggestion[];
+}
+
+export interface MaterialIdentityTarget {
+  kind: MaterialIdentityTargetKind;
+  id: number;
+  name: string;
+}
+
+export interface MaterialIdentitiesResponse {
+  identities: MaterialIdentity[];
+  targets: MaterialIdentityTarget[];
+}
+
+export interface MaterialIdentityInput {
+  source: MaterialIdentitySource;
+  logged_name: string;
+  decision: 'same_as' | 'different_product';
+  target_kind?: MaterialIdentityTargetKind;
+  target_id?: number;
+  event_ids: number[];
+  exceptions?: Array<{ event_id: number; reason: string }>;
+  formulation_difference_acknowledged?: boolean;
+  formulation_note?: string;
+  note?: string;
+  supersedes?: number;
+}
+
+/** OSP alignment T18 (Phase 5 slice 2b). Mirrors `certifications/services/material_restrictions.py`. */
+export type RestrictionMaterialKind = 'plan_entry' | 'omri' | 'wsda' | 'national_list';
+export type RestrictionSource = 'regulation' | 'operator_transcribed';
+export type RestrictionDocType =
+  | 'product_label'
+  | 'omri_listing'
+  | 'wsda_listing'
+  | 'certifier_letter'
+  | 'other';
+
+export interface RestrictionStatement {
+  id: number;
+  material_kind: RestrictionMaterialKind;
+  material_id: number;
+  material_name: string;
+  restriction_source: RestrictionSource;
+  restriction_text: string;
+  citation: string;
+  source_type: RestrictionDocType | '';
+  source_identifier: string;
+  source_locator: string;
+  source_reference: string;
+  attachment: number | null;
+  how_met: string;
+  stated_by_name: string;
+  stated_at: string | null;
+  plan_version: number | null;
+  plan_id: number;
+  supersedes: number | null;
+  superseded_at: string | null;
+  withdrawn_at?: string | null;
+  withdrawal_reason?: string;
+  withdrawn_by_name?: string;
+  state: 'current' | 'needs_review' | 'superseded' | 'withdrawn';
+  printed: string[];
+}
+
+export interface RestrictionMaterial {
+  material_kind: RestrictionMaterialKind;
+  material_id: number;
+  material_name: string;
+  regulation_restriction: { key: string; text: string; citation: string } | null;
+  statements: RestrictionStatement[];
+  history: RestrictionStatement[];
+  /** Current statements on OTHER plan versions: context to restate, never this version's answer. */
+  earlier_versions: RestrictionStatement[];
+  printed: string;
+}
+
+export interface RestrictionStatementInput {
+  material_kind: RestrictionMaterialKind;
+  material_id: number;
+  restriction_source: RestrictionSource;
+  restriction_text?: string;
+  source_type?: RestrictionDocType;
+  source_identifier?: string;
+  source_locator?: string;
+  source_reference?: string;
+  how_met: string;
+  supersedes?: number;
 }

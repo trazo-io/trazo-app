@@ -1613,6 +1613,8 @@ function ProfileProduction() {
             // Once the season closes the server refuses a DELETE on a sale
             // (7 CFR 205.103(b)(4)); the correction from then on is a void.
             isFinished={Boolean(historyData?.finish_date)}
+            companyId={companyId}
+            historyId={Number(historyData?.id) || null}
           />
           <SalesDeliverySection historyData={historyData} />
         </VStack>

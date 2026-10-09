@@ -64,8 +64,9 @@ describe('specific copy still renders', () => {
     // COLLAPSED card (above the fold) rather than under a "What This Means For You" heading
     // inside the expander, because on most cards it is the only line that answers a
     // shopper's question and a tap was losing it.
-    expect(screen.getByText(/nothing carried over from another field/i)).toBeTruthy();
-    expect(screen.getByText(/keeps an organic block organic/i)).toBeTruthy();
+    // P1b (2026-10-06): what the record holds, not what the cleaning achieved.
+    expect(screen.getByText(/Equipment cleaning was recorded before this work/i)).toBeTruthy();
+    expect(screen.getByText(/The cleaning step is dated and on record/i)).toBeTruthy();
   });
 
   it('keeps a long-standing specific sentence (harvest)', () => {
@@ -83,8 +84,15 @@ describe('specific copy still renders', () => {
     // "…to ensure maximum nutritional value and freshness"). They now do different jobs:
     // shortDescription says WHAT HAPPENED, consumerImpact says WHY IT MATTERS to the reader.
     // Asserting both is what stops a future edit collapsing them back into one voice.
-    expect(screen.getByText(/picked, weighed and graded/i)).toBeTruthy();
-    expect(screen.getByText(/week this fruit came off the block/i)).toBeTruthy();
+    // Run 8 (R8-09): "picked, weighed and graded" claimed work an estimated, ungraded harvest never had.
+    expect(screen.getByText(/^Harvest recorded$/i)).toBeTruthy();
+    // 2026-09-16: "week this fruit came off" -> "which week this lot left the block". Two
+    // reasons, both recorded in consumerDescriptionEvidence.test.ts: "fruit" asserted a crop
+    // form the record does not establish (these lines render on carrot lots too), and the
+    // first neutral rewrite ("this crop came off … how much was picked") echoed the
+    // description's own words closely enough to trip the distinctness gate at 0.50 against a
+    // 0.4 threshold. The two-voice split this test protects is unchanged.
+    expect(screen.getByText(/which week this lot left the block/i)).toBeTruthy();
   });
 
   it('describes certification WITHOUT asserting an inspection took place', () => {
@@ -144,7 +152,7 @@ describe('specific copy still renders', () => {
       date: '2026-04-10T08:00:00Z'
     });
     // Calibration is an accuracy story, not an organic-integrity one.
-    expect(screen.getByText(/lands where it should/i)).toBeTruthy();
-    expect(screen.queryByText(/nothing carried over/i)).toBeNull();
+    expect(screen.getByText(/Spray equipment calibration was recorded/i)).toBeTruthy();
+    expect(screen.queryByText(/Equipment cleaning was recorded/i)).toBeNull();
   });
 });

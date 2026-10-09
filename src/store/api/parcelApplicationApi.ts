@@ -71,7 +71,73 @@ export interface LandHistoryManager {
   contradiction: boolean;
 }
 
+/** OSP alignment audit T21-F1. Mirrors `certified_parcel_branch.to_json` in trazo-back; the PDF
+ * prints the same assessment, so the card and the page cannot disagree. */
+export type CertifiedRoute =
+  | 'ccof_g'
+  | 'ccof_crop_update'
+  | 'wsda_existing_site'
+  | 'wsda_transfer'
+  | 'wsda_new_site'
+  | 'otco_existing_site'
+  | 'otco_transfer'
+  | 'otco_new_acreage'
+  | 'unresolved'
+  | 'agent_form';
+
+export type CertifiedItemKey =
+  | 'certification'
+  | 'certificate'
+  | 'continuity'
+  | 'no_lapse_statement'
+  | 'declaration'
+  | 'prior_manager';
+
+export type CertifiedItemState =
+  | 'reported'
+  | 'attached'
+  | 'not_in_packet'
+  | 'referenced'
+  | 'missing'
+  | 'not_asked'
+  | 'stated_yes'
+  | 'stated_no'
+  | 'unanswered';
+
+export type CertifiedReviewKind =
+  | 'prohibited_input'
+  | 'unknown_input'
+  // A basis recorded as "not yet confirmed" (recordkeeping review S4, F-08).
+  | 'unconfirmed_input'
+  | 'conventional_year'
+  | 'no_lapse_answered_no'
+  | 'operation_name_not_on_file'
+  | 'certifier_not_recognised';
+
+export interface CertifiedBranch {
+  agent: string | null;
+  branch: 'existing_site' | 'from_other_operation';
+  route: CertifiedRoute;
+  /** True: this route asks for the 36-month accounting. False: not asked on this route. null: not
+   * determined (an unresolved route, or a certifier Trazo does not assess). */
+  land_history_asked: boolean | null;
+  /** The plan whose certifier this was assessed for (the newest plan not withdrawn). */
+  plan_version: number | null;
+  items: Array<{
+    key: CertifiedItemKey;
+    state: CertifiedItemState;
+    asked: boolean;
+    /** The route's form accepts this item in place of another answer (OTCO C2 2.4). */
+    alternative: boolean;
+    path: string;
+    reference: string;
+  }>;
+  review: Array<{ kind: CertifiedReviewKind; detail: string }>;
+  missing: CertifiedItemKey[];
+}
+
 export interface LandHistorySummary {
+  certified_branch: CertifiedBranch | null;
   certificate: {
     number: string;
     agent: string;
@@ -88,6 +154,8 @@ export interface LandHistorySummary {
     gaps: Array<[string, string]>;
     unplaced: number;
     text: string;
+    /** True on a certified route whose form does not ask for the 36-month accounting (T21-F1). */
+    not_asked?: boolean;
   };
 }
 
@@ -97,12 +165,31 @@ interface ParcelArgs {
   parcelId: string;
 }
 
+/** One record behind the § 205.202(b) status: a dated prohibited input, or (in `unclassified`)
+ *  an input whose organic status was never recorded. Mirrors `TransitionStatus.to_dict` in
+ *  trazo-back product/services/transition_status_service.py. */
+export interface TransitionRecord {
+  source: string;
+  date: string;
+  description: string;
+  record_id: number | null;
+}
+
+/** `/transition-status/`, field for field as `TransitionStatus.to_dict` sends it. Declared rather
+ *  than read through an index signature, so a renamed field is a type error and not a silently
+ *  dead branch (review of app #60). */
 export interface TransitionStatus {
-  status?: string;
-  earliest_organic_harvest_date?: string | null;
+  parcel_id?: number;
+  parcel_name?: string;
+  is_eligible?: boolean;
+  transition_complete_date?: string | null;
   days_remaining?: number | null;
-  findings?: Array<{ year?: number; substance?: string; date?: string }>;
-  [key: string]: unknown;
+  last_prohibited_date?: string | null;
+  findings?: TransitionRecord[];
+  unclassified?: TransitionRecord[];
+  // Inputs whose basis the grower recorded as "not yet confirmed": named, never a block.
+  unconfirmed?: TransitionRecord[];
+  note?: string;
 }
 
 const parcelApplicationApi = baseApi.injectEndpoints({

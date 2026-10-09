@@ -1,4 +1,26 @@
 /**
+ * DATE AND TIME SEMANTICS (run 8, R8-05, 2026-10-05). ADR 011 in the workspace documentation.
+ *
+ * Trazo stores no farm timezone. Every farm record therefore follows two rules, and every
+ * surface (cards, detail views, edit forms, the buyer page, the certifier page, CSV and PDF
+ * exports) must render by them:
+ *
+ *   1. CALENDAR DATES are dates. Production start and finish, harvest, sale and certificate
+ *      dates render as the calendar date stored, never shifted by the viewer's zone:
+ *      `formatDateOnly` for `YYYY-MM-DD` columns, `formatDateFromTimestamp` for DateTime
+ *      columns that hold a date (`2026-10-05T00:00:00Z` is 5 October everywhere).
+ *   2. EVENT TIMESTAMPS are the farm's wall clock, stored with a UTC label (the round trip
+ *      pinned by `eventDateRoundTrip.test.ts`). They render as stored: 23:34 is 23:34 for a
+ *      viewer in Montevideo, Los Angeles or Tokyo. `formatWallClockTime` below.
+ *
+ * Moments that are not farm records (a QR scan, a login, "generated at") are real instants and
+ * may render in the viewer's zone.
+ *
+ * Astra's run 8 saw a production dated 5 October listed as 4 October on the parcel card, and
+ * events saved at 23:34 shown at 20:34, because three renderers called `toLocale*String`
+ * without `timeZone: 'UTC'`.
+ */
+/**
  * Rendering for backend DATE columns (`YYYY-MM-DD`, no time, no zone).
  *
  * `new Date('2026-07-28')` parses a date-only string as UTC midnight. Rendered
@@ -73,6 +95,29 @@ export function formatDateFromTimestamp(
   return d.toLocaleDateString(locale, { ...options, timeZone: 'UTC' });
 }
 
+/** Did the OPERATOR choose this date, or did the form hand it to them?
+ *
+ *  `wizardDefault` is the value the form seeded itself with (react-hook-form keeps it on
+ *  `formState.defaultValues`). Exact inequality is the whole test, and it is deliberately not a
+ *  same-day heuristic: a grower who sets 06:30 for a dawn spray and then pastes a crew note at
+ *  11:43 has chosen their time, and a date-part comparison calls that "today, therefore a guess"
+ *  and takes it away. The minute matters here, because the field is a `datetime-local` on a
+ *  record whose application time feeds re-entry intervals.
+ *
+ *  A missing value is not chosen either. The caller wants "is there an operator decision on this
+ *  record's day", and the answer for an empty field is no.
+ *
+ *  Why this exists: on a note-sourced create, today is a guess. A pasted note describes work
+ *  already done, so 7 CFR 205.103(b)(2) and CA PUR (which files strictly on `event.date`) need a
+ *  day the operator stated rather than the one the wizard was holding. */
+export function isOperatorChosenDate(
+  value?: string | null,
+  wizardDefault?: string | null
+): boolean {
+  if (!value) return false;
+  return value !== wizardDefault;
+}
+
 /** Now as `YYYY-MM-DDTHH:mm` in the VIEWER's timezone, for seeding a `datetime-local` input.
  *
  *  `new Date().toISOString().slice(0, 16)` is the UTC wall clock, but a `datetime-local` input
@@ -89,4 +134,12 @@ export function nowLocalDateTimeInput(): string {
     `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}` +
     `T${pad(now.getHours())}:${pad(now.getMinutes())}`
   );
+}
+
+/** An event's stored wall-clock TIME ("23:34"), rendered as stored (rule 2 above). */
+export function formatWallClockTime(value?: string | null, locale: string = 'en-US'): string | null {
+  if (!value) return null;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' });
 }

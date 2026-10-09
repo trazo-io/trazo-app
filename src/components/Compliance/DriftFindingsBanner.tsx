@@ -33,6 +33,7 @@ import {
 } from '@chakra-ui/react';
 import { FaExclamationTriangle, FaExternalLinkAlt, FaInfoCircle } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
+import { Link as RouterLink, useParams } from 'react-router-dom';
 
 import type { DriftWarning } from 'types/standardizedEvents';
 
@@ -71,6 +72,12 @@ const RESOLUTION_COLOR_SCHEME: Record<DriftWarning['resolved_via'], string> = {
 
 const DriftFindingsBanner: React.FC<DriftFindingsBannerProps> = ({ events }) => {
   const intl = useIntl();
+  // The identity panel lives in the materials module of the plan; the banner is rendered under
+  // the farm route, so the farm id is in the URL. No id, no link (the copy still names the panel).
+  const { farmId } = useParams<{ farmId?: string }>();
+  const identityPanelHref = farmId
+    ? `/admin/dashboard/farm/${farmId}/osp/module/materials_application#logged-names`
+    : null;
 
   /**
    * Localize a finding's reason from its stable code (2026-08-25). The backend
@@ -94,6 +101,21 @@ const DriftFindingsBanner: React.FC<DriftFindingsBannerProps> = ({ events }) => 
         : `drift.reason.${code}`;
     if (!(intl.messages as Record<string, unknown>)[id]) return dw.reason;
     const params: Record<string, unknown> = { ...(dw.reason_params ?? {}) };
+    // Recordkeeping review F-01 (2026-10-07): the detector stores the closest listing it found
+    // (`possibleMatches`); the row used to say "did not match any product … in the reference
+    // catalogs" and drop it. Name it, and say it is not confirmed as the same product.
+    const candidates = Array.isArray(params.possibleMatches)
+      ? (params.possibleMatches as string[])
+      : [];
+    if (code === 'unresolved' && !dw.provisional && candidates.length > 0) {
+      const candidateId = 'drift.reason.unresolved_candidate';
+      if ((intl.messages as Record<string, unknown>)[candidateId]) {
+        return intl.formatMessage(
+          { id: candidateId },
+          { input: String(params.input ?? dw.input_label ?? ''), candidates: candidates.join('; ') }
+        );
+      }
+    }
     if (code === 'approved_with_issues') {
       const issueCodes = Array.isArray(params.issues) ? (params.issues as string[]) : [];
       params.issues = issueCodes
@@ -325,6 +347,17 @@ const DriftFindingsBanner: React.FC<DriftFindingsBannerProps> = ({ events }) => 
               })}
             </Text>
           </Alert>
+          {!allProvisional && identityPanelHref && (
+            <Link
+              as={RouterLink}
+              to={identityPanelHref}
+              fontSize="sm"
+              fontWeight="semibold"
+              color="blue.600"
+              data-testid="drift-confirm-identities-link">
+              {intl.formatMessage({ id: 'drift.banner.confirmLink' })}
+            </Link>
+          )}
         </VStack>
       </Collapse>
     </Box>

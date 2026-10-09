@@ -45,3 +45,6 @@ playwright-report/
 blob-report/
 audit.txt
 audit-full.json
+
+# Vite dep cache (per checkout; see cacheDir in vite.config.ts)
+.vite

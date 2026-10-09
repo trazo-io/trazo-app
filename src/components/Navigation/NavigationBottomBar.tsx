@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Box, HStack, VStack, Text, Icon, useColorModeValue, Center } from '@chakra-ui/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaLeaf, FaShieldAlt, FaHome } from 'react-icons/fa';
+import { FaClipboardList, FaHome, FaTag } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
 const MotionBox = motion(Box);
@@ -21,20 +21,31 @@ interface NavigationBottomBarProps {
   onScrollEnd?: () => void;
 }
 
+/**
+ * Two tabs, named for what they scroll to. Until 2026-10-08 the bar carried the old buyer-page
+ * framing: "Story" with a shield (a verification mark on a self-reported record) and "Impact"
+ * with a leaf (carbon given the hero position the transparency-first rule keeps it out of, and a
+ * general-benefit word). The record is the page; carbon stays in its expandable card inside it;
+ * the farm profile is the other destination. The "Reviews" tab left on 2026-08-06 with the
+ * review section (sign-in-gated stars for a consumer account that no longer registers).
+ */
 const navigationItems: NavigationItem[] = [
+  // Three destinations, the page's three reading zones (2026-10-08; a two-tab bottom bar read
+  // as unfinished, and bottom navigation is for three to five). Lot: what you hold (crop, lot,
+  // harvest dates, certification, inputs summary). Record: the dated timeline. Farm: who grew it.
   {
-    id: 'transparency',
-    labelId: 'consumer.nav.story',
-    defaultLabel: 'Story',
-    icon: FaShieldAlt,
+    id: 'lot',
+    labelId: 'consumer.nav.lot',
+    defaultLabel: 'Lot',
+    icon: FaTag,
     targetSection: 'transparency-section'
   },
   {
-    id: 'carbon',
-    labelId: 'consumer.nav.impact',
-    defaultLabel: 'Impact',
-    icon: FaLeaf,
-    targetSection: 'carbon-section'
+    id: 'record',
+    labelId: 'consumer.nav.record',
+    defaultLabel: 'Record',
+    icon: FaClipboardList,
+    targetSection: 'journey-section'
   },
   {
     id: 'farm',
@@ -43,15 +54,10 @@ const navigationItems: NavigationItem[] = [
     icon: FaHome,
     targetSection: 'farm-section'
   }
-  // The "Reviews" tab was removed on 2026-08-06 with the consumer review section it pointed
-  // at (`reviews-section`). Star ratings were sign-in-gated for anti-gaming reasons, and the
-  // authenticated consumer account product is being retired — so the review CTA had become a
-  // funnel into a sign-up that no longer accepts registrations. A nav tab that scrolls to a
-  // section which no longer exists is worse than no tab.
 ];
 
 export const NavigationBottomBar: React.FC<NavigationBottomBarProps> = ({
-  activeSection = 'transparency',
+  activeSection = 'lot',
   onSectionChange,
   onScrollStart,
   onScrollEnd

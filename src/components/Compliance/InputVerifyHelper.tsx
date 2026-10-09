@@ -84,6 +84,7 @@ import { useIntl } from 'react-intl';
 
 import { useLazyVerifyInputQuery } from 'store/api/ospApi';
 import type { InputVerifyResult } from 'types/osp';
+import { parseDateOnly } from 'utils/dateOnly';
 
 interface InputVerifyHelperProps {
   /** Current value of the input field the farmer is about to save. */
@@ -116,9 +117,17 @@ const InputVerifyHelper: React.FC<InputVerifyHelperProps> = ({
   onAttachWsda
 }) => {
   const intl = useIntl();
-  const [verify, { data, isFetching, isUninitialized, error }] = useLazyVerifyInputQuery();
+  const [verify, { data, isFetching, isUninitialized, error, originalArgs }] =
+    useLazyVerifyInputQuery();
 
   const trimmed = (name || '').trim();
+  // Run 8 (R8-08): a result belongs to the name it was looked up for. Editing the name used to
+  // leave the previous verdict on screen (a prohibited card under a different product, or a
+  // clean one under a prohibited name) until the grower looked up again.
+  // RTK always records the args of the last lookup; when they are absent nothing is known to
+  // be stale.
+  const isStale =
+    Boolean(data) && originalArgs !== undefined && (originalArgs.name || '').trim() !== trimmed;
   const disabled = trimmed.length < 2 || isFetching;
 
   const handleClick = () => {
@@ -160,9 +169,17 @@ const InputVerifyHelper: React.FC<InputVerifyHelperProps> = ({
               defaultMessage: 'Look up in OMRI / WSDA / National List'
             })}
         </Button>
-        {!isUninitialized && data && (
+        {!isUninitialized && data && !isStale && (
           <Text fontSize="xs" color="gray.500">
             {intl.formatMessage({ id: 'inputVerify.checked', defaultMessage: 'Checked just now' })}
+          </Text>
+        )}
+        {!isUninitialized && data && isStale && (
+          <Text fontSize="xs" color="gray.600">
+            {intl.formatMessage({
+              id: 'inputVerify.stale',
+              defaultMessage: 'The name changed. Look it up again.'
+            })}
           </Text>
         )}
       </Flex>
@@ -180,7 +197,7 @@ const InputVerifyHelper: React.FC<InputVerifyHelperProps> = ({
         </Alert>
       )}
 
-      {!isUninitialized && data && (
+      {!isUninitialized && data && !isStale && (
         <ResultCard
           result={data}
           query={trimmed}
@@ -214,11 +231,25 @@ const ResultCard: React.FC<{
     list_edition_date?: string | null;
   }) => {
     const id = candidate.omri_id ? `OMRI #${candidate.omri_id}` : null;
-    const edition = candidate.list_edition_date
+    // PARSED FIRST, AND THE RESULT IS THE CONDITION.
+    //
+    // `list_edition_date` is a backend DATE column. Passing the raw `YYYY-MM-DD` to
+    // `formatDate` parses it as UTC midnight, so every viewer west of UTC read OMRI's edition
+    // as the PREVIOUS day: the Sep 5 2026 list rendered "List of Sep 4, 2026" for a US grower.
+    // `parseDateOnly` builds a LOCAL midnight instead. See utils/dateOnly.ts.
+    //
+    // Testing the RAW string and formatting the parsed one was not enough. `parseDateOnly`
+    // returns null for a truthy-but-unparseable value, on purpose, and `null ?? undefined` is
+    // `undefined`, which `Intl.DateTimeFormat.format` renders as TODAY. So a malformed column
+    // value printed "List of <today>" as OMRI's edition date, on the surface whose whole job is
+    // saying which edition a listing came from, under a comment promising it never invents
+    // "current". MEASURED: format(undefined) returns the current date, it does not throw.
+    const parsedEdition = parseDateOnly(candidate.list_edition_date);
+    const edition = parsedEdition
       ? intl.formatMessage(
           { id: 'inputVerify.omriEdition', defaultMessage: 'List of {date}' },
           {
-            date: intl.formatDate(candidate.list_edition_date, {
+            date: intl.formatDate(parsedEdition, {
               day: 'numeric',
               month: 'short',
               year: 'numeric'
@@ -400,7 +431,24 @@ const ResultCard: React.FC<{
           badgeLabel="OMRI"
           badgeColor="purple"
           title={result.omri_product_name || ''}
-          subtitle={result.omri_product_id ? `OMRI #${result.omri_product_id}` : undefined}
+          // Through `omriSubtitle`, so the UNAMBIGUOUS match carries its edition date too.
+          // It used to build `OMRI #<id>` inline and print no edition, which had it exactly
+          // backwards: the edition appeared only in the multi-match list, and was missing from
+          // the single row a grower actually attaches to a record. Same daily-republication
+          // reason as above, on the path that ends in a stored listing.
+          //
+          // Reading the candidate rather than the top-level fields is safe and not a guess:
+          // `matched_omri` IS `omri_candidates[0]` on both server branches
+          // (certifications/views.py:206 and :217), so a match always has its row here. The
+          // `find` is still by pk, and it still falls back to the ID alone, so a response that
+          // ever stops holding the row degrades to the old subtitle instead of dropping the ID.
+          subtitle={
+            omriSubtitle(
+              omriCandidates.find((candidate) => candidate.pk === result.omri_product_pk) ?? {
+                omri_id: result.omri_product_id ?? null
+              }
+            ) || undefined
+          }
           action={
             onAttachOmri ? (
               omriAttached ? (

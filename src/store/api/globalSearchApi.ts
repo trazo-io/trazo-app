@@ -15,7 +15,6 @@ interface RawSearchResult {
   description?: string;
   location?: string;
   image_url?: string;
-  carbon_score?: number;
   area?: string;
   status?: string;
   establishment_id?: number;

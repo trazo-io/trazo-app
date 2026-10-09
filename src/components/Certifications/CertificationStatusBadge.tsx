@@ -22,6 +22,20 @@ interface CertificationStatusBadgeProps {
  * and FTC 16 CFR 260.6(d) — so green here has to mean database-backed and nothing else.
  * Only `verified*` may be green.
  */
+/**
+ * 🔴 2026-09-16 — this map takes `consumer_display_status`, NEVER `verification_status`.
+ *
+ * It used to carry a bare `verified` key, and `CertificationManager` passed it the raw
+ * `verification_status` column. That column is set by an admin edit, a data import or a
+ * fixture, and says nothing about whether a USDA Organic Integrity Database match ever
+ * happened — which is the entire reason `Certification.consumer_display_status` exists on the
+ * model. So a seeded farm's invented certificate painted green on the farm profile with
+ * "Verified via USDA Organic Integrity Database" beside it.
+ *
+ * The `verified` key is gone deliberately rather than remapped: with it absent, a caller that
+ * regresses to the raw column falls through to `STATUS_CONFIG.pending` and shows a neutral
+ * "Pending" badge. The failure mode of passing the wrong field is now under-claiming.
+ */
 const STATUS_CONFIG: Record<
   string,
   {
@@ -30,15 +44,17 @@ const STATUS_CONFIG: Record<
     messageId: string;
   }
 > = {
-  verified: {
-    variant: 'subtle',
-    icon: FaCheckCircle,
-    messageId: 'certification.badge.verified'
-  },
   verified_via_database: {
     variant: 'subtle',
     icon: FaCheckCircle,
     messageId: 'certification.badge.verified'
+  },
+  // A fabricated operation. Neutral, like self-reported, but its own label: "Reported by
+  // Producer" implies a real producer made a real statement.
+  specimen: {
+    variant: 'neutral',
+    icon: FaCertificate,
+    messageId: 'certification.badge.specimen'
   },
   // Farmer-attested. Deliberately NEUTRAL, never green and never a warning colour — it is
   // not an error, it simply is not third-party evidence.

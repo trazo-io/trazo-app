@@ -1,3 +1,6 @@
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
 import { describe, expect, it } from 'vitest';
 import { parse as parseIcu } from '@formatjs/icu-messageformat-parser';
 import enUS from '../lang/en-US.json';
@@ -54,5 +57,25 @@ describe('i18n locale parity', () => {
       if (en !== es) mismatches.push(`${key} (en: ${en || '∅'} vs es: ${es || '∅'})`);
     }
     expect(mismatches, mismatches.slice(0, 10).join(' | ')).toEqual([]);
+  });
+
+  it('declares each key exactly once per catalogue', () => {
+    // MEASURED 2026-09-26: a key was appended to both catalogues that already existed
+    // ("app.fieldNotes"). Duplicate JSON keys are legal to parse and the last one silently wins,
+    // so a new entry quietly reassigned an existing label on an unrelated surface. Every other
+    // test in this file reads the IMPORTED object, where `Object.keys` has already collapsed the
+    // pair, which is why all of them stayed green. This one reads the file as text.
+    for (const locale of ['en-US', 'es-419']) {
+      const raw = readFileSync(join(__dirname, `../lang/${locale}.json`), 'utf8');
+      const seen = new Set<string>();
+      const duplicates: string[] = [];
+      for (const line of raw.split('\n')) {
+        const key = /^\s*"([^"]+)"\s*:/.exec(line)?.[1];
+        if (!key) continue;
+        if (seen.has(key)) duplicates.push(key);
+        seen.add(key);
+      }
+      expect(duplicates, `duplicate keys in ${locale}: ${duplicates.join(', ')}`).toEqual([]);
+    }
   });
 });

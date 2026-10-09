@@ -53,15 +53,17 @@ describe('CarbonImpactExplainer — no empty card', () => {
     });
 
     // The card is there, and it carries a number rather than a heading over nothing.
-    expect(screen.getByText('Environmental Impact')).toBeInTheDocument();
+    expect(screen.getByText('Estimated emissions from recorded work and inputs')).toBeInTheDocument();
     expect(screen.getByText("This season's total")).toBeInTheDocument();
     expect(screen.getByText('412.4')).toBeInTheDocument();
 
     // NOT "Your Impact": this is the farm's whole season, and reusing the per-kg card's
     // heading would tell a shopper that 412 kg is their share of it.
     expect(screen.queryByText('Your Impact')).not.toBeInTheDocument();
-    expect(screen.getByText('kg from farm activity and purchased inputs')).toBeInTheDocument();
-    expect(screen.getByText(/Like driving 1,?160\.1 miles/)).toBeInTheDocument();
+    // Run 8 (R8-14): the unit says CO2 equivalent, and no driving or phone comparison is drawn from an
+    // estimate whose boundary does not travel with it.
+    expect(screen.getByText('kg of greenhouse gases (as CO2 equivalent) from recorded farm work and purchased inputs')).toBeInTheDocument();
+    expect(screen.queryByText(/Like driving/)).not.toBeInTheDocument();
 
     // FTC 16 CFR 260.4(c): the boundary travels with the number, in the same block, never
     // only behind the expander.
@@ -84,7 +86,7 @@ describe('CarbonImpactExplainer — no empty card', () => {
     expect(container.textContent).not.toContain('app.carbonExplainer');
   });
 
-  it('formats the season total the same way as the miles beside it', () => {
+  it('formats the season total through react-intl', () => {
     renderCard({
       totalCO2e: 1234.56,
       productName: 'Chandler Walnuts',
@@ -94,7 +96,7 @@ describe('CarbonImpactExplainer — no empty card', () => {
 
     // Both go through react-intl. The raw JS number rendered "1234.6" next to "3,473.2".
     expect(screen.getByText('1,234.6')).toBeInTheDocument();
-    expect(screen.getByText(/Like driving 3,473.2 miles/)).toBeInTheDocument();
+    expect(screen.queryByText(/Like driving/)).not.toBeInTheDocument();
   });
 
   it('omits the driving comparison when the backend sent none', () => {
@@ -118,7 +120,7 @@ describe('CarbonImpactExplainer — no empty card', () => {
     // Chakra always injects a hidden <span id="__chakra_env">, so assert on the text the
     // component would have contributed rather than on an empty node.
     expect(container.textContent).toBe('');
-    expect(screen.queryByText('Environmental Impact')).not.toBeInTheDocument();
+    expect(screen.queryByText('Estimated emissions from recorded work and inputs')).not.toBeInTheDocument();
   });
 
   it('still prefers the per-kg framing when the harvest amount is recorded', () => {

@@ -15,6 +15,30 @@ npm run format
 ⛔ `npm run build` passing proves NOTHING about types — ~815 TypeScript errors are masked
 by the build config. A change is verified by rendering the page, not by a green build.
 
+## ⛔ Git: shared working trees
+
+Several Claude sessions share this checkout. Two rules, both learned by breaking them on
+2026-09-25:
+
+- **Stage only paths you edited.** `git add <file>` takes the whole file, including another
+  session's hunks. Run `git status` first; use `git add -p` when a file is dirty from both.
+  ⚠️ `src/i18n/lang/en-US.json` and `es-419.json` are the usual trap — nearly every
+  session edits them. Append keys in place; never re-serialise or re-sort, which turns a 3-key
+  change into a 7,700-line diff.
+- **Branch from `origin/main`**, not the current HEAD:
+  `git fetch origin && git switch -c <name> origin/main`. Then check
+  `git log --oneline origin/main..HEAD` before opening the PR — anything unfamiliar there is
+  someone's unreviewed work about to merge under your name.
+
+⚠️ **A worktree must sit beside a matching `trazo-back` worktree.** 30 tests here reach
+into `trazo-back/` by relative path, and 7 backend tests reach back as
+`parents[3] / "trazo-app"`. A worktree elsewhere either fails outright or, worse, silently
+compares against whatever branch the main `trazo-back` tree happens to hold. Pair them:
+`~/dev/trazo-wt/<task>/{trazo-back,trazo-app}`, symlinking `node_modules`. Full recipe in the
+workspace CLAUDE.md.
+
+⛔ No AI attribution in commits or PR bodies.
+
 ## This repo is MIXED .jsx / .tsx
 The activity wizard is `NewEvent.jsx`. Never filter a search to `.tsx` only — it fabricates
 "orphaned code" findings.
@@ -68,6 +92,24 @@ button; a drill-down always does.
 ## Components & sizing
 1. Check `src/components/Design/StandardComponents.tsx` FIRST. 2. Chakra with theme props.
 3. Custom components need approval.
+- **⛔ A form control comes from the design system, never from `@chakra-ui/react`.**
+  `StandardSelect` / `StandardTextarea` / `StandardInput` (also `StandardSearchInput`,
+  `StandardDecimalInput`) / `StandardNumberInput`; `StandardField` for the label + required +
+  helpText shell; `StandardButton` for new code. Guard:
+  `src/components/Design/__tests__/formControlsComeFromTheDesignSystem.test.ts` (Select,
+  Textarea, Input, NumberInput; allowed only inside `components/Design/`).
+  This rule had existed as "check StandardComponents FIRST" and was still missed twice, because
+  **a raw Chakra control WORKS**: nothing fails and the diff looks fine. MEASURED in the
+  installed theme: `Select.baseStyle` sets `--select-bg: colors.white` so a select does NOT
+  inherit the filled treatment, `Input.variants.outline` carries
+  `_focusVisible.borderColor: #3182ce`, and `theme.ts` registers no Input/Select config. One
+  wrong import = white field on a gray.50 form + 6px corners against 12px + a BLUE focus ring.
+  ⚠️ `Button` is exempt from the guard (dozens of pre-existing call sites; 79 when
+  measured 2026-09-29) and NOT from the rule.
+  ⛔ Never pass `colorScheme` or `minH="44px"` to `StandardButton`. The variant map and the
+  44px floor are inside it, and a raw Chakra `variant="solid"` falls through the map unstyled.
+  ⚠️ A checkbox has no wrapper but IS themed (`theme/components/checkbox.js`): use Chakra
+  `Checkbox`, never a bare `<input type="checkbox">`.
 - `StandardSegmentedControl` = one of a few views of the SAME content. `StandardSectionTabs` =
   different sections of one record. Neither uses `role="radiogroup"`. Selection is never signalled
   by colour alone.

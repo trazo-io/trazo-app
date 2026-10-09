@@ -27,6 +27,7 @@ import {
   formatCO2e as formatCO2eUtil,
   getImpactLevel as getImpactLevelUtil
 } from '../../utils/carbonDisplayUtils';
+import { isNotEstimated } from 'utils/carbonStatus';
 
 interface CarbonCalculation {
   co2e?: number;
@@ -229,7 +230,9 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
 
     // Memoized calculations to prevent recalculation unless calculation changes
     const { impactLevel, formattedCO2e } = useMemo(() => {
-      if (!calculation) return { impactLevel: null, formattedCO2e: null };
+      // A not-estimated preview carries no figure (run 8): nothing to grade or format.
+      if (!calculation || calculation.co2e == null)
+        return { impactLevel: null, formattedCO2e: null };
 
       return {
         impactLevel: getImpactLevel(calculation.co2e),
@@ -326,6 +329,28 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
     }
 
     if (!calculation) return null;
+
+    // Run 8 (R8-04): the record holds nothing to count from. The save stores no figure, so the
+    // preview shows none either: "Not estimated", never 0 (the saved/preview mismatch Astra saw).
+    if (isNotEstimated(calculation)) {
+      return (
+        <Card bg={bgColor} borderRadius="md" borderWidth="1px" borderColor={borderColor}>
+          <CardBody>
+            <HStack spacing={2} align="start">
+              <Icon as={FaLeaf} color="gray.500" boxSize={4} mt={1} />
+              <VStack spacing={1} align="start">
+                <Text fontSize="sm" fontWeight="semibold" color={textColor}>
+                  {intl.formatMessage({ id: 'carbon.notEstimated' })}
+                </Text>
+                <Text fontSize="xs" color="gray.600">
+                  {intl.formatMessage({ id: 'carbon.notEstimatedHint' })}
+                </Text>
+              </VStack>
+            </HStack>
+          </CardBody>
+        </Card>
+      );
+    }
 
     // Zero-emission events: show context-aware transparency message
     const isPollination =

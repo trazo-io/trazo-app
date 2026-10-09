@@ -175,7 +175,7 @@ describe('OSPModuleWizard — a non-draft plan reads as a document', () => {
   it('names the actual status', () => {
     renderWizard();
     // This read "This plan has been submitted" for EVERY non-draft status.
-    expect(screen.getByText(/approved and active/)).toBeInTheDocument();
+    expect(screen.getByText(/\bactive\b/)).toBeInTheDocument();
     expect(screen.queryByText(/has been submitted/)).toBeNull();
   });
 

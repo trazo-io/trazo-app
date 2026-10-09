@@ -139,8 +139,8 @@ export const templatesForEventType = (eventType: number): TemplateAccelerator[] 
  *   seed_certification_status: 'certified_organic'  -> a § 205.204 certification claim
  *   previous_use / cleaning_protocol          -> § 205.272 commingling statements
  *
- * A template may suggest HOW MUCH and HOW. It may never answer a question that asserts a
- * compliance status, a classification, or an observation — those are the operator's to make,
+ * A template may suggest HOW. It may never answer a question that asserts a compliance
+ * status, a classification, or an observation — those are the operator's to make,
  * and `cleanEventData` is a passthrough, so anything merged here reaches the saved record
  * whether the form renders the field or not.
  *
@@ -148,20 +148,11 @@ export const templatesForEventType = (eventType: number): TemplateAccelerator[] 
  * quickEventFields would be prefilled by default, and that is exactly how this one shipped.
  */
 export const PREFILLABLE_FIELDS = new Set<string>([
-  // Scope / quantity
-  'area_covered',
-  'area_treated',
-  'volume_applied',
-  'yield_quantity',
-  'amendment_amount_numeric',
-  'irrigation_depth',
-  'transportation_distance',
-  // Energy
-  'fuel_type',
-  'fuel_consumed',
-  'equipment_hours',
-  'application_fuel_type',
-  'application_fuel_consumed',
+  // Run 8 (R8-03, 2026-10-05): no quantity and no energy. "Scope / quantity" (area, volume,
+  // yield, amendment amount, irrigation depth, transport distance) and "Energy" (fuel type and
+  // amount, equipment hours) were allowed as suggestions, so picking the Harvest template filled
+  // 1 acre, 100 lb and 5 km before the grower had said anything. A number on a record is an
+  // observation; it has to come from the person who made it. Only method fields remain.
   // Method / equipment — how the operation is carried out
   'application_method',
   'irrigation_method',
@@ -169,9 +160,7 @@ export const PREFILLABLE_FIELDS = new Set<string>([
   'equipment_type',
   'equipment_operation_type',
   'amendment_type',
-  'seeds_source',
-  'production_efficiency',
-  'operation_efficiency'
+  'seeds_source'
 ]);
 
 export const templatePrefillValues = (tpl: TemplateAccelerator): Record<string, unknown> => {

@@ -82,6 +82,8 @@ import {
 import { MdEco } from 'react-icons/md';
 import type { VerificationLevel } from '../../utils/verificationTierHelpers';
 import { formatCO2e, getImpactLevel } from '../../utils/carbonDisplayUtils';
+import { formatDateFromTimestamp, formatWallClockTime } from 'utils/dateOnly';
+import { isNotEstimated, showsInputsBadge } from 'utils/carbonStatus';
 
 // Real interfaces matching API data
 interface Member {
@@ -1438,7 +1440,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                           have sourced. It was rendering on pest-trap installs and worker-training
                           records, where it reads as a government endorsement of the activity —
                           the "USDA Verified" implication `compliance.md` forbids. */}
-                      {carbonData?.usda_factors_based && (carbonData?.co2e ?? 0) > 0 && (
+                      {showsInputsBadge(carbonData) && (
                         <Tooltip
                           label={intl.formatMessage({ id: 'carbon.badge.epaUsdaTooltip' })}
                           hasArrow
@@ -1473,12 +1475,12 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                   {event.extra_data?.date_start && event.extra_data?.date_end ? (
                     <>
                       <Text fontSize="xs" fontWeight="600" color="gray.700">
-                        {new Date(event.extra_data.date_start).toLocaleDateString('en-US', {
+                        {formatDateFromTimestamp(event.extra_data.date_start, intl.locale, {
                           month: 'short',
                           day: 'numeric'
                         })}
                         {' - '}
-                        {new Date(event.extra_data.date_end).toLocaleDateString('en-US', {
+                        {formatDateFromTimestamp(event.extra_data.date_end, intl.locale, {
                           month: 'short',
                           day: 'numeric'
                         })}
@@ -1490,16 +1492,13 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                   ) : (
                     <>
                       <Text fontSize={{ base: 'xs', md: 'sm' }} fontWeight="600" color="gray.700">
-                        {new Date(event.date).toLocaleDateString('en-US', {
+                        {formatDateFromTimestamp(event.date, intl.locale, {
                           month: 'short',
                           day: 'numeric'
                         })}
                       </Text>
                       <Text fontSize="xs" color="gray.500">
-                        {new Date(event.date).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
+                        {formatWallClockTime(event.date, intl.locale)}
                       </Text>
                     </>
                   )}
@@ -1543,7 +1542,19 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
 
               <Flex wrap="wrap" justify="space-between" align="center" gap={2}>
                 {/* Carbon Impact */}
-                {carbonData && !carbonData.error ? (
+                {carbonData && !carbonData.error && isNotEstimated(carbonData) ? (
+                  // Run 8 (R8-04): nothing recorded to count from. Said, never shown as 0.
+                  // A sentence, not a figure: it must shrink and wrap inside the card. With
+                  // flexShrink={0} it ran 120px past a 375px screen (manual pass, 2026-10-06).
+                  <HStack spacing={2} flex="1 1 auto" minW={0}>
+                    <Circle size="24px" bg="gray.100">
+                      <Icon as={MdEco} color="gray.400" boxSize={3} />
+                    </Circle>
+                    <Text fontSize="sm" color="gray.600">
+                      {intl.formatMessage({ id: 'carbon.notEstimated' })}
+                    </Text>
+                  </HStack>
+                ) : carbonData && !carbonData.error ? (
                   <Tooltip
                     label={`Environmental Impact: ${formatCO2e(carbonData.co2e)} kg CO₂e ${
                       carbonData.co2e === 0

@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Tokens must stay OUT of JavaScript-readable storage.
  *

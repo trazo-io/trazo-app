@@ -312,9 +312,19 @@ describe('AppSignUp Component', () => {
       expect(screen.getByText(/Password strength: (Very Weak|Weak)/)).toBeInTheDocument();
     });
 
-    // Test strong password
+    // A password with an open warning ("contains common words": "pass") is never also called
+    // Strong on the same screen (recordkeeping review F-20): one verdict.
     await user.clear(passwordInput);
     await user.type(passwordInput, 'StrongPass123!');
+
+    await waitFor(() => {
+      expect(screen.getByText('Password strength: Good')).toBeInTheDocument();
+      expect(screen.getByText(/common words/)).toBeInTheDocument();
+    });
+
+    // Test strong password, no warning
+    await user.clear(passwordInput);
+    await user.type(passwordInput, 'Xq7#mLv2!tRz');
 
     await waitFor(() => {
       expect(screen.getByText('Password strength: Strong')).toBeInTheDocument();
@@ -379,7 +389,8 @@ describe('AppSignUp Component', () => {
         last_name: 'Doe',
         email: 'john@test.com',
         password: VALID_PASSWORD,
-        user_type: 'PRODUCER'
+        user_type: 'PRODUCER',
+        accept_terms: true
       });
     });
   });
@@ -419,9 +430,31 @@ describe('AppSignUp Component', () => {
         email: 'jane@test.com',
         password: VALID_PASSWORD,
         user_type: 'PRODUCER',
+        accept_terms: true,
         company_code: 'TEST123'
       });
     });
+  });
+
+  // The Terms box used to gate only the email form: Google and Facebook created accounts
+  // that never agreed to anything, and the server never learned who had ticked it.
+  it('keeps social sign-up disabled until the Terms box is ticked', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <TestWrapper>
+        <AppSignUp />
+      </TestWrapper>
+    );
+
+    const google = screen.getByRole('button', { name: 'Continue with Google' });
+    expect(google).toBeDisabled();
+    expect(screen.getByText(/Tick the Terms box above/)).toBeInTheDocument();
+
+    await user.click(screen.getByLabelText(/I agree to the Terms of Service/));
+
+    expect(google).toBeEnabled();
+    expect(screen.queryByText(/Tick the Terms box above/)).not.toBeInTheDocument();
   });
 
   it('handles API errors gracefully', async () => {

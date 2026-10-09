@@ -65,7 +65,11 @@ const productionSchema = object({
   start_date: string().min(1, 'Start date is required'),
   expected_harvest: string().optional(),
   description: string().optional(),
-  production_method: string().optional(),
+  // Required, with no default (2026-10-01). A preselected "conventional" was a claim nobody
+  // made: the onboarding rehearsal started four seasons on a WSDA-certified farm and every one
+  // came up Conventional. The farm's own farming_method still seeds it below; with nothing to
+  // inherit, the grower chooses. The message is a key, rendered through intl at the field.
+  production_method: string().min(1, 'quickStart.field.productionMethod.required'),
   type: string().min(1, 'Production type is required'),
   crop_type_id: string().min(1, 'Crop type is required')
 }).superRefine((data, ctx) => {
@@ -382,7 +386,12 @@ const ORGANIC_PRODUCTION_METHODS = ['organic', 'regenerative', 'biodynamic'];
  */
 export function isProhibitedSuggestion(event: any, productionMethod?: string): boolean {
   const method = String(productionMethod || '').toLowerCase();
-  if (!ORGANIC_PRODUCTION_METHODS.includes(method)) return false;
+  // An unchosen method FAILS CLOSED (2026-10-01). Empty used to mean "conventional", because the
+  // form preselected it; now it means "not chosen yet", and the farm may well be organic. Treating
+  // it as conventional let "Select all" enable a template's prohibited inputs, unbadged, on a
+  // farm with no inherited method (trazo-app#59 review). The server never sees an empty method:
+  // the form requires one before it saves.
+  if (method && !ORGANIC_PRODUCTION_METHODS.includes(method)) return false;
 
   // backend_event_fields is where the template carries the input's real attributes; the event
   // may also carry them flattened, so check both and let either mark it prohibited.
@@ -550,7 +559,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
       name: `Production ${new Date().getFullYear()}`,
       start_date: new Date().toISOString().split('T')[0],
       type: 'OR',
-      production_method: 'conventional',
+      production_method: '',
       crop_type_id: ''
     }
   });
@@ -586,7 +595,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
   useEffect(() => {
     if (isEdit || !farmDefaultMethod) return;
     const current = getValues('production_method');
-    if (!current || current === 'conventional') {
+    if (!current) {
       setValue('production_method', farmDefaultMethod);
     }
   }, [farmDefaultMethod, isEdit, getValues, setValue]);
@@ -633,7 +642,9 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
         );
       }
 
-      const productionMethod = productionData.production_method || 'conventional';
+      // A season saved without a method stays blank and asks, rather than being re-saved as
+      // conventional the next time someone edits its name.
+      const productionMethod = productionData.production_method || '';
 
       // Format dates properly
       const formatDate = (dateStr: string | undefined) => {
@@ -788,39 +799,25 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
       if (!getValues('name')?.trim()) {
         setValue('name', generateProductionName(templateDetail.name, currentYear));
       }
-      if (!getValues('description')?.trim()) {
-        // Was: "<blurb> This production includes N pre-configured events for optimal carbon
-        // tracking." Both halves became false when templates stopped writing events: nothing
-        // is pre-configured and no carbon is calculated until the farmer logs real records.
-        // It was also hardcoded English in a file that otherwise routes everything through
-        // intl. The template's own blurb is the part that was ever true.
-        setValue('description', templateDetail.description || '');
-      }
+      // The description is NOT taken from the template (recordkeeping review F-12,
+      // 2026-10-07). The blurb ("Organic production template for Blueberries using organic
+      // production practices. All 7 event types with organic-specific defaults.") is Trazo's
+      // catalogue text, and `description` is the season's PUBLIC description on the buyer
+      // page: it printed there as the farm's own words unless the operator noticed and
+      // deleted it. The farmer writes the description or leaves it empty.
 
-      // Auto-set production method from the template's farming approach — but ONLY when
-      // nothing more authoritative has spoken.
+      // The production method is NOT taken from the template.
       //
-      // This line used to run unconditionally, and it is the third route into the
+      // History: a line here once set it from the template unconditionally, the third route into the
       // "organic farm, conventional production" bug: a generic crop template ("Comprehensive
       // production template for walnuts") carries a system_type that mapped to
       // `conventional`, overwriting both the farm's inherited farming_method and an explicit
       // choice by the farmer. The consumer QR page reads this value, so an organic grower's
       // lot was published as conventional. The farm is the authority on its own organic
-      // status; a crop template is not.
-      const currentMethod = getValues('production_method');
-      const farmerOrFarmChose =
-        Boolean(farmDefaultMethod) || (currentMethod && currentMethod !== 'conventional');
-      if (templateDetail.system_type && !farmerOrFarmChose) {
-        const methodMap: Record<string, string> = {
-          organic: 'organic',
-          conventional: 'conventional',
-          regenerative: 'regenerative',
-          integrated: 'integrated',
-          no_till: 'no_till',
-          precision: 'conventional'
-        };
-        setValue('production_method', methodMap[templateDetail.system_type] || 'conventional');
-      }
+      // status; a crop template is not. It was then narrowed to "only when nothing was chosen".
+      // 2026-10-01: a template no longer fills the method at all. With the field now required
+      // and empty by default, the template was the last thing still choosing for the grower,
+      // and by the reasoning above it is the one source with no standing to.
 
       // Set custom events from template — ALL UNSELECTED.
       //
@@ -922,14 +919,31 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
    * permanently false on an organic farm — the master switch would read unchecked forever and
    * could never be used to clear the list again.
    */
+  // Reads the WATCHED method, not getValues: getValues is a stable reference, so a memo keyed on
+  // it never recomputes when the method changes (see templateSortReactsToMethod.test.ts).
   const allSelectableSuggestionsEnabled = useMemo(() => {
-    const method = getValues('production_method') || farmDefaultMethod || '';
+    const method = watchedProductionMethod || farmDefaultMethod || '';
     const selectable = planSuggestions.filter((event) => !isProhibitedSuggestion(event, method));
     return selectable.length > 0 && selectable.every((event) => event.enabled);
-  }, [planSuggestions, getValues, farmDefaultMethod]);
+  }, [planSuggestions, watchedProductionMethod, farmDefaultMethod]);
+
+  // A row enabled under one method must not stay enabled after a change makes it prohibited:
+  // the row would render disabled while still being submitted.
+  useEffect(() => {
+    const method = watchedProductionMethod || farmDefaultMethod || '';
+    setPlanSuggestions((events) =>
+      events.some((event) => event.enabled && isProhibitedSuggestion(event, method))
+        ? events.map((event) =>
+            event.enabled && isProhibitedSuggestion(event, method)
+              ? { ...event, enabled: false }
+              : event
+          )
+        : events
+    );
+  }, [watchedProductionMethod, farmDefaultMethod]);
 
   const handleToggleAll = () => {
-    const method = getValues('production_method') || farmDefaultMethod || '';
+    const method = watchedProductionMethod || farmDefaultMethod || '';
     setPlanSuggestions((events) =>
       events.map((event) => ({
         ...event,
@@ -1012,10 +1026,15 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
 
         await startProduction(productionPayload).unwrap();
 
+        // A season with no plan item is a season with no checklist: say so instead of "Season
+        // plan saved" (recordkeeping review F-21).
+        const planned = productionPayload.plan_item_ids.length;
         toast({
           title: intl.formatMessage({ id: 'production.createdSuccessfully' }),
-          description: intl.formatMessage({ id: 'production.planSaved' }),
-          status: 'success',
+          description: intl.formatMessage({
+            id: planned > 0 ? 'production.planSaved' : 'production.planEmpty'
+          }),
+          status: planned > 0 ? 'success' : 'info',
           duration: 6000,
           isClosable: true
         });
@@ -1502,12 +1521,23 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
 
                   <GridItem>
                     <StandardField
-                      label={intl.formatMessage({ id: 'quickStart.field.productionMethod' })}>
+                      label={intl.formatMessage({ id: 'quickStart.field.productionMethod' })}
+                      required
+                      error={
+                        errors.production_method
+                          ? intl.formatMessage({ id: 'quickStart.field.productionMethod.required' })
+                          : undefined
+                      }>
                       <Controller
                         name="production_method"
                         control={control}
                         render={({ field }) => (
                           <StandardSelect {...field}>
+                            <option value="" disabled>
+                              {intl.formatMessage({
+                                id: 'quickStart.field.productionMethod.placeholder'
+                              })}
+                            </option>
                             {PRODUCTION_METHOD_CHOICES.map(({ value, label }) => (
                               <option key={value} value={value}>
                                 {label}
@@ -1609,6 +1639,16 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                     </Text>
                   </Box>
 
+                  {planSuggestions.length > 0 &&
+                    !planSuggestions.some((event) => event.enabled) && (
+                      <Text
+                        fontSize="sm"
+                        color="gray.700"
+                        mb={2}
+                        data-testid="quickstart-plan-nothing-ticked">
+                        {intl.formatMessage({ id: 'quickStart.plan.nothingTicked' })}
+                      </Text>
+                    )}
                   {/* Master Switch Controls */}
                   <HStack justify="space-between" mb={4} p={3} bg="gray.50" borderRadius="md">
                     <Text fontSize="sm" color="gray.600">

@@ -133,7 +133,17 @@ const authApi = baseApi.injectEndpoints({
       }
     }),
     socialAuth: build.mutation({
-      query: ({ provider, access_token, id_token, user_type, user, invitation_code }) => ({
+      // The body is rebuilt field by field, so a key missing here never reaches the server:
+      // `accept_terms` was dropped this way and social sign-up recorded no Terms acceptance.
+      query: ({
+        provider,
+        access_token,
+        id_token,
+        user_type,
+        user,
+        invitation_code,
+        accept_terms
+      }) => ({
         url: SOCIAL_AUTH_URL,
         method: 'POST',
         body: {
@@ -142,7 +152,8 @@ const authApi = baseApi.injectEndpoints({
           id_token,
           user_type,
           user,
-          invitation_code
+          invitation_code,
+          accept_terms
         },
         credentials: 'include'
       }),

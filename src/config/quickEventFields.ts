@@ -324,7 +324,7 @@ export const harvestFields: QuickEventTypeConfig = {
       type: 'select',
       labelKey: 'app.productionEfficiency',
       helpKey: 'app.productionEfficiencyHelp',
-      default: 'normal',
+      default: '',
       options: PRODUCTION_EFFICIENCY_OPTIONS
     },
     // 🔴 F5 (2026-08-21) — the harvest-grade select is REMOVED from this surface, not
@@ -911,7 +911,7 @@ export const equipmentMaintenanceFields: QuickEventTypeConfig = {
       type: 'select',
       labelKey: 'app.operationEfficiency',
       helpKey: 'app.operationEfficiencyHelp',
-      default: 'normal',
+      default: '',
       options: PRODUCTION_EFFICIENCY_OPTIONS,
       advanced: true
     },
