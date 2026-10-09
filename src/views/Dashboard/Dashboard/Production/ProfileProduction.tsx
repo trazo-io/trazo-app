@@ -468,7 +468,10 @@ function ProfileProduction() {
   // View public page - use public_id (UUID) for consumer-facing URLs
   const handleViewPublicPage = () => {
     const publicId = historyData?.public_id || productionId;
-    window.open(`${config.CONSUMER_BASE_URL}/production/${publicId}`, '_blank');
+    // An unpublished lot is "Product Not Found" on the consumer page, owner included, unless
+    // the page is opened as an explicit preview (2026-10-08).
+    const preview = historyData?.published ? '' : '?preview=1';
+    window.open(`${config.CONSUMER_BASE_URL}/production/${publicId}${preview}`, '_blank');
   };
 
   // Copy buyer link - proof view of the same public page for buyers/retailers
@@ -1030,12 +1033,12 @@ function ProfileProduction() {
                       size={{ base: 'xs', md: 'sm' }}
                       leftIcon={<Icon as={FaEye} />}
                       onClick={handleViewPublicPage}>
-                      {/* Owner preview until the season is finished: `public_history`'s
-                          queryset lets a producer read their OWN unpublished production, and
-                          nobody else. Calling it "Public page" here is what convinces a farmer
+                      {/* Owner preview until the lot is PUBLISHED: an unpublished lot answers
+                          404 for everyone else, and a finished season is not necessarily
+                          published. Calling it "Public page" here is what convinces a farmer
                           the lot is already live. */}
                       {intl.formatMessage({
-                        id: historyData?.finish_date
+                        id: historyData?.published
                           ? 'app.viewPublicPage'
                           : 'production.qr.previewPublicPage'
                       })}
