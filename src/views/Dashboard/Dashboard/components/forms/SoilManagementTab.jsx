@@ -1538,10 +1538,16 @@ const SoilManagementTab = forwardRef(
                   {watch('type') !== 'GR' && (
                     <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                       <StandardField
-                        label="Amendment Organic Approval"
-                        helpText="Organic certification status of this amendment (7 CFR 205.203(b))">
+                        label={intl.formatMessage({
+                          id: 'events.soil.fields.amendmentOrganicApproved'
+                        })}
+                        helpText={intl.formatMessage({
+                          id: 'events.soil.fields.amendmentOrganicBasisHelp'
+                        })}>
                         <StandardSelect
-                          placeholder="Select organic approval status"
+                          placeholder={intl.formatMessage({
+                            id: 'events.chemical.form.organicBasisPlaceholder'
+                          })}
                           {...register('amendment_organic_approved')}>
                           {/* 🔴 2026-08-19. This list was the pre-2026-08-15 vocabulary that
                               ChemicalTab retired four days earlier and nobody carried across —
@@ -1566,7 +1572,9 @@ const SoilManagementTab = forwardRef(
                           <option value="unverified">
                             {intl.formatMessage({ id: 'events.organicApproved.unverified' })}
                           </option>
-                          <option value="not_organic">Not approved - conventional use only</option>
+                          <option value="not_organic">
+                            {intl.formatMessage({ id: 'events.organicApproved.notOrganicOption' })}
+                          </option>
                           <option value="transitional">
                             Transitional - in certification process
                           </option>
@@ -2636,7 +2644,9 @@ const SoilManagementTab = forwardRef(
                   label={intl.formatMessage({ id: 'events.common.fields.privateNote' })}
                   helpText={intl.formatMessage({ id: 'events.common.help.privateNoteAudience' })}>
                   <StandardTextarea
-                    placeholder={intl.formatMessage({ id: 'events.common.placeholders.privateNote' })}
+                    placeholder={intl.formatMessage({
+                      id: 'events.common.placeholders.privateNote'
+                    })}
                     rows={3}
                     {...register('private_note')}
                   />

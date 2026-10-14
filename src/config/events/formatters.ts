@@ -594,6 +594,21 @@ export const formatConsumerTemperatureControl: FieldFormatter<boolean | string> 
 };
 
 /**
+ * Run 8b (8b-06): the shopper reads WHO said it and what it does not show. The farm's basis is
+ * the farm's own answer, never a listing check of this application and never an approval
+ * Trazo can know about. The certifier option keeps "approved" because it is the farm's own
+ * attributed statement. Exported so the chemical card formatter speaks the same sentences
+ * (one Spanish translation each in utils/fieldValues.es.ts).
+ */
+export const SHOPPER_BASIS_RECORDED =
+  "Recorded by the farm as allowed for organic use. This does not show that this application was approved or met a listing's restrictions.";
+export const SHOPPER_BASIS_CERTIFIER =
+  "Recorded by the farm as reviewed and approved by its certifier. This is the farm's own record.";
+export const SHOPPER_BASIS_EQUIVALENT =
+  "Recorded by the farm as organic-equivalent. This is the farm's own record.";
+export const SHOPPER_BASIS_NONE = 'The farm did not record an organic basis';
+
+/**
  * Organic-approval status, as a shopper may safely read it.
  *
  * WHY (2026-08-09): three consumer surfaces rendered the grower's `organic_approved` dropdown
@@ -609,22 +624,22 @@ export const formatConsumerTemperatureControl: FieldFormatter<boolean | string> 
  * still shown in full — attributed to the grower, which is what it is.
  */
 const CONSUMER_ORGANIC_STATUS: Record<string, string> = {
-  omri_listed: 'Yes — the grower recorded this as approved for organic use',
+  omri_listed: SHOPPER_BASIS_RECORDED,
   // 2026-08-15 — the three lawful verification bases added when the enum was rebuilt on
   // USDA's Input Material Application Record. Wording stays GROWER-REPORTED for all of them:
   // the basis is the grower's answer, not a third-party attestation Trazo has checked. Only
   // the server (claim_authority, which holds the catalog FKs) may upgrade that.
-  wsda_listed: 'Yes — the grower recorded this as approved for organic use',
-  nop_seal_on_label: 'Yes — the grower recorded this as approved for organic use',
-  certifier_approved: 'Yes — the grower recorded their certifier approved this input',
-  usda_nop_approved: 'Yes — the grower recorded this as approved for organic use',
-  organic_equivalent: 'Yes — the grower recorded this as organic-equivalent',
-  organic_certified: 'Yes — the grower recorded this as approved for organic use',
-  yes: 'Yes — the grower recorded this as approved for organic use',
+  wsda_listed: SHOPPER_BASIS_RECORDED,
+  nop_seal_on_label: SHOPPER_BASIS_RECORDED,
+  certifier_approved: SHOPPER_BASIS_CERTIFIER,
+  usda_nop_approved: SHOPPER_BASIS_RECORDED,
+  organic_equivalent: SHOPPER_BASIS_EQUIVALENT,
+  organic_certified: SHOPPER_BASIS_RECORDED,
+  yes: SHOPPER_BASIS_RECORDED,
   transitional: 'Transitional — the farm is converting to organic',
   not_organic: 'No, conventional input',
   no: 'No, conventional input',
-  unknown: 'The grower did not record an approval status',
+  unknown: SHOPPER_BASIS_NONE,
   // Run 8 (R8-08): the soil amendment form offers it too; never a "Yes".
   unverified: 'Not confirmed by the farm',
   // Not an answer to the question; render nothing rather than "Not Applicable".

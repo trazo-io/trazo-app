@@ -330,9 +330,11 @@ const PEST_FIELDS: readonly FieldConfig<unknown, PestData>[] = [
     formatter: (v) => {
       if (typeof v !== 'string' || !v) return null;
       const m: Record<string, string> = {
-        yes: 'OMRI / Organic-approved',
-        no: 'Not organic-approved',
-        unknown: 'Approval status unknown'
+        // Run 8b (8b-06): was "OMRI / Organic-approved" from a bare yes. The farm's answer is
+        // that it holds a basis, not which one, and not an approval.
+        yes: 'Organic basis recorded',
+        no: 'No organic basis',
+        unknown: 'Organic basis unknown'
       };
       return m[v.toLowerCase()] ?? v;
     },

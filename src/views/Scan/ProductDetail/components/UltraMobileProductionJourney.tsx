@@ -892,7 +892,8 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
       }),
       subtitle: intl.formatMessage({
         id: 'consumer.journey.chapterFarmRecordsSubtitle',
-        defaultMessage: 'Entered by the farm. Independent confirmation, where there is any, is shown with the certification above.'
+        defaultMessage:
+          'Entered by the farm. Independent confirmation, where there is any, is shown with the certification above.'
       }),
       colorScheme: 'gray'
     }
@@ -1578,16 +1579,20 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                               )}
                             </Badge>
                           )}
+                          {/* Run 8b (8b-06): the farm's own record, so it reads as one: outline
+                              and neutral like the photo count, never the green a third-party
+                              statement gets, and never a default that drops "recorded". */}
                           {ch.allInputsOrganic && (
                             <Badge
-                              variant="subtle"
-                              colorScheme="green"
+                              variant="outline"
+                              colorScheme="gray"
                               fontSize="xs"
                               borderRadius="full"
                               px={2}>
                               {intl.formatMessage({
                                 id: 'consumer.journey.allInputsOrganic',
-                                defaultMessage: 'All inputs organic-approved'
+                                defaultMessage:
+                                  'Every input recorded by the farm as allowed for organic use'
                               })}
                             </Badge>
                           )}

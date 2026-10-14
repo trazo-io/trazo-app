@@ -15,19 +15,18 @@
 // Certified (ROC)) and free-text the farmer typed.
 
 export const FIELD_VALUE_ES: Record<string, string> = {
-  // Consumer organic-approval sentences (formatters.ts CONSUMER_ORGANIC_STATUS) —
-  // rendered on the consumer card; were showing in English on the Spanish page
-  // (2026-08-25 screenshot: "Yes — the grower recorded this as approved…").
-  'Yes — the grower recorded this as approved for organic use':
-    'Sí — el productor registró este insumo como aprobado para uso orgánico',
-  'Yes — the grower recorded their certifier approved this input':
-    'Sí — el productor registró que su certificador aprobó este insumo',
-  'Yes — the grower recorded this as organic-equivalent':
-    'Sí — el productor lo registró como equivalente a orgánico',
+  // Consumer organic-basis sentences (formatters.ts SHOPPER_BASIS_*), shown on the consumer
+  // card for chemical, soil amendment and beneficial-release records. Run 8b (8b-06): each
+  // names the farm as the source and says what the record does not show.
+  "Recorded by the farm as allowed for organic use. This does not show that this application was approved or met a listing's restrictions.":
+    'Registrado por la finca como permitido para uso orgánico. Esto no muestra que esta aplicación haya sido aprobada ni que haya cumplido las restricciones de un listado.',
+  "Recorded by the farm as reviewed and approved by its certifier. This is the farm's own record.":
+    'Registrado por la finca como revisado y aprobado por su certificador. Es el registro propio de la finca.',
+  "Recorded by the farm as organic-equivalent. This is the farm's own record.":
+    'Registrado por la finca como equivalente a orgánico. Es el registro propio de la finca.',
   'Transitional — the farm is converting to organic':
     'En transición — la finca se está convirtiendo a orgánico',
-  'The grower did not record an approval status':
-    'El productor no registró un estado de aprobación',
+  'The farm did not record an organic basis': 'La finca no registró una base orgánica',
 
   // Amendment-type label: only 'Elemental Sulfur' is new (added with the sulfur
   // option, 2026-08-25). Every other AMENDMENT_TYPE_LABELS value already exists
@@ -41,12 +40,9 @@ export const FIELD_VALUE_ES: Record<string, string> = {
   'No, counts stayed below the level that calls for treatment':
     'No, los conteos se mantuvieron por debajo del nivel que justifica un tratamiento',
 
-  // Organic-approval answers shown on the consumer card (chemicalEvent.ts). These were
+  // Organic-basis answers shown on the consumer card (chemicalEvent.ts). These were
   // never translated — FIELD_VALUE_ES sits outside the i18n JSON gates, so the miss was
   // silent (`dict[s] || s` falls back to English).
-  'Yes, OMRI Listed': 'Sí, listado por OMRI',
-  'Yes, USDA NOP approved': 'Sí, aprobado por el USDA NOP',
-  'Yes, organic-equivalent': 'Sí, equivalente a orgánico',
   'Transitional, farm is converting to organic':
     'En transición, la finca se está convirtiendo a orgánico',
   'No, conventional input': 'No, insumo convencional',
@@ -267,14 +263,14 @@ export const FIELD_VALUE_ES: Record<string, string> = {
   'Not Currently Using': 'No se usa actualmente',
   'Not Measured': 'No medido',
   'Not Organic': 'No orgánico',
-  'Not Organic Approved': 'No aprobado como orgánico',
+  'No organic basis': 'Sin base orgánica',
   'Not Using Beneficial Insects': 'No se usan insectos benéficos',
   'Nutrient Management': 'Manejo de nutrientes',
   'Offset Disk': 'Rastra de discos descentrada',
   'On-Farm Composting Program': 'Programa de compostaje en finca',
   'Orchard Heater(s)': 'Calentador(es) de huerto',
   'Orchard heater(s)': 'Calentador(es) de huerto',
-  'Organic Approved': 'Aprobado como orgánico',
+  'Organic basis recorded': 'Base orgánica registrada',
   'Organic Equivalent': 'Equivalente orgánico',
   'Organic Fertilizer': 'Fertilizante orgánico',
   'Organic Matter Addition': 'Adición de materia orgánica',
@@ -473,10 +469,10 @@ export const FIELD_VALUE_ES: Record<string, string> = {
   'Insect Hotel': 'Hotel de insectos',
   'Beetle Bank': 'Banco de escarabajos',
   'Brush Pile / Hibernacula': 'Pila de ramas / hibernáculo',
-  // BR beneficial-release organic approval (formatter output)
-  'OMRI / Organic-approved': 'Aprobado OMRI / orgánico',
-  'Not organic-approved': 'No aprobado para uso orgánico',
-  'Approval status unknown': 'Estado de aprobación desconocido',
+  // BR beneficial-release organic basis (formatter output). 'Organic basis recorded' and
+  // 'No organic basis' are translated above.
+  'Organic basis unknown': 'Base orgánica desconocida',
+  'USDA NOP basis': 'Base NOP del USDA',
   // TM trap types (formatter output; "Other" already maps to "Otro")
   'Sticky card': 'Trampa adhesiva',
   'Pheromone lure': 'Trampa de feromona',
