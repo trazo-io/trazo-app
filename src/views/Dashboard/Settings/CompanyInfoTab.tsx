@@ -33,7 +33,7 @@ import { useUpdateCompanyMutation } from 'store/api/companyApi';
 import { setCompany } from 'store/features/companySlice';
 import EditCompanyModal, {
   LEGAL_STRUCTURE_LABEL_KEYS,
-  SUSTAINABILITY_COMMITMENTS
+  isKnownSustainabilityCommitment
 } from './EditCompanyModal';
 
 interface CompanyInfoTabProps {
@@ -186,7 +186,7 @@ const CompanyInfoTab: React.FC<CompanyInfoTabProps> = () => {
   // Get sustainability commitment label
   const getSustainabilityLabel = (value?: string) => {
     if (!value) return null;
-    return SUSTAINABILITY_COMMITMENTS.includes(value)
+    return isKnownSustainabilityCommitment(value)
       ? intl.formatMessage({ id: `company.sustainabilityCommitment.${value}` })
       : value;
   };
