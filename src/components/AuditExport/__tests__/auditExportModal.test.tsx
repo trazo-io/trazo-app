@@ -101,7 +101,7 @@ describe('AuditExportModal', () => {
   it('renders in Spanish without falling back to English', () => {
     const { unmount } = renderModal('es-419');
     const text = () => document.body.textContent || '';
-    expect(text()).toMatch(/Exportar para su certificadora/);
+    expect(text()).toMatch(/Exportar para tu certificadora/);
     expect(text()).not.toMatch(/Which standard|Download packet/);
     unmount();
   });
