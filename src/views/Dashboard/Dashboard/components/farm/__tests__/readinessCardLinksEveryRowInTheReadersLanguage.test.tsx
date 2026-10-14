@@ -18,6 +18,12 @@ import { MemoryRouter } from 'react-router-dom';
 import enUS from '../../../../../../i18n/lang/en-US.json';
 import es419 from '../../../../../../i18n/lang/es-419.json';
 
+// The card reads the company for the plan's access notice (Run 8b). No company loaded here, so
+// no notice: these tests are about the findings.
+vi.mock('react-redux', () => ({
+  useSelector: (fn: (s: unknown) => unknown) => fn({ company: { currentCompany: null } })
+}));
+
 vi.mock('store/api/dashboardMetricsApi', () => ({
   useGetCertifierReadinessQuery: () => ({
     data: {
