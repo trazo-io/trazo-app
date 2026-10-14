@@ -206,6 +206,8 @@ describe('Trazo-voiced catalogue keys never call an input approved', () => {
     'drift.reason.approved_with_issues',
     'drift.reason.name_omri_not_in_osp',
     'drift.reason.name_wsda_not_in_osp',
+    'drift.reason.name_nl_not_in_osp',
+    'drift.reason.nl_not_in_osp',
     'drift.reason.omri_not_in_osp',
     'drift.reason.wsda_not_in_osp'
   ];
