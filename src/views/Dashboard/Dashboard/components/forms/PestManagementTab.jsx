@@ -1294,9 +1294,11 @@ const PestManagementTab = forwardRef(
                         label={
                           intl.formatMessage({
                             id: 'events.pest.fields.beneficialOrganicApproved'
-                          }) || 'Organic Approved?'
+                          }) || 'Organic basis'
                         }
-                        helpText="Is the beneficial organism approved for organic systems?">
+                        helpText={intl.formatMessage({
+                          id: 'events.pest.fields.beneficialOrganicBasisHelp'
+                        })}>
                         <StandardSelect {...methods.register('beneficial_organic_approved')}>
                           <option value="">Select…</option>
                           <option value="yes">
@@ -1554,7 +1556,9 @@ const PestManagementTab = forwardRef(
                   label={intl.formatMessage({ id: 'events.common.fields.privateNote' })}
                   helpText={intl.formatMessage({ id: 'events.common.help.privateNoteAudience' })}>
                   <StandardTextarea
-                    placeholder={intl.formatMessage({ id: 'events.common.placeholders.privateNote' })}
+                    placeholder={intl.formatMessage({
+                      id: 'events.common.placeholders.privateNote'
+                    })}
                     rows={3}
                     {...methods.register('private_note')}
                   />

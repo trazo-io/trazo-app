@@ -129,6 +129,7 @@ import {
   mergeOfferedValues
 } from 'utils/voiceDataMapper';
 import { voiceBlockSuggestion } from 'utils/spokenBlock';
+import { isEventOnBuyerPage } from 'utils/consumerDisplay';
 import { templatePrefillValues, templatesForEventType } from 'config/events/templateAccelerators';
 import {
   formatDateFromTimestamp,
@@ -3808,6 +3809,12 @@ function NewEvent({ isEdit = false, eventId = null }) {
                              and the production subtype are chosen. Passing it lets the
                              backend prompt extract FIELDS instead of guessing the activity. */
                           knownActivity={voiceActivitySlug}
+                          /* Notes audience follows the record being saved: certifier-only
+                             production subtypes never reach the buyer page. */
+                          notesOnBuyerPage={isEventOnBuyerPage({
+                            event_type: activeEventType,
+                            production_type: eventFormData.type
+                          })}
                           fieldRequests={voiceFieldRequests}
                           /* `autoStart` stays true for the spoken path; the panel itself
                              refuses to open a mic when a seed is present. */

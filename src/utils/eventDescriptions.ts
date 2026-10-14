@@ -1572,39 +1572,14 @@ export function getConsumerEventDescription(
         ? 'Fertigation: fertilizer applied through the irrigation system. Application fuel is excluded from the carbon estimate so it is not counted twice with the irrigation record.'
         : 'The product, the date and the area treated are on record, so the certifier can check the application against the label.';
     } else if (chemicalType === 'pesticide application') {
-      // Check chemical_subtype FIRST before product name detection
-      // This ensures user's explicit selection takes precedence over product name inference
-      const chemicalSubtype = (event?.chemical_subtype || '').toLowerCase();
-      const isSyntheticBySubtype =
-        chemicalSubtype.includes('synthetic') || chemicalSubtype.includes('conventional');
-      const isOrganicBySubtype =
-        chemicalSubtype.includes('organic') ||
-        chemicalSubtype.includes('natural') ||
-        chemicalSubtype.includes('biological');
-
-      // Use subtype if specified, otherwise fall back to product name detection
-      const isOrganic =
-        isOrganicBySubtype || (!isSyntheticBySubtype && productName.toLowerCase().includes('neem'));
-
-      if (isOrganic) {
-        // Claim-safety re-voice (2026-08-01): this branch said "provides natural protection
-        // WITHOUT SYNTHETIC CHEMICALS, supporting HEALTHIER FOOD PRODUCTION" — an absolute
-        // composition claim plus an unsupported health benefit, from a record that only knows
-        // one product was applied. Both are FTC 16 CFR 260.4 general-benefit territory, and
-        // the first is not even reliably true (organic-approved does not mean non-synthetic;
-        // 7 CFR 205.601 lists synthetics that are allowed). Says what happened and what the
-        // approval means instead.
-        baseDescription = 'A pest treatment approved for organic growing was applied';
-        consumerImpact =
-          'Products allowed in organic growing are reviewed against a public national list before they can be used.';
-        sustainabilityBenefit =
-          'The product, the target pest and the date are on record, so the treatment can be checked against that list.';
-      } else {
-        baseDescription = 'A treatment was applied against a specific pest';
-        consumerImpact = 'The pest, the product aimed at it and the amount used are recorded here.';
-        sustainabilityBenefit =
-          'A certifier can compare the treatment with the problem it answered.';
-      }
+      // Run 8b (8b-06): this branch used to pick "A pest treatment approved for organic growing
+      // was applied" from the subtype text or from a product name containing "neem", even on a
+      // record the grower marked `not_organic`. A description chosen from a guess must not state
+      // an organic standing or an approval. What the input is allowed for is the job of the
+      // input chip, which names its source (the farm's record or a catalog match Trazo made).
+      baseDescription = 'A treatment was applied against a specific pest';
+      consumerImpact = 'The pest, the product aimed at it and the amount used are recorded here.';
+      sustainabilityBenefit = 'A certifier can compare the treatment with the problem it answered.';
     } else if (chemicalType === 'fungicide application') {
       // Special case for copper-based organic fungicides
       if (productName.toLowerCase().includes('copper')) {
@@ -3265,13 +3240,9 @@ export function getEventTrustIndicators(event: any): string[] {
     ) {
       indicators.push('consumer.eventCard.trust.modernFarming');
     }
-    if (
-      equipment.includes('organic') ||
-      equipment.includes('natural') ||
-      equipment.includes('neem')
-    ) {
-      indicators.push('consumer.eventCard.trust.naturalMethods');
-    }
+    // Run 8b (8b-06): a "Natural Methods" chip was added here when the product or equipment
+    // NAME contained "organic", "natural" or "neem". A name is not a basis, so no chip is drawn
+    // from it. The input's standing is the input chip's job, which names its source.
   }
 
   return indicators;

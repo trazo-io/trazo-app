@@ -56,7 +56,7 @@ import {
   SEED_TREATMENT_BASES
 } from 'config/events/enums';
 import { AREA_SUBTYPES, BUFFER_ENTERS_COMMERCE } from 'config/events/productionEvent';
-import { CONSUMER_WITHHELD_PRODUCTION_SUBTYPES } from 'utils/consumerDisplay';
+import { CONSUMER_WITHHELD_PRODUCTION_SUBTYPES, isEventOnBuyerPage } from 'utils/consumerDisplay';
 // Import through the barrel, not productionEvent directly: `config/events/index.ts` is what
 // calls `_setRegistry`, and `getSubtypes` answers with nothing until it has run.
 import { getSubtypes } from 'config/events';
@@ -1086,6 +1086,14 @@ const ProductionTab = forwardRef(
     } = methods;
 
     const productionType = watch('type');
+    // Buffer use, seed search, equipment cleanout and transport are withheld WHOLE from every
+    // public serializer (claim_authority._CONSUMER_WITHHELD_PRODUCTION_SUBTYPES), so their note
+    // never reaches the buyer page. The notes section must say so instead of promising a
+    // public note. Read from the mirror, never a local list.
+    const noteIsCertifierOnly = !isEventOnBuyerPage({
+      event_type: 1,
+      production_type: productionType
+    });
 
     /*
      * The subtype list the select renders — the display registry's, not a local copy.
@@ -5628,25 +5636,28 @@ const ProductionTab = forwardRef(
                       </>
                     )}
                   </SimpleGrid>
-                  <Box
-                    bg="teal.50"
-                    p={3}
-                    borderRadius="md"
-                    borderLeft="4px"
-                    borderLeftColor="teal.400"
-                    mt={4}>
-                    <HStack spacing={2} mb={1}>
-                      <Icon as={FaSeedling} color="teal.500" fontSize="sm" />
-                      <Text fontSize="sm" fontWeight="semibold" color="teal.700">
-                        Why This Matters to Consumers
+                  {/* Not for seed search: that record is withheld from the buyer page whole. */}
+                  {!noteIsCertifierOnly && (
+                    <Box
+                      bg="teal.50"
+                      p={3}
+                      borderRadius="md"
+                      borderLeft="4px"
+                      borderLeftColor="teal.400"
+                      mt={4}>
+                      <HStack spacing={2} mb={1}>
+                        <Icon as={FaSeedling} color="teal.500" fontSize="sm" />
+                        <Text fontSize="sm" fontWeight="semibold" color="teal.700">
+                          Why This Matters to Consumers
+                        </Text>
+                      </HStack>
+                      <Text fontSize="xs" color="teal.600">
+                        Consumers increasingly want to know where their food comes from and how it
+                        was produced. Documenting your input sources builds trust and demonstrates
+                        your commitment to sustainable, transparent farming practices.
                       </Text>
-                    </HStack>
-                    <Text fontSize="xs" color="teal.600">
-                      Consumers increasingly want to know where their food comes from and how it was
-                      produced. Documenting your input sources builds trust and demonstrates your
-                      commitment to sustainable, transparent farming practices.
-                    </Text>
-                  </Box>
+                    </Box>
+                  )}
                 </SectionBox>
               )}
 
@@ -5655,19 +5666,35 @@ const ProductionTab = forwardRef(
                 <SectionHeader
                   icon={FaSeedling}
                   title={intl.formatMessage({ id: 'events.section.fieldNotes' })}
-                  badge={intl.formatMessage({ id: 'events.section.badge.certifierRecordAndBuyer' })}
+                  badge={intl.formatMessage({
+                    id: noteIsCertifierOnly
+                      ? 'events.section.badge.certifierRecordOnly'
+                      : 'events.section.badge.certifierRecordAndBuyer'
+                  })}
                 />
                 <StandardField
-                  label={intl.formatMessage({ id: 'events.common.fields.observation' })}
+                  label={intl.formatMessage({
+                    id: noteIsCertifierOnly
+                      ? 'events.common.fields.observationCertifierOnly'
+                      : 'events.common.fields.observation'
+                  })}
                   error={errors.observation?.message}
-                  helpText={intl.formatMessage({ id: 'events.common.help.observationAudience' })}>
+                  helpText={intl.formatMessage({
+                    id: noteIsCertifierOnly
+                      ? 'events.common.help.observationCertifierOnly'
+                      : 'events.common.help.observationAudience'
+                  })}>
                   <Controller
                     name="observation"
                     control={methods.control}
                     render={({ field }) => (
                       <StandardTextarea
                         {...field}
-                        placeholder="Optional: Describe the conditions that affected this production activity, efficiency measures taken, or any observations that consumers might find valuable."
+                        placeholder={intl.formatMessage({
+                          id: noteIsCertifierOnly
+                            ? 'events.common.placeholders.observationCertifierOnly'
+                            : 'events.common.placeholders.observationPublic'
+                        })}
                         rows={4}
                       />
                     )}

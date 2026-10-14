@@ -38,6 +38,7 @@
  */
 import React from 'react';
 import { useIntl } from 'react-intl';
+import { useSelector } from 'react-redux';
 import { Link as RouterLink } from 'react-router-dom';
 
 import {
@@ -64,6 +65,8 @@ import CardBody from 'components/Card/CardBody';
 import { resolveReadinessItem } from 'components/Certifications/readinessMessages';
 import { seasonRowDetail } from 'components/Certifications/seasonRowMessages';
 import { STATUS_URGENCY_TOKENS } from 'components/Design/StandardComponents';
+import { useComplianceExports } from 'components/Guards/ComplianceExportsGuard';
+import { SETUP_HELP_EMAIL } from 'config/contactAddresses';
 import {
   CertifierReadinessFinding,
   useGetCertifierReadinessQuery
@@ -180,11 +183,21 @@ export const ROW_ROUTES: Record<string, (ctx: RowRouteContext) => string | null>
     parcelId ? `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/application` : null
 };
 
-const FINDING_ROUTES: Record<string, (farmId: string | number) => string> = {
+type FindingRouteContext = { firstParcelId?: number | null };
+const FINDING_ROUTES: Record<
+  string,
+  (farmId: string | number, ctx: FindingRouteContext) => string
+> = {
   ofpp: (farmId) => `/admin/dashboard/farm/${farmId}/profile`,
   osp: (farmId) => `/admin/dashboard/farm/${farmId}/osp`,
   attestation_support: (farmId) => `/admin/dashboard/farm/${farmId}/osp`,
-  records: (farmId) => `/admin/dashboard/farm/${farmId}`,
+  // Run 8b (8b-01): this used to be the farm home, the page the card sits on, so "Fix it here"
+  // reloaded the same screen. A season needs a parcel, so a farm without one goes to add a
+  // parcel first.
+  records: (farmId, { firstParcelId }) =>
+    firstParcelId
+      ? `/admin/dashboard/farm/${farmId}/parcel/${firstParcelId}/production/add`
+      : `/admin/dashboard/farm/${farmId}/parcel/add`,
   // Logged products missing from the materials list are confirmed on the plan's identity panel,
   // the same place the season row and the drift banner send them.
   unmatched_materials: (farmId) =>
@@ -224,6 +237,22 @@ export default function CertifierReadinessCard({
   const rowBorder = useColorModeValue('gray.200', 'gray.600');
   const clearBg = useColorModeValue('green.50', 'green.900');
   const clearBorder = useColorModeValue('green.200', 'green.700');
+
+  /**
+   * Run 8b (8b-01): the plan's access rule and the record findings are two different things and
+   * the card shows them apart. A new Starter organic farm was shown "Blocks certifier sharing"
+   * on three document rows, when the first thing refusing a review link on Starter is the plan
+   * gate (`require_compliance_exports`). The access notice reads the subscription's features
+   * (`useComplianceExports`, the value the backend gate answers with), never a slug list, and
+   * waits for the company to load so a paying farm never sees it flash.
+   */
+  const company = useSelector((state: any) => state?.company?.currentCompany);
+  const hasComplianceExports = useComplianceExports();
+  const showAccessNotice = Boolean(company?.id) && !hasComplianceExports;
+  const farm = (company?.establishments || []).find(
+    (est: { id: number | string }) => String(est.id) === String(farmId)
+  );
+  const firstParcelId: number | null = farm?.parcels?.[0]?.id ?? null;
 
   const { data, isLoading, isUninitialized, isError } = useGetCertifierReadinessQuery(
     { companyId, farmId },
@@ -489,15 +518,47 @@ export default function CertifierReadinessCard({
             </VStack>
           </HStack>
 
-          {/* OPERATION scope first — these block certifier sharing outright, so they outrank
-              anything found in a single season. Each carries its own concrete fix. */}
+          {/* ACCESS, from the plan. Kept out of the findings below: the findings are about the
+              records and read the same on every plan. */}
+          {showAccessNotice && (
+            <Box
+              data-testid="readiness-access-notice"
+              bg={rowBg}
+              border="1px solid"
+              borderColor={rowBorder}
+              borderRadius="md"
+              p={3}>
+              <HStack spacing={2} align="start" flexWrap="wrap">
+                <Icon as={FaInfoCircle} color={headerIconColor} boxSize={4} mt={0.5} />
+                <Text fontSize="sm" color={textColor} flex={1} minW="200px">
+                  {intl.formatMessage({ id: 'certifierReadiness.accessNotice' })}
+                </Text>
+                <Link
+                  as={RouterLink}
+                  to="/admin/dashboard/pricing"
+                  data-testid="readiness-access-notice-link"
+                  fontSize="xs"
+                  fontWeight="semibold"
+                  color="green.700"
+                  textDecoration="underline">
+                  {intl.formatMessage({ id: 'app.complianceExports.cta' })} →
+                </Link>
+              </HStack>
+            </Box>
+          )}
+
+          {/* OPERATION scope first: Trazo requires these before it creates a review link, so they
+              outrank anything found in a single season. Each carries its own concrete fix. */}
           {operationItems.length > 0 && (
-            <VStack align="stretch" spacing={2}>
+            <VStack align="stretch" spacing={2} data-testid="readiness-operation-findings">
               <HStack spacing={2}>
                 <Text fontSize="xs" fontWeight="bold" color={mutedColor} textTransform="uppercase">
                   {intl.formatMessage({ id: 'certifierReadiness.operationScope' })}
                 </Text>
-                {hasOperationBlockers && (
+                {/* Trazo's own share gate, stated as Trazo's. Shown only where the plan already
+                    allows review links: on Starter the plan refuses first and the access notice
+                    above says so. */}
+                {hasOperationBlockers && hasComplianceExports && (
                   <Badge variant="danger" fontSize="xs" borderRadius="full">
                     {intl.formatMessage({ id: 'certifierReadiness.sharingBlocked' })}
                   </Badge>
@@ -551,17 +612,60 @@ export default function CertifierReadinessCard({
                         {/* A finding must be a task, not a puzzle: route the
                           farmer to the editor that clears it (2026-08-10 —
                           fix text alone made them map prose to navigation). */}
-                        {FINDING_ROUTES[item.key] && (
-                          <Link
-                            as={RouterLink}
-                            to={FINDING_ROUTES[item.key](farmId)}
-                            data-testid={`readiness-operation-link-${item.key}`}
-                            fontSize="xs"
-                            fontWeight="semibold"
-                            color="green.700"
-                            textDecoration="underline">
-                            {intl.formatMessage({ id: 'certifierReadiness.fixNow' })} →
-                          </Link>
+                        {item.code === 'ofpp.missing' ? (
+                          // Two routes to a plan on file, plus a person to ask (Run 8b, D2).
+                          <HStack spacing={4} flexWrap="wrap">
+                            <Link
+                              as={RouterLink}
+                              to={`/admin/dashboard/farm/${farmId}/profile`}
+                              data-testid="readiness-operation-link-ofpp"
+                              fontSize="xs"
+                              fontWeight="semibold"
+                              color="green.700"
+                              textDecoration="underline">
+                              {intl.formatMessage({ id: 'certifierReadiness.ofppUpload' })} →
+                            </Link>
+                            <Link
+                              as={RouterLink}
+                              to={`/admin/dashboard/farm/${farmId}/osp/module/g2_0_fraud_prevention`}
+                              data-testid="readiness-operation-link-ofpp-module"
+                              fontSize="xs"
+                              fontWeight="semibold"
+                              color="green.700"
+                              textDecoration="underline">
+                              {intl.formatMessage({ id: 'certifierReadiness.ofppModule' })} →
+                            </Link>
+                            <Link
+                              href={`mailto:${SETUP_HELP_EMAIL}`}
+                              data-testid="readiness-operation-link-ofpp-help"
+                              fontSize="xs"
+                              fontWeight="semibold"
+                              color="green.700"
+                              textDecoration="underline">
+                              {intl.formatMessage({ id: 'certifierReadiness.setupHelp' })}
+                            </Link>
+                          </HStack>
+                        ) : (
+                          FINDING_ROUTES[item.key] && (
+                            <Link
+                              as={RouterLink}
+                              to={FINDING_ROUTES[item.key](farmId, { firstParcelId })}
+                              data-testid={`readiness-operation-link-${item.key}`}
+                              fontSize="xs"
+                              fontWeight="semibold"
+                              color="green.700"
+                              textDecoration="underline">
+                              {intl.formatMessage({
+                                id:
+                                  item.key === 'records'
+                                    ? firstParcelId
+                                      ? 'certifierReadiness.recordsStartSeason'
+                                      : 'certifierReadiness.recordsAddParcel'
+                                    : 'certifierReadiness.fixNow'
+                              })}{' '}
+                              →
+                            </Link>
+                          )
                         )}
                       </VStack>
                     </HStack>

@@ -32,7 +32,7 @@ import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { getConsumerEventDescription } from '../eventDescriptions';
+import { getConsumerEventDescription, localizeConsumerDescription } from '../eventDescriptions';
 
 /**
  * Words that assert a crop form or a site type rather than a documented practice.
@@ -360,4 +360,67 @@ describe('generated descriptions claim no outcome', () => {
       expect(text, key).not.toMatch(/graded|weighed/i);
     }
   });
+});
+
+/**
+ * Run 8b (8b-06, 2026-10-13): the pest-treatment branch chose "A pest treatment approved for
+ * organic growing was applied" from the subtype text or from a product NAME containing "neem",
+ * including on records the grower marked `not_organic`. A description picked from a guess must
+ * not state an organic standing or an approval in either language. The input's standing is the
+ * input chip's job, and the chip names its source (ConsumerEventCard, inputBasisNamesItsSource).
+ */
+describe('a generated description never states an input approval', () => {
+  const pest = (extra: Record<string, unknown>) => ({
+    event_type: 2,
+    type: 'PE',
+    chemical_type: 'PE',
+    date: '2026-05-11T07:00:00Z',
+    ...extra
+  });
+  const CASES: Array<[string, Record<string, unknown>]> = [
+    [
+      'neem named, recorded not_organic',
+      { commercial_name: 'Trilogy Neem Oil', organic_approved: 'not_organic' }
+    ],
+    ['neem named, no basis recorded', { commercial_name: 'Neem Concentrate' }],
+    [
+      'organic subtype, recorded not_organic',
+      {
+        chemical_subtype: 'organic_insecticide',
+        commercial_name: 'Spray X',
+        organic_approved: 'not_organic'
+      }
+    ],
+    ['biological subtype, no basis', { chemical_subtype: 'biological', commercial_name: 'Bt' }]
+  ];
+  const CLAIM =
+    /approved for organic|organic[- ]approved|allowed in organic|aprobad\w*|permitid\w* en (la )?producción orgánica/i;
+
+  it.each(CASES)('%s: no approval or organic standing in EN or ES', (_label, extra) => {
+    const en = getConsumerEventDescription('Pest treatment', pest(extra));
+    // Anti-vacuity: the pest branch was reached, not some other one.
+    expect(en.description).toBe('A treatment was applied against a specific pest');
+    expect(allText(en)).not.toMatch(CLAIM);
+    const es = localizeConsumerDescription(en, 'es-419');
+    expect(es.description).toBe('Se aplicó un tratamiento contra una plaga específica');
+    expect(allText(es)).not.toMatch(CLAIM);
+  });
+
+  it.each(['src/utils/eventDescriptions.ts', 'src/utils/eventDescriptions.es.ts'])(
+    '%s has no string that states an approval',
+    (file) => {
+      const src = readFileSync(resolve(process.cwd(), file), 'utf8')
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .replace(/^\s*\/\/.*$/gm, '')
+        .replace(/\s\/\/\s.*$/gm, '');
+      const all = [...src.matchAll(/(["'`])((?:\\.|(?!\1)[^\\\n])*)\1/g)].map((m) => m[2]);
+      expect(all.length).toBeGreaterThan(100);
+      // The one exemption is a STANDARD's own definition: GlobalG.A.P. audits are carried out
+      // by an approved certification body. That names the standard, not this record.
+      const offenders = all.filter(
+        (l) => /\bapprov\w*|aprobad\w*/i.test(l) && !l.startsWith('GlobalG.A.P.:')
+      );
+      expect(offenders).toEqual([]);
+    }
+  );
 });
