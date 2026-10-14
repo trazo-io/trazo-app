@@ -104,7 +104,7 @@ const OperationReadinessPanel: React.FC<Props> = ({ companyId, farmId, variant =
             {intl.formatMessage({
               id: 'readiness.blockedIntro',
               defaultMessage:
-                'A certifier will not accept this operation until these are resolved. Sharing is blocked.'
+                'Trazo requires these records before it creates a review link. These are checks on what is on file in Trazo, not a certification decision.'
             })}
           </Text>
         </Alert>
