@@ -50,6 +50,7 @@ import {
 } from 'utils/voiceLanguagePreference';
 import type { VoiceFieldRequest } from 'config/events/voiceFields';
 import { applicationMethodLabelKey } from 'config/events/enums';
+import { isEventOnBuyerPage } from 'utils/consumerDisplay';
 
 // Stable identity: a fresh `[]` default would be a new prop object on every render.
 const EMPTY_FIELD_REQUESTS: VoiceFieldRequest[] = [];
@@ -91,6 +92,13 @@ interface VoiceEventCaptureProps {
    */
   knownActivity?: string | null;
   /**
+   * Whether the record being logged reaches the buyer page, decided by the wizard from its own
+   * (event type, subtype) through `isEventOnBuyerPage`. Buffer use, seed search, equipment
+   * cleanout and transport are certifier-only, so the notes opt-in must not promise
+   * publication for them. Omitted: derived from `knownActivity` when it maps, else unknown.
+   */
+  notesOnBuyerPage?: boolean;
+  /**
    * The fields THIS activity records, built from the display registry
    * (`buildVoiceFieldRequests`). Sent with the request so the model is asked for
    * `low_temperature` and `protection_method` on a frost night instead of the same eight
@@ -126,6 +134,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   isActive,
   cropType,
   knownActivity = null,
+  notesOnBuyerPage,
   fieldRequests = EMPTY_FIELD_REQUESTS,
   autoStart = false,
   seedTranscript,
@@ -813,6 +822,28 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   // statement of what was understood, and suppressing it as "something you already know" would
   // be suppressing something the farmer has not been told.
   const showHeardActivity = recognized && (!chosenMapping || disagreesWithChosenActivity);
+  // Who reads the notes is decided by the record being SAVED, not by what the parser heard: a
+  // Harvest misheard as a cleanout still publishes its notes. The certifier-only wording shows
+  // only when the chosen record is withheld AND the parser did not recognise a published
+  // activity the farmer could still switch to. In doubt, the buyer-page warning stays.
+  const chosenOnBuyerPage =
+    notesOnBuyerPage ??
+    (chosenMapping
+      ? isEventOnBuyerPage({
+          event_type: chosenMapping.backendEventType,
+          production_type: chosenMapping.backendSubtype
+        })
+      : undefined);
+  const heardOnBuyerPage = mapping
+    ? isEventOnBuyerPage({
+        event_type: mapping.backendEventType,
+        production_type: mapping.backendSubtype
+      })
+    : true;
+  const notesCertifierOnly =
+    chosenOnBuyerPage === undefined
+      ? recognized && !heardOnBuyerPage
+      : !chosenOnBuyerPage && !(recognized && heardOnBuyerPage);
 
   return (
     /*
@@ -1119,7 +1150,13 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                     {intl.formatMessage({ id: 'voice.notesOptIn.label' })}
                   </Text>
                   <Text fontSize="xs" color="gray.600">
-                    {intl.formatMessage({ id: 'voice.notesOptIn.help' })}
+                    {/* Certifier-only records (buffer use, seed search, cleanout, transport)
+                        are withheld from the buyer page whole; see notesCertifierOnly. */}
+                    {intl.formatMessage({
+                      id: notesCertifierOnly
+                        ? 'voice.notesOptIn.helpCertifierOnly'
+                        : 'voice.notesOptIn.help'
+                    })}
                   </Text>
                 </VStack>
               </Checkbox>
