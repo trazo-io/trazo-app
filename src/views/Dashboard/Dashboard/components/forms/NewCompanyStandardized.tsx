@@ -399,7 +399,6 @@ export const StandardizedCompanyForm: React.FC<StandardizedCompanyFormProps> = (
                   helpText="Your company's approach to sustainable agriculture">
                   <StandardSelect {...methods.register('sustainabilityCommitment')}>
                     <option value="">Select commitment level...</option>
-                    <option value="carbon_neutral">Carbon Neutral Goals</option>
                     <option value="regenerative">Regenerative Agriculture</option>
                     <option value="organic_transition">Transitioning to Organic</option>
                     <option value="water_conservation">Water Conservation Focus</option>

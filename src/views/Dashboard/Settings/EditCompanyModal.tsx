@@ -140,13 +140,42 @@ const PRIMARY_COMMODITIES = [
   { value: 'mixed', label: 'Mixto' }
 ];
 
-// Stored values. Labels: `company.sustainabilityCommitment.<value>`.
+// Stored values a farmer may pick. Labels: `company.sustainabilityCommitment.<value>`.
 export const SUSTAINABILITY_COMMITMENTS = [
-  'carbon_neutral',
   'sustainable_practices',
   'organic_certified',
   'regenerative',
   'exploring'
+];
+
+/**
+ * Retired from the picker on 2026-10-14 (Run 8b F1), same rule as the business-event
+ * certification types retired on 2026-08-27 (`config/events/businessEvent.ts`).
+ *
+ * "Carbon neutral" is a general environmental benefit claim (FTC 16 CFR 260.4) and the exact
+ * phrase compliance.md marks unsafe. Trazo's carbon figure is the operation's own emissions
+ * plus the manufacturing of the inputs it buys, not a full LCA, so it cannot back a neutrality
+ * claim either. Retiring is a WRITE-path decision: a company that already stored the value
+ * keeps it (never remapped, never cleared on save), and the label it reads back states a goal
+ * that is no longer offered rather than asserting neutrality.
+ */
+export const RETIRED_SUSTAINABILITY_COMMITMENTS = ['carbon_neutral'];
+
+export const isKnownSustainabilityCommitment = (value: string): boolean =>
+  SUSTAINABILITY_COMMITMENTS.includes(value) || RETIRED_SUSTAINABILITY_COMMITMENTS.includes(value);
+
+/**
+ * The options the picker renders for a company whose stored value is `stored`. A retired value
+ * appears only when it is the one on file, and disabled, so the select can still show it and a
+ * save writes it back unchanged instead of falling back to blank.
+ */
+export const sustainabilityCommitmentOptions = (
+  stored?: string | null
+): Array<{ value: string; retired: boolean }> => [
+  ...SUSTAINABILITY_COMMITMENTS.map((value) => ({ value, retired: false })),
+  ...(stored && RETIRED_SUSTAINABILITY_COMMITMENTS.includes(stored)
+    ? [{ value: stored, retired: true }]
+    : [])
 ];
 
 // US States - 2-letter codes required for USDA API and carbon calculations
@@ -535,11 +564,13 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
         error={errors.sustainability_commitment?.message}>
         <StandardSelect {...register('sustainability_commitment')}>
           <option value="">Seleccionar...</option>
-          {SUSTAINABILITY_COMMITMENTS.map((value) => (
-            <option key={value} value={value}>
-              {intl.formatMessage({ id: `company.sustainabilityCommitment.${value}` })}
-            </option>
-          ))}
+          {sustainabilityCommitmentOptions(company?.sustainability_commitment).map(
+            ({ value, retired }) => (
+              <option key={value} value={value} disabled={retired}>
+                {intl.formatMessage({ id: `company.sustainabilityCommitment.${value}` })}
+              </option>
+            )
+          )}
         </StandardSelect>
       </StandardField>
 

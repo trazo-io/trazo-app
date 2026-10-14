@@ -31,7 +31,7 @@ const trustData: TrustData = {
   averageRating: 4.7,
   verificationDate: '2024-01-15',
   farmHistory: 12,
-  certifications: ['USDA Organic', 'Carbon Neutral'],
+  certifications: ['USDA Organic', 'Rainforest Alliance'],
   transparencyScore: 94,
   industryPercentile: 85,
   sustainabilityBadges: ['EPA/USDA-Sourced', 'Carbon Tracked'],

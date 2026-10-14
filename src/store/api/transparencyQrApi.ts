@@ -31,7 +31,8 @@ export interface TransparencyStandardView {
         actual_count: number;
         /** Farmer-uploaded photographs. "Documented", never "verified" — nobody checked them. */
         photo_documented_count?: number;
-        photo_documentation_rate?: number;
+        // No rate or percentage beside these counts (Run 8b F1): the payload stopped serving
+        // `photo_documentation_rate` on 2026-10-14. Counts only, on every consumer surface.
       };
     };
   };
