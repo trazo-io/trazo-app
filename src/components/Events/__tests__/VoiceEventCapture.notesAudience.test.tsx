@@ -5,6 +5,11 @@
  * for a harvest or an irrigation, and false for an equipment cleanout (EM) or a transport (TP):
  * the backend withholds those production subtypes from every public serializer, so their note
  * reaches no buyer page. Voice maps "equipment" to EM and "transport" to TP.
+ *
+ * The audience follows the record being SAVED (the wizard's own event type and subtype, passed
+ * as `notesOnBuyerPage`), not what the parser heard: a Harvest misheard as a cleanout still
+ * publishes its notes. When the two disagree and either is published, the buyer-page warning
+ * stays.
  */
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -70,13 +75,13 @@ vi.mock('hooks/useDeepgramTranscription', async (importOriginal) => {
 const SAID = 'we cleaned out the huller line this morning before the organic run';
 const m = enUS as unknown as Record<string, string>;
 
-const speak = async (parseType: string) => {
+const speak = async (parseType: string, props: Record<string, unknown> = {}) => {
   mocks.parseType = parseType;
   render(
     <Provider store={configureStore({ reducer: { userState: () => ({ user: { id: 1 } }) } })}>
       <ChakraProvider>
         <IntlProvider locale="en-US" messages={m} onError={() => undefined}>
-          <VoiceEventCapture onEventDetected={vi.fn()} isActive cropType="walnut" />
+          <VoiceEventCapture onEventDetected={vi.fn()} isActive cropType="walnut" {...props} />
         </IntlProvider>
       </ChakraProvider>
     </Provider>
@@ -111,6 +116,28 @@ describe('voice notes opt-in: the help line matches the record audience', () => 
       expect(screen.getByText(m['voice.notesOptIn.helpCertifierOnly'])).toBeTruthy();
     });
   }
+
+  it('chosen Harvest, misheard as a cleanout: keeps the buyer-page warning', async () => {
+    await speak('equipment', { knownActivity: 'harvest', notesOnBuyerPage: true });
+    expect(screen.getByText(m['voice.notesOptIn.help'])).toBeTruthy();
+    expect(screen.queryByText(m['voice.notesOptIn.helpCertifierOnly'])).toBeNull();
+  });
+
+  it('chosen seed search (no voice slug), unplaced parse: certifier-only wording', async () => {
+    await speak('general', { notesOnBuyerPage: false });
+    expect(screen.queryByText(m['voice.notesOptIn.help'])).toBeNull();
+    expect(screen.getByText(m['voice.notesOptIn.helpCertifierOnly'])).toBeTruthy();
+  });
+
+  it('chosen cleanout, heard as a harvest the farmer could switch to: warning stays', async () => {
+    await speak('harvest', { knownActivity: 'equipment', notesOnBuyerPage: false });
+    expect(screen.getByText(m['voice.notesOptIn.help'])).toBeTruthy();
+  });
+
+  it('chosen cleanout, heard as a cleanout: certifier-only wording', async () => {
+    await speak('equipment', { knownActivity: 'equipment', notesOnBuyerPage: false });
+    expect(screen.getByText(m['voice.notesOptIn.helpCertifierOnly'])).toBeTruthy();
+  });
 
   it('harvest: keeps the buyer-page warning', async () => {
     await speak('harvest');
