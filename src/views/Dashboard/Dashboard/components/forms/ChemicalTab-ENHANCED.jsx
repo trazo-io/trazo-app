@@ -1916,7 +1916,7 @@ const ChemicalTab = forwardRef(
                             <option value="not_organic">
                               {intl.formatMessage({
                                 id: 'events.organicApproved.notOrganicOption',
-                                defaultMessage: 'Not approved - conventional use only'
+                                defaultMessage: 'No organic basis: conventional use only'
                               })}
                             </option>
                             <option value="transitional">
@@ -4945,7 +4945,8 @@ const ChemicalTab = forwardRef(
                                 <Text fontSize="xs" color="gray.600">
                                   {intl.formatMessage({
                                     id: 'events.chemical.adjuvants.organicApproved',
-                                    defaultMessage: 'OMRI-listed / organic-approved adjuvant'
+                                    defaultMessage:
+                                      'Adjuvant has an organic basis (for example OMRI listed)'
                                   })}
                                 </Text>
                               </HStack>

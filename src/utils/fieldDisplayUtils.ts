@@ -423,18 +423,19 @@ export function getReadableFieldValue(field: string, value: string): string {
     // ============================================================
     organic_approved: {
       // Chemical event organic certification status
-      omri: 'OMRI Listed (Organic Certified)',
-      omri_listed: 'OMRI Listed (Organic Certified)',
+      // Run 8b (8b-06): "(Organic Certified)" said a listing certifies something; it does not.
+      omri: 'OMRI Listed',
+      omri_listed: 'OMRI Listed',
       wsda_listed: 'WSDA Listed',
       nop_seal_on_label: 'NOP seal on label',
       certifier_approved: 'Certifier-approved',
-      usda_nop_approved: 'USDA NOP Approved',
+      usda_nop_approved: 'USDA NOP basis',
       organic_equivalent: 'Organic Equivalent',
       not_organic: 'Conventional (Not Organic)',
       transitional: 'Transitional (In Certification)',
       // Legacy backend values
-      yes: 'Organic Approved',
-      no: 'Not Organic Approved',
+      yes: 'Organic basis recorded',
+      no: 'No organic basis',
       not_applicable: 'N/A'
     },
     seeds_source: {

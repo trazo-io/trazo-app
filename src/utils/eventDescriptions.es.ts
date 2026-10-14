@@ -376,13 +376,6 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
   'Counts and dates are on record, so a decision to treat, or not to treat, can be checked against what was actually found.':
     'Los conteos y las fechas quedan registrados, así la decisión de tratar, o de no tratar, puede verificarse contra lo que realmente se encontró.',
 
-  'A pest treatment approved for organic growing was applied':
-    'Se aplicó un tratamiento de plagas aprobado para producción orgánica',
-  'Products allowed in organic growing are reviewed against a public national list before they can be used.':
-    'Los productos permitidos en producción orgánica se revisan contra una lista nacional pública antes de poder usarse.',
-  'The product, the target pest and the date are on record, so the treatment can be checked against that list.':
-    'El producto, la plaga objetivo y la fecha quedan registrados, así el tratamiento puede verificarse contra esa lista.',
-
   'A treatment was applied to control weeds': 'Se aplicó un tratamiento para controlar malezas',
 
   'A heat wave crossed the block and the crop was checked afterwards':

@@ -43,7 +43,10 @@ import {
   formatNPK,
   formatPercentage,
   makeUnitPairFormatter,
-  formatConsumerPestName
+  formatConsumerPestName,
+  SHOPPER_BASIS_CERTIFIER,
+  SHOPPER_BASIS_EQUIVALENT,
+  SHOPPER_BASIS_RECORDED
 } from './formatters';
 
 // Organic approval labels — acronyms must be properly capitalized (OMRI, USDA, NOP)
@@ -53,7 +56,7 @@ const ORGANIC_APPROVED_LABELS: Record<string, string> = {
   nop_seal_on_label: 'NOP seal on label',
   certifier_approved: 'Certifier-approved',
   unverified: 'Not yet confirmed',
-  usda_nop_approved: 'USDA NOP Approved',
+  usda_nop_approved: 'USDA NOP basis',
   organic_equivalent: 'Organic Equivalent',
   not_organic: 'Not Organic',
   transitional: 'Transitional',
@@ -69,14 +72,15 @@ const ORGANIC_APPROVED_LABELS: Record<string, string> = {
 // Answering "No" plainly is the honest option: hiding a conventional input would be a
 // material omission on a page whose entire premise is documentation.
 const CONSUMER_ORGANIC_APPROVED_LABELS: Record<string, string> = {
-  omri_listed: 'Yes, OMRI Listed',
-  // 2026-08-15 — the lawful bases added with the rebuilt enum. Phrasing stays a plain
-  // answer to the question; the server is the only thing that may upgrade a listing claim.
-  wsda_listed: 'Yes, WSDA Listed',
-  nop_seal_on_label: 'Yes, NOP seal on the label',
-  certifier_approved: 'Yes, approved by the farm\u2019s certifier',
-  usda_nop_approved: 'Yes, USDA NOP approved',
-  organic_equivalent: 'Yes, organic-equivalent',
+  // Run 8b (8b-06): was "Yes, OMRI Listed", "Yes, USDA NOP approved": a listing or an approval
+  // spoken without saying the farm is the one who said it. The same attributed sentences the
+  // soil and pest rows use (formatters.ts SHOPPER_BASIS_*), with their limit.
+  omri_listed: SHOPPER_BASIS_RECORDED,
+  wsda_listed: SHOPPER_BASIS_RECORDED,
+  nop_seal_on_label: SHOPPER_BASIS_RECORDED,
+  certifier_approved: SHOPPER_BASIS_CERTIFIER,
+  usda_nop_approved: SHOPPER_BASIS_RECORDED,
+  organic_equivalent: SHOPPER_BASIS_EQUIVALENT,
   transitional: 'Transitional, farm is converting to organic',
   not_organic: 'No, conventional input',
   // Run 8: the farm has not confirmed what shows it is allowed. Said plainly, never "Yes".
