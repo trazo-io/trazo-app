@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   Box,
+  Link,
   Text,
   VStack,
   HStack,
@@ -13,9 +14,10 @@ import {
 import { FiCheck, FiChevronDown, FiChevronUp, FiX } from 'react-icons/fi';
 import { FormattedMessage, useIntl } from 'react-intl';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { SETUP_HELP_EMAIL } from '../../config/contactAddresses';
 import { useOnboardingChecklist } from '../../hooks/useOnboardingChecklist';
 import { useTourStore } from '../../store/tourStore';
-import { ChecklistVariant } from '../../tours/types';
+import { ChecklistItem } from '../../tours/types';
 
 /**
  * Route suffixes where the widget must not render.
@@ -51,13 +53,24 @@ export const isRecordOrFormRoute = (pathname: string): boolean => {
 
 /**
  * Floating onboarding checklist widget — bottom-right corner.
- * Shows Writer (5-item creation) or Viewer (4-item exploration) variant.
+ * Shows Writer (7-item), Pilot (4 required + optional) or Viewer (4-item exploration) variant.
  * Collapsible, dismissible, auto-hides when all complete or after 30 days.
  * Suppressed on form routes — see FORM_ROUTE_SUFFIXES above.
  */
 const OnboardingChecklist: React.FC = () => {
-  const { items, variant, completedCount, totalCount, progress, allComplete, isVisible, dismiss } =
-    useOnboardingChecklist();
+  const {
+    items,
+    optionalItems,
+    isPilot,
+    pilotStepsComplete,
+    variant,
+    completedCount,
+    totalCount,
+    progress,
+    allComplete,
+    isVisible,
+    dismiss
+  } = useOnboardingChecklist();
 
   // Expanded by default on desktop, COLLAPSED on phones. At 375px the expanded panel is 300px
   // wide and ~370px tall — 80% of the width and 45% of the height of the viewport — and it is
@@ -87,7 +100,89 @@ const OnboardingChecklist: React.FC = () => {
   // hook count between renders, triggering the "change in order of Hooks" warning).
   const progressBg = useColorModeValue('gray.100', 'gray.700');
 
-  if (!isVisible || allComplete || isOnFormRoute) return null;
+  if (!isVisible || (allComplete && !pilotStepsComplete) || isOnFormRoute) return null;
+
+  // Dependencies can cross groups (an optional item can wait on a required one).
+  const allItems = [...items, ...optionalItems];
+
+  const renderItem = (item: ChecklistItem) => {
+    const dependency = item.dependsOn ? allItems.find((i) => i.id === item.dependsOn) : undefined;
+    const isBlocked = !!dependency && !dependency.completed;
+    /**
+     * A blocked item was dimmed to 50% and inert with nothing saying why — the same
+     * "a disabled control is a bug report you never receive" pattern the onboarding
+     * wizards were fixed for on 2026-07-31. `tour.checklist.completeDependency`
+     * shipped in both locales for exactly this and had never been rendered.
+     */
+    const blockedReason =
+      isBlocked && dependency
+        ? intl.formatMessage(
+            // Pilot labels are conditions, not actions: "Complete "A parcel is on file" first"
+            // does not parse (review of app #113), so a pilot row says what it waits on.
+            { id: isPilot ? 'tour.checklist.pilot.waitsOn' : 'tour.checklist.completeDependency' },
+            { dependency: intl.formatMessage({ id: dependency.labelKey }) }
+          )
+        : undefined;
+    // Pilot labels state a condition ("A parcel is on file in Trazo"); striking one through
+    // when it is met would read as its negation. The check circle carries the state.
+    const strike = item.completed && !isPilot;
+
+    return (
+      <HStack
+        key={item.id}
+        data-testid={`checklist-item-${item.id}`}
+        data-completed={item.completed ? 'true' : 'false'}
+        w="full"
+        px={3}
+        py={2.5}
+        borderRadius="lg"
+        cursor={isBlocked ? 'default' : 'pointer'}
+        // `title` only. The row is a plain div (role=generic), where `aria-label` and
+        // `aria-disabled` are not allowed and are dropped by the a11y tree — my first
+        // pass set both, which would have read as coverage while announcing nothing.
+        // `title` becomes the accessible description on any element. The row being a
+        // click target with no role/tabindex at all is older, wider debt.
+        title={blockedReason}
+        opacity={isBlocked ? 0.5 : 1}
+        _hover={!isBlocked ? { bg: itemHoverBg } : undefined}
+        transition="all 0.15s"
+        onClick={() => {
+          if (!isBlocked && !item.completed) {
+            // Only track page visits for viewer checklist (visiting IS the action)
+            // Writer items are completed by actual data changes, not clicks
+            if (variant === 'viewer') {
+              trackPageVisit(item.id);
+            }
+            navigate(item.linkTo);
+          }
+        }}>
+        {/* Check circle */}
+        <Box
+          w="20px"
+          h="20px"
+          borderRadius="full"
+          border="2px"
+          borderColor={item.completed ? checkColor : borderColor}
+          bg={item.completed ? checkColor : 'transparent'}
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          flexShrink={0}
+          transition="all 0.2s">
+          {item.completed && <Icon as={FiCheck} color="white" boxSize={3} />}
+        </Box>
+
+        {/* Label */}
+        <Text
+          fontSize="sm"
+          color={item.completed ? textColor : headingColor}
+          textDecoration={strike ? 'line-through' : 'none'}
+          flex={1}>
+          <FormattedMessage id={item.labelKey} />
+        </Text>
+      </HStack>
+    );
+  };
 
   return (
     <Box
@@ -104,22 +199,30 @@ const OnboardingChecklist: React.FC = () => {
       overflow="hidden">
       {/* Header — always visible */}
       <HStack
+        data-testid="checklist-header"
         px={4}
         py={3}
         justify="space-between"
-        cursor="pointer"
-        onClick={() => setIsExpanded(!isExpanded)}
-        _hover={{ bg: itemBg }}
+        // A completed pilot panel has no body to expand, so its header is a static row.
+        cursor={pilotStepsComplete ? 'default' : 'pointer'}
+        onClick={pilotStepsComplete ? undefined : () => setIsExpanded(!isExpanded)}
+        _hover={pilotStepsComplete ? undefined : { bg: itemBg }}
         transition="background 0.15s">
         <VStack align="start" spacing={0}>
           <Text fontSize="sm" fontWeight="700" color={headingColor}>
             <FormattedMessage id="tour.checklist.title" />
           </Text>
-          <Text fontSize="xs" color={textColor}>
-            <FormattedMessage
-              id="tour.checklist.progress"
-              values={{ completed: completedCount, total: totalCount }}
-            />
+          <Text fontSize="xs" color={textColor} data-testid="checklist-progress">
+            {pilotStepsComplete ? (
+              // Exactly this sentence (Run 8b, 8b-02). Never "You're all set": these steps put
+              // records in Trazo; they do not show anything was reviewed or is ready to file.
+              <FormattedMessage id="tour.checklist.pilot.complete" />
+            ) : (
+              <FormattedMessage
+                id="tour.checklist.progress"
+                values={{ completed: completedCount, total: totalCount }}
+              />
+            )}
           </Text>
         </VStack>
         <HStack spacing={1}>
@@ -139,91 +242,72 @@ const OnboardingChecklist: React.FC = () => {
             minH="32px"
             minW="32px"
           />
-          <Icon as={isExpanded ? FiChevronDown : FiChevronUp} color={textColor} boxSize={4} />
+          {!pilotStepsComplete && (
+            <Icon as={isExpanded ? FiChevronDown : FiChevronUp} color={textColor} boxSize={4} />
+          )}
         </HStack>
       </HStack>
 
       {/* Progress bar */}
-      <Progress value={progress} size="xs" colorScheme="green" bg={progressBg} />
+      {!pilotStepsComplete && (
+        <Progress value={progress} size="xs" colorScheme="green" bg={progressBg} />
+      )}
 
       {/* Checklist items */}
-      <Collapse in={isExpanded}>
-        <VStack spacing={0} py={2} px={2}>
-          {items.map((item) => {
-            const dependency = item.dependsOn
-              ? items.find((i) => i.id === item.dependsOn)
-              : undefined;
-            const isBlocked = !!dependency && !dependency.completed;
-            /**
-             * A blocked item was dimmed to 50% and inert with nothing saying why — the same
-             * "a disabled control is a bug report you never receive" pattern the onboarding
-             * wizards were fixed for on 2026-07-31. `tour.checklist.completeDependency`
-             * shipped in both locales for exactly this and had never been rendered.
-             */
-            const blockedReason =
-              isBlocked && dependency
-                ? intl.formatMessage(
-                    { id: 'tour.checklist.completeDependency' },
-                    { dependency: intl.formatMessage({ id: dependency.labelKey }) }
-                  )
-                : undefined;
-
-            return (
-              <HStack
-                key={item.id}
-                w="full"
-                px={3}
-                py={2.5}
-                borderRadius="lg"
-                cursor={isBlocked ? 'default' : 'pointer'}
-                // `title` only. The row is a plain div (role=generic), where `aria-label` and
-                // `aria-disabled` are not allowed and are dropped by the a11y tree — my first
-                // pass set both, which would have read as coverage while announcing nothing.
-                // `title` becomes the accessible description on any element. The row being a
-                // click target with no role/tabindex at all is older, wider debt.
-                title={blockedReason}
-                opacity={isBlocked ? 0.5 : 1}
-                _hover={!isBlocked ? { bg: itemHoverBg } : undefined}
-                transition="all 0.15s"
-                onClick={() => {
-                  if (!isBlocked && !item.completed) {
-                    // Only track page visits for viewer checklist (visiting IS the action)
-                    // Writer items are completed by actual data changes, not clicks
-                    if (variant === 'viewer') {
-                      trackPageVisit(item.id);
-                    }
-                    navigate(item.linkTo);
-                  }
-                }}>
-                {/* Check circle */}
-                <Box
-                  w="20px"
-                  h="20px"
-                  borderRadius="full"
-                  border="2px"
-                  borderColor={item.completed ? checkColor : borderColor}
-                  bg={item.completed ? checkColor : 'transparent'}
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  flexShrink={0}
-                  transition="all 0.2s">
-                  {item.completed && <Icon as={FiCheck} color="white" boxSize={3} />}
-                </Box>
-
-                {/* Label */}
-                <Text
-                  fontSize="sm"
-                  color={item.completed ? textColor : headingColor}
-                  textDecoration={item.completed ? 'line-through' : 'none'}
-                  flex={1}>
-                  <FormattedMessage id={item.labelKey} />
+      {!pilotStepsComplete && (
+        <Collapse in={isExpanded}>
+          {isPilot && (
+            // Information, not steps: no check circle, never counted, never shown incomplete.
+            <Box data-testid="pilot-setup-info" px={5} pt={3} pb={1}>
+              <Text fontSize="xs" fontWeight="700" color={headingColor} mb={1}>
+                <FormattedMessage id="tour.checklist.pilot.howSetupWorks" />
+              </Text>
+              <VStack as="ul" align="start" spacing={1} pl={4} fontSize="xs" color={textColor}>
+                <Text as="li">
+                  <FormattedMessage id="tour.checklist.pilot.howSetupWorks.send" />{' '}
+                  <Link
+                    href={`mailto:${SETUP_HELP_EMAIL}`}
+                    color={checkColor}
+                    fontWeight="600"
+                    data-testid="pilot-setup-mailto">
+                    {SETUP_HELP_EMAIL}
+                  </Link>
                 </Text>
-              </HStack>
-            );
-          })}
-        </VStack>
-      </Collapse>
+                <Text as="li">
+                  <FormattedMessage id="tour.checklist.pilot.howSetupWorks.enter" />
+                </Text>
+                <Text as="li">
+                  <FormattedMessage id="tour.checklist.pilot.howSetupWorks.check" />
+                </Text>
+              </VStack>
+            </Box>
+          )}
+          <VStack spacing={0} py={2} px={2} data-testid="checklist-required">
+            {items.map(renderItem)}
+          </VStack>
+          {optionalItems.length > 0 && (
+            <Box px={2} pb={2} data-testid="checklist-optional">
+              <Text
+                px={3}
+                fontSize="xs"
+                fontWeight="700"
+                color={textColor}
+                textTransform="uppercase">
+                <FormattedMessage id="tour.checklist.optional" />
+              </Text>
+              <VStack spacing={0}>{optionalItems.map(renderItem)}</VStack>
+            </Box>
+          )}
+          {variant === 'writer' && !isPilot && (
+            <Text px={5} pb={3} fontSize="xs" color={textColor} data-testid="checklist-setup-help">
+              <FormattedMessage id="tour.checklist.setupHelpPrompt" />{' '}
+              <Link href={`mailto:${SETUP_HELP_EMAIL}`} color={checkColor} fontWeight="600">
+                <FormattedMessage id="tour.checklist.setupHelpLink" />
+              </Link>
+            </Text>
+          )}
+        </Collapse>
+      )}
     </Box>
   );
 };

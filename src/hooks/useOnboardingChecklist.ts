@@ -47,6 +47,38 @@ export const WRITER_ITEMS = [
   { id: 'upload-ofpp', dependsOn: undefined }
 ] as const;
 
+/**
+ * Pilot checklist (Run 8b, finding 8b-02).
+ *
+ * A pilot's records are entered by Oscar under his own login from what the grower sends, so the
+ * self-serve season walk-through (start, finish, share the QR code) is not what a pilot's setup
+ * consists of. The required items are the data-backed ones a renewal needs, and each label says
+ * what its completion condition in `resolveWriterCompletion` actually proves, nothing more:
+ *
+ *   add-parcel     any parcel on the company                  "A parcel is on file in Trazo"
+ *   document-event a season on this farm with >= 1 event      "Season records are on file in Trazo"
+ *   file-osp       status submitted/active, or all six        "The Organic System Plan in Trazo has
+ *                  § 205.201(a) sections have narrative        text in all six sections or is
+ *                  (section_completion >= 1)                   marked submitted"
+ *   upload-ofpp    ofpp_on_file or a plan uploaded            "A fraud prevention plan is on file"
+ *
+ * None of these shows that the grower reviewed anything, and no label or message says so. The
+ * season walk-through items stay available under "Optional" and never count toward completion.
+ */
+export const PILOT_REQUIRED_ITEMS = [
+  { id: 'add-parcel', dependsOn: undefined, labelKey: 'tour.checklist.pilot.parcel' },
+  { id: 'document-event', dependsOn: 'add-parcel', labelKey: 'tour.checklist.pilot.records' },
+  { id: 'file-osp', dependsOn: undefined, labelKey: 'tour.checklist.pilot.osp' },
+  { id: 'upload-ofpp', dependsOn: undefined, labelKey: 'tour.checklist.pilot.ofpp' }
+] as const;
+
+export const PILOT_OPTIONAL_ITEMS = ['start-production', 'finish-production', 'share-qr'] as const;
+
+/** Same expression as the farm dashboard (`views/Dashboard/Dashboard/index.tsx`). */
+export function isPilotSubscription(subscription: any): boolean {
+  return subscription?.plan?.slug === 'pilot' || subscription?.plan?.features?.is_pilot === true;
+}
+
 // `check-commercial` was here until 2026-08-11. The Commercial dashboard was cut in WS-7 and
 // `/commercial` folded to a redirect to farm home, so the item sent a read-only user to a page
 // that no longer exists and then marked itself complete for having visited the redirect target.
@@ -201,8 +233,19 @@ export function useOnboardingChecklist() {
   }, [farmId]);
 
   const variant: ChecklistVariant = canWrite ? 'writer' : 'viewer';
+  // The pilot list replaces the writer list only. A read-only member keeps the viewer list.
+  const isPilot = variant === 'writer' && isPilotSubscription(company?.subscription);
 
   const items: ChecklistItem[] = useMemo(() => {
+    if (variant === 'writer' && isPilot) {
+      return PILOT_REQUIRED_ITEMS.map(({ id, dependsOn, labelKey }) => ({
+        id,
+        labelKey,
+        linkTo: writerLinks[id],
+        completed: writerCompletion[id] || false,
+        dependsOn
+      }));
+    }
     if (variant === 'writer') {
       return WRITER_ITEMS.map(({ id, dependsOn }, i) => ({
         id,
@@ -219,7 +262,22 @@ export function useOnboardingChecklist() {
       linkTo: viewerLinks[id],
       completed: !!visitedPages[id]
     }));
-  }, [variant, writerCompletion, writerLinks, viewerLinks, visitedPages]);
+  }, [variant, isPilot, writerCompletion, writerLinks, viewerLinks, visitedPages]);
+
+  // Shown under "Optional" for pilots; never counted. Labels and order as on the writer list.
+  const optionalItems: ChecklistItem[] = useMemo(() => {
+    if (!isPilot) return [];
+    return PILOT_OPTIONAL_ITEMS.map((id) => {
+      const index = WRITER_ITEMS.findIndex((item) => item.id === id);
+      return {
+        id,
+        labelKey: `tour.checklist.writer.item${index + 1}`,
+        linkTo: writerLinks[id],
+        completed: writerCompletion[id] || false,
+        dependsOn: WRITER_ITEMS[index].dependsOn
+      };
+    });
+  }, [isPilot, writerCompletion, writerLinks]);
 
   const completedCount = items.filter((item) => item.completed).length;
   const totalCount = items.length;
@@ -258,17 +316,24 @@ export function useOnboardingChecklist() {
   // Don't show until: company + establishment exist, API data loaded, and company is new enough
   const hasCompany = !!company && !!company.id;
   const hasEstablishments = establishments.length > 0;
+  // A pilot whose required items are done sees "These setup steps are complete" until they
+  // dismiss it, instead of the panel vanishing. `markChecklistCompleted` still runs (above), so
+  // later loads skip the data requests and show only that line; a self-serve writer's panel
+  // still hides on completion as before.
+  const pilotStepsComplete = isPilot && (allComplete || checklistCompleted);
   const isVisible =
     hasCompany &&
     hasEstablishments &&
     !checklistDismissed &&
-    !checklistCompleted &&
-    !allComplete &&
+    (pilotStepsComplete || (!checklistCompleted && !allComplete)) &&
     isNewEnough &&
     !isLoadingProductions;
 
   return {
     items,
+    optionalItems,
+    isPilot,
+    pilotStepsComplete,
     variant,
     completedCount,
     totalCount,
