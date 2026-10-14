@@ -181,6 +181,21 @@ describe('pilot checklist', () => {
     expect(useTourStore.getState().checklistCompleted).toBe(false);
   });
 
+  it('a waiting pilot row says what it waits on, not "Complete <condition> first"', () => {
+    renderChecklist();
+    const title = screen.getByTestId('checklist-item-document-event').getAttribute('title');
+    expect(title).toBe('Waiting on: A parcel is on file in Trazo');
+  });
+
+  it('a completed pilot panel has a static header: no chevron, nothing to expand', () => {
+    useTourStore.setState({ checklistCompleted: true });
+    renderChecklist();
+    const header = screen.getByTestId('checklist-header');
+    // Only the dismiss button's icon remains.
+    expect(header.querySelectorAll('svg').length).toBe(1);
+    expect(screen.queryByRole('button', { name: 'Dismiss' })).not.toBeNull();
+  });
+
   it('detects a pilot from features.is_pilot too (same rule as the dashboard)', () => {
     subscription = PILOT_BY_FEATURE;
     renderChecklist();

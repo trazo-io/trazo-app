@@ -7682,6 +7682,7 @@
   "tour.checklist.pilot.osp": "The Organic System Plan in Trazo has text in all six sections or is marked submitted",
   "tour.checklist.pilot.parcel": "A parcel is on file in Trazo",
   "tour.checklist.pilot.records": "Season records are on file in Trazo",
+  "tour.checklist.pilot.waitsOn": "Waiting on: {dependency}",
   "tour.checklist.progress": "{completed} of {total} complete",
   "tour.checklist.setupHelpLink": "Get setup help",
   "tour.checklist.setupHelpPrompt": "Have last season's records somewhere else?",

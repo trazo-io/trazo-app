@@ -7682,6 +7682,7 @@
   "tour.checklist.pilot.osp": "El Plan del Sistema Orgánico en Trazo tiene texto en las seis secciones o está marcado como presentado",
   "tour.checklist.pilot.parcel": "Hay una parcela archivada en Trazo",
   "tour.checklist.pilot.records": "Hay registros de temporada archivados en Trazo",
+  "tour.checklist.pilot.waitsOn": "En espera de: {dependency}",
   "tour.checklist.progress": "{completed} de {total} completados",
   "tour.checklist.setupHelpLink": "Pide ayuda con la configuración",
   "tour.checklist.setupHelpPrompt": "¿Tienes los registros de la temporada pasada en otro lugar?",

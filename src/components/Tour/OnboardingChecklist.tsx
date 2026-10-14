@@ -117,7 +117,9 @@ const OnboardingChecklist: React.FC = () => {
     const blockedReason =
       isBlocked && dependency
         ? intl.formatMessage(
-            { id: 'tour.checklist.completeDependency' },
+            // Pilot labels are conditions, not actions: "Complete "A parcel is on file" first"
+            // does not parse (review of app #113), so a pilot row says what it waits on.
+            { id: isPilot ? 'tour.checklist.pilot.waitsOn' : 'tour.checklist.completeDependency' },
             { dependency: intl.formatMessage({ id: dependency.labelKey }) }
           )
         : undefined;
@@ -197,12 +199,14 @@ const OnboardingChecklist: React.FC = () => {
       overflow="hidden">
       {/* Header — always visible */}
       <HStack
+        data-testid="checklist-header"
         px={4}
         py={3}
         justify="space-between"
-        cursor="pointer"
-        onClick={() => setIsExpanded(!isExpanded)}
-        _hover={{ bg: itemBg }}
+        // A completed pilot panel has no body to expand, so its header is a static row.
+        cursor={pilotStepsComplete ? 'default' : 'pointer'}
+        onClick={pilotStepsComplete ? undefined : () => setIsExpanded(!isExpanded)}
+        _hover={pilotStepsComplete ? undefined : { bg: itemBg }}
         transition="background 0.15s">
         <VStack align="start" spacing={0}>
           <Text fontSize="sm" fontWeight="700" color={headingColor}>
@@ -238,7 +242,9 @@ const OnboardingChecklist: React.FC = () => {
             minH="32px"
             minW="32px"
           />
-          <Icon as={isExpanded ? FiChevronDown : FiChevronUp} color={textColor} boxSize={4} />
+          {!pilotStepsComplete && (
+            <Icon as={isExpanded ? FiChevronDown : FiChevronUp} color={textColor} boxSize={4} />
+          )}
         </HStack>
       </HStack>
 
