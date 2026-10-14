@@ -50,6 +50,7 @@ import {
 } from 'utils/voiceLanguagePreference';
 import type { VoiceFieldRequest } from 'config/events/voiceFields';
 import { applicationMethodLabelKey } from 'config/events/enums';
+import { isEventOnBuyerPage } from 'utils/consumerDisplay';
 
 // Stable identity: a fresh `[]` default would be a new prop object on every render.
 const EMPTY_FIELD_REQUESTS: VoiceFieldRequest[] = [];
@@ -1119,7 +1120,18 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                     {intl.formatMessage({ id: 'voice.notesOptIn.label' })}
                   </Text>
                   <Text fontSize="xs" color="gray.600">
-                    {intl.formatMessage({ id: 'voice.notesOptIn.help' })}
+                    {/* Cleanout (EM) and transport (TP) are withheld from the buyer page whole,
+                        so for those the help must not promise publication. */}
+                    {intl.formatMessage({
+                      id:
+                        mapping &&
+                        !isEventOnBuyerPage({
+                          event_type: mapping.backendEventType,
+                          production_type: mapping.backendSubtype
+                        })
+                          ? 'voice.notesOptIn.helpCertifierOnly'
+                          : 'voice.notesOptIn.help'
+                    })}
                   </Text>
                 </VStack>
               </Checkbox>
