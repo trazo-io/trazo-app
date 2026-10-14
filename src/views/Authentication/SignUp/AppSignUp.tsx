@@ -146,16 +146,17 @@ const AppSignUp: React.FC = () => {
       setResendCooldown(60); // 60 second cooldown
 
       toast({
-        title: 'Email sent!',
-        description: "We've sent another verification email to your inbox.",
+        title: intl.formatMessage({ id: 'auth.signup.toast.emailResent.title' }),
+        description: intl.formatMessage({ id: 'auth.signup.toast.emailResent.body' }),
         status: 'success',
         duration: 4000,
         isClosable: true
       });
     } catch (error: any) {
       toast({
-        title: 'Failed to resend email',
-        description: error?.data?.message || 'Please try again later.',
+        title: intl.formatMessage({ id: 'auth.signup.toast.resendFailed.title' }),
+        description:
+          error?.data?.message || intl.formatMessage({ id: 'auth.signup.toast.resendFailed.body' }),
         status: 'error',
         duration: 4000,
         isClosable: true
@@ -204,8 +205,10 @@ const AppSignUp: React.FC = () => {
       // Validate password strength before submitting
       if (!passwordValidation || !passwordValidation.isValid) {
         toast({
-          title: 'Weak password',
-          description: passwordValidation?.errors[0] || 'Please choose a stronger password',
+          title: intl.formatMessage({ id: 'auth.signup.toast.weakPassword.title' }),
+          description:
+            passwordValidation?.errors[0] ||
+            intl.formatMessage({ id: 'auth.signup.toast.weakPassword.body' }),
           status: 'error',
           duration: 4000,
           isClosable: true
@@ -239,9 +242,8 @@ const AppSignUp: React.FC = () => {
 
         // Company code users still need email verification first (security-first approach)
         toast({
-          title: 'Account created successfully!',
-          description:
-            "Check your email to verify your account. Once verified, you'll automatically join the company team.",
+          title: intl.formatMessage({ id: 'auth.signup.toast.created.title' }),
+          description: intl.formatMessage({ id: 'auth.signup.toast.created.joinBody' }),
           status: 'success',
           duration: 4000,
           isClosable: true
@@ -258,8 +260,8 @@ const AppSignUp: React.FC = () => {
         console.log('🔒 REGULAR SIGNUP: Processing regular signup flow');
 
         toast({
-          title: 'Account created successfully!',
-          description: 'Welcome to Trazo. Please check your email to verify your account.',
+          title: intl.formatMessage({ id: 'auth.signup.toast.created.title' }),
+          description: intl.formatMessage({ id: 'auth.signup.toast.created.body' }),
           status: 'success',
           duration: 4000,
           isClosable: true
@@ -315,10 +317,12 @@ const AppSignUp: React.FC = () => {
       }
 
       toast({
-        title: response.is_new_user ? 'Welcome to Trazo!' : 'Welcome back!',
+        title: response.is_new_user
+          ? intl.formatMessage({ id: 'auth.signup.toast.social.newUser.title' })
+          : intl.formatMessage({ id: 'auth.signup.toast.social.returning.title' }),
         description: response.is_new_user
-          ? 'Your account has been created successfully.'
-          : 'You have successfully signed in.',
+          ? intl.formatMessage({ id: 'auth.signup.toast.social.newUser.body' })
+          : intl.formatMessage({ id: 'auth.signup.toast.social.returning.body' }),
         status: 'success',
         duration: 3000,
         isClosable: true
@@ -351,8 +355,8 @@ const AppSignUp: React.FC = () => {
       case 'Google':
         if (!config.google) {
           toast({
-            title: 'Configuration Error',
-            description: 'Google sign-in is not configured. Please contact support.',
+            title: intl.formatMessage({ id: 'auth.signup.toast.config.title' }),
+            description: intl.formatMessage({ id: 'auth.signup.toast.config.googleBody' }),
             status: 'error',
             duration: 5000,
             isClosable: true
@@ -369,8 +373,8 @@ const AppSignUp: React.FC = () => {
       case 'Facebook':
         if (!config.facebook) {
           toast({
-            title: 'Configuration Error',
-            description: 'Facebook sign-in is not configured. Please contact support.',
+            title: intl.formatMessage({ id: 'auth.signup.toast.config.title' }),
+            description: intl.formatMessage({ id: 'auth.signup.toast.config.facebookBody' }),
             status: 'error',
             duration: 5000,
             isClosable: true
@@ -386,8 +390,8 @@ const AppSignUp: React.FC = () => {
 
       default:
         toast({
-          title: 'Error',
-          description: 'Unknown social login provider.',
+          title: intl.formatMessage({ id: 'auth.signup.toast.unknownProvider.title' }),
+          description: intl.formatMessage({ id: 'auth.signup.toast.unknownProvider.body' }),
           status: 'error',
           duration: 3000,
           isClosable: true

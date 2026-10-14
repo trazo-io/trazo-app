@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useIntl } from 'react-intl';
 import {
   Modal,
   ModalOverlay,
@@ -107,22 +108,24 @@ const STEPS = [
   { title: 'Sostenibilidad', icon: FaLeaf, description: 'Información agrícola' }
 ];
 
-const LEGAL_STRUCTURES = [
-  { value: 'sole_proprietorship', label: 'Propietario Único' },
-  { value: 'partnership', label: 'Sociedad' },
-  { value: 'llc', label: 'LLC' },
-  { value: 'corporation', label: 'Corporación' },
-  { value: 'cooperative', label: 'Cooperativa' },
-  { value: 'family_farm', label: 'Granja Familiar' }
+// Stored values. Labels: `company.legalStructure.<value>`.
+export const LEGAL_STRUCTURES = [
+  'sole_proprietorship',
+  'partnership',
+  'llc',
+  'corporation',
+  'cooperative',
+  'family_farm'
 ];
 
+// Stored values. Labels: `company.industry.<value>`.
 const INDUSTRIES = [
-  { value: 'crop_production', label: 'Producción de Cultivos' },
-  { value: 'livestock', label: 'Ganadería' },
-  { value: 'dairy', label: 'Lácteos' },
-  { value: 'mixed_farming', label: 'Agricultura Mixta' },
-  { value: 'organic_farming', label: 'Agricultura Orgánica' },
-  { value: 'greenhouse', label: 'Invernadero' }
+  'crop_production',
+  'livestock',
+  'dairy',
+  'mixed_farming',
+  'organic_farming',
+  'greenhouse'
 ];
 
 const PRIMARY_COMMODITIES = [
@@ -136,12 +139,13 @@ const PRIMARY_COMMODITIES = [
   { value: 'mixed', label: 'Mixto' }
 ];
 
-const SUSTAINABILITY_COMMITMENTS = [
-  { value: 'carbon_neutral', label: 'Carbono Neutral' },
-  { value: 'sustainable_practices', label: 'Prácticas Sostenibles' },
-  { value: 'organic_certified', label: 'Certificado Orgánico' },
-  { value: 'regenerative', label: 'Agricultura Regenerativa' },
-  { value: 'exploring', label: 'En Exploración' }
+// Stored values. Labels: `company.sustainabilityCommitment.<value>`.
+export const SUSTAINABILITY_COMMITMENTS = [
+  'carbon_neutral',
+  'sustainable_practices',
+  'organic_certified',
+  'regenerative',
+  'exploring'
 ];
 
 // US States - 2-letter codes required for USDA API and carbon calculations
@@ -206,6 +210,7 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
   onSubmit,
   isLoading = false
 }) => {
+  const intl = useIntl();
   const [currentStep, setCurrentStep] = useState(0);
   const isMobile = useBreakpointValue({ base: true, md: false });
 
@@ -380,9 +385,9 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
         <StandardField label="Estructura Legal" error={errors.legal_structure?.message}>
           <StandardSelect {...register('legal_structure')}>
             <option value="">Seleccionar...</option>
-            {LEGAL_STRUCTURES.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
+            {LEGAL_STRUCTURES.map((value) => (
+              <option key={value} value={value}>
+                {intl.formatMessage({ id: `company.legalStructure.${value}` })}
               </option>
             ))}
           </StandardSelect>
@@ -391,9 +396,9 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
         <StandardField label="Industria" error={errors.industry?.message}>
           <StandardSelect {...register('industry')}>
             <option value="">Seleccionar...</option>
-            {INDUSTRIES.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
+            {INDUSTRIES.map((value) => (
+              <option key={value} value={value}>
+                {intl.formatMessage({ id: `company.industry.${value}` })}
               </option>
             ))}
           </StandardSelect>
@@ -529,9 +534,9 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
         error={errors.sustainability_commitment?.message}>
         <StandardSelect {...register('sustainability_commitment')}>
           <option value="">Seleccionar...</option>
-          {SUSTAINABILITY_COMMITMENTS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
+          {SUSTAINABILITY_COMMITMENTS.map((value) => (
+            <option key={value} value={value}>
+              {intl.formatMessage({ id: `company.sustainabilityCommitment.${value}` })}
             </option>
           ))}
         </StandardSelect>

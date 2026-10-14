@@ -31,7 +31,7 @@ import { useIntl } from 'react-intl';
 import { StandardCard, StandardButton } from 'components/Design/StandardComponents';
 import { useUpdateCompanyMutation } from 'store/api/companyApi';
 import { setCompany } from 'store/features/companySlice';
-import EditCompanyModal from './EditCompanyModal';
+import EditCompanyModal, { LEGAL_STRUCTURES, SUSTAINABILITY_COMMITMENTS } from './EditCompanyModal';
 
 interface CompanyInfoTabProps {
   company?: any;
@@ -175,27 +175,18 @@ const CompanyInfoTab: React.FC<CompanyInfoTabProps> = () => {
 
   // Get legal structure label
   const getLegalStructureLabel = (value?: string) => {
-    const structures: Record<string, string> = {
-      sole_proprietorship: 'Propietario Único',
-      partnership: 'Sociedad',
-      llc: 'LLC',
-      corporation: 'Corporación',
-      cooperative: 'Cooperativa',
-      family_farm: 'Granja Familiar'
-    };
-    return value ? structures[value] || value : null;
+    if (!value) return null;
+    return LEGAL_STRUCTURES.includes(value)
+      ? intl.formatMessage({ id: `company.legalStructure.${value}` })
+      : value;
   };
 
   // Get sustainability commitment label
   const getSustainabilityLabel = (value?: string) => {
-    const commitments: Record<string, string> = {
-      carbon_neutral: 'Carbono Neutral',
-      sustainable_practices: 'Prácticas Sostenibles',
-      organic_certified: 'Certificado Orgánico',
-      regenerative: 'Agricultura Regenerativa',
-      exploring: 'En Exploración'
-    };
-    return value ? commitments[value] || value : null;
+    if (!value) return null;
+    return SUSTAINABILITY_COMMITMENTS.includes(value)
+      ? intl.formatMessage({ id: `company.sustainabilityCommitment.${value}` })
+      : value;
   };
 
   // Get sustainability goal label (transparency-first language)

@@ -119,13 +119,12 @@ const ModernVerifyEmail: React.FC<VerifyEmailProps> = ({ userType = 'producer' }
       // 🚀 2025 Best Practice: Context-aware success messaging
       const successMessage = isCompanyJoin
         ? {
-            title: 'Email verified! Welcome to the team!',
-            description:
-              "Your account is verified and you've been added to the company. Taking you to your dashboard."
+            title: intl.formatMessage({ id: 'auth.verifyEmail.success.joinTitle' }),
+            description: intl.formatMessage({ id: 'auth.verifyEmail.success.joinBody' })
           }
         : {
-            title: 'Email verified successfully!',
-            description: 'Welcome to Trazo! Taking you to your dashboard.'
+            title: intl.formatMessage({ id: 'auth.verifyEmail.success.title' }),
+            description: intl.formatMessage({ id: 'auth.verifyEmail.success.body' })
           };
 
       toast({

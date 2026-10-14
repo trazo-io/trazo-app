@@ -433,3 +433,290 @@ describe('es-419 titles use Spanish sentence case', () => {
     expect(isTitleCase('certification.type.rainforestAlliance', 'Rainforest Alliance')).toBe(false);
   });
 });
+
+/**
+ * Run 8b (8b-03, Astra 2026-10-12): the blocks above check usted IMPERATIVES at the start of a
+ * sentence and leave "su" alone, so the crew journey still addressed the grower as usted in
+ * three other shapes: possessives ("Sus datos están donde los dejó", "Para su certificador"),
+ * the present tense ("Tiene un borrador", "Ya puede editar") and imperatives in the middle of
+ * a sentence ("Recargue la página e intente…", "Por favor intente", "Déjelo en blanco"). Three
+ * voseo forms with an attached pronoun also slipped past the stressed-vowel check because they
+ * were written without the accent ("Comparalo", "Contanos", "definilo").
+ *
+ * Checks 1-3 are scoped to the namespaces converted in that slice. "su" is also the third
+ * person (the contractor's own equipment, a material's organic status, the season's trail), so
+ * every key in scope that legitimately keeps one is listed below with what it refers to. A new
+ * key that needs "su" for a third party is added here deliberately; one that addresses the
+ * grower uses "tu".
+ *
+ * Still usted, out of this scope (named open under 8b-03): `education.*`, `buyer*`,
+ * `certifierReview.*`, `tour.*`, `fieldNotes.*`, `consumer.*`, `readiness*`.
+ */
+describe('the crew journey addresses the grower as tú, not usted (Run 8b)', () => {
+  const JOURNEY = [
+    'events.',
+    'eventDetails.',
+    'farm.',
+    'osp.',
+    'app.',
+    'parcel.',
+    'parcelApp.',
+    'handler.',
+    'harvestGrade.',
+    'finishProduction.',
+    'production.',
+    'quickAdd.',
+    'quickStart.',
+    'upload.',
+    'documents.',
+    'correct.',
+    'fieldDetails.',
+    'seasonPlan.',
+    'sales.records.',
+    'certifierLink.',
+    'operationAudit.'
+  ];
+  const inJourney = (key: string) => JOURNEY.some((p) => key.startsWith(p));
+  const L = 'A-Za-zÁÉÍÓÚáéíóúñÑ';
+
+  // Keys in scope whose "su/sus" (or sentence-initial third-person verb) is NOT the grower.
+  const THIRD_PERSON: Record<string, string> = {
+    'app.carbonExplainer.epaUsdaNote': 'each input shows its own source',
+    'app.carbonExplainer.scopeBoundary': "the operation's footprint",
+    'app.carbonExplainer.whyTransparencyDesc': "farms' practices",
+    'app.manageMembersSubtitle': "members' permissions",
+    'app.pur.flag.adjuvant_line': "the adjuvant needs its own PUR line (subject of 'Necesita')",
+    'app.pur.flag.tank_mix_unexported': "each adjuvant's own line",
+    'app.pur.pcbExcluded.help': "the pest control business's own report",
+    'correct.intro': "the season's records",
+    'events.chemical.adjuvants.help': "each adjuvant's own line",
+    'events.chemical.form.appliedByPcbHelp': "the contractor's own report",
+    'events.common.help.observationAudience': "suppliers' own fields",
+    'events.fieldNote.theirWordsYourRecord': "the crew member's words",
+    'events.locked.description': "the season's records",
+    'events.locked.detail': "the production's activities",
+    'events.postHarvest.bannerBody': "the season's trail",
+    'events.production.fields.equipmentCleaningEventHelp':
+      "the cleaning event must be dated on or before (subject of 'Debe')",
+    'events.production.fields.operatorIsCustomHelp': "the contractor's equipment and name",
+    'events.production.fields.rootstockHelp': "the planting stock's organic status",
+    'events.production.fields.stockOrganicManagementStartHelp': "the planting stock's crop",
+    'events.production.help.purgeQuantity': "the quantity's unit",
+    'events.production.sanitation.intro': "the sanitizer's name and concentration",
+    'events.production.sections.customOperatorHelp': "the contractor's equipment",
+    'events.section.water.desc': "the water's source",
+    'handler.field.certifier': "the handler's certifier ('Their certifier')",
+    'handler.subtitle': "the facility's certificate",
+    'osp.agent.none': "the packet's cover page",
+    'osp.annual.duplicateYearLockedWarning': "the update's row",
+    'osp.annual.next.filed': "the update's row",
+    'osp.annual.signThenFileHelp': "the update's row",
+    'osp.annual.subtitle': "a certified operation's OSP",
+    'osp.annual.toast.alreadyLockedDesc': "the update's row",
+    'osp.approvedInputs.search.noMatch': "the catalogues' totality",
+    'osp.approvedInputs.syncDiff.narrativeLongRegistryThin': "each input's entry",
+    'osp.attachments.subtitle': "the certifier's own names",
+    'osp.cdfa.description': "producers' first organic sale",
+    'osp.changeNotifications.nextStep.acreage_field_addition': "the parcel's application",
+    'osp.changeNotifications.subtitle': "the operation's certification",
+    'osp.empty.whatIsIt': "every certified operation's certifier",
+    'osp.handlers.cert.missing': "the handler's certificate",
+    'osp.identity.ux.undoExplain': "the material's uses",
+    'osp.locked.body': "the plan's answers",
+    'osp.sectionsLocked': "the plan's narratives",
+    'parcel.addFirstEventDescription': "the parcel's history",
+    'parcel.adjoining.certifierName': "the neighbour's certifying agent ('Their Certifying Agent')",
+    'parcel.adjoining.distanceFt': "the neighbour's use ('their use')",
+    'parcel.adjoining.help': "the neighbour's own practices",
+    'parcel.affidavit.noMaterialsApplied': "the prior manager's management ('Their Management')",
+    'parcel.disclosure.body': "the parcel's outline",
+    'parcelApp.adjoining.none': "the neighbour's signed statement",
+    'parcelApp.certifiedBranch.review.unknown_input': "the input's organic status",
+    'production.details.publicLegend': "the lot's QR code",
+    'production.finish.noSeasonNamed': "the season's own page",
+    'production.finishedLoggingHint': "the work's own date",
+    'sales.records.field.harvestLots.help': "the sale's harvest"
+  };
+
+  const POSSESSIVE = new RegExp(`(?<![${L}])(su|sus)(?![${L}])`, 'i');
+  // Usted present tense, where a tú string would say "Tienes", "Puedes", "¿Estás seguro?".
+  const PRESENT = new RegExp(
+    `(?:^|[.!?:;¿¡—–]\\s*)(Tiene|Puede|Ya puede|Necesita|Desea|Quiere|Debe|Está segur[oa])(?![${L}])` +
+      `|(?<![${L}])(si prefiere|cuando quiera|cuando necesite|donde los dejó|que plantó|que seleccionó|que planificó|ya registró)(?![${L}])`
+  );
+  // Usted imperatives after a comma or "por favor", where the sentence-start check cannot see
+  // them, plus the enclitic forms ("Déjelo", "corríjalo") wherever they appear.
+  const MID_VERBS = [
+    'Actualice',
+    'Agregue',
+    'Anote',
+    'Cambie',
+    'Complete',
+    'Confirme',
+    'Consulte',
+    'Deje',
+    'Descargue',
+    'Edite',
+    'Elija',
+    'Elimine',
+    'Escriba',
+    'Guarde',
+    'Indique',
+    'Ingrese',
+    'Inicie',
+    'Intente',
+    'Marque',
+    'Mejore',
+    'Pida',
+    'Recargue',
+    'Registre',
+    'Revise',
+    'Seleccione',
+    'Suba',
+    'Verifique',
+    'Vuelva'
+  ];
+  const MID_IMPERATIVE = new RegExp(
+    `(?:,\\s*|\\bpor favor,?\\s+|\\s[ey]\\s+)(${MID_VERBS.join('|')})(?![${L}])` +
+      `|(?<![${L}])(déjel[oa]s?|corríjal[oa]s?|reemplácel[oa]s?|personalícel[oa]s?|adminístrel[oa]s?|cuéntenos)(?![${L}])`,
+    'i'
+  );
+
+  const offenders = (pattern: RegExp, allow: Record<string, string> = {}) =>
+    Object.entries(MESSAGES)
+      .filter(([k, v]) => inJourney(k) && typeof v === 'string' && !(k in allow))
+      .filter(([, v]) => pattern.test(v))
+      .map(([k, v]) => `${k}: ${v.slice(0, 80)}`);
+
+  it('addresses the grower with tu/tus, not su/sus', () => {
+    expect(
+      offenders(POSSESSIVE, THIRD_PERSON),
+      'Use "tu"/"tus" for the grower. If the possessive is a third party, add the key to ' +
+        'THIRD_PERSON with what it refers to.'
+    ).toEqual([]);
+  });
+
+  it('uses the tú present tense, not usted', () => {
+    expect(offenders(PRESENT, THIRD_PERSON)).toEqual([]);
+  });
+
+  it('has no usted imperative in mid-sentence or with an attached pronoun', () => {
+    expect(offenders(MID_IMPERATIVE)).toEqual([]);
+  });
+
+  it('every allowlisted key still exists and still needs the exemption', () => {
+    // A stale entry would silently exempt whatever text lands on that key next.
+    for (const key of Object.keys(THIRD_PERSON)) {
+      expect(MESSAGES[key], `${key} is gone; drop it from THIRD_PERSON`).toBeTruthy();
+      expect(
+        POSSESSIVE.test(MESSAGES[key]) || PRESENT.test(MESSAGES[key]),
+        `${key} no longer has a third-person "su" or verb; drop it from THIRD_PERSON`
+      ).toBe(true);
+    }
+  });
+
+  it('the patterns catch the strings that shipped and leave tuteo alone', () => {
+    expect(POSSESSIVE.test('Sus datos están donde los dejó.')).toBe(true);
+    expect(POSSESSIVE.test('Para su certificador')).toBe(true);
+    expect(POSSESSIVE.test('Para tu certificador')).toBe(false);
+    expect(PRESENT.test('Tiene un borrador sin guardar de ayer')).toBe(true);
+    expect(PRESENT.test('Se copiaron tus respuestas. Ya puede editar desde aquí.')).toBe(true);
+    expect(PRESENT.test('¿Está seguro de que desea eliminar este evento?')).toBe(true);
+    expect(PRESENT.test('Tienes un borrador sin guardar de ayer')).toBe(false);
+    expect(PRESENT.test('Ya puedes editar desde aquí.')).toBe(false);
+    expect(MID_IMPERATIVE.test('Falta el ID. Recargue la página e intente nuevamente.')).toBe(true);
+    expect(
+      MID_IMPERATIVE.test('No se pudo generar el informe. Por favor intente nuevamente.')
+    ).toBe(true);
+    expect(MID_IMPERATIVE.test('Déjelo en blanco si no aplica.')).toBe(true);
+    expect(MID_IMPERATIVE.test('Recarga la página e inténtalo de nuevo.')).toBe(false);
+    expect(MID_IMPERATIVE.test('Déjalo en blanco si no aplica.')).toBe(false);
+  });
+});
+
+/**
+ * Voseo written without its accent: "Comparalo", "Contanos", "definilo". The stressed-vowel
+ * check above keys on the accent, so an unaccented voseo imperative with a pronoun attached
+ * passed it (Run 8b, 8b-03). The tú forms carry an accent or a different stem ("Compáralo",
+ * "Cuéntanos", "defínelo"), so none of these words is correct Spanish in a tuteo string.
+ * File-wide: the list has no false positive anywhere in the catalogue.
+ */
+describe('es-419 has no unaccented voseo with an attached pronoun', () => {
+  const VOSEO_WITH_PRONOUN = [
+    'comparalo',
+    'contanos',
+    'contame',
+    'definilo',
+    'decinos',
+    'decime',
+    'avisanos',
+    'avisame',
+    'escribinos',
+    'escribime',
+    'mandanos',
+    'llamanos',
+    'contactanos',
+    'seguinos',
+    'fijate',
+    'probalo',
+    'revisalo',
+    'revisala',
+    'elegilo',
+    'elegila',
+    'subilo',
+    'subila',
+    'agregalo',
+    'agregala',
+    'completalo',
+    'guardalo',
+    'cambialo',
+    'usalo',
+    'dejalo',
+    'dejala',
+    'hacelo',
+    'ponelo',
+    'sacalo',
+    'mandalo',
+    'borralo',
+    'abrilo',
+    'cerralo',
+    'editalo',
+    'marcalo',
+    'copialo',
+    'descargalo',
+    'envialo',
+    'compartilo',
+    'registralo',
+    'confirmalo',
+    'actualizalo',
+    'activalo',
+    'anotalo',
+    'corregilo',
+    'pedile',
+    'decile',
+    'mostrame'
+  ];
+  const VOSEO = new RegExp(
+    `(?<![A-Za-zÁÉÍÓÚáéíóúñÑ])(${VOSEO_WITH_PRONOUN.join('|')})(?![A-Za-zÁÉÍÓÚáéíóúñÑ])`,
+    'i'
+  );
+
+  it('uses none of them', () => {
+    const offenders = Object.entries(MESSAGES)
+      .filter(([, v]) => typeof v === 'string' && VOSEO.test(v))
+      .map(([k, v]) => `${k}: ${v.slice(0, 80)}`);
+    expect(
+      offenders,
+      'Use the tuteo form: Comparalo→Compáralo, Contanos→Cuéntanos, definilo→defínelo.'
+    ).toEqual([]);
+  });
+
+  it('catches the three that shipped and not their tuteo forms', () => {
+    expect(VOSEO.test('Comparalo con Compliance antes de cambiar')).toBe(true);
+    expect(VOSEO.test('Contanos más (opcional)')).toBe(true);
+    expect(VOSEO.test('definilo una vez para habilitar plantillas')).toBe(true);
+    expect(VOSEO.test('Compáralo con Compliance antes de cambiar')).toBe(false);
+    expect(VOSEO.test('Cuéntanos más (opcional)')).toBe(false);
+    expect(VOSEO.test('defínelo una vez para habilitar plantillas')).toBe(false);
+  });
+});

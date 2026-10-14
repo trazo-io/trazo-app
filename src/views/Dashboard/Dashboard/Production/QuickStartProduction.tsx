@@ -356,6 +356,23 @@ export const PRODUCTION_METHOD_CHOICES = [
 ] as const;
 
 /**
+ * Screen labels for PRODUCTION_METHOD_CHOICES. The English `label` above stays the model's
+ * display string (the packet prints it); the form shows the farmer's language.
+ */
+export const PRODUCTION_METHOD_LABEL_KEYS: Record<
+  (typeof PRODUCTION_METHOD_CHOICES)[number]['value'],
+  string
+> = {
+  conventional: 'quickStart.field.productionMethod.option.conventional',
+  organic: 'quickStart.field.productionMethod.option.organic',
+  regenerative: 'quickStart.field.productionMethod.option.regenerative',
+  integrated: 'quickStart.field.productionMethod.option.integrated',
+  biodynamic: 'quickStart.field.productionMethod.option.biodynamic',
+  hydroponic: 'quickStart.field.productionMethod.option.hydroponic',
+  no_till: 'quickStart.field.productionMethod.option.no_till'
+};
+
+/**
  * Production methods under which a prohibited synthetic input must never be suggested.
  *
  * Biodynamic joined the list on 2026-08-19: Demeter certification requires organic
@@ -1540,7 +1557,10 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                             </option>
                             {PRODUCTION_METHOD_CHOICES.map(({ value, label }) => (
                               <option key={value} value={value}>
-                                {label}
+                                {intl.formatMessage({
+                                  id: PRODUCTION_METHOD_LABEL_KEYS[value],
+                                  defaultMessage: label
+                                })}
                               </option>
                             ))}
                           </StandardSelect>
