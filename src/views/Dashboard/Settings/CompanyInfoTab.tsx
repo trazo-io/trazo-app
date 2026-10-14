@@ -31,7 +31,10 @@ import { useIntl } from 'react-intl';
 import { StandardCard, StandardButton } from 'components/Design/StandardComponents';
 import { useUpdateCompanyMutation } from 'store/api/companyApi';
 import { setCompany } from 'store/features/companySlice';
-import EditCompanyModal, { LEGAL_STRUCTURES, SUSTAINABILITY_COMMITMENTS } from './EditCompanyModal';
+import EditCompanyModal, {
+  LEGAL_STRUCTURE_LABEL_KEYS,
+  SUSTAINABILITY_COMMITMENTS
+} from './EditCompanyModal';
 
 interface CompanyInfoTabProps {
   company?: any;
@@ -176,9 +179,8 @@ const CompanyInfoTab: React.FC<CompanyInfoTabProps> = () => {
   // Get legal structure label
   const getLegalStructureLabel = (value?: string) => {
     if (!value) return null;
-    return LEGAL_STRUCTURES.includes(value)
-      ? intl.formatMessage({ id: `company.legalStructure.${value}` })
-      : value;
+    const id = LEGAL_STRUCTURE_LABEL_KEYS[value];
+    return id ? intl.formatMessage({ id }) : value;
   };
 
   // Get sustainability commitment label

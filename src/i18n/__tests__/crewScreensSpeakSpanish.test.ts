@@ -83,7 +83,7 @@ describe('the crew screens speak Spanish', () => {
     ]) {
       expect(src(file), file).not.toContain('Granja Familiar');
     }
-    expect(ES['company.legalStructure.family_farm']).toBe('Finca familiar');
+    expect(ES['company.form.legalStructure.familyFarm']).toBe('Finca familiar');
     expect(src('views/Dashboard/Dashboard/components/forms/NewEvent.jsx')).not.toContain(
       'Please fill in all required fields'
     );

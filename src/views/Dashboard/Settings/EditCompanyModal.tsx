@@ -108,15 +108,16 @@ const STEPS = [
   { title: 'Sostenibilidad', icon: FaLeaf, description: 'Información agrícola' }
 ];
 
-// Stored values. Labels: `company.legalStructure.<value>`.
-export const LEGAL_STRUCTURES = [
-  'sole_proprietorship',
-  'partnership',
-  'llc',
-  'corporation',
-  'cooperative',
-  'family_farm'
-];
+// Stored values mapped to the labels the company wizard (AddCompany) already uses, so one
+// stored legal structure reads the same on every screen.
+export const LEGAL_STRUCTURE_LABEL_KEYS: Record<string, string> = {
+  sole_proprietorship: 'company.form.legalStructure.soleProprietorship',
+  partnership: 'company.form.legalStructure.partnership',
+  llc: 'company.form.legalStructure.llc',
+  corporation: 'company.form.legalStructure.corporation',
+  cooperative: 'company.form.legalStructure.cooperative',
+  family_farm: 'company.form.legalStructure.familyFarm'
+};
 
 // Stored values. Labels: `company.industry.<value>`.
 const INDUSTRIES = [
@@ -385,9 +386,9 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
         <StandardField label="Estructura Legal" error={errors.legal_structure?.message}>
           <StandardSelect {...register('legal_structure')}>
             <option value="">Seleccionar...</option>
-            {LEGAL_STRUCTURES.map((value) => (
+            {Object.entries(LEGAL_STRUCTURE_LABEL_KEYS).map(([value, id]) => (
               <option key={value} value={value}>
-                {intl.formatMessage({ id: `company.legalStructure.${value}` })}
+                {intl.formatMessage({ id })}
               </option>
             ))}
           </StandardSelect>
