@@ -60,6 +60,35 @@ describe('the crew screens speak Spanish', () => {
     expect(wizard).toContain("'app.notSavedYet'");
   });
 
+  it('harvest, cleanout, sign-up and settings labels come from the catalogue (Run 8b, 8b-03)', () => {
+    const production = src('views/Dashboard/Dashboard/components/forms/ProductionTab.jsx');
+    // Option VALUES stay (stored data); the printed labels and placeholders were English.
+    // The observation placeholder ("Optional: Describe…") belongs to another slice.
+    expect(production).not.toMatch(/placeholder="(Select|e\.g\.|Leave blank|Name and|Optional")/);
+    expect(production).not.toMatch(/<option value="[a-z_]+">[A-Z][A-Za-z/ ()-]+<\/option>/);
+    expect(production).not.toMatch(/<option value="(lbs|kg|tons|bins|boxes)">\1<\/option>/);
+    for (const file of [
+      'views/Authentication/SignUp/AppSignUp.tsx',
+      'views/Authentication/SignUp/ModernVerifyEmail.tsx'
+    ]) {
+      expect(src(file), file).not.toMatch(/title: '[A-Z][^']*'/);
+    }
+    expect(src('components/Forms/PasswordStrengthIndicator.tsx')).not.toMatch(/label="One /);
+    expect(src('views/Dashboard/Dashboard/Production/QuickStartProduction.tsx')).toContain(
+      'PRODUCTION_METHOD_LABEL_KEYS[value]'
+    );
+    for (const file of [
+      'views/Dashboard/Settings/EditCompanyModal.tsx',
+      'views/Dashboard/Settings/CompanyInfoTab.tsx'
+    ]) {
+      expect(src(file), file).not.toContain('Granja Familiar');
+    }
+    expect(ES['company.form.legalStructure.familyFarm']).toBe('Finca familiar');
+    expect(src('views/Dashboard/Dashboard/components/forms/NewEvent.jsx')).not.toContain(
+      'Please fill in all required fields'
+    );
+  });
+
   it('a template does not pre-answer the efficiency, and the registry default is empty', () => {
     expect(src('config/events/templateAccelerators.ts')).not.toMatch(/'production_efficiency'/);
     expect(src('config/quickEventFields.ts')).not.toMatch(/default: 'normal'/);

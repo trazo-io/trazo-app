@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, HStack, Text, Progress, useColorModeValue } from '@chakra-ui/react';
 import { FaCheck, FaTimes } from 'react-icons/fa';
+import { useIntl } from 'react-intl';
 import {
   passwordValidator,
   DEFAULT_REQUIREMENTS,
@@ -37,15 +38,26 @@ const Requirement: React.FC<RequirementProps> = ({ met, label }) => {
   );
 };
 
+// `getStrengthLabel` returns a fixed English verdict; the catalogue carries both locales.
+const STRENGTH_LABEL_KEYS: Record<string, string> = {
+  'Very Weak': 'auth.signup.password.strength.veryWeak',
+  Weak: 'auth.signup.password.strength.weak',
+  Fair: 'auth.signup.password.strength.fair',
+  Good: 'auth.signup.password.strength.good',
+  Strong: 'auth.signup.password.strength.strong'
+};
+
 export const PasswordStrengthIndicator: React.FC<PasswordStrengthIndicatorProps> = ({
   password,
   validation
 }) => {
+  const intl = useIntl();
   if (!password || !validation) return null;
 
   const score = validation.score;
   const colorScheme = passwordValidator.getStrengthColor(score, validation.warnings).split('.')[0];
   const label = passwordValidator.getStrengthLabel(score, validation.warnings);
+  const strengthKey = STRENGTH_LABEL_KEYS[label];
 
   return (
     <Box w="full" mt={2}>
@@ -57,7 +69,10 @@ export const PasswordStrengthIndicator: React.FC<PasswordStrengthIndicatorProps>
         colorScheme={colorScheme}
       />
       <Text fontSize="xs" color={useColorModeValue('gray.500', 'gray.400')} mt={1} mb={2}>
-        Password strength: {label}
+        {intl.formatMessage(
+          { id: 'auth.signup.password.strengthLabel' },
+          { label: strengthKey ? intl.formatMessage({ id: strengthKey }) : label }
+        )}
       </Text>
 
       <Box
@@ -69,14 +84,26 @@ export const PasswordStrengthIndicator: React.FC<PasswordStrengthIndicatorProps>
         borderColor={useColorModeValue('gray.200', 'gray.600')}>
         <Requirement
           met={password.length >= DEFAULT_REQUIREMENTS.minLength}
-          label={`At least ${DEFAULT_REQUIREMENTS.minLength} characters`}
+          label={intl.formatMessage(
+            { id: 'auth.signup.password.rule.minLength' },
+            { min: DEFAULT_REQUIREMENTS.minLength }
+          )}
         />
-        <Requirement met={/[A-Z]/.test(password)} label="One uppercase letter (A-Z)" />
-        <Requirement met={/[a-z]/.test(password)} label="One lowercase letter (a-z)" />
-        <Requirement met={/\d/.test(password)} label="One number (0-9)" />
+        <Requirement
+          met={/[A-Z]/.test(password)}
+          label={intl.formatMessage({ id: 'auth.signup.password.rule.uppercase' })}
+        />
+        <Requirement
+          met={/[a-z]/.test(password)}
+          label={intl.formatMessage({ id: 'auth.signup.password.rule.lowercase' })}
+        />
+        <Requirement
+          met={/\d/.test(password)}
+          label={intl.formatMessage({ id: 'auth.signup.password.rule.number' })}
+        />
         <Requirement
           met={/[!@#$%^&*(),.?":{}|<>]/.test(password)}
-          label="One special character (!@#$%&*...)"
+          label={intl.formatMessage({ id: 'auth.signup.password.rule.special' })}
         />
         {validation.warnings.length > 0 &&
           validation.warnings.map((warning, i) => (

@@ -2503,18 +2503,29 @@ function NewEvent({ isEdit = false, eventId = null }) {
         });
 
         if (missingFields.length > 0) {
-          const fieldLabels = {
-            type: 'Event Type',
-            commercial_name: 'Commercial Name',
-            volume_applied: 'Volume Applied',
-            area_treated: 'Area Treated',
-            concentration: 'Concentration',
-            application_method: 'Application Method',
-            name: 'Event Name',
-            business_type: 'Business Type'
+          const fieldLabelKeys = {
+            type: 'app.type',
+            commercial_name: 'events.chemical.fields.commercialName',
+            volume_applied: 'events.chemical.fields.volumeApplied',
+            area_treated: 'events.chemical.fields.areaTreated',
+            concentration: 'events.chemical.fields.concentration',
+            application_method: 'events.chemical.fields.applicationMethod',
+            name: 'events.business.fields.eventName',
+            business_type: 'events.business.fields.businessType'
           };
-          const friendlyNames = missingFields.map((f) => fieldLabels[f] || f);
-          throw new Error(`Please fill in all required fields: ${friendlyNames.join(', ')}`);
+          const friendlyNames = missingFields.map((f) =>
+            fieldLabelKeys[f] ? intl.formatMessage({ id: fieldLabelKeys[f] }) : f
+          );
+          const missingError = new Error(
+            intl.formatMessage(
+              { id: 'events.form.missingRequiredFields' },
+              { fields: friendlyNames.join(', ') }
+            )
+          );
+          // The catch below tells a validation failure from a server error by this flag, not
+          // by matching the (now translated) message text.
+          missingError.isMissingRequiredFields = true;
+          throw missingError;
         }
 
         // No auto-generation of descriptions - users must provide their own
@@ -3076,7 +3087,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
       }
 
       // Surface the actual error message so users know what to fix
-      const isValidationError = error?.message?.includes('required fields');
+      const isValidationError = error?.isMissingRequiredFields === true;
       const apiErrorMessage = error?.data?.detail || error?.data?.message || error?.data?.error;
 
       // Parse DRF field validation errors: {"field": ["error message"]}

@@ -989,9 +989,11 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                         <StandardSelect
                           {...field}
                           placeholder={t('farm.form.farmingMethod.placeholder')}>
-                          {FARMING_METHOD_OPTIONS.map(({ value, label }) => (
+                          {FARMING_METHOD_OPTIONS.map(({ value }) => (
                             <option key={value} value={value}>
-                              {label}
+                              {intl.formatMessage({
+                                id: `quickStart.field.productionMethod.option.${value}`
+                              })}
                             </option>
                           ))}
                         </StandardSelect>

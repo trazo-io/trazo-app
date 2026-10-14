@@ -1969,7 +1969,11 @@ const ProductionTab = forwardRef(
                         name="type"
                         control={methods.control}
                         render={({ field }) => (
-                          <StandardSelect {...field} placeholder="Select production activity...">
+                          <StandardSelect
+                            {...field}
+                            placeholder={intl.formatMessage({
+                              id: 'events.production.fields.productionTypePlaceholder'
+                            })}>
                             {subtypeOptions.map((entry) => (
                               <option key={entry.code} value={entry.code}>
                                 {intl.formatMessage({ id: entry.labelKey })}
@@ -2241,7 +2245,9 @@ const ProductionTab = forwardRef(
                           render={({ field }) => (
                             <StandardInput
                               {...field}
-                              placeholder="e.g., Miguel Ramirez (Farm Manager)"
+                              placeholder={intl.formatMessage({
+                                id: 'events.production.fields.cleanedByPlaceholder'
+                              })}
                             />
                           )}
                         />
@@ -2257,7 +2263,9 @@ const ProductionTab = forwardRef(
                         render={({ field }) => (
                           <StandardInput
                             {...field}
-                            placeholder="e.g., Pressure wash + manual scrub with brushes"
+                            placeholder={intl.formatMessage({
+                              id: 'events.production.fields.cleaningMethodPlaceholder'
+                            })}
                           />
                         )}
                       />
@@ -2276,7 +2284,9 @@ const ProductionTab = forwardRef(
                         render={({ field }) => (
                           <StandardTextarea
                             {...field}
-                            placeholder="e.g., Water, NOP-approved BioSafe Systems SaniDate (hydrogen peroxide + peroxyacetic acid)"
+                            placeholder={intl.formatMessage({
+                              id: 'events.production.fields.cleaningMaterialsPlaceholder'
+                            })}
                             rows={2}
                           />
                         )}
@@ -2292,7 +2302,12 @@ const ProductionTab = forwardRef(
                         name="cleaning_protocol_reference"
                         control={methods.control}
                         render={({ field }) => (
-                          <StandardInput {...field} placeholder="e.g., SOP-CLEAN-001" />
+                          <StandardInput
+                            {...field}
+                            placeholder={intl.formatMessage({
+                              id: 'events.production.fields.cleaningProtocolReferencePlaceholder'
+                            })}
+                          />
                         )}
                       />
                     </StandardField>
@@ -2309,7 +2324,12 @@ const ProductionTab = forwardRef(
                         name="purge_material"
                         control={methods.control}
                         render={({ field }) => (
-                          <StandardInput {...field} placeholder="e.g., conventional walnuts" />
+                          <StandardInput
+                            {...field}
+                            placeholder={intl.formatMessage({
+                              id: 'events.production.fields.purgeMaterialPlaceholder'
+                            })}
+                          />
                         )}
                       />
                     </StandardField>
@@ -2321,7 +2341,12 @@ const ProductionTab = forwardRef(
                         name="purge_quantity"
                         control={methods.control}
                         render={({ field }) => (
-                          <StandardInput {...field} placeholder="e.g., 200 lb" />
+                          <StandardInput
+                            {...field}
+                            placeholder={intl.formatMessage({
+                              id: 'events.production.fields.purgeQuantityPlaceholder'
+                            })}
+                          />
                         )}
                       />
                     </StandardField>
@@ -2336,7 +2361,9 @@ const ProductionTab = forwardRef(
                           <StandardTextarea
                             {...field}
                             rows={2}
-                            placeholder="e.g., sold as conventional to Handler B, delivery tag 4417"
+                            placeholder={intl.formatMessage({
+                              id: 'events.production.fields.purgeEndUsePlaceholder'
+                            })}
                           />
                         )}
                       />
@@ -2756,7 +2783,9 @@ const ProductionTab = forwardRef(
                                   step={0.1}
                                   value={field.value || ''}
                                   onChange={(valueString) => field.onChange(valueString)}
-                                  placeholder="Leave blank if N/A"
+                                  placeholder={intl.formatMessage({
+                                    id: 'events.production.fields.leaveBlankIfNaPlaceholder'
+                                  })}
                                 />
                               )}
                             />
@@ -2825,7 +2854,9 @@ const ProductionTab = forwardRef(
                                   step={0.1}
                                   value={field.value || ''}
                                   onChange={(valueString) => field.onChange(valueString)}
-                                  placeholder="Leave blank if N/A"
+                                  placeholder={intl.formatMessage({
+                                    id: 'events.production.fields.leaveBlankIfNaPlaceholder'
+                                  })}
                                 />
                               )}
                             />
@@ -2854,7 +2885,9 @@ const ProductionTab = forwardRef(
                                   step={0.1}
                                   value={field.value || ''}
                                   onChange={(valueString) => field.onChange(valueString)}
-                                  placeholder="Leave blank if N/A"
+                                  placeholder={intl.formatMessage({
+                                    id: 'events.production.fields.leaveBlankIfNaPlaceholder'
+                                  })}
                                 />
                               )}
                             />
@@ -2946,7 +2979,9 @@ const ProductionTab = forwardRef(
                               <StandardTextarea
                                 {...field}
                                 rows={2}
-                                placeholder="Name and address"
+                                placeholder={intl.formatMessage({
+                                  id: 'events.production.fields.nameAndAddressPlaceholder'
+                                })}
                               />
                             )}
                           />
@@ -2965,7 +3000,9 @@ const ProductionTab = forwardRef(
                               <StandardTextarea
                                 {...field}
                                 rows={2}
-                                placeholder="Name and address"
+                                placeholder={intl.formatMessage({
+                                  id: 'events.production.fields.nameAndAddressPlaceholder'
+                                })}
                               />
                             )}
                           />
@@ -3206,11 +3243,21 @@ const ProductionTab = forwardRef(
                               control={methods.control}
                               render={({ field }) => (
                                 <StandardSelect {...field} flex={1}>
-                                  <option value="lbs">lbs</option>
-                                  <option value="kg">kg</option>
-                                  <option value="tons">tons</option>
-                                  <option value="bins">bins</option>
-                                  <option value="boxes">boxes</option>
+                                  <option value="lbs">
+                                    {intl.formatMessage({ id: 'app.unit.lbs' })}
+                                  </option>
+                                  <option value="kg">
+                                    {intl.formatMessage({ id: 'app.unit.kg' })}
+                                  </option>
+                                  <option value="tons">
+                                    {intl.formatMessage({ id: 'events.units.yield.tons' })}
+                                  </option>
+                                  <option value="bins">
+                                    {intl.formatMessage({ id: 'events.units.yield.bins' })}
+                                  </option>
+                                  <option value="boxes">
+                                    {intl.formatMessage({ id: 'events.units.yield.boxes' })}
+                                  </option>
                                 </StandardSelect>
                               )}
                             />
@@ -3247,11 +3294,21 @@ const ProductionTab = forwardRef(
                               control={methods.control}
                               render={({ field }) => (
                                 <StandardSelect {...field} flex={1}>
-                                  <option value="lbs">lbs</option>
-                                  <option value="kg">kg</option>
-                                  <option value="tons">tons</option>
-                                  <option value="bins">bins</option>
-                                  <option value="boxes">boxes</option>
+                                  <option value="lbs">
+                                    {intl.formatMessage({ id: 'app.unit.lbs' })}
+                                  </option>
+                                  <option value="kg">
+                                    {intl.formatMessage({ id: 'app.unit.kg' })}
+                                  </option>
+                                  <option value="tons">
+                                    {intl.formatMessage({ id: 'events.units.yield.tons' })}
+                                  </option>
+                                  <option value="bins">
+                                    {intl.formatMessage({ id: 'events.units.yield.bins' })}
+                                  </option>
+                                  <option value="boxes">
+                                    {intl.formatMessage({ id: 'events.units.yield.boxes' })}
+                                  </option>
                                 </StandardSelect>
                               )}
                             />
@@ -3270,7 +3327,12 @@ const ProductionTab = forwardRef(
                             name="handler_document_reference"
                             control={methods.control}
                             render={({ field }) => (
-                              <StandardInput {...field} placeholder="e.g., PACKOUT-2026-114" />
+                              <StandardInput
+                                {...field}
+                                placeholder={intl.formatMessage({
+                                  id: 'events.production.fields.handlerDocumentReferencePlaceholder'
+                                })}
+                              />
                             )}
                           />
                         </StandardField>
@@ -3412,7 +3474,10 @@ const ProductionTab = forwardRef(
                                 {...field}
                                 type="number"
                                 min="1"
-                                placeholder="e.g., 24"
+                                placeholder={intl.formatMessage(
+                                  { id: 'events.production.fields.examplePlaceholder' },
+                                  { value: '24' }
+                                )}
                               />
                             )}
                           />
@@ -3431,7 +3496,10 @@ const ProductionTab = forwardRef(
                                   flex={2}
                                   type="number"
                                   step="0.01"
-                                  placeholder="e.g., 5000"
+                                  placeholder={intl.formatMessage(
+                                    { id: 'events.production.fields.examplePlaceholder' },
+                                    { value: '5000' }
+                                  )}
                                 />
                               )}
                             />
@@ -3581,7 +3649,11 @@ const ProductionTab = forwardRef(
                           name="growth_stage"
                           control={methods.control}
                           render={({ field }) => (
-                            <StandardSelect {...field} placeholder="Select growth stage...">
+                            <StandardSelect
+                              {...field}
+                              placeholder={intl.formatMessage({
+                                id: 'events.chemical.form.growthStagePlaceholder'
+                              })}>
                               <option value="dormant">
                                 {intl.formatMessage({ id: 'fieldDetails.growthStage.dormant' })}
                               </option>
@@ -3666,7 +3738,11 @@ const ProductionTab = forwardRef(
                           name="pollinator_type"
                           control={methods.control}
                           render={({ field }) => (
-                            <StandardSelect {...field} placeholder="Select pollinator type...">
+                            <StandardSelect
+                              {...field}
+                              placeholder={intl.formatMessage({
+                                id: 'events.production.fields.pollinatorTypePlaceholder'
+                              })}>
                               <option value="honeybee">
                                 {intl.formatMessage({ id: 'production.pollination.honeybee' })}
                               </option>
@@ -3705,7 +3781,10 @@ const ProductionTab = forwardRef(
                               step={1}
                               value={field.value || ''}
                               onChange={(valueString) => field.onChange(valueString)}
-                              placeholder="e.g., 4"
+                              placeholder={intl.formatMessage(
+                                { id: 'events.production.fields.examplePlaceholder' },
+                                { value: '4' }
+                              )}
                             />
                           )}
                         />
@@ -3780,7 +3859,11 @@ const ProductionTab = forwardRef(
                           name="processing_type"
                           control={methods.control}
                           render={({ field }) => (
-                            <StandardSelect {...field} placeholder="Select processing type...">
+                            <StandardSelect
+                              {...field}
+                              placeholder={intl.formatMessage({
+                                id: 'events.production.fields.processingTypePlaceholder'
+                              })}>
                               <option value="washing">
                                 {intl.formatMessage({ id: 'production.postHarvest.washing' })}
                               </option>
@@ -3835,7 +3918,10 @@ const ProductionTab = forwardRef(
                               step={0.5}
                               value={field.value || ''}
                               onChange={(valueString) => field.onChange(valueString)}
-                              placeholder="e.g., 4.5"
+                              placeholder={intl.formatMessage(
+                                { id: 'events.production.fields.examplePlaceholder' },
+                                { value: '4.5' }
+                              )}
                             />
                           )}
                         />
@@ -3911,7 +3997,12 @@ const ProductionTab = forwardRef(
                           name="variety"
                           control={methods.control}
                           render={({ field }) => (
-                            <StandardInput {...field} placeholder="e.g., Mourvèdre, Cabernet" />
+                            <StandardInput
+                              {...field}
+                              placeholder={intl.formatMessage({
+                                id: 'events.production.fields.canopyVarietyPlaceholder'
+                              })}
+                            />
                           )}
                         />
                       </StandardField>
@@ -3925,7 +4016,11 @@ const ProductionTab = forwardRef(
                           name="growth_stage"
                           control={methods.control}
                           render={({ field }) => (
-                            <StandardSelect {...field} placeholder="Select growth stage...">
+                            <StandardSelect
+                              {...field}
+                              placeholder={intl.formatMessage({
+                                id: 'events.chemical.form.growthStagePlaceholder'
+                              })}>
                               <option value="dormant">
                                 {intl.formatMessage({ id: 'fieldDetails.growthStage.dormant' })}
                               </option>
@@ -3970,7 +4065,11 @@ const ProductionTab = forwardRef(
                           name="canopy_operation"
                           control={methods.control}
                           render={({ field }) => (
-                            <StandardSelect {...field} placeholder="Select canopy operation...">
+                            <StandardSelect
+                              {...field}
+                              placeholder={intl.formatMessage({
+                                id: 'events.production.fields.canopyOperationPlaceholder'
+                              })}>
                               <option value="pruning">
                                 {intl.formatMessage({ id: 'production.canopy.pruning' })}
                               </option>
@@ -4013,7 +4112,10 @@ const ProductionTab = forwardRef(
                               step={1}
                               value={field.value || ''}
                               onChange={(valueString) => field.onChange(valueString)}
-                              placeholder="e.g., 1"
+                              placeholder={intl.formatMessage(
+                                { id: 'events.production.fields.examplePlaceholder' },
+                                { value: '1' }
+                              )}
                             />
                           )}
                         />
@@ -4047,11 +4149,31 @@ const ProductionTab = forwardRef(
                           name="protection_method"
                           control={methods.control}
                           render={({ field }) => (
-                            <StandardSelect {...field} placeholder="Select method...">
-                              <option value="wind_machine">Wind machine</option>
-                              <option value="orchard_heater">Orchard heater(s)</option>
-                              <option value="under_tree_sprinkler">Under-tree sprinklers</option>
-                              <option value="other">Other (describe in notes)</option>
+                            <StandardSelect
+                              {...field}
+                              placeholder={intl.formatMessage({
+                                id: 'events.production.fields.protectionMethodPlaceholder'
+                              })}>
+                              <option value="wind_machine">
+                                {intl.formatMessage({
+                                  id: 'events.production.fields.frostMethod.windMachine'
+                                })}
+                              </option>
+                              <option value="orchard_heater">
+                                {intl.formatMessage({
+                                  id: 'events.production.fields.frostMethod.orchardHeater'
+                                })}
+                              </option>
+                              <option value="under_tree_sprinkler">
+                                {intl.formatMessage({
+                                  id: 'events.production.fields.frostMethod.underTreeSprinkler'
+                                })}
+                              </option>
+                              <option value="other">
+                                {intl.formatMessage({
+                                  id: 'events.production.fields.frostMethod.other'
+                                })}
+                              </option>
                             </StandardSelect>
                           )}
                         />
@@ -4071,7 +4193,10 @@ const ProductionTab = forwardRef(
                               {...field}
                               type="number"
                               step="0.1"
-                              placeholder="e.g., -2.0"
+                              placeholder={intl.formatMessage(
+                                { id: 'events.production.fields.examplePlaceholder' },
+                                { value: '-2.0' }
+                              )}
                             />
                           )}
                         />
@@ -4242,7 +4367,10 @@ const ProductionTab = forwardRef(
                                 {...field}
                                 type="number"
                                 min="1"
-                                placeholder="e.g., 5"
+                                placeholder={intl.formatMessage(
+                                  { id: 'events.production.fields.examplePlaceholder' },
+                                  { value: '5' }
+                                )}
                               />
                             )}
                           />
@@ -4287,7 +4415,9 @@ const ProductionTab = forwardRef(
                           render={({ field }) => (
                             <StandardInput
                               {...field}
-                              placeholder="Describe the method (leave blank if unsure)"
+                              placeholder={intl.formatMessage({
+                                id: 'events.production.fields.productionMethodPlaceholder'
+                              })}
                             />
                           )}
                         />
@@ -4495,7 +4625,9 @@ const ProductionTab = forwardRef(
                             step={0.1}
                             value={field.value || ''}
                             onChange={(valueString) => field.onChange(valueString)}
-                            placeholder="Optional"
+                            placeholder={intl.formatMessage({
+                              id: 'events.production.fields.optionalPlaceholder'
+                            })}
                           />
                         )}
                       />
@@ -4556,7 +4688,9 @@ const ProductionTab = forwardRef(
                                 step={0.1}
                                 value={field.value || ''}
                                 onChange={(valueString) => field.onChange(valueString)}
-                                placeholder="Optional"
+                                placeholder={intl.formatMessage({
+                                  id: 'events.production.fields.optionalPlaceholder'
+                                })}
                               />
                             )}
                           />
@@ -4660,12 +4794,26 @@ const ProductionTab = forwardRef(
                             name="seeds_source"
                             control={methods.control}
                             render={({ field }) => (
-                              <StandardSelect {...field} placeholder="Select seed source...">
-                                <option value="farm_saved">Farm-Saved Seeds</option>
-                                <option value="local">Local Nursery/Supplier</option>
-                                <option value="cooperative">Farmer Cooperative</option>
-                                <option value="commercial">Commercial Supplier</option>
-                                <option value="other">Other (specify in notes)</option>
+                              <StandardSelect
+                                {...field}
+                                placeholder={intl.formatMessage({
+                                  id: 'events.production.fields.seedsSourcePlaceholder'
+                                })}>
+                                <option value="farm_saved">
+                                  {intl.formatMessage({ id: 'events.seedsSources.farmSaved' })}
+                                </option>
+                                <option value="local">
+                                  {intl.formatMessage({ id: 'app.seedSource.local' })}
+                                </option>
+                                <option value="cooperative">
+                                  {intl.formatMessage({ id: 'app.seedSource.cooperative' })}
+                                </option>
+                                <option value="commercial">
+                                  {intl.formatMessage({ id: 'events.seedsSources.commercial' })}
+                                </option>
+                                <option value="other">
+                                  {intl.formatMessage({ id: 'events.seedsSources.otherSpecify' })}
+                                </option>
                               </StandardSelect>
                             )}
                           />
@@ -4681,13 +4829,27 @@ const ProductionTab = forwardRef(
                             render={({ field }) => (
                               <StandardSelect
                                 {...field}
-                                placeholder="Select certification status...">
-                                <option value="certified_organic">Certified Organic</option>
-                                <option value="transitional">Transitional</option>
-                                <option value="non_organic_untreated">
-                                  Non-organic (Untreated)
+                                placeholder={intl.formatMessage({
+                                  id: 'events.production.fields.seedCertificationStatusPlaceholder'
+                                })}>
+                                <option value="certified_organic">
+                                  {intl.formatMessage({
+                                    id: 'app.seedCertStatus.certifiedOrganic'
+                                  })}
                                 </option>
-                                <option value="non_organic_treated">Non-organic (Treated)</option>
+                                <option value="transitional">
+                                  {intl.formatMessage({ id: 'app.seedCertStatus.transitional' })}
+                                </option>
+                                <option value="non_organic_untreated">
+                                  {intl.formatMessage({
+                                    id: 'app.seedCertStatus.nonOrganicUntreated'
+                                  })}
+                                </option>
+                                <option value="non_organic_treated">
+                                  {intl.formatMessage({
+                                    id: 'app.seedCertStatus.nonOrganicTreated'
+                                  })}
+                                </option>
                               </StandardSelect>
                             )}
                           />
@@ -4741,7 +4903,12 @@ const ProductionTab = forwardRef(
                             name="seed_purchase_invoice"
                             control={methods.control}
                             render={({ field }) => (
-                              <StandardInput {...field} placeholder="e.g., INV-2026-0045" />
+                              <StandardInput
+                                {...field}
+                                placeholder={intl.formatMessage({
+                                  id: 'events.production.fields.seedPurchaseInvoicePlaceholder'
+                                })}
+                              />
                             )}
                           />
                         </StandardField>
@@ -4754,7 +4921,12 @@ const ProductionTab = forwardRef(
                             name="seed_lot_number"
                             control={methods.control}
                             render={({ field }) => (
-                              <StandardInput {...field} placeholder="e.g., 23-TX-01" />
+                              <StandardInput
+                                {...field}
+                                placeholder={intl.formatMessage({
+                                  id: 'events.production.fields.seedLotNumberPlaceholder'
+                                })}
+                              />
                             )}
                           />
                         </StandardField>
@@ -4774,7 +4946,9 @@ const ProductionTab = forwardRef(
                             render={({ field }) => (
                               <StandardInput
                                 {...field}
-                                placeholder="e.g., Rhizobium inoculant, None"
+                                placeholder={intl.formatMessage({
+                                  id: 'events.production.fields.seedTreatmentPlaceholder'
+                                })}
                               />
                             )}
                           />
@@ -5112,7 +5286,10 @@ const ProductionTab = forwardRef(
                                     {...field}
                                     type="number"
                                     min="1"
-                                    placeholder="e.g., 12"
+                                    placeholder={intl.formatMessage(
+                                      { id: 'events.production.fields.examplePlaceholder' },
+                                      { value: '12' }
+                                    )}
                                   />
                                 )}
                               />
@@ -5134,7 +5311,10 @@ const ProductionTab = forwardRef(
                                       flex={2}
                                       type="number"
                                       step="0.01"
-                                      placeholder="e.g., 50000"
+                                      placeholder={intl.formatMessage(
+                                        { id: 'events.production.fields.examplePlaceholder' },
+                                        { value: '50000' }
+                                      )}
                                     />
                                   )}
                                 />
@@ -5170,15 +5350,41 @@ const ProductionTab = forwardRef(
                             name="water_source"
                             control={methods.control}
                             render={({ field }) => (
-                              <StandardSelect {...field} placeholder="Select water source...">
-                                <option value="well_groundwater">Well/Groundwater</option>
-                                <option value="municipal">Municipal Water Supply</option>
-                                <option value="rainwater_harvesting">Rainwater Harvesting</option>
-                                <option value="irrigation_canal">Irrigation Canal/District</option>
-                                <option value="river_stream">River/Stream</option>
-                                <option value="pond_reservoir">Pond/Reservoir</option>
-                                <option value="recycled_water">Recycled/Reclaimed Water</option>
-                                <option value="other">Other (specify in notes)</option>
+                              <StandardSelect
+                                {...field}
+                                placeholder={intl.formatMessage({
+                                  id: 'events.production.fields.waterSourcePlaceholder'
+                                })}>
+                                <option value="well_groundwater">
+                                  {intl.formatMessage({
+                                    id: 'events.waterSources.wellGroundwater'
+                                  })}
+                                </option>
+                                <option value="municipal">
+                                  {intl.formatMessage({ id: 'events.waterSources.municipal' })}
+                                </option>
+                                <option value="rainwater_harvesting">
+                                  {intl.formatMessage({
+                                    id: 'events.waterSources.rainwaterHarvesting'
+                                  })}
+                                </option>
+                                <option value="irrigation_canal">
+                                  {intl.formatMessage({
+                                    id: 'events.waterSources.irrigationCanal'
+                                  })}
+                                </option>
+                                <option value="river_stream">
+                                  {intl.formatMessage({ id: 'events.waterSources.riverStream' })}
+                                </option>
+                                <option value="pond_reservoir">
+                                  {intl.formatMessage({ id: 'events.waterSources.pondReservoir' })}
+                                </option>
+                                <option value="recycled_water">
+                                  {intl.formatMessage({ id: 'events.waterSources.recycledWater' })}
+                                </option>
+                                <option value="other">
+                                  {intl.formatMessage({ id: 'events.waterSources.otherSpecify' })}
+                                </option>
                               </StandardSelect>
                             )}
                           />
@@ -5194,15 +5400,45 @@ const ProductionTab = forwardRef(
                             name="irrigation_method"
                             control={methods.control}
                             render={({ field }) => (
-                              <StandardSelect {...field} placeholder="Select irrigation method...">
-                                <option value="drip">Drip Irrigation (most efficient)</option>
-                                <option value="micro_sprinkler">Micro-sprinkler</option>
-                                <option value="sprinkler">Sprinkler System</option>
-                                <option value="center_pivot">Center Pivot</option>
-                                <option value="flood">Flood/Furrow Irrigation</option>
-                                <option value="subsurface">Subsurface Drip</option>
-                                <option value="hand_watering">Hand Watering</option>
-                                <option value="other">Other Method</option>
+                              <StandardSelect
+                                {...field}
+                                placeholder={intl.formatMessage({
+                                  id: 'events.production.fields.irrigationMethodPlaceholder'
+                                })}>
+                                <option value="drip">
+                                  {intl.formatMessage({ id: 'events.irrigationMethods.drip' })}
+                                </option>
+                                <option value="micro_sprinkler">
+                                  {intl.formatMessage({
+                                    id: 'events.irrigationMethods.microSprinkler'
+                                  })}
+                                </option>
+                                <option value="sprinkler">
+                                  {intl.formatMessage({ id: 'events.irrigationMethods.sprinkler' })}
+                                </option>
+                                <option value="center_pivot">
+                                  {intl.formatMessage({
+                                    id: 'events.irrigationMethods.centerPivot'
+                                  })}
+                                </option>
+                                <option value="flood">
+                                  {intl.formatMessage({
+                                    id: 'events.irrigationMethods.floodFurrow'
+                                  })}
+                                </option>
+                                <option value="subsurface">
+                                  {intl.formatMessage({
+                                    id: 'events.irrigationMethods.subIrrigation'
+                                  })}
+                                </option>
+                                <option value="hand_watering">
+                                  {intl.formatMessage({
+                                    id: 'events.irrigationMethods.handWatering'
+                                  })}
+                                </option>
+                                <option value="other">
+                                  {intl.formatMessage({ id: 'events.irrigationMethods.other' })}
+                                </option>
                               </StandardSelect>
                             )}
                           />
@@ -5233,8 +5469,12 @@ const ProductionTab = forwardRef(
                               control={methods.control}
                               render={({ field }) => (
                                 <StandardSelect {...field} flex={1}>
-                                  <option value="inches">Inches</option>
-                                  <option value="cm">Centimeters</option>
+                                  <option value="inches">
+                                    {intl.formatMessage({ id: 'app.inches' })}
+                                  </option>
+                                  <option value="cm">
+                                    {intl.formatMessage({ id: 'app.centimeters' })}
+                                  </option>
                                 </StandardSelect>
                               )}
                             />
@@ -5386,7 +5626,9 @@ const ProductionTab = forwardRef(
                               <StandardTextarea
                                 {...field}
                                 rows={3}
-                                placeholder={'E. coli: <1 MPN/100mL\nNitrate: 2.1 mg/L'}
+                                placeholder={intl.formatMessage({
+                                  id: 'events.production.fields.waterTestSummaryPlaceholder'
+                                })}
                               />
                             )}
                           />
