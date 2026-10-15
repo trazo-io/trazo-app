@@ -147,8 +147,8 @@ const AppSignIn: React.FC = () => {
       }
 
       toast({
-        title: 'Welcome back!',
-        description: 'You have successfully signed in.',
+        title: intl.formatMessage({ id: 'auth.signup.toast.social.returning.title' }),
+        description: intl.formatMessage({ id: 'auth.signup.toast.social.returning.body' }),
         status: 'success',
         duration: 3000,
         isClosable: true
@@ -209,10 +209,16 @@ const AppSignIn: React.FC = () => {
       }
 
       toast({
-        title: response.is_new_user ? 'Welcome to Trazo!' : 'Welcome back!',
-        description: response.is_new_user
-          ? 'Your account has been created successfully.'
-          : 'You have successfully signed in.',
+        title: intl.formatMessage({
+          id: response.is_new_user
+            ? 'auth.signup.toast.social.newUser.title'
+            : 'auth.signup.toast.social.returning.title'
+        }),
+        description: intl.formatMessage({
+          id: response.is_new_user
+            ? 'auth.signup.toast.social.newUser.body'
+            : 'auth.signup.toast.social.returning.body'
+        }),
         status: 'success',
         duration: 3000,
         isClosable: true
@@ -244,8 +250,8 @@ const AppSignIn: React.FC = () => {
       case 'Google':
         if (!config.google) {
           toast({
-            title: 'Configuration Error',
-            description: 'Google sign-in is not configured. Please contact support.',
+            title: intl.formatMessage({ id: 'auth.signup.toast.config.title' }),
+            description: intl.formatMessage({ id: 'auth.signup.toast.config.googleBody' }),
             status: 'error',
             duration: 5000,
             isClosable: true
@@ -262,8 +268,8 @@ const AppSignIn: React.FC = () => {
       case 'Facebook':
         if (!config.facebook) {
           toast({
-            title: 'Configuration Error',
-            description: 'Facebook sign-in is not configured. Please contact support.',
+            title: intl.formatMessage({ id: 'auth.signup.toast.config.title' }),
+            description: intl.formatMessage({ id: 'auth.signup.toast.config.facebookBody' }),
             status: 'error',
             duration: 5000,
             isClosable: true
@@ -279,8 +285,8 @@ const AppSignIn: React.FC = () => {
 
       default:
         toast({
-          title: 'Error',
-          description: 'Unknown social login provider.',
+          title: intl.formatMessage({ id: 'auth.signup.toast.unknownProvider.title' }),
+          description: intl.formatMessage({ id: 'auth.signup.toast.unknownProvider.body' }),
           status: 'error',
           duration: 3000,
           isClosable: true

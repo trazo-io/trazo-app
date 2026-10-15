@@ -745,7 +745,7 @@ const ConsumerSignUp: React.FC = () => {
                     color={useColorModeValue('gray.400', 'gray.400')}
                     flexShrink={0}
                     fontWeight="500">
-                    Or continue with
+                    {intl.formatMessage({ id: 'auth.signin.orContinueWith' })}
                   </Text>
                   <Divider borderColor={useColorModeValue('gray.200', 'gray.600')} />
                 </HStack>

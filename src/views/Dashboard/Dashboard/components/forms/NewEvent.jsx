@@ -3400,7 +3400,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
           <CardBody py={8} px={{ base: 0, md: 6 }}>
             <VStack spacing={4} align="center">
               <Text fontSize="lg" fontWeight="semibold" color="red.700">
-                {intl.formatMessage({ id: 'app.errorLoadingEvent' }) || 'Error loading event data'}
+                {intl.formatMessage({ id: 'app.errorLoadingEvent' })}
               </Text>
             </VStack>
           </CardBody>
