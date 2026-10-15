@@ -84,12 +84,14 @@ const renderTab = (type: string, messages: Messages, locale: string) => {
 const notesBox = (container: HTMLElement) =>
   container.querySelector('textarea[name="observation"]') as HTMLTextAreaElement | null;
 
-// The field-notes section itself: the nearest ancestor of the notes box that carries the
-// section title. Assertions are scoped to it because the certifier-only notice at the top of
-// the form shares words with the new badge in Spanish ("Registro solo para el certificador").
+// The field-notes section itself: the nearest ancestor of the notes box that carries either
+// section title (public or certifier-only). Assertions are scoped to it because the
+// certifier-only notice at the top of the form shares words with the new badge in Spanish
+// ("Registro solo para el certificador").
+const NOTES_HEADINGS = ['events.section.fieldNotes', 'events.section.fieldNotesCertifierOnly'];
 const notesSection = (container: HTMLElement, m: Messages): string => {
   let node: HTMLElement | null = notesBox(container);
-  while (node && !(node.textContent ?? '').includes(m['events.section.fieldNotes'])) {
+  while (node && !NOTES_HEADINGS.some((k) => (node?.textContent ?? '').includes(m[k]))) {
     node = node.parentElement;
   }
   expect(node, 'field-notes section found').not.toBeNull();
@@ -134,6 +136,15 @@ describe('withheld production subtypes: the notes box never promises the buyer p
         );
         expect(text).toContain(m['events.common.help.observationCertifierOnly']);
         expect(text).toContain(m['events.section.badge.certifierRecordOnly']);
+        // Run 8b R2: the heading said "Farmer's Field Notes & Consumer Transparency" above a
+        // badge that said "Certifier record only".
+        expect(text, 'buyer-facing heading on a withheld record').not.toMatch(
+          /Consumer Transparency|transparencia para el consumidor/i
+        );
+        expect(text, 'public heading on a withheld record').not.toContain(
+          m['events.section.fieldNotes']
+        );
+        expect(text).toContain(m['events.section.fieldNotesCertifierOnly']);
         expect(notesBox(container)?.placeholder).toBe(
           m['events.common.placeholders.observationCertifierOnly']
         );
@@ -144,6 +155,8 @@ describe('withheld production subtypes: the notes box never promises the buyer p
       const { container } = renderTab('HA', m, locale);
       const text = notesSection(container, m);
 
+      expect(text).toContain(m['events.section.fieldNotes']);
+      expect(text).not.toContain(m['events.section.fieldNotesCertifierOnly']);
       expect(text).toContain(m['events.common.help.observationAudience']);
       expect(text).toContain(m['events.section.badge.certifierRecordAndBuyer']);
       expect(text).toContain(m['events.common.fields.observation']);
@@ -152,5 +165,33 @@ describe('withheld production subtypes: the notes box never promises the buyer p
         m['events.common.placeholders.observationPublic']
       );
     });
+  }
+
+  it('the certifier-only heading names the certifier, not the buyer, in both languages', () => {
+    expect(enUS['events.section.fieldNotesCertifierOnly']).toBe('Field notes for your certifier');
+    expect(es419['events.section.fieldNotesCertifierOnly']).toBe(
+      'Notas de campo para tu certificadora'
+    );
+  });
+});
+
+/**
+ * The input-source section used to end in a hard-coded English tip, "Why This Matters to
+ * Consumers ... your commitment to sustainable, transparent farming practices": untranslated,
+ * and a general-benefit virtue sentence (16 CFR 260.4). Removed in Run 8b R2; the badge and
+ * helper already say who sees the record.
+ */
+describe('the production form carries no consumer-virtue tip', () => {
+  // The input-source section renders for planting (PL), transplanting (TR) and irrigation (IR),
+  // the three subtypes that showed the tip.
+  for (const [locale, m] of LOCALES) {
+    for (const code of ['PL', 'TR', 'IR']) {
+      it(`${code} (${locale}) renders no "Why This Matters to Consumers" tip`, () => {
+        const { container } = renderTab(code, m, locale);
+        expect(container.textContent ?? '').not.toMatch(
+          /Why This Matters to Consumers|sustainable, transparent farming/
+        );
+      });
+    }
   }
 });

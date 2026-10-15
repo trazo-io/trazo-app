@@ -4972,6 +4972,7 @@
   "events.section.desc.pestBuyerOptional": "Optional. This appears on your buyer page. Your certifier record is built from the monitoring, threshold and application fields above.",
   "events.section.desc.sourcingOptional": "Optional. Sourcing detail appears on your buyer page. It is not part of the records your certifier reviews.",
   "events.section.fieldNotes": "Farmer's Field Notes & Consumer Transparency",
+  "events.section.fieldNotesCertifierOnly": "Field notes for your certifier",
   "events.section.fuelEquipment": "Fuel Consumption & Equipment Data",
   "events.section.pest.conditions": "Agricultural Context & Conditions",
   "events.section.pest.fieldArea": "Field Area & Context",
