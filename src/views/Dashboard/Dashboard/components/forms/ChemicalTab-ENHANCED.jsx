@@ -1865,16 +1865,11 @@ const ChemicalTab = forwardRef(
                   {/* Organic Certification Status — shown early for organic farm workflows */}
                   {chemicalType && (
                     <StandardField
-                      label={intl.formatMessage({
-                        id: 'events.chemical.form.organicBasis',
-                        defaultMessage: 'How is this input verified for organic use?'
-                      })}
+                      label={intl.formatMessage({ id: 'events.chemical.form.organicBasis' })}
                       required={requiresOrganicBasis}
                       error={methods.formState.errors.organic_approved?.message}
                       helpText={intl.formatMessage({
-                        id: 'events.chemical.form.organicBasisHelp',
-                        defaultMessage:
-                          "USDA's Input Material Application Record names four bases: OMRI or WSDA listing, the NOP seal on the label, or written certifier approval."
+                        id: 'events.chemical.form.organicBasisHelp'
                       })}>
                       <Controller
                         name="organic_approved"
@@ -1883,8 +1878,7 @@ const ChemicalTab = forwardRef(
                           <StandardSelect
                             {...field}
                             placeholder={intl.formatMessage({
-                              id: 'events.chemical.form.organicBasisPlaceholder',
-                              defaultMessage: 'Select verification basis...'
+                              id: 'events.chemical.form.organicBasisPlaceholder'
                             })}>
                             {/* 🔴 2026-08-15. Was "USDA NOP Approved — National Organic
                                 Program" and "Organic Equivalent — Meets organic standards".

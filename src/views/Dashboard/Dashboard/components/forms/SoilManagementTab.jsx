@@ -1562,11 +1562,17 @@ const SoilManagementTab = forwardRef(
                               OMRI or WSDA listing, the NOP seal on the label, or certifier
                               review and approval — and two of the four had no option here,
                               which is why growers reached for the invented ones. */}
-                          <option value="omri_listed">OMRI Listed</option>
-                          <option value="wsda_listed">WSDA Listed</option>
-                          <option value="nop_seal_on_label">NOP seal on the product label</option>
+                          <option value="omri_listed">
+                            {intl.formatMessage({ id: 'events.organicApproved.omriListed' })}
+                          </option>
+                          <option value="wsda_listed">
+                            {intl.formatMessage({ id: 'events.organicApproved.wsdaListed' })}
+                          </option>
+                          <option value="nop_seal_on_label">
+                            {intl.formatMessage({ id: 'events.organicApproved.nopSeal' })}
+                          </option>
                           <option value="certifier_approved">
-                            Reviewed and approved by my certifier
+                            {intl.formatMessage({ id: 'events.organicApproved.certifierApproved' })}
                           </option>
                           {/* Run 8 (R8-08): honest when the listing is unknown; never allowed. */}
                           <option value="unverified">
@@ -1576,7 +1582,9 @@ const SoilManagementTab = forwardRef(
                             {intl.formatMessage({ id: 'events.organicApproved.notOrganicOption' })}
                           </option>
                           <option value="transitional">
-                            Transitional - in certification process
+                            {intl.formatMessage({
+                              id: 'events.organicApproved.transitionalOption'
+                            })}
                           </option>
                           {/* A <select> bound to a value with no matching <option> shows the
                               placeholder, and the next save writes ''. Retiring an option
