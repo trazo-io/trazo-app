@@ -5636,28 +5636,6 @@ const ProductionTab = forwardRef(
                       </>
                     )}
                   </SimpleGrid>
-                  {/* Not for seed search: that record is withheld from the buyer page whole. */}
-                  {!noteIsCertifierOnly && (
-                    <Box
-                      bg="teal.50"
-                      p={3}
-                      borderRadius="md"
-                      borderLeft="4px"
-                      borderLeftColor="teal.400"
-                      mt={4}>
-                      <HStack spacing={2} mb={1}>
-                        <Icon as={FaSeedling} color="teal.500" fontSize="sm" />
-                        <Text fontSize="sm" fontWeight="semibold" color="teal.700">
-                          Why This Matters to Consumers
-                        </Text>
-                      </HStack>
-                      <Text fontSize="xs" color="teal.600">
-                        Consumers increasingly want to know where their food comes from and how it
-                        was produced. Documenting your input sources builds trust and demonstrates
-                        your commitment to sustainable, transparent farming practices.
-                      </Text>
-                    </Box>
-                  )}
                 </SectionBox>
               )}
 
@@ -5665,7 +5643,13 @@ const ProductionTab = forwardRef(
               <SectionBox>
                 <SectionHeader
                   icon={FaSeedling}
-                  title={intl.formatMessage({ id: 'events.section.fieldNotes' })}
+                  // The heading follows the same visibility rule as the badge, label and
+                  // helper below: a withheld subtype's note reaches no buyer page (Run 8b R2).
+                  title={intl.formatMessage({
+                    id: noteIsCertifierOnly
+                      ? 'events.section.fieldNotesCertifierOnly'
+                      : 'events.section.fieldNotes'
+                  })}
                   badge={intl.formatMessage({
                     id: noteIsCertifierOnly
                       ? 'events.section.badge.certifierRecordOnly'

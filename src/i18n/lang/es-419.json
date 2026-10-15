@@ -4990,6 +4990,7 @@
   "events.section.desc.pestBuyerOptional": "Opcional. Esto aparece en tu página del comprador. Tu registro para el certificador se arma con los campos de monitoreo, umbral y aplicación de arriba.",
   "events.section.desc.sourcingOptional": "Opcional. El detalle de procedencia aparece en tu página del comprador. No forma parte de los registros que revisa tu certificador.",
   "events.section.fieldNotes": "Notas de campo y transparencia para el consumidor",
+  "events.section.fieldNotesCertifierOnly": "Notas de campo para tu certificadora",
   "events.section.fuelEquipment": "Consumo de combustible y datos del equipo",
   "events.section.pest.conditions": "Contexto agrícola y condiciones",
   "events.section.pest.fieldArea": "Área del lote y contexto",
