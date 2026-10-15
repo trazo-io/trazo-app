@@ -49,7 +49,8 @@ describe('template accelerators never prefill an attestation', () => {
   it('still prefills the operational values the accelerator exists for', () => {
     const fungicide = TEMPLATE_ACCELERATORS.find((t) => t.id === 'fungicide')!;
     const prefill = templatePrefillValues(fungicide);
-    expect(prefill.type).toBe('FU');
+    // Run 8b R4: the subtype is the activity's, never the template's to write.
+    expect(prefill).not.toHaveProperty('type');
     // Run 8 (R8-03): the method is suggested; the volume is the grower's to state.
     expect(prefill.volume_applied).toBeUndefined();
     expect(prefill.application_method).toBeDefined();
@@ -58,9 +59,8 @@ describe('template accelerators never prefill an attestation', () => {
   it('drops any field not on the allow-list, so a new one fails safe', () => {
     const irrigation = TEMPLATE_ACCELERATORS.find((t) => t.id === 'irrigation')!;
     const keys = Object.keys(templatePrefillValues(irrigation));
-    // `type` plus allow-listed fields only — nothing else may appear.
+    // Allow-listed fields only, and not `type` (Run 8b R4): nothing else may appear.
     const allowed = new Set([
-      'type',
       'application_method',
       'irrigation_method',
       'water_source',

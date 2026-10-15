@@ -11,14 +11,18 @@
  * US units via useDefaultUnits() — the tab must win.
  */
 
-import { getDefaultFieldValues } from 'config/quickEventFields';
+import { ACTIVITY_VERBS, type ActivityVerb } from 'config/activityVerbs';
+import { getDefaultFieldValues, QUICK_EQUIPMENT_OPERATION_CODES } from 'config/quickEventFields';
 
 export interface TemplateAccelerator {
   /** quickEventFields templateId */
   id: string;
   /** Backend event_type the template belongs to (1, 2, 5) */
   backendEventType: number;
-  /** Subtype code the template sets on the form's `type` field */
+  /**
+   * The subtype this template is FOR. It is a filter, never a write: a template is offered only
+   * on a record whose `type` already equals it, and applying one never changes `type`.
+   */
   subtype: string;
   /** i18n key for the display name (quickAdd.template.*.name) */
   nameKey: string;
@@ -114,10 +118,6 @@ export const templatesForEventType = (eventType: number): TemplateAccelerator[] 
   TEMPLATE_ACCELERATORS.filter((t) => t.backendEventType === eventType);
 
 /**
- * Form values a template pick merges into the wizard: the subtype plus the
- * template's field defaults, minus unit fields (the tab's US defaults win).
- */
-/**
  * Fields a template is allowed to prefill.
  *
  * 🔴 2026-08-19 — an ALLOW-LIST, deliberately, and it must stay one.
@@ -163,9 +163,20 @@ export const PREFILLABLE_FIELDS = new Set<string>([
   'seeds_source'
 ]);
 
+/**
+ * Form values a template pick merges into the wizard: the template's method defaults, minus
+ * unit fields (the tab's US defaults win). NEVER `type`.
+ *
+ * Run 8b R4 (2026-10-15): this used to start from `{ type: tpl.subtype }`, so a template
+ * re-answered the activity question. Picking "Harvest" on an Equipment cleanout record turned
+ * it into a harvest while the heading, the auto-name and the cleanout preset stayed, and the
+ * note typed under "certifier-only" was then saved on a subtype the buyer page shows. The
+ * activity is answered in step 0 (verb tile, "Not X? Choose a different activity", voice
+ * "Switch to X"); a template only fills fields for the activity already chosen.
+ */
 export const templatePrefillValues = (tpl: TemplateAccelerator): Record<string, unknown> => {
   const defaults = getDefaultFieldValues(tpl.id);
-  const merged: Record<string, unknown> = { type: tpl.subtype };
+  const merged: Record<string, unknown> = {};
   Object.entries(defaults).forEach(([key, value]) => {
     // Unit fields are stripped for a different reason: quickEventFields defaults are
     // metric-leaning ('ha') while the tabs already default to the operation's US units via
@@ -174,5 +185,88 @@ export const templatePrefillValues = (tpl: TemplateAccelerator): Record<string, 
     if (!PREFILLABLE_FIELDS.has(key)) return;
     merged[key] = value;
   });
+  // Quick Add speaks words ('routine_maintenance'); the wizard and the backend speak codes
+  // (MN). Merged raw, the Equipment maintenance template wrote a value no choice accepts.
+  if (typeof merged.equipment_operation_type === 'string') {
+    merged.equipment_operation_type =
+      QUICK_EQUIPMENT_OPERATION_CODES[merged.equipment_operation_type] ??
+      merged.equipment_operation_type;
+  }
   return merged;
+};
+
+/**
+ * Fields a verb tile presets as part of the activity's IDENTITY (`presetFields` in
+ * config/activityVerbs). Today only `equipment_operation_type`: Cleanout is EM + 'CL'.
+ * Derived, so the next preset added to a tile is covered without editing this file.
+ */
+export const DISCRIMINATING_PRESET_FIELDS: readonly string[] = [
+  ...new Set(ACTIVITY_VERBS.flatMap((v) => Object.keys(v.presetFields || {})))
+];
+
+const isBlank = (value: unknown): boolean =>
+  value === undefined || value === null || String(value).trim() === '';
+
+export interface TemplateActivity {
+  /** Backend event_type in force. */
+  eventType: number | null | undefined;
+  /** The wizard's current form values (`eventFormData`). */
+  formData: Record<string, unknown> | null | undefined;
+  /** The activity verb in force, when one was picked (tile, URL, repeat). */
+  verb?: ActivityVerb;
+}
+
+/**
+ * Does this template fill fields for the activity already chosen, without re-answering it?
+ *
+ * ONE rule for the picker and for the apply step:
+ *   1. Same event type.
+ *   2. The record's subtype is already answered and equals the template's. A template never
+ *      answers the subtype, so a chemical record whose FE/PE/FU/HE question is still open is
+ *      offered no template at all.
+ *   3. For each preset that names the activity (Cleanout = EM + equipment_operation_type 'CL'),
+ *      a template that carries that field must carry the activity's own value. The activity's
+ *      value is the form's, falling back to the verb's preset; when neither has one, a template
+ *      that would set it is refused, because setting it IS answering the activity.
+ */
+export const isTemplateCompatible = (
+  tpl: TemplateAccelerator,
+  { eventType, formData, verb }: TemplateActivity
+): boolean => {
+  if (eventType == null || tpl.backendEventType !== eventType) return false;
+  const current = formData?.type;
+  if (isBlank(current) || String(current) !== tpl.subtype) return false;
+  const prefill = templatePrefillValues(tpl);
+  return DISCRIMINATING_PRESET_FIELDS.every((field) => {
+    if (!(field in prefill)) return true;
+    const fromForm = formData?.[field];
+    const activityValue = isBlank(fromForm) ? verb?.presetFields?.[field] : fromForm;
+    if (isBlank(activityValue)) return false;
+    return String(activityValue) === String(prefill[field]);
+  });
+};
+
+/** The templates the picker offers: only those compatible with the activity in force. */
+export const templatesForActivity = (activity: TemplateActivity): TemplateAccelerator[] =>
+  activity.eventType == null
+    ? []
+    : templatesForEventType(activity.eventType).filter((tpl) =>
+        isTemplateCompatible(tpl, activity)
+      );
+
+/**
+ * The form after applying `tpl`, or `prev` itself (same reference, nothing changed) when the
+ * template does not fit the activity. Pure, so the apply step refuses an incompatible template
+ * whatever path offered it, and so the refusal is testable without mounting the wizard.
+ *
+ * Method fields only (`templatePrefillValues`); `type` and the identity presets are never
+ * written here, so the record stays the activity the heading names.
+ */
+export const applyTemplateToForm = (
+  prev: Record<string, unknown>,
+  tpl: TemplateAccelerator,
+  activity: Omit<TemplateActivity, 'formData'>
+): Record<string, unknown> => {
+  if (!isTemplateCompatible(tpl, { ...activity, formData: prev })) return prev;
+  return { ...prev, ...templatePrefillValues(tpl) };
 };

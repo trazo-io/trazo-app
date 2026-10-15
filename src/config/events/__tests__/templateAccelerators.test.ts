@@ -28,10 +28,12 @@ describe('template accelerators', () => {
     });
   });
 
-  it('prefill sets the subtype and strips unit fields', () => {
+  // Run 8b R4: a template no longer writes `type`. It is offered only on a record whose subtype
+  // already equals its own (templateMatchesActivity.test.ts), so the activity is never re-answered.
+  it('prefill never writes the subtype, and strips unit fields', () => {
     TEMPLATE_ACCELERATORS.forEach((tpl) => {
       const values = templatePrefillValues(tpl);
-      expect(values.type).toBe(tpl.subtype);
+      expect(values, `${tpl.id} re-answers the activity`).not.toHaveProperty('type');
       Object.keys(values).forEach((k) => {
         expect(k.endsWith('_unit'), `${tpl.id} leaked ${k}`).toBe(false);
       });
@@ -41,8 +43,8 @@ describe('template accelerators', () => {
   it('fertilization prefill carries chemical defaults', () => {
     const tpl = TEMPLATE_ACCELERATORS.find((t) => t.id === 'fertilization')!;
     const values = templatePrefillValues(tpl);
-    expect(values.type).toBe('FE');
-    expect(Object.keys(values).length).toBeGreaterThan(1);
+    expect(values).not.toHaveProperty('type');
+    expect(Object.keys(values).length).toBeGreaterThan(0);
   });
 
   it('filters by backend event type', () => {
