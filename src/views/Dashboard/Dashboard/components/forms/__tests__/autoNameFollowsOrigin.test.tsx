@@ -159,6 +159,50 @@ describe('a name the operator typed is theirs', () => {
   });
 });
 
+/**
+ * Review finding on PR #121: the origin flips to 'operator' on the FIRST change, which for
+ * "select all, delete, type my own" is a clear. That flip re-ran the effect, which saw a blank
+ * name and refilled the auto-name under the operator's cursor. This harness holds the origin the
+ * way NewEvent does, so the flip really happens.
+ */
+const WizardLikeHarness = ({ locale, messages }: { locale: string; messages: Messages }) => {
+  const [nameOrigin, setNameOrigin] = React.useState('auto');
+  return tree(locale, messages, {
+    initialValues: { ...CLEANOUT },
+    nameOrigin,
+    onNameEdited: () => setNameOrigin('operator')
+  });
+};
+
+describe('an operator who clears the name is never fought by the auto-name', () => {
+  it('clear, then type: the typed name survives', () => {
+    const { container } = render(<WizardLikeHarness locale="en-US" messages={EN} />);
+    act(() => {});
+    expect(nameInput(container).value).toBe(EN['activities.verb.cleanout']);
+
+    act(() => {
+      fireEvent.change(nameInput(container), { target: { value: '' } });
+    });
+    expect(nameInput(container).value, 'the cleared field was refilled').toBe('');
+
+    act(() => {
+      fireEvent.change(nameInput(container), { target: { value: 'Bin trailer rinse' } });
+    });
+    expect(nameInput(container).value).toBe('Bin trailer rinse');
+  });
+
+  it('a field cleared and left blank stays blank, across a locale switch too', () => {
+    const { container, rerender } = render(<WizardLikeHarness locale="en-US" messages={EN} />);
+    act(() => {});
+    act(() => {
+      fireEvent.change(nameInput(container), { target: { value: '' } });
+    });
+    rerender(<WizardLikeHarness locale="es-419" messages={ES} />);
+    act(() => {});
+    expect(nameInput(container).value, 'a blank operator name was refilled').toBe('');
+  });
+});
+
 describe('the wizard records the origin', () => {
   const wizard = readFileSync(resolve(__dirname, '../NewEvent.jsx'), 'utf8');
 
