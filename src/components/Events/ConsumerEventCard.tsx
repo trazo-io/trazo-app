@@ -71,6 +71,7 @@ import { extractSubtypeCode } from 'utils/eventDataNormalizer';
 
 import { getRecordProvenance, type VerificationLevel } from 'utils/verificationTierHelpers';
 import { StandardImageGallery } from 'components/ImageGallery';
+import { nationalListCitation } from './nationalListCitations';
 
 /**
  * Colour + noun for the aggregate ("summary mode") card, keyed by two-letter sub-type code.
@@ -1218,9 +1219,12 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                       // to the record on an UNCONFIRMED basis. Not evidence for the chip, but
                       // the tooltip that said Trazo found nothing was false for such a record
                       // (recordkeeping review F-09).
+                      // Run 8b R5: `citation` is the server-built "§ 205.601(e)"; an older
+                      // backend sent the raw `cfr_section` code instead ("nonsyn" for a
+                      // nonsynthetic row), which is never read.
                       national_list_link?: {
                         substance?: string;
-                        cfr_section?: string;
+                        citation?: string;
                         basis?: string;
                       };
                     }
@@ -1295,19 +1299,25 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   serverInput?.status === 'organic_approved'
                     ? serverInput.national_list_link
                     : undefined;
+                // Run 8b R5: the sentence calls the link "a National List entry", so it needs a
+                // citation the backend actually produces (nationalListCitations.ts). A payload
+                // with no citation, an old payload with only `cfr_section`, or a value outside the
+                // set (it printed "7 CFR § nonsyn" for spinosad, which has no entry) gets the
+                // plain record wording. The citation is printed as served, never rebuilt here.
+                const linkCitation = nationalListCitation(candidateLink?.citation);
                 const nationalListLink =
                   candidateLink &&
                   candidateLink.substance &&
-                  candidateLink.cfr_section &&
+                  linkCitation &&
                   candidateLink.basis === 'not_confirmed'
-                    ? candidateLink
+                    ? { substance: candidateLink.substance, citation: linkCitation }
                     : undefined;
                 const organicTooltip = nationalListLink
                   ? intl.formatMessage(
                       { id: 'consumer.eventCard.organic.tooltipGrowerReportedNationalListLink' },
                       {
                         substance: nationalListLink.substance,
-                        cfr: nationalListLink.cfr_section
+                        citation: nationalListLink.citation
                       }
                     )
                   : intl.formatMessage({ id: organicTooltipKey });

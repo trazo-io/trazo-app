@@ -126,9 +126,12 @@ describe("the farm's own basis is attributed to the farm and carries its limit",
         input_status: {
           status: 'organic_approved',
           label: 'x',
+          // Run 8b R5: this fixture said Spinosad at 205.601. Spinosad is nonsynthetic and has
+          // no National List entry; a real legacy link is a listed substance with the citation
+          // the server builds.
           national_list_link: {
-            substance: 'Spinosad',
-            cfr_section: '205.601',
+            substance: 'Lime sulfur',
+            citation: '§ 205.601(e)',
             basis: 'not_confirmed'
           }
         }
@@ -136,6 +139,7 @@ describe("the farm's own basis is attributed to the farm and carries its limit",
       'es-419'
     );
     const label = chipLabel(/^Registrado por la finca como permitido para uso orgánico$/);
+    expect(label).toContain('(Lime sulfur, 7 CFR § 205.601(e))');
     expect(label).toMatch(/aún no está confirmada/);
     expect(label).toMatch(/Ninguno de los dos muestra que esta aplicación haya sido aprobada/);
   });
