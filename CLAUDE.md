@@ -34,8 +34,9 @@ Several Claude sessions share this checkout. Two rules, both learned by breaking
 into `trazo-back/` by relative path, and 7 backend tests reach back as
 `parents[3] / "trazo-app"`. A worktree elsewhere either fails outright or, worse, silently
 compares against whatever branch the main `trazo-back` tree happens to hold. Pair them:
-`~/dev/trazo-wt/<task>/{trazo-back,trazo-app}`, symlinking `node_modules`. Full recipe in the
-workspace CLAUDE.md.
+`~/dev/trazo-wt/<task>/{trazo-back,trazo-app}`, symlinking `node_modules`. In Orca, create the
+task from the `trazo` workspace project, never from this repo: its setup script builds the pair.
+Full recipe in the workspace CLAUDE.md.
 
 ⛔ No AI attribution in commits or PR bodies.
 
