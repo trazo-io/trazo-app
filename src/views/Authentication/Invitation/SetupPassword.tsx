@@ -1008,7 +1008,7 @@ const SetupPassword: React.FC = () => {
                     color={useColorModeValue('gray.400', 'gray.400')}
                     flexShrink={0}
                     fontWeight="500">
-                    Or sign up with
+                    {intl.formatMessage({ id: 'auth.signup.orSignUpWith' })}
                   </Text>
                   <Divider borderColor={useColorModeValue('gray.200', 'gray.600')} />
                 </HStack>

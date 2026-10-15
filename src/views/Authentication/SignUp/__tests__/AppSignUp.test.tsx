@@ -8,6 +8,7 @@ import userEvent from '@testing-library/user-event';
 import { ChakraProvider } from '@chakra-ui/react';
 import { IntlProvider } from 'react-intl';
 import enUS from '../../../../i18n/lang/en-US.json';
+import esES from '../../../../i18n/lang/es-419.json';
 import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 import { configureStore } from '@reduxjs/toolkit';
@@ -592,5 +593,119 @@ describe('AppSignUp Component', () => {
       reached = document.activeElement === firstInput;
     }
     expect(reached, 'First Name is not reachable by keyboard').toBe(true);
+  });
+});
+
+/**
+ * Run 8b R1: the Spanish sign-up still printed English. "Or sign up with" was a JSX literal
+ * (the key guards read the catalogues and cannot see one), and so were the join-code help and
+ * the whole "Check your email" state a new grower lands on after submitting. This renders the
+ * real es-419 catalogue and reads the page text, so a literal that slips back in is caught.
+ */
+describe('AppSignUp in Spanish (es-419)', () => {
+  const mockSignUp = vi.fn();
+  const mockUnwrap = vi.fn();
+
+  const EsWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+    <ChakraProvider theme={theme}>
+      <Provider store={createTestStore()}>
+        <IntlProvider locale="es-419" messages={esES}>
+          <BrowserRouter>{children}</BrowserRouter>
+        </IntlProvider>
+      </Provider>
+    </ChakraProvider>
+  );
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockSignUp.mockReturnValue({ unwrap: mockUnwrap });
+    vi.mocked(useSignUpMutation).mockReturnValue([mockSignUp, { isLoading: false }] as never);
+  });
+
+  it('says "O regístrate con", not "Or sign up with"', () => {
+    render(
+      <EsWrapper>
+        <AppSignUp />
+      </EsWrapper>
+    );
+
+    expect(document.body.textContent).not.toContain('Or sign up with');
+    expect(document.body.textContent).toContain('O regístrate con');
+  });
+
+  it('shows the join-code field and its help in Spanish', async () => {
+    const user = userEvent.setup();
+    render(
+      <EsWrapper>
+        <AppSignUp />
+      </EsWrapper>
+    );
+
+    await user.click(screen.getByText('Unirme a una empresa'));
+    await user.type(
+      await screen.findByPlaceholderText('Ingresa el código de empresa de 6 caracteres'),
+      'TEST123'
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Código de invitación de la empresa')).toBeInTheDocument();
+      expect(screen.getByText(/El formato del código es válido/)).toBeInTheDocument();
+    });
+    const text = document.body.textContent ?? '';
+    for (const english of [
+      'Company Invitation Code',
+      'Get this code from your company admin',
+      'Code format is valid',
+      'Validating company code'
+    ]) {
+      expect(text, `English left on the Spanish join form: ${english}`).not.toContain(english);
+    }
+  });
+
+  it('shows the "check your email" state in Spanish after sign-up', async () => {
+    const user = userEvent.setup();
+    mockUnwrap.mockResolvedValue({ success: true });
+
+    render(
+      <EsWrapper>
+        <AppSignUp />
+      </EsWrapper>
+    );
+
+    await user.type(screen.getByPlaceholderText('Nombre'), 'Juana');
+    await user.type(screen.getByPlaceholderText('Apellido'), 'Pérez');
+    await user.type(
+      screen.getByPlaceholderText('Ingresa el correo electrónico de tu empresa'),
+      'juana@test.com'
+    );
+    await user.type(
+      screen.getByPlaceholderText('Crea una contraseña segura (8+ caracteres)'),
+      VALID_PASSWORD
+    );
+    await user.type(screen.getByPlaceholderText('Confirma tu contraseña'), VALID_PASSWORD);
+    await user.click(screen.getByLabelText(/Acepto los/));
+    await user.click(screen.getByText('Crear cuenta de empresa'));
+
+    // Wait for the state to swap (the back button is the first thing it renders).
+    await screen.findByText('Volver al registro');
+    const text = document.body.textContent ?? '';
+    for (const english of [
+      'Check your email',
+      "We've sent a verification email",
+      'Click the link in the email',
+      'Resend email',
+      "Didn't receive the email",
+      'contact support'
+    ]) {
+      expect(text, `English left on the Spanish verification state: ${english}`).not.toContain(
+        english
+      );
+    }
+
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Revisa tu correo');
+    expect(
+      screen.getByText('Te enviamos un correo de verificación para empezar.')
+    ).toBeInTheDocument();
+    expect(screen.getByText('Reenviar correo')).toBeInTheDocument();
   });
 });

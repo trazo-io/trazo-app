@@ -639,7 +639,7 @@ const AppSignUp: React.FC = () => {
                             fontWeight="500"
                             color={useColorModeValue('gray.700', 'gray.300')}
                             mb={1}>
-                            Company Invitation Code
+                            {intl.formatMessage({ id: 'auth.signup.field.companyCode.label' })}
                           </Text>
                           <StandardInput
                             type="text"
@@ -652,7 +652,9 @@ const AppSignUp: React.FC = () => {
                             textAlign="center"
                             fontWeight="600"
                             {...registerField('company_code', {
-                              required: joinExistingCompany ? 'Company code is required' : false,
+                              required: joinExistingCompany
+                                ? intl.formatMessage({ id: 'auth.validation.companyCode.required' })
+                                : false,
                               minLength: joinExistingCompany
                                 ? {
                                     value: 6,
@@ -684,7 +686,9 @@ const AppSignUp: React.FC = () => {
                                     if (!value) return true;
                                     // Check if contains only alphanumeric characters
                                     if (!/^[A-Z0-9]+$/i.test(value)) {
-                                      return 'Company code can only contain letters and numbers';
+                                      return intl.formatMessage({
+                                        id: 'auth.validation.companyCode.alphanumeric'
+                                      });
                                     }
                                     return true;
                                   }
@@ -717,7 +721,7 @@ const AppSignUp: React.FC = () => {
                               <Box as="span" className="animate-spin" display="inline-block">
                                 ⟳
                               </Box>
-                              Validating company code...
+                              {intl.formatMessage({ id: 'auth.signup.companyCode.validating' })}
                             </Text>
                           )}
                           {companyCode &&
@@ -731,7 +735,8 @@ const AppSignUp: React.FC = () => {
                                 display="flex"
                                 alignItems="center"
                                 gap={1}>
-                                ✓ Code format is valid
+                                ✓{' '}
+                                {intl.formatMessage({ id: 'auth.signup.companyCode.formatValid' })}
                               </Text>
                             )}
                           {errors.company_code && (
@@ -743,7 +748,7 @@ const AppSignUp: React.FC = () => {
                             fontSize="xs"
                             color={useColorModeValue('gray.500', 'gray.400')}
                             mt={1}>
-                            Get this code from your company admin or team leader
+                            {intl.formatMessage({ id: 'auth.signup.companyCode.help' })}
                           </Text>
                         </Box>
                       </MotionBox>
@@ -1252,7 +1257,7 @@ const AppSignUp: React.FC = () => {
                       color={useColorModeValue('gray.500', 'gray.400')}
                       flexShrink={0}
                       fontWeight="medium">
-                      Or sign up with
+                      {intl.formatMessage({ id: 'auth.signup.orSignUpWith' })}
                     </Text>
                     <Divider borderColor={useColorModeValue('gray.300', 'gray.600')} />
                   </HStack>
@@ -1468,7 +1473,7 @@ const AppSignUp: React.FC = () => {
                   fontSize={{ base: 'xl', md: '2xl' }}
                   fontWeight="bold"
                   color={useColorModeValue('gray.800', 'white')}>
-                  Check your email
+                  {intl.formatMessage({ id: 'auth.signup.verify.title' })}
                 </Heading>
 
                 <Text
@@ -1476,9 +1481,9 @@ const AppSignUp: React.FC = () => {
                   color={useColorModeValue('gray.600', 'gray.300')}
                   lineHeight="1.6"
                   maxW="md">
-                  {isCompanyJoin
-                    ? "We've sent a verification email to help you join the company team."
-                    : "We've sent a verification email to get you started."}
+                  {intl.formatMessage({
+                    id: isCompanyJoin ? 'auth.signup.verify.sentJoin' : 'auth.signup.verify.sent'
+                  })}
                 </Text>
 
                 {/* Email Display */}
@@ -1503,8 +1508,9 @@ const AppSignUp: React.FC = () => {
                   fontSize="sm"
                   color={useColorModeValue('gray.600', 'gray.300')}
                   textAlign="center">
-                  Click the link in the email to verify your account and{' '}
-                  {isCompanyJoin ? 'join the company' : 'complete your registration'}.
+                  {intl.formatMessage({
+                    id: isCompanyJoin ? 'auth.signup.verify.nextJoin' : 'auth.signup.verify.next'
+                  })}
                 </Text>
               </VStack>
 
@@ -1518,19 +1524,30 @@ const AppSignUp: React.FC = () => {
                   onClick={handleResendEmail}
                   isLoading={isResending}
                   isDisabled={resendCooldown > 0}
-                  loadingText="Sending..."
+                  loadingText={intl.formatMessage({ id: 'auth.signup.verify.sending' })}
                   w="full">
-                  {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend email'}
+                  {resendCooldown > 0
+                    ? intl.formatMessage(
+                        { id: 'auth.signup.verify.resendIn' },
+                        { seconds: resendCooldown }
+                      )
+                    : intl.formatMessage({ id: 'auth.signup.verify.resend' })}
                 </Button>
 
                 <Text
                   fontSize="xs"
                   color={useColorModeValue('gray.500', 'gray.400')}
                   textAlign="center">
-                  Didn't receive the email? Check your spam folder or{' '}
-                  <Text as="span" color="green.700">
-                    contact support
-                  </Text>
+                  {intl.formatMessage(
+                    { id: 'auth.signup.verify.noEmail' },
+                    {
+                      support: (
+                        <Text as="span" color="green.700">
+                          {intl.formatMessage({ id: 'auth.signup.verify.contactSupport' })}
+                        </Text>
+                      )
+                    }
+                  )}
                 </Text>
               </VStack>
             </MotionBox>

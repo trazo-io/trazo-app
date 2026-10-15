@@ -542,7 +542,7 @@ describe('the crew journey addresses the grower as tú, not usted (Run 8b)', () 
   // Usted present tense, where a tú string would say "Tienes", "Puedes", "¿Estás seguro?".
   const PRESENT = new RegExp(
     `(?:^|[.!?:;¿¡—–]\\s*)(Tiene|Puede|Ya puede|Necesita|Desea|Quiere|Debe|Está segur[oa])(?![${L}])` +
-      `|(?<![${L}])(si prefiere|cuando quiera|cuando necesite|donde los dejó|que plantó|que seleccionó|que planificó|ya registró)(?![${L}])`
+      `|(?<![${L}])(si prefiere|cuando quiera|cuando necesite|donde los dejó|que plantó|que seleccionó|que planificó|ya registró|[Qq]ué hizo(?=[,?]))(?![${L}])`
   );
   // Usted imperatives after a comma or "por favor", where the sentence-start check cannot see
   // them, plus the enclitic forms ("Déjelo", "corríjalo") wherever they appear.
@@ -624,6 +624,12 @@ describe('the crew journey addresses the grower as tú, not usted (Run 8b)', () 
     expect(PRESENT.test('¿Está seguro de que desea eliminar este evento?')).toBe(true);
     expect(PRESENT.test('Tienes un borrador sin guardar de ayer')).toBe(false);
     expect(PRESENT.test('Ya puedes editar desde aquí.')).toBe(false);
+    // "Qué hizo, ..." asks the grower in usted (Run 8b R1, events.wizard.step.basicHint). Bare
+    // "hizo" stays legal: it is also the third person ("quién lo hizo", "lo que hizo el equipo").
+    expect(PRESENT.test('Qué hizo, cuándo y quién lo hizo')).toBe(true);
+    expect(PRESENT.test('¿Qué hizo?')).toBe(true);
+    expect(PRESENT.test('Qué hiciste, cuándo y quién lo hizo')).toBe(false);
+    expect(PRESENT.test('Anota qué hizo el equipo y quién lo hizo')).toBe(false);
     expect(MID_IMPERATIVE.test('Falta el ID. Recargue la página e intente nuevamente.')).toBe(true);
     expect(
       MID_IMPERATIVE.test('No se pudo generar el informe. Por favor intente nuevamente.')

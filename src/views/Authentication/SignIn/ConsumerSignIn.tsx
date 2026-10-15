@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { useForm } from 'react-hook-form';
+import { useIntl } from 'react-intl';
 import {
   Box,
   VStack,
@@ -52,6 +53,7 @@ interface SignInFormData {
 }
 
 const ConsumerSignIn: React.FC = () => {
+  const intl = useIntl();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const toast = useToast();
@@ -544,7 +546,7 @@ const ConsumerSignIn: React.FC = () => {
                     color={useColorModeValue('gray.500', 'gray.400')}
                     flexShrink={0}
                     fontWeight="medium">
-                    Or continue with
+                    {intl.formatMessage({ id: 'auth.signin.orContinueWith' })}
                   </Text>
                   <Divider borderColor={useColorModeValue('gray.300', 'gray.600')} />
                 </HStack>
