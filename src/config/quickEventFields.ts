@@ -2183,6 +2183,22 @@ export function getQuickEventFields(templateId: string): QuickEventTypeConfig | 
 /**
  * Get default values for a specific template
  */
+/**
+ * Quick Add's equipment operation words, mapped to the 2-character codes the wizard and the
+ * backend use (EQUIPMENT_OPERATION_TYPE in trazo-back/common/field_registry.py).
+ *
+ * Exported so the template accelerator writes a code, not a word: it used to merge the raw
+ * default 'routine_maintenance' into the wizard, a value no select option and no backend
+ * choice accepts (valid: FC/MN/RE/CA/BD/EI/CL).
+ */
+export const QUICK_EQUIPMENT_OPERATION_CODES: Readonly<Record<string, string>> = {
+  routine_maintenance: 'MN',
+  repair: 'RE',
+  calibration: 'CA',
+  cleaning: 'CL',
+  inspection: 'EI'
+};
+
 export function getDefaultFieldValues(templateId: string): Record<string, unknown> {
   const config = getQuickEventFields(templateId);
   if (!config) return {};
@@ -2298,15 +2314,8 @@ export function getFieldsForBackend(
     // `equipment_operation_type == "CL"` (see audit_export_service._build_equipment_section),
     // so every cleaning event logged through Quick Add vanished from the export a
     // certifier reads — while still looking recorded in the app.
-    const operationTypeMap: Record<string, string> = {
-      routine_maintenance: 'MN',
-      repair: 'RE',
-      calibration: 'CA',
-      cleaning: 'CL',
-      inspection: 'EI'
-    };
     result.equipment_operation_type =
-      operationTypeMap[result.equipment_operation_type as string] ||
+      QUICK_EQUIPMENT_OPERATION_CODES[result.equipment_operation_type as string] ||
       result.equipment_operation_type;
   }
 
