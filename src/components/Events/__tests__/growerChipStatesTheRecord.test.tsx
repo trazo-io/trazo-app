@@ -53,13 +53,13 @@ describe('the grower-reported chip', () => {
         label: 'x',
         national_list_link: {
           substance: 'Lime sulfur',
-          cfr_section: '205.601',
+          citation: '§ 205.601(e)',
           basis: 'not_confirmed'
         }
       })
     );
     const chip = screen.getByLabelText(/Lime sulfur/);
-    expect(chip.getAttribute('aria-label')).toContain('7 CFR § 205.601');
+    expect(chip.getAttribute('aria-label')).toContain('(Lime sulfur, 7 CFR § 205.601(e))');
     expect(chip.getAttribute('aria-label')).toContain('not yet confirmed');
     expect(chip.getAttribute('aria-label')).not.toContain('did not find');
   });
@@ -74,7 +74,9 @@ describe('the grower-reported chip', () => {
     for (const link of [
       { basis: 'confirmed' },
       { substance: 'Lime sulfur' },
-      { substance: 'Lime sulfur', cfr_section: '205.601', basis: 'exact' }
+      { substance: 'Lime sulfur', citation: '§ 205.601(e)', basis: 'exact' },
+      // Run 8b R5: the payload an older backend sends (raw section code, no citation).
+      { substance: 'Lime sulfur', cfr_section: '205.601', basis: 'not_confirmed' }
     ]) {
       const { unmount } = renderCard(
         limeSulfur({ status: 'organic_approved', label: 'x', national_list_link: link })
@@ -92,7 +94,7 @@ describe('the grower-reported chip', () => {
         label: 'x',
         national_list_link: {
           substance: 'Lime sulfur',
-          cfr_section: '205.601',
+          citation: '§ 205.601(e)',
           basis: 'not_confirmed'
         }
       }),
