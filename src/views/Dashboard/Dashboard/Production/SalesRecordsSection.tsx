@@ -112,14 +112,19 @@ interface SalesRecordsSectionProps {
 // `units` were units it could produce and a sale could not record, and either way
 // § 205.103(b)(2) reconciliation vanished from the certifier packet with nothing printed to say
 // so. Adding a unit here means adding it in all three places, in one change.
+// "bins", "plants" and "seeds" joined 2026-10-17 so a sale can be recorded in the unit the harvest
+// was (pilot rehearsal: a 40-bin harvest was sold as "40 units" and could not be reconciled).
 const UNIT_CHOICES = [
   { value: 'kg', labelId: 'sales.records.unit.kg' },
   { value: 'lb', labelId: 'sales.records.unit.lb' },
   { value: 'boxes', labelId: 'sales.records.unit.boxes' },
+  { value: 'bins', labelId: 'sales.records.unit.bins' },
   { value: 'crates', labelId: 'sales.records.unit.crates' },
   { value: 'tons', labelId: 'sales.records.unit.tons' },
   { value: 'bushels', labelId: 'sales.records.unit.bushels' },
-  { value: 'units', labelId: 'sales.records.unit.units' }
+  { value: 'units', labelId: 'sales.records.unit.units' },
+  { value: 'plants', labelId: 'sales.records.unit.plants' },
+  { value: 'seeds', labelId: 'sales.records.unit.seeds' }
 ];
 
 const UNIT_VALUES = UNIT_CHOICES.map((u) => u.value);

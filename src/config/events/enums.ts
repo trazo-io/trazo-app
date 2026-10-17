@@ -19,6 +19,11 @@ export interface EnumOption {
   descKey?: string;
   /** Optional emoji/icon identifier */
   iconKey?: string;
+  /**
+   * A stored value kept so historical records still render, but never offered for a new
+   * choice: a select shows it only when the record already holds it.
+   */
+  legacyOnly?: boolean;
 }
 
 // ============================================================================
@@ -81,12 +86,20 @@ export const APPLICATION_RATE_UNIT_SYMBOLS: Record<string, string> = {
   t_ha: 't/ha'
 };
 
-/** Volume units — liquid/solid chemicals, fertilizers */
+/**
+ * Volume units — liquid/solid chemicals, fertilizers. Mirrors UNIT_VOLUME (common/field_registry).
+ *
+ * Fluid and weight ounces are separate units (2026-10-17, pilot rehearsal: "36 oz" printed beside
+ * a "6 fl oz/acre" rate). The old single `oz` stays for records that hold it and is never offered
+ * for a new one: it does not say which ounce it means.
+ */
 export const VOLUME_UNITS: readonly EnumOption[] = [
   { value: 'L', labelKey: 'events.units.volume.liters' },
   { value: 'gal', labelKey: 'events.units.volume.gallons' },
   { value: 'mL', labelKey: 'events.units.volume.milliliters' },
-  { value: 'oz', labelKey: 'events.units.volume.ounces' },
+  { value: 'fl_oz', labelKey: 'events.units.volume.fluidOunces' },
+  { value: 'oz_wt', labelKey: 'events.units.volume.ouncesWeight' },
+  { value: 'oz', labelKey: 'events.units.volume.ounces', legacyOnly: true },
   { value: 'kg', labelKey: 'events.units.volume.kilograms' },
   { value: 'lbs', labelKey: 'events.units.volume.pounds' }
 ] as const;
@@ -113,6 +126,7 @@ export const YIELD_UNITS: readonly EnumOption[] = [
   { value: 'tons', labelKey: 'events.units.yield.tonnes' },
   { value: 'lbs', labelKey: 'events.units.yield.pounds' },
   { value: 'boxes', labelKey: 'events.units.yield.boxes' },
+  { value: 'bins', labelKey: 'events.units.yield.bins' },
   { value: 'plants', labelKey: 'events.units.yield.plants' },
   { value: 'seeds', labelKey: 'events.units.yield.seeds' }
 ] as const;

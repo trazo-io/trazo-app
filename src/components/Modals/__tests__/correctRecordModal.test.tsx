@@ -272,4 +272,88 @@ describe('CorrectRecordModal', () => {
       });
     });
   });
+
+  // Pilot rehearsal 2026-10-17: a rate-only correction (50 -> 45 lb/acre) left 300 lb over 6
+  // acres on the record, and the form said nothing. It now shows the related values and whether
+  // they agree with the value being typed, and never changes them.
+  describe('related quantities on an input application', () => {
+    const RELATED = {
+      fields: [
+        { name: 'volume_numeric', label: 'Amount applied', value: '300', unit: 'lbs' },
+        { name: 'area_numeric', label: 'Area treated', value: '6', unit: 'acres' },
+        { name: 'application_rate', label: 'Application rate', value: '50', unit: 'lbs/acre' }
+      ],
+      factor: 1,
+      tolerance: 0.01,
+      computed_amount: '300 lbs',
+      agrees: true
+    };
+
+    beforeEach(() => {
+      queryState.data = {
+        event_type: 2,
+        fields: [
+          { name: 'volume_numeric', label: 'volume numeric', current_value: '300.00' },
+          { name: 'area_numeric', label: 'area numeric', current_value: '6.00' },
+          { name: 'application_rate', label: 'application rate', current_value: '50.000' },
+          { name: 'commercial_name', label: 'commercial name', current_value: 'Surround WP' }
+        ],
+        blank_fields: [],
+        amendments: [],
+        related_quantities: RELATED
+      };
+    });
+
+    it('shows the other two values and says a new rate no longer agrees, computed', () => {
+      renderModal();
+      fireEvent.change(screen.getByRole('combobox'), { target: { value: 'application_rate' } });
+      fireEvent.change(screen.getAllByRole('textbox')[0], { target: { value: '45' } });
+      const panel = screen.queryByTestId('related-quantities');
+      expect(panel).not.toBeNull();
+      expect(panel!.textContent).toContain('Amount applied: 300 lbs');
+      expect(panel!.textContent).toContain('Area treated: 6 acres');
+      expect(panel!.textContent).toContain('Application rate: 45 lbs/acre (new value)');
+      expect(panel!.textContent).toContain(
+        '45 lbs/acre × 6 acres = 270 lbs, but the amount recorded is 300 lbs'
+      );
+      expect(panel!.textContent).toContain('Trazo does not change the other values');
+    });
+
+    it('says they agree when the new value restores agreement', () => {
+      renderModal();
+      fireEvent.change(screen.getByRole('combobox'), { target: { value: 'volume_numeric' } });
+      fireEvent.change(screen.getAllByRole('textbox')[0], { target: { value: '300' } });
+      expect(screen.queryByTestId('related-quantities')?.textContent).toContain(
+        'amount, area and rate agree'
+      );
+    });
+
+    it('stays out of the way for any other field', () => {
+      renderModal();
+      fireEvent.change(screen.getByRole('combobox'), { target: { value: 'commercial_name' } });
+      expect(screen.queryByTestId('related-quantities')).toBeNull();
+    });
+
+    it('submits only the field being corrected', async () => {
+      amendMock.mockReturnValue({ unwrap: () => Promise.resolve({ id: 1 }) });
+      renderModal();
+      fireEvent.change(screen.getByRole('combobox'), { target: { value: 'application_rate' } });
+      const boxes = screen.getAllByRole('textbox');
+      fireEvent.change(boxes[0], { target: { value: '45' } });
+      fireEvent.change(boxes[boxes.length - 1], { target: { value: 'Spray log reads 45.' } });
+      fireEvent.click(screen.getByRole('button', { name: /save correction/i }));
+      await waitFor(() => expect(amendMock).toHaveBeenCalledTimes(1));
+      expect(amendMock.mock.calls[0][0]).toMatchObject({
+        field_name: 'application_rate',
+        new_value: '45'
+      });
+    });
+
+    it('reads in Spanish too', () => {
+      renderModal('es-419');
+      fireEvent.change(screen.getByRole('combobox'), { target: { value: 'application_rate' } });
+      fireEvent.change(screen.getAllByRole('textbox')[0], { target: { value: '45' } });
+      expect(screen.queryByTestId('related-quantities')?.textContent).toContain('no coinciden');
+    });
+  });
 });
