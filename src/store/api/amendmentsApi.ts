@@ -7,6 +7,7 @@
  * the single strikethrough used on paper organic records.
  */
 import baseApi from './baseApi';
+import type { RelatedQuantities } from 'utils/relatedQuantities';
 
 /**
  * 🔴 2026-08-21 (F7) — corrections come in two shapes now.
@@ -50,6 +51,8 @@ interface AmendOptions {
    *  recording something that was missed, rather than correcting something wrong. */
   blank_fields: AmendableField[];
   amendments: EventAmendment[];
+  /** Amount / area / rate on an input application, and whether they agree. Null elsewhere. */
+  related_quantities?: RelatedQuantities | null;
 }
 
 const amendmentsApi = baseApi.injectEndpoints({
