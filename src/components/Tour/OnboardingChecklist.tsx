@@ -100,6 +100,19 @@ const OnboardingChecklist: React.FC = () => {
   // Hoisted (was called inline in JSX after the early return below — varied the
   // hook count between renders, triggering the "change in order of Hooks" warning).
   const progressBg = useColorModeValue('gray.100', 'gray.700');
+  // The pilot setup note is information, not a step: a tinted, bordered box sets it apart from
+  // the check-circle items below it. At xs with no separation it read as fine print.
+  const infoBoxProps = {
+    mx: 4,
+    mt: 3,
+    mb: 1,
+    px: 3,
+    py: 2.5,
+    bg: itemBg,
+    borderWidth: '1px',
+    borderColor,
+    borderRadius: 'md'
+  };
 
   if (!isVisible || (allComplete && !pilotStepsComplete) || isOnFormRoute) return null;
 
@@ -260,11 +273,11 @@ const OnboardingChecklist: React.FC = () => {
           {isPilot && isSetupOperator && (
             // The operator entering the grower's records gets the operator's side of setup, not
             // the grower's instruction to send records to the operator (rehearsal finding 7).
-            <Box data-testid="pilot-operator-info" px={5} pt={3} pb={1}>
-              <Text fontSize="xs" fontWeight="700" color={headingColor} mb={1}>
+            <Box data-testid="pilot-operator-info" {...infoBoxProps}>
+              <Text fontSize="sm" fontWeight="700" color={headingColor} mb={1}>
                 <FormattedMessage id="tour.checklist.pilot.operatorSetup" />
               </Text>
-              <VStack as="ul" align="start" spacing={1} pl={4} fontSize="xs" color={textColor}>
+              <VStack as="ul" align="start" spacing={1} pl={4} fontSize="sm" color={textColor}>
                 <Text as="li">
                   <FormattedMessage id="tour.checklist.pilot.operatorSetup.body" />
                 </Text>
@@ -276,11 +289,11 @@ const OnboardingChecklist: React.FC = () => {
           )}
           {isPilot && !isSetupOperator && (
             // Information, not steps: no check circle, never counted, never shown incomplete.
-            <Box data-testid="pilot-setup-info" px={5} pt={3} pb={1}>
-              <Text fontSize="xs" fontWeight="700" color={headingColor} mb={1}>
+            <Box data-testid="pilot-setup-info" {...infoBoxProps}>
+              <Text fontSize="sm" fontWeight="700" color={headingColor} mb={1}>
                 <FormattedMessage id="tour.checklist.pilot.howSetupWorks" />
               </Text>
-              <VStack as="ul" align="start" spacing={1} pl={4} fontSize="xs" color={textColor}>
+              <VStack as="ul" align="start" spacing={1} pl={4} fontSize="sm" color={textColor}>
                 <Text as="li">
                   <FormattedMessage id="tour.checklist.pilot.howSetupWorks.send" />{' '}
                   <Link
