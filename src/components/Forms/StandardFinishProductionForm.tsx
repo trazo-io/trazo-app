@@ -50,16 +50,46 @@ import { harvestGradeOptions, MAX_GRADE_LENGTH, OTHER_GRADE } from 'config/harve
 // the build never surfaces (see frontend-typecheck-gate-dead). `hooks/*` resolves in both.
 import { useDefaultUnits } from 'hooks/useMeasurementSystem';
 
-// Unit options for production amount
-const UNIT_OPTIONS = [
-  { value: 'kg', label: 'Kilograms (kg)' },
-  { value: 'lb', label: 'Pounds (lb)' },
-  { value: 'boxes', label: 'Boxes' },
-  { value: 'crates', label: 'Crates' },
-  { value: 'tons', label: 'Tons' },
-  { value: 'bushels', label: 'Bushels' },
-  { value: 'units', label: 'Units' }
+// Unit options for production amount. MUST equal History.UNIT_CHOICES (guarded cross-repo by
+// history/tests/test_transport_and_adjoining_land.py) and SalesRecordsSection's UNIT_CHOICES.
+//
+// 🔴 2026-10-17 (pilot rehearsal): this list had no "bins", so a harvest of 40 bins prefilled
+// "40" beside a unit it could not show, the season was saved in another unit, and the sale
+// (which seeds its unit from the season) followed it. It now offers every unit the harvest
+// form offers.
+export const UNIT_OPTIONS = [
+  { value: 'kg', labelId: 'sales.records.unit.kg' },
+  { value: 'lb', labelId: 'sales.records.unit.lb' },
+  { value: 'boxes', labelId: 'sales.records.unit.boxes' },
+  { value: 'bins', labelId: 'sales.records.unit.bins' },
+  { value: 'crates', labelId: 'sales.records.unit.crates' },
+  { value: 'tons', labelId: 'sales.records.unit.tons' },
+  { value: 'bushels', labelId: 'sales.records.unit.bushels' },
+  { value: 'units', labelId: 'sales.records.unit.units' },
+  { value: 'plants', labelId: 'sales.records.unit.plants' },
+  { value: 'seeds', labelId: 'sales.records.unit.seeds' }
 ];
+
+const UNIT_VALUES = UNIT_OPTIONS.map((u) => u.value);
+
+/**
+ * The unit the form opens with.
+ *
+ * A prefilled amount keeps its source's unit, or opens with NO unit (the field is required,
+ * so the operator chooses). It never falls back to the farm's default mass unit: "40" from a
+ * harvest of 40 bins shown beside "kg" is a different quantity, and saving the form as offered
+ * recorded it.
+ */
+export function initialProductionUnit(
+  prefill: { production_amount?: unknown; production_unit?: string | null } | null | undefined,
+  defaultMass: string
+): string {
+  const unit = String(prefill?.production_unit ?? '').trim();
+  if (unit && UNIT_VALUES.includes(unit)) return unit;
+  const amount = prefill?.production_amount;
+  const hasAmount = amount !== undefined && amount !== null && String(amount).trim() !== '';
+  return hasAmount ? '' : defaultMass;
+}
 
 // 🔴 F5 (2026-08-21) — this list is GONE. It was Premium / Grade A / Grade B / Standard /
 // Processing, while the harvest EVENT form offered Export Quality / Grade A / B / C /
@@ -234,7 +264,7 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
       hasHydratedRef.current = true;
       const formDefaults: FormStateData = {
         production_amount: initialData.production_amount?.toString() || '',
-        production_unit: initialData.production_unit || defaultUnits.mass,
+        production_unit: initialProductionUnit(initialData, defaultUnits.mass),
         lot_id: initialData.lot_id || '',
         finish_date: initialData.finish_date || '',
         quality_grade: initialData.quality_grade || '',
@@ -265,7 +295,9 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
 
       const finalFormData: FinishProductionFormData = {
         production_amount: Number(mergedData.production_amount || 0),
-        production_unit: mergedData.production_unit || defaultUnits.mass,
+        // No fallback unit: the schema requires one, and a default here would be a unit the
+        // operator never chose for the number above it.
+        production_unit: mergedData.production_unit,
         lot_id: mergedData.lot_id || '',
         finish_date: mergedData.finish_date || '',
         quality_grade: mergedData.quality_grade,
@@ -526,10 +558,12 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                                 name="production_unit"
                                 control={control}
                                 render={({ field }) => (
-                                  <StandardSelect {...field}>
+                                  <StandardSelect
+                                    {...field}
+                                    placeholder={intl.formatMessage({ id: 'app.select' })}>
                                     {UNIT_OPTIONS.map((option) => (
                                       <option key={option.value} value={option.value}>
-                                        {option.label}
+                                        {intl.formatMessage({ id: option.labelId })}
                                       </option>
                                     ))}
                                   </StandardSelect>

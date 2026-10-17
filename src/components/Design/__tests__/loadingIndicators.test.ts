@@ -172,4 +172,49 @@ describe('loading indicators', () => {
       expect(body, `${name} must expose a live region`).toContain('role="status"');
     }
   });
+
+  /**
+   * DEFECT 3 — the generic "Loading..." line rendered as bare text (Field notes, 2026-10-17).
+   *
+   * Three loading branches on Field notes and one in Settings printed `app.loading` inside a
+   * plain <Text>: no spinner, and no `role="status"`, so a screen reader announced nothing
+   * while the page waited. The shared loaders above already solve both; the text was a
+   * hand-rolled copy of them that dropped the half you cannot see.
+   *
+   * The rule: the generic `app.loading` key reaches the screen only as the `label` of
+   * `StandardSpinner` or `StandardPageLoading`. Screen-specific keys (`finishProduction.loading`,
+   * a button's `loadingText`) are not covered here.
+   */
+  it('renders the generic app.loading text only through a shared loader', () => {
+    const offenders: string[] = [];
+    let seen = 0;
+
+    for (const file of FILES) {
+      const src = readFileSync(file, 'utf8');
+      const uses = /['"]app\.loading['"]/g;
+      let m: RegExpExecArray | null;
+      while ((m = uses.exec(src))) {
+        seen++;
+        const line = src.slice(0, m.index).split('\n').length;
+        // The nearest tag opened before the key is the one it renders inside.
+        const before = src.slice(0, m.index);
+        const tag = /<([A-Za-z][\w.]*)\b[^<]*$/.exec(before);
+        const ok =
+          tag !== null &&
+          /^Standard(?:Spinner|PageLoading)$/.test(tag[1]) &&
+          /\blabel=\{[^}]*$/.test(tag[0]);
+        if (!ok) offenders.push(`${rel(file)}:${line} — app.loading inside <${tag?.[1] ?? '?'}>`);
+      }
+    }
+
+    // A negative assertion must prove it read something: if the key were renamed, an empty
+    // sweep would report every screen clean.
+    expect(seen, 'no use of app.loading found; the guard is reading nothing').toBeGreaterThan(0);
+    expect(
+      offenders,
+      `Bare loading text has no spinner and no live region, so a screen reader announces nothing. Use <StandardSpinner label={...} /> (inside a card or section) or <StandardPageLoading label={...} /> (whole page).\n${offenders.join(
+        '\n'
+      )}`
+    ).toEqual([]);
+  });
 });

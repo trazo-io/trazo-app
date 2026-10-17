@@ -59,7 +59,10 @@ import {
   StandardSelect,
   StandardQueryError
 } from 'components/Design/StandardComponents';
-import { useGetFarmProductionsQuery } from 'store/api/historyApi';
+import { useGetFarmProductionsQuery, useGetHistoryQuery } from 'store/api/historyApi';
+import { documentSourceLabel } from 'utils/documentSource';
+import { eventTitle } from 'config/events/narrative';
+import { formatDateFromTimestamp } from 'utils/dateOnly';
 import { DOCUMENT_DOWNLOAD_URL, RECORDS_EXPORT_URL } from 'config';
 import { env } from 'config/environment';
 import { useDebounce } from 'hooks/useDebounce';
@@ -190,10 +193,37 @@ const DocumentsPage = () => {
   const [uploadTitle, setUploadTitle] = useState('');
   const [uploadFolder, setUploadFolder] = useState('uploads');
   const [uploadProduction, setUploadProduction] = useState('');
+  // `${event_type}:${id}` of the one record this file documents, or '' (pilot rehearsal
+  // 2026-10, finding 4: an invoice could point at the season and no finer).
+  const [uploadEvent, setUploadEvent] = useState('');
 
   const { data: productions = [] } = useGetFarmProductionsQuery(farmId, {
     skip: !farmId || !isFilingOpen
   });
+  // The chosen production's own records, for the record picker. Only fetched once a production
+  // is chosen: a record belongs to exactly one season, and the server refuses a mismatch.
+  const { data: uploadProductionDetail } = useGetHistoryQuery(uploadProduction, {
+    skip: !uploadProduction || !isFilingOpen
+  });
+  const uploadEventOptions = useMemo(() => {
+    const events = (uploadProductionDetail?.events ?? []) as Array<{
+      id: number;
+      event_type: number;
+      name?: string;
+      type?: string;
+      date?: string;
+    }>;
+    return events
+      .filter((ev) => ev?.id != null && ev?.event_type != null)
+      .map((ev) => {
+        const date = formatDateFromTimestamp(ev.date, intl.locale);
+        const title = eventTitle(ev.event_type, ev.type, ev.name, intl);
+        return {
+          value: `${ev.event_type}:${ev.id}`,
+          label: date ? `${date} · ${title}` : title
+        };
+      });
+  }, [uploadProductionDetail, intl]);
 
   const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS);
 
@@ -339,6 +369,7 @@ const DocumentsPage = () => {
     setUploadTitle(file.name.replace(/\.[^.]+$/, ''));
     setUploadFolder('uploads');
     setUploadProduction('');
+    setUploadEvent('');
     onFilingOpen();
     clearInput();
   };
@@ -353,7 +384,13 @@ const DocumentsPage = () => {
         file: pendingFile,
         title: uploadTitle.trim() || undefined,
         folder: uploadFolder,
-        history: uploadProduction ? Number(uploadProduction) : null
+        history: uploadProduction ? Number(uploadProduction) : null,
+        ...(uploadProduction && uploadEvent
+          ? {
+              eventType: Number(uploadEvent.split(':')[0]),
+              eventId: Number(uploadEvent.split(':')[1])
+            }
+          : {})
       }).unwrap();
       toast({
         title: intl.formatMessage({ id: 'documents.uploaded' }),
@@ -442,7 +479,7 @@ const DocumentsPage = () => {
             own line rather than crushing the date. */}
         <Flex mt={3} align="center" justify="space-between" gap={2} wrap="wrap">
           <HStack spacing={3} flexWrap="wrap" color="gray.600" fontSize="xs">
-            <Text>{doc.source_display}</Text>
+            <Text>{documentSourceLabel(doc, intl)}</Text>
             <Text aria-hidden="true">·</Text>
             <Text>{formatSize(doc.size_bytes)}</Text>
             <Text aria-hidden="true">·</Text>
@@ -544,7 +581,7 @@ const DocumentsPage = () => {
         </Td>
         <Td>
           <Text fontSize="xs" color="gray.600">
-            {doc.source_display}
+            {documentSourceLabel(doc, intl)}
           </Text>
         </Td>
         <Td>
@@ -878,9 +915,11 @@ const DocumentsPage = () => {
                 helpText={intl.formatMessage({ id: 'documents.filing.field.productionHelp' })}>
                 <StandardSelect
                   value={uploadProduction}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                    setUploadProduction(e.target.value)
-                  }>
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                    setUploadProduction(e.target.value);
+                    // A record belongs to one season; a different season clears the pick.
+                    setUploadEvent('');
+                  }}>
                   <option value="">
                     {intl.formatMessage({ id: 'documents.filing.field.productionNone' })}
                   </option>
@@ -891,6 +930,26 @@ const DocumentsPage = () => {
                   ))}
                 </StandardSelect>
               </StandardField>
+              {uploadProduction ? (
+                <StandardField
+                  label={intl.formatMessage({ id: 'documents.filing.field.record' })}
+                  helpText={intl.formatMessage({ id: 'documents.filing.field.recordHelp' })}>
+                  <StandardSelect
+                    value={uploadEvent}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                      setUploadEvent(e.target.value)
+                    }>
+                    <option value="">
+                      {intl.formatMessage({ id: 'documents.filing.field.recordNone' })}
+                    </option>
+                    {uploadEventOptions.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </StandardSelect>
+                </StandardField>
+              ) : null}
             </VStack>
           </ModalBody>
           <ModalFooter>

@@ -2,6 +2,7 @@ import { COMPANY_URL, FARM_URL } from 'config';
 
 import { Company } from 'types/company';
 import baseApi from './baseApi';
+import { editCompanyFarm } from 'store/features/companySlice';
 
 const companyApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
@@ -129,6 +130,14 @@ const companyApi = baseApi.injectEndpoints({
               () => updatedEstablishment
             )
           );
+          // The farm dashboard header and the farm switcher read the company held in Redux
+          // (`state.company.currentCompany.establishments`), which is set at sign-in and is not
+          // an RTK Query cache entry, so invalidating 'Company' never reaches it. Without this
+          // the header kept the old city and state until a reload (pilot rehearsal 2026-10-17,
+          // finding 9).
+          if (updatedEstablishment?.id !== undefined && updatedEstablishment?.id !== null) {
+            dispatch(editCompanyFarm(updatedEstablishment));
+          }
         } catch {
           // Invalidation will handle refetch on error
         }

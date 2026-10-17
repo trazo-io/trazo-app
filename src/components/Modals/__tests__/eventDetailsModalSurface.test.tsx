@@ -50,6 +50,13 @@ vi.mock('store/api/amendmentsApi', () => ({
   useAmendSeasonMutation: () => [vi.fn(), { isLoading: false }]
 }));
 
+// The record's documents block (pilot rehearsal 2026-10) reads the documents endpoint; this
+// suite is about the modal's surface, so it answers "no documents". Covered in
+// eventDetailsRecordTrail.test.tsx.
+vi.mock('store/api/documentsApi', () => ({
+  useGetFarmDocumentsQuery: () => ({ data: [] })
+}));
+
 // canWrite gates the whole action cluster; this suite is about how those actions LOOK.
 vi.mock('hooks/useUserRole', () => ({ useUserRole: () => ({ canWrite: true }) }));
 // The crew-message provenance block (audit T29) reads its own endpoint; this suite is about the
@@ -293,11 +300,11 @@ describe('EventDetailsModal — action colours are semantic, not decorative', ()
   it('states the kg CO₂e fact instead', () => {
     renderModal();
     // What replaces the grade: a measured quantity, not a verdict. Scoped to the carbon card
-    // — "no direct emissions" also appears inside the record-value alert's prose, and an
+    // — "no emissions estimated" also appears inside the record-value alert's prose, and an
     // unscoped query would pass on that sentence alone even if the readout were deleted.
     expect(screen.getByText('kg CO₂e')).toBeInTheDocument();
     const carbonCard = screen.getByText('kg CO₂e').closest('div')?.parentElement?.parentElement;
-    expect(within(carbonCard as HTMLElement).getByText('No direct emissions')).toBeInTheDocument();
+    expect(within(carbonCard as HTMLElement).getByText('No emissions estimated')).toBeInTheDocument();
   });
 });
 

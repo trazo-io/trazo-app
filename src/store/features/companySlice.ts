@@ -46,20 +46,29 @@ export const companySlice = createSlice({
         state.currentFarm = action.payload;
       }
     },
-    editCompanyFarm: (state, action: PayloadAction<Farm>) => {
+    /**
+     * Merge a saved farm into the company's farm list (and the selected farm).
+     *
+     * MERGED, not replaced: the PATCH response (`UpdateEstablishmentSerializer`) has no
+     * `parcels` and other fields the company payload carries, so replacing the object would
+     * drop them from every screen that reads Redux.
+     */
+    editCompanyFarm: (state, action: PayloadAction<Partial<Farm> & { id: Farm['id'] }>) => {
+      const sameFarm = (farm: Farm | null | undefined) =>
+        !!farm && String(farm.id) === String(action.payload.id);
       if (
         state.currentCompany &&
         'establishments' in state.currentCompany &&
         state.currentCompany.establishments
       ) {
         state.currentCompany.establishments = [
-          ...state.currentCompany.establishments.map((farm: Farm) => {
-            if (farm.id === action.payload.id) {
-              return action.payload;
-            }
-            return farm;
-          })
+          ...state.currentCompany.establishments.map((farm: Farm) =>
+            sameFarm(farm) ? ({ ...farm, ...action.payload } as Farm) : farm
+          )
         ];
+      }
+      if (sameFarm(state.currentFarm)) {
+        state.currentFarm = { ...state.currentFarm, ...action.payload } as Farm;
       }
     },
     setFarmParcel: (
