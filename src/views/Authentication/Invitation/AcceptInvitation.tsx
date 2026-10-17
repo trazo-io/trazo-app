@@ -80,8 +80,6 @@ const AcceptInvitation: React.FC = () => {
       // If we get here, invitation was accepted successfully (authenticated user)
       setStep('success');
 
-      const companyName =
-        typeof result.company === 'string' ? result.company : result.company?.name;
       const redirectUrl = result.redirect_to || '/admin/dashboard';
 
       // Redirect based on subscription status
