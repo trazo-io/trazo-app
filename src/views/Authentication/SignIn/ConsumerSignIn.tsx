@@ -116,14 +116,6 @@ const ConsumerSignIn: React.FC = () => {
       // Set a flag to prevent Authenticated component from interfering
       sessionStorage.setItem('just_authenticated', 'true');
 
-      toast({
-        title: 'Welcome back!',
-        description: 'You have successfully signed in.',
-        status: 'success',
-        duration: 3000,
-        isClosable: true
-      });
-
       // RedirectGuard will handle the navigation
       // Default redirect to dashboard
       navigate('/admin/dashboard', { replace: true });
@@ -153,15 +145,17 @@ const ConsumerSignIn: React.FC = () => {
       // Set a flag to prevent Authenticated component from interfering
       sessionStorage.setItem('just_authenticated', 'true');
 
-      toast({
-        title: response.is_new_user ? 'Welcome to Trazo!' : 'Welcome back!',
-        description: response.is_new_user
-          ? 'Your account has been created successfully.'
-          : 'You have successfully signed in.',
-        status: 'success',
-        duration: 3000,
-        isClosable: true
-      });
+      // Returning users land on the dashboard, which is the confirmation. A first sign-in
+      // through Google creates an account, and that is worth saying.
+      if (response.is_new_user) {
+        toast({
+          title: 'Welcome to Trazo!',
+          description: 'Your account has been created successfully.',
+          status: 'success',
+          duration: 3000,
+          isClosable: true
+        });
+      }
 
       // RedirectGuard will handle the navigation
       // Default redirect to dashboard

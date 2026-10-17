@@ -39,6 +39,7 @@ import {
 import { FormProvider, useForm } from 'react-hook-form';
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { clearForm, setForm } from 'store/features/formSlice';
+import { useTourStore } from 'store/tourStore';
 import { object, string } from 'zod';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -2719,16 +2720,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
           ...finalEventData,
           id: existingEvent.id
         }).unwrap();
-
-        toast({
-          title: intl.formatMessage({ id: 'app.success' }) || 'Success',
-          description:
-            intl.formatMessage({ id: 'app.eventUpdatedSuccessfully' }) ||
-            'Event updated successfully',
-          status: 'success',
-          duration: 5000,
-          isClosable: true
-        });
       } else {
         // Create new event
         savedEvent = await createEvent({
@@ -2777,16 +2768,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
               }
             : {})
         }).unwrap();
-
-        toast({
-          title: intl.formatMessage({ id: 'app.success' }) || 'Success',
-          description:
-            intl.formatMessage({ id: 'app.eventCreatedSuccessfully' }) ||
-            'Event created successfully with complete data for carbon calculation',
-          status: 'success',
-          duration: 5000,
-          isClosable: true
-        });
       }
 
       // Non-blocking nudge: the record IS saved (a farmer logs what they know standing in the
@@ -2814,6 +2795,19 @@ function NewEvent({ isEdit = false, eventId = null }) {
           description: gapNames,
           status: 'warning',
           duration: 8000,
+          isClosable: true
+        });
+        // One save, one toast. The first-activity celebration is raised later by the Admin
+        // layout (useMilestones) once the productions refetch shows the new event, so it would
+        // stack a second toast on this one. A save that names missing documents already has the
+        // farmer's attention; record the milestone as seen instead of celebrating on top of it.
+        const tour = useTourStore.getState();
+        if (!tour.celebratedMilestones['first-event']) tour.celebrateMilestone('first-event');
+      } else {
+        toast({
+          title: intl.formatMessage({ id: 'app.activitySaved' }),
+          status: 'success',
+          duration: 3000,
           isClosable: true
         });
       }
