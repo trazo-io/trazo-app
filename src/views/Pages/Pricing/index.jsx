@@ -67,6 +67,7 @@ import {
   StandardSection,
   StandardPageLoading
 } from 'components/Design';
+import { apiErrorMessage } from 'utils/apiErrorMessage';
 
 // Lazy Stripe loader. The previous module-level loadStripe() executed on
 // EVERY app load — including the consumer QR page, where the key is empty —
@@ -380,7 +381,7 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
     } catch (error) {
       toast({
         title: t('app.error'),
-        description: error?.data?.detail || error?.data?.error || t('app.trialStartError'),
+        description: apiErrorMessage(error) ?? t('app.trialStartError'),
         status: 'error',
         duration: 5000,
         isClosable: true

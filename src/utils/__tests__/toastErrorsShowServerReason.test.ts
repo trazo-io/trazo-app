@@ -56,7 +56,21 @@ const toastCalls = (src: string): string[] => {
 };
 
 /** `String(err`, `String(error`, `String((err as ...)`, and `err.data ||` / `error?.data ||`. */
-const OFFENDER = /String\(\s*\(?\s*(?:err|error|e)\b|\b(?:err|error|e)\??\.data\s*\|\|/;
+const OFFENDER =
+  /String\(\s*\(?\s*(?:err|error|e)\b|\b(?:err|error|e)\??\.data(?:\??\.\w+)*\s*\|\|/;
+
+/**
+ * Files that still offend and are owned by another open slice or are dead code. Each must keep
+ * offending (asserted below), so the list can only shrink: fix the file, delete its line.
+ */
+const KNOWN_OFFENDERS: Record<string, string> = {
+  'views/Authentication/Invitation/SetupPassword.tsx': 'toast-text slice (hardcoded text rewrite)',
+  'views/Authentication/SignUp/AppSignUp.tsx': 'toast-text slice (hardcoded text rewrite)',
+  'views/Dashboard/Dashboard/Parcel/AddParcel.tsx': 'toast-drop slice',
+  'views/Dashboard/Dashboard/Production/UpdateProduction.tsx': 'dead code, no route',
+  'views/Dashboard/Dashboard/components/forms/CarbonReportTab.jsx': 'dead code, no import',
+  'views/Dashboard/Dashboard/components/forms/NewCompany.jsx': 'dead code, no route'
+};
 
 const FILES = walk(SRC);
 const rel = (p: string) => relative(SRC, p);
@@ -71,6 +85,9 @@ describe('error toasts show the server reason, never String(err)', () => {
       true
     );
     expect(OFFENDER.test("description: err?.data || 'x'")).toBe(true);
+    expect(OFFENDER.test("description: error?.data?.detail || error?.data?.error || t('x')")).toBe(
+      true
+    );
     expect(
       OFFENDER.test("description: apiErrorMessage(err) ?? intl.formatMessage({ id: 'x' })")
     ).toBe(false);
@@ -84,9 +101,14 @@ describe('error toasts show the server reason, never String(err)', () => {
 
   it('no toast builds its text from String(err) or err.data ||', () => {
     const offenders: string[] = [];
+    const seen = new Set<string>();
     for (const f of FILES) {
       for (const call of toastCalls(readFileSync(f, 'utf8'))) {
         if (OFFENDER.test(call)) {
+          if (rel(f) in KNOWN_OFFENDERS) {
+            seen.add(rel(f));
+            continue;
+          }
           offenders.push(
             `${rel(f)}: ${call
               .split('\n')
@@ -97,5 +119,7 @@ describe('error toasts show the server reason, never String(err)', () => {
       }
     }
     expect(offenders).toEqual([]);
+    // An entry that no longer offends must leave the list.
+    expect([...seen].sort()).toEqual(Object.keys(KNOWN_OFFENDERS).sort());
   });
 });
