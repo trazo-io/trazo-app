@@ -286,8 +286,7 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
           intl.formatMessage({ id: 'parcelForm.toast.saveErrorDescription' }),
         status: 'error',
         duration: 5000,
-        isClosable: true,
-        position: 'top-right'
+        isClosable: true
       });
     }
   };
@@ -324,8 +323,7 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
       description: intl.formatMessage({ id: 'parcelForm.error.loadDescription' }),
       status: 'error',
       duration: 5000,
-      isClosable: true,
-      position: 'top-right'
+      isClosable: true
     });
     navigate(`/admin/dashboard/farm/${farmId}`);
   }, [isEdit, parcelError, farmId, intl, navigate, toast]);

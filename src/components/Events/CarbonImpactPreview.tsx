@@ -376,18 +376,18 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
         ? // Every one of these named the transparency SCORE, which was retired as a producer
           // surface, and several also promised "the consumer story" — on a panel that renders
           // beside the certifier record on every form. Each now says what the record is FOR.
-          'Pollination is a biological service — no fuel burned, so no direct emissions. Hive counts and placement dates evidence the § 205.200 biodiversity practices your OSP describes.'
+          'Pollination is a biological service: no fuel burned, so there are no emissions to estimate. Hive counts and placement dates evidence the § 205.200 biodiversity practices your OSP describes.'
         : isScouting
-        ? 'Scouting is observational, so it produces no direct emissions. It is also the record § 205.206(e) rests on: a National List substance is permitted only where prevention proved insufficient.'
+        ? 'Scouting is observational, so there are no emissions to estimate. It is also the record § 205.206(e) rests on: a National List substance is permitted only where prevention proved insufficient.'
         : isIPM
-        ? 'Biological control and beneficial releases produce no direct emissions. They are the § 205.206(a)–(d) practices a certifier expects to see tried before any substance is applied.'
+        ? 'Biological control and beneficial releases have no emissions to estimate. They are the § 205.206(a)–(d) practices a certifier expects to see tried before any substance is applied.'
         : isBusiness
-        ? 'Certifications, inspections and audits produce no direct emissions. Their dates and certificate numbers are what your certifier asks for at renewal.'
+        ? 'Certifications, inspections and audits have no emissions to estimate. Their dates and certificate numbers are what your certifier asks for at renewal.'
         : isGeneral
-        ? 'General farm work produces no direct emissions. It still belongs in the record — § 205.103(b)(1) asks for records adapted to the particular business you run.'
+        ? 'General farm work has no emissions to estimate. It still belongs in the record — § 205.103(b)(1) asks for records adapted to the particular business you run.'
         : isWeather
         ? 'Weather events produce no emissions. They explain the gaps in a season when your certifier reads back through the record.'
-        : 'This event produces no direct emissions. It still forms part of the record your certifier reviews at renewal.';
+        : 'This event has no emissions to estimate. It still forms part of the record your certifier reviews at renewal.';
 
       return (
         <Card size="sm" bg={bgColor} borderRadius="md" borderWidth="1px" borderColor={borderColor}>
@@ -415,7 +415,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                     </Badge>
                   </HStack>
                   <Text fontSize="xs" color="gray.500">
-                    No direct emissions
+                    No emissions estimated
                   </Text>
                 </VStack>
                 {/* "Efficiency Score 100/100" stood here. It was a grade Trazo assigned to

@@ -21,7 +21,11 @@ import { useIntl } from 'react-intl';
 
 import { Box, HStack, Text, VStack, useToast } from '@chakra-ui/react';
 
-import { StandardButton, StandardCard } from 'components/Design/StandardComponents';
+import {
+  StandardButton,
+  StandardCard,
+  StandardSpinner
+} from 'components/Design/StandardComponents';
 import { useGetCrewChannelQuery } from 'store/api/crewSenderApi';
 
 const CrewChannel = () => {
@@ -43,8 +47,7 @@ const CrewChannel = () => {
         title: intl.formatMessage({ id: 'fieldNotes.channel.copyFailed' }),
         status: 'error',
         duration: 5000,
-        isClosable: true,
-        position: 'top'
+        isClosable: true
       });
       return;
     }
@@ -54,16 +57,14 @@ const CrewChannel = () => {
         title: intl.formatMessage({ id: 'fieldNotes.channel.copied' }),
         status: 'success',
         duration: 2000,
-        isClosable: true,
-        position: 'top'
+        isClosable: true
       });
     } catch {
       toast({
         title: intl.formatMessage({ id: 'fieldNotes.channel.copyFailed' }),
         status: 'error',
         duration: 5000,
-        isClosable: true,
-        position: 'top'
+        isClosable: true
       });
     }
   };
@@ -79,7 +80,7 @@ const CrewChannel = () => {
       <StandardCard>
         <VStack align="stretch" spacing={2} p={2}>
           {heading}
-          <Text fontSize="sm">{intl.formatMessage({ id: 'app.loading' })}</Text>
+          <StandardSpinner label={intl.formatMessage({ id: 'app.loading' })} />
         </VStack>
       </StandardCard>
     );

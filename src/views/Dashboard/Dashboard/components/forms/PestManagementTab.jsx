@@ -172,8 +172,34 @@ const pestSchema = object({
   }
 });
 
+// The default record name per subtype, in the farmer's language: the same labels the subtype
+// select shows. Pilot rehearsal 2026-10, finding 2: this tab never named a record, so switching to
+// Trap Monitoring left the required name blank and Continue refused with nothing on screen.
+const PEST_TYPE_NAME_KEYS = {
+  SC: 'app.scouting',
+  BR: 'app.beneficialRelease',
+  TM: 'app.trapMonitoring',
+  PI: 'app.pestIdentification',
+  TA: 'app.thresholdAssessment',
+  IP: 'app.impImplementation',
+  CU: 'events.pest.subtypes.culturalControl'
+};
+
 const PestManagementTab = forwardRef(
-  ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}, hideActions = false }, ref) => {
+  (
+    {
+      onSubmitHandler,
+      onDataChange,
+      onPrev,
+      initialValues = {},
+      hideActions = false,
+      // Who wrote the name ('auto' | 'operator' | 'unknown'), held by NewEvent. Same contract as
+      // ProductionTab (Run 8b R4): regenerate only while the name is the tab's own.
+      nameOrigin = 'auto',
+      onNameEdited
+    },
+    ref
+  ) => {
     const intl = useIntl();
     const borderColor = useColorModeValue('gray.200', 'gray.600');
 
@@ -377,6 +403,21 @@ const PestManagementTab = forwardRef(
       formState: { errors }
     } = methods;
     const pestType = watch('type');
+
+    // Default name from the subtype, while the name is the tab's own ('auto') or blank and nobody
+    // typed it. An operator-touched name is theirs even when blank (clearing to retype is an
+    // edit); an unknown origin (edit, repeat, restored draft) keeps a non-blank name as it is.
+    const pestTypeNameKey = PEST_TYPE_NAME_KEYS[pestType];
+    const pestTypeName = pestTypeNameKey ? intl.formatMessage({ id: pestTypeNameKey }) : '';
+    useEffect(() => {
+      if (!pestTypeName) return;
+      const currentName = methods.getValues('name');
+      const isBlank = !currentName || !String(currentName).trim();
+      if (nameOrigin === 'auto' || (isBlank && nameOrigin !== 'operator')) {
+        methods.setValue('name', pestTypeName, { shouldDirty: false, shouldValidate: isBlank });
+      }
+    }, [pestTypeName, nameOrigin, methods]);
+    const nameField = methods.register('name');
 
     // Sprint 5: Watch for summary mode toggle (Aggregate Pest Scouting Support)
     const isSummaryMode = watch('is_summary') === 'true';
@@ -609,7 +650,11 @@ const PestManagementTab = forwardRef(
                     required
                     error={errors.name?.message}>
                     <StandardInput
-                      {...methods.register('name')}
+                      {...nameField}
+                      onChange={(event) => {
+                        onNameEdited?.();
+                        return nameField.onChange(event);
+                      }}
                       placeholder="e.g., Pest Scouting, Beneficial Release"
                     />
                   </StandardField>
@@ -901,7 +946,7 @@ const PestManagementTab = forwardRef(
                       </Text>
                     </HStack>
                     <Text fontSize="xs" color="teal.600">
-                      Pest scouting is observational and does not produce direct emissions.
+                      Pest scouting is observational, so there are no emissions to estimate.
                       <br />
                       {/* F38 fix (2026-06): removed unsourced "+30 points" figure and the
                             FAO attribution that did not substantiate it (compliance: no

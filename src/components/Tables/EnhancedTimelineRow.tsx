@@ -1558,8 +1558,8 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                   <Tooltip
                     label={`Environmental Impact: ${formatCO2e(carbonData.co2e)} kg CO₂e ${
                       carbonData.co2e === 0
-                        ? '(no direct emissions)'
-                        : '(carbon footprint estimate)'
+                        ? '(no emissions estimated)'
+                        : '(estimated emissions: operation and purchased inputs)'
                     }`}
                     placement="top"
                     hasArrow

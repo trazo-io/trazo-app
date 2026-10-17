@@ -3168,12 +3168,21 @@ const ChemicalTab = forwardRef(
                                     defaultMessage: 'Milliliters (mL)'
                                   })}
                                 </option>
-                                <option value="oz">
-                                  {intl.formatMessage({
-                                    id: 'app.unit.fluidOunces',
-                                    defaultMessage: 'Fluid Ounces (oz)'
-                                  })}
+                                {/* Fluid and weight ounces are separate units (pilot rehearsal
+                                    2026-10-17). The old "oz", which this option stored while
+                                    labelled "Fluid Ounces", is shown only on a record that
+                                    already holds it: it does not say which ounce it means. */}
+                                <option value="fl_oz">
+                                  {intl.formatMessage({ id: 'app.unit.fluidOunces' })}
                                 </option>
+                                <option value="oz_wt">
+                                  {intl.formatMessage({ id: 'app.unit.ouncesWeight' })}
+                                </option>
+                                {field.value === 'oz' && (
+                                  <option value="oz">
+                                    {intl.formatMessage({ id: 'app.unit.ouncesUnstated' })}
+                                  </option>
+                                )}
                                 <option value="kg">
                                   {intl.formatMessage({
                                     id: 'app.unit.kilograms',
@@ -4266,9 +4275,17 @@ const ChemicalTab = forwardRef(
                               <option value="mL">
                                 {intl.formatMessage({ id: 'app.unit.milliliters' })}
                               </option>
-                              <option value="oz">
-                                {intl.formatMessage({ id: 'app.unit.ounces' })}
+                              <option value="fl_oz">
+                                {intl.formatMessage({ id: 'app.unit.fluidOunces' })}
                               </option>
+                              <option value="oz_wt">
+                                {intl.formatMessage({ id: 'app.unit.ouncesWeight' })}
+                              </option>
+                              {field.value === 'oz' && (
+                                <option value="oz">
+                                  {intl.formatMessage({ id: 'app.unit.ouncesUnstated' })}
+                                </option>
+                              )}
                               <option value="kg">
                                 {intl.formatMessage({ id: 'app.unit.kilograms' })}
                               </option>

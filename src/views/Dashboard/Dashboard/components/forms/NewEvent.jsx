@@ -132,6 +132,7 @@ import {
 import { voiceBlockSuggestion } from 'utils/spokenBlock';
 import { isEventOnBuyerPage } from 'utils/consumerDisplay';
 import { cleanEventPayload } from 'utils/cleanEventPayload';
+import { revealFirstFormError } from 'utils/revealFirstFormError';
 import {
   applyTemplateToForm,
   isTemplateCompatible,
@@ -344,24 +345,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
   const toast = useToast();
   const steps = useWizardSteps(intl);
 
-  // D7 — move the farmer to the first field that failed validation. react-hook-form marks
-  // invalid inputs with aria-invalid, so this works for every tab without each one having to
-  // report its state upward (only WeatherTab ever did, which is why the old disabled-Continue
-  // gate was dead for the other six).
-  const focusFirstInvalidField = useCallback(() => {
-    if (typeof document === 'undefined') return;
-    const firstInvalid = document.querySelector('[aria-invalid="true"]');
-    if (!firstInvalid) return;
-    firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    // Focus after the scroll settles so the browser doesn't fight the smooth scroll.
-    window.setTimeout(() => {
-      try {
-        firstInvalid.focus({ preventScroll: true });
-      } catch {
-        /* not focusable — the scroll already did the useful part */
-      }
-    }, 350);
-  }, []);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { parcelId, farmId } = useParams();
@@ -874,8 +857,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
           }),
       status: 'success',
       duration: 7000,
-      isClosable: true,
-      position: 'top'
+      isClosable: true
     });
   }, [restoreDraft, intl, toast]);
 
@@ -2477,8 +2459,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
         description: intl.formatMessage({ id: 'events.voice.dateMissingBody' }),
         status: 'warning',
         duration: 6000,
-        isClosable: true,
-        position: 'top'
+        isClosable: true
       });
       setActiveStep(0);
       return;
@@ -4110,6 +4091,8 @@ function NewEvent({ isEdit = false, eventId = null }) {
                       onPrev={goToPreviousStep}
                       initialValues={eventFormData}
                       hideActions={true}
+                      nameOrigin={nameOrigin}
+                      onNameEdited={() => setNameOrigin('operator')}
                     />
                   )}
                   {activeEventType === 7 && (
@@ -4178,21 +4161,33 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                 // D7 — validation failure used to be a console.warn, which a
                                 // farmer never sees: Continue simply did nothing and the page
                                 // did not move. Tell them what happened and take them to it.
-                                focusFirstInvalidField();
+                                // Pilot rehearsal 2026-10: the focus ran before React marked the
+                                // field invalid, so it found nothing. revealFirstFormError waits
+                                // for the re-render, focuses the field and returns its label so
+                                // the notice can name it (any tab, not only pest).
+                                const revealed = await revealFirstFormError(errors);
+                                // Only a field LABEL fills {field}. The validation message is
+                                // a sentence (and hardcoded English in the zod schemas), so
+                                // without a label the translated generic body is used instead.
+                                const fieldName = revealed.label;
                                 toast({
                                   title: intl.formatMessage({
                                     id: 'events.form.validationFailedTitle',
                                     defaultMessage: 'Some required details are missing'
                                   }),
-                                  description: intl.formatMessage({
-                                    id: 'events.form.validationFailedBody',
-                                    defaultMessage:
-                                      'We highlighted the first field that needs attention.'
-                                  }),
+                                  description: fieldName
+                                    ? intl.formatMessage(
+                                        { id: 'events.form.validationFailedField' },
+                                        { field: fieldName }
+                                      )
+                                    : intl.formatMessage({
+                                        id: 'events.form.validationFailedBody',
+                                        defaultMessage:
+                                          'We highlighted the first field that needs attention.'
+                                      }),
                                   status: 'error',
                                   duration: 6000,
-                                  isClosable: true,
-                                  position: 'top'
+                                  isClosable: true
                                 });
                               }
                             } else {
