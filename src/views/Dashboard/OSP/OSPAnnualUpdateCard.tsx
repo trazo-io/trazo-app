@@ -588,7 +588,6 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
       toast({
         status: 'warning',
         isClosable: true,
-        position: 'top',
         title: intl.formatMessage({
           id: 'osp.annual.toast.checkFields',
           defaultMessage: 'Nothing saved yet — check the highlighted fields'
@@ -680,7 +679,6 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
         // out on a three-part message.
         duration: 9000,
         isClosable: true,
-        position: 'top',
         title: intl.formatMessage({
           id: 'osp.annual.toast.error',
           defaultMessage: 'Could not save the annual update'
@@ -739,7 +737,6 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
         status: 'error',
         duration: 9000,
         isClosable: true,
-        position: 'top',
         title: intl.formatMessage({
           id: 'osp.annual.toast.actionError',
           defaultMessage: 'That did not go through'

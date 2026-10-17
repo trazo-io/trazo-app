@@ -43,8 +43,7 @@ const CrewChannel = () => {
         title: intl.formatMessage({ id: 'fieldNotes.channel.copyFailed' }),
         status: 'error',
         duration: 5000,
-        isClosable: true,
-        position: 'top'
+        isClosable: true
       });
       return;
     }
@@ -54,16 +53,14 @@ const CrewChannel = () => {
         title: intl.formatMessage({ id: 'fieldNotes.channel.copied' }),
         status: 'success',
         duration: 2000,
-        isClosable: true,
-        position: 'top'
+        isClosable: true
       });
     } catch {
       toast({
         title: intl.formatMessage({ id: 'fieldNotes.channel.copyFailed' }),
         status: 'error',
         duration: 5000,
-        isClosable: true,
-        position: 'top'
+        isClosable: true
       });
     }
   };

@@ -873,8 +873,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
           }),
       status: 'success',
       duration: 7000,
-      isClosable: true,
-      position: 'top'
+      isClosable: true
     });
   }, [restoreDraft, intl, toast]);
 
@@ -2476,8 +2475,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
         description: intl.formatMessage({ id: 'events.voice.dateMissingBody' }),
         status: 'warning',
         duration: 6000,
-        isClosable: true,
-        position: 'top'
+        isClosable: true
       });
       setActiveStep(0);
       return;
@@ -4197,8 +4195,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                   }),
                                   status: 'error',
                                   duration: 6000,
-                                  isClosable: true,
-                                  position: 'top'
+                                  isClosable: true
                                 });
                               }
                             } else {

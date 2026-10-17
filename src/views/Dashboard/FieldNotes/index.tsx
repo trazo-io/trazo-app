@@ -355,16 +355,14 @@ const FieldNotesInbox = () => {
         title: intl.formatMessage({ id: 'fieldNotes.refused.acknowledged' }),
         status: 'success',
         duration: 4000,
-        isClosable: true,
-        position: 'top'
+        isClosable: true
       });
     } catch {
       toast({
         title: intl.formatMessage({ id: 'fieldNotes.refused.acknowledgeFailed' }),
         status: 'error',
         duration: 6000,
-        isClosable: true,
-        position: 'top'
+        isClosable: true
       });
     }
   };
@@ -378,16 +376,14 @@ const FieldNotesInbox = () => {
         title: intl.formatMessage({ id: 'fieldNotes.discarded' }),
         status: 'success',
         duration: 4000,
-        isClosable: true,
-        position: 'top'
+        isClosable: true
       });
     } catch {
       toast({
         title: intl.formatMessage({ id: 'fieldNotes.discardFailed' }),
         status: 'error',
         duration: 6000,
-        isClosable: true,
-        position: 'top'
+        isClosable: true
       });
     }
   };
