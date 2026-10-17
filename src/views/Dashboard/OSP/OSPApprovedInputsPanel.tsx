@@ -71,6 +71,7 @@ import type {
   OSP,
   PlanMaterialEntry
 } from 'types/osp';
+import { apiErrorMessage } from 'utils/apiErrorMessage';
 
 interface ChangeLogSectionProps {
   logs: ApprovedInputChangeLog[];
@@ -254,7 +255,7 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
       toast({
         status: 'error',
         title: intl.formatMessage({ id: 'osp.approvedInputs.error.search' }),
-        description: String(err?.data?.error || err?.message || err),
+        description: apiErrorMessage(err) ?? intl.formatMessage({ id: 'app.errorTryAgain' }),
         duration: 5000
       });
     }
@@ -284,7 +285,7 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
       toast({
         status: 'error',
         title: intl.formatMessage({ id: 'osp.approvedInputs.own.addFailed' }),
-        description: String(err?.data?.product_name || err?.data?.detail || err?.message || err),
+        description: apiErrorMessage(err) ?? intl.formatMessage({ id: 'app.errorTryAgain' }),
         duration: 6000
       });
     }
@@ -297,7 +298,7 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
       toast({
         status: 'error',
         title: intl.formatMessage({ id: 'osp.approvedInputs.own.removeFailed' }),
-        description: String(err?.data?.detail || err?.message || err),
+        description: apiErrorMessage(err) ?? intl.formatMessage({ id: 'app.errorTryAgain' }),
         duration: 6000
       });
     }
@@ -324,7 +325,7 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
       toast({
         status: 'error',
         title: intl.formatMessage({ id: 'osp.approvedInputs.error.add' }),
-        description: String(err?.data?.error || err?.message || err),
+        description: apiErrorMessage(err) ?? intl.formatMessage({ id: 'app.errorTryAgain' }),
         duration: 5000
       });
     }
@@ -353,7 +354,7 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
       toast({
         status: 'error',
         title: intl.formatMessage({ id: 'osp.approvedInputs.error.remove' }),
-        description: String(err?.data?.error || err?.message || err),
+        description: apiErrorMessage(err) ?? intl.formatMessage({ id: 'app.errorTryAgain' }),
         duration: 5000
       });
       setPendingRemove(null);

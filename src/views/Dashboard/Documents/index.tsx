@@ -384,9 +384,10 @@ const DocumentsPage = () => {
         status: 'success',
         duration: 3000
       });
-    } catch {
+    } catch (err: unknown) {
       toast({
         title: intl.formatMessage({ id: 'documents.deleteFailed' }),
+        description: apiErrorMessage(err) ?? undefined,
         status: 'error',
         duration: 5000
       });

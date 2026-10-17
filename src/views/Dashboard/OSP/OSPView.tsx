@@ -87,6 +87,7 @@ import { selectPlanOnFile } from './selectPlanOnFile';
 import { selectWorkingOsp } from './selectWorkingOsp';
 import { useFarm, useFarmState } from 'hooks/useMeasurementSystem';
 import { todayLocalISODate } from 'utils/dateOnly';
+import { apiErrorMessage } from 'utils/apiErrorMessage';
 
 interface RootState {
   company: {
@@ -520,7 +521,7 @@ const OSPView: React.FC = () => {
       toast({
         status: 'error',
         title: intl.formatMessage({ id: 'osp.error.create' }),
-        description: String(err?.data || err)
+        description: apiErrorMessage(err) ?? intl.formatMessage({ id: 'app.errorTryAgain' })
       });
     }
   };
@@ -550,7 +551,7 @@ const OSPView: React.FC = () => {
       toast({
         status: 'error',
         title: intl.formatMessage({ id: 'osp.error.save' }),
-        description: String(err?.data || err)
+        description: apiErrorMessage(err) ?? intl.formatMessage({ id: 'app.errorTryAgain' })
       });
     }
   };
@@ -598,7 +599,7 @@ const OSPView: React.FC = () => {
         toast({
           status: 'error',
           title: intl.formatMessage({ id: 'osp.error.submit' }),
-          description: String(payload?.error || payload?.detail || err)
+          description: apiErrorMessage(err) ?? intl.formatMessage({ id: 'app.errorTryAgain' })
         });
       }
     }

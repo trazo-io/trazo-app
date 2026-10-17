@@ -67,6 +67,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { formatDateFromTimestamp } from 'utils/dateOnly';
 import { isNotEstimated, showsInputsBadge } from 'utils/carbonStatus';
+import { apiErrorMessage, apiErrorStatus } from 'utils/apiErrorMessage';
 
 // Types
 interface Member {
@@ -833,9 +834,13 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
         console.error('Failed to delete event:', error);
         toast({
           title: intl.formatMessage({ id: 'eventDetails.deleteFailed.title' }),
-          description: intl.formatMessage({ id: 'eventDetails.deleteFailed.description' }),
+          // A finished season answers 423 with the sentence that says what to do instead
+          // (correct the record); the generic line below hid it.
+          description:
+            apiErrorMessage(error) ??
+            intl.formatMessage({ id: 'eventDetails.deleteFailed.description' }),
           status: 'error',
-          duration: 3000,
+          duration: apiErrorStatus(error) === 423 ? 8000 : 3000,
           isClosable: true
         });
       });

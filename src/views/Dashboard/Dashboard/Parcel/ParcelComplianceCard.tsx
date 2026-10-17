@@ -29,6 +29,7 @@ import {
 } from 'components/Design/StandardComponents';
 import { useFarmState } from 'hooks/useMeasurementSystem';
 import { useUpdateParcelComplianceMutation } from 'store/api/productApi';
+import { apiErrorMessage } from 'utils/apiErrorMessage';
 
 interface BufferRow {
   direction: string;
@@ -126,7 +127,7 @@ const ParcelComplianceCard: React.FC<Props> = ({
           id: 'parcel.compliance.toast.error',
           defaultMessage: 'Could not save parcel compliance records'
         }),
-        description: String((err as { data?: unknown })?.data || err)
+        description: apiErrorMessage(err) ?? intl.formatMessage({ id: 'app.errorTryAgain' })
       });
     }
   };
@@ -177,7 +178,7 @@ const ParcelComplianceCard: React.FC<Props> = ({
           id: 'parcel.compliance.toast.error',
           defaultMessage: 'Could not save parcel compliance records'
         }),
-        description: String((err as { data?: unknown })?.data || err)
+        description: apiErrorMessage(err) ?? intl.formatMessage({ id: 'app.errorTryAgain' })
       });
     }
   };

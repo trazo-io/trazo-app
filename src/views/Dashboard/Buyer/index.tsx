@@ -55,6 +55,7 @@ import { useGetFarmScansPaginatedQuery } from 'store/api/historyApi';
 import BuyerReviewLinkCard from 'components/Certifications/BuyerReviewLinkCard';
 import type { RootState } from 'store/index';
 import { useTour } from 'hooks/useTour';
+import { apiErrorMessage } from 'utils/apiErrorMessage';
 
 /** Rows per page. Scans page on the server; productions page in the client (one fetch). */
 const SCAN_PAGE_SIZE = 8;
@@ -274,15 +275,25 @@ const BuyerPage = () => {
   // download_qr_code returns JSON {download_url} (S3 presign in prod, local file
   // URL in dev) — resolve it, then open the actual image.
   const handleQrDownload = async (productionId: number) => {
+    let reason: string | null = null;
     try {
       const res = await fetch(env.getApiUrl(`histories/${productionId}/download_qr_code/`), {
         credentials: 'include'
       });
       const data = (await res.json()) as { download_url?: string; error?: string };
-      if (!res.ok || !data.download_url) throw new Error(data.error || 'no url');
+      if (!res.ok || !data.download_url) {
+        // `apiErrorMessage` reads an RTK error; this is a raw fetch, so hand it the same shape.
+        reason = apiErrorMessage({ data });
+        throw new Error('no download url');
+      }
       window.open(data.download_url, '_blank', 'noopener');
     } catch {
-      toast({ title: intl.formatMessage({ id: 'app.error' }), status: 'error', duration: 4000 });
+      toast({
+        title: intl.formatMessage({ id: 'buyer.qrFailed' }),
+        description: reason ?? undefined,
+        status: 'error',
+        duration: 4000
+      });
     }
   };
 
@@ -292,8 +303,13 @@ const BuyerPage = () => {
   ) => {
     try {
       await setRequestStatus({ farmId: farmId || '', requestId: row.id, status }).unwrap();
-    } catch {
-      toast({ title: intl.formatMessage({ id: 'app.error' }), status: 'error', duration: 4000 });
+    } catch (err: unknown) {
+      toast({
+        title: intl.formatMessage({ id: 'buyer.requestUpdateFailed' }),
+        description: apiErrorMessage(err) ?? undefined,
+        status: 'error',
+        duration: 4000
+      });
     }
   };
 

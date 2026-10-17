@@ -32,6 +32,7 @@ import {
   useComplianceExports
 } from 'components/Guards/ComplianceExportsGuard';
 import { formatDateFromTimestamp } from 'utils/dateOnly';
+import { apiErrorMessage } from 'utils/apiErrorMessage';
 
 interface Props {
   companyId: string;
@@ -74,10 +75,13 @@ const BuyerReviewLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) =
         status: 'success',
         title: intl.formatMessage({ id: 'buyerLink.toast.created' })
       });
-    } catch {
+    } catch (err: unknown) {
+      // No readiness blockers here (the backend gates only certifier links on readiness), but
+      // the paywall and validation answers carry a reason the farmer should read.
       toast({
         status: 'error',
-        title: intl.formatMessage({ id: 'buyerLink.toast.createFailed' })
+        title: intl.formatMessage({ id: 'buyerLink.toast.createFailed' }),
+        description: apiErrorMessage(err) ?? undefined
       });
     }
   };
@@ -105,10 +109,11 @@ const BuyerReviewLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) =
         status: 'info',
         title: intl.formatMessage({ id: 'buyerLink.toast.revoked' })
       });
-    } catch {
+    } catch (err: unknown) {
       toast({
         status: 'error',
-        title: intl.formatMessage({ id: 'buyerLink.toast.revokeFailed' })
+        title: intl.formatMessage({ id: 'buyerLink.toast.revokeFailed' }),
+        description: apiErrorMessage(err) ?? undefined
       });
     }
   };

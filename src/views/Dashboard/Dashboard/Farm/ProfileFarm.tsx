@@ -94,6 +94,7 @@ import { normalizeState } from 'utils/usStates';
 import CertifierLinkCard from 'components/Certifications/CertifierLinkCard';
 import { ComplianceExportsGuard } from 'components/Guards/ComplianceExportsGuard';
 import { useTour } from 'hooks/useTour';
+import { apiErrorMessage } from 'utils/apiErrorMessage';
 
 // Type definitions
 interface RootState {
@@ -225,12 +226,13 @@ function ProfileFarm() {
       });
       setOfppEditMode(false);
       setOfppFile(null);
-    } catch {
+    } catch (err: unknown) {
       toast({
         title: intl.formatMessage({
           id: 'farm.soe.saveFailed',
           defaultMessage: 'Failed to save compliance data'
         }),
+        description: apiErrorMessage(err) ?? undefined,
         status: 'error',
         duration: 3000,
         isClosable: true

@@ -20,6 +20,7 @@ import {
   useGetStateOrganicRegistrationsQuery,
   useUpdateStateOrganicRegistrationMutation
 } from 'store/api/stateOrganicRegistrationApi';
+import { apiErrorMessage } from 'utils/apiErrorMessage';
 
 /**
  * States that run a USDA-approved State Organic Program under 7 CFR 205.620.
@@ -132,7 +133,7 @@ const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId, stat
           id: 'osp.cdfa.toast.errorTitle',
           defaultMessage: 'Could not save registration'
         }),
-        description: String((err as { data?: unknown })?.data || err)
+        description: apiErrorMessage(err) ?? intl.formatMessage({ id: 'app.errorTryAgain' })
       });
     }
   };

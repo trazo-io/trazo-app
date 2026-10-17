@@ -61,6 +61,7 @@ import type {
   OSPDocumentationTiming,
   OSPNotificationMethod
 } from 'types/osp';
+import { apiErrorMessage } from 'utils/apiErrorMessage';
 
 interface Props {
   companyId: string;
@@ -217,7 +218,7 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
           id: 'osp.changeNotifications.withdrawError',
           defaultMessage: 'Could not withdraw the change notification.'
         }),
-        description: String(err?.data?.error || err?.message || ''),
+        description: apiErrorMessage(err) ?? intl.formatMessage({ id: 'app.errorTryAgain' }),
         duration: 6000,
         isClosable: true
       });

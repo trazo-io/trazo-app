@@ -176,36 +176,6 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
     }
   }, [location]);
 
-  // Handle successful subscription completion
-  useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const status = searchParams.get('status');
-
-    // Only handle success if we're actually on the pricing page (not coming from Stripe redirect)
-    if (status === 'success' && !searchParams.get('session_id')) {
-      toast({
-        title: t('app.subscriptionSuccessful'),
-        description: t('app.subscriptionSuccessfulDescription'),
-        status: 'success',
-        duration: 8000,
-        isClosable: true
-      });
-
-      // Handle return path
-      const returnPath = localStorage.getItem('subscription_return_path');
-      if (returnPath) {
-        localStorage.removeItem('subscription_return_path');
-        if (returnPath === 'form') {
-          navigate('/admin/dashboard');
-        }
-      }
-
-      // Clean up URL
-      const newUrl = window.location.pathname;
-      window.history.replaceState({}, '', newUrl);
-    }
-  }, [location, toast, navigate, t]);
-
   // Get company ID for subscription
   const getCompanyId = () => {
     if (directCompanyId) return directCompanyId;
