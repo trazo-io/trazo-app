@@ -79,6 +79,26 @@ export function isPilotSubscription(subscription: any): boolean {
   return subscription?.plan?.slug === 'pilot' || subscription?.plan?.features?.is_pilot === true;
 }
 
+/**
+ * The last-name suffix every pilot operator account carries. Mirrors `SETUP_SUFFIX` in
+ * trazo-back `subscriptions/pilot_operator.py`: `provision_pilot` and `add_pilot_operator` create
+ * the operator as "<first> <last> (Trazo setup)" through `operator_last_name`, which always
+ * appends it, so the audit trail names the setup account. Pinned by a parity test.
+ */
+export const PILOT_OPERATOR_LAST_NAME_SUFFIX = '(Trazo setup)';
+
+/**
+ * Is this the account Trazo uses to set up a pilot farm, rather than the grower?
+ *
+ * The operator signs in to the grower's company to enter their records, so the pilot checklist
+ * told the operator to "Send your existing records to Oscar" (pilot rehearsal 2026-10-17,
+ * finding 7). The payload carries no role or flag for this account; the suffix is the one
+ * signal the backend always writes.
+ */
+export function isPilotSetupOperator(user: { last_name?: string | null } | null | undefined) {
+  return (user?.last_name || '').trim().endsWith(PILOT_OPERATOR_LAST_NAME_SUFFIX);
+}
+
 // `check-commercial` was here until 2026-08-11. The Commercial dashboard was cut in WS-7 and
 // `/commercial` folded to a redirect to farm home, so the item sent a read-only user to a page
 // that no longer exists and then marked itself complete for having visited the redirect target.
@@ -168,6 +188,7 @@ export function useOnboardingChecklist() {
   const { farmId: urlFarmId } = useParams();
 
   const company = useSelector((state: RootState) => state.company?.currentCompany);
+  const currentUser = useSelector((state: RootState) => (state as any).userState?.user);
   const establishments = company?.establishments || [];
 
   // Resolve current farm ID
@@ -333,6 +354,7 @@ export function useOnboardingChecklist() {
     items,
     optionalItems,
     isPilot,
+    isSetupOperator: isPilot && isPilotSetupOperator(currentUser),
     pilotStepsComplete,
     variant,
     completedCount,
