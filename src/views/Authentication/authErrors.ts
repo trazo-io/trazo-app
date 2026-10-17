@@ -96,6 +96,8 @@ export interface RtkError {
 const SIMPLE_JWT_NO_ACTIVE_ACCOUNT = 'no active account found';
 
 export const resolveSignUpError = (err: RtkError | undefined): AuthErrorResolution => {
+  const throttled = rateLimited(err);
+  if (throttled) return throttled;
   const data = err?.data ?? {};
   const code = first(data.code);
 
@@ -157,6 +159,8 @@ export const resolveSignUpError = (err: RtkError | undefined): AuthErrorResoluti
 };
 
 export const resolveSignInError = (err: RtkError | undefined): AuthErrorResolution => {
+  const throttled = rateLimited(err);
+  if (throttled) return throttled;
   const data = err?.data ?? {};
   const detail = first(data.detail);
 
@@ -201,6 +205,8 @@ export const resolveSignInError = (err: RtkError | undefined): AuthErrorResoluti
  * the caller checks for it before resolving. Returning a red box for it would be a lie.
  */
 export const resolveVerifyEmailError = (err: RtkError | undefined): AuthErrorResolution => {
+  const throttled = rateLimited(err);
+  if (throttled) return throttled;
   const data = err?.data ?? {};
   const code = first(data.code);
 
@@ -232,6 +238,8 @@ export const resolveGenericAuthError = (
   err: RtkError | undefined,
   genericMessageId: string
 ): AuthErrorResolution => {
+  const throttled = rateLimited(err);
+  if (throttled) return throttled;
   const data = err?.data ?? {};
   const text = first(data.detail) ?? first(data.error) ?? first(data.non_field_errors);
   if (text) {
@@ -248,6 +256,16 @@ export const resolveGenericAuthError = (
 };
 
 /**
+ * Checked BEFORE the body. A throttled request still carries a body (DRF's English
+ * `detail: "Request was throttled. Expected available in 42 seconds."`), so every resolver that
+ * reads `detail` first printed that sentence verbatim instead of the translated line.
+ */
+const rateLimited = (err: RtkError | undefined): AuthErrorResolution | undefined =>
+  err?.status === 429
+    ? { messageId: 'auth.error.rateLimited', action: { kind: 'none' }, fieldsInvalid: [] }
+    : undefined;
+
+/**
  * Status-only failures, where there is no body to read. `messageId` is left undefined so the
  * caller can supply the screen-appropriate generic line; everything else is shared.
  */
@@ -256,9 +274,6 @@ const transportError = (
 ): Omit<AuthErrorResolution, 'messageId'> & { messageId?: string } => {
   const status = typeof err?.status === 'number' ? err.status : undefined;
 
-  if (status === 429) {
-    return { messageId: 'auth.error.rateLimited', action: { kind: 'none' }, fieldsInvalid: [] };
-  }
   if (status !== undefined && status >= 500) {
     return { messageId: 'auth.error.server', action: { kind: 'none' }, fieldsInvalid: [] };
   }

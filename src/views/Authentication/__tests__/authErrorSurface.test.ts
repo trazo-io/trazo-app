@@ -265,6 +265,23 @@ describe('authErrors mapper', () => {
     expect(resolveSignUpError(undefined).messageId).toBe('auth.error.signup.generic');
   });
 
+  it('a throttled request is translated even though it carries an English detail', () => {
+    // DRF's Throttled body. Every resolver read `detail` before the status, so this sentence
+    // reached the screen verbatim on both locales once login/signup/password_reset were wired.
+    const throttled = {
+      status: 429,
+      data: { detail: 'Request was throttled. Expected available in 42 seconds.' }
+    };
+
+    expect(resolveSignInError(throttled).messageId).toBe('auth.error.rateLimited');
+    expect(resolveSignUpError(throttled).messageId).toBe('auth.error.rateLimited');
+    expect(resolveVerifyEmailError(throttled).messageId).toBe('auth.error.rateLimited');
+    expect(resolveGenericAuthError(throttled, 'auth.error.server').messageId).toBe(
+      'auth.error.rateLimited'
+    );
+    expect(resolveSignInError(throttled).fallbackText).toBeUndefined();
+  });
+
   it('a code the client has not learned yet still says something true', () => {
     // Degrading to a blank box, or to a lie, is worse than degrading to the server's own
     // sentence. This is the ONLY path on which server prose reaches a screen.
