@@ -19,7 +19,8 @@
  * the old behaviour.
  *
  * Readiness guard (2026-08-10): the backend never refuses this build — a not-ready operation
- * gets its PDF stamped with a red "[NON-COMPLIANT DOSSIER — DO NOT SUBMIT TO CERTIFIER]" banner
+ * gets its PDF stamped with a red "[DRAFT: documentation gaps listed]" banner (renamed from a
+ * compliance verdict 2026-10-17: Trazo lists gaps, the certifier decides)
  * instead. The same readiness query paints a warning with the blocker titles first, and the
  * build stays available — the farmer may legitimately want the stamped draft to see exactly
  * what the certifier would.
@@ -206,7 +207,7 @@ const OperationAuditExportButton: React.FC<Props> = ({ companyId, farmId }) => {
             <Text fontSize="sm" fontWeight="semibold" color="orange.800">
               {intl.formatMessage({
                 id: 'operationAudit.notReadyTitle',
-                defaultMessage: 'This dossier will be stamped "DO NOT SUBMIT"'
+                defaultMessage: 'This dossier will be stamped "DRAFT: documentation gaps listed"'
               })}
             </Text>
             <Text fontSize="sm" color="orange.800">

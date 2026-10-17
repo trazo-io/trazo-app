@@ -116,25 +116,6 @@ const ModernVerifyEmail: React.FC<VerifyEmailProps> = ({ userType = 'producer' }
     if (isSuccess) {
       setStep('success');
 
-      // 🚀 2025 Best Practice: Context-aware success messaging
-      const successMessage = isCompanyJoin
-        ? {
-            title: intl.formatMessage({ id: 'auth.verifyEmail.success.joinTitle' }),
-            description: intl.formatMessage({ id: 'auth.verifyEmail.success.joinBody' })
-          }
-        : {
-            title: intl.formatMessage({ id: 'auth.verifyEmail.success.title' }),
-            description: intl.formatMessage({ id: 'auth.verifyEmail.success.body' })
-          };
-
-      toast({
-        title: successMessage.title,
-        description: successMessage.description,
-        status: 'success',
-        duration: 4000,
-        isClosable: true
-      });
-
       // Start progress animation and redirect
       let progress = 0;
       const progressInterval = setInterval(() => {

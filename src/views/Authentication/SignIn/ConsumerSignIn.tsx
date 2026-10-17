@@ -116,14 +116,6 @@ const ConsumerSignIn: React.FC = () => {
       // Set a flag to prevent Authenticated component from interfering
       sessionStorage.setItem('just_authenticated', 'true');
 
-      toast({
-        title: 'Welcome back!',
-        description: 'You have successfully signed in.',
-        status: 'success',
-        duration: 3000,
-        isClosable: true
-      });
-
       // RedirectGuard will handle the navigation
       // Default redirect to dashboard
       navigate('/admin/dashboard', { replace: true });
@@ -153,15 +145,17 @@ const ConsumerSignIn: React.FC = () => {
       // Set a flag to prevent Authenticated component from interfering
       sessionStorage.setItem('just_authenticated', 'true');
 
-      toast({
-        title: response.is_new_user ? 'Welcome to Trazo!' : 'Welcome back!',
-        description: response.is_new_user
-          ? 'Your account has been created successfully.'
-          : 'You have successfully signed in.',
-        status: 'success',
-        duration: 3000,
-        isClosable: true
-      });
+      // Returning users land on the dashboard, which is the confirmation. A first sign-in
+      // through Google creates an account, and that is worth saying.
+      if (response.is_new_user) {
+        toast({
+          title: intl.formatMessage({ id: 'auth.signup.toast.social.newUser.title' }),
+          description: intl.formatMessage({ id: 'auth.signup.toast.social.newUser.body' }),
+          status: 'success',
+          duration: 3000,
+          isClosable: true
+        });
+      }
 
       // RedirectGuard will handle the navigation
       // Default redirect to dashboard
@@ -189,8 +183,8 @@ const ConsumerSignIn: React.FC = () => {
       case 'Google':
         if (!config.google) {
           toast({
-            title: 'Configuration Error',
-            description: 'Google sign-in is not configured. Please contact support.',
+            title: intl.formatMessage({ id: 'auth.signup.toast.config.title' }),
+            description: intl.formatMessage({ id: 'auth.signup.toast.config.googleBody' }),
             status: 'error',
             duration: 5000,
             isClosable: true
@@ -207,8 +201,8 @@ const ConsumerSignIn: React.FC = () => {
       case 'Facebook':
         if (!config.facebook) {
           toast({
-            title: 'Configuration Error',
-            description: 'Facebook sign-in is not configured. Please contact support.',
+            title: intl.formatMessage({ id: 'auth.signup.toast.config.title' }),
+            description: intl.formatMessage({ id: 'auth.signup.toast.config.facebookBody' }),
             status: 'error',
             duration: 5000,
             isClosable: true
@@ -224,8 +218,8 @@ const ConsumerSignIn: React.FC = () => {
 
       default:
         toast({
-          title: 'Error',
-          description: 'Unknown social login provider.',
+          title: intl.formatMessage({ id: 'auth.signup.toast.unknownProvider.title' }),
+          description: intl.formatMessage({ id: 'auth.signup.toast.unknownProvider.body' }),
           status: 'error',
           duration: 3000,
           isClosable: true

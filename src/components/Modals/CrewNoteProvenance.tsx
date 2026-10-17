@@ -34,6 +34,23 @@ const CrewNoteProvenance = ({ eventId, eventType }: { eventId?: number; eventTyp
         })
       : intl.formatMessage({ id: 'crewNote.notRecorded' });
 
+  // The stated occurrence is the RECORD's own date, which ADR 011 keeps as the farm's wall clock
+  // under a UTC label (`utils/dateOnly.ts`). Rendered in the viewer's zone it moved: a crew note
+  // logged at 07:00 read "4:00 AM" for a viewer in Montevideo (2026-10-17, filming the crew short),
+  // the record and its provenance disagreeing on the screen a certifier reads. Received, confirmed
+  // and reviewed are real moments and stay in the viewer's zone.
+  const wallClock = (iso: string | null) =>
+    iso
+      ? intl.formatDate(new Date(iso), {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          timeZone: 'UTC'
+        })
+      : intl.formatMessage({ id: 'crewNote.notRecorded' });
+
   return (
     <Box
       p={4}
@@ -63,7 +80,7 @@ const CrewNoteProvenance = ({ eventId, eventType }: { eventId?: number; eventTyp
           “{note.words}”
         </Text>
         <Text fontSize="sm">
-          {intl.formatMessage({ id: 'crewNote.occurred' }, { when: when(note.occurred_at) })}
+          {intl.formatMessage({ id: 'crewNote.occurred' }, { when: wallClock(note.occurred_at) })}
         </Text>
         <Text fontSize="sm">
           {intl.formatMessage(

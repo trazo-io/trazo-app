@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useIntl } from 'react-intl';
 import {
   Box,
   Button,
@@ -31,6 +32,7 @@ const AcceptInvitation: React.FC = () => {
   const navigate = useNavigate();
   const { invitationCode } = useParams<{ invitationCode: string }>();
   const [searchParams] = useSearchParams();
+  const intl = useIntl();
   const toast = useToast();
 
   const [step, setStep] = useState<'loading' | 'accept' | 'success' | 'error'>('loading');
@@ -80,21 +82,7 @@ const AcceptInvitation: React.FC = () => {
       // If we get here, invitation was accepted successfully (authenticated user)
       setStep('success');
 
-      const companyName =
-        typeof result.company === 'string' ? result.company : result.company?.name;
       const redirectUrl = result.redirect_to || '/admin/dashboard';
-
-      // Show success toast with appropriate message
-      const wasTransfer = isAuthenticated && currentUser?.companies?.length > 0;
-      toast({
-        title: wasTransfer ? 'Successfully transferred!' : 'Successfully joined!',
-        description: wasTransfer
-          ? `You've been transferred to ${companyName}. Taking you to your new dashboard...`
-          : `Welcome to ${companyName}! Taking you to your dashboard...`,
-        status: 'success',
-        duration: 4000,
-        isClosable: true
-      });
 
       // Redirect based on subscription status
       setTimeout(() => {
@@ -127,7 +115,7 @@ const AcceptInvitation: React.FC = () => {
 
       // Show toast for immediate feedback
       toast({
-        title: 'Invitation Error',
+        title: intl.formatMessage({ id: 'auth.invitation.toast.error.title' }),
         description: message,
         status: 'error',
         duration: 5000,

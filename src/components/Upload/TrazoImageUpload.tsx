@@ -441,22 +441,6 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
 
       if (imageFiles.length > 0) {
         handleFileSelect(imageFiles);
-        toast({
-          title: intl.formatMessage({
-            id: 'upload.toast.pasted',
-            defaultMessage: '📋 Photos pasted'
-          }),
-          description: intl.formatMessage(
-            {
-              id: 'upload.toast.pastedBody',
-              defaultMessage:
-                '{count, plural, one {# photo pasted from the clipboard} other {# photos pasted from the clipboard}}'
-            },
-            { count: imageFiles.length }
-          ),
-          status: 'success',
-          duration: 2000
-        });
       }
     };
 
@@ -567,16 +551,6 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
       if (onImagesChange) {
         onImagesChange(newUploadedUrls);
       }
-
-      toast({
-        title: '✅ Upload successful',
-        description: intl.formatMessage({
-          id: 'upload.toast.uploadedBody',
-          defaultMessage: 'Photo uploaded successfully'
-        }),
-        status: 'success',
-        duration: 2000
-      });
     } catch (error) {
       const isQuotaError = isStorageQuotaError(error);
       const retryErrorMessage = isQuotaError
@@ -602,11 +576,11 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
           }),
           description:
             quotaError.remaining_gb !== undefined
-              ? `You have ${quotaError.remaining_gb.toFixed(2)} GB remaining out of ${
-                  quotaError.limit_gb
-                } GB. Upgrade your plan for more storage.`
-              : quotaError.error ||
-                'Your storage limit has been reached. Please upgrade your plan.',
+              ? intl.formatMessage(
+                  { id: 'upload.error.storageRemaining' },
+                  { remaining: quotaError.remaining_gb.toFixed(2), limit: quotaError.limit_gb }
+                )
+              : quotaError.error || intl.formatMessage({ id: 'upload.error.storageGeneric' }),
           status: 'error',
           duration: 6000,
           isClosable: true

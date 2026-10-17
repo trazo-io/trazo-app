@@ -22,7 +22,7 @@ import { Controller, type Control } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 
 import type { FieldConfig } from 'src/config/events';
-import { getEnumOptions, type EnumSourceKey } from 'src/config/events';
+import { getEnumOptions, type EnumOption, type EnumSourceKey } from 'src/config/events';
 import {
   StandardField,
   StandardInput,
@@ -215,11 +215,16 @@ export const RegistryFormField: React.FC<RegistryFormFieldProps> = ({
                         value={unitFormField.value ?? ''}
                         isDisabled={isDisabled}
                         size="sm">
-                        {unitOptions.map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {resolveLabel(opt.labelKey, intl)}
-                          </option>
-                        ))}
+                        {unitOptions
+                          .filter(
+                            (opt: EnumOption) =>
+                              !opt.legacyOnly || opt.value === unitFormField.value
+                          )
+                          .map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {resolveLabel(opt.labelKey, intl)}
+                            </option>
+                          ))}
                       </StandardSelect>
                     )}
                   />

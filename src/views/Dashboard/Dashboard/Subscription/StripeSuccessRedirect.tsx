@@ -114,8 +114,7 @@ const StripeSuccessRedirect: React.FC = () => {
           }),
           status: 'success',
           duration: isNewCompany ? 8000 : 5000,
-          isClosable: true,
-          position: 'top'
+          isClosable: true
         });
 
         // Clean up bypass flags before navigation

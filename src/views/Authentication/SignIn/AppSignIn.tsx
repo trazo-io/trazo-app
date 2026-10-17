@@ -146,14 +146,6 @@ const AppSignIn: React.FC = () => {
           .catch(() => clearPendingScans());
       }
 
-      toast({
-        title: intl.formatMessage({ id: 'auth.signup.toast.social.returning.title' }),
-        description: intl.formatMessage({ id: 'auth.signup.toast.social.returning.body' }),
-        status: 'success',
-        duration: 3000,
-        isClosable: true
-      });
-
       // Don't redirect immediately - let Authenticated.jsx handle establishment redirect
       // This prevents race condition where company data isn't loaded yet
       // The user will be redirected to the appropriate establishment dashboard
@@ -208,21 +200,17 @@ const AppSignIn: React.FC = () => {
         return;
       }
 
-      toast({
-        title: intl.formatMessage({
-          id: response.is_new_user
-            ? 'auth.signup.toast.social.newUser.title'
-            : 'auth.signup.toast.social.returning.title'
-        }),
-        description: intl.formatMessage({
-          id: response.is_new_user
-            ? 'auth.signup.toast.social.newUser.body'
-            : 'auth.signup.toast.social.returning.body'
-        }),
-        status: 'success',
-        duration: 3000,
-        isClosable: true
-      });
+      // A returning user lands on their dashboard, which is the confirmation. Only a first
+      // sign-in through Google creates an account, and that is worth saying.
+      if (response.is_new_user) {
+        toast({
+          title: intl.formatMessage({ id: 'auth.signup.toast.social.newUser.title' }),
+          description: intl.formatMessage({ id: 'auth.signup.toast.social.newUser.body' }),
+          status: 'success',
+          duration: 3000,
+          isClosable: true
+        });
+      }
 
       // Don't redirect immediately - let Authenticated.jsx handle establishment redirect
       // This prevents race condition where company data isn't loaded yet

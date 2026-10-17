@@ -147,7 +147,7 @@ const OSPActivateModal: React.FC<OSPActivateModalProps> = ({
       }).unwrap();
       toast({
         status: 'success',
-        title: intl.formatMessage({ id: 'osp.action.activate' }),
+        title: intl.formatMessage({ id: 'osp.toast.activated' }),
         description: intl.formatMessage({ id: 'osp.activateModal.success' }),
         duration: 5000,
         isClosable: true

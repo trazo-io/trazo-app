@@ -513,8 +513,11 @@ const OSPView: React.FC = () => {
       setSelectedOspId(osp.id);
       toast({
         status: 'success',
-        title: intl.formatMessage({ id: 'osp.action.create' }),
-        description: `v${osp.version_number} draft created.`,
+        title: intl.formatMessage({ id: 'osp.toast.created' }),
+        description: intl.formatMessage(
+          { id: 'osp.toast.createdVersion' },
+          { version: osp.version_number }
+        ),
         duration: 3000
       });
     } catch (err: any) {
@@ -546,7 +549,7 @@ const OSPView: React.FC = () => {
           /* ignore */
         }
       }
-      toast({ status: 'success', title: intl.formatMessage({ id: 'osp.action.save' }) });
+      toast({ status: 'success', title: intl.formatMessage({ id: 'osp.toast.saved' }) });
     } catch (err: any) {
       toast({
         status: 'error',
@@ -575,7 +578,7 @@ const OSPView: React.FC = () => {
       setEditableOsp(fresh);
       toast({
         status: 'success',
-        title: intl.formatMessage({ id: 'osp.action.submit' }),
+        title: intl.formatMessage({ id: 'osp.toast.submitted' }),
         description: intl.formatMessage({ id: 'osp.action.submitHint' }),
         duration: 10000,
         isClosable: true
