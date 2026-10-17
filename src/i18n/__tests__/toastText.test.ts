@@ -69,7 +69,10 @@ const PENDING_REMOVAL: Array<[string, string]> = [
   ['views/Dashboard/Dashboard/Production/ProfileProduction.tsx', 'QR Code Ready'],
   ['views/Dashboard/Dashboard/Production/ProfileProduction.tsx', 'Download URL generated'],
   // NewEvent.jsx: `intl.formatMessage(...) || 'Success'` style fallbacks, all in slice E's rewrite.
-  ['views/Dashboard/Dashboard/components/forms/NewEvent.jsx', '']
+  ['views/Dashboard/Dashboard/components/forms/NewEvent.jsx', "'Success'"],
+  ['views/Dashboard/Dashboard/components/forms/NewEvent.jsx', "'Event updated successfully'"],
+  ['views/Dashboard/Dashboard/components/forms/NewEvent.jsx', "'Event created successfully"],
+  ['views/Dashboard/Dashboard/components/forms/NewEvent.jsx', "'Saved"]
 ];
 
 const TOAST_CALL = /\b(?:toast|showToast|toastFn)\s*\(\s*\{/g;
@@ -186,7 +189,7 @@ for (const { file, text } of FILES) {
 }
 
 const isExempt = (file: string, expr: string) =>
-  PENDING_REMOVAL.some(([f, needle]) => f === file && expr.includes(needle));
+  PENDING_REMOVAL.some(([f, needle]) => needle.length > 0 && f === file && expr.includes(needle));
 
 describe('toast text comes from the locale files', () => {
   it('scans a meaningful number of toast calls (no vacuous pass)', () => {
@@ -210,6 +213,8 @@ describe('toast text comes from the locale files', () => {
   });
 
   it('every pending-removal exemption still matches a call (stale entries fail)', () => {
+    // An empty needle matches every expression in the file and exempts it wholesale.
+    expect(PENDING_REMOVAL.filter(([, needle]) => needle.length === 0)).toEqual([]);
     const stale = PENDING_REMOVAL.filter(
       ([f, needle]) =>
         !CALLS.some((c) => c.file === f && c.props.some((p) => p.expr.includes(needle)))
