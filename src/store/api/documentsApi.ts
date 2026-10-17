@@ -27,6 +27,9 @@ export interface FarmDocument {
   /** The sale this is a source document of (invoice, bill of lading, pack-out). */
   sales_record?: number | null;
   source_kind?: SaleSourceKind | '';
+  /** The one activity record this file belongs to (both set or both null). */
+  event_type?: number | null;
+  event_id?: number | null;
   tags: string[];
   is_deletable: boolean;
   created_by_name: string | null;
@@ -49,18 +52,35 @@ interface DocFilters extends DocScope {
   /** `module.question` — the files that answer one attachment question. */
   requirement?: string;
   salesRecord?: number;
+  /** The files filed against one activity record. Sent only as a pair. */
+  eventType?: number;
+  eventId?: number;
 }
 
 const documentsApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     getFarmDocuments: build.query<FarmDocument[], DocFilters>({
-      query: ({ companyId, farmId, folder, search, linkedSection, requirement, salesRecord }) => {
+      query: ({
+        companyId,
+        farmId,
+        folder,
+        search,
+        linkedSection,
+        requirement,
+        salesRecord,
+        eventType,
+        eventId
+      }) => {
         const params = new URLSearchParams();
         if (folder) params.set('folder', folder);
         if (search) params.set('search', search);
         if (linkedSection) params.set('linked_section', linkedSection);
         if (requirement) params.set('requirement', requirement);
         if (salesRecord) params.set('sales_record', String(salesRecord));
+        if (eventType != null && eventId != null) {
+          params.set('event_type', String(eventType));
+          params.set('event_id', String(eventId));
+        }
         const qs = params.toString();
         return {
           url: DOCUMENTS_URL(companyId, farmId) + (qs ? `?${qs}` : ''),
@@ -96,6 +116,10 @@ const documentsApi = baseApi.injectEndpoints({
         /** The sale this file documents, and what kind of document it is. */
         salesRecord?: number | null;
         sourceKind?: SaleSourceKind;
+        /** The activity record this file documents (the invoice behind one spray). The server
+         *  files it under that record's production and refuses a record from another farm. */
+        eventType?: number | null;
+        eventId?: number | null;
       }
     >({
       query: ({
@@ -110,7 +134,9 @@ const documentsApi = baseApi.injectEndpoints({
         linkedSection,
         requirement,
         salesRecord,
-        sourceKind
+        sourceKind,
+        eventType,
+        eventId
       }) => {
         const body = new FormData();
         body.append('file', file);
@@ -122,6 +148,10 @@ const documentsApi = baseApi.injectEndpoints({
         if (requirement) body.append('requirement', requirement);
         if (salesRecord) body.append('sales_record', String(salesRecord));
         if (sourceKind) body.append('source_kind', sourceKind);
+        if (eventType != null && eventId != null) {
+          body.append('event_type', String(eventType));
+          body.append('event_id', String(eventId));
+        }
         (tags ?? []).forEach((t) => body.append('tags', t));
         return {
           url: DOCUMENTS_URL(companyId, farmId),
