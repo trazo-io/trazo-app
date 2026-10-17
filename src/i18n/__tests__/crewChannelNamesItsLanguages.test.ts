@@ -1,8 +1,9 @@
 /**
- * The crew channel names the languages it serves. Its parser reads English and Spanish and refuses
- * the rest, and a crew may speak Mixteco or Punjabi, so "their own language" promised something the
- * channel does not do (CLAUDE.md, input methods). Found 2026-10-17 on the Field Notes setup card
- * while filming the crew short.
+ * The crew channel names the languages it serves: the roster offers English, Spanish and Portuguese
+ * (`fieldnotes/models.py` LANGUAGE_CHOICES, `CrewSenderLanguage`) and the parser refuses the rest. A crew
+ * may speak Mixteco or Punjabi, so "their own language" promised something the channel does not do.
+ * Found 2026-10-17 on the Field Notes setup card while filming the crew short; the language list was
+ * corrected from two to three in review of #134.
  */
 import { describe, expect, it } from 'vitest';
 
@@ -23,12 +24,12 @@ describe('the crew channel says which languages it reads', () => {
     }
   });
 
-  it('the setup step names English and Spanish', () => {
+  it('the setup step names the three roster languages', () => {
     expect((en as Record<string, string>)['fieldNotes.channel.step3']).toContain(
-      'English or Spanish'
+      'English, Spanish or Portuguese'
     );
     expect((es as Record<string, string>)['fieldNotes.channel.step3']).toContain(
-      'español o en inglés'
+      'español, inglés o portugués'
     );
   });
 });
