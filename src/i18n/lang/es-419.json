@@ -5857,7 +5857,7 @@
   "osp.annual.markSubmitted": "Presentada ante mi certificador",
   "osp.annual.noOsp": "Crea primero tu Plan del Sistema Orgánico, luego presenta la actualización anual sobre él.",
   "osp.annual.planMoved": "Plan v{from} → v{to}",
-  "osp.annual.planReaffirmed": "Plan v{from} reafirmado",
+  "osp.annual.planReaffirmed": "Continúa el plan v{from}",
   "osp.annual.producesDraft": "Quedará registrada como origen de la v{version}, el borrador que estás preparando.",
   "osp.annual.applicationInfoUnchanged": "El nombre del negocio, la dirección, el teléfono y la persona responsable de la operación no cambiaron (7 CFR 205.406(a)(3))",
   "osp.annual.applicationInfoUnchangedHelp": "Déjalo sin marcar si alguno cambió, e informa a tu agente certificador qué cambió. La presentación imprime tu respuesta en cualquier caso.",

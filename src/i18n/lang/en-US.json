@@ -5857,7 +5857,7 @@
   "osp.annual.markSubmitted": "Filed with my certifier",
   "osp.annual.noOsp": "Create your Organic System Plan first, then file the annual update against it.",
   "osp.annual.planMoved": "Plan v{from} → v{to}",
-  "osp.annual.planReaffirmed": "Plan v{from} reaffirmed",
+  "osp.annual.planReaffirmed": "Continues plan v{from}",
   "osp.annual.producesDraft": "It will be recorded as producing v{version}, the draft you are preparing.",
   "osp.annual.applicationInfoUnchanged": "Business name, address, telephone and the person responsible for the operation are unchanged (7 CFR 205.406(a)(3))",
   "osp.annual.applicationInfoUnchangedHelp": "Leave it unticked if any of them changed, and tell your certifying agent what changed. The filing prints your answer either way.",
