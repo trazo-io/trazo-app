@@ -30,7 +30,8 @@ import {
   StandardSelect,
   StandardPage,
   StandardSearchInput,
-  StandardSegmentedControl
+  StandardSegmentedControl,
+  StandardSpinner
 } from 'components/Design/StandardComponents';
 import MemberRow from './memberRow';
 import CompanyInfoTab from './CompanyInfoTab';
@@ -521,9 +522,7 @@ export default function SettingsView() {
                         {/* Code Display and Copy. The API sends the code to company admins only. */}
                         {/* Three states: not loaded yet, admin (code sent), anyone else (null). */}
                         {!currentCompany ? (
-                          <Text fontSize="xs" color="gray.500">
-                            {intl.formatMessage({ id: 'app.loading' })}
-                          </Text>
+                          <StandardSpinner label={intl.formatMessage({ id: 'app.loading' })} />
                         ) : currentCompany.invitation_code ? (
                           <VStack spacing={3} align="center" minW={{ base: 'full', md: '200px' }}>
                             {/* Code Badge */}

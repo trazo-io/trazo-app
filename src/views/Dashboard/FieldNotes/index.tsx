@@ -29,6 +29,7 @@ import {
   StandardPage,
   StandardPagination,
   StandardSelect,
+  StandardSpinner,
   StandardTextarea
 } from 'components/Design/StandardComponents';
 
@@ -477,7 +478,7 @@ const FieldNotesInbox = () => {
         )}
 
         {(isLoading || refusedLoading || transcribingLoading) && (
-          <Text fontSize="sm">{intl.formatMessage({ id: 'app.loading' })}</Text>
+          <StandardSpinner label={intl.formatMessage({ id: 'app.loading' })} />
         )}
 
         {/*
