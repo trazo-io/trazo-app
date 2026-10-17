@@ -5537,6 +5537,8 @@
   "fieldNotes.kind.voice": "Voice note",
   "fieldNotes.logThis": "Log this",
   "fieldNotes.pickTheBlockFirst": "Pick the farm and the block this happened on. We do not guess it: the block is what a certifier follows.",
+  "fieldNotes.farmHasNoBlocks": "{farm} has no blocks yet. Add one, then come back: the note waits here.",
+  "fieldNotes.addABlock": "Add a block",
   "fieldNotes.refused.empty_message": "The message arrived with no text in it.",
   "fieldNotes.refused.heading": "Could not be read",
   "fieldNotes.refused.help": "These reached your number but Trazo could not turn them into a suggestion, so nothing was logged. They are kept here because somebody did report something, and that is worth knowing. Ask the sender to resend it the way each line says.",

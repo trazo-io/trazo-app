@@ -527,6 +527,12 @@ const FieldNotesInbox = () => {
           // offered on a note already spent writes a second record for one message, and
           // `_resolve_field_note` filters status=PENDING so the server declines the link silently.
           const ready = Boolean(farmId && parcelId) && note.status === 'pending';
+          // A FARM WITH NO BLOCKS IS A DEAD END, not a pending choice. The block select is
+          // required and correctly so, but on a farm that has none it renders as an open select
+          // holding only its placeholder, under a line telling the supervisor to pick one. There
+          // is nothing to pick and no way to make one from here. MEASURED 2026-10-17 on the first
+          // real crew message, against a farm with zero parcels.
+          const farmHasNoBlocks = Boolean(farm) && (farm?.parcels ?? []).length === 0;
 
           return (
             <StandardCard key={note.public_id}>
@@ -666,7 +672,7 @@ const FieldNotesInbox = () => {
                     <StandardSelect
                       placeholder={intl.formatMessage({ id: 'fieldNotes.chooseParcel' })}
                       value={parcelId ?? ''}
-                      isDisabled={!farm}
+                      isDisabled={!farm || farmHasNoBlocks}
                       onChange={(event) =>
                         setChoice((prev) => ({
                           ...prev,
@@ -690,9 +696,24 @@ const FieldNotesInbox = () => {
                   at all (a disabled button announces no reason of its own).
                 */}
                 {!ready && (
-                  <Text id={`why-${note.public_id}`} fontSize="xs" color="gray.700">
-                    {intl.formatMessage({ id: 'fieldNotes.pickTheBlockFirst' })}
-                  </Text>
+                  <VStack align="start" spacing={1}>
+                    <Text id={`why-${note.public_id}`} fontSize="xs" color="gray.700">
+                      {farmHasNoBlocks
+                        ? intl.formatMessage(
+                            { id: 'fieldNotes.farmHasNoBlocks' },
+                            { farm: farm?.name ?? '' }
+                          )
+                        : intl.formatMessage({ id: 'fieldNotes.pickTheBlockFirst' })}
+                    </Text>
+                    {farmHasNoBlocks && (
+                      <StandardButton
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/add`)}>
+                        {intl.formatMessage({ id: 'fieldNotes.addABlock' })}
+                      </StandardButton>
+                    )}
+                  </VStack>
                 )}
 
                 <Stack direction={{ base: 'column', smd: 'row' }} spacing={2}>

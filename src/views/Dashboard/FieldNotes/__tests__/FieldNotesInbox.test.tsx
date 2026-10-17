@@ -834,3 +834,54 @@ describe('a refusal can be cleared', () => {
     expect(screen.queryByRole('button', { name: /Mark as seen/i })).toBeNull();
   });
 });
+
+describe('a farm with no blocks', () => {
+  /**
+   * The block select is required, and that is right: a certifier traces by block and software must
+   * not infer one from a phone number. But on a farm that has none, "required" with no options is a
+   * dead end, and the generic hint tells the supervisor to pick something that does not exist.
+   * MEASURED 2026-10-17 on the first real crew message in production.
+   */
+  const NO_PARCELS = [{ id: 7, name: 'Home Ranch', parcels: [] as any[] }];
+
+  beforeEach(() => {
+    mocks.navigate.mockClear();
+    mocks.notes = [NOTE];
+    mocks.roster = { data: [], isLoading: false, isError: false };
+    mocks.state = {};
+  });
+
+  it('names the farm and says it has no blocks, instead of asking for one', () => {
+    renderInbox(NO_PARCELS);
+    expect(screen.getByText(/Home Ranch has no blocks yet/)).toBeTruthy();
+    // The generic hint is the thing being replaced. Leaving both would tell the supervisor to pick
+    // a block in the same breath as saying there are none.
+    expect(screen.queryByText(/Pick the farm and the block this happened on/)).toBeNull();
+  });
+
+  it('offers the way out, pointed at that farm', () => {
+    renderInbox(NO_PARCELS);
+    fireEvent.click(screen.getByRole('button', { name: /Add a block/i }));
+    expect(mocks.navigate).toHaveBeenCalledWith('/admin/dashboard/farm/7/parcel/add');
+  });
+
+  it('does not leave an empty required select open', () => {
+    renderInbox(NO_PARCELS);
+    const block = screen.getByLabelText(/Block/i) as HTMLSelectElement;
+    expect(block.hasAttribute('disabled')).toBe(true);
+  });
+
+  it('still blocks "Log this"', () => {
+    // The dead end is explained, not excused. Nothing may be logged without a block.
+    renderInbox(NO_PARCELS);
+    expect(screen.getByRole('button', { name: /Log this/i }).hasAttribute('disabled')).toBe(true);
+  });
+
+  it('keeps the generic hint when the farm does have blocks', () => {
+    // The new branch must not swallow the ordinary case: a farm WITH blocks and none chosen yet.
+    mocks.notes = [NOTE];
+    renderInbox(TWO_PARCELS);
+    expect(screen.getByText(/Pick the farm and the block this happened on/)).toBeTruthy();
+    expect(screen.queryByText(/has no blocks yet/)).toBeNull();
+  });
+});

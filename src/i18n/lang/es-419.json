@@ -5537,6 +5537,8 @@
   "fieldNotes.kind.voice": "Nota de voz",
   "fieldNotes.logThis": "Registrar esto",
   "fieldNotes.pickTheBlockFirst": "Elige la finca y el bloque donde pasó. No lo suponemos: el bloque es lo que sigue una certificadora.",
+  "fieldNotes.farmHasNoBlocks": "{farm} todavía no tiene bloques. Agrega uno y vuelve: la nota te espera aquí.",
+  "fieldNotes.addABlock": "Agregar un bloque",
   "fieldNotes.refused.empty_message": "El mensaje llegó sin texto.",
   "fieldNotes.refused.heading": "No se pudieron leer",
   "fieldNotes.refused.help": "Llegaron a tu número, pero Trazo no pudo convertirlos en una sugerencia, así que no se registró nada. Se conservan aquí porque alguien sí reportó algo, y eso vale la pena saberlo. Pide que lo vuelvan a enviar como indica cada línea.",

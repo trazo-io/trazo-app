@@ -18,7 +18,7 @@ import {
   Collapse
 } from '@chakra-ui/react';
 import { BellIcon, CloseIcon, ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
-import { FaStar, FaLeaf, FaBell } from 'react-icons/fa';
+import { FaStar, FaLeaf, FaBell, FaCommentDots } from 'react-icons/fa';
 import { MdSmartphone, MdWarning } from 'react-icons/md';
 import { useDispatch } from 'react-redux';
 import { useIntl } from 'react-intl';
@@ -60,8 +60,23 @@ type DisplayItem =
 
 // --- Icon & color helpers (Trazo-aligned) ---
 
-const getNotificationIcon = (type: string) => {
-  switch (type) {
+type NotificationMark = Pick<Notification, 'type' | 'extra_data'>;
+
+/**
+ * A crew note is NOT an alert. It travels as `system_alert` because that is the only transport
+ * the notification table offers, so the KIND inside `extra_data` decides the mark, never the
+ * type: `system_alert` alone renders a warning triangle, and a message arriving from the field
+ * is the ordinary case, not a fault. Backend: fieldnotes/services/arrival.py.
+ *
+ * FaCommentDots is the icon routes.tsx already gives the Field Notes page, so the badge and the
+ * page it opens carry the same mark. A REFUSED note keeps the warning: that one IS a fault, and
+ * it is the half a supervisor most needs to see.
+ */
+export const getNotificationIcon = (notification: NotificationMark) => {
+  if (notification.extra_data?.kind === 'field_note') {
+    return notification.extra_data?.status === 'refused' ? MdWarning : FaCommentDots;
+  }
+  switch (notification.type) {
     case 'product_scan':
       return MdSmartphone;
     case 'product_review':
@@ -85,8 +100,14 @@ const getNotificationIcon = (type: string) => {
  * all — the theme defines `amber`, so `orange.400` silently resolved to CHAKRA's orange
  * (#ED8936, 2.55:1), a foreign accent that is neither accessible nor ours.
  */
-const getNotificationColor = (type: string, priority: string) => {
-  switch (type) {
+export const getNotificationColor = (notification: NotificationMark, priority: string) => {
+  // Same split as the icon above, and for the same reason: `system_alert` would paint an
+  // arriving note gray.600, the colour this file gives a low-priority system fault.
+  // green.700 measures 5.13:1 under the white glyph, amber.900 3.79:1, both over the 3:1 floor.
+  if (notification.extra_data?.kind === 'field_note') {
+    return notification.extra_data?.status === 'refused' ? 'amber.900' : 'green.700';
+  }
+  switch (notification.type) {
     case 'product_scan':
       return 'green.700';
     case 'product_review':
@@ -105,6 +126,35 @@ const getNotificationColor = (type: string, priority: string) => {
     default:
       return 'green.700';
   }
+};
+
+export const getNotificationPath = (notification: Notification): string | null => {
+  const farmId = notification.extra_data?.establishment_id;
+  // ANSWERED BEFORE `farmId`, because the crew inbox is company-scoped and its URL carries no
+  // farm at all. A field note also legitimately arrives with no establishment (the backend
+  // says so in fieldnotes/services/arrival.py and sends null), so reading farmId first sent a
+  // farmless note to the generic branch, which returns null, and the notification did nothing
+  // when clicked. MEASURED in production 2026-10-17 on the first real crew message.
+  if (notification.extra_data?.kind === 'field_note') {
+    return '/admin/dashboard/field-notes';
+  }
+  // A finished background build ("your dossier is ready") lives on the Documents shelf, not
+  // the commercial dashboard — backend: documents/services/export_jobs.py `_notify`.
+  if (farmId && notification.extra_data?.kind === 'export_ready') {
+    return `/admin/dashboard/farm/${farmId}/documents`;
+  }
+  if (farmId) {
+    const params = new URLSearchParams();
+    if (notification.extra_data?.parcel_id)
+      params.set('parcelId', String(notification.extra_data.parcel_id));
+    if (notification.extra_data?.product_id)
+      params.set('productId', String(notification.extra_data.product_id));
+    if (notification.extra_data?.production_id)
+      params.set('productionId', String(notification.extra_data.production_id));
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return `/admin/dashboard/farm/${farmId}/commercial${query}`;
+  }
+  return null;
 };
 
 // --- Grouping logic ---
@@ -210,32 +260,11 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
   const [isOpen, setIsOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
-  const getCommercialDashboardPath = (notification: Notification): string | null => {
-    const farmId = notification.extra_data?.establishment_id;
-    // A finished background build ("your dossier is ready") lives on the Documents shelf, not
-    // the commercial dashboard — backend: documents/services/export_jobs.py `_notify`.
-    if (farmId && notification.extra_data?.kind === 'export_ready') {
-      return `/admin/dashboard/farm/${farmId}/documents`;
-    }
-    if (farmId) {
-      const params = new URLSearchParams();
-      if (notification.extra_data?.parcel_id)
-        params.set('parcelId', String(notification.extra_data.parcel_id));
-      if (notification.extra_data?.product_id)
-        params.set('productId', String(notification.extra_data.product_id));
-      if (notification.extra_data?.production_id)
-        params.set('productionId', String(notification.extra_data.production_id));
-      const query = params.toString() ? `?${params.toString()}` : '';
-      return `/admin/dashboard/farm/${farmId}/commercial${query}`;
-    }
-    return null;
-  };
-
   const handleNotificationNavigate = async (notification: Notification) => {
     if (!notification.read) {
       handleMarkAsRead(notification.id);
     }
-    const path = getCommercialDashboardPath(notification);
+    const path = getNotificationPath(notification);
     if (path) {
       setIsOpen(false);
       navigate(path);
@@ -243,7 +272,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
   };
 
   const handleGroupNavigate = async (group: NotificationGroup) => {
-    const path = getCommercialDashboardPath(group.latestNotification);
+    const path = getNotificationPath(group.latestNotification);
     if (path) {
       setIsOpen(false);
       navigate(path);
@@ -386,13 +415,13 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
         <Box
           minW={isNested ? '32px' : '40px'}
           h={isNested ? '32px' : '40px'}
-          bg={getNotificationColor(notification.type, notification.priority)}
+          bg={getNotificationColor(notification, notification.priority)}
           color="white"
           borderRadius="full"
           display="flex"
           alignItems="center"
           justifyContent="center">
-          <Icon as={getNotificationIcon(notification.type)} boxSize={isNested ? 4 : 5} />
+          <Icon as={getNotificationIcon(notification)} boxSize={isNested ? 4 : 5} />
         </Box>
 
         {/* Content */}
@@ -460,13 +489,16 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
               <Box
                 minW="40px"
                 h="40px"
-                bg={getNotificationColor(group.type, group.latestNotification.priority)}
+                bg={getNotificationColor(
+                  group.latestNotification,
+                  group.latestNotification.priority
+                )}
                 color="white"
                 borderRadius="full"
                 display="flex"
                 alignItems="center"
                 justifyContent="center">
-                <Icon as={getNotificationIcon(group.type)} boxSize={5} />
+                <Icon as={getNotificationIcon(group.latestNotification)} boxSize={5} />
               </Box>
               {/* No inline bg/color: inherit the `brand` variant, which is green.700 on white
                   (~6.4:1). The hardcoded green.500 here measured 2.78:1 with white — an unread
@@ -578,7 +610,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
                   {intl.formatMessage({ id: 'notifications.markGroupRead' })}
                 </Button>
               )}
-              {getCommercialDashboardPath(group.latestNotification) && (
+              {getNotificationPath(group.latestNotification) && (
                 <Button
                   size="xs"
                   variant="ghost"
