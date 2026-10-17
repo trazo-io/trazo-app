@@ -332,19 +332,6 @@ const SetupPassword: React.FC = () => {
 
     setStep('success');
 
-    toast({
-      title: intl.formatMessage({ id: 'auth.invitationSetup.toast.created.title' }),
-      description: result.company?.name
-        ? intl.formatMessage(
-            { id: 'auth.invitationSetup.toast.created.body' },
-            { company: result.company.name }
-          )
-        : intl.formatMessage({ id: 'auth.invitationSetup.toast.created.bodyNoCompany' }),
-      status: 'success',
-      duration: 4000,
-      isClosable: true
-    });
-
     // Start progress animation and redirect based on subscription status
     const redirectUrl = result.redirect_to || '/admin/dashboard';
     let progress = 0;

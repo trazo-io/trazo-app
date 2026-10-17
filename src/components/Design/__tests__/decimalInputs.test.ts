@@ -132,19 +132,13 @@ describe('decimal measurement fields', () => {
 
   it('uses the decimal control for the known measurement fields', () => {
     /*
-     * Named because these are the ones with a MEASURED failure behind them. Two are currently
-     * unreachable — `StandardChemicalForm` has no call site and `UpdateProduction` (the only
-     * consumer of `StandardProductionForm`) is imported in App.tsx but never routed — so they
-     * are listed to stop the bug shipping if either is ever wired up, not because a farmer can
-     * hit them today.
+     * Named because these are the ones with a MEASURED failure behind them. The two unreachable
+     * forms that used to be listed here (`StandardChemicalForm`, `StandardProductionForm`) were
+     * deleted with their only caller, `UpdateProduction`, which was never routed.
      */
     const CASES: [string, string][] = [
       ['components/Forms/StandardFarmForm.tsx', 'name="totalAcreage"'],
-      ['components/Forms/StandardParcelForm_Transparency.tsx', 'parcel.areaAcresPlaceholder'],
-      ['components/Forms/StandardChemicalForm.tsx', "value={watch('volume')}"],
-      ['components/Forms/StandardChemicalForm.tsx', "value={watch('area')}"],
-      ['components/Forms/StandardProductionForm.tsx', "value={watch('estimatedYield')}"],
-      ['components/Forms/StandardProductionForm.tsx', "value={watch('soilPh')}"]
+      ['components/Forms/StandardParcelForm_Transparency.tsx', 'parcel.areaAcresPlaceholder']
     ];
     for (const [rel, marker] of CASES) {
       const code = codeOf(join(SRC, rel));

@@ -271,14 +271,6 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
           })
         );
 
-        toast({
-          title: intl.formatMessage({ id: 'parcelForm.toast.createdTitle' }),
-          description: intl.formatMessage({ id: 'parcelForm.toast.createdDescription' }),
-          status: 'success',
-          duration: 5000,
-          isClosable: true
-        });
-
         // ✅ Redirect to new parcel profile after creation
         navigate(`/admin/dashboard/farm/${farmId}/parcel/${result.id}`);
       }
