@@ -5504,7 +5504,7 @@
   "fieldNotes.channel.copyFailed": "No se copi\u00f3. Selecciona el n\u00famero y c\u00f3pialo a mano.",
   "fieldNotes.channel.step1": "Agrega abajo el n\u00famero de cada persona, con el idioma en que escribe.",
   "fieldNotes.channel.step2": "Guarda el n\u00famero de arriba en su tel\u00e9fono.",
-  "fieldNotes.channel.step3": "Le escriben en su propio idioma, por texto o por nota de voz, cuando ocurre el trabajo. Aparece arriba en esta p\u00e1gina y nada se vuelve un registro hasta que lo registres.",
+  "fieldNotes.channel.step3": "Le escriben en espa\u00f1ol o en ingl\u00e9s, por texto o por nota de voz, cuando ocurre el trabajo. Aparece arriba en esta p\u00e1gina y nada se vuelve un registro hasta que lo registres.",
   "fieldNotes.channel.join": "Solo la primera vez: cada persona env\u00eda {phrase} a ese n\u00famero. Hasta que lo haga, WhatsApp no entrega nada a Trazo y nada llega a esta p\u00e1gina.",
   "fieldNotes.channel.joinExpiry": "Este es un n\u00famero de prueba compartido y deja de aceptar los mensajes de una persona tres d\u00edas despu\u00e9s de que se suma. Si a alguien dejan de llegarle las notas, p\u00eddele que env\u00ede {phrase} de nuevo.",
   "fieldNotes.channel.notConfigured": "El canal de WhatsApp todav\u00eda no est\u00e1 activado para esta cuenta, as\u00ed que no hay n\u00famero para repartir y nada puede llegar a esta p\u00e1gina. Igual puedes agregar abajo los n\u00fameros de tu cuadrilla: van a funcionar en cuanto est\u00e9 activo.",
