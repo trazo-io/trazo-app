@@ -60,17 +60,10 @@ const OFFENDER =
   /String\(\s*\(?\s*(?:err|error|e)\b|\b(?:err|error|e)\??\.data(?:\??\.\w+)*\s*\|\|/;
 
 /**
- * Files that still offend and are owned by another open slice or are dead code. Each must keep
- * offending (asserted below), so the list can only shrink: fix the file, delete its line.
+ * Files allowed to keep a hand-rolled error message, each with a written reason. Empty since the
+ * toast cleanup landed. Every entry must still offend (asserted below), so it can only shrink.
  */
-const KNOWN_OFFENDERS: Record<string, string> = {
-  'views/Authentication/Invitation/SetupPassword.tsx': 'toast-text slice (hardcoded text rewrite)',
-  'views/Authentication/SignUp/AppSignUp.tsx': 'toast-text slice (hardcoded text rewrite)',
-  'views/Dashboard/Dashboard/Parcel/AddParcel.tsx': 'toast-drop slice',
-  'views/Dashboard/Dashboard/Production/UpdateProduction.tsx': 'dead code, no route',
-  'views/Dashboard/Dashboard/components/forms/CarbonReportTab.jsx': 'dead code, no import',
-  'views/Dashboard/Dashboard/components/forms/NewCompany.jsx': 'dead code, no route'
-};
+const KNOWN_OFFENDERS: Record<string, string> = {};
 
 const FILES = walk(SRC);
 const rel = (p: string) => relative(SRC, p);
