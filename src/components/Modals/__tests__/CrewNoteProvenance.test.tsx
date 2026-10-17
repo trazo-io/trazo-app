@@ -15,6 +15,9 @@ vi.mock('store/api/crewNoteApi', () => ({ useGetCrewNoteQuery: () => ({ data: mo
 
 import CrewNoteProvenance from '../CrewNoteProvenance';
 
+/** ICU 72+ puts U+202F before AM/PM; compare text, not code points (review of app #81). */
+const norm = (s: string | null | undefined) => (s ?? '').replace(/[\u202f\u00a0]/g, ' ');
+
 const NOTE = {
   sender: { display_name: 'Miguel', phone_last4: '1234' },
   kind: 'voice',
@@ -64,6 +67,20 @@ describe('crew-note provenance block', () => {
     expect(text).toContain('No review recorded.');
     expect(text).not.toMatch(/Performer: Miguel/);
     expect(text).toContain('(checked by Trazo): amendment_product_name');
+  });
+
+  it('shows the stated occurrence as the record says it, not in the viewer zone', () => {
+    // 08:00 under the UTC label is the farm's 08:00 (ADR 011). Reassigning process.env.TZ inside a
+    // vitest worker does not move the zone (vitest.config pins America/Los_Angeles at start; review
+    // of app #81 and #128), so the zone dependence is proved explicitly: through the worker's zone
+    // the same instant reads differently, so a viewer-zone renderer would fail this assertion.
+    renderBlock();
+    const text = norm(screen.getByTestId('crew-note-provenance').textContent);
+    expect(text).toContain('Stated occurrence: Sep 27, 2026, 8:00 AM.');
+    const throughViewerZone = norm(
+      new Date(NOTE.occurred_at).toLocaleString('en-US', { hour: 'numeric', minute: '2-digit' })
+    );
+    expect(throughViewerZone).not.toBe('8:00 AM');
   });
 
   it('renders nothing for a record that did not come from a message', () => {
