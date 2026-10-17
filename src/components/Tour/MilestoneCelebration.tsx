@@ -123,8 +123,7 @@ export function useMilestoneToast() {
       description: intl.formatMessage({ id: bodyKey }),
       status: 'success',
       duration: 5000,
-      isClosable: true,
-      position: 'bottom-right'
+      isClosable: true
     });
   };
 

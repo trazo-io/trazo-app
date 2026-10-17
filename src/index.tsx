@@ -47,7 +47,16 @@ root.render(
       <ScrollToTop />
       <I18n>
         <CacheProvider value={emotionCache}>
-          <ChakraProvider theme={theme} resetCSS={true}>
+          {/*
+            Toast placement is decided HERE, once, never per call. Until 2026-10-17 most toasts
+            took Chakra's implicit `bottom` while 18 calls picked `top`, `top-right` or
+            `bottom-right`, so the same kind of message appeared in four places depending on the
+            screen. Guard: components/Design/__tests__/toastPlacement.test.ts.
+          */}
+          <ChakraProvider
+            theme={theme}
+            resetCSS={true}
+            toastOptions={{ defaultOptions: { position: 'bottom', isClosable: true } }}>
             <SubscriptionProvider>
               <App />
             </SubscriptionProvider>
