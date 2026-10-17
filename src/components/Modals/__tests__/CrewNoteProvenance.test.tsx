@@ -66,6 +66,20 @@ describe('crew-note provenance block', () => {
     expect(text).toContain('(checked by Trazo): amendment_product_name');
   });
 
+  it('shows the stated occurrence as the record says it, whatever zone the viewer is in', () => {
+    // 08:00 under the UTC label is the farm's 08:00 (ADR 011). A Montevideo viewer used to read
+    // 5:00 AM here while the record itself said 08:00.
+    const saved = process.env.TZ;
+    process.env.TZ = 'America/Montevideo';
+    try {
+      renderBlock();
+      const text = screen.getByTestId('crew-note-provenance').textContent ?? '';
+      expect(text).toContain('Stated occurrence: Sep 27, 2026, 8:00 AM.');
+    } finally {
+      process.env.TZ = saved;
+    }
+  });
+
   it('renders nothing for a record that did not come from a message', () => {
     mocks.data = { crew_note: null };
     const { container } = renderBlock();
