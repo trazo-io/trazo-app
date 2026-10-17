@@ -18,6 +18,8 @@ import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
 import { ChakraProvider } from '@chakra-ui/react';
 
 import enUS from '../../../i18n/lang/en-US.json';
@@ -43,10 +45,14 @@ let subscription: Subscription = PILOT;
 let establishments: any[] = [];
 let productions: any[] | undefined = [];
 let osps: any[] | undefined = [];
+let currentUser: Record<string, unknown> | null = { first_name: 'Jane', last_name: 'Grower' };
 
 vi.mock('react-redux', () => ({
   useSelector: (fn: (s: unknown) => unknown) =>
-    fn({ company: { currentCompany: { id: 7, establishments, subscription } } })
+    fn({
+      company: { currentCompany: { id: 7, establishments, subscription } },
+      userState: { user: currentUser }
+    })
 }));
 
 vi.mock('react-router-dom', () => ({
@@ -95,6 +101,7 @@ beforeEach(() => {
   establishments = [EMPTY_FARM];
   productions = [];
   osps = [];
+  currentUser = { first_name: 'Jane', last_name: 'Grower' };
   useTourStore.setState({ checklistDismissed: false, checklistCompleted: false, visitedPages: {} });
 });
 
@@ -249,5 +256,67 @@ describe('Starter checklist', () => {
     osps = [{ status: 'submitted' }];
     const { container } = renderChecklist();
     expect(container.textContent).toBe('');
+  });
+});
+
+/**
+ * Pilot rehearsal 2026-10-17, finding 7: the operator account that enters the grower's records
+ * ("<first> <last> (Trazo setup)", created by provision_pilot / add_pilot_operator) was shown the
+ * grower's instruction "Send your existing records to Oscar". The operator gets the operator's
+ * side of setup; the grower keeps the grower's text.
+ */
+describe('pilot checklist for the setup operator', () => {
+  const OPERATOR = { first_name: 'Oscar', last_name: 'Munoz (Trazo setup)' };
+
+  it('shows the operator text, never the grower instruction to send records to Oscar', () => {
+    currentUser = OPERATOR;
+    const { container } = renderChecklist();
+    const info = screen.queryByTestId('pilot-operator-info');
+    expect(info, 'the operator gets its own setup block').not.toBeNull();
+    expect(info!.textContent).toContain('You are setting up this farm');
+    expect(info!.textContent).toContain(
+      'You are setting up this farm for the grower. Records you enter show your name.'
+    );
+    expect(screen.queryByTestId('pilot-setup-info')).toBeNull();
+    expect(container.textContent).not.toContain('Send your existing records to Oscar');
+    expect(container.textContent).not.toContain('under his own login');
+    // Same four counted items: only the information block changes.
+    expect(screen.getByTestId('checklist-progress').textContent).toBe('0 of 4 complete');
+  });
+
+  it('keeps the grower text for the grower', () => {
+    renderChecklist();
+    expect(screen.queryByTestId('pilot-operator-info')).toBeNull();
+    expect(screen.getByTestId('pilot-setup-info').textContent).toContain(
+      'Send your existing records to Oscar:'
+    );
+  });
+
+  it('says it in Spanish', () => {
+    currentUser = OPERATOR;
+    const { container } = renderChecklist('es-419', es419 as Record<string, string>);
+    expect(container.textContent).toContain('Estás configurando esta finca para el productor.');
+    expect(container.textContent).not.toContain('Envía tus registros existentes a Oscar');
+  });
+
+  it('a Starter account with the suffix gets no pilot block at all', () => {
+    subscription = STARTER;
+    currentUser = OPERATOR;
+    renderChecklist();
+    expect(screen.queryByTestId('pilot-operator-info')).toBeNull();
+    expect(screen.queryByTestId('pilot-setup-info')).toBeNull();
+  });
+
+  it('matches the suffix the backend writes (subscriptions/pilot_operator.py SETUP_SUFFIX)', async () => {
+    const { PILOT_OPERATOR_LAST_NAME_SUFFIX } = await import(
+      '../../../hooks/useOnboardingChecklist'
+    );
+    const source = readFileSync(
+      resolve(__dirname, '../../../../../trazo-back/subscriptions/pilot_operator.py'),
+      'utf8'
+    );
+    const match = source.match(/^SETUP_SUFFIX = "([^"]+)"$/m);
+    expect(match, 'SETUP_SUFFIX is defined in pilot_operator.py').not.toBeNull();
+    expect(PILOT_OPERATOR_LAST_NAME_SUFFIX).toBe(match![1]);
   });
 });
