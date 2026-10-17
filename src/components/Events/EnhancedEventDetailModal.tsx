@@ -357,8 +357,8 @@ export const EnhancedEventDetailModal: React.FC<EnhancedEventDetailModalProps> =
                         </StatNumber>
                         <StatHelpText fontSize="xs">
                           {event.carbon_data.co2e === 0
-                            ? 'No direct emissions'
-                            : 'Carbon footprint estimate'}
+                            ? 'No emissions estimated'
+                            : 'Estimated emissions (operation and purchased inputs)'}
                         </StatHelpText>
                       </>
                     )}

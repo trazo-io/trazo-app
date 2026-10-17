@@ -32,7 +32,7 @@ import { ChecklistItem, ChecklistVariant } from '../tours/types';
  * QR code" would have hidden them behind the whole season.
  *
  * They are on this list because the audit export refuses to be submitted without them: with no
- * OFPP on file the dossier stamps itself "[NON-COMPLIANT DOSSIER — DO NOT SUBMIT TO CERTIFIER]"
+ * OFPP on file the dossier stamps itself "[DRAFT: documentation gaps listed]"
  * and page 1 reports the OSP as a GAP. Before this, a farmer could finish all five season items,
  * see "You're all set!", and still hold a packet their certifier will not accept — with nothing
  * anywhere in the product telling them why.

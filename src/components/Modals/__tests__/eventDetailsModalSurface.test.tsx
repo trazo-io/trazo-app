@@ -300,11 +300,11 @@ describe('EventDetailsModal — action colours are semantic, not decorative', ()
   it('states the kg CO₂e fact instead', () => {
     renderModal();
     // What replaces the grade: a measured quantity, not a verdict. Scoped to the carbon card
-    // — "no direct emissions" also appears inside the record-value alert's prose, and an
+    // — "no emissions estimated" also appears inside the record-value alert's prose, and an
     // unscoped query would pass on that sentence alone even if the readout were deleted.
     expect(screen.getByText('kg CO₂e')).toBeInTheDocument();
     const carbonCard = screen.getByText('kg CO₂e').closest('div')?.parentElement?.parentElement;
-    expect(within(carbonCard as HTMLElement).getByText('No direct emissions')).toBeInTheDocument();
+    expect(within(carbonCard as HTMLElement).getByText('No emissions estimated')).toBeInTheDocument();
   });
 });
 
