@@ -50,6 +50,13 @@ vi.mock('store/api/amendmentsApi', () => ({
   useAmendSeasonMutation: () => [vi.fn(), { isLoading: false }]
 }));
 
+// The record's documents block (pilot rehearsal 2026-10) reads the documents endpoint; this
+// suite is about the modal's surface, so it answers "no documents". Covered in
+// eventDetailsRecordTrail.test.tsx.
+vi.mock('store/api/documentsApi', () => ({
+  useGetFarmDocumentsQuery: () => ({ data: [] })
+}));
+
 // canWrite gates the whole action cluster; this suite is about how those actions LOOK.
 vi.mock('hooks/useUserRole', () => ({ useUserRole: () => ({ canWrite: true }) }));
 // The crew-message provenance block (audit T29) reads its own endpoint; this suite is about the
