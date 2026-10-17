@@ -576,11 +576,11 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
           }),
           description:
             quotaError.remaining_gb !== undefined
-              ? `You have ${quotaError.remaining_gb.toFixed(2)} GB remaining out of ${
-                  quotaError.limit_gb
-                } GB. Upgrade your plan for more storage.`
-              : quotaError.error ||
-                'Your storage limit has been reached. Please upgrade your plan.',
+              ? intl.formatMessage(
+                  { id: 'upload.error.storageRemaining' },
+                  { remaining: quotaError.remaining_gb.toFixed(2), limit: quotaError.limit_gb }
+                )
+              : quotaError.error || intl.formatMessage({ id: 'upload.error.storageGeneric' }),
           status: 'error',
           duration: 6000,
           isClosable: true

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useIntl } from 'react-intl';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
@@ -40,6 +41,7 @@ interface ResetPasswordFormProps {
 
 export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ userType }) => {
   const navigate = useNavigate();
+  const intl = useIntl();
   const toast = useToast();
   const [searchParams] = useSearchParams();
   const [confirmPasswordReset, { isLoading }] = useConfirmPasswordResetMutation();
@@ -82,8 +84,8 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ userType }
   useEffect(() => {
     if (!token || !email) {
       toast({
-        title: 'Invalid Reset Link',
-        description: 'This password reset link is invalid or has expired.',
+        title: intl.formatMessage({ id: 'auth.resetPassword.toast.invalidLink.title' }),
+        description: intl.formatMessage({ id: 'auth.resetPassword.toast.invalidLink.body' }),
         status: 'error',
         duration: 5000,
         isClosable: true
@@ -106,7 +108,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ userType }
     const validation = passwordValidator.validate(data.newPassword);
     if (!validation.isValid) {
       toast({
-        title: 'Password Requirements Not Met',
+        title: intl.formatMessage({ id: 'auth.password.toast.requirementsNotMet' }),
         description: validation.errors[0],
         status: 'error',
         duration: 5000,
@@ -117,8 +119,8 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ userType }
 
     if (!token || !email) {
       toast({
-        title: 'Error',
-        description: 'Invalid reset token. Please request a new password reset.',
+        title: intl.formatMessage({ id: 'app.error' }),
+        description: intl.formatMessage({ id: 'auth.resetPassword.toast.invalidToken.body' }),
         status: 'error',
         duration: 5000,
         isClosable: true
@@ -136,8 +138,8 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ userType }
       setResetSuccess(true);
 
       toast({
-        title: 'Password Reset Successfully',
-        description: 'Your password has been updated. You can now sign in with your new password.',
+        title: intl.formatMessage({ id: 'auth.resetPassword.toast.success.title' }),
+        description: intl.formatMessage({ id: 'auth.resetPassword.toast.success.body' }),
         status: 'success',
         duration: 5000,
         isClosable: true
@@ -149,9 +151,11 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ userType }
       }, 3000);
     } catch (error: any) {
       const errorMessage =
-        error?.data?.detail || error?.data?.error || 'Failed to reset password. Please try again.';
+        error?.data?.detail ||
+        error?.data?.error ||
+        intl.formatMessage({ id: 'auth.resetPassword.toast.failed.body' });
       toast({
-        title: 'Error',
+        title: intl.formatMessage({ id: 'app.error' }),
         description: Array.isArray(errorMessage) ? errorMessage[0] : errorMessage,
         status: 'error',
         duration: 5000,

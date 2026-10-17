@@ -345,8 +345,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
 
     toast({
       title: t('farm.form.toast.checkDetails'),
-      description:
-        formErrors[badField]?.message || 'Some required information is missing or invalid.',
+      description: formErrors[badField]?.message || t('parcel.invalid.generic'),
       status: 'error',
       duration: 5000,
       isClosable: true

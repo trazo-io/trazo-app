@@ -77,8 +77,8 @@ const ProducerResetPassword: React.FC = () => {
       setResetSuccess(true);
 
       toast({
-        title: 'Password Reset Successfully',
-        description: 'Your password has been updated',
+        title: intl.formatMessage({ id: 'auth.resetPassword.toast.success.title' }),
+        description: intl.formatMessage({ id: 'auth.resetPassword.toast.success.bodyShort' }),
         status: 'success',
         duration: 5000,
         isClosable: true

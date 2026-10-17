@@ -2768,11 +2768,10 @@ function NewEvent({ isEdit = false, eventId = null }) {
           )
           .join(', ');
         toast({
-          title:
-            intl.formatMessage({
-              id: 'app.completenessGapsSavedTitle',
-              defaultMessage: 'Saved — a certifier will also want:'
-            }) || 'Saved — a certifier will also want:',
+          title: intl.formatMessage({
+            id: 'app.completenessGapsSavedTitle',
+            defaultMessage: 'Saved. A certifier will also want:'
+          }),
           description: gapNames,
           status: 'warning',
           duration: 8000,

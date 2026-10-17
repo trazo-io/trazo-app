@@ -466,7 +466,7 @@ export const ModernErrorState: React.FC<ModernErrorStateProps> = ({
               variant="ghost"
               colorScheme="gray"
               onClick={() =>
-                void handleCopy(SUPPORT_EMAIL, 'consumer.error.emailCopied', 'Email copied!')
+                void handleCopy(SUPPORT_EMAIL, 'consumer.error.emailCopied', 'Email copied')
               }
             />
           </HStack>
@@ -489,7 +489,7 @@ export const ModernErrorState: React.FC<ModernErrorStateProps> = ({
                 variant="ghost"
                 colorScheme="gray"
                 onClick={() =>
-                  void handleCopy(errorId, 'consumer.error.errorIdCopied', 'Error ID copied!')
+                  void handleCopy(errorId, 'consumer.error.errorIdCopied', 'Error ID copied')
                 }
               />
             </HStack>

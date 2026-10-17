@@ -159,11 +159,19 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
 
   const handleSave = async () => {
     if (!form.crop_grown.trim()) {
-      toast({ title: 'Crop name is required.', status: 'warning', duration: 3000 });
+      toast({
+        title: intl.formatMessage({ id: 'parcel.fieldHistory.toast.cropRequired' }),
+        status: 'warning',
+        duration: 3000
+      });
       return;
     }
     if (!form.production_method) {
-      toast({ title: 'Please select a production method.', status: 'warning', duration: 3000 });
+      toast({
+        title: intl.formatMessage({ id: 'parcel.fieldHistory.toast.methodRequired' }),
+        status: 'warning',
+        duration: 3000
+      });
       return;
     }
 
@@ -171,11 +179,17 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
       // Update existing
       try {
         await updateEntry({ id: editingId, ...form }).unwrap();
-        toast({ title: 'Entry updated.', status: 'success', duration: 3000 });
+        toast({
+          title: intl.formatMessage({ id: 'parcel.fieldHistory.toast.updated' }),
+          status: 'success',
+          duration: 3000
+        });
         closeForm();
       } catch (error: any) {
         const detail =
-          error?.data?.non_field_errors?.[0] || error?.data?.detail || 'Failed to update entry.';
+          error?.data?.non_field_errors?.[0] ||
+          error?.data?.detail ||
+          intl.formatMessage({ id: 'parcel.fieldHistory.toast.updateFailed' });
         toast({ title: detail, status: 'error', duration: 4000 });
       }
     } else {
@@ -196,10 +210,16 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
       );
       if (duplicate) {
         toast({
-          title: `${form.crop_grown} is already recorded for ${form.year} on this parcel.`,
+          title: intl.formatMessage(
+            { id: 'parcel.fieldHistory.toast.duplicate.title' },
+            { crop: form.crop_grown, year: form.year }
+          ),
           description: form.block_id
-            ? `Block "${form.block_id}" already has this crop for ${form.year}.`
-            : 'To record a split field, give each crop a different Block / Rows value.',
+            ? intl.formatMessage(
+                { id: 'parcel.fieldHistory.toast.duplicate.blockBody' },
+                { block: form.block_id, year: form.year }
+              )
+            : intl.formatMessage({ id: 'parcel.fieldHistory.toast.duplicate.splitBody' }),
           status: 'warning',
           duration: 5000
         });
@@ -207,11 +227,17 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
       }
       try {
         await createEntry({ ...form, parcel: parcelId }).unwrap();
-        toast({ title: 'Field history entry added.', status: 'success', duration: 3000 });
+        toast({
+          title: intl.formatMessage({ id: 'parcel.fieldHistory.toast.added' }),
+          status: 'success',
+          duration: 3000
+        });
         closeForm();
       } catch (error: any) {
         const detail =
-          error?.data?.non_field_errors?.[0] || error?.data?.detail || 'Failed to save entry.';
+          error?.data?.non_field_errors?.[0] ||
+          error?.data?.detail ||
+          intl.formatMessage({ id: 'parcel.fieldHistory.toast.saveFailed' });
         toast({ title: detail, status: 'error', duration: 4000 });
       }
     }
@@ -220,10 +246,18 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
   const handleDelete = async (id: number) => {
     try {
       await deleteEntry(id).unwrap();
-      toast({ title: 'Entry removed.', status: 'success', duration: 3000 });
+      toast({
+        title: intl.formatMessage({ id: 'parcel.fieldHistory.toast.removed' }),
+        status: 'success',
+        duration: 3000
+      });
       if (editingId === id) closeForm();
     } catch {
-      toast({ title: 'Failed to delete entry.', status: 'error', duration: 4000 });
+      toast({
+        title: intl.formatMessage({ id: 'parcel.fieldHistory.toast.deleteFailed' }),
+        status: 'error',
+        duration: 4000
+      });
     }
   };
 

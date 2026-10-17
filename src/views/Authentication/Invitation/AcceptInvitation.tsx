@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useIntl } from 'react-intl';
 import {
   Box,
   Button,
@@ -31,6 +32,7 @@ const AcceptInvitation: React.FC = () => {
   const navigate = useNavigate();
   const { invitationCode } = useParams<{ invitationCode: string }>();
   const [searchParams] = useSearchParams();
+  const intl = useIntl();
   const toast = useToast();
 
   const [step, setStep] = useState<'loading' | 'accept' | 'success' | 'error'>('loading');
@@ -113,7 +115,7 @@ const AcceptInvitation: React.FC = () => {
 
       // Show toast for immediate feedback
       toast({
-        title: 'Invitation Error',
+        title: intl.formatMessage({ id: 'auth.invitation.toast.error.title' }),
         description: message,
         status: 'error',
         duration: 5000,
