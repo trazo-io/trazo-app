@@ -1963,6 +1963,8 @@
   "auth.invitationSetup.match.no": "Passwords do not match",
   "auth.invitationSetup.submit": "Complete setup",
   "auth.invitationSetup.submitting": "Creating account...",
+  "auth.invitationSetup.weakPassword.personalInfo": "Your password cannot contain your name.",
+  "auth.invitationSetup.weakPassword.tooSimple": "This password is too simple. Make it longer or mix in different kinds of characters.",
   "auth.validation.companyCode.pattern": "Company code must be 6-8 letters and numbers only",
   "auth.validation.companyCode.required": "Company code is required",
   "auth.validation.companyCode.alphanumeric": "Company code can only contain letters and numbers",

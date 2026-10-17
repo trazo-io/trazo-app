@@ -66,6 +66,22 @@ interface SetupPasswordFormData {
 // Motion components
 const MotionBox = motion(Box);
 
+/**
+ * The localized reason a password was refused, for the reasons the strength indicator cannot
+ * show. Matches the English messages `passwordValidator.validate()` pushes
+ * (utils/passwordValidation.ts).
+ */
+export function weakPasswordReasonId(errors: string[] | undefined): string {
+  const list = errors ?? [];
+  if (list.some((e) => /personal information/i.test(e))) {
+    return 'auth.invitationSetup.weakPassword.personalInfo';
+  }
+  if (list.some((e) => /too simple/i.test(e))) {
+    return 'auth.invitationSetup.weakPassword.tooSimple';
+  }
+  return 'auth.signup.toast.weakPassword.body';
+}
+
 const SetupPassword: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -205,10 +221,12 @@ const SetupPassword: React.FC = () => {
 
     if (!passwordValidation || !passwordValidation.isValid) {
       toast({
-        // The validator's own messages are English-only; the strength indicator under the
-        // field already lists each rule in the reader's language.
+        // The validator's messages are English-only. The strength indicator under the field
+        // lists the five character rules in the reader's language, but has no row for the two
+        // other reasons a password is refused (too simple, contains the person's name), so those
+        // get their own localized line; anything else falls back to the generic one.
         title: intl.formatMessage({ id: 'auth.signup.toast.weakPassword.title' }),
-        description: intl.formatMessage({ id: 'auth.signup.toast.weakPassword.body' }),
+        description: intl.formatMessage({ id: weakPasswordReasonId(passwordValidation?.errors) }),
         status: 'error',
         duration: 3000,
         isClosable: true
@@ -969,7 +987,7 @@ const SetupPassword: React.FC = () => {
                     {passwordConfirm && (
                       <Text
                         fontSize="xs"
-                        color={password === passwordConfirm ? 'green.500' : 'red.500'}
+                        color={password === passwordConfirm ? 'green.700' : 'red.700'}
                         mt={1}>
                         {password === passwordConfirm
                           ? `✓ ${intl.formatMessage({ id: 'auth.invitationSetup.match.yes' })}`
@@ -994,43 +1012,54 @@ const SetupPassword: React.FC = () => {
                         required: intl.formatMessage({ id: 'auth.validation.terms.required' })
                       })}>
                       <Text fontSize="sm" color={useColorModeValue('gray.700', 'gray.300')}>
-                        {intl.formatMessage(
-                          { id: 'auth.signup.terms.agree' },
-                          {
-                            tos: (
-                              <a
-                                key="tos"
-                                href="https://trazo.io/terms-of-service"
-                                target="_blank"
-                                rel="noopener noreferrer">
-                                <Text
-                                  as="span"
-                                  color="green.500"
-                                  fontWeight="medium"
-                                  _hover={{ textDecoration: 'underline' }}>
-                                  {intl.formatMessage({ id: 'auth.signup.terms.tos' })}
-                                </Text>
-                              </a>
-                            ),
-                            privacy: (
-                              <a
-                                key="privacy"
-                                href="https://trazo.io/privacy-policy"
-                                target="_blank"
-                                rel="noopener noreferrer">
-                                <Text
-                                  as="span"
-                                  color="green.500"
-                                  fontWeight="medium"
-                                  _hover={{ textDecoration: 'underline' }}>
-                                  {intl.formatMessage({ id: 'auth.signup.terms.privacy' })}
-                                </Text>
-                              </a>
-                            )
-                          }
-                        )}
+                        {intl.formatMessage({ id: 'auth.signup.terms.agreeShort' })}
                       </Text>
                     </Checkbox>
+                    {/* The links live OUTSIDE the checkbox label, as on AppSignUp (recordkeeping
+                        review F-20): a click on a link inside a <label> follows the link and
+                        never toggles the box. */}
+                    <Text
+                      fontSize="xs"
+                      color={useColorModeValue('gray.600', 'gray.400')}
+                      mt={1}
+                      ml={8}
+                      data-testid="setup-terms-links">
+                      {intl.formatMessage(
+                        { id: 'auth.signup.terms.readLinks' },
+                        {
+                          tos: (
+                            <a
+                              key="tos"
+                              href="https://trazo.io/terms-of-service"
+                              target="_blank"
+                              rel="noopener noreferrer">
+                              <Text
+                                as="span"
+                                color="green.700"
+                                fontWeight="medium"
+                                _hover={{ textDecoration: 'underline' }}>
+                                {intl.formatMessage({ id: 'auth.signup.terms.tos' })}
+                              </Text>
+                            </a>
+                          ),
+                          privacy: (
+                            <a
+                              key="privacy"
+                              href="https://trazo.io/privacy-policy"
+                              target="_blank"
+                              rel="noopener noreferrer">
+                              <Text
+                                as="span"
+                                color="green.700"
+                                fontWeight="medium"
+                                _hover={{ textDecoration: 'underline' }}>
+                                {intl.formatMessage({ id: 'auth.signup.terms.privacy' })}
+                              </Text>
+                            </a>
+                          )
+                        }
+                      )}
+                    </Text>
                     {errors.acceptTerms && (
                       <Text fontSize="sm" color="red.700" mt={1}>
                         {errors.acceptTerms.message}

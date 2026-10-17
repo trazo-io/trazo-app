@@ -164,3 +164,37 @@ describe('invitation setup page in en-US', () => {
     expect(text).not.toContain('revolution');
   });
 });
+
+/** Review of app #129. */
+describe('invitation setup page: terms and refused passwords', () => {
+  it('keeps the Terms and Privacy links outside the checkbox label', () => {
+    renderPage('es-419');
+    const links = document.querySelector('[data-testid="setup-terms-links"]');
+    expect(links, 'the links row renders').not.toBeNull();
+    expect(links!.querySelectorAll('a').length).toBe(2);
+    expect(links!.closest('label'), 'a link inside the label never toggles the box').toBeNull();
+    const label = document.querySelector('input[name="acceptTerms"]')!.closest('label');
+    expect(label!.querySelector('a')).toBeNull();
+  });
+
+  it('names the reasons the strength indicator cannot show, in the reader language', async () => {
+    const { passwordValidator } = await import('utils/passwordValidation');
+    const { weakPasswordReasonId } = await import('../SetupPassword');
+    const withName = passwordValidator.validate('Grower#2026xQ', {
+      firstName: 'Jane',
+      lastName: 'Grower'
+    });
+    expect(withName.isValid).toBe(false);
+    const id = weakPasswordReasonId(withName.errors);
+    expect(id).toBe('auth.invitationSetup.weakPassword.personalInfo');
+    expect((es419 as Record<string, string>)[id]).toBe(
+      'Tu contraseña no puede contener tu nombre.'
+    );
+    expect(weakPasswordReasonId(['Password is too simple. Try making it longer'])).toBe(
+      'auth.invitationSetup.weakPassword.tooSimple'
+    );
+    expect(weakPasswordReasonId(['Password must contain at least one number'])).toBe(
+      'auth.signup.toast.weakPassword.body'
+    );
+  });
+});

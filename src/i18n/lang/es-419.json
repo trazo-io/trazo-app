@@ -1963,6 +1963,8 @@
   "auth.invitationSetup.match.no": "Las contraseñas no coinciden",
   "auth.invitationSetup.submit": "Completar configuración",
   "auth.invitationSetup.submitting": "Creando cuenta...",
+  "auth.invitationSetup.weakPassword.personalInfo": "Tu contraseña no puede contener tu nombre.",
+  "auth.invitationSetup.weakPassword.tooSimple": "Esta contraseña es demasiado simple. Hazla más larga o combina distintos tipos de caracteres.",
   "auth.validation.companyCode.pattern": "El código de empresa debe tener de 6 a 8 letras y números",
   "auth.validation.companyCode.required": "El código de empresa es obligatorio",
   "auth.validation.companyCode.alphanumeric": "El código de empresa solo puede tener letras y números",
