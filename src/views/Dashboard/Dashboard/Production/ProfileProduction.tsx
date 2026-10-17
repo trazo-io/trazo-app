@@ -190,7 +190,7 @@ function ProfileProduction() {
       null,
       intl.formatMessage({
         id: 'production.cover.cleared',
-        defaultMessage: 'Cover cleared — using the first photo automatically'
+        defaultMessage: 'Cover cleared. Using the first photo automatically'
       })
     );
 
@@ -335,8 +335,8 @@ function ProfileProduction() {
       const downloadId = historyData?.public_id || productionId;
       if (!downloadId) {
         toast({
-          title: 'Error',
-          description: 'Production ID not found.',
+          title: intl.formatMessage({ id: 'app.error' }),
+          description: intl.formatMessage({ id: 'production.toast.idNotFound' }),
           status: 'error',
           duration: 3000,
           isClosable: true
@@ -357,7 +357,9 @@ function ProfileProduction() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to generate download URL');
+        throw new Error(
+          errorData.error || intl.formatMessage({ id: 'production.toast.downloadUrlFailed' })
+        );
       }
 
       const data = await response.json();
@@ -373,8 +375,11 @@ function ProfileProduction() {
     } catch (error) {
       console.error('Error downloading QR code:', error);
       toast({
-        title: 'Download Failed',
-        description: error instanceof Error ? error.message : 'Failed to generate download URL.',
+        title: intl.formatMessage({ id: 'production.toast.downloadFailed' }),
+        description:
+          error instanceof Error
+            ? error.message
+            : intl.formatMessage({ id: 'production.toast.downloadUrlFailed' }),
         status: 'error',
         duration: 3000,
         isClosable: true
@@ -390,8 +395,8 @@ function ProfileProduction() {
       const downloadId = historyData?.public_id || productionId;
       if (!downloadId) {
         toast({
-          title: 'Error',
-          description: 'Production ID not found.',
+          title: intl.formatMessage({ id: 'app.error' }),
+          description: intl.formatMessage({ id: 'production.toast.idNotFound' }),
           status: 'error',
           duration: 3000,
           isClosable: true

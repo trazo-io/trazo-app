@@ -139,9 +139,10 @@ const SetupPassword: React.FC = () => {
       dispatch(loginAction(response));
       handleSuccessfulSignup(response);
     } catch (err: any) {
-      const errorMessage = err?.data?.error || 'Social authentication failed';
+      const errorMessage =
+        err?.data?.error || intl.formatMessage({ id: 'auth.invitation.toast.socialFailed.body' });
       toast({
-        title: 'Authentication failed',
+        title: intl.formatMessage({ id: 'auth.invitation.toast.socialFailed.title' }),
         description: errorMessage,
         status: 'error',
         duration: 4000,
@@ -178,8 +179,8 @@ const SetupPassword: React.FC = () => {
   React.useEffect(() => {
     if (detailsError) {
       toast({
-        title: 'Invitation error',
-        description: 'Invitation not found or has expired',
+        title: intl.formatMessage({ id: 'auth.invitation.toast.error.title' }),
+        description: intl.formatMessage({ id: 'auth.invitation.toast.notFound.body' }),
         status: 'error',
         duration: 5000,
         isClosable: true
@@ -191,8 +192,8 @@ const SetupPassword: React.FC = () => {
   const onSubmit = async (data: SetupPasswordFormData) => {
     if (data.password !== data.password_confirm) {
       toast({
-        title: 'Password mismatch',
-        description: 'Passwords do not match',
+        title: intl.formatMessage({ id: 'auth.invitation.toast.mismatch.title' }),
+        description: intl.formatMessage({ id: 'auth.invitation.toast.mismatch.body' }),
         status: 'error',
         duration: 3000,
         isClosable: true
@@ -202,8 +203,10 @@ const SetupPassword: React.FC = () => {
 
     if (!passwordValidation || !passwordValidation.isValid) {
       toast({
-        title: 'Weak password',
-        description: passwordValidation?.errors[0] || 'Please choose a stronger password',
+        title: intl.formatMessage({ id: 'auth.signup.toast.weakPassword.title' }),
+        description:
+          passwordValidation?.errors[0] ||
+          intl.formatMessage({ id: 'auth.signup.toast.weakPassword.body' }),
         status: 'error',
         duration: 3000,
         isClosable: true
@@ -213,8 +216,8 @@ const SetupPassword: React.FC = () => {
 
     if (!invitationCode) {
       toast({
-        title: 'Invitation error',
-        description: 'No invitation code found',
+        title: intl.formatMessage({ id: 'auth.invitation.toast.error.title' }),
+        description: intl.formatMessage({ id: 'auth.invitation.toast.noCode.body' }),
         status: 'error',
         duration: 3000,
         isClosable: true
@@ -251,9 +254,12 @@ const SetupPassword: React.FC = () => {
       }
 
       toast({
-        title: 'Account creation failed',
+        title: intl.formatMessage({ id: 'auth.invitation.toast.createFailed.title' }),
         description:
-          error?.data?.error || error?.data?.message || error?.message || 'Please try again',
+          error?.data?.error ||
+          error?.data?.message ||
+          error?.message ||
+          intl.formatMessage({ id: 'auth.invitation.toast.createFailed.body' }),
         status: 'error',
         duration: 4000,
         isClosable: true

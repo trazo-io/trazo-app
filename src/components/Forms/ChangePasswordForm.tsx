@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useIntl } from 'react-intl';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -37,6 +38,7 @@ interface ChangePasswordFormProps {
 
 export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ userType }) => {
   const navigate = useNavigate();
+  const intl = useIntl();
   const toast = useToast();
   const [changePassword, { isLoading }] = useChangePasswordMutation();
 
@@ -84,7 +86,7 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ userType
     const validation = passwordValidator.validate(data.newPassword);
     if (!validation.isValid) {
       toast({
-        title: 'Password Requirements Not Met',
+        title: intl.formatMessage({ id: 'auth.password.toast.requirementsNotMet' }),
         description: validation.errors[0],
         status: 'error',
         duration: 5000,
@@ -100,8 +102,8 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ userType
       }).unwrap();
 
       toast({
-        title: 'Password Changed Successfully',
-        description: 'Your password has been updated. Please sign in with your new password.',
+        title: intl.formatMessage({ id: 'auth.changePassword.toast.success.title' }),
+        description: intl.formatMessage({ id: 'auth.changePassword.toast.success.body' }),
         status: 'success',
         duration: 5000,
         isClosable: true
@@ -115,9 +117,11 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ userType
       }
     } catch (error: any) {
       const errorMessage =
-        error?.data?.detail || error?.data?.error || 'Failed to change password. Please try again.';
+        error?.data?.detail ||
+        error?.data?.error ||
+        intl.formatMessage({ id: 'auth.changePassword.toast.failed.body' });
       toast({
-        title: 'Error',
+        title: intl.formatMessage({ id: 'app.error' }),
         description: Array.isArray(errorMessage) ? errorMessage[0] : errorMessage,
         status: 'error',
         duration: 5000,

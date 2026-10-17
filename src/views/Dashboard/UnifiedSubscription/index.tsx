@@ -618,7 +618,7 @@ function UnifiedSubscriptionDashboard() {
         .unwrap()
         .then(() => {
           toast({
-            title: intl.formatMessage({ id: 'app.success' }),
+            title: intl.formatMessage({ id: 'subscription.toast.paymentMethodUpdated' }),
             description: intl.formatMessage({ id: 'app.paymentMethodSetAsDefault' }),
             status: 'success',
             duration: 3000,
@@ -660,7 +660,7 @@ function UnifiedSubscriptionDashboard() {
         }
       }).unwrap();
       toast({
-        title: intl.formatMessage({ id: 'app.success' }),
+        title: intl.formatMessage({ id: 'subscription.toast.billingSaved' }),
         description: intl.formatMessage({ id: 'subscription.billingInfoUpdated' }),
         status: 'success',
         duration: 3000,

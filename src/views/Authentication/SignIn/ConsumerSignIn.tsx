@@ -189,8 +189,8 @@ const ConsumerSignIn: React.FC = () => {
       case 'Google':
         if (!config.google) {
           toast({
-            title: 'Configuration Error',
-            description: 'Google sign-in is not configured. Please contact support.',
+            title: intl.formatMessage({ id: 'auth.signup.toast.config.title' }),
+            description: intl.formatMessage({ id: 'auth.signup.toast.config.googleBody' }),
             status: 'error',
             duration: 5000,
             isClosable: true
@@ -207,8 +207,8 @@ const ConsumerSignIn: React.FC = () => {
       case 'Facebook':
         if (!config.facebook) {
           toast({
-            title: 'Configuration Error',
-            description: 'Facebook sign-in is not configured. Please contact support.',
+            title: intl.formatMessage({ id: 'auth.signup.toast.config.title' }),
+            description: intl.formatMessage({ id: 'auth.signup.toast.config.facebookBody' }),
             status: 'error',
             duration: 5000,
             isClosable: true
@@ -224,8 +224,8 @@ const ConsumerSignIn: React.FC = () => {
 
       default:
         toast({
-          title: 'Error',
-          description: 'Unknown social login provider.',
+          title: intl.formatMessage({ id: 'auth.signup.toast.unknownProvider.title' }),
+          description: intl.formatMessage({ id: 'auth.signup.toast.unknownProvider.body' }),
           status: 'error',
           duration: 3000,
           isClosable: true

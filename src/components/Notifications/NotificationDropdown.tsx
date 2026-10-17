@@ -314,7 +314,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
     } catch (error) {
       console.error('Failed to mark notification as read:', error);
       toast({
-        title: 'Error',
+        title: intl.formatMessage({ id: 'app.error' }),
         description: intl.formatMessage({ id: 'notifications.error.markRead' }),
         status: 'error',
         duration: 3000,
@@ -348,7 +348,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
     } catch (error) {
       console.error('Failed to mark all notifications as read:', error);
       toast({
-        title: 'Error',
+        title: intl.formatMessage({ id: 'app.error' }),
         description: intl.formatMessage({ id: 'notifications.error.markAllRead' }),
         status: 'error',
         duration: 3000,
@@ -364,7 +364,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
     } catch (error) {
       console.error('Failed to delete notification:', error);
       toast({
-        title: 'Error',
+        title: intl.formatMessage({ id: 'app.error' }),
         description: intl.formatMessage({ id: 'notifications.error.delete' }),
         status: 'error',
         duration: 3000,
