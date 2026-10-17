@@ -168,8 +168,10 @@ describe('the wizard wiring', () => {
 
   it('Continue reveals the failing field and names it, for every tab', () => {
     const cont = wizard.slice(wizard.indexOf('await currentTabRef.current.submitForm();'));
-    const handler = cont.slice(0, 1500);
+    const handler = cont.slice(0, 2500);
     expect(handler).toMatch(/await revealFirstFormError\(errors\)/);
     expect(handler).toMatch(/events\.form\.validationFailedField/);
+    // A validation sentence never fills the {field} slot (review on #133).
+    expect(handler).toMatch(/const fieldName = revealed\.label;/);
   });
 });

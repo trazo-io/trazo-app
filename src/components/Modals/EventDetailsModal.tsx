@@ -1277,7 +1277,13 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
           {/* Pilot rehearsal 2026-10: a corrected record showed only its corrected value here,
               and a document could not be tied to the record at all. Both are read-only. A
               rolled-up summary row stands in for several events and has no single trail. */}
-          {!event.is_summary && (
+          {/* Same three-way test as the summary period above: a rolled-up row carries the flag
+              in extra_data (sometimes as the string 'true'), not at the top level. */}
+          {!(
+            event.is_summary === true ||
+            event.extra_data?.is_summary === true ||
+            event.extra_data?.is_summary === 'true'
+          ) && (
             <>
               <EventCorrections
                 eventId={event.id}

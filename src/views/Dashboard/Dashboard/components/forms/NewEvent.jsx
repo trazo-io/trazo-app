@@ -4174,7 +4174,10 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                 // for the re-render, focuses the field and returns its label so
                                 // the notice can name it (any tab, not only pest).
                                 const revealed = await revealFirstFormError(errors);
-                                const fieldName = revealed.label || revealed.message;
+                                // Only a field LABEL fills {field}. The validation message is
+                                // a sentence (and hardcoded English in the zod schemas), so
+                                // without a label the translated generic body is used instead.
+                                const fieldName = revealed.label;
                                 toast({
                                   title: intl.formatMessage({
                                     id: 'events.form.validationFailedTitle',

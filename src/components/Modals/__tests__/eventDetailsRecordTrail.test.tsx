@@ -120,6 +120,14 @@ describe('corrections on a record', () => {
     expect(screen.queryByTestId('event-corrections')).toBeNull();
   });
 
+  it('shows no trail on a rolled-up summary row (flag carried in extra_data)', () => {
+    renderModal({
+      event: { ...SPRAY, event_type: 6, type: 'SC', extra_data: { is_summary: 'true' } }
+    });
+    expect(screen.queryByTestId('event-corrections')).toBeNull();
+    expect(screen.queryByTestId('event-documents')).toBeNull();
+  });
+
   it('does not request the list for a viewer (the server answers 403 to viewers)', () => {
     canWrite = false;
     renderModal();
