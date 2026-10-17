@@ -249,21 +249,11 @@ describe('ConsumerSignIn Integration Tests', () => {
         });
       });
 
-      // Verify success toast
-      await waitFor(() => {
-        expect(mockToast).toHaveBeenCalledWith({
-          title: 'Welcome back!',
-          description: 'You have successfully signed in.',
-          status: 'success',
-          duration: 3000,
-          isClosable: true
-        });
-      });
-
-      // Verify navigation
+      // A returning user's confirmation is arriving on the dashboard, not a toast.
       await waitFor(() => {
         expect(mockNavigate).toHaveBeenCalledWith('/admin/dashboard', { replace: true });
       });
+      expect(mockToast).not.toHaveBeenCalled();
     });
 
     it('handles login errors gracefully', async () => {

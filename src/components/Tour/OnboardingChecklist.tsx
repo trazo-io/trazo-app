@@ -62,6 +62,7 @@ const OnboardingChecklist: React.FC = () => {
     items,
     optionalItems,
     isPilot,
+    isSetupOperator,
     pilotStepsComplete,
     variant,
     completedCount,
@@ -256,7 +257,24 @@ const OnboardingChecklist: React.FC = () => {
       {/* Checklist items */}
       {!pilotStepsComplete && (
         <Collapse in={isExpanded}>
-          {isPilot && (
+          {isPilot && isSetupOperator && (
+            // The operator entering the grower's records gets the operator's side of setup, not
+            // the grower's instruction to send records to the operator (rehearsal finding 7).
+            <Box data-testid="pilot-operator-info" px={5} pt={3} pb={1}>
+              <Text fontSize="xs" fontWeight="700" color={headingColor} mb={1}>
+                <FormattedMessage id="tour.checklist.pilot.operatorSetup" />
+              </Text>
+              <VStack as="ul" align="start" spacing={1} pl={4} fontSize="xs" color={textColor}>
+                <Text as="li">
+                  <FormattedMessage id="tour.checklist.pilot.operatorSetup.body" />
+                </Text>
+                <Text as="li">
+                  <FormattedMessage id="tour.checklist.pilot.operatorSetup.check" />
+                </Text>
+              </VStack>
+            </Box>
+          )}
+          {isPilot && !isSetupOperator && (
             // Information, not steps: no check circle, never counted, never shown incomplete.
             <Box data-testid="pilot-setup-info" px={5} pt={3} pb={1}>
               <Text fontSize="xs" fontWeight="700" color={headingColor} mb={1}>

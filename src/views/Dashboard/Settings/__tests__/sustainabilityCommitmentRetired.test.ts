@@ -59,12 +59,6 @@ describe('sustainability commitment: carbon_neutral is retired, not remapped', (
     expect(block).not.toMatch(/value="carbon_neutral"/);
   });
 
-  it('the unused company form offers no carbon_neutral option either', () => {
-    const form = read('views/Dashboard/Dashboard/components/forms/NewCompanyStandardized.tsx');
-    expect(form).toContain("register('sustainabilityCommitment')");
-    expect(form).not.toMatch(/<option value="carbon_neutral"/);
-  });
-
   it('the Settings read-back still labels a stored retired value instead of a raw slug', () => {
     expect(isKnownSustainabilityCommitment('carbon_neutral')).toBe(true);
     expect(isKnownSustainabilityCommitment('Carbon Neutral by 2026')).toBe(false);

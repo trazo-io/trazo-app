@@ -366,8 +366,11 @@ function ProfileProduction() {
       window.open(data.download_url, '_blank');
 
       toast({
-        title: 'QR Code Ready',
-        description: `Download URL generated. ${data.filename} will open shortly.`,
+        title: intl.formatMessage({ id: 'production.toast.qrReady.title' }),
+        description: intl.formatMessage(
+          { id: 'production.toast.qrReady.body' },
+          { filename: data.filename }
+        ),
         status: 'success',
         duration: 3000,
         isClosable: true

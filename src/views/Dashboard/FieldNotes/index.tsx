@@ -29,6 +29,7 @@ import {
   StandardPage,
   StandardPagination,
   StandardSelect,
+  StandardSpinner,
   StandardTextarea
 } from 'components/Design/StandardComponents';
 
@@ -355,16 +356,14 @@ const FieldNotesInbox = () => {
         title: intl.formatMessage({ id: 'fieldNotes.refused.acknowledged' }),
         status: 'success',
         duration: 4000,
-        isClosable: true,
-        position: 'top'
+        isClosable: true
       });
     } catch {
       toast({
         title: intl.formatMessage({ id: 'fieldNotes.refused.acknowledgeFailed' }),
         status: 'error',
         duration: 6000,
-        isClosable: true,
-        position: 'top'
+        isClosable: true
       });
     }
   };
@@ -378,16 +377,14 @@ const FieldNotesInbox = () => {
         title: intl.formatMessage({ id: 'fieldNotes.discarded' }),
         status: 'success',
         duration: 4000,
-        isClosable: true,
-        position: 'top'
+        isClosable: true
       });
     } catch {
       toast({
         title: intl.formatMessage({ id: 'fieldNotes.discardFailed' }),
         status: 'error',
         duration: 6000,
-        isClosable: true,
-        position: 'top'
+        isClosable: true
       });
     }
   };
@@ -477,7 +474,7 @@ const FieldNotesInbox = () => {
         )}
 
         {(isLoading || refusedLoading || transcribingLoading) && (
-          <Text fontSize="sm">{intl.formatMessage({ id: 'app.loading' })}</Text>
+          <StandardSpinner label={intl.formatMessage({ id: 'app.loading' })} />
         )}
 
         {/*

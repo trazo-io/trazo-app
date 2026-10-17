@@ -339,12 +339,6 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
     try {
       await markAllAsReadMutation().unwrap();
       dispatch(markAllAsRead());
-      toast({
-        description: intl.formatMessage({ id: 'notifications.success.allRead' }),
-        status: 'success',
-        duration: 2000,
-        isClosable: true
-      });
     } catch (error) {
       console.error('Failed to mark all notifications as read:', error);
       toast({

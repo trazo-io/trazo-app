@@ -182,18 +182,6 @@ function AddFarm({ isEdit = false }: Props) {
         sessionStorage.setItem('creating_farm', 'true');
         sessionStorage.setItem('just_created_farm_id', result.id.toString());
 
-        // Success toast
-        toast({
-          title: intl.formatMessage({ id: 'farmForm.toast.createdTitle' }),
-          description: intl.formatMessage(
-            { id: 'farmForm.toast.createdDescription' },
-            { name: data.name }
-          ),
-          status: 'success',
-          duration: 5000,
-          isClosable: true
-        });
-
         // Navigate immediately - RTK Query optimistic update + sessionStorage flags prevent race conditions
         const targetUrl = `/admin/dashboard/farm/${result.id}`;
         navigate(targetUrl);

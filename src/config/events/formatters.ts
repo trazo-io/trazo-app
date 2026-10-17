@@ -224,6 +224,15 @@ export const formatDateTime: FieldFormatter<string> = (value) => {
  *   (useful for fields where "0" is not a meaningful display, e.g. area_covered
  *   on facility-based production subtypes like EM/PO/PH).
  */
+/**
+ * Stored unit codes that are not how a unit is written. Mirrors VOLUME_UNIT_SYMBOLS in
+ * common/field_registry: the packet prints "fl oz", so the record view must not print "fl_oz".
+ */
+export const UNIT_CODE_SYMBOLS: Record<string, string> = {
+  fl_oz: 'fl oz',
+  oz_wt: 'oz wt'
+};
+
 export function makeUnitPairFormatter(
   unitFieldName: string,
   options: { skipNonPositive?: boolean } = {}
@@ -234,7 +243,7 @@ export function makeUnitPairFormatter(
     if (Number.isNaN(numeric)) return null;
     if (options.skipNonPositive && numeric <= 0) return null;
     const unit = event[unitFieldName];
-    const unitStr = typeof unit === 'string' ? unit : '';
+    const unitStr = typeof unit === 'string' ? UNIT_CODE_SYMBOLS[unit] ?? unit : '';
     const formatted = numeric.toLocaleString(undefined, { maximumFractionDigits: 2 });
     return unitStr ? `${formatted} ${unitStr}` : formatted;
   };

@@ -27,7 +27,8 @@ import {
   StandardButton,
   StandardCard,
   StandardInput,
-  StandardSelect
+  StandardSelect,
+  StandardSpinner
 } from 'components/Design/StandardComponents';
 import {
   useCreateCrewSenderMutation,
@@ -121,8 +122,7 @@ const CrewRoster = ({ companyId, farms }: Props) => {
         title: intl.formatMessage({ id: 'fieldNotes.roster.saved' }),
         status: 'success',
         duration: 4000,
-        isClosable: true,
-        position: 'top'
+        isClosable: true
       });
     } catch (caught: any) {
       // The server validates the number, the farm and the consent tick, and its message names which
@@ -247,7 +247,7 @@ const CrewRoster = ({ companyId, farms }: Props) => {
           </Text>
         </VStack>
 
-        {!answered && <Text fontSize="sm">{intl.formatMessage({ id: 'app.loading' })}</Text>}
+        {!answered && <StandardSpinner label={intl.formatMessage({ id: 'app.loading' })} />}
 
         {answered && senders.length === 0 && (
           <Text fontSize="sm" color="gray.700">

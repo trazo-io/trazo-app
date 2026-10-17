@@ -46,6 +46,7 @@ import { useDeleteEventMutation } from 'store/api/historyApi';
 import { formatCO2e, getImpactLevel } from '../../utils/carbonDisplayUtils';
 import { ResponsiveModal } from 'components/Design/ResponsiveModal';
 import { CorrectRecordModal } from 'components/Modals/CorrectRecordModal';
+import { EventCorrections, EventDocuments } from 'components/Modals/EventRecordTrail';
 import { StandardAlert, StandardButton } from 'components/Design/StandardComponents';
 import CrewNoteProvenance from './CrewNoteProvenance';
 import { eventTypeAppearance } from 'config/events/eventTypeAppearance';
@@ -1272,6 +1273,35 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
             textColor={textColor}
             headingColor={textColor}
           />
+
+          {/* Pilot rehearsal 2026-10: a corrected record showed only its corrected value here,
+              and a document could not be tied to the record at all. Both are read-only. A
+              rolled-up summary row stands in for several events and has no single trail. */}
+          {/* Same three-way test as the summary period above: a rolled-up row carries the flag
+              in extra_data (sometimes as the string 'true'), not at the top level. */}
+          {!(
+            event.is_summary === true ||
+            event.extra_data?.is_summary === true ||
+            event.extra_data?.is_summary === 'true'
+          ) && (
+            <>
+              <EventCorrections
+                eventId={event.id}
+                eventType={event.event_type}
+                enabled={canWrite}
+                headingColor={textColor}
+                cardBg={cardBg}
+              />
+              <EventDocuments
+                companyId={currentCompany?.id}
+                farmId={farmId}
+                eventId={event.id}
+                eventType={event.event_type}
+                headingColor={textColor}
+                cardBg={cardBg}
+              />
+            </>
+          )}
 
           <Divider />
 

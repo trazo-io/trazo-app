@@ -66,6 +66,22 @@ interface SetupPasswordFormData {
 // Motion components
 const MotionBox = motion(Box);
 
+/**
+ * The localized reason a password was refused, for the reasons the strength indicator cannot
+ * show. Matches the English messages `passwordValidator.validate()` pushes
+ * (utils/passwordValidation.ts).
+ */
+export function weakPasswordReasonId(errors: string[] | undefined): string {
+  const list = errors ?? [];
+  if (list.some((e) => /personal information/i.test(e))) {
+    return 'auth.invitationSetup.weakPassword.personalInfo';
+  }
+  if (list.some((e) => /too simple/i.test(e))) {
+    return 'auth.invitationSetup.weakPassword.tooSimple';
+  }
+  return 'auth.signup.toast.weakPassword.body';
+}
+
 const SetupPassword: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -140,9 +156,9 @@ const SetupPassword: React.FC = () => {
       handleSuccessfulSignup(response);
     } catch (err: any) {
       const errorMessage =
-        err?.data?.error || intl.formatMessage({ id: 'auth.invitation.toast.socialFailed.body' });
+        err?.data?.error || intl.formatMessage({ id: 'auth.error.social.failed' });
       toast({
-        title: intl.formatMessage({ id: 'auth.invitation.toast.socialFailed.title' }),
+        title: intl.formatMessage({ id: 'auth.invitationSetup.toast.signInFailed.title' }),
         description: errorMessage,
         status: 'error',
         duration: 4000,
@@ -179,21 +195,23 @@ const SetupPassword: React.FC = () => {
   React.useEffect(() => {
     if (detailsError) {
       toast({
-        title: intl.formatMessage({ id: 'auth.invitation.toast.error.title' }),
-        description: intl.formatMessage({ id: 'auth.invitation.toast.notFound.body' }),
+        title: intl.formatMessage({ id: 'auth.invitationSetup.toast.invitationError.title' }),
+        description: intl.formatMessage({
+          id: 'auth.invitationSetup.toast.invitationError.notFound'
+        }),
         status: 'error',
         duration: 5000,
         isClosable: true
       });
     }
-  }, [detailsError, toast]);
+  }, [detailsError, toast, intl]);
 
   // Handle form submission
   const onSubmit = async (data: SetupPasswordFormData) => {
     if (data.password !== data.password_confirm) {
       toast({
-        title: intl.formatMessage({ id: 'auth.invitation.toast.mismatch.title' }),
-        description: intl.formatMessage({ id: 'auth.invitation.toast.mismatch.body' }),
+        title: intl.formatMessage({ id: 'auth.invitationSetup.toast.mismatch.title' }),
+        description: intl.formatMessage({ id: 'auth.invitationSetup.toast.mismatch.body' }),
         status: 'error',
         duration: 3000,
         isClosable: true
@@ -203,10 +221,12 @@ const SetupPassword: React.FC = () => {
 
     if (!passwordValidation || !passwordValidation.isValid) {
       toast({
+        // The validator's messages are English-only. The strength indicator under the field
+        // lists the five character rules in the reader's language, but has no row for the two
+        // other reasons a password is refused (too simple, contains the person's name), so those
+        // get their own localized line; anything else falls back to the generic one.
         title: intl.formatMessage({ id: 'auth.signup.toast.weakPassword.title' }),
-        description:
-          passwordValidation?.errors[0] ||
-          intl.formatMessage({ id: 'auth.signup.toast.weakPassword.body' }),
+        description: intl.formatMessage({ id: weakPasswordReasonId(passwordValidation?.errors) }),
         status: 'error',
         duration: 3000,
         isClosable: true
@@ -216,8 +236,10 @@ const SetupPassword: React.FC = () => {
 
     if (!invitationCode) {
       toast({
-        title: intl.formatMessage({ id: 'auth.invitation.toast.error.title' }),
-        description: intl.formatMessage({ id: 'auth.invitation.toast.noCode.body' }),
+        title: intl.formatMessage({ id: 'auth.invitationSetup.toast.invitationError.title' }),
+        description: intl.formatMessage({
+          id: 'auth.invitationSetup.toast.invitationError.noCode'
+        }),
         status: 'error',
         duration: 3000,
         isClosable: true
@@ -254,12 +276,11 @@ const SetupPassword: React.FC = () => {
       }
 
       toast({
-        title: intl.formatMessage({ id: 'auth.invitation.toast.createFailed.title' }),
+        title: intl.formatMessage({ id: 'auth.invitationSetup.toast.failed.title' }),
         description:
           error?.data?.error ||
           error?.data?.message ||
-          error?.message ||
-          intl.formatMessage({ id: 'auth.invitation.toast.createFailed.body' }),
+          intl.formatMessage({ id: 'auth.invitationSetup.toast.failed.body' }),
         status: 'error',
         duration: 4000,
         isClosable: true
@@ -310,14 +331,6 @@ const SetupPassword: React.FC = () => {
     }
 
     setStep('success');
-
-    toast({
-      title: 'Account created successfully!',
-      description: `Welcome to ${result.company?.name || 'the team'}!`,
-      status: 'success',
-      duration: 4000,
-      isClosable: true
-    });
 
     // Start progress animation and redirect based on subscription status
     const redirectUrl = result.redirect_to || '/admin/dashboard';
@@ -380,18 +393,18 @@ const SetupPassword: React.FC = () => {
               zIndex={10}>
               <VStack spacing={4}>
                 <Text fontSize="4xl" fontWeight="800" lineHeight="1.1" letterSpacing="tight">
-                  Account Created Successfully!
+                  {intl.formatMessage({ id: 'auth.invitationSetup.success.panelTitle' })}
                 </Text>
                 <Text fontSize="lg" opacity={0.9} fontWeight="400" lineHeight="1.6">
-                  Welcome to the team! You're now part of the carbon intelligence revolution.
+                  {intl.formatMessage({ id: 'auth.invitationSetup.success.panelBody' })}
                 </Text>
               </VStack>
 
               <VStack spacing={3} pt={4}>
                 {[
-                  'Access granted to dashboard',
-                  'Carbon tracking enabled',
-                  'Team collaboration ready'
+                  intl.formatMessage({ id: 'auth.invitationSetup.success.item.records' }),
+                  intl.formatMessage({ id: 'auth.invitationSetup.success.item.renewal' }),
+                  intl.formatMessage({ id: 'auth.invitationSetup.success.item.team' })
                 ].map((feature, index) => (
                   <HStack key={index} spacing={3}>
                     <Box w={2} h={2} bg="white" borderRadius="50%" />
@@ -437,14 +450,14 @@ const SetupPassword: React.FC = () => {
                     fontSize="2xl"
                     fontWeight="700"
                     color={useColorModeValue('gray.800', 'white')}>
-                    Welcome to the team!
+                    {intl.formatMessage({ id: 'auth.invitationSetup.success.title' })}
                   </Text>
                   <Text
                     fontSize="md"
                     color={useColorModeValue('gray.600', 'gray.300')}
                     textAlign="center"
                     lineHeight="1.6">
-                    Your account has been created successfully. Taking you to your dashboard...
+                    {intl.formatMessage({ id: 'auth.invitationSetup.success.body' })}
                   </Text>
                 </VStack>
 
@@ -464,7 +477,7 @@ const SetupPassword: React.FC = () => {
                   />
                   <HStack justify="space-between" mt={2}>
                     <Text fontSize="xs" color={useColorModeValue('gray.500', 'gray.400')}>
-                      Setting up your workspace...
+                      {intl.formatMessage({ id: 'auth.invitationSetup.success.progress' })}
                     </Text>
                     <Text
                       fontSize="xs"
@@ -504,10 +517,10 @@ const SetupPassword: React.FC = () => {
           </Box>
           <VStack spacing={4}>
             <Text fontSize="xl" fontWeight="600" color="gray.700">
-              Loading invitation details
+              {intl.formatMessage({ id: 'auth.invitationSetup.loading.title' })}
             </Text>
             <Text fontSize="sm" color="gray.500" lineHeight="1.6" textAlign="center">
-              Please wait while we verify your invitation...
+              {intl.formatMessage({ id: 'auth.invitationSetup.loading.body' })}
             </Text>
           </VStack>
         </VStack>
@@ -542,11 +555,10 @@ const SetupPassword: React.FC = () => {
             </Box>
             <VStack spacing={3}>
               <Text fontSize="xl" fontWeight="600" color="gray.800">
-                Invalid Invitation
+                {intl.formatMessage({ id: 'auth.invitationSetup.invalid.title' })}
               </Text>
               <Text fontSize="sm" color="gray.600" textAlign="center" lineHeight="1.6">
-                This invitation link is invalid or has expired. Please contact your team
-                administrator for a new invitation.
+                {intl.formatMessage({ id: 'auth.invitationSetup.invalid.body' })}
               </Text>
             </VStack>
             <Button
@@ -560,7 +572,7 @@ const SetupPassword: React.FC = () => {
               fontWeight="600"
               borderRadius="xl"
               _hover={{ bg: 'gray.200' }}>
-              Go to Homepage
+              {intl.formatMessage({ id: 'auth.invitationSetup.invalid.home' })}
             </Button>
           </VStack>
         </Box>
@@ -673,19 +685,18 @@ const SetupPassword: React.FC = () => {
             zIndex={10}>
             <VStack spacing={4}>
               <Text fontSize="4xl" fontWeight="800" lineHeight="1.1" letterSpacing="tight">
-                Welcome to the Team!
+                {intl.formatMessage({ id: 'auth.invitationSetup.panel.title' })}
               </Text>
               <Text fontSize="lg" opacity={0.9} fontWeight="400" lineHeight="1.6">
-                Complete your account setup and start building sustainable solutions with carbon
-                intelligence
+                {intl.formatMessage({ id: 'auth.invitationSetup.panel.body' })}
               </Text>
             </VStack>
 
             <VStack spacing={3} pt={4}>
               {[
-                'Enterprise-grade carbon tracking',
-                'Transparency-first documentation',
-                'Science-based emission data'
+                intl.formatMessage({ id: 'auth.invitationSetup.panel.item.records' }),
+                intl.formatMessage({ id: 'auth.invitationSetup.panel.item.osp' }),
+                intl.formatMessage({ id: 'auth.invitationSetup.panel.item.team' })
               ].map((feature, index) => (
                 <HStack key={index} spacing={3}>
                   <Box w={2} h={2} bg="white" borderRadius="50%" />
@@ -723,13 +734,13 @@ const SetupPassword: React.FC = () => {
                   color={useColorModeValue('gray.900', 'white')}
                   letterSpacing="tight"
                   textAlign="center">
-                  Complete Your Setup
+                  {intl.formatMessage({ id: 'auth.invitationSetup.form.title' })}
                 </Text>
                 <Text
                   fontSize="md"
                   color={useColorModeValue('gray.500', 'gray.400')}
                   textAlign="center">
-                  Create your account to join the team
+                  {intl.formatMessage({ id: 'auth.invitationSetup.form.subtitle' })}
                 </Text>
               </VStack>
             </VStack>
@@ -776,16 +787,30 @@ const SetupPassword: React.FC = () => {
                         fontWeight="medium"
                         color={useColorModeValue('gray.700', 'gray.300')}
                         mb={2}>
-                        First Name
+                        {intl.formatMessage({ id: 'auth.signup.field.firstName.label' })}
                       </Text>
                       <StandardInput
                         type="text"
-                        placeholder="John"
+                        placeholder={intl.formatMessage({
+                          id: 'auth.signup.field.firstName.placeholder'
+                        })}
                         {...registerWithFocus(
                           register('first_name', {
-                            required: 'First name is required',
-                            minLength: { value: 2, message: 'First name too short' },
-                            maxLength: { value: 50, message: 'First name too long' }
+                            required: intl.formatMessage({
+                              id: 'auth.validation.firstName.required'
+                            }),
+                            minLength: {
+                              value: 2,
+                              message: intl.formatMessage({
+                                id: 'auth.invitationSetup.validation.firstName.tooShort'
+                              })
+                            },
+                            maxLength: {
+                              value: 50,
+                              message: intl.formatMessage({
+                                id: 'auth.validation.firstName.tooLong'
+                              })
+                            }
                           }),
                           setFocusedField
                         )}
@@ -804,16 +829,30 @@ const SetupPassword: React.FC = () => {
                         fontWeight="medium"
                         color={useColorModeValue('gray.700', 'gray.300')}
                         mb={2}>
-                        Last Name
+                        {intl.formatMessage({ id: 'auth.signup.field.lastName.label' })}
                       </Text>
                       <StandardInput
                         type="text"
-                        placeholder="Doe"
+                        placeholder={intl.formatMessage({
+                          id: 'auth.signup.field.lastName.placeholder'
+                        })}
                         {...registerWithFocus(
                           register('last_name', {
-                            required: 'Last name is required',
-                            minLength: { value: 2, message: 'Last name too short' },
-                            maxLength: { value: 50, message: 'Last name too long' }
+                            required: intl.formatMessage({
+                              id: 'auth.validation.lastName.required'
+                            }),
+                            minLength: {
+                              value: 2,
+                              message: intl.formatMessage({
+                                id: 'auth.invitationSetup.validation.lastName.tooShort'
+                              })
+                            },
+                            maxLength: {
+                              value: 50,
+                              message: intl.formatMessage({
+                                id: 'auth.validation.lastName.tooLong'
+                              })
+                            }
                           }),
                           setFocusedField
                         )}
@@ -834,15 +873,20 @@ const SetupPassword: React.FC = () => {
                       fontWeight="medium"
                       color={useColorModeValue('gray.700', 'gray.300')}
                       mb={2}>
-                      Password
+                      {intl.formatMessage({ id: 'auth.signup.field.password.label' })}
                     </Text>
                     <StandardInput
                       type={showPassword ? 'text' : 'password'}
-                      placeholder="Create a strong password"
+                      placeholder={intl.formatMessage({
+                        id: 'auth.signup.field.password.placeholder'
+                      })}
                       {...registerWithFocus(
                         register('password', {
-                          required: 'Password is required',
-                          minLength: { value: 8, message: 'Password must be at least 8 characters' }
+                          required: intl.formatMessage({ id: 'auth.validation.password.required' }),
+                          minLength: {
+                            value: 8,
+                            message: intl.formatMessage({ id: 'auth.validation.password.tooShort' })
+                          }
                         }),
                         setFocusedField
                       )}
@@ -858,6 +902,9 @@ const SetupPassword: React.FC = () => {
                         <Button
                           variant="ghost"
                           onClick={() => setShowPassword(!showPassword)}
+                          aria-label={intl.formatMessage({
+                            id: showPassword ? 'auth.password.hide' : 'auth.password.show'
+                          })}
                           size="sm">
                           <Icon as={showPassword ? FiEyeOff : FiEye} />
                         </Button>
@@ -887,14 +934,18 @@ const SetupPassword: React.FC = () => {
                       fontWeight="medium"
                       color={useColorModeValue('gray.700', 'gray.300')}
                       mb={2}>
-                      Confirm Password
+                      {intl.formatMessage({ id: 'auth.signup.field.confirmPassword.label' })}
                     </Text>
                     <StandardInput
                       type={showConfirmPassword ? 'text' : 'password'}
-                      placeholder="Confirm your password"
+                      placeholder={intl.formatMessage({
+                        id: 'auth.signup.field.confirmPassword.placeholder'
+                      })}
                       {...registerWithFocus(
                         register('password_confirm', {
-                          required: 'Please confirm your password'
+                          required: intl.formatMessage({
+                            id: 'auth.validation.confirmPassword.required'
+                          })
                         }),
                         setFocusedField
                       )}
@@ -910,6 +961,9 @@ const SetupPassword: React.FC = () => {
                         <Button
                           variant="ghost"
                           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          aria-label={intl.formatMessage({
+                            id: showConfirmPassword ? 'auth.password.hide' : 'auth.password.show'
+                          })}
                           size="sm">
                           <Icon as={showConfirmPassword ? FiEyeOff : FiEye} />
                         </Button>
@@ -920,11 +974,11 @@ const SetupPassword: React.FC = () => {
                     {passwordConfirm && (
                       <Text
                         fontSize="xs"
-                        color={password === passwordConfirm ? 'green.500' : 'red.500'}
+                        color={password === passwordConfirm ? 'green.700' : 'red.700'}
                         mt={1}>
                         {password === passwordConfirm
-                          ? '✓ Passwords match'
-                          : '✗ Passwords do not match'}
+                          ? `✓ ${intl.formatMessage({ id: 'auth.invitationSetup.match.yes' })}`
+                          : `✗ ${intl.formatMessage({ id: 'auth.invitationSetup.match.no' })}`}
                       </Text>
                     )}
 
@@ -942,37 +996,57 @@ const SetupPassword: React.FC = () => {
                       colorScheme="green"
                       spacing={3}
                       {...register('acceptTerms', {
-                        required: 'You must accept the terms and conditions'
+                        required: intl.formatMessage({ id: 'auth.validation.terms.required' })
                       })}>
                       <Text fontSize="sm" color={useColorModeValue('gray.700', 'gray.300')}>
-                        I agree to the{' '}
-                        <a
-                          href="https://trazo.io/terms-of-service"
-                          target="_blank"
-                          rel="noopener noreferrer">
-                          <Text
-                            as="span"
-                            color="green.500"
-                            fontWeight="medium"
-                            _hover={{ textDecoration: 'underline' }}>
-                            Terms of Service
-                          </Text>
-                        </a>{' '}
-                        and{' '}
-                        <a
-                          href="https://trazo.io/privacy-policy"
-                          target="_blank"
-                          rel="noopener noreferrer">
-                          <Text
-                            as="span"
-                            color="green.500"
-                            fontWeight="medium"
-                            _hover={{ textDecoration: 'underline' }}>
-                            Privacy Policy
-                          </Text>
-                        </a>
+                        {intl.formatMessage({ id: 'auth.signup.terms.agreeShort' })}
                       </Text>
                     </Checkbox>
+                    {/* The links live OUTSIDE the checkbox label, as on AppSignUp (recordkeeping
+                        review F-20): a click on a link inside a <label> follows the link and
+                        never toggles the box. */}
+                    <Text
+                      fontSize="xs"
+                      color={useColorModeValue('gray.600', 'gray.400')}
+                      mt={1}
+                      ml={8}
+                      data-testid="setup-terms-links">
+                      {intl.formatMessage(
+                        { id: 'auth.signup.terms.readLinks' },
+                        {
+                          tos: (
+                            <a
+                              key="tos"
+                              href="https://trazo.io/terms-of-service"
+                              target="_blank"
+                              rel="noopener noreferrer">
+                              <Text
+                                as="span"
+                                color="green.700"
+                                fontWeight="medium"
+                                _hover={{ textDecoration: 'underline' }}>
+                                {intl.formatMessage({ id: 'auth.signup.terms.tos' })}
+                              </Text>
+                            </a>
+                          ),
+                          privacy: (
+                            <a
+                              key="privacy"
+                              href="https://trazo.io/privacy-policy"
+                              target="_blank"
+                              rel="noopener noreferrer">
+                              <Text
+                                as="span"
+                                color="green.700"
+                                fontWeight="medium"
+                                _hover={{ textDecoration: 'underline' }}>
+                                {intl.formatMessage({ id: 'auth.signup.terms.privacy' })}
+                              </Text>
+                            </a>
+                          )
+                        }
+                      )}
+                    </Text>
                     {errors.acceptTerms && (
                       <Text fontSize="sm" color="red.700" mt={1}>
                         {errors.acceptTerms.message}
@@ -991,7 +1065,7 @@ const SetupPassword: React.FC = () => {
                     fontWeight="600"
                     borderRadius="xl"
                     isLoading={isSubmitting || isCreatingAccount}
-                    loadingText="Creating account..."
+                    loadingText={intl.formatMessage({ id: 'auth.invitationSetup.submitting' })}
                     _hover={{
                       bg: 'green.600',
                       transform: 'translateY(-1px)'
@@ -1000,7 +1074,7 @@ const SetupPassword: React.FC = () => {
                       transform: 'translateY(0)'
                     }}
                     transition="all 0.2s">
-                    Complete Setup
+                    {intl.formatMessage({ id: 'auth.invitationSetup.submit' })}
                   </Button>
                 </VStack>
               </form>

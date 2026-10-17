@@ -40,40 +40,14 @@ const walk = (dir: string, out: string[] = []): string[] => {
 
 const rel = (p: string) => relative(SRC, p).split('\\').join('/');
 
-// TODO(remove): dead files that the toast cleanup slice E deletes (nothing routes to or imports
-// them). Delete this list together with the files.
-const DEAD_FILES = [
-  'components/Forms/StandardProductionForm.tsx',
-  'components/Forms/StandardChemicalForm.tsx',
-  'components/Forms/MultiStepForm.tsx',
-  'views/Dashboard/Dashboard/components/forms/NewCompanyStandardized.tsx',
-  'views/Dashboard/Dashboard/components/forms/NewCompany.jsx',
-  'views/Dashboard/Dashboard/components/forms/CarbonReportTab.jsx',
-  'views/Authentication/SignUp/ConsumerSignUp.tsx',
-  'views/Dashboard/Dashboard/Production/UpdateProduction.tsx'
-];
+// Unrouted on purpose: routes/config.ts keeps ConsumerSignUp one line away from being restored
+// until the November consumer cleanup, so its hardcoded copy is not translated. Delete the entry
+// together with the file.
+const DEAD_FILES = ['views/Authentication/SignUp/ConsumerSignUp.tsx'];
 
-// TODO(remove): call sites slice E drops or rewrites. Each entry is `[file, text the offending
-// expression contains]`; delete an entry when its toast is removed.
-const PENDING_REMOVAL: Array<[string, string]> = [
-  ['views/Authentication/Invitation/SetupPassword.tsx', 'Account created successfully!'],
-  ['views/Authentication/Invitation/SetupPassword.tsx', 'Welcome to ${'],
-  ['views/Authentication/Invitation/AcceptInvitation.tsx', 'Successfully'],
-  ['views/Authentication/Invitation/AcceptInvitation.tsx', 'Welcome to ${'],
-  ['views/Authentication/Invitation/AcceptInvitation.tsx', "You've been transferred"],
-  ['views/Authentication/SignIn/ConsumerSignIn.tsx', 'Welcome back!'],
-  ['views/Authentication/SignIn/ConsumerSignIn.tsx', 'Welcome to Trazo!'],
-  ['views/Authentication/SignIn/ConsumerSignIn.tsx', 'You have successfully signed in.'],
-  ['views/Authentication/SignIn/ConsumerSignIn.tsx', 'Your account has been created'],
-  ['components/Upload/TrazoImageUpload.tsx', 'Upload successful'],
-  ['views/Dashboard/Dashboard/Production/ProfileProduction.tsx', 'QR Code Ready'],
-  ['views/Dashboard/Dashboard/Production/ProfileProduction.tsx', 'Download URL generated'],
-  // NewEvent.jsx: `intl.formatMessage(...) || 'Success'` style fallbacks, all in slice E's rewrite.
-  ['views/Dashboard/Dashboard/components/forms/NewEvent.jsx', "'Success'"],
-  ['views/Dashboard/Dashboard/components/forms/NewEvent.jsx', "'Event updated successfully'"],
-  ['views/Dashboard/Dashboard/components/forms/NewEvent.jsx', "'Event created successfully"],
-  ['views/Dashboard/Dashboard/components/forms/NewEvent.jsx', "'Saved"]
-];
+// Call sites allowed to keep literal toast text, as `[file, text the offending expression
+// contains]`. Empty since the toast cleanup landed; an entry that stops matching fails below.
+const PENDING_REMOVAL: Array<[string, string]> = [];
 
 const TOAST_CALL = /\b(?:toast|showToast|toastFn)\s*\(\s*\{/g;
 const MESSAGE_CALL = /^(?:intl\s*\.\s*)?formatMessage\s*\(|^t\s*\(/;

@@ -271,14 +271,6 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
           })
         );
 
-        toast({
-          title: intl.formatMessage({ id: 'parcelForm.toast.createdTitle' }),
-          description: intl.formatMessage({ id: 'parcelForm.toast.createdDescription' }),
-          status: 'success',
-          duration: 5000,
-          isClosable: true
-        });
-
         // ✅ Redirect to new parcel profile after creation
         navigate(`/admin/dashboard/farm/${farmId}/parcel/${result.id}`);
       }
@@ -294,8 +286,7 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
           intl.formatMessage({ id: 'parcelForm.toast.saveErrorDescription' }),
         status: 'error',
         duration: 5000,
-        isClosable: true,
-        position: 'top-right'
+        isClosable: true
       });
     }
   };
@@ -332,8 +323,7 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
       description: intl.formatMessage({ id: 'parcelForm.error.loadDescription' }),
       status: 'error',
       duration: 5000,
-      isClosable: true,
-      position: 'top-right'
+      isClosable: true
     });
     navigate(`/admin/dashboard/farm/${farmId}`);
   }, [isEdit, parcelError, farmId, intl, navigate, toast]);
