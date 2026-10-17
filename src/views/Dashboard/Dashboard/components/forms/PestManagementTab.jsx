@@ -901,7 +901,7 @@ const PestManagementTab = forwardRef(
                       </Text>
                     </HStack>
                     <Text fontSize="xs" color="teal.600">
-                      Pest scouting is observational and does not produce direct emissions.
+                      Pest scouting is observational, so there are no emissions to estimate.
                       <br />
                       {/* F38 fix (2026-06): removed unsourced "+30 points" figure and the
                             FAO attribution that did not substantiate it (compliance: no
