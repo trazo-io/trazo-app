@@ -100,9 +100,6 @@ const SignInApp = lazyWithRetry(() => import('views/Authentication/SignIn/SignIn
 const SignUp = lazyWithRetry(() => import('views/Authentication/SignUp/SignUpBasic'));
 import Unauthorized from './views/Applications/DataTables/index';
 const UpdateEvent = lazyWithRetry(() => import('views/Dashboard/Dashboard/Event/UpdateEvent'));
-const UpdateProduction = lazyWithRetry(
-  () => import('views/Dashboard/Dashboard/Production/UpdateProduction')
-);
 const QuickStartProduction = lazyWithRetry(
   () => import('views/Dashboard/Dashboard/Production/QuickStartProduction')
 );
