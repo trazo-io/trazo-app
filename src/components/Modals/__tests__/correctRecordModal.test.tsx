@@ -328,6 +328,20 @@ describe('CorrectRecordModal', () => {
       );
     });
 
+    it('a payload with no usable factor is uncheckable, never a disagreement', () => {
+      queryState.data = {
+        ...queryState.data,
+        related_quantities: { ...RELATED, factor: undefined, tolerance: 'n/a' }
+      };
+      renderModal();
+      fireEvent.change(screen.getByRole('combobox'), { target: { value: 'application_rate' } });
+      fireEvent.change(screen.getAllByRole('textbox')[0], { target: { value: '45' } });
+      const text = screen.queryByTestId('related-quantities')?.textContent ?? '';
+      expect(text).toContain('Trazo cannot compare them here');
+      expect(text).not.toContain('NaN');
+      expect(text).not.toContain('do not agree');
+    });
+
     it('stays out of the way for any other field', () => {
       renderModal();
       fireEvent.change(screen.getByRole('combobox'), { target: { value: 'commercial_name' } });

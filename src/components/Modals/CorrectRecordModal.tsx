@@ -290,8 +290,8 @@ export const CorrectRecordModal = ({
                 p={3}
                 borderRadius="md"
                 borderWidth="1px"
-                bg={quantityCheck.agrees === false ? 'orange.50' : 'gray.50'}
-                borderColor={quantityCheck.agrees === false ? 'orange.300' : 'gray.200'}
+                bg={quantityCheck.agrees === false ? 'amber.50' : 'gray.50'}
+                borderColor={quantityCheck.agrees === false ? 'amber.300' : 'gray.200'}
                 data-testid="related-quantities">
                 <Text fontSize="xs" fontWeight="bold" color="gray.700" mb={1}>
                   {intl.formatMessage({ id: 'correct.related.title' })}
@@ -306,13 +306,13 @@ export const CorrectRecordModal = ({
                   </Text>
                 ))}
                 <Text fontSize="xs" color="gray.600" mt={2}>
-                  {quantityCheck.agrees === false && quantityCheck.expected !== null
+                  {quantityCheck.agrees === false && Number.isFinite(quantityCheck.expected)
                     ? intl.formatMessage(
                         { id: 'correct.related.disagree' },
                         {
                           rate: quantityText('application_rate'),
                           area: quantityText('area_numeric'),
-                          expected: `${formatQuantity(quantityCheck.expected)} ${
+                          expected: `${formatQuantity(quantityCheck.expected as number)} ${
                             quantityCheck.values.volume_numeric?.unit ?? ''
                           }`.trim(),
                           amount: quantityText('volume_numeric')

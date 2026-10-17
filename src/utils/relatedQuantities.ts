@@ -64,20 +64,27 @@ export function checkRelatedQuantities(
   const amount = values.volume_numeric?.value ?? null;
   const area = values.area_numeric?.value ?? null;
   const rate = values.application_rate?.value ?? null;
-  if (related.factor === null || rate === null || area === null) {
+  // The payload is not validated on the way in: a missing or non-numeric factor or tolerance
+  // means the record cannot be checked, never that it disagrees (review on app#135).
+  const factor = toNumber(related.factor);
+  const tolerance = toNumber(related.tolerance);
+  if (factor === null || tolerance === null || rate === null || area === null) {
     return { agrees: null, amount, expected: null, values };
   }
-  const expected = rate * area * related.factor;
+  const expected = rate * area * factor;
+  if (!Number.isFinite(expected)) {
+    return { agrees: null, amount, expected: null, values };
+  }
   if (amount === null || amount <= 0 || expected <= 0) {
     return { agrees: null, amount, expected, values };
   }
   return {
-    agrees: Math.abs(expected - amount) <= amount * related.tolerance,
+    agrees: Math.abs(expected - amount) <= amount * tolerance,
     amount,
     expected,
     values
   };
 }
 
-/** 270, 0.375, 1066.5 — no float noise, at most 3 decimals. */
+/** 270, 0.375, 1066.5: no float noise, at most 3 decimals. */
 export const formatQuantity = (n: number): string => String(Number(n.toFixed(3)));

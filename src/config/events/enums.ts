@@ -87,7 +87,7 @@ export const APPLICATION_RATE_UNIT_SYMBOLS: Record<string, string> = {
 };
 
 /**
- * Volume units — liquid/solid chemicals, fertilizers. Mirrors UNIT_VOLUME (common/field_registry).
+ * Volume units for liquid and solid chemicals and fertilizers. Mirrors UNIT_VOLUME (common/field_registry).
  *
  * Fluid and weight ounces are separate units (2026-10-17, pilot rehearsal: "36 oz" printed beside
  * a "6 fl oz/acre" rate). The old single `oz` stays for records that hold it and is never offered
