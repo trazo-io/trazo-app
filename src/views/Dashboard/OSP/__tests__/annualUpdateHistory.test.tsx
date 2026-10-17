@@ -109,11 +109,13 @@ describe('annual update history', () => {
     expect(screen.getByText('Plan v1 → v3')).toBeInTheDocument();
   });
 
-  it('says "reaffirmed" when the filing produced no new version', () => {
-    // § 205.406 explicitly allows a pure "no material changes" attestation. A null new_osp is
-    // that case, not missing data, and must not read as an incomplete filing.
+  it('says the filing continues the plan when it produced no new version', () => {
+    // A null new_osp is not missing data: the filing continues the prior plan. It is not, by
+    // itself, the operator's "no changes" statement, so the card never says "reaffirmed"
+    // (a draft with every attestation unticked read "Plan v1 reaffirmed", pilot rehearsal).
     renderCard();
-    expect(screen.getByText('Plan v1 reaffirmed')).toBeInTheDocument();
+    expect(screen.getByText('Continues plan v1')).toBeInTheDocument();
+    expect(screen.queryByText(/reaffirmed/i)).toBeNull();
   });
 
   it('shows an acknowledgment that is on record', () => {

@@ -876,8 +876,12 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
                             )
                           : intl.formatMessage(
                               {
+                                // "Reaffirmed" is the operator's statement that nothing changed. A
+                                // filing that makes no new plan version only CONTINUES the plan; a
+                                // draft with every attestation unticked must not claim that statement
+                                // (pilot rehearsal, 2026-10-17).
                                 id: 'osp.annual.planReaffirmed',
-                                defaultMessage: 'Plan v{from} reaffirmed'
+                                defaultMessage: 'Continues plan v{from}'
                               },
                               { from: u.prior_osp_version }
                             )}
