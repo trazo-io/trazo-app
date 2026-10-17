@@ -5725,7 +5725,7 @@
   "operationAudit.download": "Download Operation Dossier",
   "operationAudit.failed": "The dossier could not be generated",
   "operationAudit.notReadyDetail": "Open items: {items}. You can still download it as a working draft — fix these before sending anything to your certifier.",
-  "operationAudit.notReadyTitle": "This dossier will be stamped \"DO NOT SUBMIT\"",
+  "operationAudit.notReadyTitle": "This dossier will be stamped \"DRAFT: documentation gaps listed\"",
   "operationAudit.openDocuments": "Open Documents",
   "operationAudit.prepare": "Prepare dossier",
   "operationAudit.prepareAgain": "Prepare again",

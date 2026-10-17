@@ -5725,7 +5725,7 @@
   "operationAudit.download": "Descargar expediente de la operación",
   "operationAudit.failed": "No se pudo generar el expediente",
   "operationAudit.notReadyDetail": "Pendientes: {items}. Puedes descargarlo como borrador de trabajo — resuelve estos puntos antes de enviar nada a tu certificador.",
-  "operationAudit.notReadyTitle": "Este expediente saldrá marcado \"NO ENVIAR\"",
+  "operationAudit.notReadyTitle": "Este expediente saldrá marcado como borrador, con la lista de documentos que faltan",
   "operationAudit.openDocuments": "Abrir documentos",
   "operationAudit.prepare": "Preparar expediente",
   "operationAudit.prepareAgain": "Preparar de nuevo",

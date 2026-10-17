@@ -207,7 +207,7 @@ const OperationAuditExportButton: React.FC<Props> = ({ companyId, farmId }) => {
             <Text fontSize="sm" fontWeight="semibold" color="orange.800">
               {intl.formatMessage({
                 id: 'operationAudit.notReadyTitle',
-                defaultMessage: 'This dossier will be stamped "DO NOT SUBMIT"'
+                defaultMessage: 'This dossier will be stamped "DRAFT: documentation gaps listed"'
               })}
             </Text>
             <Text fontSize="sm" color="orange.800">

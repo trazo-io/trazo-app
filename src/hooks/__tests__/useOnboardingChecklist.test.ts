@@ -3,7 +3,7 @@
  *
  * A grower could complete all five season items — parcel, production, event, finish, QR — see
  * "You're all set!", and still hold an audit export stamped
- * "[NON-COMPLIANT DOSSIER — DO NOT SUBMIT TO CERTIFIER]", because no Organic Fraud Prevention
+ * "[DRAFT: documentation gaps listed]", because no Organic Fraud Prevention
  * Plan was on file and page 1 reported the Organic System Plan as a GAP. Both uploaders existed
  * and were reachable; nothing in the product ever pointed at them.
  *
