@@ -67,6 +67,7 @@ import {
   StandardSection,
   StandardPageLoading
 } from 'components/Design';
+import { apiErrorMessage } from 'utils/apiErrorMessage';
 
 // Lazy Stripe loader. The previous module-level loadStripe() executed on
 // EVERY app load — including the consumer QR page, where the key is empty —
@@ -175,36 +176,6 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
       localStorage.setItem('subscription_return_path', returnPath);
     }
   }, [location]);
-
-  // Handle successful subscription completion
-  useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const status = searchParams.get('status');
-
-    // Only handle success if we're actually on the pricing page (not coming from Stripe redirect)
-    if (status === 'success' && !searchParams.get('session_id')) {
-      toast({
-        title: t('app.subscriptionSuccessful'),
-        description: t('app.subscriptionSuccessfulDescription'),
-        status: 'success',
-        duration: 8000,
-        isClosable: true
-      });
-
-      // Handle return path
-      const returnPath = localStorage.getItem('subscription_return_path');
-      if (returnPath) {
-        localStorage.removeItem('subscription_return_path');
-        if (returnPath === 'form') {
-          navigate('/admin/dashboard');
-        }
-      }
-
-      // Clean up URL
-      const newUrl = window.location.pathname;
-      window.history.replaceState({}, '', newUrl);
-    }
-  }, [location, toast, navigate, t]);
 
   // Get company ID for subscription
   const getCompanyId = () => {
@@ -410,7 +381,7 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
     } catch (error) {
       toast({
         title: t('app.error'),
-        description: error?.data?.detail || error?.data?.error || t('app.trialStartError'),
+        description: apiErrorMessage(error) ?? t('app.trialStartError'),
         status: 'error',
         duration: 5000,
         isClosable: true

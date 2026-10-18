@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useIntl } from 'react-intl';
+import { apiErrorMessage } from 'utils/apiErrorMessage';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { StandardParcelFormTransparency } from '../../../../components/Forms/StandardParcelForm_Transparency';
@@ -282,7 +283,7 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
           id: isEdit ? 'parcelForm.toast.updateFailed' : 'parcelForm.toast.createFailed'
         }),
         description:
-          error?.data?.detail ||
+          apiErrorMessage(error) ??
           intl.formatMessage({ id: 'parcelForm.toast.saveErrorDescription' }),
         status: 'error',
         duration: 5000,

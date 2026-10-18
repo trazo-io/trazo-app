@@ -49,6 +49,7 @@ import {
   useGetAdjoiningLandAffidavitsQuery,
   useUpdateAdjoiningLandAffidavitMutation
 } from 'store/api/adjoiningLandApi';
+import { apiErrorMessage } from 'utils/apiErrorMessage';
 
 interface Props {
   companyId: string;
@@ -192,7 +193,7 @@ const AdjoiningLandSection: React.FC<Props> = ({ companyId, farmId, parcelId, ca
       toast({
         status: 'error',
         title: intl.formatMessage({ id: 'parcel.adjoining.toast.saveError' }),
-        description: String((err as { data?: unknown })?.data || err)
+        description: apiErrorMessage(err) ?? intl.formatMessage({ id: 'app.errorTryAgain' })
       });
     }
   };
@@ -204,10 +205,11 @@ const AdjoiningLandSection: React.FC<Props> = ({ companyId, farmId, parcelId, ca
         status: 'success',
         title: intl.formatMessage({ id: 'parcel.adjoining.toast.removed' })
       });
-    } catch {
+    } catch (err: unknown) {
       toast({
         status: 'error',
-        title: intl.formatMessage({ id: 'parcel.adjoining.toast.saveError' })
+        title: intl.formatMessage({ id: 'parcel.adjoining.toast.removeError' }),
+        description: apiErrorMessage(err) ?? intl.formatMessage({ id: 'app.errorTryAgain' })
       });
     }
   };

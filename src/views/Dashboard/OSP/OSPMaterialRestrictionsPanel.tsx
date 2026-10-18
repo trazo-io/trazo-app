@@ -119,7 +119,7 @@ const StatementCard: React.FC<{
           id: 'osp.restriction.ux.withdrawFailed',
           defaultMessage: 'The statement was not withdrawn'
         }),
-        description: apiErrorMessage(err) ?? String(err?.message || err),
+        description: apiErrorMessage(err) ?? intl.formatMessage({ id: 'app.errorTryAgain' }),
         duration: 8000,
         isClosable: true
       });
@@ -304,7 +304,7 @@ const MaterialItem: React.FC<{
           id: 'osp.restriction.failed',
           defaultMessage: 'The statement was not recorded'
         }),
-        description: apiErrorMessage(err) ?? String(err?.message || err),
+        description: apiErrorMessage(err) ?? intl.formatMessage({ id: 'app.errorTryAgain' }),
         duration: 8000,
         isClosable: true
       });

@@ -46,6 +46,7 @@ import {
   useGetSeasonPlanQuery,
   useUpdateSeasonPlanItemMutation
 } from 'store/api/seasonPlanApi';
+import { apiErrorMessage } from 'utils/apiErrorMessage';
 
 interface SeasonPlanSectionProps {
   /** History public_id or numeric id — the endpoint resolves either. */
@@ -178,7 +179,7 @@ export const SeasonPlanSection: React.FC<SeasonPlanSectionProps> = ({
         title: intl.formatMessage({ id: 'seasonPlan.errorTitle' }),
         // The 409 body explains that the practice is already logged against a record; without
         // this the farmer gets a bare "could not update" and no way to work out why.
-        description: error?.data?.error || error?.data?.detail,
+        description: apiErrorMessage(error) ?? undefined,
         status: 'error',
         duration: 6000,
         isClosable: true

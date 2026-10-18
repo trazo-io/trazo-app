@@ -32,6 +32,7 @@ import {
 } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { useIntl } from 'react-intl';
+import { apiErrorMessage } from 'utils/apiErrorMessage';
 import { useDispatch } from 'react-redux';
 import AuthFooter from 'components/Footer/AuthFooter';
 import { passwordValidator } from '../../../utils/passwordValidation';
@@ -156,7 +157,8 @@ const AppSignUp: React.FC = () => {
       toast({
         title: intl.formatMessage({ id: 'auth.signup.toast.resendFailed.title' }),
         description:
-          error?.data?.message || intl.formatMessage({ id: 'auth.signup.toast.resendFailed.body' }),
+          apiErrorMessage(error) ??
+          intl.formatMessage({ id: 'auth.signup.toast.resendFailed.body' }),
         status: 'error',
         duration: 4000,
         isClosable: true

@@ -288,7 +288,7 @@ const DecisionForm: React.FC<{
           id: 'osp.identity.failed',
           defaultMessage: 'The decision was not recorded'
         }),
-        description: apiErrorMessage(err) ?? String(err?.message || err),
+        description: apiErrorMessage(err) ?? intl.formatMessage({ id: 'app.errorTryAgain' }),
         duration: 8000,
         isClosable: true
       });
@@ -631,7 +631,7 @@ const IdentityItem: React.FC<{
           id: 'osp.identity.ux.undoFailed',
           defaultMessage: 'The decision was not undone'
         }),
-        description: apiErrorMessage(err) ?? String(err?.message || err),
+        description: apiErrorMessage(err) ?? intl.formatMessage({ id: 'app.errorTryAgain' }),
         duration: 8000,
         isClosable: true
       });

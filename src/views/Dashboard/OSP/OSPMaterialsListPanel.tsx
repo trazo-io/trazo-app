@@ -25,6 +25,7 @@ import { useIntl } from 'react-intl';
 import { StandardCard, StandardInput, StandardSelect } from 'components/Design/StandardComponents';
 import { useAnswerOSPMaterialMutation, useGetOSPMaterialsListQuery } from 'store/api/ospApi';
 import type { OSPMaterialListRow } from 'types/osp';
+import { apiErrorMessage } from 'utils/apiErrorMessage';
 
 interface Props {
   companyId: string;
@@ -70,9 +71,7 @@ const OSPMaterialsListPanel: React.FC<Props> = ({ companyId, farmId, osp }) => {
           id: 'osp.materialsList.saveFailed',
           defaultMessage: 'Could not save that answer'
         }),
-        description: String(
-          err?.data?.detail || err?.data?.name || err?.data?.status || err?.message || err
-        ),
+        description: apiErrorMessage(err) ?? intl.formatMessage({ id: 'app.errorTryAgain' }),
         duration: 6000,
         isClosable: true
       });

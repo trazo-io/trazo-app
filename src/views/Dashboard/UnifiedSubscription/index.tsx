@@ -95,6 +95,7 @@ import { setCompany } from 'store/features/companySlice';
 import { MastercardIcon, VisaIcon, PayPalIcon } from 'components/Icons/Icons';
 import { FaWallet, FaRocket, FaEnvelope, FaGift, FaEdit } from 'react-icons/fa';
 import config from 'config/environment';
+import { apiErrorMessage } from 'utils/apiErrorMessage';
 
 // Helper functions
 const formatDate = (date: string | Date | null | undefined): string => {
@@ -512,7 +513,8 @@ function UnifiedSubscriptionDashboard() {
     } catch (error) {
       toast({
         title: intl.formatMessage({ id: 'app.error' }),
-        description: intl.formatMessage({ id: 'app.errorReactivatingSubscription' }),
+        description:
+          apiErrorMessage(error) ?? intl.formatMessage({ id: 'app.errorReactivatingSubscription' }),
         status: 'error',
         duration: 5000,
         isClosable: true
@@ -567,7 +569,7 @@ function UnifiedSubscriptionDashboard() {
     } catch (error) {
       toast({
         title: intl.formatMessage({ id: 'app.error' }),
-        description: intl.formatMessage({ id: 'app.errorAddingAddon' }),
+        description: apiErrorMessage(error) ?? intl.formatMessage({ id: 'app.errorAddingAddon' }),
         status: 'error',
         duration: 5000,
         isClosable: true
@@ -602,7 +604,8 @@ function UnifiedSubscriptionDashboard() {
       .catch((error) => {
         toast({
           title: intl.formatMessage({ id: 'app.error' }),
-          description: intl.formatMessage({ id: 'app.errorCreatingCheckout' }),
+          description:
+            apiErrorMessage(error) ?? intl.formatMessage({ id: 'app.errorCreatingCheckout' }),
           status: 'error',
           duration: 3000,
           isClosable: true
@@ -629,7 +632,9 @@ function UnifiedSubscriptionDashboard() {
         .catch((error) => {
           toast({
             title: intl.formatMessage({ id: 'app.error' }),
-            description: intl.formatMessage({ id: 'app.errorSettingDefaultPaymentMethod' }),
+            description:
+              apiErrorMessage(error) ??
+              intl.formatMessage({ id: 'app.errorSettingDefaultPaymentMethod' }),
             status: 'error',
             duration: 5000,
             isClosable: true
@@ -668,10 +673,12 @@ function UnifiedSubscriptionDashboard() {
       });
       onBillingEditClose();
       refetchCompany();
-    } catch {
+    } catch (error) {
       toast({
         title: intl.formatMessage({ id: 'app.error' }),
-        description: intl.formatMessage({ id: 'subscription.billingInfoUpdateError' }),
+        description:
+          apiErrorMessage(error) ??
+          intl.formatMessage({ id: 'subscription.billingInfoUpdateError' }),
         status: 'error',
         duration: 5000,
         isClosable: true

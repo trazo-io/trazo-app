@@ -39,6 +39,7 @@ import {
   useGetLandownerAffidavitsQuery,
   useUpdateLandownerAffidavitMutation
 } from 'store/api/landownerAffidavitApi';
+import { apiErrorMessage } from 'utils/apiErrorMessage';
 
 interface Props {
   companyId: string;
@@ -196,7 +197,7 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
           id: 'parcel.affidavit.toast.saveError',
           defaultMessage: 'Could not save affidavit'
         }),
-        description: String((err as { data?: unknown })?.data || err)
+        description: apiErrorMessage(err) ?? intl.formatMessage({ id: 'app.errorTryAgain' })
       });
     }
   };

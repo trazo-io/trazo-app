@@ -36,6 +36,14 @@ import {
 import CertificationStatusBadge from './CertificationStatusBadge';
 import CertifyingAgentPicker from './CertifyingAgentPicker';
 import { useFarmState } from 'hooks/useMeasurementSystem';
+import { apiErrorMessage } from 'utils/apiErrorMessage';
+
+/**
+ * The one type with a verifier behind it. Mirrors `VERIFIER_REGISTRY` in
+ * trazo-back/certifications/constants.py: every other type is stored as self-reported, so a
+ * toast or a Re-verify control for those would claim a check that never runs.
+ */
+const VERIFIABLE_TYPES: CertificationType[] = ['usda_organic'];
 
 /**
  * Offered certification types, in the backend's own order.
@@ -143,8 +151,9 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
       toast({
         title: intl.formatMessage({ id: 'certification.manage.add' }),
         description: intl.formatMessage({
-          id: 'certification.manage.addedDescription',
-          defaultMessage: 'Certification added and verification initiated.'
+          id: VERIFIABLE_TYPES.includes(formData.certification_type)
+            ? 'certification.manage.addedDescription'
+            : 'certification.manage.addedSelfReported'
         }),
         status: 'success',
         duration: 3000
@@ -160,13 +169,15 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
         expiry_date: '',
         notes: ''
       });
-    } catch {
+    } catch (err: unknown) {
       toast({
         title: intl.formatMessage({ id: 'app.error', defaultMessage: 'Error' }),
-        description: intl.formatMessage({
-          id: 'certification.manage.addFailed',
-          defaultMessage: 'Failed to add certification.'
-        }),
+        description:
+          apiErrorMessage(err) ??
+          intl.formatMessage({
+            id: 'certification.manage.addFailed',
+            defaultMessage: 'Failed to add certification.'
+          }),
         status: 'error',
         duration: 3000
       });
@@ -190,13 +201,15 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
         status: 'info',
         duration: 2000
       });
-    } catch {
+    } catch (err: unknown) {
       toast({
         title: intl.formatMessage({ id: 'app.error', defaultMessage: 'Error' }),
-        description: intl.formatMessage({
-          id: 'certification.manage.removeFailed',
-          defaultMessage: 'Failed to remove certification.'
-        }),
+        description:
+          apiErrorMessage(err) ??
+          intl.formatMessage({
+            id: 'certification.manage.removeFailed',
+            defaultMessage: 'Failed to remove certification.'
+          }),
         status: 'error',
         duration: 3000
       });
@@ -215,20 +228,19 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
 
       toast({
         title: intl.formatMessage({ id: 'certification.manage.verifying' }),
-        description: intl.formatMessage({
-          id: 'certification.manage.reverifyStarted',
-          defaultMessage: 'Re-verification initiated.'
-        }),
+        description: intl.formatMessage({ id: 'certification.manage.reverifyStarted' }),
         status: 'info',
         duration: 2000
       });
-    } catch {
+    } catch (err: unknown) {
       toast({
         title: intl.formatMessage({ id: 'app.error', defaultMessage: 'Error' }),
-        description: intl.formatMessage({
-          id: 'certification.manage.reverifyFailed',
-          defaultMessage: 'Failed to trigger verification.'
-        }),
+        description:
+          apiErrorMessage(err) ??
+          intl.formatMessage({
+            id: 'certification.manage.reverifyFailed',
+            defaultMessage: 'Failed to trigger verification.'
+          }),
         status: 'error',
         duration: 3000
       });
@@ -300,15 +312,17 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
                   )}
                 </VStack>
                 <HStack spacing={1}>
-                  <Tooltip label={intl.formatMessage({ id: 'certification.manage.reverify' })}>
-                    <IconButton
-                      aria-label={intl.formatMessage({ id: 'certification.manage.reverify' })}
-                      icon={<FaSync />}
-                      size="xs"
-                      variant="ghost"
-                      onClick={() => handleVerify(cert)}
-                    />
-                  </Tooltip>
+                  {VERIFIABLE_TYPES.includes(cert.certification_type) && (
+                    <Tooltip label={intl.formatMessage({ id: 'certification.manage.reverify' })}>
+                      <IconButton
+                        aria-label={intl.formatMessage({ id: 'certification.manage.reverify' })}
+                        icon={<FaSync />}
+                        size="xs"
+                        variant="ghost"
+                        onClick={() => handleVerify(cert)}
+                      />
+                    </Tooltip>
+                  )}
                   <Tooltip
                     label={intl.formatMessage({
                       id: 'certification.manage.remove',

@@ -42,6 +42,7 @@ import { ROLE_FARM_MANAGER } from 'config';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 import { setCompany } from 'store/features/companySlice';
+import { apiErrorMessage } from 'utils/apiErrorMessage';
 
 // Types
 interface RoleOption {
@@ -137,7 +138,8 @@ export default function SettingsView() {
       toast({
         title: intl.formatMessage({ id: 'app.errorSendingInvitation' }),
         description:
-          error?.data?.error || intl.formatMessage({ id: 'app.errorSendingInvitationDescription' }),
+          apiErrorMessage(error) ??
+          intl.formatMessage({ id: 'app.errorSendingInvitationDescription' }),
         status: 'error',
         duration: 4000,
         isClosable: true

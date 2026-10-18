@@ -30,6 +30,7 @@ import { HiOfficeBuilding } from 'react-icons/hi';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { useIntl } from 'react-intl';
+import { apiErrorMessage } from 'utils/apiErrorMessage';
 import AuthFooter from 'components/Footer/AuthFooter';
 import {
   StandardField,
@@ -156,7 +157,7 @@ const SetupPassword: React.FC = () => {
       handleSuccessfulSignup(response);
     } catch (err: any) {
       const errorMessage =
-        err?.data?.error || intl.formatMessage({ id: 'auth.error.social.failed' });
+        apiErrorMessage(err) ?? intl.formatMessage({ id: 'auth.error.social.failed' });
       toast({
         title: intl.formatMessage({ id: 'auth.invitationSetup.toast.signInFailed.title' }),
         description: errorMessage,
@@ -278,8 +279,7 @@ const SetupPassword: React.FC = () => {
       toast({
         title: intl.formatMessage({ id: 'auth.invitationSetup.toast.failed.title' }),
         description:
-          error?.data?.error ||
-          error?.data?.message ||
+          apiErrorMessage(error) ??
           intl.formatMessage({ id: 'auth.invitationSetup.toast.failed.body' }),
         status: 'error',
         duration: 4000,

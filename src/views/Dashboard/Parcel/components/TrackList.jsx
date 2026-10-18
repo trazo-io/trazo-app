@@ -59,6 +59,7 @@ import {
   StandardMenuItem
 } from 'components/Design/StandardComponents';
 import { formatDateFromTimestamp } from 'utils/dateOnly';
+import { apiErrorMessage } from 'utils/apiErrorMessage';
 
 const TrackList = ({ amount }) => {
   const textColor = useColorModeValue('gray.700', 'white');
@@ -171,9 +172,7 @@ const TrackList = ({ amount }) => {
       toast({
         title: intl.formatMessage({ id: 'app.error' }),
         description:
-          error?.data?.detail ||
-          error?.data?.message ||
-          intl.formatMessage({ id: 'app.productionDeleteError' }),
+          apiErrorMessage(error) ?? intl.formatMessage({ id: 'app.productionDeleteError' }),
         status: 'error',
         duration: 5000,
         isClosable: true
