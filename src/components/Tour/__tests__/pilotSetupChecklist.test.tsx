@@ -114,7 +114,7 @@ describe('pilot checklist', () => {
     expect(text).toContain('A parcel is on file in Trazo');
     expect(text).toContain('Season records are on file in Trazo');
     expect(text).toContain(
-      'The Organic System Plan in Trazo has text in all six sections or is marked submitted'
+      'The Organic System Plan in Trazo has text in all six § 205.201(a) sections, or has been submitted'
     );
     expect(text).toContain('A fraud prevention plan is on file in Trazo');
     expect(screen.getByTestId('checklist-progress').textContent).toBe('0 of 4 complete');
@@ -273,10 +273,10 @@ describe('pilot checklist for the setup operator', () => {
     const { container } = renderChecklist();
     const info = screen.queryByTestId('pilot-operator-info');
     expect(info, 'the operator gets its own setup block').not.toBeNull();
-    expect(info!.textContent).toContain('You are setting up this farm');
-    expect(info!.textContent).toContain(
-      'You are setting up this farm for the grower. Records you enter show your name.'
-    );
+    expect(info!.textContent).toContain('You are setting up this farm for the grower');
+    expect(info!.textContent).toContain('Records you enter show your name.');
+    // The heading carries the sentence once; the first bullet used to repeat it word for word.
+    expect(info!.textContent!.split('You are setting up this farm').length - 1).toBe(1);
     expect(screen.queryByTestId('pilot-setup-info')).toBeNull();
     expect(container.textContent).not.toContain('Send your existing records to Oscar');
     expect(container.textContent).not.toContain('under his own login');
@@ -295,7 +295,7 @@ describe('pilot checklist for the setup operator', () => {
   it('says it in Spanish', () => {
     currentUser = OPERATOR;
     const { container } = renderChecklist('es-419', es419 as Record<string, string>);
-    expect(container.textContent).toContain('Estás configurando esta finca para el productor.');
+    expect(container.textContent).toContain('Estás configurando esta finca para el productor');
     expect(container.textContent).not.toContain('Envía tus registros existentes a Oscar');
   });
 

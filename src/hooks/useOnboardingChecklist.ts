@@ -58,8 +58,8 @@ export const WRITER_ITEMS = [
  *   add-parcel     any parcel on the company                  "A parcel is on file in Trazo"
  *   document-event a season on this farm with >= 1 event      "Season records are on file in Trazo"
  *   file-osp       status submitted/active, or all six        "The Organic System Plan in Trazo has
- *                  § 205.201(a) sections have narrative        text in all six sections or is
- *                  (section_completion >= 1)                   marked submitted"
+ *                  § 205.201(a) sections have narrative        text in all six § 205.201(a)
+ *                  (section_completion >= 1)                   sections, or has been submitted"
  *   upload-ofpp    ofpp_on_file or a plan uploaded            "A fraud prevention plan is on file"
  *
  * None of these shows that the grower reviewed anything, and no label or message says so. The
