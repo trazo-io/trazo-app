@@ -147,6 +147,33 @@ describe('certifier link card: past links (H-5)', () => {
   });
 });
 
+describe("certifier link card: activity in the grower's language", () => {
+  it("names each access in Spanish, not with the server's English label", () => {
+    renderCard(true, es419 as Record<string, string>, 'es-419');
+    fireEvent.click(screen.getByText('Enlaces anteriores (2)'));
+    const revoked = screen.getAllByTestId('certifier-past-link')[0];
+    fireEvent.click(within(revoked).getByText(/Ver actividad/));
+    expect(within(revoked).getAllByText('Descargó el expediente')).toHaveLength(3);
+    expect(within(revoked).queryByText('Downloaded dossier')).toBeNull();
+  });
+
+  it('falls back to the server label for an action it does not know', () => {
+    links = [
+      link({
+        id: 5,
+        is_active: false,
+        is_revoked: true,
+        revoked_at: '2026-10-18T14:34:00Z',
+        accesses: [{ ...access(21), action: 'future_action', action_display: 'Did something new' }]
+      })
+    ];
+    renderCard();
+    fireEvent.click(screen.getByText('Past links (1)'));
+    fireEvent.click(screen.getByText('Show activity (1 open)'));
+    expect(screen.getByText('Did something new')).toBeTruthy();
+  });
+});
+
 describe('certifier link card: what the certifier will see (step 1)', () => {
   it('names each thing the dossier exposes before a link is created', () => {
     renderCard();
@@ -158,6 +185,7 @@ describe('certifier link card: what the certifier will see (step 1)', () => {
       'supplier names, invoice numbers and sale amounts',
       'the names of the people recorded doing the work',
       'the email address of each account that changed a record',
+      'for each correction the earlier value and the reason',
       'The files themselves are not shared.'
     ]) {
       expect(text).toContain(phrase);
@@ -183,7 +211,10 @@ describe('certifier link card: what the certifier will see (step 1)', () => {
     const en = enUS as Record<string, string>;
     const es = es419 as Record<string, string>;
     for (const key of Object.keys(en).filter(
-      (k) => k.startsWith('certifierLink.disclosure.') || k.startsWith('certifierLink.past.')
+      (k) =>
+        k.startsWith('certifierLink.disclosure.') ||
+        k.startsWith('certifierLink.past.') ||
+        k.startsWith('certifierLink.activity.')
     )) {
       expect(es[key], key).toBeTruthy();
     }

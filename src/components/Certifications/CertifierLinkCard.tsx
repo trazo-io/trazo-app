@@ -311,6 +311,26 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
       </Link>
     );
 
+  // `action_display` is the backend's English label; a Spanish-locale grower read "Downloaded
+  // dossier" inside a Spanish card (confirmation round, 2026-10-18). The four action codes are
+  // the model's ACTION_CHOICES; an unknown code falls back to the server's label.
+  const ACTIVITY_LABELS: Record<string, { id: string; defaultMessage: string }> = {
+    metadata: { id: 'certifierLink.activity.metadata', defaultMessage: 'Opened link' },
+    readiness: {
+      id: 'certifierLink.activity.readiness',
+      defaultMessage: 'Viewed readiness findings'
+    },
+    dossier: { id: 'certifierLink.activity.dossier', defaultMessage: 'Downloaded dossier' },
+    production: {
+      id: 'certifierLink.activity.production',
+      defaultMessage: 'Viewed a production page'
+    }
+  };
+  const activityLabel = (entry: CertifierAccessLink['accesses'][number]) => {
+    const known = ACTIVITY_LABELS[entry.action];
+    return known ? intl.formatMessage(known) : entry.action_display;
+  };
+
   const activityLog = (link: CertifierAccessLink) =>
     openLog === link.id &&
     link.accesses.length > 0 && (
@@ -319,7 +339,7 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
           <HStack key={entry.id} gap={2} fontSize="xs" color="gray.500">
             <Text>{formatDateTime(entry.accessed_at)}</Text>
             <Text>·</Text>
-            <Text>{entry.action_display}</Text>
+            <Text>{activityLabel(entry)}</Text>
           </HStack>
         ))}
       </VStack>
@@ -368,7 +388,11 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
                   ['privateNotes', 'your private notes'],
                   ['commercial', 'supplier names, invoice numbers and sale amounts'],
                   ['people', 'the names of the people recorded doing the work'],
-                  ['emails', 'the email address of each account that changed a record']
+                  ['emails', 'the email address of each account that changed a record'],
+                  [
+                    'corrections',
+                    'the change history: who changed which fields, and for each correction the earlier value and the reason'
+                  ]
                 ] as const
               ).map(([key, defaultMessage]) => (
                 <li key={key}>
