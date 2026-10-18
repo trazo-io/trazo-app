@@ -511,7 +511,10 @@ describe('the crew journey addresses the grower as tú, not usted (Run 8b)', () 
     'osp.agent.none': "the packet's cover page",
     'osp.annual.duplicateYearLockedWarning': "the update's row",
     'osp.annual.next.filed': "the update's row",
+    'osp.annual.next.draftSetupOperator': "the grower's own account (read by the setup operator)",
     'osp.annual.signIsTheGrowers': "the grower's own account (read by the setup operator)",
+    'osp.annual.signThenFileHelpSetupOperator':
+      "the grower's own account, and the update's row (read by the setup operator)",
     'osp.annual.signThenFileHelp': "the update's row",
     'osp.annual.subtitle': "a certified operation's OSP",
     'osp.annual.toast.alreadyLockedDesc': "the update's row",

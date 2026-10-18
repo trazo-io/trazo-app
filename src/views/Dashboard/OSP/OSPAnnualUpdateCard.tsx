@@ -275,6 +275,15 @@ const NEXT_STEP_LABELS: Record<RowState, { id: string; defaultMessage: string }>
   withdrawn: { id: 'osp.annual.next.withdrawn', defaultMessage: 'Next: file the year again.' }
 };
 
+/** The setup account cannot sign (the server refuses it), so its next step names who does. */
+const NEXT_DRAFT_SETUP_OPERATOR = {
+  id: 'osp.annual.next.draftSetupOperator',
+  defaultMessage: 'Next: the grower signs it from their own account, then record when it was filed.'
+};
+
+const nextStepLabel = (state: RowState, isSetupOperator: boolean) =>
+  isSetupOperator && state === 'draft' ? NEXT_DRAFT_SETUP_OPERATOR : NEXT_STEP_LABELS[state];
+
 /** The revision a year stands on: not withdrawn, not superseded by a correction. */
 const isCurrentRevision = (u: OSPAnnualUpdate) => !u.withdrawn_at && !u.superseded_at;
 
@@ -302,7 +311,8 @@ export const OSPRenewalSummary: React.FC<{
   companyId?: string;
   farmId?: string;
   currentYear: number;
-}> = ({ companyId, farmId, currentYear }) => {
+  isSetupOperator?: boolean;
+}> = ({ companyId, farmId, currentYear, isSetupOperator = false }) => {
   const intl = useIntl();
   const { data: updates = [] } = useGetOSPAnnualUpdatesQuery(
     { companyId: companyId || '', farmId: farmId || '' },
@@ -329,7 +339,7 @@ export const OSPRenewalSummary: React.FC<{
                 year: latest.reporting_year,
                 state: intl.formatMessage(STATE_LABELS[rowState(latest)])
               }
-            )} ${intl.formatMessage(NEXT_STEP_LABELS[rowState(latest)])}`
+            )} ${intl.formatMessage(nextStepLabel(rowState(latest), isSetupOperator))}`
           : intl.formatMessage(
               {
                 id: 'osp.annual.summary.none',
@@ -1454,12 +1464,18 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
                 on save. Filing is now its own step on the saved row: sign it, then record the
                 date and how it reached the agent. Once filed it is kept exactly as filed.
               */}
-                  <Text fontSize="xs" color="gray.500">
-                    {intl.formatMessage({
-                      id: 'osp.annual.signThenFileHelp',
-                      defaultMessage:
-                        'Save the update, then sign it and record when it was filed from its row above. A filed update is kept exactly as filed.'
-                    })}
+                  <Text fontSize="xs" color="gray.500" data-testid="annual-sign-then-file-help">
+                    {isSetupOperator
+                      ? intl.formatMessage({
+                          id: 'osp.annual.signThenFileHelpSetupOperator',
+                          defaultMessage:
+                            'Save the update. The grower then signs it from their own account, and you record when it was filed from its row above. A filed update is kept exactly as filed.'
+                        })
+                      : intl.formatMessage({
+                          id: 'osp.annual.signThenFileHelp',
+                          defaultMessage:
+                            'Save the update, then sign it and record when it was filed from its row above. A filed update is kept exactly as filed.'
+                        })}
                   </Text>
                   <HStack justify="flex-end" spacing={2}>
                     {editingId != null && (

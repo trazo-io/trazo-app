@@ -9,7 +9,7 @@
 import React from 'react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { configureStore } from '@reduxjs/toolkit';
-import { render, renderHook, screen } from '@testing-library/react';
+import { fireEvent, render, renderHook, screen } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 import { Provider } from 'react-redux';
 import { describe, expect, it, vi } from 'vitest';
@@ -43,7 +43,7 @@ vi.mock('store/api/ospAnnualUpdateApi', () => ({
   FILING_METHODS: ['agent_web_form', 'agent_portal', 'email', 'mail', 'in_person']
 }));
 
-import OSPAnnualUpdateCard from '../OSPAnnualUpdateCard';
+import OSPAnnualUpdateCard, { OSPRenewalSummary } from '../OSPAnnualUpdateCard';
 
 const renderCard = (isSetupOperator: boolean, locale = 'en-US', messages: object = enUS) =>
   render(
@@ -80,6 +80,44 @@ describe('the setup account and the Sign button', () => {
     expect(screen.getByTestId('annual-sign-is-the-growers').textContent).toBe(
       'El productor firma desde su propia cuenta. Esta cuenta de configuración no puede hacerlo.'
     );
+  });
+});
+
+describe('nothing else on the page tells the setup account to sign (review of app #143)', () => {
+  const renderSummary = (isSetupOperator: boolean) =>
+    render(
+      <ChakraProvider>
+        <IntlProvider locale="en-US" messages={enUS as Record<string, string>}>
+          <OSPRenewalSummary
+            companyId="1"
+            farmId="2"
+            currentYear={2027}
+            isSetupOperator={isSetupOperator}
+          />
+        </IntlProvider>
+      </ChakraProvider>
+    );
+
+  it('the renewal summary names the grower as the signer', () => {
+    renderSummary(true);
+    const text = screen.getByTestId('osp-renewal-summary').textContent!;
+    expect(text).toContain('Next: the grower signs it from their own account');
+    expect(text).not.toContain('Next: sign it');
+  });
+
+  it('the grower still reads "Next: sign it"', () => {
+    renderSummary(false);
+    expect(screen.getByTestId('osp-renewal-summary').textContent).toContain(
+      'Next: sign it, then record when it was filed.'
+    );
+  });
+
+  it('the edit form says the grower signs', () => {
+    renderCard(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+    const help = screen.getByTestId('annual-sign-then-file-help').textContent!;
+    expect(help).toContain('The grower then signs it from their own account');
+    expect(help).not.toContain('then sign it');
   });
 });
 

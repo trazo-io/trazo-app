@@ -1013,6 +1013,7 @@ const OSPView: React.FC = () => {
             companyId={companyId}
             farmId={farmId}
             currentYear={new Date().getFullYear()}
+            isSetupOperator={isSetupOperator}
           />
         )}
         <Accordion allowMultiple defaultIndex={[0]}>
