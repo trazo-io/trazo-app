@@ -130,11 +130,32 @@ function findingLabel(intl: ReturnType<typeof useIntl>, finding: ReadinessFindin
   return id && intl.messages[id] ? intl.formatMessage({ id }) : finding.label;
 }
 
+/** Source files the grower chose to share with this link (H-3, handoff rehearsal 2026-10-18). */
+interface SourceFile {
+  id: string;
+  title: string;
+  folder: string;
+  linked_to: string | null;
+  size_bytes: number;
+  content_type: string;
+  uploaded_at: string;
+}
+interface SourceFilesResponse {
+  enabled: boolean;
+  documents: SourceFile[];
+}
+
+const formatSize = (bytes: number) =>
+  bytes >= 1024 * 1024
+    ? `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+    : `${Math.max(1, Math.round(bytes / 1024))} KB`;
+
 const CertifierReview: React.FC = () => {
   const intl = useIntl();
   const { token } = useParams<{ token: string }>();
   const [meta, setMeta] = useState<ReviewMetadata | null>(null);
   const [readiness, setReadiness] = useState<ReadinessResponse | null>(null);
+  const [sourceFiles, setSourceFiles] = useState<SourceFilesResponse | null>(null);
   const [showNotAssessed, setShowNotAssessed] = useState(false);
   const [failure, setFailure] = useState<ReviewLinkFailure | null>(null);
   const [loading, setLoading] = useState(true);
@@ -169,11 +190,17 @@ const CertifierReview: React.FC = () => {
       .then((res) => (res.ok ? res.json() : null))
       .catch(() => null);
 
-    Promise.all([metaRequest, readinessRequest])
-      .then(([metaData, readinessData]) => {
+    // Same posture as readiness: a failure hides the section, never the page.
+    const filesRequest = fetch(`${apiRoot}/certifier-review/${token}/documents/`)
+      .then((res) => (res.ok ? res.json() : null))
+      .catch(() => null);
+
+    Promise.all([metaRequest, readinessRequest, filesRequest])
+      .then(([metaData, readinessData, filesData]) => {
         if (cancelled) return;
         setMeta(metaData);
         setReadiness(readinessData);
+        setSourceFiles(filesData);
       })
       .catch((error) => {
         // Only a 404 may be reported as a link that is gone. Anything else — throttling, a
@@ -534,6 +561,75 @@ const CertifierReview: React.FC = () => {
                   })}
             </Text>
           </Alert>
+        )}
+
+        {sourceFiles && (
+          <Box w="full" data-testid="certifier-source-files">
+            <Divider mb={4} />
+            <Heading size="sm" color={textColor} mb={2}>
+              {intl.formatMessage({
+                id: 'certifierReview.sourceFiles.title',
+                defaultMessage: 'Source files'
+              })}
+            </Heading>
+            {!sourceFiles.enabled ? (
+              <Text fontSize="sm" color={mutedColor}>
+                {intl.formatMessage({
+                  id: 'certifierReview.sourceFiles.notIncluded',
+                  defaultMessage:
+                    'The operation did not include its source files with this link. The dossier lists them by title; ask the operation for any you need.'
+                })}
+              </Text>
+            ) : sourceFiles.documents.length === 0 ? (
+              <Text fontSize="sm" color={mutedColor}>
+                {intl.formatMessage({
+                  id: 'certifierReview.sourceFiles.none',
+                  defaultMessage: 'No files have been uploaded for this operation.'
+                })}
+              </Text>
+            ) : (
+              <VStack align="stretch" gap={2}>
+                <Text fontSize="xs" color={mutedColor}>
+                  {intl.formatMessage({
+                    id: 'certifierReview.sourceFiles.help',
+                    defaultMessage:
+                      'Each file opens through this link while it is active. The operation sees when a file is opened.'
+                  })}
+                </Text>
+                {sourceFiles.documents.map((doc) => (
+                  <HStack
+                    key={doc.id}
+                    justify="space-between"
+                    align="baseline"
+                    gap={3}
+                    flexWrap="wrap"
+                    borderTopWidth="1px"
+                    borderColor={rowBorder}
+                    pt={2}
+                    data-testid="certifier-source-file">
+                    <Box minW={0}>
+                      <Link
+                        href={`${apiRoot}/certifier-review/${token}/documents/${doc.id}/`}
+                        color="green.700"
+                        fontWeight="medium"
+                        fontSize="sm">
+                        <Icon as={FaFileAlt} mr={1} />
+                        {doc.title}
+                      </Link>
+                      {doc.linked_to && (
+                        <Text fontSize="xs" color={mutedColor}>
+                          {doc.linked_to}
+                        </Text>
+                      )}
+                    </Box>
+                    <Text fontSize="xs" color={mutedColor} flexShrink={0}>
+                      {doc.folder} · {formatSize(doc.size_bytes)}
+                    </Text>
+                  </HStack>
+                ))}
+              </VStack>
+            )}
+          </Box>
         )}
 
         <Text fontSize="xs" color="gray.500">

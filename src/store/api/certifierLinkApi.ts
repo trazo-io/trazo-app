@@ -15,10 +15,12 @@ import baseApi from './baseApi';
 
 export interface CertifierAccessLog {
   id: number;
-  action: 'metadata' | 'dossier' | 'readiness' | 'production';
+  action: 'metadata' | 'dossier' | 'readiness' | 'production' | 'document';
   action_display: string;
   accessed_at: string;
   ip_address: string | null;
+  /** The source file a `document` open was for; null for every other action. */
+  document_title?: string | null;
 }
 
 export interface CertifierAccessLink {
@@ -33,6 +35,9 @@ export interface CertifierAccessLink {
   certification_type: string;
   period_start: string | null;
   period_end: string | null;
+  /** Chosen when the link is created, never changed: whether the reviewer can open the
+      operation's uploaded files through this link (H-3, 2026-10-18). */
+  include_source_files: boolean;
   expires_at: string;
   revoked_at: string | null;
   created_at: string;

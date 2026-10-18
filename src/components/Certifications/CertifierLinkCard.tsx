@@ -14,6 +14,7 @@ import React, { useState } from 'react';
 import {
   Badge,
   Box,
+  Checkbox,
   HStack,
   Icon,
   InputGroup,
@@ -155,6 +156,9 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
   const [openLog, setOpenLog] = useState<number | null>(null);
   const [showPast, setShowPast] = useState(false);
   const [period, setPeriod] = useState<PeriodChoice>('current_year');
+  // Off by default and chosen per link (H-3, 2026-10-18): sharing the files themselves is a
+  // decision about THIS certifier, and a downloaded copy outlives revocation.
+  const [includeFiles, setIncludeFiles] = useState(false);
 
   // `= []` is a rendering convenience, not a fact: on a failed request it made the card
   // state "no active links" for a farm that may well have several. Read `isError`.
@@ -188,9 +192,15 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
       await createLink({
         companyId,
         farmId,
-        data: { label: label.trim(), audience: 'certifier', ...periodDates(period) }
+        data: {
+          label: label.trim(),
+          audience: 'certifier',
+          include_source_files: includeFiles,
+          ...periodDates(period)
+        }
       }).unwrap();
       setLabel('');
+      setIncludeFiles(false);
       toast({
         status: 'success',
         title: intl.formatMessage({
@@ -327,6 +337,22 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
     }
   };
   const activityLabel = (entry: CertifierAccessLink['accesses'][number]) => {
+    // A source-file open names the file, so the grower sees which invoice was read.
+    if (entry.action === 'document') {
+      // The file can since have been deleted (SET_NULL): then say a file was opened, not which.
+      return entry.document_title
+        ? intl.formatMessage(
+            {
+              id: 'certifierLink.activity.document',
+              defaultMessage: 'Opened source file: {title}'
+            },
+            { title: entry.document_title }
+          )
+        : intl.formatMessage({
+            id: 'certifierLink.activity.documentUntitled',
+            defaultMessage: 'Opened a source file'
+          });
+    }
     const known = ACTIVITY_LABELS[entry.action];
     return known ? intl.formatMessage(known) : entry.action_display;
   };
@@ -404,7 +430,7 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
               {intl.formatMessage({
                 id: 'certifierLink.disclosure.documents',
                 defaultMessage:
-                  'Your documents are listed by title. The files themselves are not shared.'
+                  'Your documents are listed by title. The files themselves are shared only if you tick “Include source files” below, and a file your certifier downloads stays with them after you revoke the link.'
               })}
             </Text>
           </Box>
@@ -471,6 +497,23 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
               })}
             </StandardButton>
           </HStack>
+        )}
+
+        {canWrite && canMintLinks && (
+          <Checkbox
+            colorScheme="green"
+            isChecked={includeFiles}
+            onChange={(e) => setIncludeFiles(e.target.checked)}
+            flexShrink={0}
+            minH="32px"
+            data-testid="certifier-link-include-files">
+            <Text fontSize="sm" color="gray.700">
+              {intl.formatMessage({
+                id: 'certifierLink.includeFiles',
+                defaultMessage: 'Include source files'
+              })}
+            </Text>
+          </Checkbox>
         )}
 
         {isLoading && (
@@ -553,6 +596,14 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
                     {/* The ONE place hue earns its keep: an expired or nearly-expired link is
                         the difference between a certifier reading your records and a certifier
                         hitting a dead page during renewal week. Silent until it matters. */}
+                    {link.include_source_files && (
+                      <Text fontSize="xs" color="gray.500">
+                        {intl.formatMessage({
+                          id: 'certifierLink.filesIncluded',
+                          defaultMessage: 'Source files included'
+                        })}
+                      </Text>
+                    )}
                     {expiryTone === 'neutral' ? (
                       <Text fontSize="xs" color="gray.400">
                         {intl.formatMessage(
