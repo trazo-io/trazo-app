@@ -18,8 +18,6 @@ import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
-import { readFileSync } from 'fs';
-import { resolve } from 'path';
 import { ChakraProvider } from '@chakra-ui/react';
 
 import enUS from '../../../i18n/lang/en-US.json';
@@ -309,12 +307,17 @@ describe('Starter checklist', () => {
 
 /**
  * Pilot rehearsal 2026-10-17, finding 7: the operator account that enters the grower's records
- * ("<first> <last> (Trazo setup)", created by provision_pilot / add_pilot_operator) was shown the
- * grower's instruction "Send your existing records to Oscar". The operator gets the operator's
- * side of setup; the grower keeps the grower's text.
+ * (created by provision_pilot / add_pilot_operator) was shown the grower's instruction "Send your
+ * existing records to Oscar". The operator gets the operator's side of setup; the grower keeps the
+ * grower's text. The account is known by its membership flag, never its name (review of back #176).
  */
 describe('pilot checklist for the setup operator', () => {
-  const OPERATOR = { first_name: 'Oscar', last_name: 'Munoz (Trazo setup)' };
+  // An attached account keeps its own name, so the operator here carries no setup suffix.
+  const OPERATOR = {
+    first_name: 'Oscar',
+    last_name: 'Munoz',
+    companies: [{ id: 1, role: 'Company Admin', is_setup_operator: true }]
+  };
 
   it('shows the operator text, never the grower instruction to send records to Oscar', () => {
     currentUser = OPERATOR;
@@ -323,6 +326,10 @@ describe('pilot checklist for the setup operator', () => {
     expect(info, 'the operator gets its own setup block').not.toBeNull();
     expect(info!.textContent).toContain('You are setting up this farm for the grower');
     expect(info!.textContent).toContain('Records you enter show your name.');
+    // Now enforced (the server refuses sign and submit from this account), so it is stated.
+    expect(info!.textContent).toContain(
+      'Only the grower can sign the annual update or mark the plan as submitted.'
+    );
     // The heading carries the sentence once; the first bullet used to repeat it word for word.
     expect(info!.textContent!.split('You are setting up this farm').length - 1).toBe(1);
     expect(screen.queryByTestId('pilot-setup-info')).toBeNull();
@@ -355,16 +362,10 @@ describe('pilot checklist for the setup operator', () => {
     expect(screen.queryByTestId('pilot-setup-info')).toBeNull();
   });
 
-  it('matches the suffix the backend writes (subscriptions/pilot_operator.py SETUP_SUFFIX)', async () => {
-    const { PILOT_OPERATOR_LAST_NAME_SUFFIX } = await import(
-      '../../../hooks/useOnboardingChecklist'
-    );
-    const source = readFileSync(
-      resolve(__dirname, '../../../../../trazo-back/subscriptions/pilot_operator.py'),
-      'utf8'
-    );
-    const match = source.match(/^SETUP_SUFFIX = "([^"]+)"$/m);
-    expect(match, 'SETUP_SUFFIX is defined in pilot_operator.py').not.toBeNull();
-    expect(PILOT_OPERATOR_LAST_NAME_SUFFIX).toBe(match![1]);
+  it('the setup suffix on a name alone does not make an operator', () => {
+    currentUser = { first_name: 'Oscar', last_name: 'Munoz (Trazo setup)', companies: [{ id: 1 }] };
+    renderChecklist();
+    expect(screen.queryByTestId('pilot-operator-info')).toBeNull();
+    expect(screen.getByTestId('pilot-setup-info')).not.toBeNull();
   });
 });

@@ -68,6 +68,8 @@ interface Props {
   currentYear: number;
   /** Who signs (the farm profile's responsible person) and which account records it. */
   signer?: { responsiblePerson?: string; account?: string };
+  /** The pilot setup account: it cannot sign (the server refuses), so Sign is replaced by a note. */
+  isSetupOperator?: boolean;
 }
 
 const linesToList = (text: string): string[] =>
@@ -386,7 +388,8 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
   planOnFile,
   producesDraft,
   currentYear,
-  signer
+  signer,
+  isSetupOperator = false
 }) => {
   const ospId = planOnFile?.id ?? null;
   const intl = useIntl();
@@ -923,13 +926,24 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
                       {intl.formatMessage({ id: 'osp.annual.edit', defaultMessage: 'Edit' })}
                     </StandardButton>
                   )}
-                  {rowState(u) === 'draft' && (
+                  {rowState(u) === 'draft' && !isSetupOperator && (
                     <StandardButton
                       size="xs"
                       variant="outline"
                       onClick={() => openPending(u.id, 'sign')}>
                       {intl.formatMessage({ id: 'osp.annual.sign', defaultMessage: 'Sign' })}
                     </StandardButton>
+                  )}
+                  {/* Signing is the grower's statement, in the grower's name; the server refuses
+                      it from the setup account. */}
+                  {rowState(u) === 'draft' && isSetupOperator && (
+                    <Text fontSize="xs" color="gray.600" data-testid="annual-sign-is-the-growers">
+                      {intl.formatMessage({
+                        id: 'osp.annual.signIsTheGrowers',
+                        defaultMessage:
+                          'The grower signs from their own account. This setup account cannot.'
+                      })}
+                    </Text>
                   )}
                   {rowState(u) === 'signed' && !correctedIds.has(u.id) && (
                     <StandardButton
