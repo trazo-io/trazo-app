@@ -91,6 +91,7 @@ import CertificationManager from 'components/Certifications/CertificationManager
 import OperationAuditExportButton from './OperationAuditExportButton';
 import PURExportModal from 'components/PURExport/PURExportModal';
 import { normalizeState } from 'utils/usStates';
+import { fileNameFromUrl } from 'utils/fileNameFromUrl';
 import CertifierLinkCard from 'components/Certifications/CertifierLinkCard';
 import { ComplianceExportsGuard } from 'components/Guards/ComplianceExportsGuard';
 import { useTour } from 'hooks/useTour';
@@ -655,15 +656,15 @@ function ProfileFarm() {
                               <InfoRow
                                 icon={FaFileAlt}
                                 label={intl.formatMessage({ id: 'farm.soe.documentLabel' })}
-                                value={decodeURIComponent(
-                                  establishmentData.fraud_prevention_plan_document
-                                    .split('/')
-                                    .pop() ||
-                                    intl.formatMessage({
-                                      id: 'farm.soe.viewDocument',
-                                      defaultMessage: 'View document'
-                                    })
-                                )}
+                                value={
+                                  fileNameFromUrl(
+                                    establishmentData.fraud_prevention_plan_document
+                                  ) ||
+                                  intl.formatMessage({
+                                    id: 'farm.soe.viewDocument',
+                                    defaultMessage: 'View document'
+                                  })
+                                }
                               />
                             )}
                           </SimpleGrid>
