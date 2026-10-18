@@ -7,6 +7,7 @@ import { useUserRole } from './useUserRole';
 import { useGetProductionsByFarmQuery } from '../store/api/companyApi';
 import { useGetOSPsQuery } from '../store/api/ospApi';
 import { OSP_SECTION_KEYS } from '../types/osp';
+import { ospFirstSectionWithoutTextPath } from '../views/Dashboard/OSP/ospLinks';
 import { ChecklistItem, ChecklistVariant } from '../tours/types';
 
 /**
@@ -262,11 +263,13 @@ export function useOnboardingChecklist() {
       'document-event': parcelPath,
       'finish-production': parcelPath,
       'share-qr': parcelPath,
-      'file-osp': `${farmPath}/osp`,
+      // A plan short of text opens on the section it is short of (the same count the item shows);
+      // with no plan yet, the module list is where one starts.
+      'file-osp': ospSectionDetail ? ospFirstSectionWithoutTextPath(farmPath) : `${farmPath}/osp`,
       // The OFPP uploader is the "SOE Compliance" card on the farm profile.
       'upload-ofpp': `${farmPath}/profile`
     };
-  }, [farmId, firstParcel]);
+  }, [farmId, firstParcel, ospSectionDetail]);
 
   const viewerLinks = useMemo(() => {
     const farmPath = farmId ? `/admin/dashboard/farm/${farmId}` : '/admin/dashboard';
