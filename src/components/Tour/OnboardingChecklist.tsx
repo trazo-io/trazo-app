@@ -195,13 +195,23 @@ const OnboardingChecklist: React.FC = () => {
         </Box>
 
         {/* Label */}
-        <Text
-          fontSize="sm"
-          color={item.completed ? textColor : headingColor}
-          textDecoration={strike ? 'line-through' : 'none'}
-          flex={1}>
-          <FormattedMessage id={item.labelKey} />
-        </Text>
+        <Box flex={1}>
+          <Text
+            fontSize="sm"
+            color={item.completed ? textColor : headingColor}
+            textDecoration={strike ? 'line-through' : 'none'}>
+            <FormattedMessage id={item.labelKey} />
+          </Text>
+          {item.detail && (
+            <Text
+              fontSize="xs"
+              color={textColor}
+              mt={0.5}
+              data-testid={`checklist-detail-${item.id}`}>
+              <FormattedMessage id={item.detail.id} values={item.detail.values} />
+            </Text>
+          )}
+        </Box>
       </HStack>
     );
   };

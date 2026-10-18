@@ -66,6 +66,8 @@ export interface ChecklistItem {
   completedAt?: string;
   /** ID of checklist item that must be completed first (for writer checklist) */
   dependsOn?: string;
+  /** A second line under the label while the item is open, e.g. how many OSP sections have text */
+  detail?: { id: string; values: Record<string, number> };
 }
 
 export type ChecklistVariant = 'writer' | 'viewer';

@@ -6,6 +6,7 @@ import { useTourStore } from '../store/tourStore';
 import { useUserRole } from './useUserRole';
 import { useGetProductionsByFarmQuery } from '../store/api/companyApi';
 import { useGetOSPsQuery } from '../store/api/ospApi';
+import { OSP_SECTION_KEYS } from '../types/osp';
 import { ChecklistItem, ChecklistVariant } from '../tours/types';
 
 /**
@@ -58,8 +59,8 @@ export const WRITER_ITEMS = [
  *   add-parcel     any parcel on the company                  "A parcel is on file in Trazo"
  *   document-event a season on this farm with >= 1 event      "Season records are on file in Trazo"
  *   file-osp       status submitted/active, or all six        "The Organic System Plan in Trazo has
- *                  § 205.201(a) sections have narrative        text in all six § 205.201(a)
- *                  (section_completion >= 1)                   sections, or has been submitted"
+ *                  § 205.201(a) sections have text             text in all six § 205.201(a)
+ *                  (sections_with_text, the OSP page's count)  sections, or has been submitted"
  *   upload-ofpp    ofpp_on_file or a plan uploaded            "A fraud prevention plan is on file"
  *
  * None of these shows that the grower reviewed anything, and no label or message says so. The
@@ -153,9 +154,18 @@ export function resolveWriterCompletion({
   // farm home still read "No Organic System Plan on file". Two surfaces, opposite claims, same
   // instant — and the one that congratulated the grower was the wrong one. An empty draft is
   // exactly what this item is asking them to go fill in.
+  //
+  // "Has text" is the OSP page's meaning: `sections_with_text`, the submit gate's rule. This read
+  // `section_completion >= 1` until 2026-10-17, which counts any non-blank narrative, so one
+  // character in each section ticked the item while the OSP page said "0 of 6 narrative sections
+  // have text" and submit refused the plan. The fallback covers a backend that predates the field.
   const hasOsp = ((osps as any[]) || []).some(
     (o: any) =>
-      o?.status === 'submitted' || o?.status === 'active' || (o?.section_completion ?? 0) >= 1
+      o?.status === 'submitted' ||
+      o?.status === 'active' ||
+      (typeof o?.sections_with_text === 'number'
+        ? o.sections_with_text >= OSP_SECTION_KEYS.length
+        : (o?.section_completion ?? 0) >= 1)
   );
   // ofpp_on_file = clean upload OR completed OSP module G2.0 (one backend
   // truth); the raw upload flag alone left this item unchecked forever for
@@ -171,6 +181,24 @@ export function resolveWriterCompletion({
     'share-qr': hasPublished,
     'file-osp': hasOsp,
     'upload-ofpp': hasOfpp
+  };
+}
+
+/**
+ * "{n} of 6 narrative sections have text" for the OSP item while it is open: the latest version's
+ * count, in the OSP page's own words (`osp.completion.sectionsOfTotal`), so the two surfaces show
+ * the same number. Null when there is no plan yet or the backend sends no count.
+ */
+export function resolveOspSectionDetail(osps?: any[]): ChecklistItem['detail'] | null {
+  const latest = ((osps as any[]) || []).reduce(
+    (best: any, o: any) =>
+      !best || (o?.version_number ?? 0) > (best.version_number ?? 0) ? o : best,
+    null
+  );
+  if (typeof latest?.sections_with_text !== 'number') return null;
+  return {
+    id: 'osp.completion.sectionsOfTotal',
+    values: { complete: latest.sections_with_text, total: OSP_SECTION_KEYS.length }
   };
 }
 
@@ -226,6 +254,8 @@ export function useOnboardingChecklist() {
     [establishments, productions, osps, farmId]
   );
 
+  const ospSectionDetail = useMemo(() => resolveOspSectionDetail(osps), [osps]);
+
   // Build dynamic links
   const writerLinks = useMemo(() => {
     const farmPath = farmId ? `/admin/dashboard/farm/${farmId}` : '/admin/dashboard';
@@ -258,23 +288,32 @@ export function useOnboardingChecklist() {
   const isPilot = variant === 'writer' && isPilotSubscription(company?.subscription);
 
   const items: ChecklistItem[] = useMemo(() => {
+    // Only an open item carries the count; a ticked one says nothing more.
+    const withDetail = (item: ChecklistItem): ChecklistItem =>
+      item.id === 'file-osp' && !item.completed && ospSectionDetail
+        ? { ...item, detail: ospSectionDetail }
+        : item;
     if (variant === 'writer' && isPilot) {
-      return PILOT_REQUIRED_ITEMS.map(({ id, dependsOn, labelKey }) => ({
-        id,
-        labelKey,
-        linkTo: writerLinks[id],
-        completed: writerCompletion[id] || false,
-        dependsOn
-      }));
+      return PILOT_REQUIRED_ITEMS.map(({ id, dependsOn, labelKey }) =>
+        withDetail({
+          id,
+          labelKey,
+          linkTo: writerLinks[id],
+          completed: writerCompletion[id] || false,
+          dependsOn
+        })
+      );
     }
     if (variant === 'writer') {
-      return WRITER_ITEMS.map(({ id, dependsOn }, i) => ({
-        id,
-        labelKey: `tour.checklist.writer.item${i + 1}`,
-        linkTo: writerLinks[id],
-        completed: writerCompletion[id] || false,
-        dependsOn
-      }));
+      return WRITER_ITEMS.map(({ id, dependsOn }, i) =>
+        withDetail({
+          id,
+          labelKey: `tour.checklist.writer.item${i + 1}`,
+          linkTo: writerLinks[id],
+          completed: writerCompletion[id] || false,
+          dependsOn
+        })
+      );
     }
 
     return VIEWER_ITEMS.map((id, i) => ({
@@ -283,7 +322,15 @@ export function useOnboardingChecklist() {
       linkTo: viewerLinks[id],
       completed: !!visitedPages[id]
     }));
-  }, [variant, isPilot, writerCompletion, writerLinks, viewerLinks, visitedPages]);
+  }, [
+    variant,
+    isPilot,
+    writerCompletion,
+    writerLinks,
+    viewerLinks,
+    visitedPages,
+    ospSectionDetail
+  ]);
 
   // Shown under "Optional" for pilots; never counted. Labels and order as on the writer list.
   const optionalItems: ChecklistItem[] = useMemo(() => {

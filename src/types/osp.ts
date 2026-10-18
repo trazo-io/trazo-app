@@ -55,6 +55,13 @@ export interface OSPSummary {
   packet_agent: PacketAgent;
   certifier_template_name: string | null;
   section_completion: number; // 0..1
+  /**
+   * How many of the six § 205.201(a) narratives have text, by the submit gate's rule (at least
+   * 400 characters, not padding) plus the OSP page's (a)(2) registry hold. The number the OSP
+   * page and the onboarding checklist show. `section_completion` counts any non-blank narrative.
+   * Absent from a backend older than 2026-10-17.
+   */
+  sections_with_text?: number;
   created_at: string;
   updated_at: string;
 }

@@ -235,6 +235,38 @@ describe('pilot checklist', () => {
   });
 });
 
+describe('OSP item section count', () => {
+  it("an open OSP item says how many sections have text, in the OSP page's words", () => {
+    establishments = [SET_UP_FARM];
+    productions = SET_UP_PRODUCTIONS;
+    osps = [{ version_number: 1, status: 'draft', section_completion: 1, sections_with_text: 4 }];
+    renderChecklist();
+    const item = screen.getByTestId('checklist-item-file-osp');
+    expect(item.getAttribute('data-completed')).toBe('false');
+    expect(screen.getByTestId('checklist-detail-file-osp').textContent).toBe(
+      '4 of 6 narrative sections have text'
+    );
+    expect(enUS['osp.completion.sectionsOfTotal']).toBe(
+      '{complete} of {total} narrative sections have text'
+    );
+  });
+
+  it('a ticked OSP item shows no count', () => {
+    establishments = [SET_UP_FARM];
+    osps = [{ version_number: 1, status: 'submitted', sections_with_text: 3 }];
+    renderChecklist();
+    expect(screen.queryByTestId('checklist-detail-file-osp')).toBeNull();
+  });
+
+  it('says it in Spanish', () => {
+    osps = [{ version_number: 1, status: 'draft', sections_with_text: 2 }];
+    renderChecklist('es-419', es419 as Record<string, string>);
+    expect(screen.getByTestId('checklist-detail-file-osp').textContent).toBe(
+      '2 de 6 secciones narrativas tienen texto'
+    );
+  });
+});
+
 describe('Starter checklist', () => {
   beforeEach(() => {
     subscription = STARTER;
