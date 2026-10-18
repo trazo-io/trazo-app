@@ -18,7 +18,11 @@ import esCatalogue from '../../i18n/lang/es-419.json';
 
 const en = enCatalogue as Record<string, string>;
 const es = esCatalogue as Record<string, string>;
-import { WRITER_ITEMS, resolveWriterCompletion } from '../useOnboardingChecklist';
+import {
+  WRITER_ITEMS,
+  resolveOspSectionDetail,
+  resolveWriterCompletion
+} from '../useOnboardingChecklist';
 
 const FARM = '148';
 
@@ -100,6 +104,31 @@ describe('resolveWriterCompletion — certifier prerequisites', () => {
         JSON.stringify(osp)
       ).toBe(true);
     }
+  });
+
+  it('reads "has text" the way the OSP page does, not one character per section', () => {
+    // section_completion counts any non-blank narrative. One "x" in each of the six read 1.0 and
+    // ticked the item while the OSP page said "0 of 6 narrative sections have text".
+    const tick = (osp: Record<string, unknown>) =>
+      resolveWriterCompletion({ ...seasonDone, osps: [osp] })['file-osp'];
+    expect(tick({ status: 'draft', section_completion: 1, sections_with_text: 0 })).toBe(false);
+    expect(tick({ status: 'draft', section_completion: 1, sections_with_text: 5 })).toBe(false);
+    expect(tick({ status: 'draft', section_completion: 1, sections_with_text: 6 })).toBe(true);
+    expect(tick({ status: 'submitted', section_completion: 0, sections_with_text: 0 })).toBe(true);
+  });
+
+  it("counts the latest version, in the OSP page's own message", () => {
+    expect(
+      resolveOspSectionDetail([
+        { version_number: 1, status: 'active', sections_with_text: 6 },
+        { version_number: 2, status: 'draft', sections_with_text: 4 }
+      ])
+    ).toEqual({ id: 'osp.completion.sectionsOfTotal', values: { complete: 4, total: 6 } });
+    expect(resolveOspSectionDetail([]), 'no plan yet').toBeNull();
+    expect(
+      resolveOspSectionDetail([{ version_number: 1, section_completion: 0.5 }]),
+      'a backend without the count shows no number rather than a guessed one'
+    ).toBeNull();
   });
 
   it('counts events directly, not via the retired transparency score', () => {
