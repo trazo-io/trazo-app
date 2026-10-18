@@ -18,6 +18,9 @@ import {
 export function useUserRole() {
   const currentUser = useSelector((state: any) => state.userState.user);
   const role = currentUser?.companies?.[0]?.role;
+  // The account Trazo enters a pilot grower's records with. It cannot sign the annual update or
+  // submit the OSP (the server refuses both); the UI says so instead of offering the button.
+  const isSetupOperator = currentUser?.companies?.[0]?.is_setup_operator === true;
   const isSuperuser = currentUser?.user_type === SUPERUSER;
 
   const isAdmin = role === ROLE_DISPLAY_COMPANY_ADMIN || isSuperuser;
@@ -36,6 +39,7 @@ export function useUserRole() {
     isManager,
     isViewer,
     canWrite,
-    canManageCompany
+    canManageCompany,
+    isSetupOperator
   };
 }

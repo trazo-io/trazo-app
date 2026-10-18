@@ -81,23 +81,18 @@ export function isPilotSubscription(subscription: any): boolean {
 }
 
 /**
- * The last-name suffix every pilot operator account carries. Mirrors `SETUP_SUFFIX` in
- * trazo-back `subscriptions/pilot_operator.py`: `provision_pilot` and `add_pilot_operator` create
- * the operator as "<first> <last> (Trazo setup)" through `operator_last_name`, which always
- * appends it, so the audit trail names the setup account. Pinned by a parity test.
- */
-export const PILOT_OPERATOR_LAST_NAME_SUFFIX = '(Trazo setup)';
-
-/**
  * Is this the account Trazo uses to set up a pilot farm, rather than the grower?
  *
  * The operator signs in to the grower's company to enter their records, so the pilot checklist
  * told the operator to "Send your existing records to Oscar" (pilot rehearsal 2026-10-17,
- * finding 7). The payload carries no role or flag for this account; the suffix is the one
- * signal the backend always writes.
+ * finding 7). Reads the membership flag (`WorksIn.is_setup_operator`, set by `provision_pilot` and
+ * `add_pilot_operator`). Until 2026-10-18 this read the "(Trazo setup)" name suffix, which an
+ * existing account attached as operator does not carry (review of back #176).
  */
-export function isPilotSetupOperator(user: { last_name?: string | null } | null | undefined) {
-  return (user?.last_name || '').trim().endsWith(PILOT_OPERATOR_LAST_NAME_SUFFIX);
+export function isPilotSetupOperator(
+  user: { companies?: { is_setup_operator?: boolean }[] } | null | undefined
+) {
+  return user?.companies?.[0]?.is_setup_operator === true;
 }
 
 // `check-commercial` was here until 2026-08-11. The Commercial dashboard was cut in WS-7 and

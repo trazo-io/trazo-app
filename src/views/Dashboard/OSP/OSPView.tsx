@@ -86,6 +86,7 @@ import OSPAnnualUpdateCard, { OSPRenewalSummary } from './OSPAnnualUpdateCard';
 import { selectPlanOnFile } from './selectPlanOnFile';
 import { selectWorkingOsp } from './selectWorkingOsp';
 import { useFarm, useFarmState } from 'hooks/useMeasurementSystem';
+import { useUserRole } from 'hooks/useUserRole';
 import { todayLocalISODate } from 'utils/dateOnly';
 import { apiErrorMessage } from 'utils/apiErrorMessage';
 
@@ -319,6 +320,7 @@ const OSPView: React.FC = () => {
   }, [farm]);
 
   const subtextColor = useColorModeValue('gray.600', 'gray.400');
+  const { isSetupOperator } = useUserRole();
   const emptyBg = useColorModeValue('green.50', 'green.900');
   const lockedBg = useColorModeValue('gray.50', 'gray.700');
 
@@ -828,7 +830,7 @@ const OSPView: React.FC = () => {
                   {intl.formatMessage({ id: 'osp.action.save' })}
                 </StandardButton>
               )}
-              {editableOsp.status === 'draft' && (
+              {editableOsp.status === 'draft' && !isSetupOperator && (
                 <StandardButton
                   variant="primary"
                   size="sm"
@@ -836,6 +838,17 @@ const OSPView: React.FC = () => {
                   isLoading={submitting}>
                   {intl.formatMessage({ id: 'osp.action.submit' })}
                 </StandardButton>
+              )}
+              {/* Submitting is the grower's statement to the certifier; the server refuses it
+                  from the setup account, so the button would only collect a 403. */}
+              {editableOsp.status === 'draft' && isSetupOperator && (
+                <Text
+                  fontSize="xs"
+                  color={subtextColor}
+                  maxW="xs"
+                  data-testid="osp-submit-is-the-growers">
+                  {intl.formatMessage({ id: 'osp.action.submitIsTheGrowers' })}
+                </Text>
               )}
               {editableOsp.status === 'submitted' && (
                 <StandardButton variant="primary" size="sm" onClick={openActivateModal}>
@@ -1000,6 +1013,7 @@ const OSPView: React.FC = () => {
             companyId={companyId}
             farmId={farmId}
             currentYear={new Date().getFullYear()}
+            isSetupOperator={isSetupOperator}
           />
         )}
         <Accordion allowMultiple defaultIndex={[0]}>
@@ -1199,6 +1213,7 @@ const OSPView: React.FC = () => {
           producesDraft={annualUpdateProducesDraft}
           currentYear={new Date().getFullYear()}
           signer={{ responsiblePerson: farmContactPerson, account: accountName }}
+          isSetupOperator={isSetupOperator}
         />
       )}
 
