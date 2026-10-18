@@ -46,7 +46,7 @@ import {
 } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import { ospStatusLabel } from './ospStatusLabel';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useGetFarmQuery } from 'store/api/companyApi';
 
@@ -85,6 +85,7 @@ import StateOrganicRegistrationCard, {
 import OSPAnnualUpdateCard, { OSPRenewalSummary } from './OSPAnnualUpdateCard';
 import { selectPlanOnFile } from './selectPlanOnFile';
 import { selectWorkingOsp } from './selectWorkingOsp';
+import { FIRST_SECTION_WITHOUT_TEXT } from './ospLinks';
 import { useFarm, useFarmState } from 'hooks/useMeasurementSystem';
 import { useUserRole } from 'hooks/useUserRole';
 import { todayLocalISODate } from 'utils/dateOnly';
@@ -205,6 +206,30 @@ function sectionStatus(narrative: string): SectionStatus {
 }
 
 /**
+ * Whether a section counts toward "{n} of 6 narrative sections have text". The backend's
+ * `sections_with_text` rule: material text, not padding, and (a)(2) held back while a registered
+ * input is missing from its narrative. One predicate for the count and for the section the
+ * onboarding checklist opens, so the two cannot disagree.
+ */
+function sectionHasText(key: OSPSectionKey, status: SectionStatus, unreferencedCount: number) {
+  if (status.tier !== 'complete') return false;
+  return !(key === 'inputs_list' && unreferencedCount > 0);
+}
+
+/** The first section, in the order of the regulation, that does not count as having text. */
+export function firstSectionWithoutText(
+  sections: Partial<Record<OSPSectionKey, { narrative?: string }>> | undefined,
+  unreferencedCount: number
+): OSPSectionKey | null {
+  return (
+    OSP_SECTION_KEYS.find(
+      (key) =>
+        !sectionHasText(key, sectionStatus(sections?.[key]?.narrative || ''), unreferencedCount)
+    ) ?? null
+  );
+}
+
+/**
  * Day-1 cheat sheet for the six § 205.201(a) sections.
  *
  * ⛔ `promptId`, not a literal. This array is module scope, so it cannot call `intl` itself —
@@ -263,6 +288,8 @@ const OSPView: React.FC = () => {
   const toast = useToast();
   const { farmId } = useParams<{ farmId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const opensFirstSectionWithoutText = searchParams.get('section') === FIRST_SECTION_WITHOUT_TEXT;
   // Drill-down page: reached from the OSP module list, never from the sidebar, so it owes a
   // Back button (page-layout standard). Same target and same StandardPage affordance the
   // module wizard uses. Unsaved narrative text survives the exit — the draft autosaves to
@@ -490,6 +517,31 @@ const OSPView: React.FC = () => {
     });
     return map;
   }, [editableOsp?.sections]);
+
+  // The section the checklist's "{n} of 6" points at. Above the early returns (Rules of Hooks).
+  const sectionToOpen = useMemo(
+    () =>
+      firstSectionWithoutText(
+        editableOsp?.sections,
+        editableOsp?.registry_sync_diff?.entries_not_in_narrative?.length || 0
+      ),
+    [editableOsp?.sections, editableOsp?.registry_sync_diff]
+  );
+  // Scrolled to once, on arrival: typing that completes the section must not jump the page.
+  // By ref, not by id: Chakra's `useAccordionItem` takes `id` for its button and panel ids and
+  // never puts it on the item's DOM node, so `getElementById` always returned null (review of
+  // app #146). The ref is forwarded to that node.
+  const sectionNodes = useRef<Partial<Record<OSPSectionKey, HTMLDivElement | null>>>({});
+  const scrolledToSection = useRef(false);
+  useEffect(() => {
+    if (!opensFirstSectionWithoutText || scrolledToSection.current || !sectionToOpen) {
+      return;
+    }
+    const target = sectionNodes.current[sectionToOpen];
+    if (!target) return;
+    scrolledToSection.current = true;
+    target.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
+  }, [opensFirstSectionWithoutText, sectionToOpen, editableOsp?.id]);
 
   // --- Mutations ----------------------------------------------------------
   const [createOSP, { isLoading: creating }] = useCreateOSPMutation();
@@ -755,19 +807,17 @@ const OSPView: React.FC = () => {
   // the gated completion count.
   const unreferencedCount = editableOsp.registry_sync_diff?.entries_not_in_narrative?.length || 0;
 
-  const completeSectionCount = OSP_SECTION_KEYS.reduce((acc, key) => {
-    const isMaterialComplete = perSectionStatus[key].tier === 'complete';
-    // Registry Sync gate: (a)(2) does not count as complete if approved
-    // inputs aren't referenced in the narrative, even if character count
-    // would otherwise pass. Matches `audit_export_service.py` Wave 6 fix.
-    // On unreferenced entries only: `has_warning` also fires for a thin registry, which the PDF
-    // reports as a banner and still counts (and which made this tooltip read "0 approved inputs
-    // are not mentioned"). Same rule as the backend's `sections_with_text`.
-    if (key === 'inputs_list' && isMaterialComplete && unreferencedCount > 0) {
-      return acc;
-    }
-    return acc + (isMaterialComplete ? 1 : 0);
-  }, 0);
+  // Registry Sync gate inside `sectionHasText`: (a)(2) does not count if approved inputs aren't
+  // referenced in the narrative, even if character count would otherwise pass. Matches
+  // `audit_export_service.py` Wave 6 fix. On unreferenced entries only: `has_warning` also fires
+  // for a thin registry, which the PDF reports as a banner and still counts (and which made this
+  // tooltip read "0 approved inputs are not mentioned"). Same rule as the backend's
+  // `sections_with_text`.
+  const openSectionIndex =
+    opensFirstSectionWithoutText && sectionToOpen ? OSP_SECTION_KEYS.indexOf(sectionToOpen) : 0;
+  const completeSectionCount = OSP_SECTION_KEYS.filter((key) =>
+    sectionHasText(key, perSectionStatus[key], unreferencedCount)
+  ).length;
   // Mirrors `OrganicSystemPlanViewSet.perform_update` — only a draft accepts edits.
   const isEditable = editableOsp.status === 'draft';
   const statusBadgeProps = STATUS_BADGE[editableOsp.status] ?? { colorScheme: 'gray' };
@@ -1016,7 +1066,9 @@ const OSPView: React.FC = () => {
             isSetupOperator={isSetupOperator}
           />
         )}
-        <Accordion allowMultiple defaultIndex={[0]}>
+        {/* Read at mount only: arriving from the checklist opens the section its count is short
+            of; otherwise the first section, as before. */}
+        <Accordion allowMultiple defaultIndex={[openSectionIndex]}>
           {OSP_SECTION_KEYS.map((key) => {
             const section = editableOsp.sections[key] || { narrative: '', last_updated: null };
             const status = perSectionStatus[key];
@@ -1034,7 +1086,14 @@ const OSPView: React.FC = () => {
                 ? 'amber.900'
                 : 'gray.500';
             return (
-              <AccordionItem key={key} borderTopWidth="0px" borderBottomWidth="1px">
+              <AccordionItem
+                key={key}
+                ref={(node: HTMLDivElement | null) => {
+                  sectionNodes.current[key] = node;
+                }}
+                data-testid={`osp-section-${key}`}
+                borderTopWidth="0px"
+                borderBottomWidth="1px">
                 <AccordionButton py={3}>
                   <Flex
                     flex={1}

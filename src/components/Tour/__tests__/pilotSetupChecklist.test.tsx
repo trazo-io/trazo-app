@@ -16,7 +16,7 @@
  */
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 import { ChakraProvider } from '@chakra-ui/react';
 
@@ -54,9 +54,11 @@ vi.mock('react-redux', () => ({
     })
 }));
 
+const { navigate } = vi.hoisted(() => ({ navigate: vi.fn() }));
+
 vi.mock('react-router-dom', () => ({
   useParams: () => ({ farmId: '148' }),
-  useNavigate: () => vi.fn(),
+  useNavigate: () => navigate,
   useLocation: () => ({ pathname })
 }));
 
@@ -248,6 +250,25 @@ describe('OSP item section count', () => {
     expect(enUS['osp.completion.sectionsOfTotal']).toBe(
       '{complete} of {total} narrative sections have text'
     );
+  });
+
+  it('opens the narratives page on the first section without text', () => {
+    establishments = [SET_UP_FARM];
+    osps = [{ version_number: 1, status: 'draft', sections_with_text: 4 }];
+    navigate.mockClear();
+    renderChecklist();
+    fireEvent.click(screen.getByTestId('checklist-item-file-osp'));
+    expect(navigate).toHaveBeenCalledWith(
+      '/admin/dashboard/farm/148/osp/narratives?section=first-without-text'
+    );
+  });
+
+  it('with no plan yet, opens the module list where one starts', () => {
+    osps = [];
+    navigate.mockClear();
+    renderChecklist();
+    fireEvent.click(screen.getByTestId('checklist-item-file-osp'));
+    expect(navigate).toHaveBeenCalledWith('/admin/dashboard/farm/148/osp');
   });
 
   it('a ticked OSP item shows no count', () => {
