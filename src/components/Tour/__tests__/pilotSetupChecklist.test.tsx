@@ -46,6 +46,7 @@ let establishments: any[] = [];
 let productions: any[] | undefined = [];
 let osps: any[] | undefined = [];
 let currentUser: Record<string, unknown> | null = { first_name: 'Jane', last_name: 'Grower' };
+let pathname = '/admin/dashboard/farm/148';
 
 vi.mock('react-redux', () => ({
   useSelector: (fn: (s: unknown) => unknown) =>
@@ -58,7 +59,7 @@ vi.mock('react-redux', () => ({
 vi.mock('react-router-dom', () => ({
   useParams: () => ({ farmId: '148' }),
   useNavigate: () => vi.fn(),
-  useLocation: () => ({ pathname: '/admin/dashboard/farm/148' })
+  useLocation: () => ({ pathname })
 }));
 
 vi.mock('../../../hooks/useUserRole', () => ({
@@ -102,10 +103,24 @@ beforeEach(() => {
   productions = [];
   osps = [];
   currentUser = { first_name: 'Jane', last_name: 'Grower' };
+  pathname = '/admin/dashboard/farm/148';
   useTourStore.setState({ checklistDismissed: false, checklistCompleted: false, visitedPages: {} });
 });
 
 describe('pilot checklist', () => {
+  // Pilot rehearsal 2026-10-17: the panel sat over "Save Annual Update" on the OSP narratives
+  // page until the grower dismissed it.
+  it('stays off the OSP pages, where the annual update is saved', () => {
+    renderChecklist();
+    expect(screen.queryByTestId('checklist-required')).not.toBeNull();
+    for (const osp of ['/osp', '/osp/narratives', '/osp/module/g2']) {
+      pathname = `/admin/dashboard/farm/148${osp}`;
+      const { container, unmount } = renderChecklist();
+      expect(container.textContent).toBe('');
+      unmount();
+    }
+  });
+
   it('requires exactly the four data-backed items, labelled by what they prove', () => {
     renderChecklist();
     const required = screen.getByTestId('checklist-required');

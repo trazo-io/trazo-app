@@ -30,9 +30,11 @@ import { ChecklistItem } from '../../tours/types';
  * first step of the very checklist it was showing.
  *
  * Every wizard route ends in one of these, so suffix matching is sufficient; earlier
- * `/event/add` and `/production/add` entries were redundant with `/add`.
+ * `/event/add` and `/production/add` entries were redundant with `/add`. The edit forms
+ * (farm, parcel, event, production) end in `/change`, not `/edit`, so until 2026-10-17 the
+ * panel still covered their primary actions, QuickStartProduction's fixed commit bar included.
  */
-const FORM_ROUTE_SUFFIXES = ['/add', '/edit', '/finish'];
+const FORM_ROUTE_SUFFIXES = ['/add', '/edit', '/change', '/finish'];
 
 /**
  * Pages whose content the fixed panel covered (recordkeeping review F-19, 2026-10-07): on the
@@ -40,7 +42,13 @@ const FORM_ROUTE_SUFFIXES = ['/add', '/edit', '/finish'];
  * had just created. The panel is a guide to the next step, never a lid on the current one.
  */
 // The production segment is the season's public_id (a UUID), never a number (review of app #98).
-const RECORD_ROUTE_PATTERNS = [/\/parcel\/\d+$/, /\/parcel\/\d+\/production\/[^/]+$/];
+// The OSP pages (module list, module wizard, narratives with the annual update): in the pilot
+// rehearsal of 2026-10-17 the panel sat over "Save Annual Update" until it was dismissed.
+const RECORD_ROUTE_PATTERNS = [
+  /\/parcel\/\d+$/,
+  /\/parcel\/\d+\/production\/[^/]+$/,
+  /\/farm\/\d+\/osp(\/|$)/
+];
 
 /** Trailing slashes appear on some routes (e.g. after finalize redirects), so normalise. */
 export const isRecordOrFormRoute = (pathname: string): boolean => {
