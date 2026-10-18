@@ -153,6 +153,7 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
   const toast = useToast();
   const [label, setLabel] = useState('');
   const [openLog, setOpenLog] = useState<number | null>(null);
+  const [showPast, setShowPast] = useState(false);
   const [period, setPeriod] = useState<PeriodChoice>('current_year');
 
   // `= []` is a rendering convenience, not a fact: on a failed request it made the card
@@ -174,6 +175,13 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
   // Buyer-audience links live on the Buyer page's own card; showing them here
   // would imply a certifier can open them (they cannot — cross-audience is 404).
   const activeLinks = links.filter((l) => l.is_active && l.audience !== 'buyer');
+  // Revoked and expired links stay listed with their activity (handoff rehearsal 2026-10-18,
+  // H-5): the card dropped them, so revoking a link also erased the grower's record of whether
+  // the certifier had opened it. The backend always kept those rows. Newest ending first.
+  const endedAt = (l: CertifierAccessLink) => l.revoked_at || l.expires_at || '';
+  const pastLinks = links
+    .filter((l) => !l.is_active && l.audience !== 'buyer')
+    .sort((a, b) => endedAt(b).localeCompare(endedAt(a)));
 
   const handleCreate = async () => {
     try {
@@ -274,6 +282,49 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
     }
   };
 
+  /* The access log itself, not just a count. `accesses[]` was already on the wire and typed but
+     rendered nowhere, so a farmer could see THAT their certifier opened the link but not WHAT they
+     did — and "downloaded the dossier" is a materially different signal from "opened the page".
+     Deliberately omits ip_address: that is Trazo's audit trail for abuse investigation, not
+     something a farmer needs about a third party. Shared by active and past links. */
+  const activityToggle = (link: CertifierAccessLink) =>
+    link.accesses.length > 0 && (
+      <Link
+        as="button"
+        type="button"
+        fontSize="xs"
+        color="green.700"
+        fontWeight="medium"
+        onClick={() => setOpenLog(openLog === link.id ? null : link.id)}>
+        {openLog === link.id
+          ? intl.formatMessage({
+              id: 'certifierLink.hideActivity',
+              defaultMessage: 'Hide activity'
+            })
+          : intl.formatMessage(
+              {
+                id: 'certifierLink.showActivity',
+                defaultMessage: 'Show activity ({n, plural, one {# open} other {# opens}})'
+              },
+              { n: link.accesses.length }
+            )}
+      </Link>
+    );
+
+  const activityLog = (link: CertifierAccessLink) =>
+    openLog === link.id &&
+    link.accesses.length > 0 && (
+      <VStack align="stretch" gap={1} pl={1} pb={1}>
+        {link.accesses.map((entry) => (
+          <HStack key={entry.id} gap={2} fontSize="xs" color="gray.500">
+            <Text>{formatDateTime(entry.accessed_at)}</Text>
+            <Text>·</Text>
+            <Text>{entry.action_display}</Text>
+          </HStack>
+        ))}
+      </VStack>
+    );
+
   return (
     <StandardCard
       title={intl.formatMessage({
@@ -291,6 +342,49 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
               'Send your certifier a link to this operation’s audit dossier. They do not need a Trazo account, the records are always current, and you can revoke access at any time.'
           })}
         </Text>
+
+        {/* What the dossier exposes, said BEFORE the link exists (handoff rehearsal 2026-10-18):
+            the description promised "always current" and "revocable" but not what a certifier
+            reads. Each line is something the dossier prints (`audit_export_service.py`). */}
+        {canWrite && canMintLinks && (
+          <Box data-testid="certifier-link-disclosure" fontSize="sm" color="gray.600">
+            <Text fontWeight="semibold" color="gray.700">
+              {intl.formatMessage({
+                id: 'certifierLink.disclosure.title',
+                defaultMessage: 'What your certifier will see'
+              })}
+            </Text>
+            <Text>
+              {intl.formatMessage({
+                id: 'certifierLink.disclosure.intro',
+                defaultMessage:
+                  'The dossier holds this farm’s records for the period you choose, including:'
+              })}
+            </Text>
+            <Box as="ul" pl={5}>
+              {(
+                [
+                  ['unpublished', 'seasons you have not published on your buyer page'],
+                  ['privateNotes', 'your private notes'],
+                  ['commercial', 'supplier names, invoice numbers and sale amounts'],
+                  ['people', 'the names of the people recorded doing the work'],
+                  ['emails', 'the email address of each account that changed a record']
+                ] as const
+              ).map(([key, defaultMessage]) => (
+                <li key={key}>
+                  {intl.formatMessage({ id: `certifierLink.disclosure.${key}`, defaultMessage })}
+                </li>
+              ))}
+            </Box>
+            <Text>
+              {intl.formatMessage({
+                id: 'certifierLink.disclosure.documents',
+                defaultMessage:
+                  'Your documents are listed by title. The files themselves are not shared.'
+              })}
+            </Text>
+          </Box>
+        )}
 
         {canWrite && canMintLinks && (
           <OperationReadinessPanel companyId={companyId} farmId={farmId} variant="preshare" />
@@ -477,35 +571,7 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
                 {/* Text actions, not buttons. Two 44px buttons per row × six rows was most of
                     this card's height, and neither is the primary action — creating a link is. */}
                 <HStack gap={4}>
-                  {/* The access log itself, not just a count. `accesses[]` was already on the
-                      wire and typed but rendered nowhere, so a farmer could see THAT their
-                      certifier opened the link but not WHAT they did — and "downloaded the
-                      dossier" is a materially different signal from "opened the page".
-                      Deliberately omits ip_address: that is Trazo's audit trail for abuse
-                      investigation, not something a farmer needs about a third party. */}
-                  {link.accesses.length > 0 && (
-                    <Link
-                      as="button"
-                      type="button"
-                      fontSize="xs"
-                      color="green.700"
-                      fontWeight="medium"
-                      onClick={() => setOpenLog(openLog === link.id ? null : link.id)}>
-                      {openLog === link.id
-                        ? intl.formatMessage({
-                            id: 'certifierLink.hideActivity',
-                            defaultMessage: 'Hide activity'
-                          })
-                        : intl.formatMessage(
-                            {
-                              id: 'certifierLink.showActivity',
-                              defaultMessage:
-                                'Show activity ({n, plural, one {# open} other {# opens}})'
-                            },
-                            { n: link.accesses.length }
-                          )}
-                    </Link>
-                  )}
+                  {activityToggle(link)}
                   {canWrite && (
                     <Link
                       as="button"
@@ -523,21 +589,90 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
                   )}
                 </HStack>
 
-                {openLog === link.id && link.accesses.length > 0 && (
-                  <VStack align="stretch" gap={1} pl={1} pb={1}>
-                    {link.accesses.map((entry) => (
-                      <HStack key={entry.id} gap={2} fontSize="xs" color="gray.500">
-                        <Text>{formatDateTime(entry.accessed_at)}</Text>
-                        <Text>·</Text>
-                        <Text>{entry.action_display}</Text>
-                      </HStack>
-                    ))}
-                  </VStack>
-                )}
+                {activityLog(link)}
               </VStack>
             </Box>
           );
         })}
+
+        {!isLoading && !isError && pastLinks.length > 0 && (
+          <Box
+            borderTopWidth="1px"
+            borderColor="gray.100"
+            pt={3}
+            data-testid="certifier-past-links">
+            <Link
+              as="button"
+              type="button"
+              fontSize="xs"
+              color="gray.600"
+              fontWeight="medium"
+              onClick={() => setShowPast(!showPast)}>
+              {showPast
+                ? intl.formatMessage({
+                    id: 'certifierLink.past.hide',
+                    defaultMessage: 'Hide past links'
+                  })
+                : intl.formatMessage(
+                    { id: 'certifierLink.past.show', defaultMessage: 'Past links ({n})' },
+                    { n: pastLinks.length }
+                  )}
+            </Link>
+            {showPast && (
+              <VStack align="stretch" gap={3} mt={2}>
+                <Text fontSize="xs" color="gray.500">
+                  {intl.formatMessage({
+                    id: 'certifierLink.past.help',
+                    defaultMessage: 'These links no longer open. Their activity is kept here.'
+                  })}
+                </Text>
+                {pastLinks.map((link) => (
+                  <VStack key={link.id} align="stretch" gap={1} data-testid="certifier-past-link">
+                    <HStack justify="space-between" align="baseline" gap={3} flexWrap="wrap">
+                      <Text fontSize="sm" color="gray.600" minW={0}>
+                        {link.label ||
+                          intl.formatMessage({
+                            id: 'certifierLink.unlabelled',
+                            defaultMessage: 'Certifier link'
+                          })}
+                      </Text>
+                      <HStack
+                        gap={2}
+                        flexWrap="wrap"
+                        justify="flex-end"
+                        fontSize="xs"
+                        color="gray.500">
+                        <HStack gap={1}>
+                          <Icon as={FaEye} boxSize={3} />
+                          <Text as="span">{link.access_count}</Text>
+                        </HStack>
+                        <Text>
+                          {link.is_revoked
+                            ? intl.formatMessage(
+                                {
+                                  id: 'certifierLink.past.revoked',
+                                  defaultMessage: 'Revoked {date}'
+                                },
+                                { date: formatTimestampDate(link.revoked_at) }
+                              )
+                            : intl.formatMessage(
+                                {
+                                  id: 'certifierLink.past.expired',
+                                  defaultMessage: 'Expired {date}'
+                                },
+                                { date: formatTimestampDate(link.expires_at) }
+                              )}
+                        </Text>
+                      </HStack>
+                    </HStack>
+                    <HStack gap={4}>{activityToggle(link)}</HStack>
+                    {activityLog(link)}
+                  </VStack>
+                ))}
+              </VStack>
+            )}
+          </Box>
+        )}
       </VStack>
     </StandardCard>
   );
