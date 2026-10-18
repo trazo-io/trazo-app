@@ -505,7 +505,7 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
             isChecked={includeFiles}
             onChange={(e) => setIncludeFiles(e.target.checked)}
             flexShrink={0}
-            minH="32px"
+            minH="44px"
             data-testid="certifier-link-include-files">
             <Text fontSize="sm" color="gray.700">
               {intl.formatMessage({
