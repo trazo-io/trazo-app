@@ -528,12 +528,16 @@ const OSPView: React.FC = () => {
     [editableOsp?.sections, editableOsp?.registry_sync_diff]
   );
   // Scrolled to once, on arrival: typing that completes the section must not jump the page.
+  // By ref, not by id: Chakra's `useAccordionItem` takes `id` for its button and panel ids and
+  // never puts it on the item's DOM node, so `getElementById` always returned null (review of
+  // app #146). The ref is forwarded to that node.
+  const sectionNodes = useRef<Partial<Record<OSPSectionKey, HTMLDivElement | null>>>({});
   const scrolledToSection = useRef(false);
   useEffect(() => {
     if (!opensFirstSectionWithoutText || scrolledToSection.current || !sectionToOpen) {
       return;
     }
-    const target = document.getElementById(`osp-section-${sectionToOpen}`);
+    const target = sectionNodes.current[sectionToOpen];
     if (!target) return;
     scrolledToSection.current = true;
     target.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
@@ -1084,7 +1088,9 @@ const OSPView: React.FC = () => {
             return (
               <AccordionItem
                 key={key}
-                id={`osp-section-${key}`}
+                ref={(node: HTMLDivElement | null) => {
+                  sectionNodes.current[key] = node;
+                }}
                 data-testid={`osp-section-${key}`}
                 borderTopWidth="0px"
                 borderBottomWidth="1px">
