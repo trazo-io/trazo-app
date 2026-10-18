@@ -751,7 +751,6 @@ const OSPView: React.FC = () => {
   // `perSectionStatus` was computed above the early-return guards (Rules
   // of Hooks — useMemo must run on every render). Use it here to compute
   // the gated completion count.
-  const registrySyncHasWarning = !!editableOsp.registry_sync_diff?.has_warning;
   const unreferencedCount = editableOsp.registry_sync_diff?.entries_not_in_narrative?.length || 0;
 
   const completeSectionCount = OSP_SECTION_KEYS.reduce((acc, key) => {
@@ -759,7 +758,10 @@ const OSPView: React.FC = () => {
     // Registry Sync gate: (a)(2) does not count as complete if approved
     // inputs aren't referenced in the narrative, even if character count
     // would otherwise pass. Matches `audit_export_service.py` Wave 6 fix.
-    if (key === 'inputs_list' && isMaterialComplete && registrySyncHasWarning) {
+    // On unreferenced entries only: `has_warning` also fires for a thin registry, which the PDF
+    // reports as a banner and still counts (and which made this tooltip read "0 approved inputs
+    // are not mentioned"). Same rule as the backend's `sections_with_text`.
+    if (key === 'inputs_list' && isMaterialComplete && unreferencedCount > 0) {
       return acc;
     }
     return acc + (isMaterialComplete ? 1 : 0);
@@ -876,7 +878,7 @@ const OSPView: React.FC = () => {
                     { complete: completeSectionCount, total: OSP_SECTION_KEYS.length }
                   )}
                 </Text>
-                {registrySyncHasWarning && (
+                {unreferencedCount > 0 && (
                   <Tooltip
                     hasArrow
                     placement="top"
@@ -1004,7 +1006,7 @@ const OSPView: React.FC = () => {
           {OSP_SECTION_KEYS.map((key) => {
             const section = editableOsp.sections[key] || { narrative: '', last_updated: null };
             const status = perSectionStatus[key];
-            const showRegistryGap = key === 'inputs_list' && registrySyncHasWarning;
+            const showRegistryGap = key === 'inputs_list' && unreferencedCount > 0;
             const iconAs = status.tier === 'complete' ? FaCheckCircle : FaRegCircle;
             // MEASURED on white, WCAG 1.4.11 non-text floor is 3.0:
             //   green.500 2.78 ✗ -> green.700 5.13 ✓
