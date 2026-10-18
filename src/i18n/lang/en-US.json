@@ -3160,7 +3160,7 @@
   "dashboard.shareYourStory": "Share Your Farm's Page",
   "dashboard.tooltipConsumerReach": "People who opened your buyer page this month",
   "dashboard.tooltipDocumentedEvents": "Total farming events you've documented across all productions.",
-  "dashboard.tooltipFinishedSeasons": "Seasons you have finished and published. Finished seasons are the ones your certifier packet and QR page are built from.",
+  "dashboard.tooltipFinishedSeasons": "Seasons you have finished, published or not. Your certifier packet covers every finished season; your QR page shows only the ones you publish.",
   "dashboard.tooltipMonthlyScans": "Times your QR codes were scanned this month",
   "dashboard.tooltipVerifiedProductions": "Productions with blockchain-recorded data (add-on feature). Shows how many of your productions have immutable blockchain records.",
   "dashboard.transparencyCycles": "Seasons in progress",
