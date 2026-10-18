@@ -110,10 +110,11 @@ beforeEach(() => {
 describe('pilot checklist', () => {
   // Pilot rehearsal 2026-10-17: the panel sat over "Save Annual Update" on the OSP narratives
   // page until the grower dismissed it.
-  it('stays off the OSP pages, where the annual update is saved', () => {
+  // The farm profile holds the certifier link card ("Create link", covered at 1280 px).
+  it('stays off the OSP pages and the farm profile', () => {
     renderChecklist();
     expect(screen.queryByTestId('checklist-required')).not.toBeNull();
-    for (const osp of ['/osp', '/osp/narratives', '/osp/module/g2']) {
+    for (const osp of ['/osp', '/osp/narratives', '/osp/module/g2', '/profile']) {
       pathname = `/admin/dashboard/farm/148${osp}`;
       const { container, unmount } = renderChecklist();
       expect(container.textContent).toBe('');
