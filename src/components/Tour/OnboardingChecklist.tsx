@@ -44,10 +44,14 @@ const FORM_ROUTE_SUFFIXES = ['/add', '/edit', '/change', '/finish'];
 // The production segment is the season's public_id (a UUID), never a number (review of app #98).
 // The OSP pages (module list, module wizard, narratives with the annual update): in the pilot
 // rehearsal of 2026-10-17 the panel sat over "Save Annual Update" until it was dismissed.
+// The farm profile: at 1280 px the panel covered the certifier link card's "Create link"
+// (local check, 2026-10-17). The checklist's own fraud prevention plan step links here, so the
+// panel has done its job once the grower arrives.
 const RECORD_ROUTE_PATTERNS = [
   /\/parcel\/\d+$/,
   /\/parcel\/\d+\/production\/[^/]+$/,
-  /\/farm\/\d+\/osp(\/|$)/
+  /\/farm\/\d+\/osp(\/|$)/,
+  /\/farm\/\d+\/profile$/
 ];
 
 /** Trailing slashes appear on some routes (e.g. after finalize redirects), so normalise. */

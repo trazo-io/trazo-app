@@ -49,8 +49,15 @@ describe('onboarding says what it holds', () => {
     }
     expect(isRecordOrFormRoute('/admin/dashboard/settings/change-password')).toBe(false);
     expect(isRecordOrFormRoute('/admin/dashboard/farm/20/ospx')).toBe(false);
-    // Not covered by this rule: the farm profile, where the certifier link card sits.
-    expect(isRecordOrFormRoute('/admin/dashboard/farm/20/profile')).toBe(false);
+  });
+
+  it('the Getting Started panel stays off the farm profile, where the certifier link is made', () => {
+    // Local check 2026-10-17: at 1280 px it covered the certifier link card's "Create link".
+    expect(isRecordOrFormRoute('/admin/dashboard/farm/20/profile')).toBe(true);
+    expect(isRecordOrFormRoute('/admin/dashboard/farm/20/profile/')).toBe(true);
+    // The parcel profile and the user's own profile are different pages.
+    expect(isRecordOrFormRoute('/admin/dashboard/farm/20/parcel/12/profile')).toBe(false);
+    expect(isRecordOrFormRoute('/admin/dashboard/profile')).toBe(false);
   });
 
   it('a password with an open warning is never called Strong', () => {
