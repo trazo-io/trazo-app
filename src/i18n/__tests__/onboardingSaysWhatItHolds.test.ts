@@ -33,6 +33,26 @@ describe('onboarding says what it holds', () => {
     expect(isRecordOrFormRoute('/admin/dashboard/farm/2')).toBe(false);
   });
 
+  it('the Getting Started panel stays off the OSP pages and the edit forms', () => {
+    // Pilot rehearsal 2026-10-17: it covered "Save Annual Update" on /osp/narratives.
+    for (const osp of ['/osp', '/osp/', '/osp/narratives', '/osp/module/g2']) {
+      expect(isRecordOrFormRoute(`/admin/dashboard/farm/20${osp}`)).toBe(true);
+    }
+    // Every edit route ends in /change (App.tsx), none in /edit.
+    for (const edit of [
+      '/admin/dashboard/farm/20/change',
+      '/admin/dashboard/farm/20/parcel/12/change',
+      '/admin/dashboard/farm/20/parcel/12/event/5/change',
+      '/admin/dashboard/farm/20/parcel/12/production/027804d7-17ba-468a-a210-e1279e92e165/change'
+    ]) {
+      expect(isRecordOrFormRoute(edit)).toBe(true);
+    }
+    expect(isRecordOrFormRoute('/admin/dashboard/settings/change-password')).toBe(false);
+    expect(isRecordOrFormRoute('/admin/dashboard/farm/20/ospx')).toBe(false);
+    // Not covered by this rule: the farm profile, where the certifier link card sits.
+    expect(isRecordOrFormRoute('/admin/dashboard/farm/20/profile')).toBe(false);
+  });
+
   it('a password with an open warning is never called Strong', () => {
     expect(passwordValidator.getStrengthLabel(95, [])).toBe('Strong');
     expect(passwordValidator.getStrengthLabel(95, ['Password contains common words'])).toBe('Good');
