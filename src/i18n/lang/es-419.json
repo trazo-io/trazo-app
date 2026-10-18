@@ -3165,7 +3165,7 @@
   "dashboard.shareYourStory": "Comparte la página de tu finca",
   "dashboard.tooltipConsumerReach": "Personas que abrieron tu página del comprador este mes",
   "dashboard.tooltipDocumentedEvents": "Total de eventos agrícolas que has documentado en todas tus producciones.",
-  "dashboard.tooltipFinishedSeasons": "Temporadas que cerraste y publicaste. El paquete para tu certificador y la página QR se arman a partir de las temporadas cerradas.",
+  "dashboard.tooltipFinishedSeasons": "Temporadas que cerraste, publicadas o no. El paquete para tu certificador incluye todas las temporadas cerradas; tu página QR muestra solo las que publicas.",
   "dashboard.tooltipMonthlyScans": "Veces que se escanearon tus códigos QR este mes",
   "dashboard.tooltipVerifiedProductions": "Producciones con datos registrados en blockchain (función adicional). Muestra cuántas de tus producciones tienen registros inmutables en blockchain.",
   "dashboard.transparencyCycles": "Temporadas en curso",

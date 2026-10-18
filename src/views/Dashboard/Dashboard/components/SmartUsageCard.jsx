@@ -275,7 +275,8 @@ const SmartUsageCard = ({
               This tile used to show the transparency percentage, which made farm home render
               the same number five times (here, three ways inside TransparencySummaryCard, and
               its progress bar). `scored_productions` is the honest fact underneath it: how many
-              seasons have been closed out and published. (This note used to add "the score now
+              seasons have been closed out, published or not (2026-10-18: it required published,
+              so a finished season left off the buyer page read "No finished season yet"). (This note used to add "the score now
               lives only on /admin/dashboard/farm/:farmId/transparency" — that page was never
               routed and was deleted 2026-08-11; the score has no producer surface at all.) */}
           <Tooltip label={intl.formatMessage({ id: 'dashboard.tooltipFinishedSeasons' })} hasArrow>
