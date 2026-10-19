@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 
-import { test, expect, type APIRequestContext } from '@playwright/test';
+import { test, expect, type APIRequestContext, type Page } from '@playwright/test';
 
 /**
  * The half of the crew-note flow that only a browser can answer.
@@ -79,6 +79,34 @@ async function deliver(request: APIRequestContext, body: string, id: string) {
   });
 }
 
+/**
+ * The card for ONE note, scoped by its own words.
+ *
+ * ⛔ NOT `locator('div').filter({ hasText: words }).last()`, which is what this file had.
+ * `hasText` matches every ANCESTOR div whose descendant text contains the string, and `.last()`
+ * takes the innermost of those: the bare text wrapper holding the quote and nothing else. A
+ * privacy assertion scoped there could never fail, because the element contains no phone number,
+ * no buttons and no selects whatever the product does (review of app #150).
+ *
+ * Narrowing by a control the card owns pins it to the card itself. Every test then drives its own
+ * note rather than `.first()` on a shared inbox: these tests leave notes behind for each other,
+ * so an unscoped `.first()` acts on whichever note happens to sort first.
+ */
+/**
+ * ⛔ NEVER `getByLabel(/farm/i)` HERE. The sidebar renders each establishment as an accordion
+ * button whose aria-label is "<farm name> navigation section", so a label query for /farm/ starts
+ * matching a BUTTON the moment the account has a second farm, and `selectOption` then fails with
+ * "Element is not a <select> element". MEASURED when the seeder gained "Audit Ranch (no blocks)".
+ * `combobox` is the select's own role and cannot drift onto a button.
+ */
+function noteCard(page: Page, words: string) {
+  return page
+    .locator('div')
+    .filter({ hasText: words })
+    .filter({ has: page.getByRole('button', { name: /log this/i }) })
+    .last();
+}
+
 test.describe('a supervisor turns a crew message into a record', () => {
   test.skip(!TOKEN, 'set E2E_FIELD_NOTE_TOKEN and run the backend with it; see the file header');
 
@@ -100,12 +128,15 @@ test.describe('a supervisor turns a crew message into a record', () => {
         words
       );
     expect(editable, "the crew's words appeared in an editable field").toBe(0);
-    // The NOTE shows the sender by its last four digits only. Scoped to the note card on
-    // purpose: the roster section above legitimately prints the full number, because that is the
-    // operator's own list of who may send. A page-wide assertion fails on the roster and would
-    // read as a privacy defect that is not there.
-    const noteCard = page.locator('div').filter({ hasText: words }).last();
-    await expect(noteCard.getByText(CREW_PHONE)).toHaveCount(0);
+    // The NOTE shows the sender by its last four digits only. Scoped to the card, because the
+    // roster section above legitimately prints the full number: it is the operator's own list of
+    // who may send, and a page-wide assertion would fail there and read as a privacy defect that
+    // is not there.
+    const card = noteCard(page, words);
+    // A POSITIVE ANCHOR FIRST. Without it the next line passes when the locator resolves to
+    // nothing at all, which is how the previous version of this assertion could never fail.
+    await expect(card.getByText(CREW_PHONE.slice(-4))).toBeVisible();
+    await expect(card.getByText(CREW_PHONE)).toHaveCount(0);
   });
 
   test('the date question is unanswered when the message states no day', async ({
@@ -117,20 +148,27 @@ test.describe('a supervisor turns a crew message into a record', () => {
     expect((await deliver(request, words, `SM-nodate-${Date.now()}`)).status()).toBe(200);
 
     await page.goto('/admin/dashboard/field-notes');
-    const card = page.locator('div').filter({ hasText: words }).last();
-    await expect(card).toBeVisible();
 
     // FARM AND BLOCK FIRST, because "Log this" stays disabled until both are answered and the
     // hint above it says so. That is the product working: the block a certifier traces is the
     // operator's choice, never inferred from a phone number. A test that clicked straight
     // through would be asserting a flow no supervisor can perform.
-    await page.getByLabel(/farm/i).first().selectOption({ index: 1 });
+    //
+    // SCOPED TO THIS TEST'S OWN NOTE. The tests above leave notes pending in the same inbox, so
+    // `.first()` drove whichever note happened to sort first (review of app #150).
+    const card = noteCard(page, words);
+    await expect(card).toBeVisible();
+    await card
+      .getByRole('combobox', { name: /farm|finca/i })
+      .selectOption({ label: 'Audit Ranch' });
     // BY NAME, not by index. The seeder opens a season on River Block only, and a block with no
     // season stops at "No open season on this parcel" before the form ever renders. Picking by
     // index made this test pass against a page that had no form on it at all.
-    await page.getByLabel(/block/i).first().selectOption({ label: 'River Block' });
+    await card
+      .getByRole('combobox', { name: /^block|^bloque/i })
+      .selectOption({ label: 'River Block' });
 
-    const logThis = page.getByRole('button', { name: /log this/i }).first();
+    const logThis = card.getByRole('button', { name: /log this/i });
     await expect(logThis).toBeEnabled();
     await logThis.click();
     await page.waitForURL(/field_note=/);
@@ -157,8 +195,14 @@ test.describe('a supervisor turns a crew message into a record', () => {
     expect((await deliver(request, words, `SM-who-${Date.now()}`)).status()).toBe(200);
 
     await page.goto('/admin/dashboard/field-notes');
-    await page.getByLabel(/farm/i).first().selectOption({ index: 1 });
-    await page.getByLabel(/block/i).first().selectOption({ label: 'River Block' });
+    await page
+      .getByRole('combobox', { name: /farm|finca/i })
+      .first()
+      .selectOption({ index: 1 });
+    await page
+      .getByRole('combobox', { name: /^block|^bloque/i })
+      .first()
+      .selectOption({ label: 'River Block' });
     await page
       .getByRole('button', { name: /log this/i })
       .first()
@@ -190,8 +234,14 @@ test.describe('a supervisor turns a crew message into a record', () => {
     expect((await deliver(request, words, `SM-walk-${Date.now()}`)).status()).toBe(200);
 
     await page.goto('/admin/dashboard/field-notes');
-    await page.getByLabel(/farm/i).first().selectOption({ index: 1 });
-    await page.getByLabel(/block/i).first().selectOption({ label: 'River Block' });
+    await page
+      .getByRole('combobox', { name: /farm|finca/i })
+      .first()
+      .selectOption({ index: 1 });
+    await page
+      .getByRole('combobox', { name: /^block|^bloque/i })
+      .first()
+      .selectOption({ label: 'River Block' });
     await page
       .getByRole('button', { name: /log this/i })
       .first()
@@ -263,8 +313,14 @@ test.describe('a supervisor turns a crew message into a record', () => {
     expect((await deliver(request, words, `SM-noseason-${Date.now()}`)).status()).toBe(200);
 
     await page.goto('/admin/dashboard/field-notes');
-    await page.getByLabel(/farm/i).first().selectOption({ index: 1 });
-    await page.getByLabel(/block/i).first().selectOption({ label: 'block 1' });
+    await page
+      .getByRole('combobox', { name: /farm|finca/i })
+      .first()
+      .selectOption({ index: 1 });
+    await page
+      .getByRole('combobox', { name: /^block|^bloque/i })
+      .first()
+      .selectOption({ label: 'block 1' });
     await page
       .getByRole('button', { name: /log this/i })
       .first()
@@ -279,6 +335,19 @@ test.describe('a supervisor turns a crew message into a record', () => {
     // produce nothing rather than a blank offer that looks like a real one.
     await page.goto(
       '/admin/dashboard/farm/1/parcel/1/event/add?field_note=00000000-0000-0000-0000-000000000000'
+    );
+
+    // A POSITIVE ANCHOR FIRST. The only assertion used to be "these words are absent", which a
+    // 404, an auth redirect, a server error or a blank render all satisfy: the test passed on
+    // every failure it was meant to catch (review of app #150). Proving the wizard rendered at
+    // all is what makes the absence below mean anything.
+    await expect(
+      page.getByRole('heading', { name: /add a new event|registrar actividad|log activity/i })
+    ).toBeVisible({ timeout: 30_000 });
+
+    // No crew banner, because there is no such note.
+    await expect(page.getByText(/from the crew message|del mensaje de la cuadrilla/i)).toHaveCount(
+      0
     );
     await expect(page.getByText(/Regamos|Aplicamos/)).toHaveCount(0);
   });
@@ -304,13 +373,35 @@ test.describe('a supervisor turns a crew message into a record', () => {
 test.describe('a farm with no blocks', () => {
   test.skip(!TOKEN, 'set E2E_FIELD_NOTE_TOKEN and run the backend with it; see the file header');
 
-  test('says so and offers the way out instead of an empty required select', async ({ page }) => {
-    // The defect fixed in trazo-app #125, asserted where it actually lives. The vitest guard
-    // covers the branch; this covers the rendered page a supervisor sees.
+  test('says so and offers the way out instead of an empty required select', async ({
+    page,
+    request
+  }) => {
+    // THE DEAD END, ASSERTED RATHER THAN HOPED FOR.
+    //
+    // This was `if ((await deadEnd.count()) > 0)` with no else and no fallback, so it passed
+    // whether the message appeared or not: if the regression came back, or the page simply had
+    // not rendered, the test stayed green (review of app #150). `count()` is a one-shot,
+    // non-retrying query, so on a slow render it answered 0 and the test asserted nothing at all.
+    //
+    // The seeder now provisions "Audit Ranch (no blocks)" with zero parcels, which is a
+    // deterministic way into the state. The behaviour under test is trazo-app #125.
+    const words = `Regamos algo en la finca sin bloques ${Date.now()}`;
+    expect((await deliver(request, words, `SM-noblocks-${Date.now()}`)).status()).toBe(200);
+
     await page.goto('/admin/dashboard/field-notes');
-    const deadEnd = page.getByText(/has no blocks yet/i);
-    if ((await deadEnd.count()) > 0) {
-      await expect(page.getByRole('button', { name: /add a block/i })).toBeVisible();
-    }
+    const card = noteCard(page, words);
+    await card
+      .getByRole('combobox', { name: /farm|finca/i })
+      .selectOption({ label: 'Audit Ranch (no blocks)' });
+
+    await expect(card.getByText(/has no blocks yet|todav[ií]a no tiene bloques/i)).toBeVisible();
+    await expect(
+      card.getByRole('button', { name: /add a block|agregar un bloque/i })
+    ).toBeVisible();
+    // The empty required select is not left open to be tabbed into.
+    await expect(card.getByRole('combobox', { name: /^block|^bloque/i })).toBeDisabled();
+    // And nothing may be logged from it.
+    await expect(card.getByRole('button', { name: /log this|registrar esto/i })).toBeDisabled();
   });
 });
