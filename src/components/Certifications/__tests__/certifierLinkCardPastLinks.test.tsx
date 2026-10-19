@@ -45,6 +45,11 @@ const link = (overrides: Record<string, unknown>) => ({
 
 let links: any[] = [];
 let canMint = true;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const createLink = vi.fn((_args: { data: Record<string, unknown> }) => ({
+  unwrap: () => Promise.resolve({})
+}));
+const createdWith = () => createLink.mock.calls[0]?.[0]?.data ?? {};
 
 vi.mock('store/api/certifierLinkApi', () => ({
   useGetCertifierLinksQuery: () => ({
@@ -54,7 +59,7 @@ vi.mock('store/api/certifierLinkApi', () => ({
     isFetching: false,
     refetch: vi.fn()
   }),
-  useCreateCertifierLinkMutation: () => [vi.fn(), { isLoading: false }],
+  useCreateCertifierLinkMutation: () => [createLink, { isLoading: false }],
   useRevokeCertifierLinkMutation: () => [vi.fn()],
   useGetOperationReadinessQuery: () => ({ data: { ready: true } })
 }));
@@ -79,6 +84,7 @@ const renderCard = (canWrite = true, messages: Record<string, string> = enUS, lo
 
 beforeEach(() => {
   canMint = true;
+  createLink.mockClear();
   links = [
     link({ id: 1 }),
     link({
@@ -186,7 +192,7 @@ describe('certifier link card: what the certifier will see (step 1)', () => {
       'the names of the people recorded doing the work',
       'the email address of each account that changed a record',
       'for each correction the earlier value and the reason',
-      'The files themselves are not shared.'
+      'The files themselves are shared only if you tick “Include source files” below'
     ]) {
       expect(text).toContain(phrase);
     }
@@ -218,5 +224,56 @@ describe('certifier link card: what the certifier will see (step 1)', () => {
     )) {
       expect(es[key], key).toBeTruthy();
     }
+  });
+});
+
+describe('certifier link card: source files opt-in (H-3)', () => {
+  it('is off by default, and creating sends it off', async () => {
+    renderCard();
+    const box = screen.getByTestId('certifier-link-include-files').querySelector('input')!;
+    expect(box.checked).toBe(false);
+    fireEvent.click(screen.getByText('Create link'));
+    expect(createLink).toHaveBeenCalledTimes(1);
+    expect(createdWith().include_source_files).toBe(false);
+  });
+
+  it('ticked, the new link is created with source files', () => {
+    renderCard();
+    fireEvent.click(screen.getByText('Include source files'));
+    fireEvent.click(screen.getByText('Create link'));
+    expect(createdWith().include_source_files).toBe(true);
+  });
+
+  it('a link that shares files says so on its row', () => {
+    links = [link({ id: 1, include_source_files: true })];
+    renderCard();
+    expect(screen.getByText('Source files included')).toBeTruthy();
+  });
+
+  it('the activity log names the file that was opened', () => {
+    links = [
+      link({
+        id: 1,
+        include_source_files: true,
+        accesses: [
+          {
+            ...access(31),
+            action: 'document',
+            action_display: 'Opened a source file',
+            document_title: 'ASTRA TEST invoice ASTRA-INV-2605-01'
+          }
+        ]
+      })
+    ];
+    renderCard();
+    fireEvent.click(screen.getByText('Show activity (1 open)'));
+    expect(
+      screen.getByText('Opened source file: ASTRA TEST invoice ASTRA-INV-2605-01')
+    ).toBeTruthy();
+  });
+
+  it('is not offered where creating a link is not', () => {
+    renderCard(false);
+    expect(screen.queryByTestId('certifier-link-include-files')).toBeNull();
   });
 });
