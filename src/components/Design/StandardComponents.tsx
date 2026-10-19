@@ -194,9 +194,9 @@ export const StandardPage = ({
                       size="sm"
                       // A named destination can be a long parcel name. Buttons do not wrap
                       // by default, so on a phone it would run off the screen instead.
+                      // NEVER pass minH here: StandardButton's own 44px is the touch floor.
                       whiteSpace="normal"
                       h="auto"
-                      minH={8}
                       py={1.5}
                       textAlign="left"
                       mb={1}>
