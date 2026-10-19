@@ -83,12 +83,24 @@ async function openDetails(page: Page, request: APIRequestContext, words: string
     .first()
     .click();
 
-  // The parse runs on this step and takes several seconds.
-  for (let i = 0; i < 40; i += 1) {
-    if ((await page.getByText(/analyz|analiz/i).count()) === 0) break;
-    await page.waitForTimeout(1000);
-  }
-  await page.waitForTimeout(1200);
+  // WAIT FOR THE OUTCOME, NOT FOR A SPINNER TO VANISH.
+  //
+  // This was a `for` loop breaking when `getByText(/analyz/i).count()` hit 0. `count()` does not
+  // retry: it reads the DOM at the instant it is called, and right after Continue the parse panel
+  // has not mounted, so it answered 0 on the first iteration and the loop exited immediately. The
+  // tests then passed on the trailing `waitForTimeout` alone, which is luck with a timer on it
+  // (review of app #154).
+  //
+  // The real signal that the parse finished is the offer itself, so that is what is awaited, with
+  // a timeout long enough for a live model call.
+  await expect(
+    page.getByText(/from the crew message|del mensaje de la cuadrilla/i),
+    'the crew-note banner never appeared, so the parse did not finish'
+  ).toBeVisible({ timeout: 90_000 });
+  // ⛔ NOT "wait for the spinner to disappear". MEASURED: the crew banner renders WHILE the parse
+  // is still running, so asserting the analysing text is gone fails on a page that is working
+  // correctly. Each test waits for the thing it actually needs (the offer button), which is the
+  // only signal that means the parse finished.
 }
 
 /** Every named form control and its value, including the empty ones. */
@@ -115,7 +127,9 @@ test.describe('a note that is allowed to fill', () => {
     expect(before.irrigation_method, 'the message wrote a value before any tap').toBe('');
 
     const fill = page.getByRole('button', { name: /fill in \d+ value|completar/i }).first();
-    await expect(fill, 'a non-application record offered nothing to fill').toBeVisible();
+    await expect(fill, 'a non-application record offered nothing to fill').toBeVisible({
+      timeout: 90_000
+    });
     await fill.click();
     await page.waitForTimeout(1500);
 
@@ -164,12 +178,21 @@ test.describe('a note that is allowed to fill', () => {
     const words = `Regamos el bloque 4 por goteo, tres horas ${Date.now()}`;
     await openDetails(page, request, words, /^irrigation$|^riego$/i);
 
-    const promised = await page
-      .getByRole('button', { name: /fill in (\d+) value|completar (\d+) dato/i })
-      .first()
-      .textContent();
-    const count = Number((promised ?? '').match(/\d+/)?.[0] ?? 0);
-    expect(count, 'no count was offered at all').toBeGreaterThan(0);
+    // THE BUTTON HAS TWO SHAPES, and the first version only matched one of them. A multi-value
+    // offer reads "Fill in 2 values"; a SINGLE-value offer reads "Fill in Relación NPK" with no
+    // digit at all (`events.voice.pastedNoteApplyNamed`, added in app #151). Matching only the
+    // digit form meant a single-value offer failed on a locator timeout rather than reporting
+    // anything useful.
+    //
+    // The old `expect(count).toBeGreaterThan(0)` could also never fail: the locator already
+    // required a digit in the accessible name, so by the time the count was read it was
+    // guaranteed present (review of app #154).
+    const offer = page.getByRole('button', { name: /fill in |completar /i }).first();
+    await expect(offer, 'no offer button was rendered at all').toBeVisible({ timeout: 90_000 });
+    const label = (await offer.textContent()) ?? '';
+    const digits = label.match(/\d+/);
+    // No digit means the named single-value shape, which promises exactly one.
+    const count = digits ? Number(digits[0]) : 1;
 
     const before = await fields(page);
     await page
