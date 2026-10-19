@@ -5086,6 +5086,7 @@
   "events.customFields.error.labelRequired": "El nombre del campo es obligatorio",
   "events.customFields.error.labelTooLong": "El nombre del campo no puede superar los 100 caracteres",
   "events.customFields.error.valueTooLong": "El valor no puede superar los 500 caracteres",
+  "events.customFields.error.valueInvalid": "Escribe un valor para este campo",
   "events.section.badge.caPesticideReport": "Reporte de plaguicidas de California",
   "events.section.badge.certifierRecord": "Registro para el certificador",
   "events.wizard.preview": "Vista previa",

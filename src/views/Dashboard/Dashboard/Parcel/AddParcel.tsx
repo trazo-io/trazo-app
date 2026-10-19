@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useIntl } from 'react-intl';
 import { apiErrorMessage } from 'utils/apiErrorMessage';
+import { backToLabel } from 'utils/backToLabel';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { StandardParcelFormTransparency } from '../../../../components/Forms/StandardParcelForm_Transparency';
@@ -296,10 +297,9 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
     navigate(`/admin/dashboard/farm/${farmId}`);
   };
   // Names where handleCancel goes: the form's footer has its own previous-step control.
-  const farmName = establishmentData?.name || currentEstablishment?.name;
-  const backLabel = farmName
-    ? intl.formatMessage({ id: 'common.backTo' }, { place: farmName })
-    : intl.formatMessage({ id: 'common.backToFarm' });
+  // The ROUTE's farm only. The store's active establishment can be a different farm, and
+  // naming it here would label the button with one farm while it navigates to another.
+  const backLabel = backToLabel(intl, establishmentData?.name, 'common.backToFarm');
 
   // Toast + redirect on a failed fetch, in an EFFECT.
   //

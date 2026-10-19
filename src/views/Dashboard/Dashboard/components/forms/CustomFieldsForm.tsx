@@ -45,13 +45,20 @@ interface CustomFieldsFormProps {
   disabled?: boolean;
 }
 
-// Simplified validation schema for custom field form. The messages are i18n ids: the schema
-// lives outside the component, so they are translated where they render.
+// Simplified validation schema for custom field form. Every message is an i18n id: the schema
+// lives outside the component, so they are translated where they render. That includes zod's
+// built-in required/type errors, which would otherwise reach formatMessage as English text.
 const customFieldValidationSchema = object({
-  label: string()
+  label: string({
+    required_error: 'events.customFields.error.labelRequired',
+    invalid_type_error: 'events.customFields.error.labelRequired'
+  })
     .min(1, 'events.customFields.error.labelRequired')
     .max(100, 'events.customFields.error.labelTooLong'),
-  value: string().max(500, 'events.customFields.error.valueTooLong'),
+  value: string({
+    required_error: 'events.customFields.error.valueInvalid',
+    invalid_type_error: 'events.customFields.error.valueInvalid'
+  }).max(500, 'events.customFields.error.valueTooLong'),
   is_consumer_visible: string().optional()
 });
 

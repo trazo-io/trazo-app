@@ -115,6 +115,7 @@ import {
 } from 'config/activityVerbs';
 import { formatFieldValue, getFieldConfig, getSubtypes } from 'config/events';
 import { localizeFieldValue } from 'utils/fieldDisplayUtils';
+import { backToLabel } from 'utils/backToLabel';
 import { buildVoiceFieldRequests } from 'config/events/voiceFields';
 import { ActivitySubtypeChooser } from 'components/Events/ActivitySubtypeChooser';
 import { VerbPickerGrid } from 'components/Events/VerbPickerGrid';
@@ -2917,18 +2918,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // The header button LEAVES the wizard; the footer one goes back a step. Both used to read
   // "Back", so a farmer on step 2 who wanted step 1 clicked the one at the top and landed on
   // the parcel page. The header names its destination; the footer says "Previous step".
-  const backToParcelLabel = voiceParcel?.name
-    ? intl.formatMessage({ id: 'common.backTo' }, { place: voiceParcel.name })
-    : intl.formatMessage({ id: 'common.backToParcel' });
-
-  // A finished step in the stepper is a way back to it, so returning to step 1 from the
-  // bottom of a long step 2 does not need a scroll to the footer. Backwards only: Continue
-  // is where each step is validated, and a forward jump would skip it.
-  const goToStep = (step) => {
-    if (step < activeStep) {
-      setActiveStep(step);
-    }
-  };
+  const backToParcelLabel = backToLabel(intl, voiceParcel?.name, 'common.backToParcel');
 
   // The locked-record notice replaces the form entirely rather than sitting above it. Leaving
   // an editable form under a "this cannot be edited" banner invites the farmer to fill it in
@@ -3172,7 +3162,10 @@ function NewEvent({ isEdit = false, eventId = null }) {
               currentStep={activeStep}
               completedSteps={Array.from({ length: activeStep }, (_, i) => i)}
               allowStepClick
-              onStepClick={goToStep}
+              // A finished step is a way back to it, so step 1 is reachable from the top of a
+              // long step 2. StandardStepper only offers steps behind the current one: Continue
+              // is where each step is validated, and a forward jump would skip it.
+              onStepClick={setActiveStep}
             />
             <Flex justify="flex-end">
               <AutoSaveStatus lastSaved={draftLastSaved} isSaving={isSavingDraft} />

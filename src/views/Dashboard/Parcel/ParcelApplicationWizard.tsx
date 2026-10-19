@@ -13,6 +13,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { formatDateOnly } from 'utils/dateOnly';
+import { backToLabel } from 'utils/backToLabel';
 import { transitionState } from './transitionState';
 import CertifiedBranchCard from './CertifiedBranchCard';
 import {
@@ -1038,11 +1039,7 @@ const ParcelApplicationWizard = () => {
       showBackButton
       onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}
       // Names the destination: the page nav below has its own previous-page control.
-      backLabel={
-        parcel?.name
-          ? intl.formatMessage({ id: 'common.backTo' }, { place: parcel.name })
-          : intl.formatMessage({ id: 'common.backToParcel' })
-      }
+      backLabel={backToLabel(intl, parcel?.name, 'common.backToParcel')}
       rightAction={
         <HStack spacing={3}>
           {status ? (

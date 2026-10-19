@@ -21,11 +21,12 @@ import { join } from 'path';
 import { describe, it, expect, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
-import { IntlProvider } from 'react-intl';
+import { createIntl, IntlProvider } from 'react-intl';
 // Relative, not the `theme/*` tsconfig alias: vitest.config.ts does not map that one.
 import theme from '../../../theme/theme';
 import { StandardPage, StandardStepper } from '../StandardComponents';
 import enUS from '../../../i18n/lang/en-US.json';
+import { backToLabel } from '../../../utils/backToLabel';
 
 const renderUi = (ui: React.ReactElement) =>
   render(
@@ -63,6 +64,19 @@ describe('StandardPage: back label', () => {
   });
 });
 
+describe('backToLabel', () => {
+  const intl = createIntl({ locale: 'en-US', messages: enUS });
+
+  it('names the destination when its name is known', () => {
+    expect(backToLabel(intl, 'River Block', 'common.backToParcel')).toBe('Back to River Block');
+  });
+
+  it('falls back to the generic place while the name loads', () => {
+    expect(backToLabel(intl, undefined, 'common.backToParcel')).toBe('Back to parcel');
+    expect(backToLabel(intl, '', 'common.backToFarm')).toBe('Back to farm');
+  });
+});
+
 describe('StandardStepper: finished steps are a way back', () => {
   it('makes only the steps BEHIND the current one buttons', () => {
     renderUi(
@@ -89,6 +103,20 @@ describe('StandardStepper: finished steps are a way back', () => {
     const current = container.querySelector('[aria-current="step"]');
     expect(current).not.toBeNull();
     expect(current).toHaveTextContent('Activity details');
+  });
+
+  it('puts only phrasing content inside a step button (no <div> or <p>)', () => {
+    renderUi(
+      <StandardStepper
+        steps={[{ title: 'Activity & date', description: 'What you did' }, ...STEPS.slice(1)]}
+        currentStep={2}
+        allowStepClick
+        onStepClick={() => {}}
+      />
+    );
+    for (const button of screen.getAllByRole('button')) {
+      expect(button.querySelectorAll('div, p, h1, h2, h3, h4, h5, h6')).toHaveLength(0);
+    }
   });
 
   it('renders no buttons at all unless the caller opts in', () => {
@@ -186,7 +214,7 @@ describe('Multi-step forms: the two Backs never share a label', () => {
 
   it('lets the activity wizard stepper take the farmer back to a finished step', () => {
     expect(read(WIZARDS[0].file)).toMatch(
-      /<StandardStepper[\s\S]*?allowStepClick[\s\S]*?onStepClick=\{goToStep\}/
+      /<StandardStepper[\s\S]*?allowStepClick[\s\S]*?onStepClick=\{setActiveStep\}/
     );
   });
 });

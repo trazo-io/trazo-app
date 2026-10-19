@@ -143,6 +143,10 @@ export const StandardPage = ({
   const hasHeroContent = title || description;
   const needsMinimalHeader = showBackButton && !hasHeroContent;
   const backButtonLabel = backLabel || intl.formatMessage({ id: 'common.back' });
+  // A named destination can be a long parcel name, and buttons do not wrap by default, so
+  // it would overflow the column instead. Applied to all three Back buttons below.
+  // NEVER add minH here: StandardButton's own 44px is the touch floor.
+  const backButtonWrap = { whiteSpace: 'normal', h: 'auto', py: 1.5, textAlign: 'left' } as const;
 
   return (
     <Box bg={bgColor} minH="100vh">
@@ -161,7 +165,8 @@ export const StandardPage = ({
               variant="outline"
               leftIcon={<FaChevronLeft />}
               onClick={onBack}
-              size="sm">
+              size="sm"
+              {...backButtonWrap}>
               {backButtonLabel}
             </StandardButton>
           </Container>
@@ -193,13 +198,7 @@ export const StandardPage = ({
                       leftIcon={<FaChevronLeft />}
                       onClick={onBack}
                       size="sm"
-                      // A named destination can be a long parcel name. Buttons do not wrap
-                      // by default, so on a phone it would run off the screen instead.
-                      // NEVER pass minH here: StandardButton's own 44px is the touch floor.
-                      whiteSpace="normal"
-                      h="auto"
-                      py={1.5}
-                      textAlign="left"
+                      {...backButtonWrap}
                       mb={1}>
                       {backButtonLabel}
                     </StandardButton>
@@ -264,7 +263,8 @@ export const StandardPage = ({
                         leftIcon={<FaChevronLeft />}
                         onClick={onBack}
                         size="sm"
-                        minH="44px">
+                        minH="44px"
+                        {...backButtonWrap}>
                         {backButtonLabel}
                       </Button>
                     </Box>
@@ -599,6 +599,7 @@ export const StandardStepper = ({
                   _focusVisible={isClickable ? { outline: 'none', boxShadow: 'outline' } : {}}
                   transition="all 0.3s ease">
                   <Circle
+                    as="span"
                     size={circleSize}
                     /*
                      * green.700 / green.800, not green.500 / green.400. The circle carries a
@@ -621,10 +622,10 @@ export const StandardStepper = ({
                     {completedSteps.includes(index) || index < currentStep ? (
                       <Icon as={step.icon || FaCheckCircle} boxSize={iconSize} />
                     ) : (
-                      <Text>{index + 1}</Text>
+                      <Text as="span">{index + 1}</Text>
                     )}
                   </Circle>
-                  <VStack spacing={1} align="center">
+                  <VStack as="span" spacing={1} align="center">
                     {/* A step label is wayfinding, not user data — never ellipsis it.
                       "Event Deta…" tells the farmer less than the step number does.
                       Pass an explicit `shortTitle` when a step name is too long for a
@@ -635,6 +636,7 @@ export const StandardStepper = ({
                       spans by `display` rather than a breakpoint hook keeps it flash-free,
                       and a `display: none` span is not announced, so no double-read. */}
                     <Text
+                      as="span"
                       fontSize={titleFontSize}
                       fontWeight="bold"
                       color={index <= currentStep ? 'green.700' : 'gray.600'}
@@ -658,6 +660,7 @@ export const StandardStepper = ({
                     </Text>
                     {step.description && !manySteps && (
                       <Text
+                        as="span"
                         fontSize="xs"
                         color="gray.500"
                         textAlign="center"

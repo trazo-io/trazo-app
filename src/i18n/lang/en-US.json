@@ -5086,6 +5086,7 @@
   "events.customFields.error.labelRequired": "Field name is required",
   "events.customFields.error.labelTooLong": "Field name cannot exceed 100 characters",
   "events.customFields.error.valueTooLong": "Value cannot exceed 500 characters",
+  "events.customFields.error.valueInvalid": "Enter a value for this field",
   "events.section.badge.caPesticideReport": "CA pesticide report",
   "events.section.badge.certifierRecord": "Certifier record",
   "events.wizard.preview": "Preview",
