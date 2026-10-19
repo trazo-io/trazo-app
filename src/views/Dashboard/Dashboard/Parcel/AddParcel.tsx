@@ -295,6 +295,11 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
   const handleCancel = () => {
     navigate(`/admin/dashboard/farm/${farmId}`);
   };
+  // Names where handleCancel goes: the form's footer has its own previous-step control.
+  const farmName = establishmentData?.name || currentEstablishment?.name;
+  const backLabel = farmName
+    ? intl.formatMessage({ id: 'common.backTo' }, { place: farmName })
+    : intl.formatMessage({ id: 'common.backToFarm' });
 
   // Toast + redirect on a failed fetch, in an EFFECT.
   //
@@ -347,7 +352,8 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
       <StandardPage
         title={intl.formatMessage({ id: 'parcelForm.page.editTitle' })}
         showBackButton
-        onBack={handleCancel}>
+        onBack={handleCancel}
+        backLabel={backLabel}>
         <StandardPageLoading />
       </StandardPage>
     );
@@ -362,6 +368,7 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
       <StandardParcelFormTransparency
         onSubmit={handleSubmit}
         onCancel={handleCancel}
+        backLabel={backLabel}
         initialData={getInitialData()}
         isLoading={isCreating || isUpdating}
         isEdit={isEdit}

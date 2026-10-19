@@ -228,6 +228,9 @@ interface EstablishmentFormData {
 interface StandardFarmFormProps {
   onSubmit: (data: EstablishmentFormData) => void;
   onCancel: () => void;
+  /** Header Back label naming where `onCancel` goes. The footer has its own previous-step
+      control, so a bare "Back" up here is ambiguous. Defaults to "Back". */
+  backLabel?: React.ReactNode;
   initialData?: Partial<EstablishmentFormData>;
   isLoading?: boolean;
   isEdit?: boolean;
@@ -241,6 +244,7 @@ interface StandardFarmFormProps {
 export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
   onSubmit,
   onCancel,
+  backLabel,
   initialData,
   isLoading = false,
   isEdit = false,
@@ -557,7 +561,8 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
           : t(isEdit ? 'farm.form.page.edit' : 'farm.form.page.add')
       }
       showBackButton
-      onBack={onCancel}>
+      onBack={onCancel}
+      backLabel={backLabel}>
       {/* Optional pre-flight alert (e.g., subscription limit warning) */}
       {preFormAlert}
 
@@ -926,7 +931,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                       leftIcon={<FaChevronLeft />}
                       onClick={previousStep}
                       borderRadius="xl">
-                      {t('common.back')}
+                      {t('common.previousStep')}
                     </StandardButton>
                     <StandardButton
                       onClick={nextStep}
@@ -948,7 +953,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                       leftIcon={<FaChevronLeft />}
                       onClick={previousStep}
                       borderRadius="xl">
-                      {t('common.back')}
+                      {t('common.previousStep')}
                     </StandardButton>
 
                     <HStack spacing={3}>
@@ -1325,7 +1330,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                       leftIcon={<FaChevronLeft />}
                       onClick={previousStep}
                       borderRadius="xl">
-                      {t('common.back')}
+                      {t('common.previousStep')}
                     </StandardButton>
                     <StandardButton
                       onClick={nextStep}
@@ -1347,7 +1352,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                       leftIcon={<FaChevronLeft />}
                       onClick={previousStep}
                       borderRadius="xl">
-                      {t('common.back')}
+                      {t('common.previousStep')}
                     </StandardButton>
 
                     <HStack spacing={3}>
@@ -1401,7 +1406,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                       leftIcon={<FaChevronLeft />}
                       onClick={previousStep}
                       borderRadius="xl">
-                      {t('common.back')}
+                      {t('common.previousStep')}
                     </StandardButton>
                     <StandardButton
                       type="submit"
@@ -1427,7 +1432,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                       leftIcon={<FaChevronLeft />}
                       onClick={previousStep}
                       borderRadius="xl">
-                      {t('common.back')}
+                      {t('common.previousStep')}
                     </StandardButton>
 
                     <HStack spacing={3}>

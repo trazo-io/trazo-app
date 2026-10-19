@@ -10,10 +10,13 @@
  *   1. StandardPage takes a `backLabel` so a header Back can name where it goes.
  *   2. StandardStepper's finished steps are real buttons, so step 1 is reachable from the
  *      top of the page by mouse AND keyboard. A clickable <div> was mouse-only.
- *   3. The wizard itself uses both, and its footer says "Previous step", not "Back".
+ *   3. Every multi-step form uses both: the header names its destination ("Back to River
+ *      Block") and the footer says "Previous step". The same two Backs were on the parcel,
+ *      farm, finish-production, company and parcel-application forms, most of which have no
+ *      draft, so the wrong one threw the form away.
  */
 import React from 'react';
-import { readFileSync } from 'fs';
+import { readdirSync, readFileSync, statSync } from 'fs';
 import { join } from 'path';
 import { describe, it, expect, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
@@ -94,30 +97,96 @@ describe('StandardStepper: finished steps are a way back', () => {
   });
 });
 
-describe('Activity wizard wiring', () => {
-  // NewEvent.jsx pulls in the store, RTK Query and the router; rendering it for three
-  // props is far heavier than the property being guarded. A source read is enough.
-  const src = readFileSync(
-    join(process.cwd(), 'src/views/Dashboard/Dashboard/components/forms/NewEvent.jsx'),
-    'utf-8'
+// Every multi-step form, and where its header Back is labelled. `header` is the file whose
+// <StandardPage showBackButton> must carry a backLabel: the form itself when it computes the
+// label, or the shared form component that forwards one from its caller. `null` = the header
+// is already unambiguous (the OSP wizard's footer said "Previous step" before this guard).
+const WIZARDS: { file: string; header: 'own' | 'forwarded' | null }[] = [
+  { file: 'src/views/Dashboard/Dashboard/components/forms/NewEvent.jsx', header: 'own' },
+  { file: 'src/views/Dashboard/Parcel/ParcelApplicationWizard.tsx', header: 'own' },
+  { file: 'src/views/Dashboard/Dashboard/Company/AddCompany.jsx', header: 'own' },
+  { file: 'src/components/Forms/StandardParcelForm_Transparency.tsx', header: 'forwarded' },
+  { file: 'src/components/Forms/StandardFarmForm.tsx', header: 'forwarded' },
+  { file: 'src/components/Forms/StandardFinishProductionForm.tsx', header: 'forwarded' },
+  { file: 'src/views/Dashboard/OSP/OSPModuleWizard.tsx', header: null }
+];
+
+// The pages that render a 'forwarded' form, each of which must pass the label down.
+const FORM_CALLERS: { file: string; form: string }[] = [
+  {
+    file: 'src/views/Dashboard/Dashboard/Parcel/AddParcel.tsx',
+    form: 'StandardParcelFormTransparency'
+  },
+  { file: 'src/views/Dashboard/Dashboard/Farm/AddFarm.tsx', form: 'StandardFarmForm' },
+  {
+    file: 'src/views/Dashboard/Dashboard/Production/FinishProduction.tsx',
+    form: 'StandardFinishProductionForm'
+  }
+];
+
+// Rendering these pulls in the store, RTK Query and the router; a source read is enough for
+// what is guarded here, which is which label each control is given.
+const read = (file: string) => readFileSync(join(process.cwd(), file), 'utf-8');
+// The opening tag of each <StandardPage>. Arrows are masked first: an `onBack={() => …}`
+// prop holds a `>` that would otherwise end the tag before the props after it.
+const standardPageTags = (src: string) =>
+  src.replace(/=>/g, '=~').match(/<StandardPage\b[\s\S]*?>/g) ?? [];
+
+const walk = (dir: string, out: string[] = []): string[] => {
+  for (const entry of readdirSync(dir)) {
+    if (entry === '__tests__' || entry === 'node_modules') continue;
+    const full = join(dir, entry);
+    if (statSync(full).isDirectory()) walk(full, out);
+    else if (/\.(jsx|tsx)$/.test(entry)) out.push(full);
+  }
+  return out;
+};
+
+describe('Multi-step forms: the two Backs never share a label', () => {
+  it.each(WIZARDS.map((w) => [w.file, w]))(
+    '%s: the previous-step control says "Previous step", not "Back"',
+    (_file, { file }) => {
+      const src = read(file);
+      expect(src).not.toMatch(/['"]common\.back['"]/);
+      expect(src).toContain("'common.previousStep'");
+    }
   );
 
-  it('names the header destination on every StandardPage it renders', () => {
-    const pages = src.match(/<StandardPage\b[\s\S]*?>/g) ?? [];
-    expect(pages.length).toBeGreaterThan(0);
-    for (const page of pages) {
-      if (page.includes('showBackButton')) {
-        expect(page).toContain('backLabel={backToParcelLabel}');
+  it.each(WIZARDS.filter((w) => w.header).map((w) => [w.file, w]))(
+    '%s: the header Back names its destination',
+    (_file, { file, header }) => {
+      const pages = standardPageTags(read(file)).filter((tag) => tag.includes('showBackButton'));
+      expect(pages.length).toBeGreaterThan(0);
+      for (const page of pages) {
+        expect(page).toMatch(header === 'forwarded' ? /backLabel=\{backLabel\}/ : /backLabel=/);
       }
     }
+  );
+
+  it.each(FORM_CALLERS.map((c) => [c.file, c]))(
+    '%s passes a backLabel to the form and to its loading page',
+    (_file, { file, form }) => {
+      const src = read(file);
+      expect(src).toMatch(new RegExp(`<${form}\\b[\\s\\S]*?backLabel=\\{backLabel\\}`));
+      for (const page of standardPageTags(src)) {
+        if (page.includes('showBackButton')) expect(page).toContain('backLabel={backLabel}');
+      }
+    }
+  );
+
+  it('lists every form that renders a StandardStepper', () => {
+    // A new stepped form gets the same two Backs by default. Add it to WIZARDS above.
+    const listed = new Set(WIZARDS.map((w) => w.file));
+    const steppers = walk(join(process.cwd(), 'src'))
+      .filter((f) => readFileSync(f, 'utf-8').includes('<StandardStepper'))
+      .map((f) => f.slice(process.cwd().length + 1));
+    expect(steppers.length).toBeGreaterThan(0);
+    expect(steppers.filter((f) => !listed.has(f))).toEqual([]);
   });
 
-  it('labels the footer control "Previous step", never the same "Back" as the header', () => {
-    expect(src).not.toMatch(/id:\s*'common\.back'/);
-    expect(src).toContain("id: 'events.wizard.previousStep'");
-  });
-
-  it('lets the stepper take the farmer back to a finished step', () => {
-    expect(src).toMatch(/<StandardStepper[\s\S]*?allowStepClick[\s\S]*?onStepClick=\{goToStep\}/);
+  it('lets the activity wizard stepper take the farmer back to a finished step', () => {
+    expect(read(WIZARDS[0].file)).toMatch(
+      /<StandardStepper[\s\S]*?allowStepClick[\s\S]*?onStepClick=\{goToStep\}/
+    );
   });
 });

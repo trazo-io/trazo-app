@@ -207,12 +207,17 @@ function FinishProduction() {
   const handleCancel = () => {
     navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/`);
   };
+  // Names where handleCancel goes: the form's footer has its own previous-step control.
+  const backLabel = parcelName
+    ? intl.formatMessage({ id: 'common.backTo' }, { place: parcelName })
+    : intl.formatMessage({ id: 'common.backToParcel' });
 
   return (
     <WriteAccessGuard>
       <StandardFinishProductionForm
         onSubmit={handleSubmit}
         onCancel={handleCancel}
+        backLabel={backLabel}
         isLoading={isLoading}
         initialData={harvestPrefill}
         productName={productName}

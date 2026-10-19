@@ -2918,8 +2918,8 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // "Back", so a farmer on step 2 who wanted step 1 clicked the one at the top and landed on
   // the parcel page. The header names its destination; the footer says "Previous step".
   const backToParcelLabel = voiceParcel?.name
-    ? intl.formatMessage({ id: 'events.wizard.backToParcel' }, { parcel: voiceParcel.name })
-    : intl.formatMessage({ id: 'events.wizard.backToParcelGeneric' });
+    ? intl.formatMessage({ id: 'common.backTo' }, { place: voiceParcel.name })
+    : intl.formatMessage({ id: 'common.backToParcel' });
 
   // A finished step in the stepper is a way back to it, so returning to step 1 from the
   // bottom of a long step 2 does not need a scroll to the footer. Backwards only: Continue
@@ -4140,7 +4140,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                         size={{ base: 'md', md: 'lg' }}
                         order={{ base: 3, md: 1 }}
                         w={{ base: '100%', md: 'auto' }}>
-                        {intl.formatMessage({ id: 'events.wizard.previousStep' })}
+                        {intl.formatMessage({ id: 'common.previousStep' })}
                       </StandardButton>
                       <Flex
                         direction={{ base: 'row', md: 'row' }}
@@ -4310,7 +4310,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                           size={{ base: 'md', md: 'lg' }}
                           order={{ base: 3, md: 1 }}
                           w={{ base: '100%', md: 'auto' }}>
-                          {intl.formatMessage({ id: 'events.wizard.previousStep' })}
+                          {intl.formatMessage({ id: 'common.previousStep' })}
                         </StandardButton>
                         <Flex
                           direction={{ base: 'row', md: 'row' }}

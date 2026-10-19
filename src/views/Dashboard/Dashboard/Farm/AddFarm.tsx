@@ -231,6 +231,12 @@ function AddFarm({ isEdit = false }: Props) {
       navigate('/admin/dashboard');
     }
   };
+  // Names where handleCancel goes: the form's footer has its own previous-step control.
+  const backLabel = !isEdit
+    ? intl.formatMessage({ id: 'common.backToHome' })
+    : establishmentData?.name
+    ? intl.formatMessage({ id: 'common.backTo' }, { place: establishmentData.name })
+    : intl.formatMessage({ id: 'common.backToFarm' });
 
   // Transform establishment data for the form
   const getInitialData = () => {
@@ -319,7 +325,8 @@ function AddFarm({ isEdit = false }: Props) {
       <StandardPage
         title={intl.formatMessage({ id: 'farm.form.page.editTitle' })}
         showBackButton
-        onBack={handleCancel}>
+        onBack={handleCancel}
+        backLabel={backLabel}>
         <StandardPageLoading />
       </StandardPage>
     );
@@ -330,6 +337,7 @@ function AddFarm({ isEdit = false }: Props) {
       <StandardFarmForm
         onSubmit={handleSubmit}
         onCancel={handleCancel}
+        backLabel={backLabel}
         initialData={getInitialData()}
         isLoading={isCreating || isUpdating}
         isEdit={isEdit}

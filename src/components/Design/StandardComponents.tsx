@@ -96,9 +96,10 @@ interface StandardPageProps {
    * Names where Back goes ("Back to River Block"). Defaults to a bare "Back", which is
    * right only when nothing else on the page also goes back. A multi-step form has its own
    * previous-step control, and two buttons both reading "Back" sent a farmer out of the
-   * activity wizard when they meant to return to step 1.
+   * activity wizard when they meant to return to step 1. ReactNode for the same reason as
+   * `description`: `formatMessage` with values is typed `string | ReactNode[]`.
    */
-  backLabel?: string;
+  backLabel?: ReactNode;
   rightAction?: ReactNode;
   /**
    * NARROWS the page's column. Omit it — every page shares `PAGE_MAX_W` below, applied to the
