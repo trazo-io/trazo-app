@@ -170,6 +170,92 @@ test.describe('a supervisor turns a crew message into a record', () => {
     await expect(performer, "a crew member's name was lifted out of the message").toHaveValue('');
   });
 
+  test('the whole walk: message to saved record, and what the message is NOT allowed to fill', async ({
+    page,
+    request
+  }) => {
+    // THE FLOW END TO END, because the assertions above each prove one property and none of them
+    // prove the thing a grower actually cares about: that the record which lands is theirs.
+    //
+    // MEASURED on this walk, and it is the answer to "how much does the machine decide":
+    //   * the activity is NOT pre-selected. All 17 verb tiles report aria-pressed="false" and the
+    //     page says "Those are their words. The record is yours: you choose the activity, the day
+    //     and what gets written." So the parser's `type` does not steer the form.
+    //   * for an APPLICATION the panel says, in words: "The product, rate, quantity and area come
+    //     from your own records, not from the message, so the message does not fill them."
+    //     Those four are also REQUIRED, so the operator types them.
+    //   * the offer sits behind "Fill in N value(s)" and fills only facts about the named product
+    //     (urea -> N 46, P 0, K 0), never a quantity claimed in the message.
+    const words = `Aplique 200 libras de urea en River Block, dos horas con el tractor ${Date.now()}`;
+    expect((await deliver(request, words, `SM-walk-${Date.now()}`)).status()).toBe(200);
+
+    await page.goto('/admin/dashboard/field-notes');
+    await page.getByLabel(/farm/i).first().selectOption({ index: 1 });
+    await page.getByLabel(/block/i).first().selectOption({ label: 'River Block' });
+    await page
+      .getByRole('button', { name: /log this/i })
+      .first()
+      .click();
+    await page.waitForURL(/field_note=/);
+
+    // Nothing is chosen for the operator.
+    const pressed = await page
+      .locator('button[aria-pressed]')
+      .evaluateAll((els) => els.filter((e) => e.getAttribute('aria-pressed') === 'true').length);
+    expect(pressed, 'an activity was pre-selected from the message').toBe(0);
+
+    await page.getByRole('button', { name: /input application/i }).click();
+    await page.getByRole('button', { name: /^fertilizer$/i }).click();
+
+    // The operator's own date. 2026-10-14 is deliberately NOT today, so a record carrying today
+    // would prove the form answered for them.
+    await page.locator('input[name="date"]').fill('2026-10-14T09:30');
+    await page
+      .getByRole('button', { name: /^continue$/i })
+      .first()
+      .click();
+
+    const held = page.getByText(/come from your own records, not from the message/i);
+    await expect(
+      held,
+      'the form no longer says what it refuses to take from a message'
+    ).toBeVisible({
+      timeout: 60_000
+    });
+
+    const fillBtn = page.getByRole('button', { name: /fill in \d+ value/i }).first();
+    await expect(fillBtn, 'the suggestion was not held behind a tap').toBeVisible();
+    await fillBtn.click();
+
+    // What the tap filled: a fact about the product, not a quantity from the message.
+    await expect(page.locator('input[name="nitrogen_percentage"]')).toHaveValue('46');
+    await expect(
+      page.locator('input[name="volume_numeric"]'),
+      'a quantity from the message reached the form'
+    ).toHaveValue('');
+
+    // The four the message may not fill, typed by the operator.
+    await page.locator('input[name="commercial_name"]').fill('Urea 46-0-0');
+    await page.locator('input[name="volume_numeric"]').fill('200');
+    await page.locator('input[name="area_numeric"]').fill('4');
+    await page.locator('input[name="application_rate"]').fill('50');
+    await page.locator('select[name="application_method"]').selectOption({ index: 1 });
+
+    await page
+      .getByRole('button', { name: /^continue$/i })
+      .first()
+      .click();
+    await page
+      .getByRole('button', { name: /create event/i })
+      .first()
+      .click();
+    await page.waitForURL(/\/parcel\/\d+$/, { timeout: 30_000 });
+
+    // The note leaves the queue once it became a record.
+    await page.goto('/admin/dashboard/field-notes');
+    await expect(page.getByText(words)).toHaveCount(0);
+  });
+
   test('a block with no season says so and keeps the note waiting', async ({ page, request }) => {
     // Good behaviour, pinned. The same shape as the no-blocks dead end: name the obstacle, say
     // what to do, and state that nothing was lost. A silent empty form would be the defect.
