@@ -65,6 +65,13 @@ export interface FieldNote {
    * message's values off an application follows the record type the confirmer picks, not this.
    */
   suggested_route?: 'application' | '';
+  /**
+   * A CAUTION, never a classification, and it decides nothing: the confirmer still picks the
+   * activity, the block and the day. True when the message names two families of work, because
+   * one note becomes one record and the second job would otherwise be lost with nothing on screen
+   * to say so. MEASURED 2026-10-19: the extractor flagged none of six such messages itself.
+   */
+  mentions_multiple_jobs?: boolean;
   /** Stamped when the recording was deleted at the provider, so there is nothing left to play. */
   audio_deleted_at?: string | null;
   received_at: string;

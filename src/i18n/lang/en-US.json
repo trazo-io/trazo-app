@@ -5640,6 +5640,7 @@
   "fieldNotes.kind.voice": "Voice note",
   "fieldNotes.logThis": "Log this",
   "fieldNotes.pickTheBlockFirst": "Pick the farm and the block this happened on. We do not guess it: the block is what a certifier follows.",
+  "fieldNotes.mentionsMultipleJobs": "This message mentions more than one job. Logging it records one of them.",
   "fieldNotes.farmHasNoBlocks": "{farm} has no blocks yet. Add one, then come back: the note waits here.",
   "fieldNotes.addABlock": "Add a block",
   "fieldNotes.refused.empty_message": "The message arrived with no text in it.",

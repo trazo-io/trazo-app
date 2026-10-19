@@ -885,3 +885,50 @@ describe('a farm with no blocks', () => {
     expect(screen.queryByText(/has no blocks yet/)).toBeNull();
   });
 });
+
+describe('a message that mentions more than one job', () => {
+  /**
+   * One note becomes one record. MEASURED 2026-10-19 over the labelled corpus: of six messages
+   * describing two activities, the extractor flagged none of them, returning the first at
+   * confidence 90 with manual_review false. The second job disappeared with nothing on any
+   * screen to say so, and the crew member who reported both assumes both were filed.
+   *
+   * The caution decides nothing: nothing is pre-selected, nothing is blocked.
+   */
+  beforeEach(() => {
+    mocks.navigate.mockClear();
+    mocks.roster = { data: [], isLoading: false, isError: false };
+    mocks.state = {};
+  });
+
+  it('warns beside the words, and says what logging it will do', () => {
+    mocks.notes = [
+      {
+        ...NOTE,
+        words: 'Regamos el bloque 2 y despues podamos el bloque 3',
+        mentions_multiple_jobs: true
+      }
+    ];
+    renderInbox(ONE_PARCEL);
+    expect(screen.getByTestId('note-multiple-jobs')).toBeTruthy();
+    expect(screen.getByText(/mentions more than one job/i)).toBeTruthy();
+  });
+
+  it('says nothing when the message holds one job', () => {
+    // A caution on every second note is a caution nobody reads.
+    mocks.notes = [{ ...NOTE, mentions_multiple_jobs: false }];
+    renderInbox(ONE_PARCEL);
+    expect(screen.queryByTestId('note-multiple-jobs')).toBeNull();
+  });
+
+  // NOT TESTED HERE: that a refused note shows no caution. Refused notes render through their
+  // own block further down the page and never reach this one, so such a test passes whatever the
+  // condition says. MEASURED: a mutant that rendered the caution on EVERY note left it green.
+  it('does not block logging', () => {
+    // It is a caution, not a gate. The confirmer logs one job and can log the other from the
+    // same words; refusing the note would strand both.
+    mocks.notes = [{ ...NOTE, mentions_multiple_jobs: true }];
+    renderInbox(ONE_PARCEL);
+    expect(screen.getByRole('button', { name: /Log this/i }).hasAttribute('disabled')).toBe(false);
+  });
+});
