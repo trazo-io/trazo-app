@@ -50,6 +50,9 @@ const WEBHOOK_URL =
 /** The roster row the seeder creates. Fixed, because the seeder attests consent on it. */
 const CREW_PHONE = '+15095550123';
 
+/** Seeded by `audit_crew_messages --seed` with zero parcels, for the dead-end test. */
+const EMPTY_FARM = 'Audit Ranch (no blocks)';
+
 function sign(url: string, params: Record<string, string>): string {
   const payload =
     url +
@@ -195,19 +198,24 @@ test.describe('a supervisor turns a crew message into a record', () => {
     expect((await deliver(request, words, `SM-who-${Date.now()}`)).status()).toBe(200);
 
     await page.goto('/admin/dashboard/field-notes');
-    await page
-      .getByRole('combobox', { name: /farm|finca/i })
-      .first()
-      .selectOption({ index: 1 });
-    await page
+    // SCOPED TO THIS TEST'S OWN NOTE. Three page-wide `.first()` queries are not even
+    // guaranteed to resolve to the same card as each other, and earlier tests leave their
+    // notes pending on purpose (review of app #150, second pass).
+    const card = noteCard(page, words);
+    await card.getByRole('combobox', { name: /farm|finca/i }).selectOption({ index: 1 });
+    await card
       .getByRole('combobox', { name: /^block|^bloque/i })
-      .first()
       .selectOption({ label: 'River Block' });
-    await page
-      .getByRole('button', { name: /log this/i })
-      .first()
-      .click();
+    await card.getByRole('button', { name: /log this/i }).click();
     await page.waitForURL(/field_note=/);
+    // IDENTITY, not just arrival. Scoping the click is not enough on its own: if it acted
+    // on a stale note the assertions below would still pass, because the other note's
+    // `performed_by` and date are empty too. A value-based mutant cannot catch "wrong
+    // card", only "wrong value off the right card" (review of app #150, second pass).
+    await expect(
+      page.getByText(words),
+      'the wizard opened on a different note than this test delivered'
+    ).toBeVisible();
 
     const performer = page.locator('input[name="performed_by"]');
     await expect(performer, 'the wizard rendered no performer field to check').toHaveCount(1);
@@ -234,19 +242,24 @@ test.describe('a supervisor turns a crew message into a record', () => {
     expect((await deliver(request, words, `SM-walk-${Date.now()}`)).status()).toBe(200);
 
     await page.goto('/admin/dashboard/field-notes');
-    await page
-      .getByRole('combobox', { name: /farm|finca/i })
-      .first()
-      .selectOption({ index: 1 });
-    await page
+    // SCOPED TO THIS TEST'S OWN NOTE. Three page-wide `.first()` queries are not even
+    // guaranteed to resolve to the same card as each other, and earlier tests leave their
+    // notes pending on purpose (review of app #150, second pass).
+    const card = noteCard(page, words);
+    await card.getByRole('combobox', { name: /farm|finca/i }).selectOption({ index: 1 });
+    await card
       .getByRole('combobox', { name: /^block|^bloque/i })
-      .first()
       .selectOption({ label: 'River Block' });
-    await page
-      .getByRole('button', { name: /log this/i })
-      .first()
-      .click();
+    await card.getByRole('button', { name: /log this/i }).click();
     await page.waitForURL(/field_note=/);
+    // IDENTITY, not just arrival. Scoping the click is not enough on its own: if it acted
+    // on a stale note the assertions below would still pass, because the other note's
+    // `performed_by` and date are empty too. A value-based mutant cannot catch "wrong
+    // card", only "wrong value off the right card" (review of app #150, second pass).
+    await expect(
+      page.getByText(words),
+      'the wizard opened on a different note than this test delivered'
+    ).toBeVisible();
 
     // Nothing is chosen for the operator.
     const pressed = await page
@@ -313,18 +326,15 @@ test.describe('a supervisor turns a crew message into a record', () => {
     expect((await deliver(request, words, `SM-noseason-${Date.now()}`)).status()).toBe(200);
 
     await page.goto('/admin/dashboard/field-notes');
-    await page
-      .getByRole('combobox', { name: /farm|finca/i })
-      .first()
-      .selectOption({ index: 1 });
-    await page
+    // SCOPED TO THIS TEST'S OWN NOTE. Three page-wide `.first()` queries are not even
+    // guaranteed to resolve to the same card as each other, and earlier tests leave their
+    // notes pending on purpose (review of app #150, second pass).
+    const card = noteCard(page, words);
+    await card.getByRole('combobox', { name: /farm|finca/i }).selectOption({ index: 1 });
+    await card
       .getByRole('combobox', { name: /^block|^bloque/i })
-      .first()
       .selectOption({ label: 'block 1' });
-    await page
-      .getByRole('button', { name: /log this/i })
-      .first()
-      .click();
+    await card.getByRole('button', { name: /log this/i }).click();
 
     await expect(page.getByText(/no open season on this parcel/i)).toBeVisible();
     await expect(page.getByText(/still waiting in field notes/i)).toBeVisible();
@@ -366,7 +376,9 @@ test.describe('a supervisor turns a crew message into a record', () => {
     await expect(page.getByText(words)).toBeVisible();
     // Documented as the current behaviour, not asserted as correct: this test is here to make the
     // defect visible in the UI layer and to fail loudly if the handling changes either way.
-    await expect(page.getByRole('button', { name: /log this/i }).first()).toBeVisible();
+    // Scoped, so this asserts THIS message is offered as loggable rather than whichever
+    // note happens to sort first.
+    await expect(noteCard(page, words).getByRole('button', { name: /log this/i })).toBeVisible();
   });
 });
 
@@ -391,9 +403,7 @@ test.describe('a farm with no blocks', () => {
 
     await page.goto('/admin/dashboard/field-notes');
     const card = noteCard(page, words);
-    await card
-      .getByRole('combobox', { name: /farm|finca/i })
-      .selectOption({ label: 'Audit Ranch (no blocks)' });
+    await card.getByRole('combobox', { name: /farm|finca/i }).selectOption({ label: EMPTY_FARM });
 
     await expect(card.getByText(/has no blocks yet|todav[ií]a no tiene bloques/i)).toBeVisible();
     await expect(
