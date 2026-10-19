@@ -577,6 +577,24 @@ const FieldNotesInbox = () => {
                   </Text>
 
                   {/*
+                    ONE NOTE BECOMES ONE RECORD, so a message holding two jobs loses one of them.
+                    MEASURED 2026-10-19 over the labelled corpus: of six messages describing two
+                    activities the extractor flagged none, returning the first at confidence 90
+                    with `manual_review` false. The crew member who reported both work items
+                    reasonably assumes both were filed.
+
+                    A CAUTION, NOT A DECISION. Nothing is pre-selected and nothing is blocked; the
+                    confirmer logs one and can log the other from the same note's words. It sits
+                    beside the words it is about rather than once per page, which is this
+                    project's rule for qualifiers.
+                  */}
+                  {note.mentions_multiple_jobs && (
+                    <Badge variant="warning" data-testid="note-multiple-jobs">
+                      {intl.formatMessage({ id: 'fieldNotes.mentionsMultipleJobs' })}
+                    </Badge>
+                  )}
+
+                  {/*
                     A VOICE NOTE'S WORDS ARE A MACHINE'S GUESS, and the surface says so beside them.
                     For typed text the sender wrote the words; here an ASR system did, and the
                     difference decides what the reader should trust. The qualifier sits next to the
