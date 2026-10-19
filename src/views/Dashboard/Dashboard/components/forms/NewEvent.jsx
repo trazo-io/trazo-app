@@ -56,6 +56,7 @@ import {
   DraftRestorationAlert,
   AutoSaveStatus,
   StandardAlert,
+  StandardEmptyState,
   StandardTextarea
 } from 'components/Design/StandardComponents';
 import { useEventDraft } from 'src/hooks/useEventDraft';
@@ -2915,6 +2916,20 @@ function NewEvent({ isEdit = false, eventId = null }) {
     navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/`);
   };
 
+  // A plan item titles the page with the practice's own name ("Annual Structural Pruning"),
+  // which is more specific than any verb the grid could offer. An in-page pick wins over the
+  // URL preset: after "Change activity" the header must name what the farmer just chose, not
+  // what the link they followed said. Shared with the no-season door so that screen keeps
+  // naming the task the farmer came to do instead of headlining what is missing.
+  const createPageTitle = activePlanItem
+    ? intl.formatMessage({ id: 'activities.logTitle' }, { verb: activePlanItem.name })
+    : activeVerbKey
+    ? intl.formatMessage(
+        { id: 'activities.logTitle' },
+        { verb: intl.formatMessage({ id: `activities.verb.${activeVerbKey}` }) }
+      )
+    : intl.formatMessage({ id: 'app.createNewEvent' }) || 'Add Event';
+
   // The locked-record notice replaces the form entirely rather than sitting above it. Leaving
   // an editable form under a "this cannot be edited" banner invites the farmer to fill it in
   // again and hit the same wall; the only useful control here is the correction path.
@@ -2957,64 +2972,81 @@ function NewEvent({ isEdit = false, eventId = null }) {
   }
 
   if (!isEdit && !parcelHistoriesLoading && parcelHistories && !openSeason && !postHarvestTarget) {
-    // The door: no open season on this parcel. Two honest ways forward, asked
-    // BEFORE the form — mirrors the locked-record screen's alert+actions pattern.
+    // The door: no open season on this parcel. Two honest ways forward, asked BEFORE the form.
+    // The page title keeps naming the task the farmer came to do; the missing production is an
+    // empty state inside it, not the page headline. It used to be the reverse: a hero-size
+    // "No open season" headline over two full-width blue alerts that restated it, with the CTA
+    // stranded bottom-left. StandardEmptyState keeps the sentence and its answer together.
     return (
       <StandardPage
-        title={intl.formatMessage({ id: 'events.noOpenSeason.title' })}
-        description={intl.formatMessage({ id: 'events.noOpenSeason.description' })}
+        title={createPageTitle}
         showBackButton
         onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/`)}>
-        <StandardAlert
-          status="info"
-          description={
-            latestFinished
-              ? intl.formatMessage(
-                  { id: 'events.noOpenSeason.bodyWithFinished' },
-                  {
-                    name: latestFinished.name,
-                    date: localDateLabel(latestFinished.finish_date)
-                  }
-                )
-              : intl.formatMessage({ id: 'events.noOpenSeason.bodyNoFinished' })
-          }
-          mb={4}
-        />
-        {/* WHERE THE CREW MESSAGE WENT.
-            "Start a season" navigates to the production wizard, which does not carry
-            `?field_note=`, so a supervisor who clicked "Log this" on a message and landed here
-            watches it disappear from the flow with nothing on screen to say why. The note itself
-            is safe: nothing has consumed it, its status is still `pending`, and the inbox still
-            lists it. Say that, rather than thread the id through a second wizard: the note is
-            only spent when a record is authored, and a round trip through the inbox keeps that
-            true. */}
-        {activeFieldNote && activeFieldNote.status === 'pending' && (
-          <StandardAlert
-            status="info"
-            description={intl.formatMessage({ id: 'events.noOpenSeason.noteStaysWaiting' })}
-            mb={4}
+        <StandardCard variant="outline">
+          <StandardEmptyState
+            icon={FaSeedling}
+            title={intl.formatMessage({ id: 'events.noOpenSeason.title' })}
+            description={
+              latestFinished
+                ? intl.formatMessage(
+                    { id: 'events.noOpenSeason.bodyWithFinished' },
+                    {
+                      name: latestFinished.name,
+                      date: localDateLabel(latestFinished.finish_date)
+                    }
+                  )
+                : intl.formatMessage({ id: 'events.noOpenSeason.bodyNoFinished' })
+            }
+            action={
+              <VStack spacing={4} w="100%">
+                {/* `md`, not `sm`: this theme's `sm` is 320px, so a `sm` row put both buttons side
+                    by side on a 390px phone and pushed the post-harvest one off screen. */}
+                <Stack
+                  direction={{ base: 'column', md: 'row' }}
+                  spacing={3}
+                  justify="center"
+                  align={{ base: 'stretch', md: 'center' }}
+                  w={{ base: '100%', md: 'auto' }}>
+                  <StandardButton
+                    onClick={() =>
+                      navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/add`)
+                    }>
+                    {intl.formatMessage({ id: 'events.noOpenSeason.startCta' })}
+                  </StandardButton>
+                  {latestFinished && (
+                    // Carries the production's own name, so its length is the farmer's, not
+                    // ours: let it wrap instead of spilling past its border on a phone.
+                    <StandardButton
+                      variant="outline"
+                      whiteSpace="normal"
+                      h="auto"
+                      py={2.5}
+                      onClick={() => setPostHarvestTarget(latestFinished)}>
+                      {intl.formatMessage(
+                        { id: 'events.noOpenSeason.postHarvestCta' },
+                        { name: latestFinished.name }
+                      )}
+                    </StandardButton>
+                  )}
+                </Stack>
+                {/* WHERE THE CREW MESSAGE WENT.
+                    "Start a production" navigates to the production wizard, which does not
+                    carry `?field_note=`, so a supervisor who clicked "Log this" on a message and
+                    landed here watches it disappear from the flow with nothing on screen to say
+                    why. The note itself is safe: nothing has consumed it, its status is still
+                    `pending`, and the inbox still lists it. Say that, rather than thread the id
+                    through a second wizard: the note is only spent when a record is authored,
+                    and a round trip through the inbox keeps that true. A footnote under the
+                    buttons, not a second alert: it qualifies the action, it is not news. */}
+                {activeFieldNote && activeFieldNote.status === 'pending' && (
+                  <Text fontSize="sm" color="gray.600" maxW="360px">
+                    {intl.formatMessage({ id: 'events.noOpenSeason.noteStaysWaiting' })}
+                  </Text>
+                )}
+              </VStack>
+            }
           />
-        )}
-        <HStack spacing={3} flexWrap="wrap">
-          <StandardButton
-            size="sm"
-            onClick={() =>
-              navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/add`)
-            }>
-            {intl.formatMessage({ id: 'events.noOpenSeason.startCta' })}
-          </StandardButton>
-          {latestFinished && (
-            <StandardButton
-              size="sm"
-              variant="outline"
-              onClick={() => setPostHarvestTarget(latestFinished)}>
-              {intl.formatMessage(
-                { id: 'events.noOpenSeason.postHarvestCta' },
-                { name: latestFinished.name }
-              )}
-            </StandardButton>
-          )}
-        </HStack>
+        </StandardCard>
       </StandardPage>
     );
   }
@@ -3030,18 +3062,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
             editVerbLabel
             ? intl.formatMessage({ id: 'activities.editTitle' }, { verb: editVerbLabel })
             : intl.formatMessage({ id: 'app.editEvent' })
-          : // A plan item titles the page with the practice's own name ("Annual Structural
-          // Pruning"), which is more specific than any verb the grid could offer.
-          activePlanItem
-          ? intl.formatMessage({ id: 'activities.logTitle' }, { verb: activePlanItem.name })
-          : // An in-page pick wins over the URL preset — after "Change activity" the header
-          // must name what the farmer just chose, not what the link they followed said.
-          activeVerbKey
-          ? intl.formatMessage(
-              { id: 'activities.logTitle' },
-              { verb: intl.formatMessage({ id: `activities.verb.${activeVerbKey}` }) }
-            )
-          : intl.formatMessage({ id: 'app.createNewEvent' }) || 'Add Event'
+          : createPageTitle
       }
       description={
         isEdit
