@@ -43,3 +43,31 @@ describe('build and apply use one rule (review of app #64)', () => {
     );
   });
 });
+
+/**
+ * The apply button says WHICH value, not just how many.
+ *
+ * Reported from the Spanish UI on 2026-10-19: "it says Completar 1 dato, but which dato?". The
+ * line that names the value is real, but it sits above the application paragraph and the date
+ * question, so a reader reaching the button finds the answer several lines back behind a wall of
+ * text. The grouping of offered values is deliberate and stays; the button carries the name.
+ */
+describe('the apply button names a single offered value', () => {
+  it('uses the named label when exactly one value is offered', () => {
+    expect(src).toMatch(/voiceFilledLabels\.length === 1/);
+    expect(src).toMatch(/events\.voice\.pastedNoteApplyNamed/);
+    expect(src).toMatch(/field: voiceFilledLabels\[0\]/);
+  });
+
+  it('keeps the count past one, because a button is not a list', () => {
+    expect(src).toMatch(
+      /events\.voice\.pastedNoteApply'\s*\},\s*\{\s*count: voiceFilledLabels\.length/
+    );
+  });
+
+  it('puts the label in the button and leaves the value to the line that prints it', () => {
+    // The value is already shown in full as "Would fill: Relación NPK: 46-0-0". Repeating it in
+    // the button would put the same number in two places that can drift apart.
+    expect(src).not.toMatch(/pastedNoteApplyNamed'\s*\},\s*\{\s*field: voiceOfferedSummary/);
+  });
+});

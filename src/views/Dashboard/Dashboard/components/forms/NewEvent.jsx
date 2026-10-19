@@ -3919,10 +3919,26 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                     colorScheme="green"
                                     minH="44px"
                                     onClick={handleVoiceSeededApply}>
-                                    {intl.formatMessage(
-                                      { id: 'events.voice.pastedNoteApply' },
-                                      { count: voiceFilledLabels.length }
-                                    )}
+                                    {/* NAME THE VALUE WHEN THERE IS ONE.
+                                        "Fill in 1 value" says how many and not which, and the
+                                        line that does name it sits above the application
+                                        paragraph and the date question, so by the time a reader
+                                        reaches this button the answer is several lines behind a
+                                        wall of text. Reported from the Spanish UI 2026-10-19:
+                                        "it says Completar 1 dato, but which dato?".
+                                        The label alone, not the value: the value is printed in
+                                        full on the "Would fill" line, and repeating it would put
+                                        the same number in two places that can disagree. Past one
+                                        the count stays, because a button is not a list. */}
+                                    {voiceFilledLabels.length === 1
+                                      ? intl.formatMessage(
+                                          { id: 'events.voice.pastedNoteApplyNamed' },
+                                          { field: voiceFilledLabels[0] }
+                                        )
+                                      : intl.formatMessage(
+                                          { id: 'events.voice.pastedNoteApply' },
+                                          { count: voiceFilledLabels.length }
+                                        )}
                                   </Button>
                                   <Button
                                     size="xs"

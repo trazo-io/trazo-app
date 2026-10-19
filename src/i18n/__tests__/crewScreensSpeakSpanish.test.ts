@@ -118,3 +118,24 @@ describe('the crew screens speak Spanish', () => {
     expect(EN['consumer.journey.viewFullRecord']).toMatch(/one \{/);
   });
 });
+
+/**
+ * Two strings a grower read on screen on 2026-10-19 while testing the crew-note flow in Spanish.
+ * Both are small and both were shipped, which is the point: a missing accent and a banned dash do
+ * not fail a build, do not fail a type check, and are invisible in a diff unless somebody looks at
+ * the rendered page in that language.
+ */
+describe('Spanish copy a grower actually read', () => {
+  it('spells Relación with its accent', () => {
+    // "Relacion NPK" was printed in the crew-note banner under the quoted message.
+    expect((es as Record<string, string>)['events.chemical.fields.npkRatio']).toBe('Relación NPK');
+  });
+
+  it('keeps the em dash out of the recent-inputs helper', () => {
+    // The house rule bans the em dash in anything written for a user. This string sits directly
+    // under the crew-note banner, on the one path that saves a grower from retyping a product.
+    const helper = (es as Record<string, string>)['chemical.recentInputs.helper'] ?? '';
+    expect(helper).not.toMatch(/—/);
+    expect(helper).toContain('Reaplica un producto que ya usaste');
+  });
+});
