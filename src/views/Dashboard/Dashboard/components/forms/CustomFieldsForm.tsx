@@ -45,12 +45,13 @@ interface CustomFieldsFormProps {
   disabled?: boolean;
 }
 
-// Simplified validation schema for custom field form
+// Simplified validation schema for custom field form. The messages are i18n ids: the schema
+// lives outside the component, so they are translated where they render.
 const customFieldValidationSchema = object({
   label: string()
-    .min(1, 'Field name is required')
-    .max(100, 'Field name cannot exceed 100 characters'),
-  value: string().max(500, 'Value cannot exceed 500 characters'),
+    .min(1, 'events.customFields.error.labelRequired')
+    .max(100, 'events.customFields.error.labelTooLong'),
+  value: string().max(500, 'events.customFields.error.valueTooLong'),
   is_consumer_visible: string().optional()
 });
 
@@ -71,6 +72,8 @@ const CustomFieldsForm: React.FC<CustomFieldsFormProps> = ({
   const tableHeaderBg = useColorModeValue('gray.50', 'gray.700');
   const tableBorder = useColorModeValue('gray.200', 'gray.600');
   const hoverBg = useColorModeValue('gray.50', 'gray.700');
+  const errorText = (id: unknown) =>
+    typeof id === 'string' ? intl.formatMessage({ id }) : undefined;
 
   const methods = useForm({
     resolver: zodResolver(customFieldValidationSchema),
@@ -180,12 +183,12 @@ const CustomFieldsForm: React.FC<CustomFieldsFormProps> = ({
                       colorScheme="green"
                       isDisabled={disabled}>
                       <Text fontSize="xs" color="gray.600" display={{ base: 'none', md: 'inline' }}>
-                        Visible
+                        {intl.formatMessage({ id: 'events.customFields.onBuyerPage' })}
                       </Text>
                     </Checkbox>
                     <IconButton
                       icon={<FaTrash />}
-                      aria-label="Delete field"
+                      aria-label={intl.formatMessage({ id: 'events.customFields.delete' })}
                       size="sm"
                       colorScheme="red"
                       variant="ghost"
@@ -209,7 +212,7 @@ const CustomFieldsForm: React.FC<CustomFieldsFormProps> = ({
             borderLeft="4px"
             borderLeftColor="green.400">
             <Text color="gray.600" fontSize="sm">
-              Add custom fields to document additional farming practices
+              {intl.formatMessage({ id: 'events.customFields.empty' })}
             </Text>
           </Box>
         )}
@@ -223,7 +226,7 @@ const CustomFieldsForm: React.FC<CustomFieldsFormProps> = ({
               onClick={() => setIsAddingField(true)}
               size="sm"
               isDisabled={disabled}>
-              Add Custom Field
+              {intl.formatMessage({ id: 'events.customFields.add' })}
             </StandardButton>
           </HStack>
         )}
@@ -253,17 +256,19 @@ const CustomFieldsForm: React.FC<CustomFieldsFormProps> = ({
             <VStack spacing={4} align="stretch">
               {/* Field Name Input */}
               <StandardField
-                label="Field Name"
+                label={intl.formatMessage({ id: 'events.customFields.label' })}
                 required
-                error={errors.label?.message}
-                helpText="Brief name for this information">
+                error={errorText(errors.label?.message)}
+                helpText={intl.formatMessage({ id: 'events.customFields.labelHelp' })}>
                 <Controller
                   name="label"
                   control={control}
                   render={({ field }) => (
                     <StandardInput
                       {...field}
-                      placeholder="e.g., Soil Type, Irrigation Source"
+                      placeholder={intl.formatMessage({
+                        id: 'events.customFields.labelPlaceholder'
+                      })}
                       size="md"
                       autoFocus
                     />
@@ -273,16 +278,18 @@ const CustomFieldsForm: React.FC<CustomFieldsFormProps> = ({
 
               {/* Value Input */}
               <StandardField
-                label="Value"
-                error={errors.value?.message}
-                helpText="Details for this field">
+                label={intl.formatMessage({ id: 'events.customFields.value' })}
+                error={errorText(errors.value?.message)}
+                helpText={intl.formatMessage({ id: 'events.customFields.valueHelp' })}>
                 <Controller
                   name="value"
                   control={control}
                   render={({ field }) => (
                     <StandardInput
                       {...field}
-                      placeholder="e.g., Loamy soil, Well water"
+                      placeholder={intl.formatMessage({
+                        id: 'events.customFields.valuePlaceholder'
+                      })}
                       size="md"
                     />
                   )}
@@ -301,13 +308,13 @@ const CustomFieldsForm: React.FC<CustomFieldsFormProps> = ({
                       size="md"
                       colorScheme="green">
                       <Text fontSize="sm" fontWeight="500" color="gray.700">
-                        Visible to consumers
+                        {intl.formatMessage({ id: 'events.customFields.showOnBuyerPage' })}
                       </Text>
                     </Checkbox>
                   )}
                 />
                 <Text fontSize="xs" color="gray.500" mt={1} ml={6}>
-                  Show this information on public transparency pages
+                  {intl.formatMessage({ id: 'events.customFields.showOnBuyerPageHelp' })}
                 </Text>
               </Box>
 
@@ -317,7 +324,7 @@ const CustomFieldsForm: React.FC<CustomFieldsFormProps> = ({
                   {intl.formatMessage({ id: 'app.cancel' })}
                 </StandardButton>
                 <StandardButton variant="primary" onClick={handleSubmit(onSubmit)} size="md">
-                  Add Field
+                  {intl.formatMessage({ id: 'events.customFields.submit' })}
                 </StandardButton>
               </HStack>
             </VStack>
@@ -333,7 +340,7 @@ const CustomFieldsForm: React.FC<CustomFieldsFormProps> = ({
             borderLeft="4px"
             borderLeftColor="orange.400">
             <Text fontSize="sm" fontWeight="500" color="orange.700">
-              Maximum 10 fields reached
+              {intl.formatMessage({ id: 'events.customFields.maxReached' })}
             </Text>
           </Box>
         )}

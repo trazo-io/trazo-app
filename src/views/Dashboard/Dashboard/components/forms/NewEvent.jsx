@@ -2914,6 +2914,21 @@ function NewEvent({ isEdit = false, eventId = null }) {
   const handleBack = () => {
     navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/`);
   };
+  // The header button LEAVES the wizard; the footer one goes back a step. Both used to read
+  // "Back", so a farmer on step 2 who wanted step 1 clicked the one at the top and landed on
+  // the parcel page. The header names its destination; the footer says "Previous step".
+  const backToParcelLabel = voiceParcel?.name
+    ? intl.formatMessage({ id: 'events.wizard.backToParcel' }, { parcel: voiceParcel.name })
+    : intl.formatMessage({ id: 'events.wizard.backToParcelGeneric' });
+
+  // A finished step in the stepper is a way back to it, so returning to step 1 from the
+  // bottom of a long step 2 does not need a scroll to the footer. Backwards only: Continue
+  // is where each step is validated, and a forward jump would skip it.
+  const goToStep = (step) => {
+    if (step < activeStep) {
+      setActiveStep(step);
+    }
+  };
 
   // The locked-record notice replaces the form entirely rather than sitting above it. Leaving
   // an editable form under a "this cannot be edited" banner invites the farmer to fill it in
@@ -2924,6 +2939,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
         title={intl.formatMessage({ id: 'events.locked.title' })}
         description={intl.formatMessage({ id: 'events.locked.description' })}
         showBackButton
+        backLabel={backToParcelLabel}
         onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/`)}>
         {/*
           The actions sit BELOW the alert, not inside it.
@@ -2964,6 +2980,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
         title={intl.formatMessage({ id: 'events.noOpenSeason.title' })}
         description={intl.formatMessage({ id: 'events.noOpenSeason.description' })}
         showBackButton
+        backLabel={backToParcelLabel}
         onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/`)}>
         <StandardAlert
           status="info"
@@ -3057,6 +3074,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
       // Net effect at 1440px: the form goes from 591px to 1024px.
       contentMaxW="5xl"
       onBack={handleBack}
+      backLabel={backToParcelLabel}
       rightAction={
         <Badge colorScheme="green" variant="subtle" px={3} py={1} borderRadius="full">
           <HStack spacing={1}>
@@ -3153,6 +3171,8 @@ function NewEvent({ isEdit = false, eventId = null }) {
               steps={steps}
               currentStep={activeStep}
               completedSteps={Array.from({ length: activeStep }, (_, i) => i)}
+              allowStepClick
+              onStepClick={goToStep}
             />
             <Flex justify="flex-end">
               <AutoSaveStatus lastSaved={draftLastSaved} isSaving={isSavingDraft} />
@@ -4120,7 +4140,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                         size={{ base: 'md', md: 'lg' }}
                         order={{ base: 3, md: 1 }}
                         w={{ base: '100%', md: 'auto' }}>
-                        {intl.formatMessage({ id: 'common.back' }) || 'Previous'}
+                        {intl.formatMessage({ id: 'events.wizard.previousStep' })}
                       </StandardButton>
                       <Flex
                         direction={{ base: 'row', md: 'row' }}
@@ -4290,7 +4310,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                           size={{ base: 'md', md: 'lg' }}
                           order={{ base: 3, md: 1 }}
                           w={{ base: '100%', md: 'auto' }}>
-                          {intl.formatMessage({ id: 'common.back' }) || 'Previous'}
+                          {intl.formatMessage({ id: 'events.wizard.previousStep' })}
                         </StandardButton>
                         <Flex
                           direction={{ base: 'row', md: 'row' }}
