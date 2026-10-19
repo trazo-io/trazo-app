@@ -5314,6 +5314,7 @@
   "events.voice.pasteNotePlaceholder": "Paste what came in from the field, in the words it was sent in.",
   "events.voice.pasteNoteRead": "Read this note",
   "events.voice.pastedNoteApplied": "{count, plural, one {From a pasted note. # field filled} other {From a pasted note. # fields filled}}",
+  "events.voice.pastedNoteApplyNamed": "Fill in {field}",
   "events.voice.pastedNoteApply": "{count, plural, one {Fill in # value} other {Fill in # values}}",
   "events.voice.pastedNoteDateAnother": "It was another day",
   "events.voice.pastedNoteDateAsk": "Which day did this happen?",
