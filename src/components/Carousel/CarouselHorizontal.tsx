@@ -22,7 +22,7 @@ import BgMusicCard from 'assets/img/BgMusicCard.png';
 // Custom components
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
-import { StandardEmptyState } from 'components/Design/StandardComponents';
+import { StandardButton, StandardEmptyState } from 'components/Design/StandardComponents';
 import CardHeader from 'components/Card/CardHeader';
 import CarouselCard from './CarouselCard';
 import { QuickAddParcelModal } from 'components/Parcels/QuickAddParcelModal';
@@ -324,6 +324,15 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
             icon={FaSeedling}
             title={intl.formatMessage({ id: 'app.noParcelsYet' })}
             description={intl.formatMessage({ id: 'app.noParcelsYetDescription' })}
+            // The dashed "+ New" tile in the header was the only way in, and at 1440px the
+            // Getting Started panel sits on top of it. The empty state names its own next step.
+            action={
+              canCreateParcel ? (
+                <StandardButton leftIcon={<FaPlus />} onClick={quickAdd.onOpen}>
+                  {intl.formatMessage({ id: 'app.addFirstParcel' })}
+                </StandardButton>
+              ) : undefined
+            }
           />
         )}
       </CardBody>
