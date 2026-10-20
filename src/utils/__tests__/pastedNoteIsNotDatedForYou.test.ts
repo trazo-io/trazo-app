@@ -206,8 +206,10 @@ describe('a held pasted note is re-offered, never dropped and never merged', () 
     const apply = blockAfter('const handleVoiceSeededApply = () => {');
     expect(apply).toMatch(/const written = mergeOfferedValues\(eventFormData, kept\)/);
     expect(apply).toMatch(/keptFields: Object\.keys\(written\)/);
-    // and the form must be written from that same object, or the two can disagree
-    expect(apply).toMatch(/\.\.\.prev, \.\.\.written/);
+    // and the form must be written from that same object, or the two can disagree. The names are
+    // renamed on the way in for General events (`activity_type` -> `type`), which is a rename of
+    // the KEYS, never a different set of values.
+    expect(apply).toMatch(/\.\.\.prev, \.\.\.asFormFields\(written\)/);
     expect(apply, 'the offer is still cleared on apply').toMatch(/seededPending: null/);
   });
 

@@ -90,7 +90,18 @@ const GENERAL_FIELDS: readonly FieldConfig<unknown, GeneralData>[] = [
   {
     name: 'duration',
     labelKey: 'events.general.fields.duration',
-    valueType: 'string',
+    // 🔴 A NUMBER OF HOURS, not free text, because that is what the form collects and what the
+    // value has to survive as. MEASURED 2026-10-20: a crew message ("about three hours") answered
+    // `duration: "3 hours"`, the banner formatted it as "Duration: 3 hours" and the operator
+    // tapped, and the input underneath stayed EMPTY: it is `type="number"` (`duration_hours` in
+    // GeneralTab), and a browser discards a non-numeric value silently.
+    //
+    // Declaring it a string meant the voice sanitiser took its string branch and passed the raw
+    // answer through. As a number the same sanitiser reads "3 hours" as 3 and DROPS anything it
+    // cannot read as a number ("all morning"), so the banner stops promising what the form
+    // cannot hold. The model column stays a CharField and `formatDurationHours` renders either,
+    // so nothing downstream changes.
+    valueType: 'number',
     formatter: formatDurationHours,
     surfaces: {
       timeline: 'immediate',
