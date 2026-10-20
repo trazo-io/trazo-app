@@ -1764,40 +1764,81 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // Labels for the fields voice actually wrote, resolved through the display registry so the
   // banner uses the same words the form does. A field with no registry label (or one whose
   // labelKey is missing from the catalogue) is skipped rather than printed as a raw key.
-  const voiceFilledEntries = useMemo(() => {
-    // Unit companions (`area_unit`, `fuel_unit`, `yield_unit`…) are excluded from BOTH the
-    // count and the names, and they have to be excluded from the same place or the banner
-    // contradicts itself: they have no display-registry entry of their own, so counting them
-    // produced "8 fields filled" above a list of five names. A unit is part of a value, not a
-    // fact the farmer needs to go and check.
-    const named = (voiceBanner?.keptFields || []).filter((name) => !VOICE_UNIT_COMPANIONS[name]);
+  // Names -> display entries, shared by the two lists the banner keeps: what is still on offer
+  // and what this message has already put on the form.
+  const entriesForFieldNames = useCallback(
+    (fieldNames) => {
+      // Unit companions (`area_unit`, `fuel_unit`, `yield_unit`…) are excluded from BOTH the
+      // count and the names, and they have to be excluded from the same place or the banner
+      // contradicts itself: they have no display-registry entry of their own, so counting them
+      // produced "8 fields filled" above a list of five names. A unit is part of a value, not a
+      // fact the farmer needs to go and check.
+      const named = (fieldNames || []).filter((name) => !VOICE_UNIT_COMPANIONS[name]);
 
-    // Fields the registry renders as ONE thing are named once here too.
-    //
-    // MEASURED 2026-09-01 on a farmer's phone, in Spanish: "NPK 10 guion 10 guion 10" filled
-    // nitrogen, phosphorus and potassium, and the banner listed
-    // "Relacion NPK, Fósforo (%), Potasio (%)" — three entries, one of them wearing the GROUP's
-    // name because `nitrogen_percentage` is the group leader (`groupWith`, formatted by
-    // formatNPK). So the farmer was told about a field called "NPK ratio" and never told about
-    // nitrogen at all. The registry's own rule is that a group "is rendered by a single formatter
-    // and the other fields are automatically hidden from their own render slots"; this banner is
-    // another render slot.
-    const absorbed = new Set();
-    named.forEach((name) => {
-      const cfg = getFieldConfig(activeEventType, name);
-      (cfg?.groupWith || []).forEach((member) => absorbed.add(member));
-    });
-    const names = named.filter((name) => !absorbed.has(name));
-
-    return names
-      .map((name) => {
+      // Fields the registry renders as ONE thing are named once here too.
+      //
+      // MEASURED 2026-09-01 on a farmer's phone, in Spanish: "NPK 10 guion 10 guion 10" filled
+      // nitrogen, phosphorus and potassium, and the banner listed
+      // "Relacion NPK, Fósforo (%), Potasio (%)" — three entries, one of them wearing the GROUP's
+      // name because `nitrogen_percentage` is the group leader (`groupWith`, formatted by
+      // formatNPK). So the farmer was told about a field called "NPK ratio" and never told about
+      // nitrogen at all. The registry's own rule is that a group "is rendered by a single formatter
+      // and the other fields are automatically hidden from their own render slots"; this banner is
+      // another render slot.
+      const absorbed = new Set();
+      named.forEach((name) => {
         const cfg = getFieldConfig(activeEventType, name);
-        if (!cfg?.labelKey) return null;
-        const label = intl.formatMessage({ id: cfg.labelKey, defaultMessage: '' });
-        return label ? { name, label } : null;
-      })
-      .filter(Boolean);
-  }, [voiceBanner, activeEventType, intl]);
+        (cfg?.groupWith || []).forEach((member) => absorbed.add(member));
+      });
+      const names = named.filter((name) => !absorbed.has(name));
+
+      return names
+        .map((name) => {
+          const cfg = getFieldConfig(activeEventType, name);
+          if (!cfg?.labelKey) return null;
+          const label = intl.formatMessage({ id: cfg.labelKey, defaultMessage: '' });
+          return label ? { name, label } : null;
+        })
+        .filter(Boolean);
+    },
+    [activeEventType, intl]
+  );
+
+  /** What is still on OFFER (or, once applied, what that tap wrote). */
+  const voiceFilledEntries = useMemo(
+    () => entriesForFieldNames(voiceBanner?.keptFields),
+    [entriesForFieldNames, voiceBanner]
+  );
+
+  /**
+   * What this message has ALREADY put on the form, across every tap.
+   *
+   * Separate from the offer because the two can be live at once: accepting a block writes it
+   * immediately while the field offer is still waiting behind "Fill in N values".
+   */
+  const voiceWrittenLabels = useMemo(
+    () => entriesForFieldNames(voiceBanner?.filledFields).map((entry) => entry.label),
+    [entriesForFieldNames, voiceBanner]
+  );
+
+  /**
+   * EVERYTHING on the form from this input, once there is no offer left standing.
+   *
+   * A UNION, not a fallback. `blockSuggestion` is offered on live dictation too, where there is
+   * no `seededPending` and `keptFields` already holds the dictated fields. Reading
+   * `voiceWrittenLabels` instead of them the moment a block was accepted would have dropped the
+   * dictated chips from the banner and left the headline counting fields it no longer showed
+   * (review of app #162).
+   */
+  const voiceAllFilledLabels = useMemo(() => {
+    const names = Array.from(
+      new Set([
+        ...(voiceBanner?.filledFields || []),
+        ...(voiceBanner?.seededPending ? [] : voiceBanner?.keptFields || [])
+      ])
+    );
+    return entriesForFieldNames(names).map((entry) => entry.label);
+  }, [entriesForFieldNames, voiceBanner]);
   const voiceFilledLabels = useMemo(
     () => voiceFilledEntries.map((entry) => entry.label),
     [voiceFilledEntries]
@@ -2062,13 +2103,23 @@ function NewEvent({ isEdit = false, eventId = null }) {
               seeded: voiceBanner.seeded
             }),
             manualReview: voiceBanner.manualReview,
-            filledCount: voiceFilledLabels.length,
+            // AFTER the offer, the count is everything the message put on the form, which can
+            // include a block accepted by its own tap earlier. While the offer stands it is the
+            // size of the offer, which is what "N values to review" means.
+            filledCount: voiceBanner.seededPending
+              ? voiceFilledLabels.length
+              : voiceAllFilledLabels.length,
             hasSuggestion: Boolean(voiceBanner.blockSuggestion || voiceBanner.suggestion),
             seeded: voiceBanner.seeded,
             seededPending: voiceBanner.seededPending
           })
         },
-        { count: voiceFilledLabels.length }
+        {
+          // SAME BASIS AS THE KEY ABOVE. The id was picking "N fields filled" from one number
+          // while the message printed another, so a banner showing two chips said "1 field
+          // filled" (MEASURED 2026-10-20, block accepted by its own tap and then the offer).
+          count: voiceBanner.seededPending ? voiceFilledLabels.length : voiceAllFilledLabels.length
+        }
       )
     : '';
 
@@ -2133,7 +2184,18 @@ function NewEvent({ isEdit = false, eventId = null }) {
     setEventFormData((prev) => withListingAttachmentChecked(prev, { ...prev, ...written }));
 
     setVoiceBanner((prev) =>
-      prev ? { ...prev, seededPending: null, keptFields: Object.keys(written) } : prev
+      prev
+        ? {
+            ...prev,
+            seededPending: null,
+            keptFields: Object.keys(written),
+            // Everything this message has put on the form, including anything a separate tap
+            // (the block) wrote before this one.
+            filledFields: Array.from(
+              new Set([...(prev.filledFields || []), ...Object.keys(written)])
+            )
+          }
+        : prev
     );
     // NOW the tabs must re-read initialValues, the same remount the spoken merge uses.
     setVoiceSeq((s) => s + 1);
@@ -2246,7 +2308,14 @@ function NewEvent({ isEdit = false, eventId = null }) {
         ? {
             ...prev,
             blockSuggestion: null,
-            keptFields: [...(prev.keptFields || []), 'block_id']
+            // 🔴 WRITTEN, NOT OFFERED. This used to push `block_id` into `keptFields`, which is
+            // the list the banner reads as the OFFER while `seededPending` stands. MEASURED
+            // 2026-10-20: accepting "Use South Block" turned "Fill in Yield" into "Fill in 2
+            // values" for a value that was already on the form, and then the tap reported "1
+            // field filled" because `mergeOfferedValues` correctly skipped the field it had
+            // just written. The banner promised two and accounted for one, on the screen whose
+            // whole job is to say what the message did.
+            filledFields: Array.from(new Set([...(prev.filledFields || []), 'block_id']))
           }
         : prev
     );
@@ -3987,6 +4056,25 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                   </CrewNoteRow>
                                 </VStack>
                               )}
+                              {/* ALREADY ON THE FORM, while the offer is still waiting. The block
+                                  tap writes immediately, so without this the banner either
+                                  counted it as part of the offer (and then could not write it
+                                  again) or never mentioned it at all. */}
+                              {voiceBanner.seededPending && voiceWrittenLabels.length > 0 && (
+                                <CrewNoteRow
+                                  label={intl.formatMessage({ id: 'events.voice.row.filled' })}>
+                                  <CrewNoteChips
+                                    testId="crew-note-written"
+                                    values={voiceWrittenLabels}
+                                  />
+                                  <Box as="span" srOnly>
+                                    {intl.formatMessage(
+                                      { id: 'events.voice.filledFields' },
+                                      { fields: voiceWrittenLabels.join(', ') }
+                                    )}
+                                  </Box>
+                                </CrewNoteRow>
+                              )}
                               {voiceFilledLabels.length > 0 && (
                                 <CrewNoteRow
                                   label={intl.formatMessage({
@@ -4000,7 +4088,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                     values={
                                       voiceBanner.seededPending
                                         ? voiceOfferedChips
-                                        : voiceFilledLabels
+                                        : voiceAllFilledLabels
                                     }
                                   />
                                   {/* THE SAME LIST, AS ONE SENTENCE, for a screen reader. Chips
@@ -4017,7 +4105,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                       {
                                         fields: voiceBanner.seededPending
                                           ? voiceOfferedSummary
-                                          : voiceFilledLabels.join(', ')
+                                          : voiceAllFilledLabels.join(', ')
                                       }
                                     )}
                                   </Box>

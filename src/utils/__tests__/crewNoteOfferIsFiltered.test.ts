@@ -25,6 +25,50 @@ describe('crew-note offer in the wizard', () => {
     expect(src).toMatch(/events\.voice\.crewNoteWithheld/);
   });
 
+  it('separates what a tap already wrote from what is still on offer', () => {
+    // 🔴 MEASURED 2026-10-20. Accepting "Use South Block" writes the block immediately, and it
+    // used to be pushed into `keptFields`, the list the banner reads as THE OFFER. So the button
+    // went from "Fill in Yield" to "Fill in 2 values" for a value already on the form, and the
+    // tap then reported "1 field filled" because the merge correctly skipped the field it had
+    // just written. The banner promised two and accounted for one, on the screen whose whole job
+    // is to say what the message did.
+    expect(src).toMatch(
+      /filledFields: Array\.from\(new Set\(\[\.\.\.\(prev\.filledFields \|\| \[\]\), 'block_id'\]\)\)/
+    );
+    expect(src).not.toMatch(/keptFields: \[\.\.\.\(prev\.keptFields \|\| \[\]\), 'block_id'\]/);
+    // Applying adds to the same list rather than replacing it.
+    expect(src).toMatch(
+      /filledFields: Array\.from\(\s*new Set\(\[\.\.\.\(prev\.filledFields \|\| \[\]\), \.\.\.Object\.keys\(written\)\]\)\s*\)/
+    );
+    // And the banner shows it while the offer is still waiting.
+    expect(src).toMatch(/testId="crew-note-written"/);
+  });
+
+  it('counts with the same number it chooses the wording from', () => {
+    // The headline id was picked from one count and the message printed another, so a banner
+    // showing two chips read "1 field filled".
+    const call = src.slice(
+      src.indexOf('const voiceBannerHeadline ='),
+      src.indexOf('const seededDateUnanswered')
+    );
+    const basis =
+      /voiceBanner\.seededPending\s*\?\s*voiceFilledLabels\.length\s*:\s*voiceAllFilledLabels\.length/g;
+    expect(call.match(basis)?.length, 'the id and the count use different numbers').toBe(2);
+  });
+
+  it('shows everything on the form once the offer is gone, not just the last tap', () => {
+    // ⛔ A UNION, NOT A FALLBACK. `blockSuggestion` is offered on live dictation too, where there
+    // is no `seededPending` and `keptFields` already holds the dictated fields. Reading the
+    // written list INSTEAD of them the moment a block was accepted dropped the dictated chips
+    // from the banner and left the headline counting fields it no longer showed (review of
+    // app #162).
+    expect(src).toMatch(/\.\.\.\(voiceBanner\?\.filledFields \|\| \[\]\),/);
+    expect(src).toMatch(
+      /\.\.\.\(voiceBanner\?\.seededPending \? \[\] : voiceBanner\?\.keptFields \|\| \[\]\)/
+    );
+    expect(src).not.toMatch(/voiceWrittenLabels\.length\s*\?\s*voiceWrittenLabels/);
+  });
+
   it('shows the banner as labelled rows, not as stacked sentences', () => {
     // The banner was six full-width sentences, and on a phone a farmer could not tell at a glance
     // what the message would write, what it refused to write, or which day it would file under
