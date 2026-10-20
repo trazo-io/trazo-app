@@ -286,7 +286,12 @@ test.describe('a supervisor turns a crew message into a record', () => {
       timeout: 60_000
     });
 
-    const fillBtn = page.getByRole('button', { name: /fill in \d+ value/i }).first();
+    // BOTH SHAPES. A multi-value offer reads "Fill in 2 values"; a SINGLE-value offer reads
+    // "Fill in Relación NPK" with no digit (`events.voice.pastedNoteApplyNamed`, app #151).
+    // This walk offers exactly one, so the digit-only pattern stopped matching the moment #151
+    // merged, and nothing said so because Playwright does not run in CI. Spec 08 was fixed for
+    // this and spec 07 was not.
+    const fillBtn = page.getByRole('button', { name: /fill in /i }).first();
     await expect(fillBtn, 'the suggestion was not held behind a tap').toBeVisible();
     await fillBtn.click();
 
@@ -330,13 +335,25 @@ test.describe('a supervisor turns a crew message into a record', () => {
     // guaranteed to resolve to the same card as each other, and earlier tests leave their
     // notes pending on purpose (review of app #150, second pass).
     const card = noteCard(page, words);
-    await card.getByRole('combobox', { name: /farm|finca/i }).selectOption({ index: 1 });
+    // BY NAME. This picked index 1, which stopped meaning "Audit Ranch" the moment the
+    // seeder gained a second farm ("Audit Ranch (no blocks)", added for the dead-end test).
+    // An index is a bet on ordering that nothing in the fixture promises.
+    await card
+      .getByRole('combobox', { name: /farm|finca/i })
+      .selectOption({ label: 'Audit Ranch' });
     await card
       .getByRole('combobox', { name: /^block|^bloque/i })
       .selectOption({ label: 'block 1' });
     await card.getByRole('button', { name: /log this/i }).click();
 
-    await expect(page.getByText(/no open season on this parcel/i)).toBeVisible();
+    // THE COPY, READ FROM THE LOCALE, not retyped here. This assertion was
+    // `/no open season on this parcel/i` and silently stopped matching when the panel was reworded
+    // to `events.noOpenSeason.title`; the test then failed for a wording change rather than for a
+    // behaviour change, which is the same class of stale literal as the farm index below.
+    await expect(page.getByText(/no production in progress/i)).toBeVisible();
+    // The way out, not just the diagnosis: naming the obstacle without a next step is half a dead
+    // end. `events.noOpenSeason.startCta`.
+    await expect(page.getByRole('button', { name: /start a production/i })).toBeVisible();
     await expect(page.getByText(/still waiting in field notes/i)).toBeVisible();
   });
 

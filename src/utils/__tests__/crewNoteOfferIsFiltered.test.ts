@@ -94,6 +94,33 @@ describe('the crew-note banner says the important thing first', () => {
     expect(suggestion).toBeLessThan(wouldFill);
   });
 
+  it('keeps the Switch button a button, not a wrapper around half the banner', () => {
+    // THE BUG THE FIRST ATTEMPT AT THIS REORDER SHIPPED. Moving the block by searching for the
+    // first `)}` after `events.voice.switchTo` cut inside the Button: that `)}` closes the
+    // formatMessage, not the block. The Button then never closed and swallowed the date
+    // question, the manual-review text and the Fill/Discard controls, nesting interactive
+    // controls inside a <button>.
+    //
+    // It rendered the SAME TEXT, which is why reading the screen did not catch it. Structure
+    // needs a structural assertion.
+    const open = src.indexOf('onClick={handleVoiceSwitchType}');
+    expect(open).toBeGreaterThan(-1);
+    const close = src.indexOf('</Button>', open);
+    const span = src.slice(open, close);
+    expect(
+      span.split('\n').length,
+      'the Switch button swallowed the rest of the banner again'
+    ).toBeLessThan(20);
+    // Nothing interactive may live inside it.
+    expect(span).not.toMatch(/pastedNoteApply|pastedNoteDiscard|handleVoiceSeededApply/);
+  });
+
+  it('only speaks for a crew message when the words came from one', () => {
+    // "From the crew message" over a pasted note or live dictation attributes the farmer's own
+    // words to somebody else, on a record that names an author.
+    expect(src).toMatch(/seededFromCrewNote &&\s*\n?\s*voiceFilledLabels\.length === 0/);
+  });
+
   it('never claims nothing can be filled while offering an action that fills something', () => {
     // The zero case of `crewNoteOffered` reads "Nothing on this activity to fill from those
     // words", and it was rendered above a "Use South Block" button and a "Switch to Harvest"
