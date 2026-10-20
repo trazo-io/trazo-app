@@ -871,6 +871,26 @@ export function productTotalFromAmounts(
 }
 
 /**
+ * The containers a harvest is counted in: bins, boxes, cajas, totes, lugs.
+ *
+ * ⛔ THIS IS NOT `category === 'count'`. That label is ALSO what the model falls back to for any
+ * unit no dimension recognises, which `voiceRenderGate` pins for
+ * `{ value: 240, unit: 'trees', category: 'count' }`. Selecting the yield on the label put a
+ * tree or plant count ahead of the weight the crew stated: "4,200 pounds from 240 trees" filled
+ * NOTHING (no select option for trees) and "500 kg from 300 plants" offered 300 plants, which is
+ * the unrelated-number defect this whole branch exists to stop, one unit family over
+ * (review of app #159). The container vocabulary is the thing to test, so it is its own
+ * predicate and `categoryForUnit` reads it rather than repeating the list.
+ */
+function isContainerUnit(unit: string | undefined): boolean {
+  return /^(bin|bins|bines?|box|boxes|cajas?|tote|totes|lug|lugs)$/.test(
+    String(unit ?? '')
+      .toLowerCase()
+      .trim()
+  );
+}
+
+/**
  * What PHYSICAL DIMENSION is this unit — decided by the unit, not by the model.
  *
  * 🔴 MEASURED 2026-09-03, from a real dictation. "Sprayed Entrust on the east block. Six fluid
@@ -915,10 +935,8 @@ function categoryForUnit(unit: string | undefined): string | null {
     return 'volume';
   }
   // CONTAINERS, and they are the unit tree fruit is actually harvested in. A bin is not a
-  // weight: 85 bins is 85 bins, and converting it to kilos would be inventing a number. It gets
-  // its own dimension so the harvest branch can tell "85 bins" from "14 tonnes", which is how
-  // the truck's load to the packer came to be offered as the day's yield.
-  if (/^(bin|bins|bines?|box|boxes|cajas?|tote|totes|lug|lugs)$/.test(u)) return 'count';
+  // weight: 85 bins is 85 bins, and converting it to kilos would be inventing a number.
+  if (isContainerUnit(u)) return 'count';
   if (/^(acres?|ha|hectares?|hect[aá]reas?|m2|km2)$/.test(u)) return 'area';
   if (/^(hours?|hrs?|horas?|minutes?|mins?|minutos?)$/.test(u)) return 'time';
   if (
@@ -1545,8 +1563,12 @@ export function mapVoiceDataToFieldValues(
     // about something else (a truck, a bin tare, a contract). If no container was named, a
     // weight is the yield, as before.
     if (templateId === 'harvest' || templateId === 'post_harvest') {
-      const yieldAmount =
-        amounts.find((a) => a.category === 'count') ?? amounts.find((a) => a.category === 'weight');
+      // BY THE UNIT, never by the model's category label. See `isContainerUnit`.
+      const container = amounts.find((a) => isContainerUnit(a.unit));
+      const weight = amounts.find((a) => a.category === 'weight');
+      // A container the select cannot show falls back to the weight rather than blanking the
+      // yield: the crew stated a number either way.
+      const yieldAmount = container && yieldUnitFor(container.unit) ? container : weight;
       const yieldUnit = yieldUnitFor(yieldAmount?.unit);
       // BOTH OR NEITHER. The unit select offers a fixed vocabulary, so a spoken unit it does not
       // carry ("toneladas" is not one of its options, nor is "cubetas") would land as a quantity

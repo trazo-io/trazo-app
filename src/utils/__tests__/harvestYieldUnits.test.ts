@@ -77,6 +77,51 @@ describe('a harvest stated in containers', () => {
     expect(out.yield_unit).toBeUndefined();
   });
 
+  it('ignores a tree or plant count and keeps the weight that was stated', () => {
+    // ⛔ `category: 'count'` IS NOT A CONTAINER. It is also the label the model attaches to any
+    // unit no dimension recognises, which `voiceRenderGate` already pins for
+    // `{ value: 240, unit: 'trees', category: 'count' }`. Selecting on the label put the tree
+    // count ahead of the weight the crew actually stated: with "trees" the yield came out BLANK
+    // (no select option), and with "plants" it came out as 300 plants instead of 500 kg, which
+    // is the same unrelated-number defect this file exists for, one unit family over
+    // (review of app #159).
+    const trees = detected(
+      parsed({
+        detected_amounts: [
+          { value: 4200, unit: 'lb', category: 'weight' },
+          { value: 240, unit: 'trees', category: 'count' }
+        ]
+      })
+    );
+    expect(trees.yield_quantity, 'a tree count displaced the weight').toBe(4200);
+    expect(trees.yield_unit).toBe('lbs');
+
+    const plants = detected(
+      parsed({
+        detected_amounts: [
+          { value: 500, unit: 'kg', category: 'weight' },
+          { value: 300, unit: 'plants', category: 'count' }
+        ]
+      })
+    );
+    expect(plants.yield_quantity, 'a plant count was offered as the yield').toBe(500);
+    expect(plants.yield_unit).toBe('kg');
+  });
+
+  it('still prefers a container when one was counted, whatever else is in the message', () => {
+    const out = detected(
+      parsed({
+        detected_amounts: [
+          { value: 14, unit: 'toneladas', category: 'weight' },
+          { value: 120, unit: 'bines', category: 'count' },
+          { value: 240, unit: 'trees', category: 'count' }
+        ]
+      })
+    );
+    expect(out.yield_quantity).toBe(120);
+    expect(out.yield_unit).toBe('bins');
+  });
+
   it('post-harvest processing follows the same rule', () => {
     const out = detected(parsed({ type: 'post_harvest', detected_amounts: ['40 bins'] }));
     expect(out.yield_quantity).toBe(40);
