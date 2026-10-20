@@ -19,7 +19,7 @@ import React from 'react';
 import { readdirSync, readFileSync, statSync } from 'fs';
 import { join } from 'path';
 import { describe, it, expect, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, renderHook, screen } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { createIntl, IntlProvider } from 'react-intl';
 // Relative, not the `theme/*` tsconfig alias: vitest.config.ts does not map that one.
@@ -27,6 +27,7 @@ import theme from '../../../theme/theme';
 import { StandardPage, StandardStepper } from '../StandardComponents';
 import enUS from '../../../i18n/lang/en-US.json';
 import { backToLabel } from '../../../utils/backToLabel';
+import { useFurthestStep } from '../../../hooks/useFurthestStep';
 
 const renderUi = (ui: React.ReactElement) =>
   render(
@@ -77,6 +78,18 @@ describe('backToLabel', () => {
   });
 });
 
+describe('useFurthestStep', () => {
+  it('grows with the current step and never shrinks when going back', () => {
+    const { result, rerender } = renderHook(({ step }) => useFurthestStep(step), {
+      initialProps: { step: 0 }
+    });
+    rerender({ step: 1 });
+    rerender({ step: 2 });
+    rerender({ step: 0 });
+    expect(result.current).toBe(2);
+  });
+});
+
 describe('StandardStepper: finished steps are a way back', () => {
   it('makes only the steps BEHIND the current one buttons', () => {
     renderUi(
@@ -117,6 +130,37 @@ describe('StandardStepper: finished steps are a way back', () => {
     for (const button of screen.getAllByRole('button')) {
       expect(button.querySelectorAll('div, p, h1, h2, h3, h4, h5, h6')).toHaveLength(0);
     }
+  });
+
+  it('offers the NEXT step forward once it has been reached, and nothing further', () => {
+    const onStepClick = vi.fn();
+    renderUi(
+      <StandardStepper
+        steps={[...STEPS, { title: 'Review' }]}
+        currentStep={0}
+        furthestStep={3}
+        allowStepClick
+        onStepClick={onStepClick}
+      />
+    );
+    // Step 2 is one Continue away, so its validation runs; steps 3 and 4 would skip step 2's.
+    const buttons = screen.getAllByRole('button');
+    expect(buttons).toHaveLength(1);
+    fireEvent.click(buttons[0]);
+    expect(onStepClick).toHaveBeenCalledWith(1);
+  });
+
+  it('keeps forward steps closed until they have been reached', () => {
+    renderUi(
+      <StandardStepper
+        steps={STEPS}
+        currentStep={0}
+        furthestStep={0}
+        allowStepClick
+        onStepClick={() => {}}
+      />
+    );
+    expect(screen.queryAllByRole('button')).toHaveLength(0);
   });
 
   it('renders no buttons at all unless the caller opts in', () => {
@@ -212,9 +256,20 @@ describe('Multi-step forms: the two Backs never share a label', () => {
     expect(steppers.filter((f) => !listed.has(f))).toEqual([]);
   });
 
-  it('lets the activity wizard stepper take the farmer back to a finished step', () => {
-    expect(read(WIZARDS[0].file)).toMatch(
-      /<StandardStepper[\s\S]*?allowStepClick[\s\S]*?onStepClick=\{setActiveStep\}/
-    );
+  it('lets every stepper return to a step already visited, through its own Continue', () => {
+    // Reported 2026-10-19: back on step 1 after visiting step 2, step 2 was not clickable.
+    const steppers = WIZARDS.map((w) => w.file).filter((f) => read(f).includes('<StandardStepper'));
+    expect(steppers.length).toBe(5);
+    for (const file of steppers) {
+      const tag = read(file).match(/<StandardStepper\b[\s\S]*?\/>/)?.[0] ?? '';
+      expect(tag, file).toContain('furthestStep={furthestStep}');
+      // Forward must not be a bare setter: that skips the step's validation.
+      expect(tag, file).not.toMatch(/onStepClick=\{\(?step\)? => setCurrentStep\(step\)\}/);
+      expect(tag, file).not.toMatch(/onStepClick=\{set(Active|Current)Step\}/);
+    }
+    const newEvent = read(WIZARDS[0].file);
+    expect(newEvent).toMatch(/onStepClick=\{handleStepClick\}/);
+    expect(newEvent).toMatch(/basicMethods\.handleSubmit\(onSubmitBasic\)\(\)/);
+    expect(newEvent).toMatch(/onClick=\{continueFromDetails\}/);
   });
 });

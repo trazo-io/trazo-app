@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useFurthestStep } from 'hooks/useFurthestStep';
 import {
   VStack,
   HStack,
@@ -189,6 +190,7 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
 }) => {
   const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
+  const furthestStep = useFurthestStep(currentStep);
   const [savedFormData, setSavedFormData] = useState<Partial<FormStateData>>({});
   const intl = useIntl();
   // US-first unit default — see useMeasurementSystem. Walnuts, almonds and citrus are
@@ -489,7 +491,8 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
               currentStep={currentStep}
               completedSteps={getCompletedSteps()}
               allowStepClick={true}
-              onStepClick={goToStep}
+              furthestStep={furthestStep}
+              onStepClick={(step) => (step < currentStep ? goToStep(step) : nextStep())}
             />
 
             {/* Step 1: Production Information */}

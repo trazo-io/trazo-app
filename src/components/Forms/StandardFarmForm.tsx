@@ -16,6 +16,7 @@
  *   recordkeeping language.
  */
 import React, { useState, useEffect } from 'react';
+import { useFurthestStep } from 'hooks/useFurthestStep';
 import {
   VStack,
   HStack,
@@ -252,6 +253,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
   preFormAlert
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
+  const furthestStep = useFurthestStep(currentStep);
   const [newCrop, setNewCrop] = useState('');
   // Operational field states
   const [newWaterSource, setNewWaterSource] = useState('');
@@ -572,7 +574,8 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
         currentStep={currentStep}
         completedSteps={getCompletedSteps()}
         allowStepClick={true}
-        onStepClick={(step) => setCurrentStep(step)}
+        furthestStep={furthestStep}
+        onStepClick={(step) => (step < currentStep ? setCurrentStep(step) : nextStep())}
       />
 
       <FormProvider {...methods}>
