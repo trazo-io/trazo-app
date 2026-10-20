@@ -81,7 +81,11 @@ describe('voice → wizard merge contract', () => {
     const result = mapVoiceDataToFieldValues(data, mapping.templateId);
     const detected = Object.fromEntries(result.overriddenFields.map((k) => [k, result.values[k]]));
     expect(detected.yield_quantity).toBe(4200);
-    expect(detected.yield_unit).toBe('lb');
+    // `lbs`, not `lb`: this used to pin the SPOKEN unit, written through raw. The yield unit is a
+    // select whose options are kg/tons/lbs/boxes/bins/plants/seeds, so `lb` was a value it has no
+    // option for, and so was every Spanish unit the crew speaks. The expectation moved to the
+    // vocabulary the form actually carries.
+    expect(detected.yield_unit).toBe('lbs');
   });
 
   it('template defaults are never in overriddenFields', () => {

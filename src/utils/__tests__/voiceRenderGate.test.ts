@@ -5,7 +5,7 @@
  * Irrigation at step 0, speaks about a harvest at step 1:
  *
  *   VoiceEventCapture   "I understood: Harvest"
- *   mapper              yield_quantity: 4200, yield_unit: 'lb'
+ *   mapper              yield_quantity: 4200, yield_unit: 'lbs'
  *   registry            yield_quantity is visibleForSubtypes ['HA','PH','PL'] → no input
  *   ProductionTab:675   seeds yield_quantity into defaultValues for ALL 16 subtypes
  *   ProductionTab:1394  emits it with no subtype gate
@@ -107,7 +107,9 @@ describe('voice render gate', () => {
       'HA'
     );
     expect(kept.yield_quantity).toBe(4200);
-    expect(kept.yield_unit).toBe('lb');
+    // `lbs`, not the spoken `lb`: the yield unit is a select whose options are
+    // kg/tons/lbs/boxes/bins/plants/seeds, and the spoken word used to be written through raw.
+    expect(kept.yield_unit).toBe('lbs');
   });
 
   it('drops chemical fields heard while the form is a production activity', () => {
@@ -1538,7 +1540,7 @@ describe('newly routed activities (2026-08-26)', () => {
       'PH'
     );
     expect(ph.kept.yield_quantity).toBe(8000);
-    expect(ph.kept.yield_unit).toBe('lb');
+    expect(ph.kept.yield_unit).toBe('lbs');
   });
 
   it('TP / PO route without inventing a measurement', () => {
