@@ -287,9 +287,10 @@ describe('the offer says what it would write, and where the words came from', ()
   it('names each offered VALUE, not only the field', () => {
     // MEASURED 2026-10-08: "Would fill: Equipment Hours" over a crew note that said "2 horas".
     // The operator was asked to accept a number they could not see.
-    expect(src).toMatch(
-      /fields: voiceBanner\.seededPending\s*\?\s*voiceOfferedSummary\s*:\s*voiceFilledLabels\.join\(', '\)/
-    );
+    // The sentence a screen reader hears: the offer while it stands, and once applied everything
+    // the message put on the form, which can include a block a separate tap wrote first.
+    expect(src).toMatch(/fields: voiceBanner\.seededPending\s*\?\s*voiceOfferedSummary/);
+    expect(src).toMatch(/voiceWrittenLabels\s*:\s*voiceFilledLabels\s*\)\.join\(', '\)/);
     // The list is built once and used twice: as chips on screen and as that sentence for a
     // screen reader. Assembling them separately is how the two come to disagree, so the sentence
     // is asserted to be a join of the chips rather than its own construction.
@@ -301,9 +302,10 @@ describe('the offer says what it would write, and where the words came from', ()
     expect(src).toMatch(
       /const voiceOfferedSummary = useMemo\(\(\) => voiceOfferedChips\.join\(', '\)/
     );
-    expect(src).toMatch(
-      /values=\{\s*voiceBanner\.seededPending\s*\?\s*voiceOfferedChips\s*:\s*voiceFilledLabels\s*\}/
-    );
+    // While the offer stands the chips are the offer; once it is applied they are everything the
+    // message put on the form, which can include a block a separate tap wrote first.
+    expect(src).toMatch(/values=\{\s*voiceBanner\.seededPending\s*\?\s*voiceOfferedChips/);
+    expect(src).toMatch(/voiceWrittenLabels\.length\s*\?\s*voiceWrittenLabels/);
   });
 
   it('calls a crew message a crew message, not a pasted note', () => {
