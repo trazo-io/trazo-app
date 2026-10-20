@@ -146,6 +146,9 @@ interface StandardFinishProductionFormProps {
     }
   ) => void;
   onCancel: () => void;
+  /** Header Back label naming where `onCancel` goes. The footer has its own previous-step
+      control, so a bare "Back" up here is ambiguous. Defaults to "Back". */
+  backLabel?: React.ReactNode;
   /** Prefill values, in the form's own string-shaped state — NOT the zod OUTPUT type.
       `FinishProductionFormData` has `production_amount: number` because the schema
       transforms it, but everything here is fed straight into HTML inputs and is read
@@ -173,6 +176,7 @@ interface StandardFinishProductionFormProps {
 export const StandardFinishProductionForm: React.FC<StandardFinishProductionFormProps> = ({
   onSubmit,
   onCancel,
+  backLabel,
   initialData,
   isLoading = false,
   isEdit = false,
@@ -453,6 +457,7 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
       }${parcelName ? ` in ${parcelName}` : ''}`}
       showBackButton
       onBack={onCancel}
+      backLabel={backLabel}
       rightAction={
         <Badge colorScheme="green" variant="subtle" px={3} py={1} borderRadius="full">
           <HStack spacing={1}>
@@ -842,7 +847,7 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                   {/* Step Navigation */}
                   <HStack spacing={4} justify="space-between" pt={4}>
                     <StandardButton variant="outline" onClick={previousStep}>
-                      {intl.formatMessage({ id: 'common.back' })}
+                      {intl.formatMessage({ id: 'common.previousStep' })}
                     </StandardButton>
 
                     <StandardButton

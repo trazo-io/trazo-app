@@ -116,6 +116,7 @@ import {
 } from 'config/activityVerbs';
 import { formatFieldValue, getFieldConfig, getSubtypes } from 'config/events';
 import { localizeFieldValue } from 'utils/fieldDisplayUtils';
+import { backToLabel } from 'utils/backToLabel';
 import { buildVoiceFieldRequests } from 'config/events/voiceFields';
 import { ActivitySubtypeChooser } from 'components/Events/ActivitySubtypeChooser';
 import { VerbPickerGrid } from 'components/Events/VerbPickerGrid';
@@ -2915,6 +2916,10 @@ function NewEvent({ isEdit = false, eventId = null }) {
   const handleBack = () => {
     navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/`);
   };
+  // The header button LEAVES the wizard; the footer one goes back a step. Both used to read
+  // "Back", so a farmer on step 2 who wanted step 1 clicked the one at the top and landed on
+  // the parcel page. The header names its destination; the footer says "Previous step".
+  const backToParcelLabel = backToLabel(intl, voiceParcel?.name, 'common.backToParcel');
 
   // A plan item titles the page with the practice's own name ("Annual Structural Pruning"),
   // which is more specific than any verb the grid could offer. An in-page pick wins over the
@@ -2939,6 +2944,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
         title={intl.formatMessage({ id: 'events.locked.title' })}
         description={intl.formatMessage({ id: 'events.locked.description' })}
         showBackButton
+        backLabel={backToParcelLabel}
         onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/`)}>
         {/*
           The actions sit BELOW the alert, not inside it.
@@ -2981,6 +2987,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
       <StandardPage
         title={createPageTitle}
         showBackButton
+        backLabel={backToParcelLabel}
         onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/`)}>
         <StandardCard variant="outline">
           <StandardEmptyState
@@ -3078,6 +3085,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
       // Net effect at 1440px: the form goes from 591px to 1024px.
       contentMaxW="5xl"
       onBack={handleBack}
+      backLabel={backToParcelLabel}
       rightAction={
         <Badge colorScheme="green" variant="subtle" px={3} py={1} borderRadius="full">
           <HStack spacing={1}>
@@ -3174,6 +3182,11 @@ function NewEvent({ isEdit = false, eventId = null }) {
               steps={steps}
               currentStep={activeStep}
               completedSteps={Array.from({ length: activeStep }, (_, i) => i)}
+              allowStepClick
+              // A finished step is a way back to it, so step 1 is reachable from the top of a
+              // long step 2. StandardStepper only offers steps behind the current one: Continue
+              // is where each step is validated, and a forward jump would skip it.
+              onStepClick={setActiveStep}
             />
             <Flex justify="flex-end">
               <AutoSaveStatus lastSaved={draftLastSaved} isSaving={isSavingDraft} />
@@ -4157,7 +4170,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                         size={{ base: 'md', md: 'lg' }}
                         order={{ base: 3, md: 1 }}
                         w={{ base: '100%', md: 'auto' }}>
-                        {intl.formatMessage({ id: 'common.back' }) || 'Previous'}
+                        {intl.formatMessage({ id: 'common.previousStep' })}
                       </StandardButton>
                       <Flex
                         direction={{ base: 'row', md: 'row' }}
@@ -4327,7 +4340,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                           size={{ base: 'md', md: 'lg' }}
                           order={{ base: 3, md: 1 }}
                           w={{ base: '100%', md: 'auto' }}>
-                          {intl.formatMessage({ id: 'common.back' }) || 'Previous'}
+                          {intl.formatMessage({ id: 'common.previousStep' })}
                         </StandardButton>
                         <Flex
                           direction={{ base: 'row', md: 'row' }}

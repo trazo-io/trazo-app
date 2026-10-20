@@ -35,6 +35,7 @@ import { useCreateFarmMutation, useEditFarmMutation, useGetFarmQuery } from 'sto
 import { addCompanyFarm } from 'store/features/companySlice';
 import { PlanLimitAlert } from 'components/Subscription/PlanLimitAlert';
 import { getLimit, isAtLimit } from 'utils/subscriptionLimits';
+import { backToLabel } from 'utils/backToLabel';
 
 interface Props {
   isEdit?: boolean;
@@ -231,6 +232,10 @@ function AddFarm({ isEdit = false }: Props) {
       navigate('/admin/dashboard');
     }
   };
+  // Names where handleCancel goes: the form's footer has its own previous-step control.
+  const backLabel = isEdit
+    ? backToLabel(intl, establishmentData?.name, 'common.backToFarm')
+    : backToLabel(intl, null, 'common.backToHome');
 
   // Transform establishment data for the form
   const getInitialData = () => {
@@ -319,7 +324,8 @@ function AddFarm({ isEdit = false }: Props) {
       <StandardPage
         title={intl.formatMessage({ id: 'farm.form.page.editTitle' })}
         showBackButton
-        onBack={handleCancel}>
+        onBack={handleCancel}
+        backLabel={backLabel}>
         <StandardPageLoading />
       </StandardPage>
     );
@@ -330,6 +336,7 @@ function AddFarm({ isEdit = false }: Props) {
       <StandardFarmForm
         onSubmit={handleSubmit}
         onCancel={handleCancel}
+        backLabel={backLabel}
         initialData={getInitialData()}
         isLoading={isCreating || isUpdating}
         isEdit={isEdit}

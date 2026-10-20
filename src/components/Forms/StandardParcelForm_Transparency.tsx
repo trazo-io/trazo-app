@@ -147,6 +147,9 @@ interface TransparencyParcelFormData {
 interface StandardParcelFormTransparencyProps {
   onSubmit: (data: TransparencyParcelFormData) => void;
   onCancel: () => void;
+  /** Header Back label naming where `onCancel` goes. The footer has its own previous-step
+      control, so a bare "Back" up here is ambiguous. Defaults to "Back". */
+  backLabel?: React.ReactNode;
   initialData?: Partial<TransparencyParcelFormData>;
   isLoading?: boolean;
   isEdit?: boolean;
@@ -160,6 +163,7 @@ interface StandardParcelFormTransparencyProps {
 export const StandardParcelFormTransparency: React.FC<StandardParcelFormTransparencyProps> = ({
   onSubmit,
   onCancel,
+  backLabel,
   initialData,
   isLoading = false,
   isEdit = false,
@@ -562,7 +566,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
         .filter(Boolean)
         .join(' ')}
       showBackButton
-      onBack={onCancel}>
+      onBack={onCancel}
+      backLabel={backLabel}>
       {/* Optional pre-flight alert (e.g., subscription limit warning) */}
       {preFormAlert}
 
@@ -880,7 +885,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
                     onClick={previousStep}>
-                    {intl.formatMessage({ id: 'common.back' })}
+                    {intl.formatMessage({ id: 'common.previousStep' })}
                   </StandardButton>
 
                   <HStack spacing={3}>
@@ -961,7 +966,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
                     onClick={previousStep}>
-                    {intl.formatMessage({ id: 'common.back' })}
+                    {intl.formatMessage({ id: 'common.previousStep' })}
                   </StandardButton>
 
                   <HStack spacing={3}>
@@ -1014,7 +1019,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
                     onClick={previousStep}>
-                    {intl.formatMessage({ id: 'common.back' })}
+                    {intl.formatMessage({ id: 'common.previousStep' })}
                   </StandardButton>
 
                   <HStack spacing={3}>

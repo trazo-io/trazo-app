@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { computeHarvestPrefill } from 'utils/harvestPrefill';
+import { backToLabel } from 'utils/backToLabel';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
@@ -207,12 +208,15 @@ function FinishProduction() {
   const handleCancel = () => {
     navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/`);
   };
+  // Names where handleCancel goes: the form's footer has its own previous-step control.
+  const backLabel = backToLabel(intl, parcelName, 'common.backToParcel');
 
   return (
     <WriteAccessGuard>
       <StandardFinishProductionForm
         onSubmit={handleSubmit}
         onCancel={handleCancel}
+        backLabel={backLabel}
         isLoading={isLoading}
         initialData={harvestPrefill}
         productName={productName}

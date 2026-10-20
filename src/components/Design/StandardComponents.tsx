@@ -92,6 +92,14 @@ interface StandardPageProps {
   description?: ReactNode;
   showBackButton?: boolean;
   onBack?: () => void;
+  /**
+   * Names where Back goes ("Back to River Block"). Defaults to a bare "Back", which is
+   * right only when nothing else on the page also goes back. A multi-step form has its own
+   * previous-step control, and two buttons both reading "Back" sent a farmer out of the
+   * activity wizard when they meant to return to step 1. ReactNode for the same reason as
+   * `description`: `formatMessage` with values is typed `string | ReactNode[]`.
+   */
+  backLabel?: ReactNode;
   rightAction?: ReactNode;
   /**
    * NARROWS the page's column. Omit it — every page shares `PAGE_MAX_W` below, applied to the
@@ -123,6 +131,7 @@ export const StandardPage = ({
   description,
   showBackButton = false,
   onBack,
+  backLabel,
   rightAction,
   contentMaxW
 }: StandardPageProps) => {
@@ -133,6 +142,11 @@ export const StandardPage = ({
   // Determine if we need the full hero or just a minimal header
   const hasHeroContent = title || description;
   const needsMinimalHeader = showBackButton && !hasHeroContent;
+  const backButtonLabel = backLabel || intl.formatMessage({ id: 'common.back' });
+  // A named destination can be a long parcel name, and buttons do not wrap by default, so
+  // it would overflow the column instead. Applied to all three Back buttons below.
+  // NEVER add minH here: StandardButton's own 44px is the touch floor.
+  const backButtonWrap = { whiteSpace: 'normal', h: 'auto', py: 1.5, textAlign: 'left' } as const;
 
   return (
     <Box bg={bgColor} minH="100vh">
@@ -151,8 +165,9 @@ export const StandardPage = ({
               variant="outline"
               leftIcon={<FaChevronLeft />}
               onClick={onBack}
-              size="sm">
-              {intl.formatMessage({ id: 'common.back' })}
+              size="sm"
+              {...backButtonWrap}>
+              {backButtonLabel}
             </StandardButton>
           </Container>
         </Box>
@@ -183,8 +198,9 @@ export const StandardPage = ({
                       leftIcon={<FaChevronLeft />}
                       onClick={onBack}
                       size="sm"
+                      {...backButtonWrap}
                       mb={1}>
-                      {intl.formatMessage({ id: 'common.back' })}
+                      {backButtonLabel}
                     </StandardButton>
                   )}
 
@@ -247,8 +263,9 @@ export const StandardPage = ({
                         leftIcon={<FaChevronLeft />}
                         onClick={onBack}
                         size="sm"
-                        minH="44px">
-                        {intl.formatMessage({ id: 'common.back' })}
+                        minH="44px"
+                        {...backButtonWrap}>
+                        {backButtonLabel}
                       </Button>
                     </Box>
                   )}
@@ -555,45 +572,61 @@ export const StandardStepper = ({
           maxW={manySteps ? 'none' : '800px'}
           mx="auto"
           px={{ base: 2, md: manySteps ? 4 : 0 }}>
-          {steps.map((step, index) => (
-            <React.Fragment key={index}>
-              <VStack
-                spacing={2}
-                align="center"
-                flex={manySteps ? '0 0 auto' : '1'}
-                minW={manySteps ? '80px' : 'auto'}
-                cursor={allowStepClick && index <= currentStep ? 'pointer' : 'default'}
-                onClick={() => allowStepClick && index <= currentStep && onStepClick?.(index)}
-                _hover={allowStepClick && index <= currentStep ? { opacity: 0.8 } : {}}
-                transition="all 0.3s ease">
-                <Circle
-                  size={circleSize}
-                  /*
-                   * green.700 / green.800, not green.500 / green.400. The circle carries a
-                   * WHITE step number or check, and white on green.500 is 2.78:1 — on
-                   * green.400 it is worse. The current step is the DARKER of the two so
-                   * "where am I" is not signalled by hue alone.
-                   */
-                  bg={
-                    completedSteps.includes(index) || index < currentStep
-                      ? 'green.700'
-                      : index === currentStep
-                      ? 'green.800'
-                      : 'gray.200'
-                  }
-                  color={index <= currentStep ? 'white' : 'gray.600'}
-                  fontSize={{ base: 'sm', md: 'md' }}
-                  fontWeight="bold"
-                  boxShadow={index === currentStep ? 'lg' : 'md'}
-                  transition="all 0.3s">
-                  {completedSteps.includes(index) || index < currentStep ? (
-                    <Icon as={step.icon || FaCheckCircle} boxSize={iconSize} />
-                  ) : (
-                    <Text>{index + 1}</Text>
-                  )}
-                </Circle>
-                <VStack spacing={1} align="center">
-                  {/* A step label is wayfinding, not user data — never ellipsis it.
+          {steps.map((step, index) => {
+            // Only a step already behind the farmer is a link back. The current step goes
+            // nowhere, and a later one would skip the validation that Continue runs.
+            // A real <button>, not a clickable div: a div is invisible to the keyboard and to
+            // a screen reader, so the shortcut existed for mouse users only.
+            const isClickable = allowStepClick && !!onStepClick && index < currentStep;
+            return (
+              <React.Fragment key={index}>
+                <VStack
+                  {...(isClickable
+                    ? {
+                        as: 'button' as const,
+                        type: 'button' as const,
+                        onClick: () => onStepClick?.(index)
+                      }
+                    : {})}
+                  aria-current={index === currentStep ? 'step' : undefined}
+                  spacing={2}
+                  align="center"
+                  flex={manySteps ? '0 0 auto' : '1'}
+                  minW={manySteps ? '80px' : 'auto'}
+                  borderRadius="lg"
+                  cursor={isClickable ? 'pointer' : 'default'}
+                  _hover={isClickable ? { opacity: 0.8 } : {}}
+                  _focusVisible={isClickable ? { outline: 'none', boxShadow: 'outline' } : {}}
+                  transition="all 0.3s ease">
+                  <Circle
+                    as="span"
+                    size={circleSize}
+                    /*
+                     * green.700 / green.800, not green.500 / green.400. The circle carries a
+                     * WHITE step number or check, and white on green.500 is 2.78:1 — on
+                     * green.400 it is worse. The current step is the DARKER of the two so
+                     * "where am I" is not signalled by hue alone.
+                     */
+                    bg={
+                      completedSteps.includes(index) || index < currentStep
+                        ? 'green.700'
+                        : index === currentStep
+                        ? 'green.800'
+                        : 'gray.200'
+                    }
+                    color={index <= currentStep ? 'white' : 'gray.600'}
+                    fontSize={{ base: 'sm', md: 'md' }}
+                    fontWeight="bold"
+                    boxShadow={index === currentStep ? 'lg' : 'md'}
+                    transition="all 0.3s">
+                    {completedSteps.includes(index) || index < currentStep ? (
+                      <Icon as={step.icon || FaCheckCircle} boxSize={iconSize} />
+                    ) : (
+                      <Text as="span">{index + 1}</Text>
+                    )}
+                  </Circle>
+                  <VStack as="span" spacing={1} align="center">
+                    {/* A step label is wayfinding, not user data — never ellipsis it.
                       "Event Deta…" tells the farmer less than the step number does.
                       Pass an explicit `shortTitle` when a step name is too long for a
                       phone column; it applies BELOW `md` only, so the full name still
@@ -602,65 +635,68 @@ export const StandardStepper = ({
                       silently left the 80px smd cap in force on desktop. Swapping the two
                       spans by `display` rather than a breakpoint hook keeps it flash-free,
                       and a `display: none` span is not announced, so no double-read. */}
-                  <Text
-                    fontSize={titleFontSize}
-                    fontWeight="bold"
-                    color={index <= currentStep ? 'green.700' : 'gray.600'}
-                    textAlign="center"
-                    lineHeight="1.2"
-                    whiteSpace="normal"
-                    noOfLines={2}
-                    maxW={manySteps ? '80px' : { base: '84px', smd: '110px', md: 'none' }}>
-                    {step.shortTitle ? (
-                      <>
-                        <Box as="span" display={{ base: 'inline', md: 'none' }}>
-                          {step.shortTitle}
-                        </Box>
-                        <Box as="span" display={{ base: 'none', md: 'inline' }}>
-                          {step.title}
-                        </Box>
-                      </>
-                    ) : (
-                      step.title
-                    )}
-                  </Text>
-                  {step.description && !manySteps && (
                     <Text
-                      fontSize="xs"
-                      color="gray.500"
+                      as="span"
+                      fontSize={titleFontSize}
+                      fontWeight="bold"
+                      color={index <= currentStep ? 'green.700' : 'gray.600'}
                       textAlign="center"
-                      display={{ base: 'none', md: 'block' }}
-                      lineHeight="1.2">
-                      {step.description}
+                      lineHeight="1.2"
+                      whiteSpace="normal"
+                      noOfLines={2}
+                      maxW={manySteps ? '80px' : { base: '84px', smd: '110px', md: 'none' }}>
+                      {step.shortTitle ? (
+                        <>
+                          <Box as="span" display={{ base: 'inline', md: 'none' }}>
+                            {step.shortTitle}
+                          </Box>
+                          <Box as="span" display={{ base: 'none', md: 'inline' }}>
+                            {step.title}
+                          </Box>
+                        </>
+                      ) : (
+                        step.title
+                      )}
                     </Text>
-                  )}
+                    {step.description && !manySteps && (
+                      <Text
+                        as="span"
+                        fontSize="xs"
+                        color="gray.500"
+                        textAlign="center"
+                        display={{ base: 'none', md: 'block' }}
+                        lineHeight="1.2">
+                        {step.description}
+                      </Text>
+                    )}
+                  </VStack>
                 </VStack>
-              </VStack>
-              {index < steps.length - 1 && (
-                // Columns align at the top (see HStack align) so a two-line label can't
-                // shove its circle off the connector. The connector therefore carries the
-                // circle's own height and centres its rule inside it — margin offsets do
-                // not work here, Stack's `& > * ~ *` spacing rule outranks a child's mt.
-                // It must NOT take an equal `flex: 1` share on a phone: with 4 steps that
-                // gave the rules as much width as the labels and squeezed every column to
-                // 36px. The connector earns its stretch only once there is room for it.
-                <Flex
-                  flex={manySteps ? '0 0 40px' : { base: '0 1 16px', md: '1' }}
-                  w={manySteps ? '40px' : 'auto'}
-                  h={circleSize}
-                  align="center"
-                  mx={{ base: 0.5, md: 2 }}>
-                  <Box
-                    height="3px"
-                    w="100%"
-                    bg={index < currentStep ? 'green.700' : 'gray.200'}
-                    borderRadius="full"
-                    transition="all 0.3s"
-                  />
-                </Flex>
-              )}
-            </React.Fragment>
-          ))}
+                {index < steps.length - 1 && (
+                  // Columns align at the top (see HStack align) so a two-line label can't
+                  // shove its circle off the connector. The connector therefore carries the
+                  // circle's own height and centres its rule inside it — margin offsets do
+                  // not work here, Stack's `& > * ~ *` spacing rule outranks a child's mt.
+                  // It must NOT take an equal `flex: 1` share on a phone: with 4 steps that
+                  // gave the rules as much width as the labels and squeezed every column to
+                  // 36px. The connector earns its stretch only once there is room for it.
+                  <Flex
+                    flex={manySteps ? '0 0 40px' : { base: '0 1 16px', md: '1' }}
+                    w={manySteps ? '40px' : 'auto'}
+                    h={circleSize}
+                    align="center"
+                    mx={{ base: 0.5, md: 2 }}>
+                    <Box
+                      height="3px"
+                      w="100%"
+                      bg={index < currentStep ? 'green.700' : 'gray.200'}
+                      borderRadius="full"
+                      transition="all 0.3s"
+                    />
+                  </Flex>
+                )}
+              </React.Fragment>
+            );
+          })}
         </HStack>
       </Box>
     </StandardCard>

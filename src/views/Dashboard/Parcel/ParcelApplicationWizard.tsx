@@ -13,6 +13,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { formatDateOnly } from 'utils/dateOnly';
+import { backToLabel } from 'utils/backToLabel';
 import { transitionState } from './transitionState';
 import CertifiedBranchCard from './CertifiedBranchCard';
 import {
@@ -64,6 +65,7 @@ import {
   useSaveParcelApplicationMutation
 } from 'store/api/parcelApplicationApi';
 import { useGetOSPsQuery } from 'store/api/ospApi';
+import { useGetParcelQuery } from 'store/api/productApi';
 import { useGetFarmDocumentsQuery, useUploadFarmDocumentMutation } from 'store/api/documentsApi';
 import { apiErrorMessage } from 'utils/apiErrorMessage';
 import { OSP_MODULE_PDF_URL } from 'config';
@@ -607,6 +609,12 @@ const ParcelApplicationWizard = () => {
     { skip: !companyId || !farmId }
   );
   const ospId = osps?.[0]?.id;
+  // For the header Back label only. Same args as the parcel page, so this is normally a
+  // cache hit on the page the farmer just came from.
+  const { data: parcel } = useGetParcelQuery(
+    { parcelId, farmId, companyId: currentCompany?.id },
+    { skip: !parcelId || !farmId || currentCompany?.id == null }
+  );
 
   const definition = data?.definition;
   const [answers, setAnswers] = useState<ModuleAnswers>({});
@@ -1030,6 +1038,8 @@ const ParcelApplicationWizard = () => {
       description={intl.formatMessage({ id: 'parcelApp.description' })}
       showBackButton
       onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}
+      // Names the destination: the page nav below has its own previous-page control.
+      backLabel={backToLabel(intl, parcel?.name, 'common.backToParcel')}
       rightAction={
         <HStack spacing={3}>
           {status ? (
@@ -1101,7 +1111,7 @@ const ParcelApplicationWizard = () => {
             leftIcon={<FaChevronLeft />}
             isDisabled={clamped === 0}
             onClick={() => goTo(clamped - 1)}>
-            {intl.formatMessage({ id: 'common.back' })}
+            {intl.formatMessage({ id: 'common.previousStep' })}
           </StandardButton>
           {clamped < pages.length - 1 ? (
             <StandardButton

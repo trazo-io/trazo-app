@@ -437,7 +437,9 @@ function AddCompany({ isEdit = false }) {
       title={intl.formatMessage({ id: 'company.form.page.title' })}
       description={intl.formatMessage({ id: 'company.form.page.description' })}
       showBackButton
-      onBack={handleCancel}>
+      onBack={handleCancel}
+      // Names where handleCancel goes: the footer has its own previous-step control.
+      backLabel={intl.formatMessage({ id: 'common.backToHome' })}>
       {/* Modern Progress Stepper */}
       <StandardStepper
         steps={steps}
@@ -635,7 +637,7 @@ function AddCompany({ isEdit = false }) {
                     leftIcon={<FaChevronLeft />}
                     onClick={previousStep}>
                     {intl.formatMessage({
-                      id: isMobile ? 'company.form.btn.back' : 'company.form.btn.backToIdentity'
+                      id: isMobile ? 'common.previousStep' : 'company.form.btn.backToIdentity'
                     })}
                   </StandardButton>
 

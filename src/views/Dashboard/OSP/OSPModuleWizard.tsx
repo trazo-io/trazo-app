@@ -1173,7 +1173,7 @@ const OSPModuleWizard = () => {
                     minH="44px"
                     onClick={() => setStepIndex((i) => Math.max(i - 1, 0))}
                     isDisabled={clampedStep === 0 && !onReview}>
-                    {intl.formatMessage({ id: 'osp.wizard.back' })}
+                    {intl.formatMessage({ id: 'common.previousStep' })}
                   </StandardButton>
                   {onReview ? (
                     <StandardButton minH="44px" onClick={handleComplete} isLoading={saving}>
