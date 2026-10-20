@@ -145,9 +145,15 @@ async function fields(page: Page): Promise<Record<string, string>> {
   );
   const out: Record<string, string> = {};
   for (const [label, value, name] of raw as [string, string, string][]) {
+    // UNTIL IT IS UNIQUE, not once, and `name` is not a tiebreaker on its own: a radio group's
+    // inputs share one `name` by design, so a third control under the same label and name would
+    // have collided on the computed key and overwritten the second. That is the same silent
+    // misread one level down (review of app #157). Nothing on the irrigation form does this
+    // today; the point is that this reader cannot lose a control whatever form it is given.
     let key = label;
-    if (key in out) {
-      key = name ? `${label} [${name}]` : `${label} [${Object.keys(out).length}]`;
+    for (let n = 2; key in out; n += 1) {
+      const tag = name ? (n === 2 ? name : `${name} ${n}`) : String(n);
+      key = `${label} [${tag}]`;
     }
     out[key] = value;
   }
@@ -240,6 +246,12 @@ test.describe('a note that is allowed to fill', () => {
     // landing only because the unit companion rule refuses it. Make the promise keepable first
     // and 14 tonnes files itself as a 120-bin harvest.
     test.fail();
+    // A BUDGET, NOT THE DEFAULT 60s. This test waits for a live model parse and then waits out a
+    // 15s locator timeout proving an absence, so on a slow parse the 60s cap expires first.
+    // Playwright reports a timeout as a HARNESS failure, which `test.fail()` does not accept, so
+    // the suite went red for the clock rather than for the defect (MEASURED: one run took 18m
+    // wall-clock across the file). The assertion has to be what decides.
+    test.setTimeout(240_000);
     const words = `Cosechamos 85 bines del bloque 1, variedad Chandler ${Date.now()}`;
     await openDetails(page, request, words, /^harvest$|^cosecha$/i);
 
