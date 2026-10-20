@@ -32,7 +32,14 @@ import {
   Wrap,
   WrapItem
 } from '@chakra-ui/react';
-import { FaCalendarAlt, FaChevronLeft, FaChevronRight, FaListUl, FaPlus } from 'react-icons/fa';
+import {
+  FaCalendarAlt,
+  FaChevronLeft,
+  FaChevronRight,
+  FaListUl,
+  FaPlus,
+  FaSeedling
+} from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -40,6 +47,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   StandardButton,
   StandardCard,
+  StandardEmptyState,
   StandardInput,
   StandardPage,
   StandardPageLoading,
@@ -53,6 +61,7 @@ import { ACTIVITY_VERBS } from 'config/activityVerbs';
 import { activitySummary, activityTitle } from 'config/events/narrative';
 import { ResponsiveModal } from 'components/Design/ResponsiveModal';
 import { VerbPickerGrid } from 'components/Events/VerbPickerGrid';
+import { QuickAddParcelModal } from 'components/Parcels/QuickAddParcelModal';
 import { useGetActivityFeedQuery } from 'store/api/activityFeedApi';
 import type { ActivityRow } from 'store/api/activityFeedApi';
 import type { RootState } from 'store/index';
@@ -179,6 +188,7 @@ const ActivitiesPage = () => {
   const [typeFilter, setTypeFilter] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const verbModal = useDisclosure();
+  const quickAddParcel = useDisclosure();
   const [pendingVerb, setPendingVerb] = useState<(typeof VERBS)[number] | null>(null);
   // Which activity is open for reading, and which day is open in full. Both are plain row/
   // key state rather than useDisclosure: the identity IS the open condition, so they cannot
@@ -871,7 +881,34 @@ const ActivitiesPage = () => {
               : intl.formatMessage({ id: 'activities.pickVerb' })}
           </Text>
         }>
-        {pendingVerb ? (
+        {pendingVerb && parcels.length === 0 ? (
+          /* A farm with no block used to open this sheet EMPTY: the heading, a close button and
+             nothing else, the dead end a new Starter account hits the first time it tries to log
+             a spray (2026-10-15, the first inbound grower made a farm and no block). Name the farm, say
+             why, and offer the two-field quick-add; the server refuses an event without a parcel
+             (`history/views.py`, "No matching parcel found.") and that stays. */
+          <StandardEmptyState
+            size="sm"
+            icon={FaSeedling}
+            title={intl.formatMessage(
+              { id: 'activities.farmHasNoBlocks' },
+              { farm: establishment?.name ?? '' }
+            )}
+            description={intl.formatMessage({ id: 'activities.farmHasNoBlocksDetail' })}
+            action={
+              <StandardButton
+                minH="44px"
+                leftIcon={<FaPlus />}
+                onClick={() => {
+                  verbModal.onClose();
+                  setPendingVerb(null);
+                  quickAddParcel.onOpen();
+                }}>
+                {intl.formatMessage({ id: 'parcel.addABlock' })}
+              </StandardButton>
+            }
+          />
+        ) : pendingVerb ? (
           <VStack align="stretch" spacing={2}>
             {/*
               Neutral option rows, not outline BUTTONS.
@@ -920,6 +957,15 @@ const ActivitiesPage = () => {
           <VerbPickerGrid onSelect={startVerb} columns={{ base: 2, smd: 2 }} />
         )}
       </ResponsiveModal>
+
+      {companyId && farmId && (
+        <QuickAddParcelModal
+          isOpen={quickAddParcel.isOpen}
+          onClose={quickAddParcel.onClose}
+          companyId={companyId}
+          farmId={farmId}
+        />
+      )}
 
       {/* The day sheet: every activity on one date, in full, with nothing truncated and
           nothing hidden behind a chip cap. */}

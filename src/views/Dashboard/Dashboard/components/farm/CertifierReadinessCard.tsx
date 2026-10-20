@@ -271,8 +271,19 @@ export default function CertifierReadinessCard({
     { skip: !companyId || !farmId }
   );
 
+  // A farm with no parcel has nowhere to keep a season, so "add a parcel" is the rung every
+  // season-side item stands on. The server sends ofpp, osp, records in check order, which put
+  // that rung THIRD, below the fold at 375px, under a long OFPP paragraph whose link is the
+  // first action on the page. The first inbound grower (2026-10-15) uploaded an OFPP, the thing
+  // that link asks for, never added a parcel, and left. Only the order changes; every item
+  // still shows.
+  const farmHasNoParcels = Boolean(farm) && !firstParcelId;
   const operationItems: ReadinessItem[] = operation?.applicable
-    ? [...operation.blockers, ...operation.warnings]
+    ? [...operation.blockers, ...operation.warnings].sort(
+        (a, b) =>
+          Number(farmHasNoParcels && b.key === 'records') -
+          Number(farmHasNoParcels && a.key === 'records')
+      )
     : [];
   const hasOperationBlockers = Boolean(operation?.applicable && operation.blockers.length > 0);
 
@@ -335,9 +346,30 @@ export default function CertifierReadinessCard({
               <Heading as="h3" size="sm" fontWeight="600" color={titleColor}>
                 {intl.formatMessage({ id: 'certifierReadiness.title' })}
               </Heading>
-              <Text fontSize="sm" color={mutedColor}>
-                {intl.formatMessage({ id: 'certifierReadiness.noProduction' })}
-              </Text>
+              {/* "Start a production" cannot be done on a farm with no parcel, and this card is
+                  the first thing on the farm page, so it names the rung that comes first. */}
+              {farmHasNoParcels ? (
+                <>
+                  <Text fontSize="sm" color={mutedColor}>
+                    {intl.formatMessage({ id: 'certifierReadiness.noParcel' })}
+                  </Text>
+                  <Link
+                    as={RouterLink}
+                    to={`/admin/dashboard/farm/${farmId}/parcel/add`}
+                    data-testid="readiness-add-first-parcel"
+                    fontSize="sm"
+                    fontWeight="semibold"
+                    color="green.700"
+                    textDecoration="underline"
+                    mt={1}>
+                    {intl.formatMessage({ id: 'certifierReadiness.recordsAddParcel' })} →
+                  </Link>
+                </>
+              ) : (
+                <Text fontSize="sm" color={mutedColor}>
+                  {intl.formatMessage({ id: 'certifierReadiness.noProduction' })}
+                </Text>
+              )}
             </VStack>
           </HStack>
         </CardBody>
