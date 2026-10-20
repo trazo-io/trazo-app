@@ -25,10 +25,10 @@ describe('crew-note offer in the wizard', () => {
     expect(src).toMatch(/events\.voice\.crewNoteWithheld/);
   });
 
-  it('gives manual review its own headline and no success colour', () => {
-    expect(src).toMatch(
-      /id: voiceBanner\.manualReview\s*\?\s*'events\.voice\.crewNoteManualReviewHeadline'/
-    );
+  it('gives manual review no success colour', () => {
+    // WHICH headline manual review gets, and that it outranks the others, is a truth table and is
+    // tested as one in `voiceBannerHeadline.test.ts`. What stays here is the part that only exists
+    // in the render: a banner that needs a person to read it must not come up in success green.
     expect(src).toMatch(
       /bg=\{\s*voiceBanner\.seededPending \|\| voiceBanner\.manualReview\s*\?\s*'white'\s*:\s*'green\.50'\s*\}/
     );
@@ -69,5 +69,57 @@ describe('the apply button names a single offered value', () => {
     // The value is already shown in full as "Would fill: Relación NPK: 46-0-0". Repeating it in
     // the button would put the same number in two places that can drift apart.
     expect(src).not.toMatch(/pastedNoteApplyNamed'\s*\},\s*\{\s*field: voiceOfferedSummary/);
+  });
+});
+
+/**
+ * The banner's ORDER and its headline, reported from a Spanish screen on 2026-10-19 carrying six
+ * stacked statements and two buttons: "is not too much UI and UX trazo aligned I think, and
+ * difficult for the farmer".
+ */
+describe('the crew-note banner says the important thing first', () => {
+  it('puts the wrong-activity offer above the values it would fill', () => {
+    // If the farmer is logging the wrong kind of activity, nothing below it matters: every value
+    // they review belongs to a record about to be filed under the wrong verb. It used to sit LAST,
+    // under the offered values, the block suggestion, the date question and the dropped-value note.
+    const suggestion = src.indexOf('{voiceBanner.suggestion && (');
+    const wouldFill = src.indexOf('{voiceFilledLabels.length > 0 && (');
+    expect(suggestion).toBeGreaterThan(-1);
+    expect(wouldFill).toBeGreaterThan(-1);
+    expect(suggestion).toBeLessThan(wouldFill);
+  });
+
+  it('keeps the Switch button a button, not a wrapper around half the banner', () => {
+    // THE BUG THE FIRST ATTEMPT AT THIS REORDER SHIPPED. Moving the block by searching for the
+    // first `)}` after `events.voice.switchTo` cut inside the Button: that `)}` closes the
+    // formatMessage, not the block. The Button then never closed and swallowed the date
+    // question, the manual-review text and the Fill/Discard controls, nesting interactive
+    // controls inside a <button>.
+    //
+    // It rendered the SAME TEXT, which is why reading the screen did not catch it. Structure
+    // needs a structural assertion.
+    const open = src.indexOf('onClick={handleVoiceSwitchType}');
+    expect(open).toBeGreaterThan(-1);
+    const close = src.indexOf('</Button>', open);
+    const span = src.slice(open, close);
+    expect(
+      span.split('\n').length,
+      'the Switch button swallowed the rest of the banner again'
+    ).toBeLessThan(20);
+    // Nothing interactive may live inside it.
+    expect(span).not.toMatch(/pastedNoteApply|pastedNoteDiscard|handleVoiceSeededApply/);
+  });
+
+  it('chooses the headline through the tested truth table, not a ternary here', () => {
+    // The two assertions that used to sit here were regexes over this file's source, and both
+    // defects they were written for were asymmetries between the crew-note path and the pasted /
+    // live-dictation paths, which a regex for the crew branch cannot see. The choice now lives in
+    // `utils/voiceBannerHeadline.ts` with a truth table over all three sources; this only keeps it
+    // from being re-inlined.
+    expect(src).toMatch(/voiceBannerHeadlineId\(\{/);
+    expect(src).toMatch(/source: voiceNoteSource\(\{/);
+    // No branch on the source may come back into the headline itself.
+    const call = src.slice(src.indexOf('const voiceBannerHeadline ='), src.indexOf('const seededDateUnanswered'));
+    expect(call).not.toMatch(/crewNoteOffered|pastedNoteOffered|HeadlinePlain|ManualReviewHeadline/);
   });
 });

@@ -133,6 +133,7 @@ import {
   mergeOfferedValues
 } from 'utils/voiceDataMapper';
 import { voiceBlockSuggestion } from 'utils/spokenBlock';
+import { voiceBannerHeadlineId, voiceNoteSource } from 'utils/voiceBannerHeadline';
 import { isEventOnBuyerPage } from 'utils/consumerDisplay';
 import { cleanEventPayload } from 'utils/cleanEventPayload';
 import { revealFirstFormError } from 'utils/revealFirstFormError';
@@ -1967,22 +1968,26 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // ONE source of truth: the form's own date field. Answering on step 0 ends the question by
   // itself, `handleVoiceSwitchType` rebuilding the banner cannot lose it, and there is no flag to
   // reconcile against the value that will actually be filed.
+  //
+  // The CHOICE of headline lives in `voiceBannerHeadline.ts`, as a truth table with its own tests.
+  // It was a nested ternary here, and this file has no render harness, so the only guard available
+  // was a regex over its own source. Two defects went through that gap, both the same class: a
+  // rule written for the crew-note path while pasted notes and live dictation kept the old
+  // behaviour. See that file's header.
   const voiceBannerHeadline = voiceBanner
     ? intl.formatMessage(
         {
-          // Manual review first: nothing was filled, so neither "offered" nor "filled" is true, and
-          // "0 fields filled" in success green read as done (review of app #63).
-          id: voiceBanner.manualReview
-            ? 'events.voice.crewNoteManualReviewHeadline'
-            : voiceBanner.seeded
-            ? voiceBanner.seededPending
-              ? seededFromCrewNote
-                ? 'events.voice.crewNoteOffered'
-                : 'events.voice.pastedNoteOffered'
-              : seededFromCrewNote
-              ? 'events.voice.crewNoteApplied'
-              : 'events.voice.pastedNoteApplied'
-            : 'events.voice.applied'
+          id: voiceBannerHeadlineId({
+            source: voiceNoteSource({
+              fromCrewNote: voiceBanner.fromCrewNote,
+              seeded: voiceBanner.seeded
+            }),
+            manualReview: voiceBanner.manualReview,
+            filledCount: voiceFilledLabels.length,
+            hasSuggestion: Boolean(voiceBanner.blockSuggestion || voiceBanner.suggestion),
+            seeded: voiceBanner.seeded,
+            seededPending: voiceBanner.seededPending
+          })
         },
         { count: voiceFilledLabels.length }
       )
@@ -3858,6 +3863,49 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                   changed — the notes box is below the fold on every
                                   activity. Labels come from the display registry, so they
                                   are the same words the field itself carries. */}
+                              {/* THE WRONG ACTIVITY IS THE FIRST THING TO SAY.
+                                  This sat LAST, under the offered values, the block suggestion,
+                                  the date question and the dropped-value note. If the farmer is
+                                  logging the wrong kind of activity then nothing below it
+                                  matters: every value they review belongs to a record they are
+                                  about to file under the wrong verb. Reported 2026-10-19 from a
+                                  Spanish screen carrying six stacked statements and two buttons.
+
+                                  ⛔ MOVED BY BRACE BALANCE, NOT BY SEARCHING FOR `)}`. The first
+                                  attempt cut at the first `)}` after `events.voice.switchTo`,
+                                  which closes the formatMessage INSIDE the Button, so the Button
+                                  never closed and swallowed the date question, the manual-review
+                                  text and the Fill/Discard controls. It rendered the same text,
+                                  which is why reading the screen did not catch it. */}
+                              {voiceBanner.suggestion && (
+                                <VStack align="start" spacing={2} pt={1}>
+                                  <Text fontSize="xs" color="gray.700">
+                                    {intl.formatMessage(
+                                      { id: 'events.voice.typeMismatch' },
+                                      {
+                                        heard: intl.formatMessage({
+                                          id: `activities.verb.${voiceBanner.suggestion.verbKey}`
+                                        })
+                                      }
+                                    )}
+                                  </Text>
+                                  <Button
+                                    size="xs"
+                                    variant="outline"
+                                    colorScheme="green"
+                                    minH="44px"
+                                    onClick={handleVoiceSwitchType}>
+                                    {intl.formatMessage(
+                                      { id: 'events.voice.switchTo' },
+                                      {
+                                        heard: intl.formatMessage({
+                                          id: `activities.verb.${voiceBanner.suggestion.verbKey}`
+                                        })
+                                      }
+                                    )}
+                                  </Button>
+                                </VStack>
+                              )}
                               {voiceFilledLabels.length > 0 && (
                                 <Text fontSize="xs" color="gray.700">
                                   {intl.formatMessage(
@@ -4062,35 +4110,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                     { count: voiceBanner.droppedCount }
                                   )}
                                 </Text>
-                              )}
-                              {voiceBanner.suggestion && (
-                                <VStack align="start" spacing={2} pt={1}>
-                                  <Text fontSize="xs" color="gray.700">
-                                    {intl.formatMessage(
-                                      { id: 'events.voice.typeMismatch' },
-                                      {
-                                        heard: intl.formatMessage({
-                                          id: `activities.verb.${voiceBanner.suggestion.verbKey}`
-                                        })
-                                      }
-                                    )}
-                                  </Text>
-                                  <Button
-                                    size="xs"
-                                    variant="outline"
-                                    colorScheme="green"
-                                    minH="44px"
-                                    onClick={handleVoiceSwitchType}>
-                                    {intl.formatMessage(
-                                      { id: 'events.voice.switchTo' },
-                                      {
-                                        heard: intl.formatMessage({
-                                          id: `activities.verb.${voiceBanner.suggestion.verbKey}`
-                                        })
-                                      }
-                                    )}
-                                  </Button>
-                                </VStack>
                               )}
                             </VStack>
                             {/* 24px and unlabelled until 2026-09-25: under the 44px touch floor
