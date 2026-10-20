@@ -103,16 +103,61 @@ async function openDetails(page: Page, request: APIRequestContext, words: string
   // only signal that means the parse finished.
 }
 
-/** Every named form control and its value, including the empty ones. */
+/**
+ * Every control keyed by its ACCESSIBLE NAME, never by `name`, and never collapsed.
+ *
+ * ⛔ A CHAKRA NumberInput CARRIES AN EMPTY `name`. The first version of this helper keyed on
+ * `name` and filtered out everything without one, so every numeric field in the form was
+ * invisible to it: Equipment Hours, Quantity harvested, Area, Rate. It then reported that a tap
+ * had written fewer values than the banner promised, and this file shipped a `test.fail()`
+ * recording a defect that does not exist, with a root-cause analysis to match.
+ *
+ * MEASURED 2026-10-19, same message, read by label: "Regamos el bloque 4 por goteo, tres horas"
+ * promises 2 and writes 2, Equipment Hours = 3 and Irrigation Method = drip.
+ *
+ * ⛔ AND LABELS ARE NOT UNIQUE. A value and its companion unit select share one `StandardField`,
+ * so Chakra gives both controls the same id from the one `FormControl` and
+ * `label[for=...]` answers the same text for each: `irrigation_depth` + `irrigation_depth_unit`
+ * (ProductionTab.jsx:5464), `yield_total` + `yield_total_unit` (:3502). `Object.fromEntries`
+ * keeps the LAST pair for a repeated key, so the unit select, which always carries a default
+ * like `lbs`, silently overwrote the number it belongs to. A test reading a value+unit field
+ * would have read the unit and called it the value (review of app #157).
+ *
+ * Repeats therefore keep their own entry, suffixed by the control's `name` when it has one. The
+ * FIRST control under a label keeps the plain label, because that is the value and the unit
+ * follows it in DOM order.
+ *
+ * The lesson is not "use labels". It is that a measurement which cannot see the thing it is
+ * measuring reports its own blind spot as a product defect, and reads exactly like a finding.
+ * Both versions of this helper did that, in two different ways.
+ */
 async function fields(page: Page): Promise<Record<string, string>> {
-  const pairs = await page
-    .locator('input, select, textarea')
-    .evaluateAll((els) =>
-      els
-        .map((e) => [(e as HTMLInputElement).name, String((e as HTMLInputElement).value ?? '')])
-        .filter(([n]) => n)
-    );
-  return Object.fromEntries(pairs as [string, string][]);
+  const raw = await page.locator('input, select, textarea').evaluateAll((els) =>
+    els.map((e) => {
+      const el = e as HTMLInputElement;
+      let label = el.getAttribute('aria-label') ?? '';
+      if (!label && el.id) {
+        label = document.querySelector(`label[for="${el.id}"]`)?.textContent?.trim() ?? '';
+      }
+      if (!label) label = el.closest('div')?.querySelector('label')?.textContent?.trim() ?? '';
+      return [label || el.name || '(unnamed)', String(el.value ?? ''), el.name ?? ''];
+    })
+  );
+  const out: Record<string, string> = {};
+  for (const [label, value, name] of raw as [string, string, string][]) {
+    // UNTIL IT IS UNIQUE, not once, and `name` is not a tiebreaker on its own: a radio group's
+    // inputs share one `name` by design, so a third control under the same label and name would
+    // have collided on the computed key and overwritten the second. That is the same silent
+    // misread one level down (review of app #157). Nothing on the irrigation form does this
+    // today; the point is that this reader cannot lose a control whatever form it is given.
+    let key = label;
+    for (let n = 2; key in out; n += 1) {
+      const tag = name ? (n === 2 ? name : `${name} ${n}`) : String(n);
+      key = `${label} [${tag}]`;
+    }
+    out[key] = value;
+  }
+  return out;
 }
 
 test.describe('a note that is allowed to fill', () => {
@@ -124,7 +169,23 @@ test.describe('a note that is allowed to fill', () => {
 
     // HELD, not merged. Nothing from the message is in the form until a person asks.
     const before = await fields(page);
-    expect(before.irrigation_method, 'the message wrote a value before any tap').toBe('');
+    // THE HARNESS MEASURES ITSELF FIRST, because both of this file's wrong answers came from the
+    // reader and not from the product. MEASURED on this form: 25 controls, and four of them share
+    // a label with another, `Irrigation Depth` with its own unit select among them. Keyed by
+    // label alone and collapsed with `Object.fromEntries`, those 25 became 21 and
+    // `before['Irrigation Depth']` answered the unit, never the number (review of app #157).
+    const controls = await page.locator('input, select, textarea').count();
+    expect(
+      Object.keys(before).length,
+      'fields() collapsed controls that share a label, so it is reading the wrong one'
+    ).toBe(controls);
+    // The collision itself, named: the value keeps the plain label, the unit is suffixed.
+    expect(Object.keys(before)).toContain('Irrigation Depth [irrigation_depth_unit]');
+    expect(before['Irrigation Depth'], 'the depth read as its own unit select').toBe('');
+    // Keyed by LABEL now, like the reader. The old `name` keys silently read `undefined`,
+    // which is the same blind spot that produced the false defect this file used to carry.
+    expect(before['Irrigation Method'], 'the message wrote a value before any tap').toBe('');
+    expect(before['Equipment Hours'], 'the message wrote a value before any tap').toBe('');
 
     const fill = page.getByRole('button', { name: /fill in \d+ value|completar/i }).first();
     await expect(fill, 'a non-application record offered nothing to fill').toBeVisible({
@@ -134,80 +195,78 @@ test.describe('a note that is allowed to fill', () => {
     await page.waitForTimeout(1500);
 
     const after = await fields(page);
-    expect(after.irrigation_method, 'the tap did not write the method it offered').toBe('drip');
+    expect(after['Irrigation Method'], 'the tap did not write the method it offered').toBe('drip');
+    // The numeric field the old reader could not see at all.
+    expect(after['Equipment Hours'], 'the tap did not write the hours it offered').toBe('3');
   });
 
-  // `test.fail()`, NOT `skip` and NOT deleted. This asserts the defect is STILL THERE: Playwright
-  // reports a failure if it ever starts passing, so the day somebody fixes it this file says so
-  // instead of sitting green and stale. Documenting a known defect as "expected to fail" keeps CI
-  // honest without hiding it.
-  //
-  // ROOT CAUSE, traced 2026-10-19:
-  //   productionEvent.ts  equipment_hours.visibleForSubtypes = PL HA IR PR TR CU TH EM PH CM FP MO
-  //   ProductionTab.jsx:4424 renders it for                    HA PL PR TR CU TH CM MO
-  //   declared but never rendered: IR, EM, PH, FP
-  // The crew-note offer is built from the REGISTRY, so it offers `equipment_hours` for an
-  // irrigation note and the form has nowhere to put it.
-  //
-  // Two possible fixes, and which one is right is a product call rather than a test call:
-  //   (a) add the missing subtypes to the render gate, matching what the registry declares; or
-  //   (b) build the offer from what the form will actually render, which is what
-  //       `crewNoteApplication.ts` already does for application records.
-  test('the banner never promises a value the tap cannot write', async ({ page, request }) => {
-    // INSIDE the test body, deliberately. At describe scope `test.fail()` applies to EVERY test
-    // in the scope, so placing it above this one marked the passing test as expected-to-fail and
-    // reported "Expected to fail, but passed" against the wrong test.
-    test.fail();
-    // MEASURED 2026-10-19, and this test FAILS on the current build.
-    //
-    // "Regamos el bloque 4 por goteo, tres horas" offers two values:
-    //   Would fill: Equipment Hours: 3 hours, Irrigation Method: Drip Irrigation
-    // and the button reads "Fill in 2 values". The tap writes ONE. `equipment_hours` is declared
-    // for subtype IR in productionEvent.ts and carries `carbonRelevant: true`, but no input for
-    // it is rendered on the irrigation form: a DOM scan of every control, with every collapsible
-    // section expanded, finds no hours field, while `fuel_type` (identical `visibleForSubtypes`)
-    // renders fine.
-    //
-    // The operator reads "2 values", taps once, and believes the three hours were recorded. Pump
-    // runtime is a carbon input, so the number does not merely go missing: the figure computed
-    // without it is wrong and nothing on screen says so.
-    //
-    // `crewNoteApplication.ts` already enforces this promise for APPLICATION records ("so the
-    // banner never promises values the tap will not write"). There is no equivalent check that an
-    // offered key has a rendered field on the records that are allowed to fill.
+  test('the banner keeps its promise: what it names, the tap writes', async ({ page, request }) => {
+    // THIS TEST PREVIOUSLY CARRIED `test.fail()` AND WAS WRONG. It reported that irrigation
+    // promises 2 values and writes 1, which was an artifact of reading controls by `name` while
+    // Chakra NumberInputs carry none. Read by label, the same message writes both.
     const words = `Regamos el bloque 4 por goteo, tres horas ${Date.now()}`;
     await openDetails(page, request, words, /^irrigation$|^riego$/i);
 
-    // THE BUTTON HAS TWO SHAPES, and the first version only matched one of them. A multi-value
-    // offer reads "Fill in 2 values"; a SINGLE-value offer reads "Fill in Relación NPK" with no
-    // digit at all (`events.voice.pastedNoteApplyNamed`, added in app #151). Matching only the
-    // digit form meant a single-value offer failed on a locator timeout rather than reporting
-    // anything useful.
-    //
-    // The old `expect(count).toBeGreaterThan(0)` could also never fail: the locator already
-    // required a digit in the accessible name, so by the time the count was read it was
-    // guaranteed present (review of app #154).
     const offer = page.getByRole('button', { name: /fill in |completar /i }).first();
     await expect(offer, 'no offer button was rendered at all').toBeVisible({ timeout: 90_000 });
     const label = (await offer.textContent()) ?? '';
     const digits = label.match(/\d+/);
-    // No digit means the named single-value shape, which promises exactly one.
     const count = digits ? Number(digits[0]) : 1;
 
     const before = await fields(page);
-    await page
-      .getByRole('button', { name: /fill in \d+ value|completar/i })
-      .first()
-      .click();
+    await offer.click();
     await page.waitForTimeout(1500);
     const after = await fields(page);
 
     const written = Object.keys(after).filter((k) => after[k] && after[k] !== before[k]);
     expect(
       written.length,
-      `the banner promised ${count} values and the tap wrote ${written.length} (${written.join(
-        ', '
-      )}). ` + 'A promise the tap does not keep reads to the operator as a value that was recorded.'
+      `the banner promised ${count} and the tap wrote ${written.length} (${written.join(', ')})`
     ).toBe(count);
+  });
+
+  test('a harvest counted in bins offers the yield', async ({ page, request }) => {
+    // MEASURED 2026-10-19, and this one IS a defect. Bins are the unit tree fruit is harvested
+    // in, which is the crop this product is sold for.
+    //
+    //   "Cosechamos 85 bines del bloque 1" -> "Nothing on this activity to fill from those
+    //   words." No offer at all.
+    //
+    // `categoryForUnit` in voiceDataMapper.ts recognises weight, volume, area, time and depth.
+    // Bins are in none of them, so the amount is categorised `count`, and the harvest mapper
+    // (:1501) looks for `category === 'weight'` and finds nothing.
+    //
+    // WORSE, when the message carries a weight for something else:
+    //   "Cosechamos 120 bines ... el camion llevo 14 toneladas a la empacadora"
+    //   -> "Would fill: Yield: 14 toneladas"
+    // The truck's load to the packer is offered as the harvest yield. The form's own help text
+    // says a certifier reads that figure for lot traceability and mass balance.
+    //
+    // ⛔ DO NOT "fix" the promise without fixing this. Today the wrong number is saved from
+    // landing only because the unit companion rule refuses it. Make the promise keepable first
+    // and 14 tonnes files itself as a 120-bin harvest.
+    test.fail();
+    // A BUDGET, NOT THE DEFAULT 60s. This test waits for a live model parse and then waits out a
+    // 15s locator timeout proving an absence, so on a slow parse the 60s cap expires first.
+    // Playwright reports a timeout as a HARNESS failure, which `test.fail()` does not accept, so
+    // the suite went red for the clock rather than for the defect (MEASURED: one run took 18m
+    // wall-clock across the file). The assertion has to be what decides.
+    test.setTimeout(240_000);
+    const words = `Cosechamos 85 bines del bloque 1, variedad Chandler ${Date.now()}`;
+    await openDetails(page, request, words, /^harvest$|^cosecha$/i);
+
+    // Wait for the BANNER, which does appear, then assert on the offer with a short timeout.
+    // Waiting 90s for an element that never arrives ends the test as a TIMEOUT, and Playwright
+    // treats a timeout as a harness failure rather than the expected one, so `test.fail()` does
+    // not accept it and the suite goes red for the wrong reason.
+    await expect(
+      page.getByText(/from the crew message|del mensaje de la cuadrilla/i).first()
+    ).toBeVisible({ timeout: 90_000 });
+
+    const offer = page.getByRole('button', { name: /fill in |completar /i });
+    await expect(
+      offer,
+      'a harvest stated in bins offered nothing: the yield the crew reported is not captured'
+    ).toHaveCount(1);
   });
 });
