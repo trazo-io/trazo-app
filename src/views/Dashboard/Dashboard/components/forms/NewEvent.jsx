@@ -1966,9 +1966,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // ONE source of truth: the form's own date field. Answering on step 0 ends the question by
   // itself, `handleVoiceSwitchType` rebuilding the banner cannot lose it, and there is no flag to
   // reconcile against the value that will actually be filed.
-  // ONE source of truth: the form's own date field. Answering on step 0 ends the question by
-  // itself, `handleVoiceSwitchType` rebuilding the banner cannot lose it, and there is no flag to
-  // reconcile against the value that will actually be filed.
   //
   // The CHOICE of headline lives in `voiceBannerHeadline.ts`, as a truth table with its own tests.
   // It was a nested ternary here, and this file has no render harness, so the only guard available
