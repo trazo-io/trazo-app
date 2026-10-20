@@ -103,9 +103,8 @@ async function openDetails(page: Page, request: APIRequestContext, words: string
   // only signal that means the parse finished.
 }
 
-/** Every named form control and its value, including the empty ones. */
 /**
- * Every control keyed by its ACCESSIBLE NAME, never by `name`.
+ * Every control keyed by its ACCESSIBLE NAME, never by `name`, and never collapsed.
  *
  * ⛔ A CHAKRA NumberInput CARRIES AN EMPTY `name`. The first version of this helper keyed on
  * `name` and filtered out everything without one, so every numeric field in the form was
@@ -116,11 +115,24 @@ async function openDetails(page: Page, request: APIRequestContext, words: string
  * MEASURED 2026-10-19, same message, read by label: "Regamos el bloque 4 por goteo, tres horas"
  * promises 2 and writes 2, Equipment Hours = 3 and Irrigation Method = drip.
  *
+ * ⛔ AND LABELS ARE NOT UNIQUE. A value and its companion unit select share one `StandardField`,
+ * so Chakra gives both controls the same id from the one `FormControl` and
+ * `label[for=...]` answers the same text for each: `irrigation_depth` + `irrigation_depth_unit`
+ * (ProductionTab.jsx:5464), `yield_total` + `yield_total_unit` (:3502). `Object.fromEntries`
+ * keeps the LAST pair for a repeated key, so the unit select, which always carries a default
+ * like `lbs`, silently overwrote the number it belongs to. A test reading a value+unit field
+ * would have read the unit and called it the value (review of app #157).
+ *
+ * Repeats therefore keep their own entry, suffixed by the control's `name` when it has one. The
+ * FIRST control under a label keeps the plain label, because that is the value and the unit
+ * follows it in DOM order.
+ *
  * The lesson is not "use labels". It is that a measurement which cannot see the thing it is
  * measuring reports its own blind spot as a product defect, and reads exactly like a finding.
+ * Both versions of this helper did that, in two different ways.
  */
 async function fields(page: Page): Promise<Record<string, string>> {
-  const pairs = await page.locator('input, select, textarea').evaluateAll((els) =>
+  const raw = await page.locator('input, select, textarea').evaluateAll((els) =>
     els.map((e) => {
       const el = e as HTMLInputElement;
       let label = el.getAttribute('aria-label') ?? '';
@@ -128,10 +140,18 @@ async function fields(page: Page): Promise<Record<string, string>> {
         label = document.querySelector(`label[for="${el.id}"]`)?.textContent?.trim() ?? '';
       }
       if (!label) label = el.closest('div')?.querySelector('label')?.textContent?.trim() ?? '';
-      return [label || el.name || '(unnamed)', String(el.value ?? '')];
+      return [label || el.name || '(unnamed)', String(el.value ?? ''), el.name ?? ''];
     })
   );
-  return Object.fromEntries(pairs as [string, string][]);
+  const out: Record<string, string> = {};
+  for (const [label, value, name] of raw as [string, string, string][]) {
+    let key = label;
+    if (key in out) {
+      key = name ? `${label} [${name}]` : `${label} [${Object.keys(out).length}]`;
+    }
+    out[key] = value;
+  }
+  return out;
 }
 
 test.describe('a note that is allowed to fill', () => {
@@ -143,6 +163,19 @@ test.describe('a note that is allowed to fill', () => {
 
     // HELD, not merged. Nothing from the message is in the form until a person asks.
     const before = await fields(page);
+    // THE HARNESS MEASURES ITSELF FIRST, because both of this file's wrong answers came from the
+    // reader and not from the product. MEASURED on this form: 25 controls, and four of them share
+    // a label with another, `Irrigation Depth` with its own unit select among them. Keyed by
+    // label alone and collapsed with `Object.fromEntries`, those 25 became 21 and
+    // `before['Irrigation Depth']` answered the unit, never the number (review of app #157).
+    const controls = await page.locator('input, select, textarea').count();
+    expect(
+      Object.keys(before).length,
+      'fields() collapsed controls that share a label, so it is reading the wrong one'
+    ).toBe(controls);
+    // The collision itself, named: the value keeps the plain label, the unit is suffixed.
+    expect(Object.keys(before)).toContain('Irrigation Depth [irrigation_depth_unit]');
+    expect(before['Irrigation Depth'], 'the depth read as its own unit select').toBe('');
     // Keyed by LABEL now, like the reader. The old `name` keys silently read `undefined`,
     // which is the same blind spot that produced the false defect this file used to carry.
     expect(before['Irrigation Method'], 'the message wrote a value before any tap').toBe('');
