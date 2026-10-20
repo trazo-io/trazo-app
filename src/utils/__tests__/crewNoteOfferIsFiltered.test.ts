@@ -26,9 +26,14 @@ describe('crew-note offer in the wizard', () => {
   });
 
   it('gives manual review its own headline and no success colour', () => {
+    // The shape changed when the plain headline landed above it, so this asserts the PROPERTY
+    // rather than the old one-line ternary: manual review still selects its own headline, and it
+    // still outranks every branch except the plain one (which only fires when nothing was
+    // offered AND manual review is false).
     expect(src).toMatch(
-      /id: voiceBanner\.manualReview\s*\?\s*'events\.voice\.crewNoteManualReviewHeadline'/
+      /voiceBanner\.manualReview\s*\?\s*'events\.voice\.crewNoteManualReviewHeadline'/
     );
+    expect(src).toMatch(/!voiceBanner\.manualReview\s*&&/);
     expect(src).toMatch(
       /bg=\{\s*voiceBanner\.seededPending \|\| voiceBanner\.manualReview\s*\?\s*'white'\s*:\s*'green\.50'\s*\}/
     );
@@ -69,5 +74,31 @@ describe('the apply button names a single offered value', () => {
     // The value is already shown in full as "Would fill: Relación NPK: 46-0-0". Repeating it in
     // the button would put the same number in two places that can drift apart.
     expect(src).not.toMatch(/pastedNoteApplyNamed'\s*\},\s*\{\s*field: voiceOfferedSummary/);
+  });
+});
+
+/**
+ * The banner's ORDER and its headline, reported from a Spanish screen on 2026-10-19 carrying six
+ * stacked statements and two buttons: "is not too much UI and UX trazo aligned I think, and
+ * difficult for the farmer".
+ */
+describe('the crew-note banner says the important thing first', () => {
+  it('puts the wrong-activity offer above the values it would fill', () => {
+    // If the farmer is logging the wrong kind of activity, nothing below it matters: every value
+    // they review belongs to a record about to be filed under the wrong verb. It used to sit LAST,
+    // under the offered values, the block suggestion, the date question and the dropped-value note.
+    const suggestion = src.indexOf('{voiceBanner.suggestion && (');
+    const wouldFill = src.indexOf('{voiceFilledLabels.length > 0 && (');
+    expect(suggestion).toBeGreaterThan(-1);
+    expect(wouldFill).toBeGreaterThan(-1);
+    expect(suggestion).toBeLessThan(wouldFill);
+  });
+
+  it('never claims nothing can be filled while offering an action that fills something', () => {
+    // The zero case of `crewNoteOffered` reads "Nothing on this activity to fill from those
+    // words", and it was rendered above a "Use South Block" button and a "Switch to Harvest"
+    // button. Both fill something, so the headline was false, not merely unhelpful.
+    expect(src).toMatch(/events\.voice\.crewNoteHeadlinePlain/);
+    expect(src).toMatch(/voiceBanner\.blockSuggestion \|\| voiceBanner\.suggestion/);
   });
 });

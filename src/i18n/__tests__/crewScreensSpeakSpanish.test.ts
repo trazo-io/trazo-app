@@ -139,3 +139,21 @@ describe('Spanish copy a grower actually read', () => {
     expect(helper).toContain('Reaplica un producto que ya usaste');
   });
 });
+
+describe('the crew-note banner keeps the em dash out', () => {
+  // Reported from a live Spanish screen: "We heard X — on this parcel" and "1 value was not
+  // filled in — this activity does not record it". The house rule bans the em dash in anything
+  // written for a user, and this banner is the most-read surface of the whole feature.
+  const voiceKeys = (messages: Record<string, string>) =>
+    Object.entries(messages).filter(([k]) => k.startsWith('events.voice.'));
+
+  it('has none in English', () => {
+    const offenders = voiceKeys(en as Record<string, string>).filter(([, v]) => v.includes('—'));
+    expect(offenders.map(([k]) => k)).toEqual([]);
+  });
+
+  it('has none in Spanish', () => {
+    const offenders = voiceKeys(es as Record<string, string>).filter(([, v]) => v.includes('—'));
+    expect(offenders.map(([k]) => k)).toEqual([]);
+  });
+});

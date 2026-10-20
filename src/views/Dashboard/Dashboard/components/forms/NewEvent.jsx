@@ -1970,7 +1970,18 @@ function NewEvent({ isEdit = false, eventId = null }) {
         {
           // Manual review first: nothing was filled, so neither "offered" nor "filled" is true, and
           // "0 fields filled" in success green read as done (review of app #63).
-          id: voiceBanner.manualReview
+          // ⛔ NEVER CLAIM "NOTHING" WHILE OFFERING AN ACTION. The zero case of
+          // `crewNoteOffered` reads "Nothing on this activity to fill from those words", and it
+          // was shown above a "Use South Block" button and a "Switch to Harvest" button. Both
+          // fill something, so the headline was not merely unhelpful, it was false, and a
+          // farmer who reads the first line and stops has been told the message was useless.
+          // MEASURED 2026-10-19 on a Spanish screen.
+          id:
+            !voiceBanner.manualReview &&
+            voiceFilledLabels.length === 0 &&
+            (voiceBanner.blockSuggestion || voiceBanner.suggestion)
+              ? 'events.voice.crewNoteHeadlinePlain'
+              : voiceBanner.manualReview
             ? 'events.voice.crewNoteManualReviewHeadline'
             : voiceBanner.seeded
             ? voiceBanner.seededPending
@@ -3789,211 +3800,13 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                   changed — the notes box is below the fold on every
                                   activity. Labels come from the display registry, so they
                                   are the same words the field itself carries. */}
-                              {voiceFilledLabels.length > 0 && (
-                                <Text fontSize="xs" color="gray.700">
-                                  {intl.formatMessage(
-                                    {
-                                      // "Would fill" only while the offer stands.
-                                      id: voiceBanner.seededPending
-                                        ? 'events.voice.pastedNoteWouldFill'
-                                        : 'events.voice.filledFields'
-                                    },
-                                    {
-                                      fields: voiceBanner.seededPending
-                                        ? voiceOfferedSummary
-                                        : voiceFilledLabels.join(', ')
-                                    }
-                                  )}
-                                </Text>
-                              )}
-                              {/* The block the farmer named, as an offer. A block is the lot a
-                                  record belongs to (CA PUR box 22), so voice never writes one
-                                  it had to work out — the tap does. Sits with the other offered
-                                  values, ahead of the date question and the Fill/Discard row, so
-                                  everything read from the note is in one place. */}
-                              {voiceBanner.blockSuggestion && (
-                                <VStack align="start" spacing={2} pt={1}>
-                                  <Text fontSize="xs" color="gray.700">
-                                    {voiceBanner.blockSuggestion.kind === 'new'
-                                      ? intl.formatMessage(
-                                          { id: 'events.voice.blockNew' },
-                                          { block: voiceBanner.blockSuggestion.value }
-                                        )
-                                      : intl.formatMessage(
-                                          { id: 'events.voice.blockKnown' },
-                                          {
-                                            spoken: voiceBanner.blockSuggestion.spoken,
-                                            block: voiceBanner.blockSuggestion.value
-                                          }
-                                        )}
-                                  </Text>
-                                  <Button
-                                    size="xs"
-                                    variant="outline"
-                                    colorScheme="green"
-                                    minH="44px"
-                                    onClick={handleVoiceBlockAccept}>
-                                    {intl.formatMessage(
-                                      {
-                                        id:
-                                          voiceBanner.blockSuggestion.kind === 'new'
-                                            ? 'events.voice.blockAddNew'
-                                            : 'events.voice.blockUseKnown'
-                                      },
-                                      { block: voiceBanner.blockSuggestion.value }
-                                    )}
-                                  </Button>
-                                </VStack>
-                              )}
-                              {/* WHICH DAY. Asked before the values, because it is the one fact a
-                                  pasted note almost never carries and the wizard was happy to
-                                  guess: step 0 seeds today before the paste box is reached. Today
-                                  is offered back as a suggestion rather than left in the field, so
-                                  the day on a § 205.103(b)(2) record is one the operator chose.
-                                  Neutral ground and a plain border on purpose: this is a question,
-                                  not an error, and status colour here would claim something. */}
-                              {seededDateUnanswered && (
-                                <Box
-                                  w="full"
-                                  mt={1}
-                                  p={2}
-                                  bg="white"
-                                  borderWidth="1px"
-                                  borderColor="gray.300"
-                                  borderRadius="md">
-                                  <Text fontSize="xs" fontWeight="semibold" color="gray.800">
-                                    {intl.formatMessage({ id: 'events.voice.pastedNoteDateAsk' })}
-                                  </Text>
-                                  <Text fontSize="xs" color="gray.700">
-                                    {intl.formatMessage({
-                                      id: seededFromCrewNote
-                                        ? 'events.voice.crewNoteDateWhy'
-                                        : 'events.voice.pastedNoteDateWhy'
-                                    })}
-                                  </Text>
-                                  <Stack
-                                    direction={{ base: 'column', smd: 'row' }}
-                                    spacing={2}
-                                    pt={2}
-                                    w={{ base: 'full', smd: 'auto' }}>
-                                    <Button
-                                      size="xs"
-                                      minH="44px"
-                                      variant="outline"
-                                      colorScheme="green"
-                                      onClick={handleVoiceSeededUseToday}>
-                                      {intl.formatMessage(
-                                        { id: 'events.voice.pastedNoteDateUseToday' },
-                                        { date: localDateTimeLabel(nowLocalDateTimeInput()) }
-                                      )}
-                                    </Button>
-                                    <Button
-                                      size="xs"
-                                      minH="44px"
-                                      variant="ghost"
-                                      onClick={handleVoiceSeededPickAnotherDay}>
-                                      {intl.formatMessage({
-                                        id: 'events.voice.pastedNoteDateAnother'
-                                      })}
-                                    </Button>
-                                  </Stack>
-                                </Box>
-                              )}
-                              {voiceBanner.manualReview && (
-                                <Text
-                                  fontSize="xs"
-                                  color="gray.800"
-                                  data-testid="crew-note-manual-review">
-                                  {intl.formatMessage({
-                                    id: `events.voice.crewNoteManualReview.${voiceBanner.manualReview}`
-                                  })}
-                                </Text>
-                              )}
-                              {voiceBanner.seeded &&
-                                isApplicationRecord(activeEventType, eventFormData) && (
-                                  <Text
-                                    fontSize="xs"
-                                    color="gray.800"
-                                    data-testid="crew-note-application-mode">
-                                    {intl.formatMessage({
-                                      id: 'events.voice.crewNoteApplicationMode'
-                                    })}
-                                    {voiceBanner.withheldFields?.length
-                                      ? ` ${intl.formatMessage(
-                                          { id: 'events.voice.crewNoteWithheld' },
-                                          { count: voiceBanner.withheldFields.length }
-                                        )}`
-                                      : ''}
-                                  </Text>
-                                )}
-                              {/* Answered. Say which day it will file under, because the farmer
-                                  chose it on another step and a date they cannot see is a date
-                                  they cannot check. */}
-                              {seededDateAnswered && (
-                                <Text fontSize="xs" color="gray.700">
-                                  {intl.formatMessage(
-                                    { id: 'events.voice.pastedNoteDateSet' },
-                                    { date: localDateTimeLabel(eventFormData.date) }
-                                  )}
-                                </Text>
-                              )}
-                              {/* The tap that writes them. Nothing above this line has touched
-                                  the form: a pasted note is somebody else's words, so the person
-                                  who signs the record is the one who puts them on it. Same shape
-                                  as the block offer below and the OSP "Use suggestion" button. */}
-                              {voiceBanner.seededPending && voiceFilledLabels.length > 0 && (
-                                <Stack
-                                  direction={{ base: 'column', smd: 'row' }}
-                                  spacing={2}
-                                  pt={1}
-                                  w={{ base: 'full', smd: 'auto' }}>
-                                  <Button
-                                    size="xs"
-                                    variant="outline"
-                                    colorScheme="green"
-                                    minH="44px"
-                                    onClick={handleVoiceSeededApply}>
-                                    {/* NAME THE VALUE WHEN THERE IS ONE.
-                                        "Fill in 1 value" says how many and not which, and the
-                                        line that does name it sits above the application
-                                        paragraph and the date question, so by the time a reader
-                                        reaches this button the answer is several lines behind a
-                                        wall of text. Reported from the Spanish UI 2026-10-19:
-                                        "it says Completar 1 dato, but which dato?".
-                                        The label alone, not the value: the value is printed in
-                                        full on the "Would fill" line, and repeating it would put
-                                        the same number in two places that can disagree. Past one
-                                        the count stays, because a button is not a list. */}
-                                    {voiceFilledLabels.length === 1
-                                      ? intl.formatMessage(
-                                          { id: 'events.voice.pastedNoteApplyNamed' },
-                                          { field: voiceFilledLabels[0] }
-                                        )
-                                      : intl.formatMessage(
-                                          { id: 'events.voice.pastedNoteApply' },
-                                          { count: voiceFilledLabels.length }
-                                        )}
-                                  </Button>
-                                  <Button
-                                    size="xs"
-                                    variant="ghost"
-                                    minH="44px"
-                                    onClick={handleVoiceSeededDiscard}>
-                                    {intl.formatMessage({ id: 'events.voice.pastedNoteDiscard' })}
-                                  </Button>
-                                </Stack>
-                              )}
-                              {/* Say out loud what was NOT written. A value the farmer spoke
-                                  and cannot see on the form has to be accounted for, or the
-                                  banner's own count becomes the misleading part. */}
-                              {voiceBanner.droppedCount > 0 && (
-                                <Text fontSize="xs" color="gray.700">
-                                  {intl.formatMessage(
-                                    { id: 'events.voice.notRecordedHere' },
-                                    { count: voiceBanner.droppedCount }
-                                  )}
-                                </Text>
-                              )}
+                              {/* THE WRONG ACTIVITY IS THE FIRST THING TO SAY.
+                                  This sat LAST, under the offered values, the block suggestion,
+                                  the date question and the dropped-value note. If the farmer is
+                                  logging the wrong kind of activity then nothing below it matters:
+                                  every value they review belongs to a record they are about to
+                                  file under the wrong verb. Reported 2026-10-19 from a Spanish
+                                  screen carrying six stacked statements and two buttons. */}
                               {voiceBanner.suggestion && (
                                 <VStack align="start" spacing={2} pt={1}>
                                   <Text fontSize="xs" color="gray.700">
@@ -4019,6 +3832,215 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                           id: `activities.verb.${voiceBanner.suggestion.verbKey}`
                                         })
                                       }
+                                    )}
+                                    {voiceFilledLabels.length > 0 && (
+                                      <Text fontSize="xs" color="gray.700">
+                                        {intl.formatMessage(
+                                          {
+                                            // "Would fill" only while the offer stands.
+                                            id: voiceBanner.seededPending
+                                              ? 'events.voice.pastedNoteWouldFill'
+                                              : 'events.voice.filledFields'
+                                          },
+                                          {
+                                            fields: voiceBanner.seededPending
+                                              ? voiceOfferedSummary
+                                              : voiceFilledLabels.join(', ')
+                                          }
+                                        )}
+                                      </Text>
+                                    )}
+                                    {/* The block the farmer named, as an offer. A block is the lot a
+                                  record belongs to (CA PUR box 22), so voice never writes one
+                                  it had to work out — the tap does. Sits with the other offered
+                                  values, ahead of the date question and the Fill/Discard row, so
+                                  everything read from the note is in one place. */}
+                                    {voiceBanner.blockSuggestion && (
+                                      <VStack align="start" spacing={2} pt={1}>
+                                        <Text fontSize="xs" color="gray.700">
+                                          {voiceBanner.blockSuggestion.kind === 'new'
+                                            ? intl.formatMessage(
+                                                { id: 'events.voice.blockNew' },
+                                                { block: voiceBanner.blockSuggestion.value }
+                                              )
+                                            : intl.formatMessage(
+                                                { id: 'events.voice.blockKnown' },
+                                                {
+                                                  spoken: voiceBanner.blockSuggestion.spoken,
+                                                  block: voiceBanner.blockSuggestion.value
+                                                }
+                                              )}
+                                        </Text>
+                                        <Button
+                                          size="xs"
+                                          variant="outline"
+                                          colorScheme="green"
+                                          minH="44px"
+                                          onClick={handleVoiceBlockAccept}>
+                                          {intl.formatMessage(
+                                            {
+                                              id:
+                                                voiceBanner.blockSuggestion.kind === 'new'
+                                                  ? 'events.voice.blockAddNew'
+                                                  : 'events.voice.blockUseKnown'
+                                            },
+                                            { block: voiceBanner.blockSuggestion.value }
+                                          )}
+                                        </Button>
+                                      </VStack>
+                                    )}
+                                    {/* WHICH DAY. Asked before the values, because it is the one fact a
+                                  pasted note almost never carries and the wizard was happy to
+                                  guess: step 0 seeds today before the paste box is reached. Today
+                                  is offered back as a suggestion rather than left in the field, so
+                                  the day on a § 205.103(b)(2) record is one the operator chose.
+                                  Neutral ground and a plain border on purpose: this is a question,
+                                  not an error, and status colour here would claim something. */}
+                                    {seededDateUnanswered && (
+                                      <Box
+                                        w="full"
+                                        mt={1}
+                                        p={2}
+                                        bg="white"
+                                        borderWidth="1px"
+                                        borderColor="gray.300"
+                                        borderRadius="md">
+                                        <Text fontSize="xs" fontWeight="semibold" color="gray.800">
+                                          {intl.formatMessage({
+                                            id: 'events.voice.pastedNoteDateAsk'
+                                          })}
+                                        </Text>
+                                        <Text fontSize="xs" color="gray.700">
+                                          {intl.formatMessage({
+                                            id: seededFromCrewNote
+                                              ? 'events.voice.crewNoteDateWhy'
+                                              : 'events.voice.pastedNoteDateWhy'
+                                          })}
+                                        </Text>
+                                        <Stack
+                                          direction={{ base: 'column', smd: 'row' }}
+                                          spacing={2}
+                                          pt={2}
+                                          w={{ base: 'full', smd: 'auto' }}>
+                                          <Button
+                                            size="xs"
+                                            minH="44px"
+                                            variant="outline"
+                                            colorScheme="green"
+                                            onClick={handleVoiceSeededUseToday}>
+                                            {intl.formatMessage(
+                                              { id: 'events.voice.pastedNoteDateUseToday' },
+                                              { date: localDateTimeLabel(nowLocalDateTimeInput()) }
+                                            )}
+                                          </Button>
+                                          <Button
+                                            size="xs"
+                                            minH="44px"
+                                            variant="ghost"
+                                            onClick={handleVoiceSeededPickAnotherDay}>
+                                            {intl.formatMessage({
+                                              id: 'events.voice.pastedNoteDateAnother'
+                                            })}
+                                          </Button>
+                                        </Stack>
+                                      </Box>
+                                    )}
+                                    {voiceBanner.manualReview && (
+                                      <Text
+                                        fontSize="xs"
+                                        color="gray.800"
+                                        data-testid="crew-note-manual-review">
+                                        {intl.formatMessage({
+                                          id: `events.voice.crewNoteManualReview.${voiceBanner.manualReview}`
+                                        })}
+                                      </Text>
+                                    )}
+                                    {voiceBanner.seeded &&
+                                      isApplicationRecord(activeEventType, eventFormData) && (
+                                        <Text
+                                          fontSize="xs"
+                                          color="gray.800"
+                                          data-testid="crew-note-application-mode">
+                                          {intl.formatMessage({
+                                            id: 'events.voice.crewNoteApplicationMode'
+                                          })}
+                                          {voiceBanner.withheldFields?.length
+                                            ? ` ${intl.formatMessage(
+                                                { id: 'events.voice.crewNoteWithheld' },
+                                                { count: voiceBanner.withheldFields.length }
+                                              )}`
+                                            : ''}
+                                        </Text>
+                                      )}
+                                    {/* Answered. Say which day it will file under, because the farmer
+                                  chose it on another step and a date they cannot see is a date
+                                  they cannot check. */}
+                                    {seededDateAnswered && (
+                                      <Text fontSize="xs" color="gray.700">
+                                        {intl.formatMessage(
+                                          { id: 'events.voice.pastedNoteDateSet' },
+                                          { date: localDateTimeLabel(eventFormData.date) }
+                                        )}
+                                      </Text>
+                                    )}
+                                    {/* The tap that writes them. Nothing above this line has touched
+                                  the form: a pasted note is somebody else's words, so the person
+                                  who signs the record is the one who puts them on it. Same shape
+                                  as the block offer below and the OSP "Use suggestion" button. */}
+                                    {voiceBanner.seededPending && voiceFilledLabels.length > 0 && (
+                                      <Stack
+                                        direction={{ base: 'column', smd: 'row' }}
+                                        spacing={2}
+                                        pt={1}
+                                        w={{ base: 'full', smd: 'auto' }}>
+                                        <Button
+                                          size="xs"
+                                          variant="outline"
+                                          colorScheme="green"
+                                          minH="44px"
+                                          onClick={handleVoiceSeededApply}>
+                                          {/* NAME THE VALUE WHEN THERE IS ONE.
+                                        "Fill in 1 value" says how many and not which, and the
+                                        line that does name it sits above the application
+                                        paragraph and the date question, so by the time a reader
+                                        reaches this button the answer is several lines behind a
+                                        wall of text. Reported from the Spanish UI 2026-10-19:
+                                        "it says Completar 1 dato, but which dato?".
+                                        The label alone, not the value: the value is printed in
+                                        full on the "Would fill" line, and repeating it would put
+                                        the same number in two places that can disagree. Past one
+                                        the count stays, because a button is not a list. */}
+                                          {voiceFilledLabels.length === 1
+                                            ? intl.formatMessage(
+                                                { id: 'events.voice.pastedNoteApplyNamed' },
+                                                { field: voiceFilledLabels[0] }
+                                              )
+                                            : intl.formatMessage(
+                                                { id: 'events.voice.pastedNoteApply' },
+                                                { count: voiceFilledLabels.length }
+                                              )}
+                                        </Button>
+                                        <Button
+                                          size="xs"
+                                          variant="ghost"
+                                          minH="44px"
+                                          onClick={handleVoiceSeededDiscard}>
+                                          {intl.formatMessage({
+                                            id: 'events.voice.pastedNoteDiscard'
+                                          })}
+                                        </Button>
+                                      </Stack>
+                                    )}
+                                    {/* Say out loud what was NOT written. A value the farmer spoke
+                                  and cannot see on the form has to be accounted for, or the
+                                  banner's own count becomes the misleading part. */}
+                                    {voiceBanner.droppedCount > 0 && (
+                                      <Text fontSize="xs" color="gray.700">
+                                        {intl.formatMessage(
+                                          { id: 'events.voice.notRecordedHere' },
+                                          { count: voiceBanner.droppedCount }
+                                        )}
+                                      </Text>
                                     )}
                                   </Button>
                                 </VStack>
