@@ -283,13 +283,24 @@ test.describe('a supervisor turns a crew message into a record', () => {
       .first()
       .click();
 
-    const held = page.getByText(/come from your own records, not from the message/i);
+    // WHICH FIELDS, then WHY, in that order. The fields an application refuses to take are named
+    // as chips; the reason is one tap away rather than two lines of prose in the middle of the
+    // banner (app #160). Both still have to be here: a farmer told that values were held back is
+    // owed the reason on the same screen.
+    const withheld = page.getByTestId('crew-note-withheld');
     await expect(
-      held,
+      withheld,
+      'the banner no longer names the values an application refuses to take'
+    ).toBeVisible({ timeout: 60_000 });
+    await expect(withheld).toContainText(/product|producto/i);
+
+    const why = page.getByRole('button', { name: /^why\?$|^¿por qué\?$/i });
+    await expect(why, 'the reason is not reachable from the banner').toBeVisible();
+    await why.click();
+    await expect(
+      page.getByText(/come from your own records, not from the message/i),
       'the form no longer says what it refuses to take from a message'
-    ).toBeVisible({
-      timeout: 60_000
-    });
+    ).toBeVisible();
 
     // BOTH SHAPES. A multi-value offer reads "Fill in 2 values"; a SINGLE-value offer reads
     // "Fill in Relación NPK" with no digit (`events.voice.pastedNoteApplyNamed`, app #151).

@@ -290,11 +290,20 @@ describe('the offer says what it would write, and where the words came from', ()
     expect(src).toMatch(
       /fields: voiceBanner\.seededPending\s*\?\s*voiceOfferedSummary\s*:\s*voiceFilledLabels\.join\(', '\)/
     );
-    const summary = blockAfter('const voiceOfferedSummary = useMemo(() => {');
-    expect(summary).toMatch(
+    // The list is built once and used twice: as chips on screen and as that sentence for a
+    // screen reader. Assembling them separately is how the two come to disagree, so the sentence
+    // is asserted to be a join of the chips rather than its own construction.
+    const chips = blockAfter('const voiceOfferedChips = useMemo(() => {');
+    expect(chips).toMatch(
       /formatFieldValue\(activeEventType, name, \{ \.\.\.eventFormData, \.\.\.offered \}\)/
     );
-    expect(summary).toMatch(/localizeFieldValue\(formatted, intl\.locale\)/);
+    expect(chips).toMatch(/localizeFieldValue\(formatted, intl\.locale\)/);
+    expect(src).toMatch(
+      /const voiceOfferedSummary = useMemo\(\(\) => voiceOfferedChips\.join\(', '\)/
+    );
+    expect(src).toMatch(
+      /values=\{\s*voiceBanner\.seededPending\s*\?\s*voiceOfferedChips\s*:\s*voiceFilledLabels\s*\}/
+    );
   });
 
   it('calls a crew message a crew message, not a pasted note', () => {
