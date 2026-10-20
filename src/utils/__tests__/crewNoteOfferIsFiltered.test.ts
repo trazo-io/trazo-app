@@ -25,15 +25,10 @@ describe('crew-note offer in the wizard', () => {
     expect(src).toMatch(/events\.voice\.crewNoteWithheld/);
   });
 
-  it('gives manual review its own headline and no success colour', () => {
-    // The shape changed when the plain headline landed above it, so this asserts the PROPERTY
-    // rather than the old one-line ternary: manual review still selects its own headline, and it
-    // still outranks every branch except the plain one (which only fires when nothing was
-    // offered AND manual review is false).
-    expect(src).toMatch(
-      /voiceBanner\.manualReview\s*\?\s*'events\.voice\.crewNoteManualReviewHeadline'/
-    );
-    expect(src).toMatch(/!voiceBanner\.manualReview\s*&&/);
+  it('gives manual review no success colour', () => {
+    // WHICH headline manual review gets, and that it outranks the others, is a truth table and is
+    // tested as one in `voiceBannerHeadline.test.ts`. What stays here is the part that only exists
+    // in the render: a banner that needs a person to read it must not come up in success green.
     expect(src).toMatch(
       /bg=\{\s*voiceBanner\.seededPending \|\| voiceBanner\.manualReview\s*\?\s*'white'\s*:\s*'green\.50'\s*\}/
     );
@@ -115,17 +110,16 @@ describe('the crew-note banner says the important thing first', () => {
     expect(span).not.toMatch(/pastedNoteApply|pastedNoteDiscard|handleVoiceSeededApply/);
   });
 
-  it('only speaks for a crew message when the words came from one', () => {
-    // "From the crew message" over a pasted note or live dictation attributes the farmer's own
-    // words to somebody else, on a record that names an author.
-    expect(src).toMatch(/seededFromCrewNote &&\s*\n?\s*voiceFilledLabels\.length === 0/);
-  });
-
-  it('never claims nothing can be filled while offering an action that fills something', () => {
-    // The zero case of `crewNoteOffered` reads "Nothing on this activity to fill from those
-    // words", and it was rendered above a "Use South Block" button and a "Switch to Harvest"
-    // button. Both fill something, so the headline was false, not merely unhelpful.
-    expect(src).toMatch(/events\.voice\.crewNoteHeadlinePlain/);
-    expect(src).toMatch(/voiceBanner\.blockSuggestion \|\| voiceBanner\.suggestion/);
+  it('chooses the headline through the tested truth table, not a ternary here', () => {
+    // The two assertions that used to sit here were regexes over this file's source, and both
+    // defects they were written for were asymmetries between the crew-note path and the pasted /
+    // live-dictation paths, which a regex for the crew branch cannot see. The choice now lives in
+    // `utils/voiceBannerHeadline.ts` with a truth table over all three sources; this only keeps it
+    // from being re-inlined.
+    expect(src).toMatch(/voiceBannerHeadlineId\(\{/);
+    expect(src).toMatch(/source: voiceNoteSource\(\{/);
+    // No branch on the source may come back into the headline itself.
+    const call = src.slice(src.indexOf('const voiceBannerHeadline ='), src.indexOf('const seededDateUnanswered'));
+    expect(call).not.toMatch(/crewNoteOffered|pastedNoteOffered|HeadlinePlain|ManualReviewHeadline/);
   });
 });

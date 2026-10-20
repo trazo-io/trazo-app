@@ -302,13 +302,16 @@ describe('the offer says what it would write, and where the words came from', ()
     // available on a crew-note URL, and a hand-pasted note there is not the crew message.
     expect(src).toMatch(/const seededFromCrewNote = Boolean\(voiceBanner\?\.fromCrewNote\)/);
     expect(src).toMatch(/fromCrewNote: Boolean\(eventData\.from_crew_note\)/);
-    for (const key of [
-      'events.voice.crewNoteOffered',
-      'events.voice.crewNoteApplied',
-      'events.voice.crewNoteDateWhy',
-      'events.voice.dismissCrewNote'
-    ]) {
+    for (const key of ['events.voice.crewNoteDateWhy', 'events.voice.dismissCrewNote']) {
       expect(src, `${key} is not rendered`).toContain(`'${key}'`);
+    }
+    // The two HEADLINE keys moved into the chooser when it became a truth table with its own
+    // tests; the wizard passes it the provenance and no longer names a key. They are asserted
+    // where they now live rather than dropped, since what this test holds is that a crew message
+    // is called one.
+    const chooser = readFileSync(join(__dirname, '../voiceBannerHeadline.ts'), 'utf8');
+    for (const key of ['events.voice.crewNoteOffered', 'events.voice.crewNoteApplied']) {
+      expect(chooser, `${key} is not chosen anywhere`).toContain(`'${key}'`);
     }
   });
 

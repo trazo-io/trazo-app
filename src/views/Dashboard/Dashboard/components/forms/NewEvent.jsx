@@ -132,6 +132,7 @@ import {
   mergeOfferedValues
 } from 'utils/voiceDataMapper';
 import { voiceBlockSuggestion } from 'utils/spokenBlock';
+import { voiceBannerHeadlineId, voiceNoteSource } from 'utils/voiceBannerHeadline';
 import { isEventOnBuyerPage } from 'utils/consumerDisplay';
 import { cleanEventPayload } from 'utils/cleanEventPayload';
 import { revealFirstFormError } from 'utils/revealFirstFormError';
@@ -1965,38 +1966,29 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // ONE source of truth: the form's own date field. Answering on step 0 ends the question by
   // itself, `handleVoiceSwitchType` rebuilding the banner cannot lose it, and there is no flag to
   // reconcile against the value that will actually be filed.
+  // ONE source of truth: the form's own date field. Answering on step 0 ends the question by
+  // itself, `handleVoiceSwitchType` rebuilding the banner cannot lose it, and there is no flag to
+  // reconcile against the value that will actually be filed.
+  //
+  // The CHOICE of headline lives in `voiceBannerHeadline.ts`, as a truth table with its own tests.
+  // It was a nested ternary here, and this file has no render harness, so the only guard available
+  // was a regex over its own source. Two defects went through that gap, both the same class: a
+  // rule written for the crew-note path while pasted notes and live dictation kept the old
+  // behaviour. See that file's header.
   const voiceBannerHeadline = voiceBanner
     ? intl.formatMessage(
         {
-          // Manual review first: nothing was filled, so neither "offered" nor "filled" is true, and
-          // "0 fields filled" in success green read as done (review of app #63).
-          // ⛔ NEVER CLAIM "NOTHING" WHILE OFFERING AN ACTION. The zero case of
-          // `crewNoteOffered` reads "Nothing on this activity to fill from those words", and it
-          // was shown above a "Use South Block" button and a "Switch to Harvest" button. Both
-          // fill something, so the headline was not merely unhelpful, it was false, and a
-          // farmer who reads the first line and stops has been told the message was useless.
-          // MEASURED 2026-10-19 on a Spanish screen.
-          //
-          // GATED ON `seededFromCrewNote`, like the two branches below it. Without that a pasted
-          // note, or live dictation, could be headlined "From the crew message", which attributes
-          // the farmer's own words to somebody else on a record that names an author.
-          id:
-            !voiceBanner.manualReview &&
-            seededFromCrewNote &&
-            voiceFilledLabels.length === 0 &&
-            (voiceBanner.blockSuggestion || voiceBanner.suggestion)
-              ? 'events.voice.crewNoteHeadlinePlain'
-              : voiceBanner.manualReview
-              ? 'events.voice.crewNoteManualReviewHeadline'
-              : voiceBanner.seeded
-              ? voiceBanner.seededPending
-                ? seededFromCrewNote
-                  ? 'events.voice.crewNoteOffered'
-                  : 'events.voice.pastedNoteOffered'
-                : seededFromCrewNote
-                ? 'events.voice.crewNoteApplied'
-                : 'events.voice.pastedNoteApplied'
-              : 'events.voice.applied'
+          id: voiceBannerHeadlineId({
+            source: voiceNoteSource({
+              fromCrewNote: voiceBanner.fromCrewNote,
+              seeded: voiceBanner.seeded
+            }),
+            manualReview: voiceBanner.manualReview,
+            filledCount: voiceFilledLabels.length,
+            hasSuggestion: Boolean(voiceBanner.blockSuggestion || voiceBanner.suggestion),
+            seeded: voiceBanner.seeded,
+            seededPending: voiceBanner.seededPending
+          })
         },
         { count: voiceFilledLabels.length }
       )

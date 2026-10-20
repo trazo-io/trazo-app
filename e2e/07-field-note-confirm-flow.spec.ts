@@ -50,6 +50,13 @@ const WEBHOOK_URL =
 /** The roster row the seeder creates. Fixed, because the seeder attests consent on it. */
 const CREW_PHONE = '+15095550123';
 
+/** The seeded farm that HAS blocks. By name: an index stopped meaning this one the moment
+ * the seeder gained a second farm. */
+const FARM = 'Audit Ranch';
+
+/** The only seeded block with an open season, so the wizard opens instead of a dead end. */
+const BLOCK_WITH_SEASON = 'River Block';
+
 /** Seeded by `audit_crew_messages --seed` with zero parcels, for the dead-end test. */
 const EMPTY_FARM = 'Audit Ranch (no blocks)';
 
@@ -161,9 +168,7 @@ test.describe('a supervisor turns a crew message into a record', () => {
     // `.first()` drove whichever note happened to sort first (review of app #150).
     const card = noteCard(page, words);
     await expect(card).toBeVisible();
-    await card
-      .getByRole('combobox', { name: /farm|finca/i })
-      .selectOption({ label: 'Audit Ranch' });
+    await card.getByRole('combobox', { name: /farm|finca/i }).selectOption({ label: FARM });
     // BY NAME, not by index. The seeder opens a season on River Block only, and a block with no
     // season stops at "No open season on this parcel" before the form ever renders. Picking by
     // index made this test pass against a page that had no form on it at all.
@@ -202,7 +207,7 @@ test.describe('a supervisor turns a crew message into a record', () => {
     // guaranteed to resolve to the same card as each other, and earlier tests leave their
     // notes pending on purpose (review of app #150, second pass).
     const card = noteCard(page, words);
-    await card.getByRole('combobox', { name: /farm|finca/i }).selectOption({ index: 1 });
+    await card.getByRole('combobox', { name: /farm|finca/i }).selectOption({ label: FARM });
     await card
       .getByRole('combobox', { name: /^block|^bloque/i })
       .selectOption({ label: 'River Block' });
@@ -246,7 +251,7 @@ test.describe('a supervisor turns a crew message into a record', () => {
     // guaranteed to resolve to the same card as each other, and earlier tests leave their
     // notes pending on purpose (review of app #150, second pass).
     const card = noteCard(page, words);
-    await card.getByRole('combobox', { name: /farm|finca/i }).selectOption({ index: 1 });
+    await card.getByRole('combobox', { name: /farm|finca/i }).selectOption({ label: FARM });
     await card
       .getByRole('combobox', { name: /^block|^bloque/i })
       .selectOption({ label: 'River Block' });
@@ -338,9 +343,7 @@ test.describe('a supervisor turns a crew message into a record', () => {
     // BY NAME. This picked index 1, which stopped meaning "Audit Ranch" the moment the
     // seeder gained a second farm ("Audit Ranch (no blocks)", added for the dead-end test).
     // An index is a bet on ordering that nothing in the fixture promises.
-    await card
-      .getByRole('combobox', { name: /farm|finca/i })
-      .selectOption({ label: 'Audit Ranch' });
+    await card.getByRole('combobox', { name: /farm|finca/i }).selectOption({ label: FARM });
     await card
       .getByRole('combobox', { name: /^block|^bloque/i })
       .selectOption({ label: 'block 1' });
@@ -396,6 +399,73 @@ test.describe('a supervisor turns a crew message into a record', () => {
     // Scoped, so this asserts THIS message is offered as loggable rather than whichever
     // note happens to sort first.
     await expect(noteCard(page, words).getByRole('button', { name: /log this/i })).toBeVisible();
+  });
+});
+
+test.describe('a note the operator pasted themselves', () => {
+  test.skip(!TOKEN, 'set E2E_FIELD_NOTE_TOKEN and run the backend with it; see the file header');
+
+  test('is not headlined as a crew message, and does not deny an offer it is making', async ({
+    page,
+    request
+  }) => {
+    // THE SIBLING SURFACE. Both defects app #158 fixes were written on the crew-note path, and
+    // review asked the obvious question: does the pasted note still say the old thing. It did.
+    // "From the crew message" over words the operator pasted attributes them to somebody else on
+    // a record that names an author (7 CFR 205.201(a)), and the zero case still opened with
+    // "Nothing on this activity to fill from those words" above two buttons that fill something.
+    //
+    // Reached through a delivered note only to LEARN A REAL PARCEL URL, then re-opened without
+    // `?field_note=`, so the wizard under test carries no crew note at all.
+    const seed = `Para abrir el asistente ${Date.now()}`;
+    expect((await deliver(request, seed, `SM-paste-${Date.now()}`)).status()).toBe(200);
+    await page.goto('/admin/dashboard/field-notes');
+    const card = noteCard(page, seed);
+    await card.getByRole('combobox', { name: /farm|finca/i }).selectOption({ label: FARM });
+    await card
+      .getByRole('combobox', { name: /^block|^bloque/i })
+      .selectOption({ label: BLOCK_WITH_SEASON });
+    await card.getByRole('button', { name: /log this/i }).click();
+    await page.waitForURL(/field_note=/);
+    const clean = page.url().replace(/[?&]field_note=[^&]*/, '');
+    await page.goto(clean);
+    await expect(page.getByText(seed)).toHaveCount(0);
+
+    // Pruning, and a note about harvest in a block this parcel has never recorded: nothing to
+    // fill, two things to act on.
+    await page
+      .getByRole('button', { name: /^pruning|^poda/i })
+      .first()
+      .click();
+    // The paste box lives on the DETAILS step, not on the verb step: by the time it exists the
+    // activity is already chosen, which is what lets the parse ask for fields instead of guessing
+    // the activity.
+    await page.locator('input[name="date"]').fill('2026-10-14T09:30');
+    await page
+      .getByRole('button', { name: /^continue$|^continuar$/i })
+      .first()
+      .click();
+    await page.getByRole('button', { name: /paste a note|pegar una nota/i }).click();
+    await page
+      .getByRole('textbox', { name: /paste a note|pegar una nota|paste what came in/i })
+      .fill('Cosechamos 30 bines de Gala en el bloque sur');
+    await page.getByRole('button', { name: /read this note|leer esta nota/i }).click();
+
+    const banner = page.getByText(/from a pasted note|de una nota pegada/i);
+    await expect(banner, 'the pasted note produced no banner at all').toBeVisible({
+      timeout: 90_000
+    });
+    // The two defects, on this surface.
+    await expect(page.getByText(/from the crew message|del mensaje de la cuadrilla/i)).toHaveCount(
+      0
+    );
+    await expect(
+      page.getByText(/nothing on this activity to fill|no hay campos que completar/i)
+    ).toHaveCount(0);
+    // And it is a denial that would have been false: something IS on offer.
+    await expect(
+      page.getByRole('button', { name: /switch to|cambiar a|bloque sur|south/i }).first()
+    ).toBeVisible();
   });
 });
 
