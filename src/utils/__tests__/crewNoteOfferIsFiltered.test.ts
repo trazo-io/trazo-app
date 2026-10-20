@@ -137,8 +137,12 @@ describe('the crew-note banner says the important thing first', () => {
     // needs a structural assertion.
     const open = src.indexOf('onClick={handleVoiceSwitchType}');
     expect(open).toBeGreaterThan(-1);
-    const close = src.indexOf('</Button>', open);
-    const span = src.slice(open, close);
+    // EITHER CLOSING TAG. The banner's buttons are `StandardButton` now (app #160), and a guard
+    // that only knew `</Button>` would walk past the real closer to the next raw Chakra button
+    // far below and report a 300-line span on a healthy file.
+    const close = src.slice(open).search(/<\/(Standard)?Button>/);
+    expect(close).toBeGreaterThan(-1);
+    const span = src.slice(open, open + close);
     expect(
       span.split('\n').length,
       'the Switch button swallowed the rest of the banner again'

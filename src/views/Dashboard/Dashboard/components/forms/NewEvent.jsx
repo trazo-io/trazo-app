@@ -377,7 +377,11 @@ const CrewNoteRow = ({ label, children }) => (
  * carries no meaning and does not have to.
  */
 const CrewNoteChips = ({ values, testId }) => (
-  <HStack flexWrap="wrap" spacing={2} rowGap={1} data-testid={testId}>
+  // ⛔ `aria-hidden`, because a sentence saying the same thing sits beside it. Without this a
+  // screen reader reads every value twice, once as a run of disconnected chips and once as the
+  // sentence, and the chips are the half that does not say what the values ARE (review of app
+  // #160). The sentence is the accessible version; this is its picture.
+  <HStack flexWrap="wrap" spacing={2} rowGap={1} aria-hidden="true" data-testid={testId}>
     {values.map((value) => (
       <Badge
         key={value}
@@ -3966,11 +3970,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                         }
                                       )}
                                     </Text>
-                                    <Button
+                                    <StandardButton
                                       size="xs"
                                       variant="outline"
-                                      colorScheme="green"
-                                      minH="44px"
                                       mt={1}
                                       onClick={handleVoiceSwitchType}>
                                       {intl.formatMessage(
@@ -3981,7 +3983,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                           })
                                         }
                                       )}
-                                    </Button>
+                                    </StandardButton>
                                   </CrewNoteRow>
                                 </VStack>
                               )}
@@ -4044,11 +4046,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                             }
                                           )}
                                     </Text>
-                                    <Button
+                                    <StandardButton
                                       size="xs"
                                       variant="outline"
-                                      colorScheme="green"
-                                      minH="44px"
                                       mt={1}
                                       onClick={handleVoiceBlockAccept}>
                                       {intl.formatMessage(
@@ -4060,7 +4060,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                         },
                                         { block: voiceBanner.blockSuggestion.value }
                                       )}
-                                    </Button>
+                                    </StandardButton>
                                   </CrewNoteRow>
                                 </VStack>
                               )}
@@ -4095,26 +4095,23 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                     spacing={2}
                                     pt={2}
                                     w={{ base: 'full', smd: 'auto' }}>
-                                    <Button
+                                    <StandardButton
                                       size="xs"
-                                      minH="44px"
                                       variant="outline"
-                                      colorScheme="green"
                                       onClick={handleVoiceSeededUseToday}>
                                       {intl.formatMessage(
                                         { id: 'events.voice.pastedNoteDateUseToday' },
                                         { date: localDateTimeLabel(nowLocalDateTimeInput()) }
                                       )}
-                                    </Button>
-                                    <Button
+                                    </StandardButton>
+                                    <StandardButton
                                       size="xs"
-                                      minH="44px"
                                       variant="ghost"
                                       onClick={handleVoiceSeededPickAnotherDay}>
                                       {intl.formatMessage({
                                         id: 'events.voice.pastedNoteDateAnother'
                                       })}
-                                    </Button>
+                                    </StandardButton>
                                   </Stack>
                                 </Box>
                               )}
@@ -4154,16 +4151,15 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                           values={voiceWithheldLabels}
                                         />
                                       )}
-                                      <Button
+                                      <StandardButton
                                         size="xs"
                                         variant="ghost"
-                                        minH="44px"
                                         px={2}
                                         ml={-2}
                                         aria-expanded={showCrewNoteWhy}
                                         onClick={() => setShowCrewNoteWhy((open) => !open)}>
                                         {intl.formatMessage({ id: 'events.voice.row.why' })}
-                                      </Button>
+                                      </StandardButton>
                                       {showCrewNoteWhy && (
                                         <Text
                                           fontSize="xs"
@@ -4196,7 +4192,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                               {seededDateAnswered && (
                                 <CrewNoteRow
                                   label={intl.formatMessage({ id: 'events.voice.row.date' })}>
-                                  <Text fontSize="xs" color="gray.700">
+                                  <Text fontSize="xs" color="gray.700" aria-hidden="true">
                                     {localDateTimeLabel(eventFormData.date)}
                                   </Text>
                                   {/* The full sentence stays for a screen reader: "Will be
@@ -4220,11 +4216,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                   spacing={2}
                                   pt={1}
                                   w={{ base: 'full', smd: 'auto' }}>
-                                  <Button
+                                  <StandardButton
                                     size="xs"
                                     variant="outline"
-                                    colorScheme="green"
-                                    minH="44px"
                                     onClick={handleVoiceSeededApply}>
                                     {/* NAME THE VALUE WHEN THERE IS ONE.
                                         "Fill in 1 value" says how many and not which, and the
@@ -4246,14 +4240,13 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                           { id: 'events.voice.pastedNoteApply' },
                                           { count: voiceFilledLabels.length }
                                         )}
-                                  </Button>
-                                  <Button
+                                  </StandardButton>
+                                  <StandardButton
                                     size="xs"
                                     variant="ghost"
-                                    minH="44px"
                                     onClick={handleVoiceSeededDiscard}>
                                     {intl.formatMessage({ id: 'events.voice.pastedNoteDiscard' })}
-                                  </Button>
+                                  </StandardButton>
                                 </Stack>
                               )}
                               {/* Say out loud what was NOT written. A value the farmer spoke
