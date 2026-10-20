@@ -290,7 +290,7 @@ describe('the offer says what it would write, and where the words came from', ()
     // The sentence a screen reader hears: the offer while it stands, and once applied everything
     // the message put on the form, which can include a block a separate tap wrote first.
     expect(src).toMatch(/fields: voiceBanner\.seededPending\s*\?\s*voiceOfferedSummary/);
-    expect(src).toMatch(/voiceWrittenLabels\s*:\s*voiceFilledLabels\s*\)\.join\(', '\)/);
+    expect(src).toMatch(/:\s*voiceAllFilledLabels\.join\(', '\)/);
     // The list is built once and used twice: as chips on screen and as that sentence for a
     // screen reader. Assembling them separately is how the two come to disagree, so the sentence
     // is asserted to be a join of the chips rather than its own construction.
@@ -305,7 +305,7 @@ describe('the offer says what it would write, and where the words came from', ()
     // While the offer stands the chips are the offer; once it is applied they are everything the
     // message put on the form, which can include a block a separate tap wrote first.
     expect(src).toMatch(/values=\{\s*voiceBanner\.seededPending\s*\?\s*voiceOfferedChips/);
-    expect(src).toMatch(/voiceWrittenLabels\.length\s*\?\s*voiceWrittenLabels/);
+    expect(src).toMatch(/voiceOfferedChips\s*:\s*voiceAllFilledLabels/);
   });
 
   it('calls a crew message a crew message, not a pasted note', () => {

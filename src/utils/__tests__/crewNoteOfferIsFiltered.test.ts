@@ -52,8 +52,21 @@ describe('crew-note offer in the wizard', () => {
       src.indexOf('const seededDateUnanswered')
     );
     const basis =
-      /voiceBanner\.seededPending\s*\?\s*voiceFilledLabels\.length\s*:\s*Math\.max\(voiceFilledLabels\.length, voiceWrittenLabels\.length\)/g;
+      /voiceBanner\.seededPending\s*\?\s*voiceFilledLabels\.length\s*:\s*voiceAllFilledLabels\.length/g;
     expect(call.match(basis)?.length, 'the id and the count use different numbers').toBe(2);
+  });
+
+  it('shows everything on the form once the offer is gone, not just the last tap', () => {
+    // ⛔ A UNION, NOT A FALLBACK. `blockSuggestion` is offered on live dictation too, where there
+    // is no `seededPending` and `keptFields` already holds the dictated fields. Reading the
+    // written list INSTEAD of them the moment a block was accepted dropped the dictated chips
+    // from the banner and left the headline counting fields it no longer showed (review of
+    // app #162).
+    expect(src).toMatch(/\.\.\.\(voiceBanner\?\.filledFields \|\| \[\]\),/);
+    expect(src).toMatch(
+      /\.\.\.\(voiceBanner\?\.seededPending \? \[\] : voiceBanner\?\.keptFields \|\| \[\]\)/
+    );
+    expect(src).not.toMatch(/voiceWrittenLabels\.length\s*\?\s*voiceWrittenLabels/);
   });
 
   it('shows the banner as labelled rows, not as stacked sentences', () => {

@@ -1820,6 +1820,25 @@ function NewEvent({ isEdit = false, eventId = null }) {
     () => entriesForFieldNames(voiceBanner?.filledFields).map((entry) => entry.label),
     [entriesForFieldNames, voiceBanner]
   );
+
+  /**
+   * EVERYTHING on the form from this input, once there is no offer left standing.
+   *
+   * A UNION, not a fallback. `blockSuggestion` is offered on live dictation too, where there is
+   * no `seededPending` and `keptFields` already holds the dictated fields. Reading
+   * `voiceWrittenLabels` instead of them the moment a block was accepted would have dropped the
+   * dictated chips from the banner and left the headline counting fields it no longer showed
+   * (review of app #162).
+   */
+  const voiceAllFilledLabels = useMemo(() => {
+    const names = Array.from(
+      new Set([
+        ...(voiceBanner?.filledFields || []),
+        ...(voiceBanner?.seededPending ? [] : voiceBanner?.keptFields || [])
+      ])
+    );
+    return entriesForFieldNames(names).map((entry) => entry.label);
+  }, [entriesForFieldNames, voiceBanner]);
   const voiceFilledLabels = useMemo(
     () => voiceFilledEntries.map((entry) => entry.label),
     [voiceFilledEntries]
@@ -2089,7 +2108,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
             // size of the offer, which is what "N values to review" means.
             filledCount: voiceBanner.seededPending
               ? voiceFilledLabels.length
-              : Math.max(voiceFilledLabels.length, voiceWrittenLabels.length),
+              : voiceAllFilledLabels.length,
             hasSuggestion: Boolean(voiceBanner.blockSuggestion || voiceBanner.suggestion),
             seeded: voiceBanner.seeded,
             seededPending: voiceBanner.seededPending
@@ -2099,9 +2118,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
           // SAME BASIS AS THE KEY ABOVE. The id was picking "N fields filled" from one number
           // while the message printed another, so a banner showing two chips said "1 field
           // filled" (MEASURED 2026-10-20, block accepted by its own tap and then the offer).
-          count: voiceBanner.seededPending
-            ? voiceFilledLabels.length
-            : Math.max(voiceFilledLabels.length, voiceWrittenLabels.length)
+          count: voiceBanner.seededPending ? voiceFilledLabels.length : voiceAllFilledLabels.length
         }
       )
     : '';
@@ -4071,9 +4088,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                     values={
                                       voiceBanner.seededPending
                                         ? voiceOfferedChips
-                                        : voiceWrittenLabels.length
-                                        ? voiceWrittenLabels
-                                        : voiceFilledLabels
+                                        : voiceAllFilledLabels
                                     }
                                   />
                                   {/* THE SAME LIST, AS ONE SENTENCE, for a screen reader. Chips
@@ -4090,10 +4105,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                       {
                                         fields: voiceBanner.seededPending
                                           ? voiceOfferedSummary
-                                          : (voiceWrittenLabels.length
-                                              ? voiceWrittenLabels
-                                              : voiceFilledLabels
-                                            ).join(', ')
+                                          : voiceAllFilledLabels.join(', ')
                                       }
                                     )}
                                   </Box>
