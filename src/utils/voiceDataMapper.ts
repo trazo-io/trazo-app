@@ -871,6 +871,26 @@ export function productTotalFromAmounts(
 }
 
 /**
+ * The containers a harvest is counted in: bins, boxes, cajas, totes, lugs.
+ *
+ * ⛔ THIS IS NOT `category === 'count'`. That label is ALSO what the model falls back to for any
+ * unit no dimension recognises, which `voiceRenderGate` pins for
+ * `{ value: 240, unit: 'trees', category: 'count' }`. Selecting the yield on the label put a
+ * tree or plant count ahead of the weight the crew stated: "4,200 pounds from 240 trees" filled
+ * NOTHING (no select option for trees) and "500 kg from 300 plants" offered 300 plants, which is
+ * the unrelated-number defect this whole branch exists to stop, one unit family over
+ * (review of app #159). The container vocabulary is the thing to test, so it is its own
+ * predicate and `categoryForUnit` reads it rather than repeating the list.
+ */
+function isContainerUnit(unit: string | undefined): boolean {
+  return /^(bin|bins|bines?|box|boxes|cajas?|tote|totes|lug|lugs)$/.test(
+    String(unit ?? '')
+      .toLowerCase()
+      .trim()
+  );
+}
+
+/**
  * What PHYSICAL DIMENSION is this unit — decided by the unit, not by the model.
  *
  * 🔴 MEASURED 2026-09-03, from a real dictation. "Sprayed Entrust on the east block. Six fluid
@@ -914,6 +934,9 @@ function categoryForUnit(unit: string | undefined): string | null {
   ) {
     return 'volume';
   }
+  // CONTAINERS, and they are the unit tree fruit is actually harvested in. A bin is not a
+  // weight: 85 bins is 85 bins, and converting it to kilos would be inventing a number.
+  if (isContainerUnit(u)) return 'count';
   if (/^(acres?|ha|hectares?|hect[aá]reas?|m2|km2)$/.test(u)) return 'area';
   if (/^(hours?|hrs?|horas?|minutes?|mins?|minutos?)$/.test(u)) return 'time';
   if (
@@ -923,6 +946,31 @@ function categoryForUnit(unit: string | undefined): string | null {
   ) {
     return 'depth';
   }
+  return null;
+}
+
+/**
+ * The spoken unit, as one of the options the yield unit select actually offers.
+ *
+ * `yield_unit` is a `<select>` with a fixed vocabulary (kg, tons, lbs, boxes, bins, plants,
+ * seeds). The spoken unit was written to it RAW, so "14 toneladas" set `yield_unit` to a string
+ * the select has no option for: nothing shows as selected and the record carries a unit no other
+ * surface can read. Spanish is the common case, since the crew speaks it.
+ *
+ * Returns null for anything outside the vocabulary, and the caller then fills neither half.
+ */
+function yieldUnitFor(unit: string | undefined): string | null {
+  const u = String(unit ?? '')
+    .toLowerCase()
+    .trim();
+  if (!u) return null;
+  if (/^(kg|kilograms?|kilos?|quilos?|kilogramos?)$/.test(u)) return 'kg';
+  if (/^(tons?|tonnes?|toneladas?|t)$/.test(u)) return 'tons';
+  if (/^(lb|lbs|pounds?|libras?)$/.test(u)) return 'lbs';
+  if (/^(box|boxes|cajas?)$/.test(u)) return 'boxes';
+  if (/^(bin|bins|bines?|tote|totes|lug|lugs)$/.test(u)) return 'bins';
+  if (/^(plants?|plantas?)$/.test(u)) return 'plants';
+  if (/^(seeds?|semillas?)$/.test(u)) return 'seeds';
   return null;
 }
 
@@ -1496,12 +1544,40 @@ export function mapVoiceDataToFieldValues(
     }
 
     // Yield — harvest and post-harvest processing both render it (visibleForSubtypes
-    // ['HA','PH','PL']), so a weight spoken about either lands on the same field.
+    // ['HA','PH','PL']), so an amount spoken about either lands on the same field.
+    //
+    // 🔴 MEASURED 2026-10-19, both halves of this are defects the crew hit on the first day:
+    //
+    //   "Cosechamos 85 bines del bloque 1"
+    //     -> "Nothing on this activity to fill from those words." Bins were in no dimension, so
+    //        the only amount in the sentence was invisible and a harvest offered nothing.
+    //
+    //   "Cosechamos 120 bines ... el camion llevo 14 toneladas a la empacadora"
+    //     -> "Would fill: Yield: 14 toneladas". `find(category === 'weight')` takes the FIRST
+    //        weight in the message whatever it is about, so the truck's load to the packer was
+    //        offered as the day's harvest. A certifier reads that figure for lot traceability
+    //        and mass balance.
+    //
+    // A COUNT WINS OVER A WEIGHT, and that is the whole rule. If the crew stated the harvest in
+    // containers, containers are what they counted; a weight elsewhere in the same message is
+    // about something else (a truck, a bin tare, a contract). If no container was named, a
+    // weight is the yield, as before.
     if (templateId === 'harvest' || templateId === 'post_harvest') {
-      const weightAmount = amounts.find((a) => a.category === 'weight');
-      if (weightAmount) {
-        overrides.yield_quantity = weightAmount.value;
-        overrides.yield_unit = weightAmount.unit;
+      // BY THE UNIT, never by the model's category label. See `isContainerUnit`.
+      const container = amounts.find((a) => isContainerUnit(a.unit));
+      const weight = amounts.find((a) => a.category === 'weight');
+      // A container the select cannot show falls back to the weight rather than blanking the
+      // yield: the crew stated a number either way.
+      const containerUnit = container ? yieldUnitFor(container.unit) : null;
+      const yieldAmount = containerUnit ? container : weight;
+      const yieldUnit = containerUnit ?? yieldUnitFor(weight?.unit);
+      // BOTH OR NEITHER. The unit select offers a fixed vocabulary, so a spoken unit it does not
+      // carry ("toneladas" is not one of its options, nor is "cubetas") would land as a quantity
+      // under whatever unit the form defaulted to, which is a different number. Same rule as the
+      // irrigation depth above: a missing input must never become a default.
+      if (yieldAmount && yieldUnit) {
+        overrides.yield_quantity = yieldAmount.value;
+        overrides.yield_unit = yieldUnit;
       }
     }
   }
@@ -1663,9 +1739,52 @@ export function mergeOfferedValues(
     return [...group];
   };
 
+  /** The amount fields a unit key belongs to, whether or not they are on offer. */
+  const ownersOf = (key: string): readonly string[] => VOICE_UNIT_COMPANIONS[key] ?? [];
+  const isUnitKey = (key: string) => key in VOICE_UNIT_COMPANIONS;
+
+  // A UNIT ON ITS OWN STATES NOTHING, so it does not block its own pair.
+  //
+  // 🔴 MEASURED 2026-10-20 on the running stack. "Cosechamos 85 bines del bloque 1" offered
+  // "Would fill: Yield: 85 bins", the operator tapped, and the banner answered "0 fields
+  // filled". The form arrives with `yield_unit` at the tab's default ("lbs"), that default read
+  // as a filled member of the fact group, and the group was skipped whole. Every value+unit
+  // field on every activity had this: area, volume, fuel, yield, irrigation depth.
+  //
+  // What the rule is REALLY for stays: writing an amount beside a unit somebody else chose
+  // invents a figure that prints on a certifier packet and a CA PUR export. Both of those
+  // dangers are still blocked below:
+  //   * the farmer typed the amount -> the owner is filled, nothing is written;
+  //   * the amount is offered and its unit is NOT (dropped by the render gate, or never heard)
+  //     -> the existing unit decides what the number means, so it still blocks.
+  // The case being unblocked is the only coherent one: both halves offered together, the
+  // amount empty, and the banner naming the pair in words before the tap.
+  //
+  // ⚠️ WHAT THIS CANNOT TELL APART, stated rather than left implicit: a unit sitting at the tab
+  // default and a unit the farmer picked themselves but has not typed a number under yet. Both
+  // read as `isFilled(unit) && !isFilled(amount)`, so in that second case an offer replaces
+  // their choice. The form holds no record of who set it. The exchange is deliberate: the
+  // alternative left every value+unit field unfillable for everyone, and the banner names the
+  // unit it would write ("Yield: 85 bins") before the tap.
+  const blocks = (key: string) => {
+    if (!isFilled(key)) return false;
+    if (!isUnitKey(key)) return true;
+    // A unit blocks only once one of its amounts is an answer.
+    return ownersOf(key).some(isFilled);
+  };
+
   const result: Record<string, unknown> = {};
   offeredKeys.forEach((key) => {
-    if (factGroup(key).some(isFilled)) return;
+    const group = factGroup(key);
+    if (group.some(blocks)) return;
+    // An amount whose unit is NOT on offer is still decided by whatever unit is already there.
+    if (!isUnitKey(key)) {
+      const unitsOwningThis = Object.keys(VOICE_UNIT_COMPANIONS).filter((unit) =>
+        ownersOf(unit).includes(key)
+      );
+      const unitOnOffer = unitsOwningThis.some((unit) => offeredKeys.includes(unit));
+      if (!unitOnOffer && unitsOwningThis.some(isFilled)) return;
+    }
     result[key] = offered[key];
   });
   return result;

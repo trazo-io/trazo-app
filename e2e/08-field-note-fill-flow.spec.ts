@@ -224,49 +224,60 @@ test.describe('a note that is allowed to fill', () => {
       `the banner promised ${count} and the tap wrote ${written.length} (${written.join(', ')})`
     ).toBe(count);
   });
+});
 
-  test('a harvest counted in bins offers the yield', async ({ page, request }) => {
-    // MEASURED 2026-10-19, and this one IS a defect. Bins are the unit tree fruit is harvested
-    // in, which is the crop this product is sold for.
+/**
+ * ⚠️ RETRIED, and deliberately. The offer this asserts comes from a live model, and its recall
+ * varies: MEASURED 2026-10-20, the same sentence ("Cosechamos 85 bines del bloque 1") produced
+ * "Would fill: Yield: 85 bins" on one run and no amount at all on the next, with identical code.
+ * A real regression fails every attempt; a parse that simply did not return the amount this
+ * minute does not. Without this, the file reports model variance as a product defect, which is
+ * the mistake this whole spec exists to stop making.
+ */
+test.describe('a harvest counted in bins', () => {
+  test.describe.configure({ retries: 2 });
+  test.skip(!TOKEN, 'set E2E_FIELD_NOTE_TOKEN and run the backend with it; see spec 07');
+
+  test('offers the yield, and the tap writes it', async ({ page, request }) => {
+    // THIS TEST CARRIED `test.fail()` AND THE DEFECT IS NOW FIXED (app #159), so it reads as a
+    // plain assertion. What it recorded, measured 2026-10-19:
     //
     //   "Cosechamos 85 bines del bloque 1" -> "Nothing on this activity to fill from those
-    //   words." No offer at all.
+    //   words." No offer at all, because bins were in no dimension `categoryForUnit` knew.
     //
-    // `categoryForUnit` in voiceDataMapper.ts recognises weight, volume, area, time and depth.
-    // Bins are in none of them, so the amount is categorised `count`, and the harvest mapper
-    // (:1501) looks for `category === 'weight'` and finds nothing.
-    //
-    // WORSE, when the message carries a weight for something else:
     //   "Cosechamos 120 bines ... el camion llevo 14 toneladas a la empacadora"
-    //   -> "Would fill: Yield: 14 toneladas"
-    // The truck's load to the packer is offered as the harvest yield. The form's own help text
-    // says a certifier reads that figure for lot traceability and mass balance.
+    //   -> "Would fill: Yield: 14 toneladas". The truck's load to the packer offered as the
+    //   harvest yield, on a figure a certifier reads for lot traceability and mass balance.
     //
-    // ⛔ DO NOT "fix" the promise without fixing this. Today the wrong number is saved from
-    // landing only because the unit companion rule refuses it. Make the promise keepable first
-    // and 14 tonnes files itself as a 120-bin harvest.
-    test.fail();
-    // A BUDGET, NOT THE DEFAULT 60s. This test waits for a live model parse and then waits out a
-    // 15s locator timeout proving an absence, so on a slow parse the 60s cap expires first.
-    // Playwright reports a timeout as a HARNESS failure, which `test.fail()` does not accept, so
-    // the suite went red for the clock rather than for the defect (MEASURED: one run took 18m
-    // wall-clock across the file). The assertion has to be what decides.
+    // And once those were right, the tap still answered "0 fields filled": `mergeOfferedValues`
+    // read the tab's DEFAULT unit as a filled field and skipped the whole pair.
+    //
+    // The last one is why this is a browser test and not three more unit tests: it only exists
+    // once a real form has supplied its own defaults.
     test.setTimeout(240_000);
     const words = `Cosechamos 85 bines del bloque 1, variedad Chandler ${Date.now()}`;
     await openDetails(page, request, words, /^harvest$|^cosecha$/i);
 
-    // Wait for the BANNER, which does appear, then assert on the offer with a short timeout.
-    // Waiting 90s for an element that never arrives ends the test as a TIMEOUT, and Playwright
-    // treats a timeout as a harness failure rather than the expected one, so `test.fail()` does
-    // not accept it and the suite goes red for the wrong reason.
-    await expect(
-      page.getByText(/from the crew message|del mensaje de la cuadrilla/i).first()
-    ).toBeVisible({ timeout: 90_000 });
-
-    const offer = page.getByRole('button', { name: /fill in |completar /i });
+    const offer = page.getByRole('button', { name: /fill in |completar /i }).first();
     await expect(
       offer,
       'a harvest stated in bins offered nothing: the yield the crew reported is not captured'
-    ).toHaveCount(1);
+    ).toBeVisible({ timeout: 90_000 });
+
+    // NAMED IN THE BANNER, in the unit the crew used. "85" with no unit, or 85 under the form's
+    // default pounds, would be a different number.
+    await expect(page.getByText(/would fill|completar[ií]a/i).first()).toContainText(/85 bins/i);
+
+    const before = await fields(page);
+    expect(before['Quantity harvested'], 'the message wrote a value before any tap').toBe('');
+    await offer.click();
+    await page.waitForTimeout(1500);
+    const after = await fields(page);
+
+    expect(after['Quantity harvested'], 'the tap did not write the yield it offered').toBe('85');
+    // The unit travels with the number. It arrives as the tab default ("lbs"), and a default is
+    // not an answer, so the offer is allowed to replace it.
+    const unitKey = Object.keys(after).find((k) => /^unit/i.test(k) && after[k] === 'bins');
+    expect(unitKey, `no unit select reads "bins": ${JSON.stringify(after)}`).toBeTruthy();
   });
 });

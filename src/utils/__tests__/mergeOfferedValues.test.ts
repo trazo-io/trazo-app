@@ -43,11 +43,35 @@ describe('mergeOfferedValues fills empties only', () => {
     expect(mergeOfferedValues({}, offered)).toEqual(offered);
   });
 
-  it('writes NEITHER half when the tab already supplied a unit default', () => {
-    // The defect this exists for: writing 40 beside a pre-existing "gal" when the note said
-    // pounds invents an application rate that appears on a certifier packet and a PUR export.
+  it('writes an amount beside the tab unit default when the note stated the unit too', () => {
+    // NARROWED 2026-10-20, and the defect the old rule exists for is pinned in the test below.
+    //
+    // The old rule blocked the whole pair whenever ANY member was filled, and a form arrives
+    // with its unit selects already on a default. MEASURED on the running stack: a crew note
+    // reading "Cosechamos 85 bines del bloque 1" offered "Would fill: Yield: 85 bins", the
+    // operator tapped, and the banner answered "0 fields filled", because `yield_unit` sat at
+    // the tab's "lbs". That silently cost every value+unit field on every activity.
+    //
+    // Writing both halves cannot invent a figure: they are coherent with each other and the
+    // banner names them in words before the tap. A unit alone states nothing.
     const current = { volume_unit: 'gal' };
-    expect(mergeOfferedValues(current, { volume_applied: 40, volume_unit: 'lb' })).toEqual({});
+    expect(mergeOfferedValues(current, { volume_applied: 40, volume_unit: 'lb' })).toEqual({
+      volume_applied: 40,
+      volume_unit: 'lb'
+    });
+  });
+
+  it('writes NOTHING when the amount is offered and its unit is not', () => {
+    // THE ORIGINAL DEFECT, and it is the half that stays blocked: 40 written beside somebody
+    // else's "gal" when the note said pounds invents an application rate that prints on a
+    // certifier packet and a CA PUR export. The unit can be absent because the render gate
+    // dropped it or because nobody said one.
+    const current = { volume_unit: 'gal' };
+    expect(mergeOfferedValues(current, { volume_applied: 40 })).toEqual({});
+  });
+
+  it('writes an amount whose unit nobody has chosen and nobody offered', () => {
+    expect(mergeOfferedValues({}, { volume_applied: 40 })).toEqual({ volume_applied: 40 });
   });
 
   it('writes NEITHER half when the farmer typed the amount and the unit is on offer', () => {
