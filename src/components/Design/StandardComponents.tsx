@@ -538,6 +538,13 @@ interface StandardStepperProps {
   completedSteps?: number[];
   onStepClick?: (step: number) => void;
   allowStepClick?: boolean;
+  /**
+   * The furthest step the person has reached (`useFurthestStep`). When it is ahead of
+   * `currentStep`, the NEXT step is clickable too and drawn as reachable (outlined). Only the next one:
+   * the caller must route that click through its own Continue, which validates the current
+   * step, and a step two ahead would skip the one in between, whose form is not mounted.
+   */
+  furthestStep?: number;
 }
 
 export const StandardStepper = ({
@@ -545,7 +552,8 @@ export const StandardStepper = ({
   currentStep,
   completedSteps = [],
   onStepClick,
-  allowStepClick = false
+  allowStepClick = false,
+  furthestStep
 }: StandardStepperProps) => {
   // Null safety for steps array
   if (!steps || !Array.isArray(steps)) {
@@ -577,7 +585,17 @@ export const StandardStepper = ({
             // nowhere, and a later one would skip the validation that Continue runs.
             // A real <button>, not a clickable div: a div is invisible to the keyboard and to
             // a screen reader, so the shortcut existed for mouse users only.
-            const isClickable = allowStepClick && !!onStepClick && index < currentStep;
+            // Only the NEXT step can be reached forward, so only it is drawn as reachable. A
+            // visited step two ahead that looked reachable and did nothing would be the same
+            // dead affordance this exists to remove.
+            const isReachableAhead =
+              allowStepClick &&
+              !!onStepClick &&
+              furthestStep !== undefined &&
+              index === currentStep + 1 &&
+              index <= furthestStep;
+            const isClickable =
+              (allowStepClick && !!onStepClick && index < currentStep) || isReachableAhead;
             return (
               <React.Fragment key={index}>
                 <VStack
@@ -607,14 +625,23 @@ export const StandardStepper = ({
                      * green.400 it is worse. The current step is the DARKER of the two so
                      * "where am I" is not signalled by hue alone.
                      */
+                    // A step already visited but ahead of here is outlined, not filled: it is
+                    // reachable, but it has not been re-confirmed since the farmer came back.
                     bg={
                       completedSteps.includes(index) || index < currentStep
                         ? 'green.700'
                         : index === currentStep
                         ? 'green.800'
+                        : isReachableAhead
+                        ? 'white'
                         : 'gray.200'
                     }
-                    color={index <= currentStep ? 'white' : 'gray.600'}
+                    border={isReachableAhead ? '2px solid' : undefined}
+                    // green.600: a non-text boundary (the colour table); the number stays green.700.
+                    borderColor={isReachableAhead ? 'green.600' : undefined}
+                    color={
+                      index <= currentStep ? 'white' : isReachableAhead ? 'green.700' : 'gray.600'
+                    }
                     fontSize={{ base: 'sm', md: 'md' }}
                     fontWeight="bold"
                     boxShadow={index === currentStep ? 'lg' : 'md'}
@@ -639,7 +666,7 @@ export const StandardStepper = ({
                       as="span"
                       fontSize={titleFontSize}
                       fontWeight="bold"
-                      color={index <= currentStep ? 'green.700' : 'gray.600'}
+                      color={index <= currentStep || isReachableAhead ? 'green.700' : 'gray.600'}
                       textAlign="center"
                       lineHeight="1.2"
                       whiteSpace="normal"

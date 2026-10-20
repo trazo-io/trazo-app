@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useFurthestStep } from 'hooks/useFurthestStep';
 import { useIntl } from 'react-intl';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
@@ -199,6 +200,7 @@ function AddCompany({ isEdit = false }) {
   const dispatch = useDispatch();
   const currentUser = useSelector((state) => state.userState.user);
   const [currentStep, setCurrentStep] = useState(0);
+  const furthestStep = useFurthestStep(currentStep);
   const toast = useToast();
 
   const isMobile = useBreakpointValue({ base: true, smd: false });
@@ -446,7 +448,8 @@ function AddCompany({ isEdit = false }) {
         currentStep={currentStep}
         completedSteps={getCompletedSteps()}
         allowStepClick={true}
-        onStepClick={(step) => setCurrentStep(step)}
+        furthestStep={furthestStep}
+        onStepClick={(step) => (step < currentStep ? setCurrentStep(step) : nextStep())}
       />
 
       <FormProvider {...methods}>

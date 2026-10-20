@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useFurthestStep } from 'hooks/useFurthestStep';
 import { VStack, HStack, SimpleGrid, useToast, Text, Box, Flex } from '@chakra-ui/react';
 import {
   StandardPage,
@@ -202,6 +203,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
   } = methods;
 
   const [currentStep, setCurrentStep] = useState(0);
+  const furthestStep = useFurthestStep(currentStep);
   const [polygon, setPolygon] = useState<Array<{ lat: number; lng: number }>>(
     toLatLngPath(initialData?.polygon)
   );
@@ -577,7 +579,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
         currentStep={currentStep}
         completedSteps={getCompletedSteps()}
         allowStepClick={true}
-        onStepClick={goToStep}
+        furthestStep={furthestStep}
+        onStepClick={(step) => (step < currentStep ? goToStep(step) : nextStep())}
       />
 
       <FormProvider {...methods}>

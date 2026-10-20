@@ -117,6 +117,7 @@ import {
 import { formatFieldValue, getFieldConfig, getSubtypes } from 'config/events';
 import { localizeFieldValue } from 'utils/fieldDisplayUtils';
 import { backToLabel } from 'utils/backToLabel';
+import { useFurthestStep } from 'hooks/useFurthestStep';
 import { buildVoiceFieldRequests } from 'config/events/voiceFields';
 import { ActivitySubtypeChooser } from 'components/Events/ActivitySubtypeChooser';
 import { VerbPickerGrid } from 'components/Events/VerbPickerGrid';
@@ -736,6 +737,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
   // Step management
   const [activeStep, setActiveStep] = useState(0);
+  const furthestStep = useFurthestStep(activeStep);
 
   // The heading of whichever step card is mounted. One ref, three headings — only one
   // step renders at a time, so the ref always points at the visible one.
@@ -2912,6 +2914,75 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // Debug info available via React DevTools or selective logging when needed
   // Note: Tab components are rendered directly via conditional rendering in JSX (activeEventType === X)
 
+  // Step 1's Continue: submit the active tab's form, which validates it and advances. Named
+  // rather than inline because the stepper's forward click must run exactly the same checks.
+  const continueFromDetails = async () => {
+    // Programmatically submit the tab's form via useImperativeHandle
+    // This triggers the tab's onSubmit (which constructs extra_data with
+    // aggregate fields) and then onSubmitMainInfo (which advances to step 2)
+    const tabRefs = {
+      0: weatherTabRef,
+      1: productionTabRef,
+      2: chemicalTabRef,
+      3: generalTabRef,
+      5: soilManagementTabRef,
+      6: pestManagementTabRef,
+      7: businessTabRef
+    };
+    const currentTabRef = tabRefs[activeEventType];
+    if (currentTabRef?.current?.submitForm) {
+      try {
+        await currentTabRef.current.submitForm();
+        // onSubmitMainInfo handles setActiveStep(2)
+      } catch (errors) {
+        // D7 — validation failure used to be a console.warn, which a
+        // farmer never sees: Continue simply did nothing and the page
+        // did not move. Tell them what happened and take them to it.
+        // Pilot rehearsal 2026-10: the focus ran before React marked the
+        // field invalid, so it found nothing. revealFirstFormError waits
+        // for the re-render, focuses the field and returns its label so
+        // the notice can name it (any tab, not only pest).
+        const revealed = await revealFirstFormError(errors);
+        // Only a field LABEL fills {field}. The validation message is
+        // a sentence (and hardcoded English in the zod schemas), so
+        // without a label the translated generic body is used instead.
+        const fieldName = revealed.label;
+        toast({
+          title: intl.formatMessage({
+            id: 'events.form.validationFailedTitle',
+            defaultMessage: 'Some required details are missing'
+          }),
+          description: fieldName
+            ? intl.formatMessage({ id: 'events.form.validationFailedField' }, { field: fieldName })
+            : intl.formatMessage({
+                id: 'events.form.validationFailedBody',
+                defaultMessage: 'We highlighted the first field that needs attention.'
+              }),
+          status: 'error',
+          duration: 6000,
+          isClosable: true
+        });
+      }
+    } else {
+      // Fallback for any tab that doesn't have submitForm yet
+      currentTabRef?.current?.flushData?.();
+      setActiveStep(2);
+    }
+  };
+
+  // The stepper takes the farmer back to any finished step, and forward to the next one if
+  // they have been there before. Forward goes through that step's own Continue, so a step 0
+  // with a missing date still stops on step 0 with the error shown.
+  const handleStepClick = (step) => {
+    if (step < activeStep) {
+      setActiveStep(step);
+    } else if (activeStep === 0) {
+      basicMethods.handleSubmit(onSubmitBasic)();
+    } else if (activeStep === 1) {
+      continueFromDetails();
+    }
+  };
+
   // Handler for back navigation
   const handleBack = () => {
     navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/`);
@@ -3183,10 +3254,8 @@ function NewEvent({ isEdit = false, eventId = null }) {
               currentStep={activeStep}
               completedSteps={Array.from({ length: activeStep }, (_, i) => i)}
               allowStepClick
-              // A finished step is a way back to it, so step 1 is reachable from the top of a
-              // long step 2. StandardStepper only offers steps behind the current one: Continue
-              // is where each step is validated, and a forward jump would skip it.
-              onStepClick={setActiveStep}
+              furthestStep={furthestStep}
+              onStepClick={handleStepClick}
             />
             <Flex justify="flex-end">
               <AutoSaveStatus lastSaved={draftLastSaved} isSaving={isSavingDraft} />
@@ -4188,63 +4257,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                         </StandardButton>
                         <StandardButton
                           variant="primary"
-                          onClick={async () => {
-                            // Programmatically submit the tab's form via useImperativeHandle
-                            // This triggers the tab's onSubmit (which constructs extra_data with
-                            // aggregate fields) and then onSubmitMainInfo (which advances to step 2)
-                            const tabRefs = {
-                              0: weatherTabRef,
-                              1: productionTabRef,
-                              2: chemicalTabRef,
-                              3: generalTabRef,
-                              5: soilManagementTabRef,
-                              6: pestManagementTabRef,
-                              7: businessTabRef
-                            };
-                            const currentTabRef = tabRefs[activeEventType];
-                            if (currentTabRef?.current?.submitForm) {
-                              try {
-                                await currentTabRef.current.submitForm();
-                                // onSubmitMainInfo handles setActiveStep(2)
-                              } catch (errors) {
-                                // D7 — validation failure used to be a console.warn, which a
-                                // farmer never sees: Continue simply did nothing and the page
-                                // did not move. Tell them what happened and take them to it.
-                                // Pilot rehearsal 2026-10: the focus ran before React marked the
-                                // field invalid, so it found nothing. revealFirstFormError waits
-                                // for the re-render, focuses the field and returns its label so
-                                // the notice can name it (any tab, not only pest).
-                                const revealed = await revealFirstFormError(errors);
-                                // Only a field LABEL fills {field}. The validation message is
-                                // a sentence (and hardcoded English in the zod schemas), so
-                                // without a label the translated generic body is used instead.
-                                const fieldName = revealed.label;
-                                toast({
-                                  title: intl.formatMessage({
-                                    id: 'events.form.validationFailedTitle',
-                                    defaultMessage: 'Some required details are missing'
-                                  }),
-                                  description: fieldName
-                                    ? intl.formatMessage(
-                                        { id: 'events.form.validationFailedField' },
-                                        { field: fieldName }
-                                      )
-                                    : intl.formatMessage({
-                                        id: 'events.form.validationFailedBody',
-                                        defaultMessage:
-                                          'We highlighted the first field that needs attention.'
-                                      }),
-                                  status: 'error',
-                                  duration: 6000,
-                                  isClosable: true
-                                });
-                              }
-                            } else {
-                              // Fallback for any tab that doesn't have submitForm yet
-                              currentTabRef?.current?.flushData?.();
-                              setActiveStep(2);
-                            }
-                          }}
+                          onClick={continueFromDetails}
                           rightIcon={<FaChevronRight />}
                           size={{ base: 'md', md: 'lg' }}
                           flex={{ base: 1, md: 'none' }}>
