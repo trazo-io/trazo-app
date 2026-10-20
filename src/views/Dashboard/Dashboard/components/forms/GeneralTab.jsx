@@ -270,29 +270,47 @@ const GeneralTab = forwardRef(
         if (onDataChange && typeof onDataChange === 'function') {
           const currentValues = mainInfoMethods.getValues();
 
-          // Only trigger if we have meaningful data
-          if (currentValues.name && currentValues.name.trim().length > 0) {
-            const relevantFields = [
-              'name',
-              'type',
-              'duration_hours',
-              'participants',
-              'observation',
-              'private_note',
-              'is_contamination_incident',
-              'contamination_source',
-              'contamination_affected_area',
-              'corrective_action_taken',
-              'corrective_action_date',
-              'certifier_notified',
-              'certifier_notification_date',
-              'custom_fields'
-            ];
-            const currentRelevantValues = {};
-            relevantFields.forEach((field) => {
-              currentRelevantValues[field] = currentValues[field];
-            });
+          // ANY meaningful value, not just a name.
+          //
+          // 🔴 MEASURED 2026-10-20. This read `if (currentValues.name && ...)`, so until somebody
+          // typed an Activity Name NOTHING this tab held was reported upward: not the activity
+          // type they picked, not the hours, not the people. The wizard's own state stayed empty,
+          // and everything that asks it "has the operator answered this yet?" was told no.
+          //
+          // That is the state a crew note arrives in. This tab does not auto-generate a name the
+          // way the production tabs do, so an operator could read the note, pick an Activity Type
+          // themselves, tap "Fill in N values", and watch the note's value replace their own pick
+          // (review of app #163). The gate was there to avoid firing on an untouched form; it
+          // still does, by asking whether anything has been answered at all.
+          const relevantFields = [
+            'name',
+            'type',
+            'duration_hours',
+            'participants',
+            'observation',
+            'private_note',
+            'is_contamination_incident',
+            'contamination_source',
+            'contamination_affected_area',
+            'corrective_action_taken',
+            'corrective_action_date',
+            'certifier_notified',
+            'certifier_notification_date',
+            'custom_fields'
+          ];
+          const currentRelevantValues = {};
+          relevantFields.forEach((field) => {
+            currentRelevantValues[field] = currentValues[field];
+          });
+          const answered = relevantFields.some((field) => {
+            const value = currentValues[field];
+            if (value === undefined || value === null) return false;
+            if (typeof value === 'string') return value.trim() !== '';
+            if (Array.isArray(value)) return value.length > 0;
+            return value !== false;
+          });
 
+          if (answered) {
             // Check if values have actually changed
             const hasChanged =
               JSON.stringify(currentRelevantValues) !== JSON.stringify(previousValuesRef.current);
@@ -518,7 +536,9 @@ const GeneralTab = forwardRef(
                     render={({ field }) => (
                       <StandardTextarea
                         {...field}
-                        placeholder={intl.formatMessage({ id: 'events.common.placeholders.privateNote' })}
+                        placeholder={intl.formatMessage({
+                          id: 'events.common.placeholders.privateNote'
+                        })}
                         rows={3}
                       />
                     )}

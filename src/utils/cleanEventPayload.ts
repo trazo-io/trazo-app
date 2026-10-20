@@ -1,4 +1,28 @@
 /**
+ * General events: the form's field names and the model's, in one place.
+ *
+ * 🔴 MEASURED IN PRODUCTION 2026-10-20. A crew message ("Fixed the leak in the drip line")
+ * offered "Activity Type: Maintenance", the operator tapped, the banner said "1 field filled",
+ * and the select underneath still read "Select activity type...". The value was valid; it was
+ * written under the MODEL name `activity_type` while the form's select is `name="type"`, so the
+ * record was saved without the one fact the message carried.
+ *
+ * The rename existed only on the way OUT (submit). The voice and crew-note paths write the
+ * registry's names, which are the model's, so every General field they fill landed in a key the
+ * tab does not read: all three of them.
+ */
+export const GENERAL_FORM_TO_MODEL: Readonly<Record<string, string>> = {
+  type: 'activity_type',
+  duration_hours: 'duration',
+  participants: 'people_involved'
+};
+
+/** The same table, read the other way, for anything writing INTO the form. */
+export const GENERAL_MODEL_TO_FORM: Readonly<Record<string, string>> = Object.fromEntries(
+  Object.entries(GENERAL_FORM_TO_MODEL).map(([form, model]) => [model, form])
+);
+
+/**
  * The activity wizard's payload builder: form values in, request body out.
  *
  * Moved out of NewEvent's submit handler verbatim (Run 8b R4, 2026-10-15) so a test can run the
@@ -191,10 +215,9 @@ export const cleanEventPayload = (
       if (shouldIncludeField(key, value)) {
         let finalKey = key;
 
-        // Field name remapping: frontend form → backend model
-        if (key === 'type') finalKey = 'activity_type';
-        if (key === 'duration_hours') finalKey = 'duration';
-        if (key === 'participants') finalKey = 'people_involved';
+        // Field name remapping: frontend form → backend model, from the one table that the
+        // voice merge reads in reverse.
+        if (GENERAL_FORM_TO_MODEL[key]) finalKey = GENERAL_FORM_TO_MODEL[key];
         if (key === 'observation') {
           applyNotesField(cleaned, value);
           return;

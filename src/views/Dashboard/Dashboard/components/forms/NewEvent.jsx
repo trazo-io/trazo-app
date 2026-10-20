@@ -135,7 +135,7 @@ import {
 import { voiceBlockSuggestion } from 'utils/spokenBlock';
 import { voiceBannerHeadlineId, voiceNoteSource } from 'utils/voiceBannerHeadline';
 import { isEventOnBuyerPage } from 'utils/consumerDisplay';
-import { cleanEventPayload } from 'utils/cleanEventPayload';
+import { cleanEventPayload, GENERAL_MODEL_TO_FORM } from 'utils/cleanEventPayload';
 import { revealFirstFormError } from 'utils/revealFirstFormError';
 import {
   applyTemplateToForm,
@@ -1890,6 +1890,56 @@ function NewEvent({ isEdit = false, eventId = null }) {
     [voiceWithheldNames, activeEventType, intl]
   );
 
+  /**
+   * Model field names -> the names the FORM actually binds, for General events.
+   *
+   * 🔴 MEASURED IN PRODUCTION 2026-10-20. "Fixed the leak in the drip line" offered
+   * "Activity Type: Maintenance", the operator tapped, the banner said "1 field filled", and the
+   * select underneath still read "Select activity type...". The value was valid and the merge
+   * did write it: under `activity_type`, which is the MODEL's name and the registry's, while the
+   * tab's select is `name="type"`. Same for `duration` vs `duration_hours` and `people_involved`
+   * vs `participants`, so all three General fields a message can fill were landing in keys
+   * nothing reads.
+   *
+   * ⛔ ONLY the values going INTO the form are renamed. The banner's labels, `keptFields` and the
+   * field-note proposal stay on the registry's names, which is what they are read by.
+   */
+  /**
+   * The form's state, READ as the registry names it, for General events.
+   *
+   * 🔴 THE OTHER HALF OF THE RENAME, and without it the rename is worse than the bug it fixes
+   * (review of app #163). Every "is this already filled?" decision looks up `eventFormData` by
+   * the REGISTRY's name — `mergeOfferedValues`'s `isFilled`, and the re-offer guard below — while
+   * a General form stores the operator's own answers under `type`, `duration_hours` and
+   * `participants`. So those three always read as empty, the offer always counted them as
+   * writable, and once `asFormFields` put the result on the live key, tapping "Fill in N values"
+   * REPLACED an Activity Type the operator had chosen themselves, with the banner still crediting
+   * the note for it. Before the rename the write landed on a dead key and nothing was lost.
+   *
+   * Both directions, or neither.
+   */
+  const asModelFields = useCallback(
+    (values, eventType) => {
+      if ((eventType ?? activeEventType) !== 3 || !values) return values;
+      const out = { ...values };
+      Object.entries(GENERAL_MODEL_TO_FORM).forEach(([model, form]) => {
+        if (out[form] !== undefined) out[model] = out[form];
+      });
+      return out;
+    },
+    [activeEventType]
+  );
+
+  const asFormFields = useCallback(
+    (values, eventType) => {
+      if ((eventType ?? activeEventType) !== 3 || !values) return values;
+      return Object.fromEntries(
+        Object.entries(values).map(([key, value]) => [GENERAL_MODEL_TO_FORM[key] ?? key, value])
+      );
+    },
+    [activeEventType]
+  );
+
   const handleVoiceEventDetected = (eventData) => {
     const subtype = eventFormData.type;
     const { kept, banner, detected } = applyVoiceData(eventData, activeEventType, subtype);
@@ -2017,7 +2067,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
       return;
     }
 
-    setEventFormData((prev) => withListingAttachmentChecked(prev, { ...prev, ...kept }));
+    setEventFormData((prev) =>
+      withListingAttachmentChecked(prev, { ...prev, ...asFormFields(kept) })
+    );
     setVoiceBanner(holding ? { ...banner, droppedCount: 0 } : banner);
     setShowVoiceCapture(false);
     setVoiceSeq((s) => s + 1);
@@ -2170,7 +2222,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
     // themselves, which is a false statement about provenance in the wizard that feeds certifier
     // packets. Recomputed from the merge result, the same way the late-subtype re-offer below
     // builds its own `keptFields` from `fresh` rather than from what was proposed.
-    const written = mergeOfferedValues(eventFormData, kept);
+    const written = mergeOfferedValues(asModelFields(eventFormData), kept);
     // Only values read from the crew note count as applied FROM it (see `voiceSeedIsCrewNote`).
     if (voiceBanner?.fromCrewNote) {
       fieldNoteProposalRef.current = {
@@ -2181,7 +2233,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
       };
     }
 
-    setEventFormData((prev) => withListingAttachmentChecked(prev, { ...prev, ...written }));
+    setEventFormData((prev) =>
+      withListingAttachmentChecked(prev, { ...prev, ...asFormFields(written) })
+    );
 
     setVoiceBanner((prev) =>
       prev
@@ -2271,10 +2325,13 @@ function NewEvent({ isEdit = false, eventId = null }) {
       return;
     }
 
-    // Never overwrite something the farmer typed in the meantime.
+    // Never overwrite something the farmer typed in the meantime. READ BY THE REGISTRY'S NAMES,
+    // which is what `kept` is keyed by: on a General form the operator's own answers live under
+    // the form's names, so looking them up directly answered "empty" every time.
     const fresh = {};
+    const currentByModelName = asModelFields(eventFormData);
     Object.entries(kept).forEach(([key, value]) => {
-      const current = eventFormData[key];
+      const current = currentByModelName[key];
       if (current === undefined || current === null || current === '') fresh[key] = value;
     });
 
@@ -2289,7 +2346,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
         : prev
     );
     if (added === 0) return;
-    setEventFormData((prev) => withListingAttachmentChecked(prev, { ...prev, ...fresh }));
+    setEventFormData((prev) =>
+      withListingAttachmentChecked(prev, { ...prev, ...asFormFields(fresh) })
+    );
     // The tabs read initialValues on mount only — same remount the template accelerator uses.
     setVoiceSeq((n) => n + 1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -2385,7 +2444,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
       withListingAttachmentChecked(prev, {
         ...prev,
         ...(subtype ? { type: subtype } : {}),
-        ...kept
+        // The type is switching in the same tick, so the rename follows the type being switched
+        // TO rather than the one in state.
+        ...asFormFields(kept, pending.backendEventType)
       })
     );
     setVoiceBanner({ ...banner, suggestion: null });
