@@ -1568,8 +1568,9 @@ export function mapVoiceDataToFieldValues(
       const weight = amounts.find((a) => a.category === 'weight');
       // A container the select cannot show falls back to the weight rather than blanking the
       // yield: the crew stated a number either way.
-      const yieldAmount = container && yieldUnitFor(container.unit) ? container : weight;
-      const yieldUnit = yieldUnitFor(yieldAmount?.unit);
+      const containerUnit = container ? yieldUnitFor(container.unit) : null;
+      const yieldAmount = containerUnit ? container : weight;
+      const yieldUnit = containerUnit ?? yieldUnitFor(weight?.unit);
       // BOTH OR NEITHER. The unit select offers a fixed vocabulary, so a spoken unit it does not
       // carry ("toneladas" is not one of its options, nor is "cubetas") would land as a quantity
       // under whatever unit the form defaulted to, which is a different number. Same rule as the
@@ -1758,6 +1759,13 @@ export function mergeOfferedValues(
   //     -> the existing unit decides what the number means, so it still blocks.
   // The case being unblocked is the only coherent one: both halves offered together, the
   // amount empty, and the banner naming the pair in words before the tap.
+  //
+  // ⚠️ WHAT THIS CANNOT TELL APART, stated rather than left implicit: a unit sitting at the tab
+  // default and a unit the farmer picked themselves but has not typed a number under yet. Both
+  // read as `isFilled(unit) && !isFilled(amount)`, so in that second case an offer replaces
+  // their choice. The form holds no record of who set it. The exchange is deliberate: the
+  // alternative left every value+unit field unfillable for everyone, and the banner names the
+  // unit it would write ("Yield: 85 bins") before the tap.
   const blocks = (key: string) => {
     if (!isFilled(key)) return false;
     if (!isUnitKey(key)) return true;
