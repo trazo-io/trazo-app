@@ -540,7 +540,7 @@ interface StandardStepperProps {
   allowStepClick?: boolean;
   /**
    * The furthest step the person has reached (`useFurthestStep`). When it is ahead of
-   * `currentStep`, the NEXT step is clickable too and drawn as visited. Only the next one:
+   * `currentStep`, the NEXT step is clickable too and drawn as reachable (outlined). Only the next one:
    * the caller must route that click through its own Continue, which validates the current
    * step, and a step two ahead would skip the one in between, whose form is not mounted.
    */
@@ -585,12 +585,17 @@ export const StandardStepper = ({
             // nowhere, and a later one would skip the validation that Continue runs.
             // A real <button>, not a clickable div: a div is invisible to the keyboard and to
             // a screen reader, so the shortcut existed for mouse users only.
-            const isVisitedAhead =
-              furthestStep !== undefined && index > currentStep && index <= furthestStep;
-            const isClickable =
+            // Only the NEXT step can be reached forward, so only it is drawn as reachable. A
+            // visited step two ahead that looked reachable and did nothing would be the same
+            // dead affordance this exists to remove.
+            const isReachableAhead =
               allowStepClick &&
               !!onStepClick &&
-              (index < currentStep || (isVisitedAhead && index === currentStep + 1));
+              furthestStep !== undefined &&
+              index === currentStep + 1 &&
+              index <= furthestStep;
+            const isClickable =
+              (allowStepClick && !!onStepClick && index < currentStep) || isReachableAhead;
             return (
               <React.Fragment key={index}>
                 <VStack
@@ -627,14 +632,15 @@ export const StandardStepper = ({
                         ? 'green.700'
                         : index === currentStep
                         ? 'green.800'
-                        : isVisitedAhead
+                        : isReachableAhead
                         ? 'white'
                         : 'gray.200'
                     }
-                    border={isVisitedAhead ? '2px solid' : undefined}
-                    borderColor={isVisitedAhead ? 'green.700' : undefined}
+                    border={isReachableAhead ? '2px solid' : undefined}
+                    // green.600: a non-text boundary (the colour table); the number stays green.700.
+                    borderColor={isReachableAhead ? 'green.600' : undefined}
                     color={
-                      index <= currentStep ? 'white' : isVisitedAhead ? 'green.700' : 'gray.600'
+                      index <= currentStep ? 'white' : isReachableAhead ? 'green.700' : 'gray.600'
                     }
                     fontSize={{ base: 'sm', md: 'md' }}
                     fontWeight="bold"
@@ -660,7 +666,7 @@ export const StandardStepper = ({
                       as="span"
                       fontSize={titleFontSize}
                       fontWeight="bold"
-                      color={index <= currentStep || isVisitedAhead ? 'green.700' : 'gray.600'}
+                      color={index <= currentStep || isReachableAhead ? 'green.700' : 'gray.600'}
                       textAlign="center"
                       lineHeight="1.2"
                       whiteSpace="normal"

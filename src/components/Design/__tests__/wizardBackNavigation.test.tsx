@@ -267,6 +267,12 @@ describe('Multi-step forms: the two Backs never share a label', () => {
       expect(tag, file).not.toMatch(/onStepClick=\{\(?step\)? => setCurrentStep\(step\)\}/);
       expect(tag, file).not.toMatch(/onStepClick=\{set(Active|Current)Step\}/);
     }
+    // The finish-production form gated Continue only with `disabled`, which stops nothing but
+    // the button; its stepper click reached nextStep unchecked (review on #156).
+    const finish = read('src/components/Forms/StandardFinishProductionForm.tsx');
+    expect(finish).toMatch(
+      /const nextStep = \(\) => \{[\s\S]*?if \(currentStep === 0 && !isStep0Valid\) return;/
+    );
     const newEvent = read(WIZARDS[0].file);
     expect(newEvent).toMatch(/onStepClick=\{handleStepClick\}/);
     expect(newEvent).toMatch(/basicMethods\.handleSubmit\(onSubmitBasic\)\(\)/);
