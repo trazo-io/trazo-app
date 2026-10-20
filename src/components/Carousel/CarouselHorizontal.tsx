@@ -328,7 +328,7 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
             // Getting Started panel sits on top of it. The empty state names its own next step.
             action={
               canCreateParcel ? (
-                <StandardButton minH="44px" leftIcon={<FaPlus />} onClick={quickAdd.onOpen}>
+                <StandardButton leftIcon={<FaPlus />} onClick={quickAdd.onOpen}>
                   {intl.formatMessage({ id: 'app.addFirstParcel' })}
                 </StandardButton>
               ) : undefined

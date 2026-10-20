@@ -897,7 +897,6 @@ const ActivitiesPage = () => {
             description={intl.formatMessage({ id: 'activities.farmHasNoBlocksDetail' })}
             action={
               <StandardButton
-                minH="44px"
                 leftIcon={<FaPlus />}
                 onClick={() => {
                   verbModal.onClose();
