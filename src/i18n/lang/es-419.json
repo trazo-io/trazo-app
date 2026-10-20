@@ -8056,6 +8056,8 @@
   "traceback.balance.notComputed": "La cosecha y las ventas no se pueden sumar con estos registros: falta una cantidad o las unidades no coinciden. Los registros de arriba muestran cuál.",
   "traceback.balance.packedOut": "Empacado por el procesador",
   "traceback.balance.sold": "Vendido como orgánico",
+  "traceback.balance.soldNotOrganic": "También vendido, sin identificar como orgánico en la factura y contado aparte: {quantity} en {count, plural, one {# venta} other {# ventas}}.",
+  "traceback.balance.soldNotOrganicCount": "También vendido, sin identificar como orgánico en la factura y contado aparte: {count, plural, one {# venta} other {# ventas}}.",
   "traceback.field.block": "Bloque",
   "traceback.field.bol": "Conocimiento de embarque",
   "traceback.field.buyer": "Comprador",

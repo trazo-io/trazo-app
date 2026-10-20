@@ -673,7 +673,6 @@ const DocumentsPage = () => {
               tests are the ones on this shelf; free on every plan (it shows, it files nothing). */}
           <StandardButton
             onClick={() => navigate(`/admin/dashboard/farm/${farmId}/traceback`)}
-            minH="44px"
             variant="outline"
             leftIcon={<FaRoute />}>
             {intl.formatMessage({ id: 'documents.runTraceback' })}

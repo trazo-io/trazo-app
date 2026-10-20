@@ -211,6 +211,20 @@ describe('TracebackPage', () => {
     expect(screen.getByText(/the sale names no pick/)).toBeTruthy();
   });
 
+  it('is a drill-down: it has a Back button', () => {
+    renderAt('/admin/dashboard/farm/1/traceback');
+    expect(screen.getByRole('button', { name: messages['common.back'] })).toBeTruthy();
+  });
+
+  it('states sales not invoiced as organic beside the balance, never drops them', () => {
+    state.trace = {
+      ...TRACE,
+      balance: { ...TRACE.balance, sold_not_organic: '400 lb', sold_not_organic_count: 1 }
+    };
+    renderAt('/admin/dashboard/farm/1/traceback?sale=7');
+    expect(screen.getByText(/counted apart: 400 lb in 1 sale\./)).toBeTruthy();
+  });
+
   it('renders every gap code with its own message', () => {
     state.trace = TRACE;
     renderAt('/admin/dashboard/farm/1/traceback?sale=7');

@@ -8056,6 +8056,8 @@
   "traceback.balance.notComputed": "Harvest and sales cannot be summed from these records: a quantity is missing or the units differ. The records above show which.",
   "traceback.balance.packedOut": "Packed out by the handler",
   "traceback.balance.sold": "Sold as organic",
+  "traceback.balance.soldNotOrganic": "Also sold, not identified as organic on the invoice and counted apart: {quantity} in {count, plural, one {# sale} other {# sales}}.",
+  "traceback.balance.soldNotOrganicCount": "Also sold, not identified as organic on the invoice and counted apart: {count, plural, one {# sale} other {# sales}}.",
   "traceback.field.block": "Block",
   "traceback.field.bol": "Bill of lading",
   "traceback.field.buyer": "Buyer",

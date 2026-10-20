@@ -161,7 +161,18 @@ export const TracebackPage = () => {
       });
 
   return (
-    <StandardPage title={t('traceback.pageTitle')} description={t('traceback.pageDescription')}>
+    // A drill-down (no sidebar entry), so it has a Back button. Two entry points (Documents and a
+    // season's sales row), so Back returns to whichever one opened it; opened cold from a link,
+    // it falls back to the farm's Documents page rather than leaving the app.
+    <StandardPage
+      title={t('traceback.pageTitle')}
+      description={t('traceback.pageDescription')}
+      showBackButton
+      onBack={() =>
+        (window.history.state?.idx ?? 0) > 0
+          ? navigate(-1)
+          : navigate(`/admin/dashboard/farm/${farmId}/documents`)
+      }>
       <StandardCard>
         <Box
           as="form"
@@ -380,6 +391,20 @@ export const TracebackPage = () => {
                 <Fact label={t('traceback.balance.sold')} value={tb.balance.sold} />
                 <Fact label={t('traceback.balance.difference')} value={tb.balance.difference} />
               </>
+            )}
+            {/* Counted apart, never dropped: without this line a conventional (buffer) sale made
+                "sold" read short with nothing to say why. */}
+            {tb.balance.sold_not_organic_count > 0 && (
+              <Text fontSize="sm" mt={2} color="gray.600">
+                {tb.balance.sold_not_organic
+                  ? t('traceback.balance.soldNotOrganic', {
+                      quantity: tb.balance.sold_not_organic,
+                      count: tb.balance.sold_not_organic_count
+                    })
+                  : t('traceback.balance.soldNotOrganicCount', {
+                      count: tb.balance.sold_not_organic_count
+                    })}
+              </Text>
             )}
           </StandardCard>
         </Box>
