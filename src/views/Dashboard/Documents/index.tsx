@@ -40,12 +40,13 @@ import {
   FaChevronUp,
   FaDownload,
   FaFileUpload,
+  FaRoute,
   FaFolderOpen,
   FaTrash
 } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import {
   StandardButton,
@@ -173,6 +174,7 @@ const groupDocuments = (docs: FarmDocument[]): DocGroup[] => {
 
 const DocumentsPage = () => {
   const intl = useIntl();
+  const navigate = useNavigate();
   const toast = useToast();
   const { farmId } = useParams();
   const currentCompany = useSelector((s: RootState) => s.company.currentCompany);
@@ -640,7 +642,7 @@ const DocumentsPage = () => {
             onChange={(e) => stageUpload(e.target.files?.[0])}
           />
           {/*
-            `w="full"` because this page is the only one that puts TWO actions in the header
+            `w="full"` because this page is the only one that puts several actions in the header
             slot, and StandardPage stretches them so their right edges meet the page margin.
             The stretch lands on this `data-tour` Box; without it the Button inside stays
             auto-width (MEASURED 94px against the export's 304px) and the column is ragged.
@@ -665,6 +667,16 @@ const DocumentsPage = () => {
             variant="outline"
             leftIcon={<FaDownload />}>
             {intl.formatMessage({ id: 'documents.exportAll' })}
+          </StandardButton>
+          {/* The traceback drill: every sale's chain back to its picks, season and inputs, the
+              walk an inspector runs at every inspection. Lives here because the documents it
+              tests are the ones on this shelf; free on every plan (it shows, it files nothing). */}
+          <StandardButton
+            onClick={() => navigate(`/admin/dashboard/farm/${farmId}/traceback`)}
+            minH="44px"
+            variant="outline"
+            leftIcon={<FaRoute />}>
+            {intl.formatMessage({ id: 'documents.runTraceback' })}
           </StandardButton>
         </>
       }>

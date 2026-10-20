@@ -52,6 +52,7 @@ const OSPView = lazyWithRetry(() => import('views/Dashboard/OSP/OSPView'));
 const OSPModuleListPage = lazyWithRetry(() => import('views/Dashboard/OSP/OSPModuleListPage'));
 const OSPModuleWizard = lazyWithRetry(() => import('views/Dashboard/OSP/OSPModuleWizard'));
 const DocumentsPage = lazyWithRetry(() => import('views/Dashboard/Documents'));
+const TracebackPage = lazyWithRetry(() => import('views/Dashboard/Traceback'));
 const ActivitiesPage = lazyWithRetry(() => import('views/Dashboard/Activities'));
 //@ts-ignore
 import CheckAuth from './utils/protections/CheckAuth';
@@ -480,6 +481,7 @@ const App = () => {
                   <Route path="farm/:farmId/osp/module/:moduleKey" element={<OSPModuleWizard />} />
                   <Route path="farm/:farmId/osp/narratives" element={<OSPView />} />
                   <Route path="farm/:farmId/documents" element={<DocumentsPage />} />
+                  <Route path="farm/:farmId/traceback" element={<TracebackPage />} />
                   <Route path="farm/:farmId/activities" element={<ActivitiesPage />} />
                   {/* WS-7 October cuts: commercial/scans/reviews fold into the farm
                       home + Buyer Page; routes stay as redirects so old links land well. */}
