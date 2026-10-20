@@ -216,8 +216,12 @@ export const TracebackPage = () => {
                 justify="space-between"
                 borderWidth="1px"
                 borderRadius="md"
-                p={3}>
-                <Box>
+                p={3}
+                spacing={3}>
+                {/* minW 0 lets a long match label wrap instead of squeezing the button
+                    (MEASURED in the E2E run: "matched on a harvest lot code of the season"
+                    pushed the label into the button edge). */}
+                <Box flex={1} minW={0}>
                   <Text fontWeight="semibold">
                     {[m.date, m.buyer, m.invoice].filter(Boolean).join(' · ')}
                   </Text>
@@ -228,6 +232,7 @@ export const TracebackPage = () => {
                 </Box>
                 <StandardButton
                   size="sm"
+                  flexShrink={0}
                   onClick={() => setSearchParams({ sale: String(m.sale_id) })}>
                   {t('traceback.matches.trace')}
                 </StandardButton>
