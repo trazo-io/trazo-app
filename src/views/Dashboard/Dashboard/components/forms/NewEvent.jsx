@@ -344,6 +344,54 @@ const COMPLETENESS_GAP_LABELS = {
   }
 };
 
+/**
+ * One labelled line of the crew-note banner: "Would fill", "Held back", "Block", "Records on".
+ *
+ * The banner used to be six stacked sentences, each a full line of prose, and a farmer reading it
+ * on a phone could not tell at a glance what the message would write, what it refused to write,
+ * or which day it would file under (Oscar, 2026-10-20: "I dont like the way we show that, like
+ * just in text"). The facts did not change; they are a label and its values now, so the eye can
+ * land on the one it wants.
+ */
+const CrewNoteRow = ({ label, children }) => (
+  <Stack
+    direction={{ base: 'column', smd: 'row' }}
+    spacing={{ base: 0.5, smd: 3 }}
+    align={{ base: 'start', smd: 'baseline' }}
+    w="full">
+    <Text fontSize="xs" color="gray.600" minW={{ smd: '104px' }} flexShrink={0}>
+      {label}
+    </Text>
+    <Box flex="1" minW={0}>
+      {children}
+    </Box>
+  </Stack>
+);
+
+/**
+ * The values on a row, one chip each.
+ *
+ * ⛔ NEUTRAL, never green. A chip here is a value WAITING for a person to accept it, and green is
+ * this app's done colour: tinting an offer with it would say the record already carries the
+ * number. The row's own label is what separates "Would fill" from "Held back", so the colour
+ * carries no meaning and does not have to.
+ */
+const CrewNoteChips = ({ values, testId }) => (
+  <HStack flexWrap="wrap" spacing={2} rowGap={1} data-testid={testId}>
+    {values.map((value) => (
+      <Badge
+        key={value}
+        variant="neutral"
+        textTransform="none"
+        fontWeight="medium"
+        whiteSpace="normal"
+        fontSize="11px">
+        {value}
+      </Badge>
+    ))}
+  </HStack>
+);
+
 function NewEvent({ isEdit = false, eventId = null }) {
   const intl = useIntl();
   const toast = useToast();
@@ -632,6 +680,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // merged eventFormData. onDataChange keeps eventFormData live, so nothing the
   // farmer already typed is lost by the remount.
   const [showVoiceCapture, setShowVoiceCapture] = useState(false);
+  // Collapsed by default: the reason an application withholds its input details is worth one tap
+  // for the reader who wants it and two lines of prose in everybody else's way.
+  const [showCrewNoteWhy, setShowCrewNoteWhy] = useState(false);
   // A note the farmer PASTED rather than spoke: today a crew WhatsApp message, by hand. It runs
   // the same extraction as voice and then stops: `seeded` on the result makes the wizard hold the
   // values instead of merging them (handleVoiceEventDetected). Kept out of `eventFormData` so a
@@ -1756,19 +1807,43 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // they cannot see, which is the opposite of what the hold is for. Formatted by the registry, the
   // same words the record will print, with unit companions carried in the event so "5" reads
   // "5 acres" and not a bare number.
-  const voiceOfferedSummary = useMemo(() => {
+  const voiceOfferedChips = useMemo(() => {
     const offered = voiceBanner?.seededPending?.kept;
-    if (!offered) return voiceFilledLabels.join(', ');
-    return voiceFilledEntries
-      .map(({ name, label }) => {
-        const formatted =
-          formatFieldValue(activeEventType, name, { ...eventFormData, ...offered }) ??
-          (offered[name] == null ? '' : String(offered[name]));
-        const value = localizeFieldValue(formatted, intl.locale);
-        return value ? `${label}: ${value}` : label;
-      })
-      .join(', ');
+    if (!offered) return voiceFilledLabels;
+    return voiceFilledEntries.map(({ name, label }) => {
+      const formatted =
+        formatFieldValue(activeEventType, name, { ...eventFormData, ...offered }) ??
+        (offered[name] == null ? '' : String(offered[name]));
+      const value = localizeFieldValue(formatted, intl.locale);
+      return value ? `${label}: ${value}` : label;
+    });
   }, [voiceBanner, voiceFilledEntries, voiceFilledLabels, activeEventType, eventFormData, intl]);
+
+  // ONE STRING, from the same list the chips render. The banner shows the values as chips and
+  // reads them out as a sentence, so the two must not be assembled separately: a screen reader
+  // hearing a different set from the one on screen is the same defect as a wrong count.
+  const voiceOfferedSummary = useMemo(() => voiceOfferedChips.join(', '), [voiceOfferedChips]);
+
+  // The input details an application REFUSED to fill, as the words the form prints rather than as
+  // raw keys. `withheldFields` is a list of names like `volume_applied`; a farmer reads
+  // "Volume Applied". Unit companions are dropped here as they are in the filled list: a unit is
+  // part of a value, not a fact of its own.
+  const voiceWithheldNames = useMemo(
+    () => (voiceBanner?.withheldFields || []).filter((name) => !VOICE_UNIT_COMPANIONS[name]),
+    [voiceBanner]
+  );
+  const voiceWithheldCount = voiceWithheldNames.length;
+  const voiceWithheldLabels = useMemo(
+    () =>
+      voiceWithheldNames
+        .map((name) => {
+          const cfg = getFieldConfig(activeEventType, name);
+          if (!cfg?.labelKey) return null;
+          return intl.formatMessage({ id: cfg.labelKey, defaultMessage: '' }) || null;
+        })
+        .filter(Boolean),
+    [voiceWithheldNames, activeEventType, intl]
+  );
 
   const handleVoiceEventDetected = (eventData) => {
     const subtype = eventFormData.type;
@@ -3878,50 +3953,73 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                   text and the Fill/Discard controls. It rendered the same text,
                                   which is why reading the screen did not catch it. */}
                               {voiceBanner.suggestion && (
-                                <VStack align="start" spacing={2} pt={1}>
-                                  <Text fontSize="xs" color="gray.700">
-                                    {intl.formatMessage(
-                                      { id: 'events.voice.typeMismatch' },
-                                      {
-                                        heard: intl.formatMessage({
-                                          id: `activities.verb.${voiceBanner.suggestion.verbKey}`
-                                        })
-                                      }
-                                    )}
-                                  </Text>
-                                  <Button
-                                    size="xs"
-                                    variant="outline"
-                                    colorScheme="green"
-                                    minH="44px"
-                                    onClick={handleVoiceSwitchType}>
-                                    {intl.formatMessage(
-                                      { id: 'events.voice.switchTo' },
-                                      {
-                                        heard: intl.formatMessage({
-                                          id: `activities.verb.${voiceBanner.suggestion.verbKey}`
-                                        })
-                                      }
-                                    )}
-                                  </Button>
+                                <VStack align="start" spacing={2} pt={1} w="full">
+                                  <CrewNoteRow
+                                    label={intl.formatMessage({ id: 'events.voice.row.activity' })}>
+                                    <Text fontSize="xs" color="gray.700">
+                                      {intl.formatMessage(
+                                        { id: 'events.voice.typeMismatch' },
+                                        {
+                                          heard: intl.formatMessage({
+                                            id: `activities.verb.${voiceBanner.suggestion.verbKey}`
+                                          })
+                                        }
+                                      )}
+                                    </Text>
+                                    <Button
+                                      size="xs"
+                                      variant="outline"
+                                      colorScheme="green"
+                                      minH="44px"
+                                      mt={1}
+                                      onClick={handleVoiceSwitchType}>
+                                      {intl.formatMessage(
+                                        { id: 'events.voice.switchTo' },
+                                        {
+                                          heard: intl.formatMessage({
+                                            id: `activities.verb.${voiceBanner.suggestion.verbKey}`
+                                          })
+                                        }
+                                      )}
+                                    </Button>
+                                  </CrewNoteRow>
                                 </VStack>
                               )}
                               {voiceFilledLabels.length > 0 && (
-                                <Text fontSize="xs" color="gray.700">
-                                  {intl.formatMessage(
-                                    {
-                                      // "Would fill" only while the offer stands.
-                                      id: voiceBanner.seededPending
-                                        ? 'events.voice.pastedNoteWouldFill'
-                                        : 'events.voice.filledFields'
-                                    },
-                                    {
-                                      fields: voiceBanner.seededPending
-                                        ? voiceOfferedSummary
-                                        : voiceFilledLabels.join(', ')
+                                <CrewNoteRow
+                                  label={intl.formatMessage({
+                                    // "Would fill" only while the offer stands.
+                                    id: voiceBanner.seededPending
+                                      ? 'events.voice.row.wouldFill'
+                                      : 'events.voice.row.filled'
+                                  })}>
+                                  <CrewNoteChips
+                                    testId="crew-note-offered"
+                                    values={
+                                      voiceBanner.seededPending
+                                        ? voiceOfferedChips
+                                        : voiceFilledLabels
                                     }
-                                  )}
-                                </Text>
+                                  />
+                                  {/* THE SAME LIST, AS ONE SENTENCE, for a screen reader. Chips
+                                      read out as disconnected words, and the count is the part a
+                                      farmer is being asked to trust. Built from the same array as
+                                      the chips so the two cannot disagree. */}
+                                  <Box as="span" srOnly>
+                                    {intl.formatMessage(
+                                      {
+                                        id: voiceBanner.seededPending
+                                          ? 'events.voice.pastedNoteWouldFill'
+                                          : 'events.voice.filledFields'
+                                      },
+                                      {
+                                        fields: voiceBanner.seededPending
+                                          ? voiceOfferedSummary
+                                          : voiceFilledLabels.join(', ')
+                                      }
+                                    )}
+                                  </Box>
+                                </CrewNoteRow>
                               )}
                               {/* The block the farmer named, as an offer. A block is the lot a
                                   record belongs to (CA PUR box 22), so voice never writes one
@@ -3929,37 +4027,41 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                   values, ahead of the date question and the Fill/Discard row, so
                                   everything read from the note is in one place. */}
                               {voiceBanner.blockSuggestion && (
-                                <VStack align="start" spacing={2} pt={1}>
-                                  <Text fontSize="xs" color="gray.700">
-                                    {voiceBanner.blockSuggestion.kind === 'new'
-                                      ? intl.formatMessage(
-                                          { id: 'events.voice.blockNew' },
-                                          { block: voiceBanner.blockSuggestion.value }
-                                        )
-                                      : intl.formatMessage(
-                                          { id: 'events.voice.blockKnown' },
-                                          {
-                                            spoken: voiceBanner.blockSuggestion.spoken,
-                                            block: voiceBanner.blockSuggestion.value
-                                          }
-                                        )}
-                                  </Text>
-                                  <Button
-                                    size="xs"
-                                    variant="outline"
-                                    colorScheme="green"
-                                    minH="44px"
-                                    onClick={handleVoiceBlockAccept}>
-                                    {intl.formatMessage(
-                                      {
-                                        id:
-                                          voiceBanner.blockSuggestion.kind === 'new'
-                                            ? 'events.voice.blockAddNew'
-                                            : 'events.voice.blockUseKnown'
-                                      },
-                                      { block: voiceBanner.blockSuggestion.value }
-                                    )}
-                                  </Button>
+                                <VStack align="start" spacing={2} pt={1} w="full">
+                                  <CrewNoteRow
+                                    label={intl.formatMessage({ id: 'events.voice.row.block' })}>
+                                    <Text fontSize="xs" color="gray.700">
+                                      {voiceBanner.blockSuggestion.kind === 'new'
+                                        ? intl.formatMessage(
+                                            { id: 'events.voice.blockNew' },
+                                            { block: voiceBanner.blockSuggestion.value }
+                                          )
+                                        : intl.formatMessage(
+                                            { id: 'events.voice.blockKnown' },
+                                            {
+                                              spoken: voiceBanner.blockSuggestion.spoken,
+                                              block: voiceBanner.blockSuggestion.value
+                                            }
+                                          )}
+                                    </Text>
+                                    <Button
+                                      size="xs"
+                                      variant="outline"
+                                      colorScheme="green"
+                                      minH="44px"
+                                      mt={1}
+                                      onClick={handleVoiceBlockAccept}>
+                                      {intl.formatMessage(
+                                        {
+                                          id:
+                                            voiceBanner.blockSuggestion.kind === 'new'
+                                              ? 'events.voice.blockAddNew'
+                                              : 'events.voice.blockUseKnown'
+                                        },
+                                        { block: voiceBanner.blockSuggestion.value }
+                                      )}
+                                    </Button>
+                                  </CrewNoteRow>
                                 </VStack>
                               )}
                               {/* WHICH DAY. Asked before the values, because it is the one fact a
@@ -4026,33 +4128,87 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                   })}
                                 </Text>
                               )}
+                              {/* WHAT THE MESSAGE WAS NOT ALLOWED TO WRITE. On an application the
+                                  product, rate, quantity, area and their units are typed by the
+                                  confirmer from their own records (OSP audit T29, Oscar's
+                                  boundary 2026-10-01), and the server refuses the save if they
+                                  arrive from a message.
+
+                                  The REASON used to be two lines of prose in the middle of the
+                                  banner, which is most of what made it a wall of text, while the
+                                  fields it was talking about were never named at all. Named now,
+                                  as chips; the reason sits behind a toggle for the reader who
+                                  wants it. ⛔ The text itself is not cut: a farmer who is told
+                                  four values were held back is owed the reason on the same
+                                  screen, not in a help centre. */}
                               {voiceBanner.seeded &&
                                 isApplicationRecord(activeEventType, eventFormData) && (
-                                  <Text
-                                    fontSize="xs"
-                                    color="gray.800"
-                                    data-testid="crew-note-application-mode">
-                                    {intl.formatMessage({
-                                      id: 'events.voice.crewNoteApplicationMode'
-                                    })}
-                                    {voiceBanner.withheldFields?.length
-                                      ? ` ${intl.formatMessage(
-                                          { id: 'events.voice.crewNoteWithheld' },
-                                          { count: voiceBanner.withheldFields.length }
-                                        )}`
-                                      : ''}
-                                  </Text>
+                                  <CrewNoteRow
+                                    label={intl.formatMessage({
+                                      id: 'events.voice.row.heldBack'
+                                    })}>
+                                    <VStack align="start" spacing={1} w="full">
+                                      {voiceWithheldLabels.length > 0 && (
+                                        <CrewNoteChips
+                                          testId="crew-note-withheld"
+                                          values={voiceWithheldLabels}
+                                        />
+                                      )}
+                                      <Button
+                                        size="xs"
+                                        variant="ghost"
+                                        minH="44px"
+                                        px={2}
+                                        ml={-2}
+                                        aria-expanded={showCrewNoteWhy}
+                                        onClick={() => setShowCrewNoteWhy((open) => !open)}>
+                                        {intl.formatMessage({ id: 'events.voice.row.why' })}
+                                      </Button>
+                                      {showCrewNoteWhy && (
+                                        <Text
+                                          fontSize="xs"
+                                          color="gray.800"
+                                          data-testid="crew-note-application-mode">
+                                          {intl.formatMessage({
+                                            id: 'events.voice.crewNoteApplicationMode'
+                                          })}
+                                          {voiceBanner.withheldFields?.length
+                                            ? ` ${intl.formatMessage(
+                                                { id: 'events.voice.crewNoteWithheld' },
+                                                // THE SAME BASIS AS THE CHIPS. The raw list
+                                                // carries unit companions (`volume_unit` beside
+                                                // `volume_applied`), so counting it said "4
+                                                // values" over three chips. A unit is part of a
+                                                // value, not a value of its own: the filled
+                                                // count has excluded them since 2026-09-01 for
+                                                // the same reason.
+                                                { count: voiceWithheldCount }
+                                              )}`
+                                            : ''}
+                                        </Text>
+                                      )}
+                                    </VStack>
+                                  </CrewNoteRow>
                                 )}
                               {/* Answered. Say which day it will file under, because the farmer
                                   chose it on another step and a date they cannot see is a date
                                   they cannot check. */}
                               {seededDateAnswered && (
-                                <Text fontSize="xs" color="gray.700">
-                                  {intl.formatMessage(
-                                    { id: 'events.voice.pastedNoteDateSet' },
-                                    { date: localDateTimeLabel(eventFormData.date) }
-                                  )}
-                                </Text>
+                                <CrewNoteRow
+                                  label={intl.formatMessage({ id: 'events.voice.row.date' })}>
+                                  <Text fontSize="xs" color="gray.700">
+                                    {localDateTimeLabel(eventFormData.date)}
+                                  </Text>
+                                  {/* The full sentence stays for a screen reader: "Will be
+                                      recorded on ..." says what the date MEANS, and a bare date
+                                      read out after a label does not. */}
+                                  <Box as="span" srOnly>
+                                    {intl.formatMessage(
+                                      { id: 'events.voice.pastedNoteDateSet' },
+                                      { date: localDateTimeLabel(eventFormData.date) }
+                                    )}
+                                  </Box>
+                                </CrewNoteRow>
                               )}
                               {/* The tap that writes them. Nothing above this line has touched
                                   the form: a pasted note is somebody else's words, so the person

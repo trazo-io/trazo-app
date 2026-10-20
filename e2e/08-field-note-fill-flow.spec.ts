@@ -265,8 +265,9 @@ test.describe('a harvest counted in bins', () => {
     ).toBeVisible({ timeout: 90_000 });
 
     // NAMED IN THE BANNER, in the unit the crew used. "85" with no unit, or 85 under the form's
-    // default pounds, would be a different number.
-    await expect(page.getByText(/would fill|completar[ií]a/i).first()).toContainText(/85 bins/i);
+    // default pounds, would be a different number. Read from the chips rather than from a
+    // sentence: the label and the value are separate elements since app #160.
+    await expect(page.getByTestId('crew-note-offered')).toContainText(/85 bins/i);
 
     const before = await fields(page);
     expect(before['Quantity harvested'], 'the message wrote a value before any tap').toBe('');

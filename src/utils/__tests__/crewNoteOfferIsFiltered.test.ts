@@ -25,6 +25,43 @@ describe('crew-note offer in the wizard', () => {
     expect(src).toMatch(/events\.voice\.crewNoteWithheld/);
   });
 
+  it('shows the banner as labelled rows, not as stacked sentences', () => {
+    // The banner was six full-width sentences, and on a phone a farmer could not tell at a glance
+    // what the message would write, what it refused to write, or which day it would file under
+    // (Oscar, 2026-10-20). Same facts, as a label and its values.
+    for (const key of [
+      'events.voice.row.wouldFill',
+      'events.voice.row.filled',
+      'events.voice.row.heldBack',
+      'events.voice.row.block',
+      'events.voice.row.activity',
+      'events.voice.row.date'
+    ]) {
+      expect(src, `${key} is not rendered`).toContain(`'${key}'`);
+    }
+  });
+
+  it('names the fields an application held back, and counts them the same way', () => {
+    // The reason was two lines of prose in the middle of the banner while the fields it was about
+    // were never named. The chips name them; the count beside the reason is taken from the same
+    // filtered list, because the raw list carries unit companions and said "4 values" over three
+    // chips.
+    expect(src).toMatch(/testId="crew-note-withheld"/);
+    expect(src).toMatch(/values=\{voiceWithheldLabels\}/);
+    expect(src).toMatch(/\{ count: voiceWithheldCount \}/);
+    expect(src).not.toMatch(/\{ count: voiceBanner\.withheldFields\.length \}/);
+  });
+
+  it('keeps the reason on the same screen, one tap away', () => {
+    // ⛔ NOT deleted and NOT moved to a help centre. A farmer told that four values were held back
+    // is owed the reason where they are standing. Collapsed by default, expanded by a control that
+    // says what it does.
+    expect(src).toMatch(/aria-expanded=\{showCrewNoteWhy\}/);
+    expect(src).toMatch(/events\.voice\.row\.why/);
+    expect(src).toMatch(/showCrewNoteWhy && \(/);
+    expect(src).toMatch(/events\.voice\.crewNoteApplicationMode/);
+  });
+
   it('gives manual review no success colour', () => {
     // WHICH headline manual review gets, and that it outranks the others, is a truth table and is
     // tested as one in `voiceBannerHeadline.test.ts`. What stays here is the part that only exists
@@ -119,7 +156,12 @@ describe('the crew-note banner says the important thing first', () => {
     expect(src).toMatch(/voiceBannerHeadlineId\(\{/);
     expect(src).toMatch(/source: voiceNoteSource\(\{/);
     // No branch on the source may come back into the headline itself.
-    const call = src.slice(src.indexOf('const voiceBannerHeadline ='), src.indexOf('const seededDateUnanswered'));
-    expect(call).not.toMatch(/crewNoteOffered|pastedNoteOffered|HeadlinePlain|ManualReviewHeadline/);
+    const call = src.slice(
+      src.indexOf('const voiceBannerHeadline ='),
+      src.indexOf('const seededDateUnanswered')
+    );
+    expect(call).not.toMatch(
+      /crewNoteOffered|pastedNoteOffered|HeadlinePlain|ManualReviewHeadline/
+    );
   });
 });
