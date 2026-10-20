@@ -309,6 +309,17 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   // never saw the text that would actually be sent.
   // A seeded parse has no recorder state, so without this the panel would quote an empty string
   // while showing chips derived from text the farmer cannot see. Whatever is parsed is shown.
+  // WHAT THIS PANEL IS READING, decided once.
+  //
+  // 🔴 MEASURED 2026-10-20 on a WhatsApp TEXT message: the panel was headed "Voice entry" and the
+  // progress line read "Analyzing your voice input…". Nobody spoke; a crew member typed, and the
+  // operator opening it is reading somebody else's words. The subtitle was worse: "Describe the
+  // activity and we'll fill in what we can" instructs a person who has nothing left to do.
+  //
+  // A crew note may itself have been an audio note, and the wording still holds: what reaches
+  // this panel is its TRANSCRIPT, and what the panel does with it is read it.
+  const seedSource = seedTranscript ? (seedNoteId ? 'crewNote' : 'pastedNote') : 'voice';
+
   const displayTranscript = seedTranscript
     ? seedTranscript
     : useDeepgram
@@ -486,7 +497,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
       // Post-process transcript to fix common speech-to-text errors (NPK, etc.)
       const processedText = postProcessTranscript(text);
 
-      setProcessingStage(intl.formatMessage({ id: 'voice.stage.analyzing' }));
+      setProcessingStage(intl.formatMessage({ id: `voice.stage.analyzing.${seedSource}` }));
       await new Promise((resolve) => setTimeout(resolve, 300));
 
       // Use RTK Query mutation for voice processing
@@ -865,7 +876,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                 Basics") are gray.800; a green one here reads as a different hierarchy and
                 spends the brand colour on a label instead of on an action. */}
             <Text fontSize="md" fontWeight="semibold" color="gray.800">
-              {intl.formatMessage({ id: 'voice.title' })}
+              {intl.formatMessage({ id: `voice.title.${seedSource}` })}
             </Text>
             {/* Instructions for the state before recording. Once a result is on screen the
                 farmer has already done this, and leaving it up put "You review every field
@@ -873,7 +884,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                 low-confidence warning — the same sentence twice, eight lines apart. */}
             {!parsedData && (
               <Text fontSize="sm" color="gray.600">
-                {intl.formatMessage({ id: 'voice.subtitle' })}
+                {intl.formatMessage({ id: `voice.subtitle.${seedSource}` })}
               </Text>
             )}
           </VStack>
