@@ -182,6 +182,70 @@ const normalise = (s: string) =>
     .replace(/\s*\*$/, '')
     .toLowerCase();
 
+test.describe('what the operator chose, the offer leaves alone', () => {
+  test.skip(!TOKEN, 'set E2E_FIELD_NOTE_TOKEN and run the backend with it; see spec 07');
+
+  test('a General pick survives the tap that fills the rest', async ({ page, request }) => {
+    // 🔴 THE REGRESSION THE RENAME NEARLY SHIPPED (review of app #163). Every "is this already
+    // filled?" decision reads `eventFormData` by the REGISTRY's names, while a General form
+    // stores the operator's answers under the FORM's (`type`, `duration_hours`, `participants`).
+    // So those three always read as empty and the offer always counted them writable. While the
+    // write landed on a dead key that was harmless; the moment the rename put it on the live key,
+    // "Fill in N values" would have replaced an Activity Type the operator picked themselves,
+    // with the banner still crediting the note for it.
+    test.setTimeout(240_000);
+    const words = `Fixed the leak in the drip line, two of us, about three hours (own pick ${Date.now()})`;
+    expect((await deliver(request, words)).status()).toBe(200);
+
+    await page.goto('/admin/dashboard/field-notes');
+    const card = page
+      .locator('div')
+      .filter({ hasText: words })
+      .filter({ has: page.getByRole('button', { name: /log this/i }) })
+      .last();
+    await card.getByRole('combobox', { name: /farm|finca/i }).selectOption({ label: FARM });
+    await card
+      .getByRole('combobox', { name: /^block|^bloque/i })
+      .selectOption({ label: BLOCK_WITH_SEASON });
+    await card.getByRole('button', { name: /log this/i }).click();
+    await page.waitForURL(/field_note=/);
+    await page
+      .getByRole('button', { name: /^other activity$/i })
+      .first()
+      .click();
+    await page.locator('input[name="date"]').fill('2026-10-14T09:30');
+    await page
+      .getByRole('button', { name: /^continue$|^continuar$/i })
+      .first()
+      .click();
+    await expect(
+      page.getByText(/from (the|a) crew message|mensaje de la cuadrilla/i).first()
+    ).toBeVisible({ timeout: 120_000 });
+
+    // The operator disagrees with the note and picks for themselves. The note says maintenance.
+    const activityType = page.locator('select[name="type"]');
+    await expect(activityType).toBeVisible();
+    await activityType.selectOption('inspection');
+    await expect(activityType).toHaveValue('inspection');
+    // The tab reports upward on a debounce, so a pick and an immediate tap is a race a person can
+    // lose too. Give it the moment a human would take; the race itself is measured below.
+    await page.waitForTimeout(1500);
+
+    const fill = page.getByRole('button', { name: /fill in |completar /i }).first();
+    if (!(await fill.isVisible().catch(() => false))) {
+      // No offer on this run; the parse is nondeterministic and there is nothing to tap.
+      return;
+    }
+    await fill.click();
+    await page.waitForTimeout(1500);
+
+    await expect(
+      activityType,
+      'the offer replaced an activity type the operator chose themselves'
+    ).toHaveValue('inspection');
+  });
+});
+
 test.describe('what the banner promises, the tap writes', () => {
   test.skip(!TOKEN, 'set E2E_FIELD_NOTE_TOKEN and run the backend with it; see spec 07');
 

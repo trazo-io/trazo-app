@@ -1904,6 +1904,32 @@ function NewEvent({ isEdit = false, eventId = null }) {
    * ⛔ ONLY the values going INTO the form are renamed. The banner's labels, `keptFields` and the
    * field-note proposal stay on the registry's names, which is what they are read by.
    */
+  /**
+   * The form's state, READ as the registry names it, for General events.
+   *
+   * 🔴 THE OTHER HALF OF THE RENAME, and without it the rename is worse than the bug it fixes
+   * (review of app #163). Every "is this already filled?" decision looks up `eventFormData` by
+   * the REGISTRY's name — `mergeOfferedValues`'s `isFilled`, and the re-offer guard below — while
+   * a General form stores the operator's own answers under `type`, `duration_hours` and
+   * `participants`. So those three always read as empty, the offer always counted them as
+   * writable, and once `asFormFields` put the result on the live key, tapping "Fill in N values"
+   * REPLACED an Activity Type the operator had chosen themselves, with the banner still crediting
+   * the note for it. Before the rename the write landed on a dead key and nothing was lost.
+   *
+   * Both directions, or neither.
+   */
+  const asModelFields = useCallback(
+    (values, eventType) => {
+      if ((eventType ?? activeEventType) !== 3 || !values) return values;
+      const out = { ...values };
+      Object.entries(GENERAL_MODEL_TO_FORM).forEach(([model, form]) => {
+        if (out[form] !== undefined) out[model] = out[form];
+      });
+      return out;
+    },
+    [activeEventType]
+  );
+
   const asFormFields = useCallback(
     (values, eventType) => {
       if ((eventType ?? activeEventType) !== 3 || !values) return values;
@@ -2196,7 +2222,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
     // themselves, which is a false statement about provenance in the wizard that feeds certifier
     // packets. Recomputed from the merge result, the same way the late-subtype re-offer below
     // builds its own `keptFields` from `fresh` rather than from what was proposed.
-    const written = mergeOfferedValues(eventFormData, kept);
+    const written = mergeOfferedValues(asModelFields(eventFormData), kept);
     // Only values read from the crew note count as applied FROM it (see `voiceSeedIsCrewNote`).
     if (voiceBanner?.fromCrewNote) {
       fieldNoteProposalRef.current = {
@@ -2299,10 +2325,13 @@ function NewEvent({ isEdit = false, eventId = null }) {
       return;
     }
 
-    // Never overwrite something the farmer typed in the meantime.
+    // Never overwrite something the farmer typed in the meantime. READ BY THE REGISTRY'S NAMES,
+    // which is what `kept` is keyed by: on a General form the operator's own answers live under
+    // the form's names, so looking them up directly answered "empty" every time.
     const fresh = {};
+    const currentByModelName = asModelFields(eventFormData);
     Object.entries(kept).forEach(([key, value]) => {
-      const current = eventFormData[key];
+      const current = currentByModelName[key];
       if (current === undefined || current === null || current === '') fresh[key] = value;
     });
 

@@ -204,7 +204,12 @@ describe('a held pasted note is re-offered, never dropped and never merged', () 
     // themselves, which is a false claim about provenance in a wizard that feeds certifier
     // packets. Same recompute the late-subtype re-offer does from `fresh`.
     const apply = blockAfter('const handleVoiceSeededApply = () => {');
-    expect(apply).toMatch(/const written = mergeOfferedValues\(eventFormData, kept\)/);
+    // READ BY THE REGISTRY'S NAMES. `kept` is keyed that way, and on a General form the
+    // operator's own answers live under the form's names, so a direct lookup answered "empty"
+    // for all three and the offer would have replaced what they chose themselves.
+    expect(apply).toMatch(
+      /const written = mergeOfferedValues\(asModelFields\(eventFormData\), kept\)/
+    );
     expect(apply).toMatch(/keptFields: Object\.keys\(written\)/);
     // and the form must be written from that same object, or the two can disagree. The names are
     // renamed on the way in for General events (`activity_type` -> `type`), which is a rename of
