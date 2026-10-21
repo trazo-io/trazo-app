@@ -27,6 +27,7 @@ type Match = {
   date: string;
   buyer: string;
   invoice: string;
+  quantity: string;
   crop: string;
   parcel: string;
   season: string;
@@ -98,6 +99,8 @@ export const ReviewTraceback = ({ token, apiRoot }: Props) => {
     });
   };
   const busy = state.kind === 'loading';
+  const recall =
+    state.kind === 'matches' && state.matches.every((m) => m.matched_on.startsWith('input_'));
 
   return (
     <Box w="full" data-testid="certifier-traceback">
@@ -166,10 +169,25 @@ export const ReviewTraceback = ({ token, apiRoot }: Props) => {
               {t('traceback.matches.title', { count: state.matches.length })}
             </Text>
             <Text fontSize="sm" color="gray.600">
-              {t('traceback.matches.subtitle')}
+              {t(
+                // A capped recall list must never claim to be the whole list (review of app #170).
+                !recall
+                  ? 'traceback.matches.subtitle'
+                  : state.truncated
+                  ? 'traceback.matches.subtitleRecallPartial'
+                  : 'traceback.matches.subtitleRecall'
+              )}
             </Text>
             {state.truncated && (
-              <StandardAlert status="info" mb={0} description={t('traceback.matches.truncated')} />
+              <StandardAlert
+                status={recall ? 'warning' : 'info'}
+                mb={0}
+                description={t(
+                  recall
+                    ? 'certifierReview.traceback.truncatedRecall'
+                    : 'traceback.matches.truncated'
+                )}
+              />
             )}
             {state.matches.map((m) => (
               <HStack
@@ -181,7 +199,7 @@ export const ReviewTraceback = ({ token, apiRoot }: Props) => {
                 spacing={3}>
                 <Box flex={1} minW={0}>
                   <Text fontWeight="semibold">
-                    {[m.date, m.buyer, m.invoice].filter(Boolean).join(' · ')}
+                    {[m.date, m.buyer, m.quantity, m.invoice].filter(Boolean).join(' · ')}
                   </Text>
                   <Text fontSize="sm" color="gray.600">
                     {[m.crop, m.parcel, m.season].filter(Boolean).join(' · ')} ·{' '}

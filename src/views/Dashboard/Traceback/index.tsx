@@ -70,6 +70,8 @@ export const TracebackPage = () => {
   // search or a 404 trace would render the previous answer under the new question.
   const matches: any[] | undefined = search.currentData?.results;
   const truncated = Boolean(search.currentData?.truncated);
+  const recall =
+    Boolean(matches?.length) && matches!.every((m) => m.matched_on.startsWith('input_'));
 
   // One match is the sale: open it once, when that answer arrives. Several are a choice the
   // operator makes, never this page. Keyed on the response time, so Back (or re-submitting the
@@ -167,9 +169,23 @@ export const TracebackPage = () => {
       {!saleId && (matches?.length ?? 0) > 0 && (
         <StandardCard
           title={t('traceback.matches.title', { count: matches!.length })}
-          subtitle={t('traceback.matches.subtitle')}>
+          subtitle={t(
+            // An input's lot or invoice is a recall: every row is the answer, none is "the" sale.
+            // A capped recall list must never claim to be the whole list (review of app #170).
+            !recall
+              ? 'traceback.matches.subtitle'
+              : truncated
+              ? 'traceback.matches.subtitleRecallPartial'
+              : 'traceback.matches.subtitleRecall'
+          )}>
           {truncated && (
-            <StandardAlert status="info" mb={3} description={t('traceback.matches.truncated')} />
+            <StandardAlert
+              status={recall ? 'warning' : 'info'}
+              mb={3}
+              description={t(
+                recall ? 'traceback.matches.truncatedRecall' : 'traceback.matches.truncated'
+              )}
+            />
           )}
           <VStack align="stretch" spacing={2}>
             {matches!.map((m: any) => (
@@ -185,7 +201,7 @@ export const TracebackPage = () => {
                     pushed the label into the button edge). */}
                 <Box flex={1} minW={0}>
                   <Text fontWeight="semibold">
-                    {[m.date, m.buyer, m.invoice].filter(Boolean).join(' · ')}
+                    {[m.date, m.buyer, m.quantity, m.invoice].filter(Boolean).join(' · ')}
                   </Text>
                   <Text fontSize="sm" color="gray.600">
                     {[m.crop, m.parcel, m.season].filter(Boolean).join(' · ')} ·{' '}
