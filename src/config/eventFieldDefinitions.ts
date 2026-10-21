@@ -517,30 +517,6 @@ export const productionFields: Record<string, SharedFieldDefinition> = {
     sectionKey: 'production.irrigation',
     quickEventVisible: true,
     quickEventOrder: 14
-  },
-
-  water_volume: {
-    name: 'water_volume',
-    type: 'number',
-    labelKey: 'quickAdd.fields.waterVolume',
-    helpKey: 'quickAdd.fields.waterVolumeHelp',
-    validation: {
-      min: 0,
-      step: 1
-    },
-    unitConfig: {
-      hasUnitDropdown: true,
-      unitFieldName: 'water_unit',
-      unitOptions: [
-        { value: 'gal', labelKey: 'quickAdd.fields.units.gal' },
-        { value: 'L', labelKey: 'quickAdd.fields.units.L' },
-        { value: 'm3', labelKey: 'quickAdd.fields.units.m3' }
-      ],
-      defaultUnit: 'gal'
-    },
-    sectionKey: 'production.irrigation',
-    quickEventVisible: true,
-    quickEventOrder: 16
   }
 };
 
@@ -792,7 +768,6 @@ export const eventTypeFieldGroups = {
       'area_covered',
       'water_source',
       'irrigation_method',
-      'water_volume',
       'equipment_hours',
       'fuel_type',
       'fuel_consumed'
@@ -894,145 +869,6 @@ export const eventTypeFieldGroups = {
 };
 
 // ============================================================================
-// SMART DEFAULTS BY EVENT TYPE
-// Quick Event uses these to pre-populate forms with sensible values
-// ============================================================================
-
-export const smartDefaults = {
-  // Production Events
-  irrigation: {
-    area_covered: 1,
-    area_unit: 'ha',
-    water_source: 'well_groundwater',
-    irrigation_method: 'drip',
-    water_volume: 10000,
-    water_unit: 'gal',
-    equipment_hours: 2,
-    fuel_type: 'diesel',
-    fuel_consumed: 2,
-    fuel_unit: 'L'
-  },
-  harvest: {
-    area_covered: 1,
-    area_unit: 'ha',
-    yield_quantity: 100,
-    yield_unit: 'kg',
-    equipment_hours: 4,
-    fuel_type: 'diesel',
-    fuel_consumed: 5,
-    fuel_unit: 'L',
-    production_efficiency: 'normal'
-  },
-  planting: {
-    area_covered: 1,
-    area_unit: 'ha',
-    seeds_source: 'commercial',
-    equipment_hours: 3,
-    fuel_type: 'diesel',
-    fuel_consumed: 2,
-    fuel_unit: 'L'
-  },
-  pruning: {
-    area_covered: 0.5,
-    area_unit: 'ha',
-    equipment_type: 'manual',
-    equipment_hours: 4,
-    fuel_type: 'diesel',
-    fuel_consumed: 0.5,
-    fuel_unit: 'L'
-  },
-  transplanting: {
-    area_covered: 0.5,
-    area_unit: 'ha',
-    equipment_hours: 4,
-    fuel_type: 'diesel',
-    fuel_consumed: 2.4,
-    fuel_unit: 'L'
-  },
-  cultivation: {
-    area_covered: 1,
-    area_unit: 'ha',
-    cultivation_method: 'mechanical',
-    equipment_hours: 3,
-    fuel_type: 'diesel',
-    fuel_consumed: 3,
-    fuel_unit: 'L'
-  },
-  thinning: {
-    area_covered: 0.5,
-    area_unit: 'ha',
-    equipment_type: 'manual',
-    equipment_hours: 4,
-    fuel_type: 'diesel',
-    fuel_consumed: 0.5,
-    fuel_unit: 'L'
-  },
-  equipment_maintenance: {
-    equipment_type: 'tractor',
-    equipment_operation_type: 'routine_maintenance',
-    equipment_hours: 2,
-    fuel_type: 'diesel',
-    fuel_consumed: 5,
-    fuel_unit: 'L'
-  },
-
-  // Chemical Events
-  fertilization: {
-    chemical_subtype: 'synthetic_fertilizer',
-    concentration: '10-10-10',
-    volume_applied: 100,
-    volume_unit: 'kg',
-    area_treated: 1,
-    area_unit: 'ha',
-    application_method: 'broadcast',
-    application_fuel_type: 'diesel',
-    application_fuel_consumed: 1,
-    application_fuel_unit: 'L'
-  },
-  pest_control: {
-    chemical_subtype: 'synthetic_pesticide',
-    concentration: '50%',
-    volume_applied: 50,
-    volume_unit: 'L',
-    area_treated: 1,
-    area_unit: 'ha',
-    application_method: 'foliar_spray',
-    application_fuel_type: 'diesel',
-    application_fuel_consumed: 0.5,
-    application_fuel_unit: 'L'
-  },
-  herbicide: {
-    chemical_subtype: 'synthetic_herbicide',
-    concentration: '50%',
-    volume_applied: 50,
-    volume_unit: 'L',
-    area_treated: 1,
-    area_unit: 'ha',
-    application_method: 'foliar_spray',
-    application_fuel_type: 'diesel',
-    application_fuel_consumed: 0.5,
-    application_fuel_unit: 'L'
-  },
-  fungicide: {
-    chemical_subtype: 'synthetic_fungicide',
-    concentration: '50%',
-    volume_applied: 30,
-    volume_unit: 'L',
-    area_treated: 1,
-    area_unit: 'ha',
-    application_method: 'foliar_spray',
-    application_fuel_type: 'diesel',
-    application_fuel_consumed: 0.5,
-    application_fuel_unit: 'L'
-  },
-
-  // General
-  general_documentation: {
-    activity_type: 'inspection'
-  }
-};
-
-// ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
 
@@ -1074,13 +910,6 @@ export function getQuickEventFields(
   return allFields
     .filter((field) => field.quickEventVisible)
     .sort((a, b) => (a.quickEventOrder || 0) - (b.quickEventOrder || 0));
-}
-
-/**
- * Get smart defaults for a specific event template
- */
-export function getSmartDefaults(templateId: string): Record<string, unknown> {
-  return smartDefaults[templateId as keyof typeof smartDefaults] || {};
 }
 
 /**
