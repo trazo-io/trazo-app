@@ -36,7 +36,14 @@ const ALLOWED: Record<string, string> = {
   'tour.welcomeViewer.step3.content': 'teaches the word: "each parcel is a field or block"'
 };
 
-const stripPlaceholders = (value: string) => value.replace(/\{[^{}]*\}/g, '');
+// Only simple placeholders (`{block}`, `{count}`) are variable names. Plural and select branches
+// (`{count, plural, one {Saved to # parcel} ...}`) hold real copy and must stay checkable, so the
+// ICU keywords are removed and the branch text kept.
+const stripPlaceholders = (value: string) =>
+  value
+    .replace(/\{\s*\w+\s*\}/g, '')
+    .replace(/\{\s*\w+\s*,\s*(plural|select|selectordinal)\s*,/g, ' ')
+    .replace(/\b(zero|one|two|few|many|other|=\d+)\s*\{/g, ' ');
 
 const offenders = (messages: Record<string, string>, pattern: RegExp) =>
   Object.entries(messages)
@@ -62,6 +69,13 @@ describe('parcel / section vocabulary', () => {
         /\b(bloques?|cuadros?)\b/i.test(stripPlaceholders(es ?? ''));
       expect(stillUsed, `${key} no longer needs its exception: remove it`).toBe(true);
     }
+  });
+
+  it('reads the copy inside plural branches, not only plain strings', () => {
+    expect(
+      stripPlaceholders('{count, plural, one {Saved to # block} other {Saved to # blocks}}')
+    ).toMatch(/\bblocks?\b/);
+    expect(stripPlaceholders('Use {block}')).not.toMatch(/\bblock\b/);
   });
 
   it('the label inside a parcel is a section, in both languages', () => {
