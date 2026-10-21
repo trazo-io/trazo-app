@@ -29,6 +29,21 @@ const STYLE = {
   disabled: { fillColor: '#9E9E9E', fillOpacity: 0.3, strokeColor: '#9E9E9E', strokeWeight: 1 }
 };
 
+// The parcel dashboard's view (CardWithMap): satellite imagery, so a grower recognises the rows
+// and the outlines are drawn on the farm itself. The map type lives IN the options: passed
+// only as the `mapTypeId` prop beside an `options` object, the map came up as a road map.
+// Module-level so the object is not rebuilt (and re-applied to the map) on every render.
+const MAP_OPTIONS: google.maps.MapOptions = {
+  mapTypeId: 'satellite',
+  // One finger scrolls the page, two move the map: the picker sits inside a long form.
+  gestureHandling: 'cooperative',
+  streetViewControl: false,
+  mapTypeControl: false,
+  // As on the parcel dashboard: a small picker is easier to tap in full screen.
+  fullscreenControl: true,
+  clickableIcons: false
+};
+
 const MAX_NAME = 16;
 const shortName = (name: string) =>
   name.length > MAX_NAME ? `${name.slice(0, MAX_NAME - 1)}…` : name;
@@ -128,16 +143,8 @@ const ParcelMapPicker = ({
         aria-hidden="true">
         <GoogleMap
           mapContainerStyle={{ width: '100%', height: '100%' }}
-          mapTypeId="satellite"
           onLoad={fitAll}
-          options={{
-            // One finger scrolls the page, two move the map: the picker sits inside a long form.
-            gestureHandling: 'cooperative',
-            streetViewControl: false,
-            mapTypeControl: false,
-            fullscreenControl: false,
-            clickableIcons: false
-          }}>
+          options={MAP_OPTIONS}>
           {drawn.map((parcel) => {
             const isDisabled = disabledIds.has(parcel.id);
             const isSelected = parcel.id === fixedId || selected.has(parcel.id);
