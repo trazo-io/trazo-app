@@ -154,7 +154,7 @@ const FUEL_TYPES = [
  *
  * Memoise on `intl` at the call site; rebuilding the schema each render remounts the resolver.
  */
-export const buildChemicalSchema = (intl) =>
+export const buildChemicalSchema = (intl, { multiTarget = false } = {}) =>
   object({
     type: string().min(
       1,
@@ -442,8 +442,12 @@ export const buildChemicalSchema = (intl) =>
       }
     }
     // Use volume_numeric as the primary numeric field; fall back to volume_applied for backward compat
+    // With several blocks the amount is asked per block (MultiParcel.PerParcelAmounts), so the
+    // single total this tab would ask for does not exist and must not be required.
     const effectiveVolume = data.volume_numeric || data.volume_applied;
-    if (!effectiveVolume || effectiveVolume.length === 0) {
+    if (multiTarget) {
+      // per block, checked by the wizard
+    } else if (!effectiveVolume || effectiveVolume.length === 0) {
       ctx.addIssue({
         code: 'custom',
         path: ['volume_numeric'],
@@ -474,7 +478,9 @@ export const buildChemicalSchema = (intl) =>
     }
     // Use area_numeric as the primary numeric field; fall back to area_treated for backward compat
     const effectiveArea = data.area_numeric || data.area_treated;
-    if (!effectiveArea || effectiveArea.length === 0) {
+    if (multiTarget) {
+      // per block, checked by the wizard
+    } else if (!effectiveArea || effectiveArea.length === 0) {
       ctx.addIssue({
         code: 'custom',
         path: ['area_numeric'],
@@ -561,6 +567,12 @@ const ChemicalTab = forwardRef(
        * answer. NewEvent passes this on every path — create and edit alike.
        */
       hideTypeSelect = false,
+      /**
+       * One spray on several blocks (MultiParcel). The amount and area treated, where on the
+       * block, the block id, summary mode, tank-mix partner volumes and fuel are per block or
+       * have no per-block value, so they are hidden here and asked per block by the wizard.
+       */
+      multiTarget = false,
       carbonCalculation = null,
       isCalculatingCarbon = false
     },
@@ -569,7 +581,10 @@ const ChemicalTab = forwardRef(
     const intl = useIntl();
     // Memoised on `intl`: a new schema object each render would hand zodResolver a fresh
     // resolver every time and reset the form's validation state mid-typing.
-    const formSchemaMainInfo = useMemo(() => buildChemicalSchema(intl), [intl]);
+    const formSchemaMainInfo = useMemo(
+      () => buildChemicalSchema(intl, { multiTarget }),
+      [intl, multiTarget]
+    );
     const [hasInitialized, setHasInitialized] = useState(false);
 
     // SPRINT 6 DEBUG: Log initialValues only on mount (not every render)
@@ -1183,7 +1198,7 @@ const ChemicalTab = forwardRef(
     // SPRINT 6 FIX (2025-12-23): Only enable summary mode for chemical types that support it (FE, FU, PE)
     // This prevents HE (Herbicide) from having hidden quantity fields when is_summary is stale/true
     const isSummaryMode =
-      watch('is_summary') === 'true' && ['FE', 'FU', 'PE'].includes(chemicalType);
+      !multiTarget && watch('is_summary') === 'true' && ['FE', 'FU', 'PE'].includes(chemicalType);
 
     // Clear chemical_subtype when chemical type changes (to prevent invalid subtype/type combinations)
     const previousChemicalTypeRef = useRef(chemicalType);
@@ -1944,116 +1959,119 @@ const ChemicalTab = forwardRef(
                   )}
 
                   {/* Sprint 5: Aggregate Chemical Support - Summary Mode Toggle (Fertilizer, Fungicide & Pesticide) */}
-                  {(chemicalType === 'FE' || chemicalType === 'FU' || chemicalType === 'PE') && (
-                    <Box
-                      p={4}
-                      bg={isSummaryMode ? 'blue.50' : 'gray.50'}
-                      borderRadius="md"
-                      border="1px solid"
-                      borderColor={isSummaryMode ? 'blue.200' : 'gray.200'}
-                      mb={4}>
-                      <HStack justify="space-between" align="center">
-                        <Box flex={1}>
-                          {isSummaryMode && (
-                            <Badge colorScheme="blue" mb={2}>
-                              {intl.formatMessage({
-                                id: 'events.chemical.summaryMode.badge',
-                                defaultMessage: 'Summary Mode'
-                              })}
-                            </Badge>
-                          )}
-                          {/* ICU arguments, not a template literal. The English read
+                  {!multiTarget &&
+                    (chemicalType === 'FE' || chemicalType === 'FU' || chemicalType === 'PE') && (
+                      <Box
+                        p={4}
+                        bg={isSummaryMode ? 'blue.50' : 'gray.50'}
+                        borderRadius="md"
+                        border="1px solid"
+                        borderColor={isSummaryMode ? 'blue.200' : 'gray.200'}
+                        mb={4}>
+                        <HStack justify="space-between" align="center">
+                          <Box flex={1}>
+                            {isSummaryMode && (
+                              <Badge colorScheme="blue" mb={2}>
+                                {intl.formatMessage({
+                                  id: 'events.chemical.summaryMode.badge',
+                                  defaultMessage: 'Summary Mode'
+                                })}
+                              </Badge>
+                            )}
+                            {/* ICU arguments, not a template literal. The English read
                               `Log multiple ${kind} applications as one summary (e.g. "${n}
                               applications")`, which is untranslatable BY CONSTRUCTION: word
                               order, gender agreement and the noun's plural all move with the
                               language, and a concatenation fixes them at English. Spanish needs
                               "aplicaciones de fungicida", not "fungicida aplicaciones". */}
-                          <Text fontSize="sm" color="gray.600">
-                            {isSummaryMode
-                              ? intl.formatMessage(
-                                  {
-                                    id: 'events.chemical.summaryMode.on',
-                                    defaultMessage:
-                                      'Log multiple {kind} applications as one summary (e.g., "{example}").'
-                                  },
-                                  {
-                                    kind: intl
-                                      .formatMessage({
+                            <Text fontSize="sm" color="gray.600">
+                              {isSummaryMode
+                                ? intl.formatMessage(
+                                    {
+                                      id: 'events.chemical.summaryMode.on',
+                                      defaultMessage:
+                                        'Log multiple {kind} applications as one summary (e.g., "{example}").'
+                                    },
+                                    {
+                                      kind: intl
+                                        .formatMessage({
+                                          id:
+                                            chemicalType === 'FE'
+                                              ? 'events.chemical.subtypes.fertilizer'
+                                              : chemicalType === 'FU'
+                                              ? 'events.chemical.subtypes.fungicide'
+                                              : 'events.chemical.subtypes.pesticide'
+                                        })
+                                        .toLowerCase(),
+                                      example: intl.formatMessage({
                                         id:
                                           chemicalType === 'FE'
-                                            ? 'events.chemical.subtypes.fertilizer'
+                                            ? 'events.chemical.summaryMode.exampleFertilizer'
                                             : chemicalType === 'FU'
-                                            ? 'events.chemical.subtypes.fungicide'
-                                            : 'events.chemical.subtypes.pesticide'
+                                            ? 'events.chemical.summaryMode.exampleFungicide'
+                                            : 'events.chemical.summaryMode.examplePesticide'
                                       })
-                                      .toLowerCase(),
-                                    example: intl.formatMessage({
-                                      id:
-                                        chemicalType === 'FE'
-                                          ? 'events.chemical.summaryMode.exampleFertilizer'
-                                          : chemicalType === 'FU'
-                                          ? 'events.chemical.summaryMode.exampleFungicide'
-                                          : 'events.chemical.summaryMode.examplePesticide'
-                                    })
-                                  }
-                                )
-                              : intl.formatMessage({
-                                  id: 'events.chemical.summaryMode.off',
-                                  defaultMessage: 'Toggle to log multiple applications at once'
-                                })}
-                          </Text>
-                        </Box>
-                        <Controller
-                          name="is_summary"
-                          control={methods.control}
-                          render={({ field }) => (
-                            <Switch
-                              {...field}
-                              isChecked={field.value === 'true'}
-                              onChange={(e) => field.onChange(e.target.checked ? 'true' : 'false')}
-                              colorScheme="blue"
-                              size="lg"
-                            />
-                          )}
-                        />
-                      </HStack>
+                                    }
+                                  )
+                                : intl.formatMessage({
+                                    id: 'events.chemical.summaryMode.off',
+                                    defaultMessage: 'Toggle to log multiple applications at once'
+                                  })}
+                            </Text>
+                          </Box>
+                          <Controller
+                            name="is_summary"
+                            control={methods.control}
+                            render={({ field }) => (
+                              <Switch
+                                {...field}
+                                isChecked={field.value === 'true'}
+                                onChange={(e) =>
+                                  field.onChange(e.target.checked ? 'true' : 'false')
+                                }
+                                colorScheme="blue"
+                                size="lg"
+                              />
+                            )}
+                          />
+                        </HStack>
 
-                      {/* Benefits of Summary Mode */}
-                      {isSummaryMode && (
-                        <Box mt={3} p={2} bg="blue.100" borderRadius="md">
-                          <Text fontSize="xs" color="blue.700">
-                            <Icon as={FaCheckCircle} mr={1} />
-                            {/* ⚠️ UNSOURCED. The 95% / 87-93% / 90% figures predate this file's
+                        {/* Benefits of Summary Mode */}
+                        {isSummaryMode && (
+                          <Box mt={3} p={2} bg="blue.100" borderRadius="md">
+                            <Text fontSize="xs" color="blue.700">
+                              <Icon as={FaCheckCircle} mr={1} />
+                              {/* ⚠️ UNSOURCED. The 95% / 87-93% / 90% figures predate this file's
                                 git history and cite nothing. They are producer-facing, so no FTC
                                 green-claim exposure — but they are still numbers on screen with
                                 no measurement behind them. Translated as found rather than
                                 silently dropped; deleting a claim is a product call. */}
-                            <strong>
-                              {intl.formatMessage(
-                                {
-                                  id: 'events.chemical.summaryMode.timeSavings',
-                                  defaultMessage: '{percent} time savings:'
-                                },
-                                {
-                                  percent:
-                                    chemicalType === 'FE'
-                                      ? '95%'
-                                      : chemicalType === 'FU'
-                                      ? '87-93%'
-                                      : '90%'
-                                }
-                              )}
-                            </strong>{' '}
-                            {intl.formatMessage({
-                              id: 'events.chemical.summaryMode.timeSavingsHelp',
-                              defaultMessage:
-                                'Log multiple applications with one entry while maintaining accurate carbon calculations'
-                            })}
-                          </Text>
-                        </Box>
-                      )}
-                    </Box>
-                  )}
+                              <strong>
+                                {intl.formatMessage(
+                                  {
+                                    id: 'events.chemical.summaryMode.timeSavings',
+                                    defaultMessage: '{percent} time savings:'
+                                  },
+                                  {
+                                    percent:
+                                      chemicalType === 'FE'
+                                        ? '95%'
+                                        : chemicalType === 'FU'
+                                        ? '87-93%'
+                                        : '90%'
+                                  }
+                                )}
+                              </strong>{' '}
+                              {intl.formatMessage({
+                                id: 'events.chemical.summaryMode.timeSavingsHelp',
+                                defaultMessage:
+                                  'Log multiple applications with one entry while maintaining accurate carbon calculations'
+                              })}
+                            </Text>
+                          </Box>
+                        )}
+                      </Box>
+                    )}
 
                   {/* Sprint 5: Aggregate Fertilizer Fields (shown when summary mode is active) */}
                   {isSummaryMode && chemicalType === 'FE' && (
@@ -3109,33 +3127,36 @@ const ChemicalTab = forwardRef(
                     <>
                       {/* Phase 3: volume_numeric is the primary numeric field; volume_applied kept for backward compat */}
                       <Stack direction={{ base: 'column', md: 'row' }} spacing={4} align="stretch">
-                        <StandardField
-                          label={intl.formatMessage({
-                            id: 'app.volumeApplied',
-                            defaultMessage: 'Product Amount Applied'
-                          })}
-                          required
-                          error={errors.volume_numeric?.message}
-                          helpText={intl.formatMessage({
-                            id: 'app.volumeAppliedHelp',
-                            defaultMessage:
-                              'How much of the PRODUCT itself went out, added up over the area treated. Not the tank or spray volume it was mixed into.'
-                          })}
-                          flex={2}>
-                          <Controller
-                            name="volume_numeric"
-                            control={methods.control}
-                            render={({ field }) => (
-                              <StandardInput
-                                {...field}
-                                type="number"
-                                step="0.1"
-                                min="0"
-                                placeholder="0.0"
-                              />
-                            )}
-                          />
-                        </StandardField>
+                        {/* Several blocks: the amount is asked per block (MultiParcel). The unit stays here. */}
+                        {!multiTarget && (
+                          <StandardField
+                            label={intl.formatMessage({
+                              id: 'app.volumeApplied',
+                              defaultMessage: 'Product Amount Applied'
+                            })}
+                            required
+                            error={errors.volume_numeric?.message}
+                            helpText={intl.formatMessage({
+                              id: 'app.volumeAppliedHelp',
+                              defaultMessage:
+                                'How much of the PRODUCT itself went out, added up over the area treated. Not the tank or spray volume it was mixed into.'
+                            })}
+                            flex={2}>
+                            <Controller
+                              name="volume_numeric"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardInput
+                                  {...field}
+                                  type="number"
+                                  step="0.1"
+                                  min="0"
+                                  placeholder="0.0"
+                                />
+                              )}
+                            />
+                          </StandardField>
+                        )}
 
                         <StandardField
                           label={intl.formatMessage({
@@ -3203,32 +3224,35 @@ const ChemicalTab = forwardRef(
 
                       {/* Phase 3: area_numeric is the primary numeric field; area_treated kept for backward compat */}
                       <Stack direction={{ base: 'column', md: 'row' }} spacing={4} align="stretch">
-                        <StandardField
-                          label={intl.formatMessage({
-                            id: 'app.areaTreated',
-                            defaultMessage: 'Area Treated'
-                          })}
-                          required
-                          error={errors.area_numeric?.message}
-                          helpText={intl.formatMessage({
-                            id: 'app.areaTreatedHelp',
-                            defaultMessage: 'Area coverage for accurate carbon calculation'
-                          })}
-                          flex={2}>
-                          <Controller
-                            name="area_numeric"
-                            control={methods.control}
-                            render={({ field }) => (
-                              <StandardInput
-                                {...field}
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                placeholder="0.00"
-                              />
-                            )}
-                          />
-                        </StandardField>
+                        {/* Several blocks: the area is asked per block (MultiParcel). The unit stays here. */}
+                        {!multiTarget && (
+                          <StandardField
+                            label={intl.formatMessage({
+                              id: 'app.areaTreated',
+                              defaultMessage: 'Area Treated'
+                            })}
+                            required
+                            error={errors.area_numeric?.message}
+                            helpText={intl.formatMessage({
+                              id: 'app.areaTreatedHelp',
+                              defaultMessage: 'Area coverage for accurate carbon calculation'
+                            })}
+                            flex={2}>
+                            <Controller
+                              name="area_numeric"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardInput
+                                  {...field}
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  placeholder="0.00"
+                                />
+                              )}
+                            />
+                          </StandardField>
+                        )}
 
                         <StandardField
                           label={intl.formatMessage({
@@ -4068,48 +4092,55 @@ const ChemicalTab = forwardRef(
                     {/* WS-4 — § 205.103(b)(2): records must identify WHERE the input went.
                         (b)(1) is "be adapted to the particular business" and says nothing about
                         location; the user-facing help string already cites (b)(2). */}
-                    <StandardField
-                      label={intl.formatMessage({ id: 'events.chemical.fields.appliedScope' })}
-                      error={errors.applied_scope?.message}
-                      helpText={intl.formatMessage({ id: 'chemical.appliedScopeHelp' })}>
-                      <Controller
-                        name="applied_scope"
-                        control={methods.control}
-                        render={({ field }) => (
-                          <StandardSelect
-                            {...field}
-                            placeholder={intl.formatMessage({ id: 'app.select' })}>
-                            <option value="all">
-                              {intl.formatMessage({ id: 'events.appliedScope.all' })}
-                            </option>
-                            <option value="part">
-                              {intl.formatMessage({ id: 'events.appliedScope.part' })}
-                            </option>
-                          </StandardSelect>
-                        )}
-                      />
-                    </StandardField>
+                    {/* Several blocks: whole block or part is asked per block (MultiParcel). */}
+                    {!multiTarget && (
+                      <>
+                        <StandardField
+                          label={intl.formatMessage({ id: 'events.chemical.fields.appliedScope' })}
+                          error={errors.applied_scope?.message}
+                          helpText={intl.formatMessage({ id: 'chemical.appliedScopeHelp' })}>
+                          <Controller
+                            name="applied_scope"
+                            control={methods.control}
+                            render={({ field }) => (
+                              <StandardSelect
+                                {...field}
+                                placeholder={intl.formatMessage({ id: 'app.select' })}>
+                                <option value="all">
+                                  {intl.formatMessage({ id: 'events.appliedScope.all' })}
+                                </option>
+                                <option value="part">
+                                  {intl.formatMessage({ id: 'events.appliedScope.part' })}
+                                </option>
+                              </StandardSelect>
+                            )}
+                          />
+                        </StandardField>
 
-                    {methods.watch('applied_scope') === 'part' && (
-                      <StandardField
-                        label={intl.formatMessage({
-                          id: 'events.chemical.fields.appliedScopeDetail'
-                        })}
-                        error={errors.applied_scope_detail?.message}
-                        helpText={intl.formatMessage({ id: 'chemical.appliedScopeDetailHelp' })}>
-                        <Controller
-                          name="applied_scope_detail"
-                          control={methods.control}
-                          render={({ field }) => (
-                            <StandardInput
-                              {...field}
-                              placeholder={intl.formatMessage({
-                                id: 'chemical.appliedScopeDetailPlaceholder'
-                              })}
+                        {methods.watch('applied_scope') === 'part' && (
+                          <StandardField
+                            label={intl.formatMessage({
+                              id: 'events.chemical.fields.appliedScopeDetail'
+                            })}
+                            error={errors.applied_scope_detail?.message}
+                            helpText={intl.formatMessage({
+                              id: 'chemical.appliedScopeDetailHelp'
+                            })}>
+                            <Controller
+                              name="applied_scope_detail"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardInput
+                                  {...field}
+                                  placeholder={intl.formatMessage({
+                                    id: 'chemical.appliedScopeDetailPlaceholder'
+                                  })}
+                                />
+                              )}
                             />
-                          )}
-                        />
-                      </StandardField>
+                          </StandardField>
+                        )}
+                      </>
                     )}
                   </SimpleGrid>
                 </VStack>
@@ -4747,225 +4778,228 @@ const ChemicalTab = forwardRef(
                     )}
 
                     {/* Tank-mix adjuvants — each CA-registered partner is a separate PUR line */}
-                    <Box
-                      p={3}
-                      bg="gray.50"
-                      borderRadius="md"
-                      border="1px solid"
-                      borderColor="gray.200">
-                      {/* An HStack is a single non-wrapping row, and Chakra's Button base style is
+                    {/* Several blocks: partner volumes are per product and per block, so not asked here. */}
+                    {!multiTarget && (
+                      <Box
+                        p={3}
+                        bg="gray.50"
+                        borderRadius="md"
+                        border="1px solid"
+                        borderColor="gray.200">
+                        {/* An HStack is a single non-wrapping row, and Chakra's Button base style is
                           `whiteSpace: nowrap`. At 375px the Spanish title ("Coadyuvantes /
                           adherentes de mezcla en tanque") wrapped to three lines while "Agregar
                           coadyuvante" stayed on one and ran straight through the panel's right
                           border, printing ON TOP of the title. The header stacks on mobile and
                           only becomes a row once there is width for both. */}
-                      <Stack
-                        direction={{ base: 'column', smd: 'row' }}
-                        align={{ base: 'stretch', smd: 'center' }}
-                        justify="space-between"
-                        spacing={2}
-                        mb={2}>
-                        <HStack align="flex-start">
-                          <Icon as={FaFlask} color="gray.600" mt="2px" flexShrink={0} />
-                          <Text fontSize="sm" fontWeight="semibold" color="gray.700">
+                        <Stack
+                          direction={{ base: 'column', smd: 'row' }}
+                          align={{ base: 'stretch', smd: 'center' }}
+                          justify="space-between"
+                          spacing={2}
+                          mb={2}>
+                          <HStack align="flex-start">
+                            <Icon as={FaFlask} color="gray.600" mt="2px" flexShrink={0} />
+                            <Text fontSize="sm" fontWeight="semibold" color="gray.700">
+                              {intl.formatMessage({
+                                id: 'events.chemical.adjuvants.title',
+                                defaultMessage: 'Tank-mix adjuvants / spreader-stickers'
+                              })}
+                            </Text>
+                          </HStack>
+                          <StandardButton
+                            size="sm"
+                            variant="outline"
+                            flexShrink={0}
+                            alignSelf={{ base: 'flex-start', smd: 'auto' }}
+                            leftIcon={<FaPlus />}
+                            onClick={() =>
+                              appendAdjuvant({
+                                commercial_name: '',
+                                manufacturer: '',
+                                epa_registration_number: '',
+                                volume: '',
+                                volume_unit: 'gal',
+                                organic_approved: 'false'
+                              })
+                            }>
                             {intl.formatMessage({
-                              id: 'events.chemical.adjuvants.title',
-                              defaultMessage: 'Tank-mix adjuvants / spreader-stickers'
+                              id: 'events.chemical.adjuvants.add',
+                              defaultMessage: 'Add adjuvant'
                             })}
-                          </Text>
-                        </HStack>
-                        <StandardButton
-                          size="sm"
-                          variant="outline"
-                          flexShrink={0}
-                          alignSelf={{ base: 'flex-start', smd: 'auto' }}
-                          leftIcon={<FaPlus />}
-                          onClick={() =>
-                            appendAdjuvant({
-                              commercial_name: '',
-                              manufacturer: '',
-                              epa_registration_number: '',
-                              volume: '',
-                              volume_unit: 'gal',
-                              organic_approved: 'false'
-                            })
-                          }>
+                          </StandardButton>
+                        </Stack>
+                        <Text fontSize="xs" color="gray.600" mb={3}>
                           {intl.formatMessage({
-                            id: 'events.chemical.adjuvants.add',
-                            defaultMessage: 'Add adjuvant'
-                          })}
-                        </StandardButton>
-                      </Stack>
-                      <Text fontSize="xs" color="gray.600" mb={3}>
-                        {intl.formatMessage({
-                          id: 'events.chemical.adjuvants.help',
-                          defaultMessage:
-                            'CA-registered adjuvants applied in the tank mix are reportable — each is added as its own line on the Pesticide Use Report (DPR boxes 23/24). Leave empty if none.'
-                        })}
-                      </Text>
-
-                      {adjuvantFields.length === 0 ? (
-                        <Text fontSize="xs" color="gray.500" fontStyle="italic">
-                          {intl.formatMessage({
-                            id: 'events.chemical.adjuvants.empty',
-                            defaultMessage: 'No adjuvants added.'
+                            id: 'events.chemical.adjuvants.help',
+                            defaultMessage:
+                              'CA-registered adjuvants applied in the tank mix are reportable — each is added as its own line on the Pesticide Use Report (DPR boxes 23/24). Leave empty if none.'
                           })}
                         </Text>
-                      ) : (
-                        <VStack spacing={3} align="stretch">
-                          {adjuvantFields.map((adjuvant, index) => (
-                            <Box
-                              key={adjuvant.id}
-                              p={3}
-                              bg="white"
-                              borderRadius="md"
-                              border="1px solid"
-                              borderColor="gray.200">
-                              <HStack mb={2} justify="space-between">
-                                <Text fontSize="xs" fontWeight="semibold" color="gray.600">
-                                  {intl.formatMessage(
-                                    {
-                                      id: 'events.chemical.adjuvants.itemLabel',
-                                      defaultMessage: 'Adjuvant {n}'
-                                    },
-                                    { n: index + 1 }
-                                  )}
-                                </Text>
-                                <StandardButton
-                                  size="sm"
-                                  variant="ghost"
-                                  leftIcon={<FaTrash />}
-                                  onClick={() => removeAdjuvant(index)}>
-                                  {intl.formatMessage({
-                                    id: 'events.chemical.adjuvants.remove',
-                                    defaultMessage: 'Remove'
-                                  })}
-                                </StandardButton>
-                              </HStack>
-                              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
-                                <StandardField
-                                  label={intl.formatMessage({
-                                    id: 'events.chemical.adjuvants.productName',
-                                    defaultMessage: 'Product name'
-                                  })}>
-                                  <Controller
-                                    name={`tank_mix_partners.${index}.commercial_name`}
-                                    control={methods.control}
-                                    render={({ field }) => (
-                                      <StandardInput
-                                        {...field}
-                                        placeholder={intl.formatMessage({
-                                          id: 'events.chemical.form.adjuvantProductPlaceholder',
-                                          defaultMessage: 'e.g., Dyne-Amic'
-                                        })}
-                                      />
+
+                        {adjuvantFields.length === 0 ? (
+                          <Text fontSize="xs" color="gray.500" fontStyle="italic">
+                            {intl.formatMessage({
+                              id: 'events.chemical.adjuvants.empty',
+                              defaultMessage: 'No adjuvants added.'
+                            })}
+                          </Text>
+                        ) : (
+                          <VStack spacing={3} align="stretch">
+                            {adjuvantFields.map((adjuvant, index) => (
+                              <Box
+                                key={adjuvant.id}
+                                p={3}
+                                bg="white"
+                                borderRadius="md"
+                                border="1px solid"
+                                borderColor="gray.200">
+                                <HStack mb={2} justify="space-between">
+                                  <Text fontSize="xs" fontWeight="semibold" color="gray.600">
+                                    {intl.formatMessage(
+                                      {
+                                        id: 'events.chemical.adjuvants.itemLabel',
+                                        defaultMessage: 'Adjuvant {n}'
+                                      },
+                                      { n: index + 1 }
                                     )}
-                                  />
-                                </StandardField>
-                                <StandardField
-                                  label={intl.formatMessage({
-                                    id: 'events.chemical.adjuvants.manufacturer',
-                                    defaultMessage: 'Manufacturer'
-                                  })}>
-                                  <Controller
-                                    name={`tank_mix_partners.${index}.manufacturer`}
-                                    control={methods.control}
-                                    render={({ field }) => (
-                                      <StandardInput
-                                        {...field}
-                                        placeholder={intl.formatMessage({
-                                          id: 'events.chemical.form.adjuvantManufacturerPlaceholder',
-                                          defaultMessage: 'e.g., Helena'
-                                        })}
-                                      />
-                                    )}
-                                  />
-                                </StandardField>
-                                <StandardField
-                                  label={intl.formatMessage({
-                                    id: 'events.chemical.adjuvants.epaReg',
-                                    defaultMessage: 'EPA / State Reg. No.'
-                                  })}
-                                  helpText={intl.formatMessage({
-                                    id: 'events.chemical.form.adjuvantAmountHelp',
-                                    defaultMessage: 'DPR box 23'
-                                  })}>
-                                  <Controller
-                                    name={`tank_mix_partners.${index}.epa_registration_number`}
-                                    control={methods.control}
-                                    render={({ field }) => (
-                                      <StandardInput {...field} placeholder="e.g., 5905-501" />
-                                    )}
-                                  />
-                                </StandardField>
-                                <StandardField
-                                  label={intl.formatMessage({
-                                    id: 'events.chemical.adjuvants.amount',
-                                    defaultMessage: 'Total product used'
-                                  })}
-                                  helpText={intl.formatMessage({
-                                    id: 'events.chemical.form.adjuvantEpaRegHelp',
-                                    defaultMessage: 'DPR box 24'
-                                  })}>
-                                  <HStack spacing={2}>
+                                  </Text>
+                                  <StandardButton
+                                    size="sm"
+                                    variant="ghost"
+                                    leftIcon={<FaTrash />}
+                                    onClick={() => removeAdjuvant(index)}>
+                                    {intl.formatMessage({
+                                      id: 'events.chemical.adjuvants.remove',
+                                      defaultMessage: 'Remove'
+                                    })}
+                                  </StandardButton>
+                                </HStack>
+                                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+                                  <StandardField
+                                    label={intl.formatMessage({
+                                      id: 'events.chemical.adjuvants.productName',
+                                      defaultMessage: 'Product name'
+                                    })}>
                                     <Controller
-                                      name={`tank_mix_partners.${index}.volume`}
+                                      name={`tank_mix_partners.${index}.commercial_name`}
                                       control={methods.control}
                                       render={({ field }) => (
                                         <StandardInput
                                           {...field}
-                                          type="number"
-                                          step="0.01"
-                                          placeholder="0.00"
-                                          flex={2}
+                                          placeholder={intl.formatMessage({
+                                            id: 'events.chemical.form.adjuvantProductPlaceholder',
+                                            defaultMessage: 'e.g., Dyne-Amic'
+                                          })}
                                         />
                                       )}
                                     />
+                                  </StandardField>
+                                  <StandardField
+                                    label={intl.formatMessage({
+                                      id: 'events.chemical.adjuvants.manufacturer',
+                                      defaultMessage: 'Manufacturer'
+                                    })}>
                                     <Controller
-                                      name={`tank_mix_partners.${index}.volume_unit`}
+                                      name={`tank_mix_partners.${index}.manufacturer`}
                                       control={methods.control}
                                       render={({ field }) => (
-                                        <StandardSelect {...field} flex={1}>
-                                          <option value="gal">gal</option>
-                                          <option value="qt">qt</option>
-                                          <option value="pt">pt</option>
-                                          <option value="fl_oz">fl oz</option>
-                                          <option value="oz">oz</option>
-                                          <option value="lb">lb</option>
-                                          <option value="L">L</option>
-                                        </StandardSelect>
+                                        <StandardInput
+                                          {...field}
+                                          placeholder={intl.formatMessage({
+                                            id: 'events.chemical.form.adjuvantManufacturerPlaceholder',
+                                            defaultMessage: 'e.g., Helena'
+                                          })}
+                                        />
                                       )}
                                     />
-                                  </HStack>
-                                </StandardField>
-                              </SimpleGrid>
-                              <HStack mt={2}>
-                                <Controller
-                                  name={`tank_mix_partners.${index}.organic_approved`}
-                                  control={methods.control}
-                                  render={({ field }) => (
-                                    <Switch
-                                      isChecked={field.value === 'true' || field.value === true}
-                                      onChange={(e) =>
-                                        field.onChange(e.target.checked ? 'true' : 'false')
-                                      }
-                                      colorScheme="green"
+                                  </StandardField>
+                                  <StandardField
+                                    label={intl.formatMessage({
+                                      id: 'events.chemical.adjuvants.epaReg',
+                                      defaultMessage: 'EPA / State Reg. No.'
+                                    })}
+                                    helpText={intl.formatMessage({
+                                      id: 'events.chemical.form.adjuvantAmountHelp',
+                                      defaultMessage: 'DPR box 23'
+                                    })}>
+                                    <Controller
+                                      name={`tank_mix_partners.${index}.epa_registration_number`}
+                                      control={methods.control}
+                                      render={({ field }) => (
+                                        <StandardInput {...field} placeholder="e.g., 5905-501" />
+                                      )}
                                     />
-                                  )}
-                                />
-                                <Text fontSize="xs" color="gray.600">
-                                  {intl.formatMessage({
-                                    id: 'events.chemical.adjuvants.organicApproved',
-                                    defaultMessage:
-                                      'Adjuvant has an organic basis (for example OMRI listed)'
-                                  })}
-                                </Text>
-                              </HStack>
-                            </Box>
-                          ))}
-                        </VStack>
-                      )}
-                    </Box>
+                                  </StandardField>
+                                  <StandardField
+                                    label={intl.formatMessage({
+                                      id: 'events.chemical.adjuvants.amount',
+                                      defaultMessage: 'Total product used'
+                                    })}
+                                    helpText={intl.formatMessage({
+                                      id: 'events.chemical.form.adjuvantEpaRegHelp',
+                                      defaultMessage: 'DPR box 24'
+                                    })}>
+                                    <HStack spacing={2}>
+                                      <Controller
+                                        name={`tank_mix_partners.${index}.volume`}
+                                        control={methods.control}
+                                        render={({ field }) => (
+                                          <StandardInput
+                                            {...field}
+                                            type="number"
+                                            step="0.01"
+                                            placeholder="0.00"
+                                            flex={2}
+                                          />
+                                        )}
+                                      />
+                                      <Controller
+                                        name={`tank_mix_partners.${index}.volume_unit`}
+                                        control={methods.control}
+                                        render={({ field }) => (
+                                          <StandardSelect {...field} flex={1}>
+                                            <option value="gal">gal</option>
+                                            <option value="qt">qt</option>
+                                            <option value="pt">pt</option>
+                                            <option value="fl_oz">fl oz</option>
+                                            <option value="oz">oz</option>
+                                            <option value="lb">lb</option>
+                                            <option value="L">L</option>
+                                          </StandardSelect>
+                                        )}
+                                      />
+                                    </HStack>
+                                  </StandardField>
+                                </SimpleGrid>
+                                <HStack mt={2}>
+                                  <Controller
+                                    name={`tank_mix_partners.${index}.organic_approved`}
+                                    control={methods.control}
+                                    render={({ field }) => (
+                                      <Switch
+                                        isChecked={field.value === 'true' || field.value === true}
+                                        onChange={(e) =>
+                                          field.onChange(e.target.checked ? 'true' : 'false')
+                                        }
+                                        colorScheme="green"
+                                      />
+                                    )}
+                                  />
+                                  <Text fontSize="xs" color="gray.600">
+                                    {intl.formatMessage({
+                                      id: 'events.chemical.adjuvants.organicApproved',
+                                      defaultMessage:
+                                        'Adjuvant has an organic basis (for example OMRI listed)'
+                                    })}
+                                  </Text>
+                                </HStack>
+                              </Box>
+                            ))}
+                          </VStack>
+                        )}
+                      </Box>
+                    )}
                   </VStack>
                 </SectionBox>
               )}
@@ -5106,7 +5140,7 @@ const ChemicalTab = forwardRef(
 
               {/* Section 4: Application Equipment & Fuel Usage - Phase 3 Electric Equipment Support */}
               {/* Hidden in Summary Mode - aggregate fuel fields are shown in the summary sections instead */}
-              {!isSummaryMode && (
+              {!isSummaryMode && !multiTarget && (
                 <CollapsibleSection
                   icon={FaBolt}
                   title={intl.formatMessage({ id: 'events.section.chemical.equipmentFuel' })}
@@ -5630,7 +5664,7 @@ const ChemicalTab = forwardRef(
                     />
                   </StandardField>
 
-                  <BlockIdField control={methods.control} />
+                  {!multiTarget && <BlockIdField control={methods.control} />}
 
                   <StandardField
                     label={intl.formatMessage({ id: 'fieldDetails.growthStage' })}

@@ -98,6 +98,7 @@ import { isApplicationRecord, withoutInputValues } from 'config/events/crewNoteA
 import { useGetSeasonPlanQuery } from 'store/api/seasonPlanApi';
 import { EventPreviewModal } from 'components/Events/EventPreviewModal';
 import { PhotoRecommendationsBox } from 'components/Events/PhotoRecommendationsBox';
+import { AlsoAppliedTo, PerParcelAmounts } from 'components/Events/MultiParcel';
 import { useGoogleMap } from '@react-google-maps/api';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
@@ -136,6 +137,13 @@ import { voiceBlockSuggestion } from 'utils/spokenBlock';
 import { voiceBannerHeadlineId, voiceNoteSource } from 'utils/voiceBannerHeadline';
 import { isEventOnBuyerPage } from 'utils/consumerDisplay';
 import { cleanEventPayload, GENERAL_MODEL_TO_FORM } from 'utils/cleanEventPayload';
+import {
+  MULTI_PARCEL_EVENT_TYPE,
+  buildMultiTargetBody,
+  newApplicationGroup,
+  newTarget,
+  targetIssues
+} from 'utils/multiParcel';
 import { revealFirstFormError } from 'utils/revealFirstFormError';
 import {
   applyTemplateToForm,
@@ -972,27 +980,53 @@ function NewEvent({ isEdit = false, eventId = null }) {
     }
   );
 
-  // Parcel data
-  const parcels = useSelector((state) =>
-    state.company.currentCompany?.establishments?.reduce((res_parcels, establishment) => {
-      const establishmentParcels = establishment.parcels
-        .filter((parcel) => parcel.has_current_production)
-        .map((parcel) => {
-          if (parcel.id === Number(parcelId)) {
-            return {
-              value: parcel.id,
-              label: parcel.name,
-              isFixed: true
-            };
-          }
-          return {
-            value: parcel.id,
-            label: parcel.name
-          };
-        });
-      return res_parcels.concat(establishmentParcels);
-    }, [])
+  // One spray on several blocks of THIS farm (components/Events/MultiParcel, utils/multiParcel).
+  // Same farm only: the packet, the certificate and the route are per farm, and the server
+  // refuses a mix. Create only, and only from the plain entry: a plan item, a crew note, a named
+  // production or a post-harvest season each belong to ONE record.
+  const farmParcelsInStore = useSelector(
+    (state) =>
+      state.company.currentCompany?.establishments?.find((e) => Number(e.id) === Number(farmId))
+        ?.parcels
   );
+  const farmParcels = useMemo(() => farmParcelsInStore || [], [farmParcelsInStore]);
+  const multiParcelEligible =
+    !isEdit &&
+    !isRepeat &&
+    !activePlanItem &&
+    !fieldNoteIdFromUrl &&
+    !planProductionIdFromUrl &&
+    !postHarvestTarget &&
+    !!openSeason &&
+    activeEventType === MULTI_PARCEL_EVENT_TYPE &&
+    farmParcels.length > 1;
+  const [multiParcelIds, setMultiParcelIds] = useState([]);
+  const [multiTargets, setMultiTargets] = useState([]);
+  const [showMultiIssues, setShowMultiIssues] = useState(false);
+  // Minted once per wizard session and sent as the server's idempotency key, so a save retried
+  // after a lost response returns the records already written instead of writing them again.
+  const applicationGroupRef = useRef(null);
+  const multiActive = multiParcelEligible && multiParcelIds.length > 0;
+  useEffect(() => {
+    if (!multiActive) {
+      setMultiTargets([]);
+      return;
+    }
+    const ids = [Number(parcelId), ...multiParcelIds];
+    setMultiTargets((prev) =>
+      ids.map(
+        (id) =>
+          prev.find((t) => t.parcelId === id) ||
+          newTarget(farmParcels.find((p) => Number(p.id) === id) || { id, name: String(id) })
+      )
+    );
+  }, [multiActive, multiParcelIds, farmParcels, parcelId]);
+  const multiRateInputs = (data) => ({
+    rate: data?.application_rate,
+    rateUnit: data?.application_rate_unit || '',
+    volumeUnit: data?.volume_unit || 'gal',
+    areaUnit: data?.area_unit || 'acres'
+  });
 
   // Carbon calculation with debouncing
   const carbonTimeoutRef = useRef(null);
@@ -1544,6 +1578,24 @@ function NewEvent({ isEdit = false, eventId = null }) {
   const onSubmitMainInfo = (data) => {
     const updatedData = { ...eventFormData, ...data };
     setEventFormData(updatedData);
+
+    // Several blocks: each needs its area and amount before the record can be written. Checked
+    // here, on the tab's own submitted values, so the rate the amounts derive from is the one
+    // the grower just entered and not the debounced copy.
+    if (multiActive) {
+      const inputs = multiRateInputs(updatedData);
+      if (multiTargets.some((target) => targetIssues(target, inputs).length > 0)) {
+        setShowMultiIssues(true);
+        toast({
+          title: intl.formatMessage({ id: 'events.multiParcel.validationTitle' }),
+          description: intl.formatMessage({ id: 'events.multiParcel.validationBody' }),
+          status: 'error',
+          duration: 6000,
+          isClosable: true
+        });
+        return;
+      }
+    }
 
     // Recalculate carbon with new data
     calculateCarbonWithDebounce(updatedData, activeEventType);
@@ -2706,6 +2758,10 @@ function NewEvent({ isEdit = false, eventId = null }) {
           1: ['type'], // Production - other fields are optional but encouraged
           2: isSummaryMode
             ? ['type', 'commercial_name', 'application_method'] // Summary mode: AI total used instead of volume/area/concentration
+            : multiActive
+            ? // Several blocks: amount and area are per block, checked on each card before step 1
+              // could continue, so the single totals this list asks for do not exist.
+              ['type', 'commercial_name', 'concentration', 'application_method']
             : [
                 'type',
                 'commercial_name',
@@ -2919,6 +2975,36 @@ function NewEvent({ isEdit = false, eventId = null }) {
           ...finalEventData,
           id: existingEvent.id
         }).unwrap();
+      } else if (multiActive) {
+        // One spray on several blocks: one request, one record per block, all or none. The
+        // shared body loses every per-block and single-record key (the server would refuse them
+        // there), and each block carries the amount and area the grower confirmed.
+        // Step 1's Continue already refused an unanswered block; a block added afterwards (back
+        // to step 0, tick another) must not reach the server as an amount of "null".
+        const saveInputs = multiRateInputs(eventFormData);
+        if (multiTargets.some((target) => targetIssues(target, saveInputs).length > 0)) {
+          setShowMultiIssues(true);
+          setActiveStep(1);
+          toast({
+            title: intl.formatMessage({ id: 'events.multiParcel.validationTitle' }),
+            description: intl.formatMessage({ id: 'events.multiParcel.validationBody' }),
+            status: 'error',
+            duration: 6000,
+            isClosable: true
+          });
+          return;
+        }
+        if (!applicationGroupRef.current) applicationGroupRef.current = newApplicationGroup();
+        savedEvent = await createEvent({
+          companyId: currentCompany.id,
+          farmId: parseInt(farmId || '0'),
+          ...buildMultiTargetBody(
+            finalEventData,
+            multiTargets,
+            multiRateInputs(eventFormData),
+            applicationGroupRef.current
+          )
+        }).unwrap();
       } else {
         // Create new event
         savedEvent = await createEvent({
@@ -2971,6 +3057,13 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
       // Non-blocking nudge: the record IS saved (a farmer logs what they know standing in the
       // orchard), but surface what a certifier will still ask for so it can be filled in later.
+      // Several blocks: the body names every record written. The gaps below are the first
+      // record's; the others share every field the checklist reads except amount and area.
+      const savedRecordCount = Array.isArray(savedEvent?.records) ? savedEvent.records.length : 1;
+      const savedToText = intl.formatMessage(
+        { id: 'events.multiParcel.savedTo' },
+        { count: savedRecordCount }
+      );
       const completenessGaps = Array.isArray(savedEvent?.completeness_gaps)
         ? savedEvent.completeness_gaps
         : [];
@@ -2990,7 +3083,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
             id: 'app.completenessGapsSavedTitle',
             defaultMessage: 'Saved. A certifier will also want:'
           }),
-          description: gapNames,
+          description: savedRecordCount > 1 ? `${savedToText} · ${gapNames}` : gapNames,
           status: 'warning',
           duration: 8000,
           isClosable: true
@@ -3004,6 +3097,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
       } else {
         toast({
           title: intl.formatMessage({ id: 'app.activitySaved' }),
+          ...(savedRecordCount > 1 ? { description: savedToText } : {}),
           status: 'success',
           duration: 3000,
           isClosable: true
@@ -3043,6 +3137,29 @@ function NewEvent({ isEdit = false, eventId = null }) {
         if (fieldEntries.length > 0) {
           fieldErrors = fieldEntries.join('; ');
         }
+      }
+
+      // Several blocks: the server answers per block, `{"targets": {"<parcel id>": ...}}`, and
+      // nothing was written. Name the block, not the id, so the grower knows which one to fix.
+      const perBlock = error?.data?.targets;
+      if (multiActive && perBlock && typeof perBlock === 'object' && !Array.isArray(perBlock)) {
+        const flatten = (detail) =>
+          Array.isArray(detail)
+            ? detail.map(flatten).join(', ')
+            : detail && typeof detail === 'object'
+            ? Object.values(detail).map(flatten).join(', ')
+            : String(detail);
+        fieldErrors = Object.entries(perBlock)
+          .map(([id, detail]) =>
+            intl.formatMessage(
+              { id: 'events.multiParcel.blockFailed' },
+              {
+                name: multiTargets.find((t) => String(t.parcelId) === id)?.name || id,
+                message: flatten(detail)
+              }
+            )
+          )
+          .join('; ');
       }
 
       const errorDescription = isValidationError
@@ -3736,6 +3853,16 @@ function NewEvent({ isEdit = false, eventId = null }) {
                               )}
                             </StandardButton>
                           </Box>
+                        )}
+
+                        {multiParcelEligible && (
+                          <AlsoAppliedTo
+                            parcels={farmParcels}
+                            originParcelId={Number(parcelId)}
+                            selectedIds={multiParcelIds}
+                            onChange={setMultiParcelIds}
+                            areaUnit={eventFormData.area_unit || 'acres'}
+                          />
                         )}
 
                         {/* Event Timing & Traceability Section */}
@@ -4490,9 +4617,20 @@ function NewEvent({ isEdit = false, eventId = null }) {
                          to reach onSubmit, and it gates the payload branches, the carbon
                          factor and what the PUR export asserts. */
                       hideTypeSelect
+                      multiTarget={multiActive}
                       carbonCalculation={carbonCalculation}
                       isCalculatingCarbon={isCalculatingCarbon || isCalculating}
                     />
+                  )}
+                  {activeEventType === 2 && multiActive && (
+                    <Box mt={{ base: 5, md: 6 }}>
+                      <PerParcelAmounts
+                        targets={multiTargets}
+                        onChange={setMultiTargets}
+                        inputs={multiRateInputs(eventFormData)}
+                        showIssues={showMultiIssues}
+                      />
+                    </Box>
                   )}
                   {activeEventType === 3 && (
                     <GeneralTab

@@ -54,7 +54,8 @@ import {
   TabList,
   Tab,
   TabPanels,
-  TabPanel
+  TabPanel,
+  Checkbox
 } from '@chakra-ui/react';
 import type { ButtonProps, FormControlProps } from '@chakra-ui/react';
 import { S3Image } from '../Media/S3Image';
@@ -813,6 +814,101 @@ export const StandardSegmentedControl = <T extends string>({
     })}
   </HStack>
 );
+
+export interface StandardCheckboxListOption {
+  value: string;
+  label: ReactNode;
+  /** A second line under the label (a size, a status). */
+  detail?: ReactNode;
+  /** Shown as visible text and the option cannot be ticked. Never a silent grey-out. */
+  disabledReason?: ReactNode;
+  /** Ticked and locked: the item the list is about (e.g. the parcel the page was opened from). */
+  isFixed?: boolean;
+}
+
+interface StandardCheckboxListProps {
+  /** Rendered as the fieldset's legend, so screen readers announce the group. */
+  legend: ReactNode;
+  options: StandardCheckboxListOption[];
+  value: string[];
+  onChange: (value: string[]) => void;
+  /** When set, a "select all" control ticks every option that can be ticked. */
+  selectAllLabel?: ReactNode;
+}
+
+/**
+ * A list of checkboxes with a real legend, visible disabled reasons and an optional select-all.
+ *
+ * Chakra's `Checkbox` is themed (`theme/components/checkbox.js`), so this wraps it rather than
+ * a bare `<input type="checkbox">`; the wrapper exists for the parts every multi-select needs and
+ * a raw list forgets: the group name for assistive tech, a reason next to anything that cannot be
+ * picked, and 44px rows on a phone.
+ */
+export const StandardCheckboxList = ({
+  legend,
+  options,
+  value,
+  onChange,
+  selectAllLabel
+}: StandardCheckboxListProps) => {
+  const selectable = options.filter((o) => !o.disabledReason && !o.isFixed).map((o) => o.value);
+  const fixed = options.filter((o) => o.isFixed).map((o) => o.value);
+  const allSelected = selectable.length > 0 && selectable.every((v) => value.includes(v));
+  const toggle = (optionValue: string, checked: boolean) =>
+    onChange(checked ? [...value, optionValue] : value.filter((v) => v !== optionValue));
+
+  return (
+    <Box as="fieldset" border="none" p={0} m={0}>
+      <Box as="legend" fontSize="sm" fontWeight="semibold" color="gray.700" mb={2}>
+        {legend}
+      </Box>
+      <VStack align="stretch" spacing={1}>
+        {selectAllLabel && selectable.length > 1 && (
+          <Checkbox
+            minH="44px"
+            isChecked={allSelected}
+            isIndeterminate={!allSelected && selectable.some((v) => value.includes(v))}
+            onChange={(e) => onChange(e.target.checked ? [...fixed, ...selectable] : fixed)}>
+            <Text fontSize="sm" fontWeight="medium" color="gray.700">
+              {selectAllLabel}
+            </Text>
+          </Checkbox>
+        )}
+        {options.map((option) => (
+          <Box key={option.value} py={1}>
+            {/* The fixed item is read-only, not disabled: Chakra dims a disabled label to 0.4
+                opacity, below the 4.5 text floor, and this one is the item the list is about. */}
+            <Checkbox
+              minH="44px"
+              alignItems="flex-start"
+              isChecked={option.isFixed || value.includes(option.value)}
+              isReadOnly={option.isFixed}
+              isDisabled={!option.isFixed && !!option.disabledReason}
+              onChange={(e) => toggle(option.value, e.target.checked)}>
+              <Box>
+                <Text fontSize="sm" color="gray.800">
+                  {option.label}
+                </Text>
+                {option.detail && (
+                  <Text fontSize="xs" color="gray.600">
+                    {option.detail}
+                  </Text>
+                )}
+              </Box>
+            </Checkbox>
+            {/* Outside the Checkbox so the disabled dimming does not reach it: the reason is the
+                one thing a grower needs to read on an option they cannot pick. */}
+            {option.disabledReason && (
+              <Text fontSize="xs" color="gray.700" pl={7}>
+                {option.disabledReason}
+              </Text>
+            )}
+          </Box>
+        ))}
+      </VStack>
+    </Box>
+  );
+};
 
 export type SectionTabStatus = 'complete' | 'incomplete' | 'none';
 
