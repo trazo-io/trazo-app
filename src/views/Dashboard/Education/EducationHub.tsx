@@ -30,7 +30,8 @@ import {
   FaClipboardCheck,
   FaDatabase,
   FaFileSignature,
-  FaMapMarkedAlt
+  FaMapMarkedAlt,
+  FaRoute
 } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import { StandardPage, StandardSearchInput } from 'components/Design/StandardComponents';
@@ -170,6 +171,13 @@ const EducationHub: React.FC = () => {
       title: intl.formatMessage({ id: 'education.topicInspectionPrepTitle' }),
       description: intl.formatMessage({ id: 'education.topicInspectionPrepDesc' }),
       icon: FaClipboardCheck,
+      category: intl.formatMessage({ id: 'education.categoryCompliance' })
+    },
+    {
+      id: 'traceback',
+      title: intl.formatMessage({ id: 'education.topicTracebackTitle' }),
+      description: intl.formatMessage({ id: 'education.topicTracebackDesc' }),
+      icon: FaRoute,
       category: intl.formatMessage({ id: 'education.categoryCompliance' })
     },
     {
