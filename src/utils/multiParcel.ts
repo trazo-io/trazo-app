@@ -1,0 +1,262 @@
+/**
+ * One spray logged on several parcels at once (trazo-back `history/services/multi_target.py`).
+ *
+ * The server writes ONE RECORD PER PARCEL, linked by `application_group`, all or none. What
+ * differs between the records is the amount and the place: how much product went on THIS block
+ * and over how much of it. Everything else (product, label rate, date, applicator, REI/PHI,
+ * purchase) is the same application and is sent once.
+ *
+ * NEVER: invent the per-block amount. Growers record a label rate and the blocks they
+ * sprayed; they do not measure product per block. So the amount is shown as a derivation from
+ * facts the grower confirmed ("2 gal/ac × 12.4 ac = 24.8 gal"), and the grower can overwrite it.
+ * Where the rate's unit does not match the product unit the form asks for, nothing is derived
+ * and the grower types it: a conversion the grower never saw would be a number on a certifier
+ * record that nobody stated.
+ *
+ * The key lists below mirror the server's spec. The server is the authority: it refuses a
+ * per-parcel field sent in the shared body rather than copying it, so a drift here fails loudly
+ * at save instead of printing one block's amount on every block.
+ */
+
+import { AREA_CONVERSION_FACTORS } from './areaUnits';
+
+/** Chemical application (every subtype). Soil amendment is accepted by the server, not built here yet. */
+export const MULTI_PARCEL_EVENT_TYPE = 2;
+export const MAX_MULTI_PARCELS = 50;
+
+/** Sent per parcel inside `targets`, never in the shared body. */
+export const PER_TARGET_KEYS = [
+  'volume_applied',
+  'volume',
+  'volume_numeric',
+  'area_treated',
+  'area',
+  'area_numeric',
+  'applied_scope',
+  'applied_scope_detail',
+  'block_id',
+  'planted_area',
+  'site_id',
+  'application_county',
+  'mtrs_section',
+  'mtrs_township',
+  'mtrs_range',
+  'mtrs_base_meridian'
+] as const;
+
+/** Season totals and per-product or per-machine amounts have no honest per-parcel value. */
+export const SUMMARY_TOTAL_KEYS = [
+  'area_treated_total',
+  'volume_applied_total',
+  'active_ingredient_total_kg',
+  'nitrogen_total_kg',
+  'phosphorus_total_kg',
+  'potassium_total_kg',
+  'fuel_consumption_total'
+] as const;
+export const REFUSED_KEYS = [
+  'tank_mix_partners',
+  'application_fuel_consumed',
+  'is_summary',
+  ...SUMMARY_TOTAL_KEYS
+] as const;
+
+/** A plan item, a crew note and a named season belong to ONE record. */
+export const SINGLE_RECORD_KEYS = [
+  'parcels',
+  'history',
+  'plan_item_id',
+  'field_note',
+  'field_note_proposal'
+] as const;
+
+export type BlockScope = 'all' | 'part';
+
+export interface ParcelTarget {
+  parcelId: number;
+  name: string;
+  /** `Parcel.area`, stored in hectares. */
+  areaHa: number;
+  /** Unset until the grower answers: a default of "whole block" would be a claim nobody made. */
+  scope: BlockScope | null;
+  /**
+   * Area typed by the grower, in the form's area unit: the part treated when `scope === 'part'`,
+   * or the block's size when `scope === 'all'` and the parcel has no size on record.
+   */
+  partArea: string;
+  partDetail: string;
+  /** What the grower typed. Empty means "use the derived amount". */
+  amountTyped: string;
+}
+
+export const newTarget = (parcel: {
+  id: number;
+  name: string;
+  area?: number | string | null;
+}): ParcelTarget => ({
+  parcelId: parcel.id,
+  name: parcel.name,
+  areaHa: Number(parcel.area) || 0,
+  scope: null,
+  partArea: '',
+  partDetail: '',
+  amountTyped: ''
+});
+
+const toNumber = (value: unknown): number | null => {
+  if (value === null || value === undefined || value === '') return null;
+  const n = typeof value === 'number' ? value : parseFloat(String(value));
+  return Number.isFinite(n) ? n : null;
+};
+
+/** Hectares expressed in the form's area unit (`ha`, `acres`, `m2`). */
+export const hectaresIn = (hectares: number, unit: string): number | null => {
+  if (unit === 'ha') return hectares;
+  if (unit === 'acres') return hectares * AREA_CONVERSION_FACTORS.HECTARES_TO_ACRES;
+  if (unit === 'm2') return hectares * AREA_CONVERSION_FACTORS.HECTARES_TO_SQ_METERS;
+  return null;
+};
+
+/** True when the parcel's size is on record, so "whole block" needs no number from the grower. */
+export const hasRecordedSize = (target: ParcelTarget): boolean => target.areaHa > 0;
+
+/** The area this target treated, in the form's area unit, or null when not yet answered. */
+export const targetArea = (target: ParcelTarget, areaUnit: string): number | null => {
+  if (target.scope === 'all') {
+    if (!hasRecordedSize(target)) {
+      // No size on record: the grower states the block's size, never a guess.
+      const typed = toNumber(target.partArea);
+      return typed !== null && typed > 0 ? typed : null;
+    }
+    const area = hectaresIn(target.areaHa, areaUnit);
+    return area && area > 0 ? round(area, 2) : null;
+  }
+  if (target.scope === 'part') {
+    const area = toNumber(target.partArea);
+    return area !== null && area > 0 ? area : null;
+  }
+  return null;
+};
+
+/**
+ * Rate unit → the product unit and area unit it is "per". Only the units the chemical form's
+ * product-amount select offers are listed: quarts and pints per acre have no matching product
+ * unit there, and plain "oz/ac" does not say fluid or weight, so none of them derives a total.
+ */
+const RATE_BASIS: Record<string, { product: string; area: 'acres' | 'ha' }> = {
+  fl_oz_ac: { product: 'fl_oz', area: 'acres' },
+  gal_ac: { product: 'gal', area: 'acres' },
+  lb_ac: { product: 'lbs', area: 'acres' },
+  mL_ha: { product: 'mL', area: 'ha' },
+  L_ha: { product: 'L', area: 'ha' },
+  kg_ha: { product: 'kg', area: 'ha' }
+};
+
+/** `area` (in `areaUnit`) converted to the rate's area basis. */
+const areaInBasis = (area: number, areaUnit: string, basis: 'acres' | 'ha'): number | null => {
+  if (areaUnit === basis) return area;
+  const hectares =
+    areaUnit === 'ha'
+      ? area
+      : areaUnit === 'acres'
+      ? area * AREA_CONVERSION_FACTORS.ACRES_TO_HECTARES
+      : areaUnit === 'm2'
+      ? area * AREA_CONVERSION_FACTORS.SQ_METERS_TO_HECTARES
+      : null;
+  if (hectares === null) return null;
+  return basis === 'ha' ? hectares : hectares * AREA_CONVERSION_FACTORS.HECTARES_TO_ACRES;
+};
+
+export interface RateInputs {
+  rate: unknown;
+  rateUnit: string;
+  volumeUnit: string;
+  areaUnit: string;
+}
+
+/** Rate × area, when the rate's units line up with the form's. Null when it cannot be derived. */
+export const derivedAmount = (target: ParcelTarget, inputs: RateInputs): number | null => {
+  const rate = toNumber(inputs.rate);
+  const basis = RATE_BASIS[inputs.rateUnit];
+  const area = targetArea(target, inputs.areaUnit);
+  if (rate === null || rate <= 0 || !basis || basis.product !== inputs.volumeUnit || area === null)
+    return null;
+  const inBasis = areaInBasis(area, inputs.areaUnit, basis.area);
+  return inBasis === null ? null : round(rate * inBasis, 3);
+};
+
+/** The amount that will be saved: what the grower typed, else the derived amount. */
+export const targetAmount = (target: ParcelTarget, inputs: RateInputs): number | null => {
+  const typed = toNumber(target.amountTyped);
+  if (target.amountTyped.trim() !== '') return typed !== null && typed > 0 ? typed : null;
+  return derivedAmount(target, inputs);
+};
+
+export type TargetIssue = 'scope' | 'area' | 'amount';
+
+/** What is still missing before this target can be saved, in the order the card asks. */
+export const targetIssues = (target: ParcelTarget, inputs: RateInputs): TargetIssue[] => {
+  if (target.scope === null) return ['scope'];
+  const issues: TargetIssue[] = [];
+  if (targetArea(target, inputs.areaUnit) === null) issues.push('area');
+  if (targetAmount(target, inputs) === null) issues.push('amount');
+  return issues;
+};
+
+/**
+ * The request body for a multi-parcel save, from the single-parcel body the wizard already builds.
+ *
+ * Per-parcel, refused and single-record keys are removed from the shared body (the server would
+ * refuse them there), and each target carries its own amount, area and scope.
+ */
+export const buildMultiTargetBody = (
+  singleBody: Record<string, unknown>,
+  targets: ParcelTarget[],
+  inputs: RateInputs,
+  applicationGroup: string
+): Record<string, unknown> => {
+  const shared: Record<string, unknown> = { ...singleBody };
+  [...PER_TARGET_KEYS, ...REFUSED_KEYS, ...SINGLE_RECORD_KEYS].forEach((key) => {
+    delete shared[key];
+  });
+  if (shared.extra_data && typeof shared.extra_data === 'object') {
+    // The chemical tab mirrors some fields into `extra_data` too (fuel, units, summary totals), so
+    // the same per-block and refused keys come out of it: a value left in there would be copied
+    // onto every block's record just as surely as one at the top level.
+    const extra = { ...(shared.extra_data as Record<string, unknown>) };
+    [...PER_TARGET_KEYS, ...REFUSED_KEYS].forEach((key) => {
+      delete extra[key];
+    });
+    shared.extra_data = extra;
+  }
+
+  return {
+    ...shared,
+    application_group: applicationGroup,
+    targets: targets.map((target) => ({
+      parcel: target.parcelId,
+      volume_applied: String(targetAmount(target, inputs)),
+      area_treated: String(targetArea(target, inputs.areaUnit)),
+      applied_scope: target.scope,
+      ...(target.scope === 'part' && target.partDetail.trim()
+        ? { applied_scope_detail: target.partDetail.trim() }
+        : {})
+    }))
+  };
+};
+
+/** A UUID for `application_group`, minted once per wizard session. */
+export const newApplicationGroup = (): string => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
+    return crypto.randomUUID();
+  // RFC 4122 v4 from Math.random: only reached where crypto.randomUUID is missing (old browsers).
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+  });
+};
+
+function round(value: number, places: number): number {
+  const f = 10 ** places;
+  return Math.round(value * f) / f;
+}
