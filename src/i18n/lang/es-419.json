@@ -8763,5 +8763,14 @@
   "events.multiParcel.blockFailed": "{name}: {message}",
   "events.multiParcel.scopeAllNoSize": "Parcela completa",
   "events.multiParcel.blockSize": "Tamaño de la parcela ({unit})",
-  "events.multiParcel.blockSizeHelp": "Esta parcela no tiene un tamaño registrado. Ingresa el tamaño de la parcela completa."
+  "events.multiParcel.blockSizeHelp": "Esta parcela no tiene un tamaño registrado. Ingresa el tamaño de la parcela completa.",
+  "events.multiParcel.field.volume_applied": "Producto aplicado ({unit})",
+  "events.multiParcel.field.application_fuel_consumed": "Combustible usado ({unit})",
+  "events.multiParcel.field.fuel_consumed": "Combustible usado ({unit})",
+  "events.multiParcel.field.equipment_hours": "Horas de máquina",
+  "events.multiParcel.field.irrigation_depth": "Agua aplicada, como lámina ({unit})",
+  "events.multiParcel.field.plants_established": "Plantas establecidas",
+  "events.multiParcel.field.hive_count": "Colmenas colocadas",
+  "events.multiParcel.field.amendment_amount": "Cantidad aplicada ({unit})",
+  "events.multiParcel.sectionHelp": "Opcional. La sección o las hileras de esta parcela, si el trabajo no la cubrió completa de la misma forma."
 }

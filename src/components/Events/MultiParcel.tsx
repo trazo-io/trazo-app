@@ -1,7 +1,8 @@
 /**
- * One spray logged on several blocks: the block picker (wizard step 0) and the per-block amounts
- * (step 1). The rules for what is shared and what is per block live in `utils/multiParcel.ts`;
- * these components only ask for it.
+ * One activity logged on several parcels: the parcel picker (wizard step 0) and the per-parcel
+ * cards (step 1). What is per parcel comes from the spec (`config/events/multiParcel.ts`, a checked
+ * copy of the server's); the arithmetic and the request body from `utils/multiParcel.ts`. These
+ * components only ask for it.
  */
 import React from 'react';
 import { useIntl } from 'react-intl';
@@ -19,15 +20,19 @@ import {
 } from 'components/Design/StandardComponents';
 import { APPLICATION_RATE_UNIT_SYMBOLS } from 'config/events/enums';
 import { UNIT_CODE_SYMBOLS } from 'config/events/formatters';
+import { SectionInput } from 'components/Fields/BlockIdField';
+import type { MultiParcelRules, PerParcelField } from 'config/events/multiParcel';
 import {
-  derivedAmount,
+  areaUnitOf,
+  derivedValue,
   hasRecordedSize,
   hectaresIn,
   targetArea,
   targetIssues,
+  unitOf,
   type BlockScope,
   type ParcelTarget,
-  type RateInputs
+  type SharedForm
 } from 'utils/multiParcel';
 
 /** A parcel as the establishment payload serves it (`ParcelBasicSerializer`). */
@@ -110,26 +115,61 @@ export const AlsoAppliedTo = ({
   );
 };
 
-interface PerParcelAmountsProps {
+interface PerParcelCardsProps {
   targets: ParcelTarget[];
   onChange: (targets: ParcelTarget[]) => void;
-  inputs: RateInputs;
-  /** After a refused Continue: mark what each block is missing. */
+  rules: MultiParcelRules;
+  /** The shared form values the cards read (units, the label rate). */
+  form: SharedForm;
+  /** Each parcel's own known sections, by parcel id (for the chips). */
+  sectionsByParcel?: Record<number, string[]>;
+  /** After a refused Continue: mark what each parcel is missing. */
   showIssues: boolean;
 }
 
-export const PerParcelAmounts = ({
+const unitSymbol = (unit: string) => AREA_SYMBOLS[unit] ?? volumeSymbol(unit);
+
+export const PerParcelCards = ({
   targets,
   onChange,
-  inputs,
+  rules,
+  form,
+  sectionsByParcel = {},
   showIssues
-}: PerParcelAmountsProps) => {
+}: PerParcelCardsProps) => {
   const intl = useIntl();
   const update = (parcelId: number, patch: Partial<ParcelTarget>) =>
     onChange(targets.map((t) => (t.parcelId === parcelId ? { ...t, ...patch } : t)));
-  const areaUnit = areaSymbol(inputs.areaUnit);
-  const productUnit = volumeSymbol(inputs.volumeUnit);
-  const rateUnit = APPLICATION_RATE_UNIT_SYMBOLS[inputs.rateUnit] ?? inputs.rateUnit;
+  const areaUnitCode = areaUnitOf(form);
+  const areaUnit = areaSymbol(areaUnitCode);
+
+  const fieldLabel = (field: PerParcelField) => {
+    const unit = unitOf(field, form);
+    return intl.formatMessage(
+      { id: `events.multiParcel.field.${field.key}` },
+      { unit: unit ? unitSymbol(unit) : '' }
+    );
+  };
+
+  const derivationText = (target: ParcelTarget, field: PerParcelField) => {
+    const derived = derivedValue(target, field, form);
+    const area = targetArea(target, areaUnitCode);
+    if (!field.derive) return undefined;
+    if (derived === null || area === null) {
+      return intl.formatMessage({ id: 'events.multiParcel.noDerivation' });
+    }
+    const rateUnitCode = String(form[field.derive.rate_unit_key] ?? '');
+    return intl.formatMessage(
+      { id: 'events.multiParcel.derivation' },
+      {
+        rate: `${fmt(Number(form[field.derive.rate_key]))} ${
+          APPLICATION_RATE_UNIT_SYMBOLS[rateUnitCode] ?? rateUnitCode
+        }`,
+        area: `${fmt(area)} ${areaUnit}`,
+        amount: `${fmt(derived)} ${unitSymbol(unitOf(field, form))}`
+      }
+    );
+  };
 
   return (
     <SectionBox>
@@ -140,10 +180,11 @@ export const PerParcelAmounts = ({
       />
       <VStack align="stretch" spacing={3}>
         {targets.map((target) => {
-          const issues = showIssues ? targetIssues(target, inputs) : [];
-          const area = targetArea(target, inputs.areaUnit);
-          const derived = derivedAmount(target, inputs);
-          const wholeArea = hectaresIn(target.areaHa, inputs.areaUnit);
+          const issues = showIssues ? targetIssues(target, rules, form) : [];
+          const wholeArea = hectaresIn(target.areaHa, areaUnitCode);
+          // Without an area per parcel the card has nothing to ask first; with one, the rest of
+          // the card waits for the whole / part answer, so no value is asked against no area.
+          const answered = !rules.areaKey || target.scope !== null;
           return (
             <Box
               key={target.parcelId}
@@ -152,31 +193,41 @@ export const PerParcelAmounts = ({
               borderRadius="lg"
               p={{ base: 3, md: 4 }}>
               <Text fontSize="sm" fontWeight="semibold" color="gray.800" mb={2}>
-                {intl.formatMessage({ id: 'events.multiParcel.scopeLabel' }, { name: target.name })}
+                {rules.areaKey
+                  ? intl.formatMessage(
+                      { id: 'events.multiParcel.scopeLabel' },
+                      { name: target.name }
+                    )
+                  : target.name}
               </Text>
-              <StandardSegmentedControl<BlockScope | ''>
-                ariaLabel={intl.formatMessage(
-                  { id: 'events.multiParcel.scopeLabel' },
-                  { name: target.name }
-                )}
-                value={target.scope ?? ''}
-                onChange={(scope) => update(target.parcelId, { scope: scope || null })}
-                options={[
-                  {
-                    key: 'all',
-                    label: wholeArea
-                      ? intl.formatMessage(
-                          { id: 'events.multiParcel.scopeAll' },
-                          { area: `${fmt(wholeArea)} ${areaUnit}` }
-                        )
-                      : intl.formatMessage({ id: 'events.multiParcel.scopeAllNoSize' })
-                  },
-                  { key: 'part', label: intl.formatMessage({ id: 'events.multiParcel.scopePart' }) }
-                ]}
-              />
-              {target.scope === 'all' && !hasRecordedSize(target) && (
+              {rules.areaKey && (
+                <StandardSegmentedControl<BlockScope | ''>
+                  ariaLabel={intl.formatMessage(
+                    { id: 'events.multiParcel.scopeLabel' },
+                    { name: target.name }
+                  )}
+                  value={target.scope ?? ''}
+                  onChange={(scope) => update(target.parcelId, { scope: scope || null })}
+                  options={[
+                    {
+                      key: 'all',
+                      label: wholeArea
+                        ? intl.formatMessage(
+                            { id: 'events.multiParcel.scopeAll' },
+                            { area: `${fmt(wholeArea)} ${areaUnit}` }
+                          )
+                        : intl.formatMessage({ id: 'events.multiParcel.scopeAllNoSize' })
+                    },
+                    {
+                      key: 'part',
+                      label: intl.formatMessage({ id: 'events.multiParcel.scopePart' })
+                    }
+                  ]}
+                />
+              )}
+              {rules.areaKey && target.scope === 'all' && !hasRecordedSize(target) && (
                 // No size on record for this parcel: ask for it here rather than leave a "whole
-                // block" that can never resolve, or push the grower to "part", which would
+                // parcel" that can never resolve, or push the grower to "part", which would
                 // record the wrong scope.
                 <Box mt={3}>
                   <StandardField
@@ -203,7 +254,7 @@ export const PerParcelAmounts = ({
                   </StandardField>
                 </Box>
               )}
-              {target.scope === 'part' && (
+              {rules.areaKey && target.scope === 'part' && (
                 <Stack direction={{ base: 'column', md: 'row' }} spacing={3} mt={3}>
                   <StandardField
                     label={intl.formatMessage(
@@ -226,58 +277,65 @@ export const PerParcelAmounts = ({
                       }
                     />
                   </StandardField>
-                  <StandardField
-                    label={intl.formatMessage({ id: 'events.multiParcel.partDetail' })}>
-                    <StandardInput
-                      value={target.partDetail}
-                      maxLength={200}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        update(target.parcelId, { partDetail: e.target.value })
-                      }
-                    />
-                  </StandardField>
+                  {rules.scope && (
+                    <StandardField
+                      label={intl.formatMessage({ id: 'events.multiParcel.partDetail' })}>
+                      <StandardInput
+                        value={target.partDetail}
+                        maxLength={200}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          update(target.parcelId, { partDetail: e.target.value })
+                        }
+                      />
+                    </StandardField>
+                  )}
                 </Stack>
               )}
-              {target.scope && (
+              {answered && rules.sections && (
                 <Box mt={3}>
                   <StandardField
-                    label={intl.formatMessage(
-                      { id: 'events.multiParcel.amountLabel' },
-                      { unit: productUnit }
-                    )}
-                    required
-                    helpText={
-                      derived !== null && area !== null
-                        ? intl.formatMessage(
-                            { id: 'events.multiParcel.derivation' },
-                            {
-                              rate: `${fmt(Number(inputs.rate))} ${rateUnit}`,
-                              area: `${fmt(area)} ${areaUnit}`,
-                              amount: `${fmt(derived)} ${productUnit}`
-                            }
-                          )
-                        : intl.formatMessage({ id: 'events.multiParcel.noDerivation' })
-                    }
-                    error={
-                      issues.includes('amount')
-                        ? intl.formatMessage({ id: 'events.multiParcel.issue.amount' })
-                        : undefined
-                    }>
-                    <StandardInput
-                      type="number"
-                      min="0"
-                      step="0.001"
-                      // The derived amount is a PLACEHOLDER, not a value: the grower sees it, and
-                      // typing replaces it. Saved as typed, or derived when left empty.
-                      placeholder={derived !== null ? String(derived) : ''}
-                      value={target.amountTyped}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        update(target.parcelId, { amountTyped: e.target.value })
-                      }
+                    label={intl.formatMessage({ id: 'fieldDetails.blockId' })}
+                    helpText={intl.formatMessage({ id: 'events.multiParcel.sectionHelp' })}>
+                    <SectionInput
+                      value={target.section}
+                      onChange={(section) => update(target.parcelId, { section })}
+                      knownSections={sectionsByParcel[target.parcelId] ?? []}
                     />
                   </StandardField>
                 </Box>
               )}
+              {answered &&
+                rules.fields.map((field) => {
+                  const derived = derivedValue(target, field, form);
+                  return (
+                    <Box mt={3} key={field.key}>
+                      <StandardField
+                        label={fieldLabel(field)}
+                        required={field.required}
+                        helpText={derivationText(target, field)}
+                        error={
+                          issues.includes(`field:${field.key}`)
+                            ? intl.formatMessage({ id: 'events.multiParcel.issue.amount' })
+                            : undefined
+                        }>
+                        <StandardInput
+                          type="number"
+                          min="0"
+                          step="0.001"
+                          // A derived value is a PLACEHOLDER, not a value: the grower sees it, and
+                          // typing replaces it. Saved as typed, or derived when left empty.
+                          placeholder={derived !== null ? String(derived) : ''}
+                          value={target.values[field.key] ?? ''}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            update(target.parcelId, {
+                              values: { ...target.values, [field.key]: e.target.value }
+                            })
+                          }
+                        />
+                      </StandardField>
+                    </Box>
+                  );
+                })}
               {issues.includes('scope') && (
                 <Text role="alert" mt={2} fontSize="sm" fontWeight="medium" color="red.700">
                   {intl.formatMessage({ id: 'events.multiParcel.issue.scope' })}

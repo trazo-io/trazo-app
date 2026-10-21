@@ -1,5 +1,5 @@
 /**
- * "Also applied to" and the per-block amounts (one spray, several blocks).
+ * "Also applied to" and the per-parcel cards (one activity, several parcels).
  *
  * The picker must never let a block be ticked that the server would refuse (no open season, two
  * open seasons), and must SAY why next to it. The cards must not claim "whole block" before the
@@ -12,7 +12,8 @@ import { ChakraProvider } from '@chakra-ui/react';
 import { IntlProvider } from 'react-intl';
 
 import enUS from '../../../i18n/lang/en-US.json';
-import { AlsoAppliedTo, PerParcelAmounts, type FarmParcel } from '../MultiParcel';
+import { AlsoAppliedTo, PerParcelCards, type FarmParcel } from '../MultiParcel';
+import { specRulesFor, type MultiParcelRules } from '../../../config/events/multiParcel';
 import { newTarget, type ParcelTarget } from '../../../utils/multiParcel';
 
 const wrap = (ui: React.ReactElement) =>
@@ -78,30 +79,45 @@ describe('AlsoAppliedTo', () => {
   });
 });
 
+const chemical = specRulesFor(2, 'FU') as MultiParcelRules;
+const mowing = specRulesFor(1, 'MO') as MultiParcelRules;
+const galPerAcre = {
+  application_rate: '2',
+  application_rate_unit: 'gal_ac',
+  volume_unit: 'gal',
+  area_unit: 'acres'
+};
+
 const Cards = ({
   initial,
-  rate = '2',
+  rules = chemical,
+  form = galPerAcre,
+  sections = {},
   showIssues = false
 }: {
   initial: ParcelTarget[];
-  rate?: string;
+  rules?: MultiParcelRules;
+  form?: Record<string, unknown>;
+  sections?: Record<number, string[]>;
   showIssues?: boolean;
 }) => {
   const [targets, setTargets] = useState(initial);
   return (
-    <PerParcelAmounts
+    <PerParcelCards
       targets={targets}
       onChange={setTargets}
-      inputs={{ rate, rateUnit: 'gal_ac', volumeUnit: 'gal', areaUnit: 'acres' }}
+      rules={rules}
+      form={form}
+      sectionsByParcel={sections}
       showIssues={showIssues}
     />
   );
 };
 
-describe('PerParcelAmounts', () => {
+describe('PerParcelCards', () => {
   const blockA = newTarget({ id: 1, name: 'Block A', area: 5.0181 });
 
-  it('asks whole or part with neither chosen, and no amount until it is answered', () => {
+  it('asks whole or part with neither chosen, and nothing else until it is answered', () => {
     wrap(<Cards initial={[blockA]} />);
     expect(screen.getByRole('button', { name: /Whole parcel \(12\.4 ac\)/ })).toHaveAttribute(
       'aria-pressed',
@@ -110,28 +126,62 @@ describe('PerParcelAmounts', () => {
     expect(screen.queryByText(/Product applied/)).not.toBeInTheDocument();
   });
 
-  it('whole block: shows the derivation and offers it as the amount', () => {
+  it('whole parcel: shows the derivation and offers it as the amount', () => {
     wrap(<Cards initial={[blockA]} />);
     fireEvent.click(screen.getByRole('button', { name: /Whole parcel/ }));
     expect(screen.getByText('2 gal/ac × 12.4 ac = 24.8 gal')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('24.8')).toHaveValue(null);
   });
 
-  it('a block with no size on record asks for it under "whole block"', () => {
+  it('a parcel with no size on record asks for it under "whole parcel"', () => {
     wrap(<Cards initial={[newTarget({ id: 9, name: 'New block', area: 0 })]} showIssues />);
     fireEvent.click(screen.getByRole('button', { name: 'Whole parcel' }));
     expect(screen.getByLabelText(/Parcel size \(ac\)/)).toBeInTheDocument();
-    expect(screen.getByText('Enter the area treated.')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText(/Parcel size \(ac\)/), { target: { value: '8' } });
     expect(screen.getByText('2 gal/ac × 8 ac = 16 gal')).toBeInTheDocument();
   });
 
   it('says when it cannot derive, instead of guessing', () => {
-    wrap(<Cards initial={[{ ...blockA, scope: 'all' }]} rate="" />);
+    wrap(
+      <Cards
+        initial={[{ ...blockA, scope: 'all' }]}
+        form={{ ...galPerAcre, application_rate: '' }}
+      />
+    );
     expect(screen.getByText(/It is not calculated/)).toBeInTheDocument();
   });
 
-  it('after a refused Continue, marks what each block is missing', () => {
+  it("offers THIS parcel's own sections as chips, and a tap fills the section", () => {
+    wrap(
+      <Cards
+        initial={[
+          { ...blockA, scope: 'all' },
+          { ...newTarget({ id: 2, name: 'Block B', area: 1 }), scope: 'all' }
+        ]}
+        sections={{ 1: ['Rows 1-12'], 2: ['East half'] }}
+      />
+    );
+    const chip = screen.getByRole('button', { name: 'Rows 1-12' });
+    expect(screen.getByRole('button', { name: 'East half' })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /Rows 1-12|East half/ })).toHaveLength(2);
+    fireEvent.click(chip);
+    expect(chip).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('another activity asks its own fields: mowing asks fuel and hours, no product', () => {
+    wrap(
+      <Cards
+        initial={[{ ...blockA, scope: 'all' }]}
+        rules={mowing}
+        form={{ area_unit: 'acres', fuel_unit: 'gal' }}
+      />
+    );
+    expect(screen.getByText('Fuel used (gal)')).toBeInTheDocument();
+    expect(screen.getByText('Machine hours')).toBeInTheDocument();
+    expect(screen.queryByText(/Product applied/)).not.toBeInTheDocument();
+  });
+
+  it('after a refused Continue, marks what each parcel is missing', () => {
     wrap(
       <Cards
         initial={[blockA, { ...newTarget({ id: 2, name: 'Block B', area: 1 }), scope: 'part' }]}

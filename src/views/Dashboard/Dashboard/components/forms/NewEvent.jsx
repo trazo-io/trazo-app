@@ -99,7 +99,9 @@ import { isApplicationRecord, withoutInputValues } from 'config/events/crewNoteA
 import { useGetSeasonPlanQuery } from 'store/api/seasonPlanApi';
 import { EventPreviewModal } from 'components/Events/EventPreviewModal';
 import { PhotoRecommendationsBox } from 'components/Events/PhotoRecommendationsBox';
-import { AlsoAppliedTo, PerParcelAmounts } from 'components/Events/MultiParcel';
+import { AlsoAppliedTo, PerParcelCards } from 'components/Events/MultiParcel';
+import { multiParcelRulesFor } from 'config/events/multiParcel';
+import { useGetParcelGeometryQuery } from 'store/api/parcelGeometryApi';
 import { useGoogleMap } from '@react-google-maps/api';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
@@ -140,7 +142,6 @@ import { voiceBannerHeadlineId, voiceNoteSource } from 'utils/voiceBannerHeadlin
 import { isEventOnBuyerPage } from 'utils/consumerDisplay';
 import { cleanEventPayload, GENERAL_MODEL_TO_FORM } from 'utils/cleanEventPayload';
 import {
-  MULTI_PARCEL_EVENT_TYPE,
   buildMultiTargetBody,
   newApplicationGroup,
   newTarget,
@@ -1000,6 +1001,11 @@ function NewEvent({ isEdit = false, eventId = null }) {
         ?.parcels
   );
   const farmParcels = useMemo(() => farmParcelsInStore || [], [farmParcelsInStore]);
+  // What may differ per parcel for this activity, from the server's spec; null = single-parcel.
+  const multiRules = useMemo(
+    () => multiParcelRulesFor(activeEventType, eventFormData.type),
+    [activeEventType, eventFormData.type]
+  );
   const multiParcelEligible =
     !isEdit &&
     !isRepeat &&
@@ -1008,7 +1014,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
     !planProductionIdFromUrl &&
     !postHarvestTarget &&
     !!openSeason &&
-    activeEventType === MULTI_PARCEL_EVENT_TYPE &&
+    !!multiRules &&
     farmParcels.length > 1;
   const [multiParcelIds, setMultiParcelIds] = useState([]);
   const [multiTargets, setMultiTargets] = useState([]);
@@ -1031,12 +1037,23 @@ function NewEvent({ isEdit = false, eventId = null }) {
       )
     );
   }, [multiActive, multiParcelIds, farmParcels, parcelId]);
-  const multiRateInputs = (data) => ({
-    rate: data?.application_rate,
-    rateUnit: data?.application_rate_unit || '',
-    volumeUnit: data?.volume_unit || 'gal',
-    areaUnit: data?.area_unit || 'acres'
+  // The shared form values the per-parcel cards read. Blank units fall back to the tabs' own
+  // defaults (gallons, acres), the same values the tab shows before the grower touches them.
+  const multiForm = (data) => ({
+    ...(data || {}),
+    volume_unit: data?.volume_unit || 'gal',
+    area_unit: data?.area_unit || 'acres'
   });
+  // Each selected parcel's own sections, for its card's chips (one query for the whole farm).
+  const { data: farmGeometry } = useGetParcelGeometryQuery(
+    { companyId: currentCompany?.id, farmId },
+    { skip: !multiActive || !currentCompany?.id || !farmId }
+  );
+  const sectionsByParcel = useMemo(
+    () =>
+      Object.fromEntries((farmGeometry || []).map((parcel) => [parcel.id, parcel.known_block_ids])),
+    [farmGeometry]
+  );
 
   // Carbon calculation with debouncing
   const carbonTimeoutRef = useRef(null);
@@ -1593,8 +1610,8 @@ function NewEvent({ isEdit = false, eventId = null }) {
     // here, on the tab's own submitted values, so the rate the amounts derive from is the one
     // the grower just entered and not the debounced copy.
     if (multiActive) {
-      const inputs = multiRateInputs(updatedData);
-      if (multiTargets.some((target) => targetIssues(target, inputs).length > 0)) {
+      const form = multiForm(updatedData);
+      if (multiTargets.some((target) => targetIssues(target, multiRules, form).length > 0)) {
         setShowMultiIssues(true);
         toast({
           title: intl.formatMessage({ id: 'events.multiParcel.validationTitle' }),
@@ -2962,8 +2979,8 @@ function NewEvent({ isEdit = false, eventId = null }) {
         // there), and each block carries the amount and area the grower confirmed.
         // Step 1's Continue already refused an unanswered block; a block added afterwards (back
         // to step 0, tick another) must not reach the server as an amount of "null".
-        const saveInputs = multiRateInputs(eventFormData);
-        if (multiTargets.some((target) => targetIssues(target, saveInputs).length > 0)) {
+        const saveForm = multiForm(eventFormData);
+        if (multiTargets.some((target) => targetIssues(target, multiRules, saveForm).length > 0)) {
           setShowMultiIssues(true);
           setActiveStep(1);
           toast({
@@ -2982,7 +2999,8 @@ function NewEvent({ isEdit = false, eventId = null }) {
           ...buildMultiTargetBody(
             finalEventData,
             multiTargets,
-            multiRateInputs(eventFormData),
+            multiRules,
+            multiForm(eventFormData),
             applicationGroupRef.current
           )
         }).unwrap();
@@ -4603,12 +4621,14 @@ function NewEvent({ isEdit = false, eventId = null }) {
                       isCalculatingCarbon={isCalculatingCarbon || isCalculating}
                     />
                   )}
-                  {activeEventType === 2 && multiActive && (
+                  {multiActive && multiRules && (
                     <Box mt={{ base: 5, md: 6 }}>
-                      <PerParcelAmounts
+                      <PerParcelCards
                         targets={multiTargets}
                         onChange={setMultiTargets}
-                        inputs={multiRateInputs(eventFormData)}
+                        rules={multiRules}
+                        form={multiForm(eventFormData)}
+                        sectionsByParcel={sectionsByParcel}
                         showIssues={showMultiIssues}
                       />
                     </Box>

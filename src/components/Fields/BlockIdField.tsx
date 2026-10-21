@@ -40,6 +40,69 @@ interface BlockIdFieldProps {
   name?: string;
 }
 
+interface SectionInputProps {
+  value: string;
+  onChange: (value: string) => void;
+  /** This parcel's sections already in use, offered as chips. */
+  knownSections: string[];
+  /** Extra props for the text input (a form binding's `name`, `onBlur`, `ref`). */
+  inputProps?: Record<string, unknown>;
+}
+
+/**
+ * The text input plus the known-sections chips, without a form binding. `BlockIdField` wraps it for
+ * the single-parcel forms; the multi-parcel cards use it directly, one per parcel, each with that
+ * parcel's own sections (a chip from parcel A offered on parcel B's card would be a guess).
+ */
+export const SectionInput: React.FC<SectionInputProps> = ({
+  value,
+  onChange,
+  knownSections,
+  inputProps = {}
+}) => {
+  const intl = useIntl();
+  const current = (value ?? '').trim().toLowerCase();
+  return (
+    <>
+      <StandardInput
+        {...inputProps}
+        value={value ?? ''}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
+        placeholder={intl.formatMessage({ id: 'fieldDetails.blockIdPlaceholder' })}
+      />
+      {knownSections.length > 0 && (
+        <>
+          <Text fontSize="xs" color="gray.600" mt={2} mb={1}>
+            {intl.formatMessage({ id: 'fieldDetails.blockIdKnown' })}
+          </Text>
+          <Wrap spacing={2} data-testid="block-id-suggestions">
+            {knownSections.map((section) => {
+              const isSelected = current === section.trim().toLowerCase();
+              return (
+                <WrapItem key={section}>
+                  <Button
+                    type="button"
+                    size="sm"
+                    minH="44px"
+                    variant={isSelected ? 'solid' : 'outline'}
+                    colorScheme="green"
+                    fontWeight="normal"
+                    // Tapping a selected chip clears it, so a mis-tap on a phone is
+                    // recoverable without opening the keyboard to delete text.
+                    onClick={() => onChange(isSelected ? '' : section)}
+                    aria-pressed={isSelected}>
+                    {section}
+                  </Button>
+                </WrapItem>
+              );
+            })}
+          </Wrap>
+        </>
+      )}
+    </>
+  );
+};
+
 export const BlockIdField: React.FC<BlockIdFieldProps> = ({ control, name = 'block_id' }) => {
   const intl = useIntl();
   const { farmId, parcelId } = useParams();
@@ -65,47 +128,14 @@ export const BlockIdField: React.FC<BlockIdFieldProps> = ({ control, name = 'blo
       <Controller
         name={name}
         control={control}
-        render={({ field }) => {
-          const current = (field.value ?? '').trim().toLowerCase();
-          return (
-            <>
-              <StandardInput
-                {...field}
-                value={field.value ?? ''}
-                placeholder={intl.formatMessage({ id: 'fieldDetails.blockIdPlaceholder' })}
-              />
-              {knownBlockIds.length > 0 && (
-                <>
-                  <Text fontSize="xs" color="gray.600" mt={2} mb={1}>
-                    {intl.formatMessage({ id: 'fieldDetails.blockIdKnown' })}
-                  </Text>
-                  <Wrap spacing={2} data-testid="block-id-suggestions">
-                    {knownBlockIds.map((blockId) => {
-                      const isSelected = current === blockId.trim().toLowerCase();
-                      return (
-                        <WrapItem key={blockId}>
-                          <Button
-                            type="button"
-                            size="sm"
-                            minH="44px"
-                            variant={isSelected ? 'solid' : 'outline'}
-                            colorScheme="green"
-                            fontWeight="normal"
-                            // Tapping a selected chip clears it, so a mis-tap on a phone is
-                            // recoverable without opening the keyboard to delete text.
-                            onClick={() => field.onChange(isSelected ? '' : blockId)}
-                            aria-pressed={isSelected}>
-                            {blockId}
-                          </Button>
-                        </WrapItem>
-                      );
-                    })}
-                  </Wrap>
-                </>
-              )}
-            </>
-          );
-        }}
+        render={({ field }) => (
+          <SectionInput
+            value={field.value ?? ''}
+            onChange={field.onChange}
+            knownSections={knownBlockIds}
+            inputProps={{ name: field.name, onBlur: field.onBlur, ref: field.ref }}
+          />
+        )}
       />
     </StandardField>
   );
