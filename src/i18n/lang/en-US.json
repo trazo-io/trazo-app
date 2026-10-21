@@ -8763,5 +8763,18 @@
   "events.multiParcel.blockFailed": "{name}: {message}",
   "events.multiParcel.scopeAllNoSize": "Whole parcel",
   "events.multiParcel.blockSize": "Parcel size ({unit})",
-  "events.multiParcel.blockSizeHelp": "This parcel has no size on record. Enter the size of the whole parcel."
+  "events.multiParcel.blockSizeHelp": "This parcel has no size on record. Enter the size of the whole parcel.",
+  "events.multiParcel.field.volume_applied": "Product applied ({unit})",
+  "events.multiParcel.field.application_fuel_consumed": "Fuel used ({unit})",
+  "events.multiParcel.field.fuel_consumed": "Fuel used ({unit})",
+  "events.multiParcel.field.equipment_hours": "Machine hours",
+  "events.multiParcel.field.irrigation_depth": "Water applied, as depth ({unit})",
+  "events.multiParcel.field.plants_established": "Plants established",
+  "events.multiParcel.field.hive_count": "Hives placed",
+  "events.multiParcel.field.amendment_amount": "Amount applied ({unit})",
+  "events.multiParcel.sectionHelp": "Optional. The section or rows of this parcel, if the work did not cover the whole of it the same way.",
+  "events.multiParcel.field.release_quantity": "Released ({unit})",
+  "events.multiParcel.field.habitat_structure_count": "Structures installed",
+  "events.multiParcel.fuelUnitLabel": "Fuel unit",
+  "events.multiParcel.fuelUnitHelp": "Fuel used is asked on each parcel below, in this unit."
 }

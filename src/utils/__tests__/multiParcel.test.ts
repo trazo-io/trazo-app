@@ -1,81 +1,95 @@
 import { describe, expect, it } from 'vitest';
 
+import { specRulesFor, type MultiParcelRules } from '../../config/events/multiParcel';
 import {
   buildMultiTargetBody,
-  derivedAmount,
+  derivedValue,
+  fieldValue,
   newTarget,
-  PER_TARGET_KEYS,
-  targetAmount,
   targetArea,
   targetIssues,
   type ParcelTarget
 } from '../multiParcel';
 
-const galPerAcre = { rate: '2', rateUnit: 'gal_ac', volumeUnit: 'gal', areaUnit: 'acres' };
+const chemical = specRulesFor(2, 'FU') as MultiParcelRules;
+const irrigation = specRulesFor(1, 'IR') as MultiParcelRules;
+const volume = chemical.fields.find((f) => f.key === 'volume_applied')!;
 
-const block = (overrides: Partial<ParcelTarget> = {}): ParcelTarget => ({
+const galPerAcre = {
+  application_rate: '2',
+  application_rate_unit: 'gal_ac',
+  volume_unit: 'gal',
+  area_unit: 'acres'
+};
+
+const parcel = (overrides: Partial<ParcelTarget> = {}): ParcelTarget => ({
   // 5.0181 ha = 12.4 ac
-  ...newTarget({ id: 11, name: 'Block A', area: 5.0181 }),
+  ...newTarget({ id: 11, name: 'North', area: 5.0181 }),
   ...overrides
 });
 
-describe('multiParcel: area and amount per block', () => {
+describe('multiParcel: area per parcel', () => {
   it('starts with no scope, so nothing is claimed until the grower answers', () => {
     const target = newTarget({ id: 1, name: 'A', area: 2 });
     expect(target.scope).toBeNull();
     expect(targetArea(target, 'acres')).toBeNull();
-    expect(targetIssues(target, galPerAcre)).toEqual(['scope']);
+    expect(targetIssues(target, chemical, galPerAcre)).toEqual(['scope']);
   });
 
-  it('whole block: the stored hectares, in the form unit', () => {
-    expect(targetArea(block({ scope: 'all' }), 'acres')).toBe(12.4);
-    expect(targetArea(block({ scope: 'all' }), 'ha')).toBe(5.02);
+  it('whole parcel: the stored hectares, in the form unit', () => {
+    expect(targetArea(parcel({ scope: 'all' }), 'acres')).toBe(12.4);
+    expect(targetArea(parcel({ scope: 'all' }), 'ha')).toBe(5.02);
   });
 
-  it('part of a block: the area the grower typed', () => {
-    expect(targetArea(block({ scope: 'part', partArea: '3.5' }), 'acres')).toBe(3.5);
-    expect(targetArea(block({ scope: 'part', partArea: '' }), 'acres')).toBeNull();
-    expect(targetIssues(block({ scope: 'part', partArea: '' }), galPerAcre)).toEqual([
+  it('part of a parcel: the area the grower typed', () => {
+    expect(targetArea(parcel({ scope: 'part', partArea: '3.5' }), 'acres')).toBe(3.5);
+    expect(targetIssues(parcel({ scope: 'part' }), chemical, galPerAcre)).toEqual([
       'area',
-      'amount'
+      'field:volume_applied'
     ]);
   });
 
-  it('derives rate × area when the units line up, converting the area basis', () => {
-    expect(derivedAmount(block({ scope: 'all' }), galPerAcre)).toBe(24.8);
-    // 2 L/ha over a block entered in acres: 12.4 ac = 5.018 ha → 10.036 L
-    expect(
-      derivedAmount(block({ scope: 'all' }), {
-        rate: '2',
-        rateUnit: 'L_ha',
-        volumeUnit: 'L',
-        areaUnit: 'acres'
-      })
-    ).toBeCloseTo(10.036, 2);
-  });
-
-  it('derives nothing when the rate and the product unit disagree', () => {
-    // qt/ac has no matching product unit in the form; gal/ac with a product unit of fl oz needs
-    // a conversion the grower never saw. Both leave the amount to the grower.
-    expect(derivedAmount(block({ scope: 'all' }), { ...galPerAcre, rateUnit: 'qt_ac' })).toBeNull();
-    expect(
-      derivedAmount(block({ scope: 'all' }), { ...galPerAcre, volumeUnit: 'fl_oz' })
-    ).toBeNull();
-    expect(derivedAmount(block({ scope: 'all' }), { ...galPerAcre, rate: '' })).toBeNull();
-    expect(targetIssues(block({ scope: 'all' }), { ...galPerAcre, rate: '' })).toEqual(['amount']);
-  });
-
-  it('whole block with no size on record: the grower states the size, never a guess', () => {
-    const unsized = { ...newTarget({ id: 9, name: 'New block', area: 0 }), scope: 'all' as const };
+  it('whole parcel with no size on record: the grower states the size, never a guess', () => {
+    const unsized = { ...newTarget({ id: 9, name: 'New', area: 0 }), scope: 'all' as const };
     expect(targetArea(unsized, 'acres')).toBeNull();
-    expect(targetIssues(unsized, galPerAcre)).toEqual(['area', 'amount']);
     expect(targetArea({ ...unsized, partArea: '8' }, 'acres')).toBe(8);
-    expect(derivedAmount({ ...unsized, partArea: '8' }, galPerAcre)).toBe(16);
+    expect(derivedValue({ ...unsized, partArea: '8' }, volume, galPerAcre)).toBe(16);
+  });
+});
+
+describe('multiParcel: derived values', () => {
+  it('derives rate × area when the units line up, converting the area basis', () => {
+    expect(derivedValue(parcel({ scope: 'all' }), volume, galPerAcre)).toBe(24.8);
+    const litresPerHa = { ...galPerAcre, application_rate_unit: 'L_ha', volume_unit: 'L' };
+    expect(derivedValue(parcel({ scope: 'all' }), volume, litresPerHa)).toBeCloseTo(10.036, 2);
   });
 
-  it('what the grower typed wins over the derived amount', () => {
-    expect(targetAmount(block({ scope: 'all', amountTyped: '20' }), galPerAcre)).toBe(20);
-    expect(targetAmount(block({ scope: 'all', amountTyped: '0' }), galPerAcre)).toBeNull();
+  it('derives nothing when the rate and the unit disagree, or there is no rate', () => {
+    expect(
+      derivedValue(parcel({ scope: 'all' }), volume, {
+        ...galPerAcre,
+        application_rate_unit: 'qt_ac'
+      })
+    ).toBeNull();
+    expect(
+      derivedValue(parcel({ scope: 'all' }), volume, { ...galPerAcre, volume_unit: 'fl_oz' })
+    ).toBeNull();
+    expect(
+      targetIssues(parcel({ scope: 'all' }), chemical, { ...galPerAcre, application_rate: '' })
+    ).toEqual(['field:volume_applied']);
+  });
+
+  it('what the grower typed wins over the derived value', () => {
+    const typed = parcel({ scope: 'all', values: { volume_applied: '20' } });
+    expect(fieldValue(typed, volume, galPerAcre)).toBe(20);
+  });
+
+  it('a field with no rate is only ever what the grower typed', () => {
+    const depth = irrigation.fields.find((f) => f.key === 'irrigation_depth')!;
+    expect(fieldValue(parcel({ scope: 'all' }), depth, {})).toBeNull();
+    expect(
+      fieldValue(parcel({ scope: 'all', values: { irrigation_depth: '1.5' } }), depth, {})
+    ).toBe(1.5);
   });
 });
 
@@ -100,38 +114,42 @@ describe('multiParcel: request body', () => {
     plan_item_id: 9,
     tank_mix_partners: [{ commercial_name: 'x', volume: '2' }],
     application_fuel_consumed: '3',
-    is_summary: 'false',
-    // The chemical tab mirrors fuel into extra_data: it must not ride onto every block from there.
+    // A summary toggled on before parcels were picked: one record of many applications.
+    is_summary: 'true',
+    date_start: '2026-03-01',
+    event_count: '6',
     extra_data: {
       volume_applied_total: '300',
       active_ingredient: 'copper',
-      application_fuel_consumed: '3',
-      is_summary: 'false'
+      application_fuel_consumed: '3'
     }
   };
 
   const targets = [
-    block({ scope: 'all' }),
+    parcel({ scope: 'all', section: 'Rows 1-12' }),
     {
-      ...newTarget({ id: 12, name: 'Block B', area: 2.4281 }),
+      ...newTarget({ id: 12, name: 'South', area: 2.4281 }),
       scope: 'part' as const,
       partArea: '3.5',
-      partDetail: 'rows 1-9'
+      partDetail: 'rows 1-9',
+      values: { application_fuel_consumed: '1.5' }
     }
   ];
 
-  const body = buildMultiTargetBody(single, targets, galPerAcre, 'group-1');
+  const body = buildMultiTargetBody(single, targets, chemical, single, 'group-1');
 
   it('sends no per-parcel, refused or single-record key in the shared body', () => {
-    [
-      ...PER_TARGET_KEYS,
+    expect(chemical.hiddenKeys.has('is_summary')).toBe(true);
+    for (const key of [
+      ...chemical.hiddenKeys,
       'parcels',
       'history',
       'plan_item_id',
-      'tank_mix_partners',
-      'application_fuel_consumed',
-      'is_summary'
-    ].forEach((key) => expect(body).not.toHaveProperty(key));
+      'tank_mix_partners'
+    ]) {
+      expect(body, key).not.toHaveProperty(key);
+    }
+    // extra_data loses them too: the chemical tab mirrors fuel there.
     expect(body.extra_data).toEqual({ active_ingredient: 'copper' });
   });
 
@@ -144,16 +162,42 @@ describe('multiParcel: request body', () => {
     });
   });
 
-  it('carries each block its own amount, area and scope', () => {
+  it('carries each parcel its own area, scope, section and values', () => {
     expect(body.targets).toEqual([
-      { parcel: 11, volume_applied: '24.8', area_treated: '12.4', applied_scope: 'all' },
+      {
+        parcel: 11,
+        area_treated: '12.4',
+        applied_scope: 'all',
+        block_id: 'Rows 1-12',
+        volume_applied: '24.8'
+      },
       {
         parcel: 12,
-        volume_applied: '7',
         area_treated: '3.5',
         applied_scope: 'part',
-        applied_scope_detail: 'rows 1-9'
+        applied_scope_detail: 'rows 1-9',
+        volume_applied: '7',
+        application_fuel_consumed: '1.5'
       }
     ]);
+  });
+
+  it("keeps another subtype's per-parcel keys out of the shared body too", () => {
+    expect(irrigation.hiddenKeys.has('applied_scope')).toBe(true);
+    expect(irrigation.hiddenKeys.has('plants_established')).toBe(true);
+    expect(irrigation.refusedExtraDataKeys.has('yield_quantity')).toBe(true);
+  });
+
+  it('irrigation sends area and depth per parcel, and no scope (IR has none)', () => {
+    const irBody = buildMultiTargetBody(
+      { event_type: 1, type: 'IR', area_covered: '9', irrigation_method: 'drip' },
+      [parcel({ scope: 'all', values: { irrigation_depth: '1.5' } })],
+      irrigation,
+      { area_unit: 'acres' },
+      'group-2'
+    );
+    expect(irBody).not.toHaveProperty('area_covered');
+    expect(irBody).toMatchObject({ irrigation_method: 'drip' });
+    expect(irBody.targets).toEqual([{ parcel: 11, area_covered: '12.4', irrigation_depth: '1.5' }]);
   });
 });

@@ -26,6 +26,9 @@ export const PARCEL_APPLICATION_URL = (companyId: string, farmId: string, parcel
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/parcels/${parcelId}/application/`;
 export const PARCEL_UPDATE_URL = (companyId: string, farmId: string, parcelId: string) =>
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/parcels/${parcelId}/update_parcel/`;
+/** Every parcel of one farm with its boundary, for the parcel picker's map (owner side only). */
+export const FARM_PARCEL_GEOMETRY_URL = (companyId: string, farmId: string) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/parcel-geometry/`;
 export const FARM_PRODUCTS_URL = (companyId: string, farmId: string) =>
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/products/`;
 export const FARM_HISTORIES_URL = (companyId: string, farmId: string) =>

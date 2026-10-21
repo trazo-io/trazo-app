@@ -1,65 +1,22 @@
 /**
- * One spray logged on several parcels at once (trazo-back `history/services/multi_target.py`).
+ * One activity on several parcels (trazo-back `history/services/multi_target.py`): the per-parcel
+ * card math and the request body.
  *
- * The server writes ONE RECORD PER PARCEL, linked by `application_group`, all or none. What
- * differs between the records is the amount and the place: how much product went on THIS block
- * and over how much of it. Everything else (product, label rate, date, applicator, REI/PHI,
- * purchase) is the same application and is sent once.
+ * The server writes ONE RECORD PER PARCEL, linked by `application_group`, all or none. Which keys
+ * are shared, which differ per parcel and which are refused comes from the spec
+ * (`config/events/multiParcel.ts`, a checked copy of the server's file); this module only does the
+ * arithmetic and builds the body from those rules.
  *
- * NEVER: invent the per-block amount. Growers record a label rate and the blocks they
- * sprayed; they do not measure product per block. So the amount is shown as a derivation from
- * facts the grower confirmed ("2 gal/ac × 12.4 ac = 24.8 gal"), and the grower can overwrite it.
- * Where the rate's unit does not match the product unit the form asks for, nothing is derived
- * and the grower types it: a conversion the grower never saw would be a number on a certifier
- * record that nobody stated.
- *
- * The key lists below mirror the server's spec. The server is the authority: it refuses a
- * per-parcel field sent in the shared body rather than copying it, so a drift here fails loudly
- * at save instead of printing one block's amount on every block.
+ * NEVER: invent a per-parcel number. A value is either typed by the grower or shown as a derivation
+ * from facts they confirmed ("2 gal/ac × 12.4 ac = 24.8 gal"), and the grower can overwrite it.
+ * Where the rate's unit does not match the field's unit, nothing is derived and the grower types it:
+ * a conversion the grower never saw would be a number on a certifier record that nobody stated.
  */
 
+import type { MultiParcelRules, PerParcelField } from '../config/events/multiParcel';
 import { AREA_CONVERSION_FACTORS } from './areaUnits';
 
-/** Chemical application (every subtype). Soil amendment is accepted by the server, not built here yet. */
-export const MULTI_PARCEL_EVENT_TYPE = 2;
 export const MAX_MULTI_PARCELS = 50;
-
-/** Sent per parcel inside `targets`, never in the shared body. */
-export const PER_TARGET_KEYS = [
-  'volume_applied',
-  'volume',
-  'volume_numeric',
-  'area_treated',
-  'area',
-  'area_numeric',
-  'applied_scope',
-  'applied_scope_detail',
-  'block_id',
-  'planted_area',
-  'site_id',
-  'application_county',
-  'mtrs_section',
-  'mtrs_township',
-  'mtrs_range',
-  'mtrs_base_meridian'
-] as const;
-
-/** Season totals and per-product or per-machine amounts have no honest per-parcel value. */
-export const SUMMARY_TOTAL_KEYS = [
-  'area_treated_total',
-  'volume_applied_total',
-  'active_ingredient_total_kg',
-  'nitrogen_total_kg',
-  'phosphorus_total_kg',
-  'potassium_total_kg',
-  'fuel_consumption_total'
-] as const;
-export const REFUSED_KEYS = [
-  'tank_mix_partners',
-  'application_fuel_consumed',
-  'is_summary',
-  ...SUMMARY_TOTAL_KEYS
-] as const;
 
 /** A plan item, a crew note and a named season belong to ONE record. */
 export const SINGLE_RECORD_KEYS = [
@@ -85,8 +42,10 @@ export interface ParcelTarget {
    */
   partArea: string;
   partDetail: string;
-  /** What the grower typed. Empty means "use the derived amount". */
-  amountTyped: string;
+  /** The section / rows inside the parcel (`block_id`), when the type has sections. */
+  section: string;
+  /** What the grower typed per field key. Missing or empty means "use the derived value". */
+  values: Record<string, string>;
 }
 
 export const newTarget = (parcel: {
@@ -100,7 +59,8 @@ export const newTarget = (parcel: {
   scope: null,
   partArea: '',
   partDetail: '',
-  amountTyped: ''
+  section: '',
+  values: {}
 });
 
 const toNumber = (value: unknown): number | null => {
@@ -167,81 +127,128 @@ const areaInBasis = (area: number, areaUnit: string, basis: 'acres' | 'ha'): num
   return basis === 'ha' ? hectares : hectares * AREA_CONVERSION_FACTORS.HECTARES_TO_ACRES;
 };
 
-export interface RateInputs {
-  rate: unknown;
-  rateUnit: string;
-  volumeUnit: string;
-  areaUnit: string;
-}
+/** The form's values the cards read (units, the label rate): the shared half of the activity. */
+export type SharedForm = Record<string, unknown>;
 
-/** Rate × area, when the rate's units line up with the form's. Null when it cannot be derived. */
-export const derivedAmount = (target: ParcelTarget, inputs: RateInputs): number | null => {
-  const rate = toNumber(inputs.rate);
-  const basis = RATE_BASIS[inputs.rateUnit];
-  const area = targetArea(target, inputs.areaUnit);
-  if (rate === null || rate <= 0 || !basis || basis.product !== inputs.volumeUnit || area === null)
+const AREA_UNIT_DEFAULT = 'acres';
+export const areaUnitOf = (form: SharedForm): string =>
+  (typeof form.area_unit === 'string' && form.area_unit) || AREA_UNIT_DEFAULT;
+
+/** The unit a field's value is in, read from the shared form (`volume_unit`, `fuel_unit`...). */
+export const unitOf = (field: PerParcelField, form: SharedForm): string =>
+  (field.unit_key &&
+    typeof form[field.unit_key] === 'string' &&
+    (form[field.unit_key] as string)) ||
+  '';
+
+/** Rate × area, when the field derives from a rate whose units line up. Null otherwise. */
+export const derivedValue = (
+  target: ParcelTarget,
+  field: PerParcelField,
+  form: SharedForm
+): number | null => {
+  if (!field.derive) return null;
+  const rate = toNumber(form[field.derive.rate_key]);
+  const basis = RATE_BASIS[String(form[field.derive.rate_unit_key] ?? '')];
+  const areaUnit = areaUnitOf(form);
+  const area = targetArea(target, areaUnit);
+  if (
+    rate === null ||
+    rate <= 0 ||
+    !basis ||
+    basis.product !== unitOf(field, form) ||
+    area === null
+  )
     return null;
-  const inBasis = areaInBasis(area, inputs.areaUnit, basis.area);
+  const inBasis = areaInBasis(area, areaUnit, basis.area);
   return inBasis === null ? null : round(rate * inBasis, 3);
 };
 
-/** The amount that will be saved: what the grower typed, else the derived amount. */
-export const targetAmount = (target: ParcelTarget, inputs: RateInputs): number | null => {
-  const typed = toNumber(target.amountTyped);
-  if (target.amountTyped.trim() !== '') return typed !== null && typed > 0 ? typed : null;
-  return derivedAmount(target, inputs);
+/** The value that will be saved for a field: what the grower typed, else the derived value. */
+export const fieldValue = (
+  target: ParcelTarget,
+  field: PerParcelField,
+  form: SharedForm
+): number | null => {
+  const typed = (target.values[field.key] ?? '').trim();
+  if (typed !== '') {
+    const n = toNumber(typed);
+    return n !== null && n >= 0 ? n : null;
+  }
+  return derivedValue(target, field, form);
 };
 
-export type TargetIssue = 'scope' | 'area' | 'amount';
+export type TargetIssue = 'scope' | 'area' | `field:${string}`;
 
 /** What is still missing before this target can be saved, in the order the card asks. */
-export const targetIssues = (target: ParcelTarget, inputs: RateInputs): TargetIssue[] => {
-  if (target.scope === null) return ['scope'];
+export const targetIssues = (
+  target: ParcelTarget,
+  rules: MultiParcelRules,
+  form: SharedForm
+): TargetIssue[] => {
   const issues: TargetIssue[] = [];
-  if (targetArea(target, inputs.areaUnit) === null) issues.push('area');
-  if (targetAmount(target, inputs) === null) issues.push('amount');
+  if (rules.areaKey) {
+    if (target.scope === null) return ['scope'];
+    if (targetArea(target, areaUnitOf(form)) === null) issues.push('area');
+  }
+  for (const field of rules.fields) {
+    if (!field.required) continue;
+    const value = fieldValue(target, field, form);
+    if (value === null || value <= 0) issues.push(`field:${field.key}`);
+  }
   return issues;
 };
 
 /**
  * The request body for a multi-parcel save, from the single-parcel body the wizard already builds.
  *
- * Per-parcel, refused and single-record keys are removed from the shared body (the server would
- * refuse them there), and each target carries its own amount, area and scope.
+ * Every per-parcel, refused and single-record key is removed from the shared body, at the top level
+ * and inside `extra_data` (several tabs mirror fields there), and each target carries its own area,
+ * scope, section and field values.
  */
 export const buildMultiTargetBody = (
   singleBody: Record<string, unknown>,
   targets: ParcelTarget[],
-  inputs: RateInputs,
+  rules: MultiParcelRules,
+  form: SharedForm,
   applicationGroup: string
 ): Record<string, unknown> => {
   const shared: Record<string, unknown> = { ...singleBody };
-  [...PER_TARGET_KEYS, ...REFUSED_KEYS, ...SINGLE_RECORD_KEYS].forEach((key) => {
+  const stripFromShared = new Set([...rules.hiddenKeys, ...SINGLE_RECORD_KEYS]);
+  stripFromShared.forEach((key) => {
     delete shared[key];
   });
   if (shared.extra_data && typeof shared.extra_data === 'object') {
-    // The chemical tab mirrors some fields into `extra_data` too (fuel, units, summary totals), so
-    // the same per-block and refused keys come out of it: a value left in there would be copied
-    // onto every block's record just as surely as one at the top level.
     const extra = { ...(shared.extra_data as Record<string, unknown>) };
-    [...PER_TARGET_KEYS, ...REFUSED_KEYS].forEach((key) => {
+    new Set([...rules.hiddenKeys, ...rules.refusedExtraDataKeys]).forEach((key) => {
       delete extra[key];
     });
     shared.extra_data = extra;
   }
 
+  const areaUnit = areaUnitOf(form);
   return {
     ...shared,
     application_group: applicationGroup,
-    targets: targets.map((target) => ({
-      parcel: target.parcelId,
-      volume_applied: String(targetAmount(target, inputs)),
-      area_treated: String(targetArea(target, inputs.areaUnit)),
-      applied_scope: target.scope,
-      ...(target.scope === 'part' && target.partDetail.trim()
-        ? { applied_scope_detail: target.partDetail.trim() }
-        : {})
-    }))
+    targets: targets.map((target) => {
+      const body: Record<string, unknown> = { parcel: target.parcelId };
+      if (rules.areaKey) {
+        const area = targetArea(target, areaUnit);
+        if (area !== null) body[rules.areaKey] = String(area);
+      }
+      if (rules.scope && target.scope) {
+        body.applied_scope = target.scope;
+        if (target.scope === 'part' && target.partDetail.trim()) {
+          body.applied_scope_detail = target.partDetail.trim();
+        }
+      }
+      if (rules.sections && target.section.trim()) body.block_id = target.section.trim();
+      for (const field of rules.fields) {
+        const value = fieldValue(target, field, form);
+        if (value !== null) body[field.key] = String(value);
+      }
+      return body;
+    })
   };
 };
 

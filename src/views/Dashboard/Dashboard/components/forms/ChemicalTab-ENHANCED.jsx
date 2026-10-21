@@ -5184,7 +5184,9 @@ const ChemicalTab = forwardRef(
 
               {/* Section 4: Application Equipment & Fuel Usage - Phase 3 Electric Equipment Support */}
               {/* Hidden in Summary Mode - aggregate fuel fields are shown in the summary sections instead */}
-              {!isSummaryMode && !multiTarget && (
+              {/* With several parcels the fuel type and unit stay shared and the amount is
+                  asked on each parcel's card, so only the amount input is left out here. */}
+              {!isSummaryMode && (
                 <CollapsibleSection
                   icon={FaBolt}
                   title={intl.formatMessage({ id: 'events.section.chemical.equipmentFuel' })}
@@ -5226,34 +5228,40 @@ const ChemicalTab = forwardRef(
 
                       <StandardField
                         label={
-                          watch('application_fuel_type') === 'electric'
+                          multiTarget
+                            ? intl.formatMessage({ id: 'events.multiParcel.fuelUnitLabel' })
+                            : watch('application_fuel_type') === 'electric'
                             ? 'Energy Amount (kWh)'
                             : 'Fuel Consumed'
                         }
                         helpText={
-                          watch('application_fuel_type') === 'electric'
+                          multiTarget
+                            ? intl.formatMessage({ id: 'events.multiParcel.fuelUnitHelp' })
+                            : watch('application_fuel_type') === 'electric'
                             ? 'Energy consumption for carbon emission calculation'
                             : 'Fuel consumed during application'
                         }>
                         <HStack spacing={2}>
-                          <Controller
-                            name="application_fuel_consumed"
-                            control={methods.control}
-                            render={({ field }) => (
-                              <StandardInput
-                                {...field}
-                                flex={2}
-                                type="number"
-                                step="0.1"
-                                min="0"
-                                placeholder={
-                                  watch('application_fuel_type') === 'electric'
-                                    ? 'e.g., 5 kWh'
-                                    : 'e.g., 2.5'
-                                }
-                              />
-                            )}
-                          />
+                          {!multiTarget && (
+                            <Controller
+                              name="application_fuel_consumed"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardInput
+                                  {...field}
+                                  flex={2}
+                                  type="number"
+                                  step="0.1"
+                                  min="0"
+                                  placeholder={
+                                    watch('application_fuel_type') === 'electric'
+                                      ? 'e.g., 5 kWh'
+                                      : 'e.g., 2.5'
+                                  }
+                                />
+                              )}
+                            />
+                          )}
                           <Controller
                             name="application_fuel_unit"
                             control={methods.control}
