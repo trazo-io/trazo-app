@@ -54,6 +54,7 @@
   "activities.changeParcels": "Cambiar parcelas",
   "activities.verbOneParcelOnly": "Se registra en una parcela a la vez",
   "events.multiParcel.alsoSingleOnly": "Esta actividad se registra en una parcela a la vez, así que se abrió solo en {name}. Registra las otras por separado.",
+  "events.multiParcel.alsoRouteNoSeason": "Este formulario se abrió en {name}, que no tiene exactamente una producción abierta, así que no se pudo agregar {names} al mismo registro. Regístralas por separado.",
   "activities.prevMonth": "Mes anterior",
   "activities.quickLog": "Registro rápido (voz y plantillas)",
   "activities.searchPlaceholder": "Buscar actividades…",

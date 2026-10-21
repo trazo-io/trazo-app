@@ -361,10 +361,14 @@ export const planAlsoSeed = ({
     };
   }
   if (routeCannotShare) {
+    // The blocker is the form's OWN parcel, so the notice names it; the others are fine.
     return {
       kind: 'done',
       ids: [],
-      notice: { id: 'events.multiParcel.alsoDropped', values: { names: names(wanted) } }
+      notice: {
+        id: 'events.multiParcel.alsoRouteNoSeason',
+        values: { name: byId.get(routeId)?.name ?? '', names: names(wanted) }
+      }
     };
   }
   return { kind: 'wait' };

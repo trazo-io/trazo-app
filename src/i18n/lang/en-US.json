@@ -54,6 +54,7 @@
   "activities.changeParcels": "Change parcels",
   "activities.verbOneParcelOnly": "Logged one parcel at a time",
   "events.multiParcel.alsoSingleOnly": "This activity is logged one parcel at a time, so it opened on {name} only. Log the others separately.",
+  "events.multiParcel.alsoRouteNoSeason": "This form opened on {name}, which has no single open production, so {names} could not be added to the same record. Log them separately.",
   "activities.prevMonth": "Previous month",
   "activities.quickLog": "Quick log (voice & templates)",
   "activities.searchPlaceholder": "Search activities…",

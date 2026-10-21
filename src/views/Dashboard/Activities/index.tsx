@@ -920,10 +920,7 @@ const ActivitiesPage = () => {
         }
         footer={
           pickStep === 'parcels' && parcels.length > 1 ? (
-            <StandardButton
-              minH="44px"
-              isDisabled={pickedIds.length === 0}
-              onClick={() => setPickStep('verb')}>
+            <StandardButton isDisabled={pickedIds.length === 0} onClick={() => setPickStep('verb')}>
               {pickedIds.length === 0
                 ? intl.formatMessage({ id: 'activities.continue' })
                 : intl.formatMessage(

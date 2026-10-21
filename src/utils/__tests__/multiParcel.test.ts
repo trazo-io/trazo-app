@@ -264,13 +264,17 @@ describe('planAlsoSeed: the parcels the Activities page passed', () => {
     });
   });
 
-  it('a form parcel with no open production names every parcel it could not add', () => {
+  it('a form parcel with no open production is named as the blocker, not the others', () => {
+    // North and South each have one open production: the notice must not blame them.
     expect(
       planAlsoSeed({ ...base, routeId: 3, eligible: false, routeCannotShare: true, also: '1,2' })
     ).toEqual({
       kind: 'done',
       ids: [],
-      notice: { id: 'events.multiParcel.alsoDropped', values: { names: 'North, South' } }
+      notice: {
+        id: 'events.multiParcel.alsoRouteNoSeason',
+        values: { name: 'Fallow', names: 'North, South' }
+      }
     });
   });
 
