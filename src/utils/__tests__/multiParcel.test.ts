@@ -6,6 +6,7 @@ import {
   derivedValue,
   fieldValue,
   newTarget,
+  restorableDraftParcels,
   targetArea,
   targetIssues,
   type ParcelTarget
@@ -199,5 +200,22 @@ describe('multiParcel: request body', () => {
     expect(irBody).not.toHaveProperty('area_covered');
     expect(irBody).toMatchObject({ irrigation_method: 'drip' });
     expect(irBody.targets).toEqual([{ parcel: 11, area_covered: '12.4', irrigation_depth: '1.5' }]);
+  });
+});
+
+describe('restorableDraftParcels: what a days-old draft may put back', () => {
+  const parcels = [
+    { id: 1, name: 'North', open_season_count: 1 },
+    { id: 2, name: 'South', open_season_count: 0 },
+    { id: 3, name: 'East', open_season_count: 2 },
+    { id: 4, name: 'Uncounted', open_season_count: null }
+  ];
+
+  it('keeps parcels that can still join, names the ones whose season changed, forgets the rest', () => {
+    // 99 left the farm since the draft; 2 and 3 would come back ticked AND locked.
+    expect(restorableDraftParcels([1, 2, 3, 4, 99], parcels)).toEqual({
+      ids: [1, 4],
+      droppedNames: ['South', 'East']
+    });
   });
 });

@@ -8777,8 +8777,16 @@
   "events.multiParcel.field.hive_count": "Colmenas colocadas",
   "events.multiParcel.field.amendment_amount": "Cantidad aplicada ({unit})",
   "events.multiParcel.sectionHelp": "Opcional. La sección o las hileras de esta parcela, si el trabajo no la cubrió completa de la misma forma.",
+  "events.multiParcel.alsoDropped": "No se agregó: {names}. Cada una necesita exactamente una producción abierta para compartir este registro. Regístrala desde la página de esa parcela.",
   "events.multiParcel.field.release_quantity": "Liberado ({unit})",
   "events.multiParcel.field.habitat_structure_count": "Estructuras instaladas",
   "events.multiParcel.fuelUnitLabel": "Unidad de combustible",
-  "events.multiParcel.fuelUnitHelp": "El combustible usado se pide en cada parcela, más abajo, en esta unidad."
+  "events.multiParcel.fuelUnitHelp": "El combustible usado se pide en cada parcela, más abajo, en esta unidad.",
+  "picker.modeLabel": "Mostrar parcelas como",
+  "picker.list": "Lista",
+  "picker.map": "Mapa",
+  "picker.mapHint": "Toca una parcela para agregarla o quitarla. Para elegir con teclado o lector de pantalla, usa Lista.",
+  "picker.mapUnavailable": "El mapa no pudo cargar. Elige las parcelas en la lista.",
+  "picker.noOutlineCount": "{count, plural, one {# parcela no tiene contorno registrado: elígela en Lista.} other {# parcelas no tienen contorno registrado: elígelas en Lista.}}",
+  "picker.selected": "{count, plural, one {# parcela seleccionada} other {# parcelas seleccionadas}}"
 }

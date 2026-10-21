@@ -12,15 +12,15 @@ import { FaBalanceScale, FaLayerGroup } from 'react-icons/fa';
 import {
   SectionBox,
   SectionHeader,
-  StandardCheckboxList,
   StandardField,
   StandardInput,
-  StandardSegmentedControl,
-  type StandardCheckboxListOption
+  StandardSegmentedControl
 } from 'components/Design/StandardComponents';
 import { APPLICATION_RATE_UNIT_SYMBOLS } from 'config/events/enums';
 import { UNIT_CODE_SYMBOLS } from 'config/events/formatters';
 import { SectionInput } from 'components/Fields/BlockIdField';
+import { ParcelPicker } from 'components/Events/ParcelPicker';
+import type { ParcelGeometry } from 'store/api/parcelGeometryApi';
 import type { MultiParcelRules, PerParcelField } from 'config/events/multiParcel';
 import {
   areaUnitOf,
@@ -52,49 +52,25 @@ const fmt = (value: number) => value.toLocaleString(undefined, { maximumFraction
 
 interface AlsoAppliedToProps {
   parcels: FarmParcel[];
+  /** The farm's outlines (parcel-geometry), for the Map mode. */
+  geometry?: ParcelGeometry[];
   originParcelId: number;
   /** Selected parcel ids OTHER than the origin. */
   selectedIds: number[];
   onChange: (ids: number[]) => void;
-  /** For the size shown under each block. */
+  /** For the size shown under each parcel. */
   areaUnit?: string;
 }
 
 export const AlsoAppliedTo = ({
   parcels,
+  geometry,
   originParcelId,
   selectedIds,
   onChange,
   areaUnit = 'acres'
 }: AlsoAppliedToProps) => {
   const intl = useIntl();
-
-  const options: StandardCheckboxListOption[] = parcels.map((parcel) => {
-    const id = Number(parcel.id);
-    const area = hectaresIn(Number(parcel.area) || 0, areaUnit);
-    const isOrigin = id === originParcelId;
-    let disabledReason: string | undefined;
-    if (!isOrigin && parcel.open_season_count === 0) {
-      disabledReason = intl.formatMessage({ id: 'events.multiParcel.noOpenSeason' });
-    } else if (!isOrigin && (parcel.open_season_count ?? 0) > 1) {
-      disabledReason = intl.formatMessage({ id: 'events.multiParcel.twoOpenSeasons' });
-    }
-    return {
-      value: String(id),
-      label: isOrigin
-        ? intl.formatMessage({ id: 'events.multiParcel.origin' }, { name: parcel.name })
-        : parcel.name,
-      detail: area
-        ? intl.formatMessage(
-            { id: 'events.multiParcel.areaDetail' },
-            { area: fmt(area), unit: areaSymbol(areaUnit) }
-          )
-        : undefined,
-      isFixed: isOrigin,
-      disabledReason
-    };
-  });
-
   return (
     <SectionBox>
       <SectionHeader
@@ -102,14 +78,14 @@ export const AlsoAppliedTo = ({
         title={intl.formatMessage({ id: 'events.multiParcel.title' })}
         description={intl.formatMessage({ id: 'events.multiParcel.hint' })}
       />
-      <StandardCheckboxList
+      <ParcelPicker
+        parcels={parcels}
+        geometry={geometry}
+        originParcelId={originParcelId}
+        selectedIds={selectedIds}
+        onChange={onChange}
         legend={intl.formatMessage({ id: 'events.multiParcel.legend' })}
-        options={options}
-        value={[String(originParcelId), ...selectedIds.map(String)]}
-        onChange={(values) =>
-          onChange(values.map(Number).filter((id) => id !== originParcelId && Number.isFinite(id)))
-        }
-        selectAllLabel={intl.formatMessage({ id: 'events.multiParcel.selectAll' })}
+        areaUnit={areaUnit}
       />
     </SectionBox>
   );

@@ -8777,8 +8777,16 @@
   "events.multiParcel.field.hive_count": "Hives placed",
   "events.multiParcel.field.amendment_amount": "Amount applied ({unit})",
   "events.multiParcel.sectionHelp": "Optional. The section or rows of this parcel, if the work did not cover the whole of it the same way.",
+  "events.multiParcel.alsoDropped": "Not added: {names}. Each needs exactly one open production to share this record. Log it from its own page.",
   "events.multiParcel.field.release_quantity": "Released ({unit})",
   "events.multiParcel.field.habitat_structure_count": "Structures installed",
   "events.multiParcel.fuelUnitLabel": "Fuel unit",
-  "events.multiParcel.fuelUnitHelp": "Fuel used is asked on each parcel below, in this unit."
+  "events.multiParcel.fuelUnitHelp": "Fuel used is asked on each parcel below, in this unit.",
+  "picker.modeLabel": "Show parcels as",
+  "picker.list": "List",
+  "picker.map": "Map",
+  "picker.mapHint": "Tap a parcel to add or remove it. To pick with a keyboard or a screen reader, use List.",
+  "picker.mapUnavailable": "The map could not load. Pick the parcels in the list.",
+  "picker.noOutlineCount": "{count, plural, one {# parcel has no outline on file: pick it in List.} other {# parcels have no outline on file: pick them in List.}}",
+  "picker.selected": "{count, plural, one {# parcel selected} other {# parcels selected}}"
 }

@@ -267,3 +267,37 @@ function round(value: number, places: number): number {
   const f = 10 ** places;
   return Math.round(value * f) / f;
 }
+
+/** A parcel as the farm payload serves it, enough to say whether it may join a group. */
+export interface JoinableParcel {
+  id: number | string;
+  name: string;
+  open_season_count?: number | null;
+}
+
+/**
+ * May this parcel join a multi-parcel record? Exactly one open production, the rule the server
+ * holds a group to. `open_season_count` null means "not counted": it joins and the server decides.
+ * The same rule `disabledReasonFor` (ParcelPicker) shows as a reason.
+ */
+export const parcelMayJoin = (parcel: JoinableParcel): boolean =>
+  parcel.open_season_count == null || parcel.open_season_count === 1;
+
+/**
+ * The parcels a restored draft may put back: still on this farm and still able to join. A draft
+ * can be days old, and a parcel whose season closed since would come back ticked AND locked (the
+ * picker greys it from live data), with no way to untick it. Those come back as `droppedNames`.
+ */
+export const restorableDraftParcels = (
+  draftIds: Array<number | string>,
+  parcels: JoinableParcel[]
+): { ids: number[]; droppedNames: string[] } => {
+  const byId = new Map(parcels.map((p) => [Number(p.id), p]));
+  const onFarm = draftIds.map(Number).filter((id) => byId.has(id));
+  return {
+    ids: onFarm.filter((id) => parcelMayJoin(byId.get(id)!)),
+    droppedNames: onFarm
+      .filter((id) => !parcelMayJoin(byId.get(id)!))
+      .map((id) => byId.get(id)!.name)
+  };
+};
