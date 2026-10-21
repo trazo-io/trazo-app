@@ -109,7 +109,9 @@ const FAMILIES: Array<{ name: string; event: Record<string, unknown> }> = [
 const OPERATOR_ONLY = [
   'EPA Registration',
   'Buffer Zone',
-  'Block / Section',
+  // The section label inside a parcel (fieldDetails.blockId). It was 'Block / Section' until the
+  // 2026-10-21 rename; the guard follows the catalog, or it can never fail again.
+  'Section / rows',
   'Fuel Consumed',
   'Equipment Hours',
   'Applicator Certification',

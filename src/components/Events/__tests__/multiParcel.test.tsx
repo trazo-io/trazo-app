@@ -50,7 +50,7 @@ const Picker = ({ onIds }: { onIds?: (ids: number[]) => void }) => {
 describe('AlsoAppliedTo', () => {
   it('shows the origin block ticked and locked, and names it', () => {
     wrap(<Picker />);
-    const origin = screen.getByRole('checkbox', { name: /Block A \(this block\)/ });
+    const origin = screen.getByRole('checkbox', { name: /Block A \(this parcel\)/ });
     expect(origin).toBeChecked();
     expect(origin).toHaveAttribute('readonly');
   });
@@ -59,7 +59,7 @@ describe('AlsoAppliedTo', () => {
     wrap(<Picker />);
     expect(screen.getByRole('checkbox', { name: /Block C/ })).toBeDisabled();
     expect(screen.getByRole('checkbox', { name: /Block D/ })).toBeDisabled();
-    expect(screen.getByText(/No open production on this block/)).toBeInTheDocument();
+    expect(screen.getByText(/No open production on this parcel/)).toBeInTheDocument();
     expect(screen.getByText(/two open productions/)).toBeInTheDocument();
     // Not counted is not "none": the server decides, so the block stays pickable.
     expect(screen.getByRole('checkbox', { name: /Block E/ })).not.toBeDisabled();
@@ -103,7 +103,7 @@ describe('PerParcelAmounts', () => {
 
   it('asks whole or part with neither chosen, and no amount until it is answered', () => {
     wrap(<Cards initial={[blockA]} />);
-    expect(screen.getByRole('button', { name: /Whole block \(12\.4 ac\)/ })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: /Whole parcel \(12\.4 ac\)/ })).toHaveAttribute(
       'aria-pressed',
       'false'
     );
@@ -112,17 +112,17 @@ describe('PerParcelAmounts', () => {
 
   it('whole block: shows the derivation and offers it as the amount', () => {
     wrap(<Cards initial={[blockA]} />);
-    fireEvent.click(screen.getByRole('button', { name: /Whole block/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Whole parcel/ }));
     expect(screen.getByText('2 gal/ac × 12.4 ac = 24.8 gal')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('24.8')).toHaveValue(null);
   });
 
   it('a block with no size on record asks for it under "whole block"', () => {
     wrap(<Cards initial={[newTarget({ id: 9, name: 'New block', area: 0 })]} showIssues />);
-    fireEvent.click(screen.getByRole('button', { name: 'Whole block' }));
-    expect(screen.getByLabelText(/Block size \(ac\)/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Whole parcel' }));
+    expect(screen.getByLabelText(/Parcel size \(ac\)/)).toBeInTheDocument();
     expect(screen.getByText('Enter the area treated.')).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText(/Block size \(ac\)/), { target: { value: '8' } });
+    fireEvent.change(screen.getByLabelText(/Parcel size \(ac\)/), { target: { value: '8' } });
     expect(screen.getByText('2 gal/ac × 8 ac = 16 gal')).toBeInTheDocument();
   });
 
@@ -138,7 +138,7 @@ describe('PerParcelAmounts', () => {
         showIssues
       />
     );
-    expect(screen.getByRole('alert')).toHaveTextContent('Choose whole block or part.');
+    expect(screen.getByRole('alert')).toHaveTextContent('Choose whole parcel or part.');
     expect(screen.getByText('Enter the area treated.')).toBeInTheDocument();
   });
 });

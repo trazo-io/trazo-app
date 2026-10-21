@@ -142,7 +142,7 @@ describe('farm without NOP checks, no parcel: name the parcel, not a production'
     renderCard('es-419', es419 as Record<string, string>);
     const link = screen.getByTestId('readiness-add-first-parcel');
     expect(link.textContent).toContain('Primero agrega una parcela');
-    expect(screen.getByText(/se lleva en una parcela \(un bloque\)/)).toBeTruthy();
+    expect(screen.getByText(/se lleva en una parcela\. Esta finca/)).toBeTruthy();
   });
 
   it('keeps "start a production" once there is a parcel to start it on', () => {

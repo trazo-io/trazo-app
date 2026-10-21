@@ -86,7 +86,7 @@ describe('Log activity on a farm with no block', () => {
     renderActivities([]);
     const sheet = pickInputApplication();
     expect(within(sheet).getByText(enUS['activities.pickParcel'])).toBeTruthy();
-    expect(within(sheet).getByText('1060 has no blocks yet')).toBeTruthy();
+    expect(within(sheet).getByText('1060 has no parcels yet')).toBeTruthy();
   });
 
   it('opens the quick-add from the sheet, so the next step is one tap', () => {
@@ -105,7 +105,7 @@ describe('Log activity on a farm with no block', () => {
   it("speaks the reader's language in es-419", () => {
     renderActivities([], 'es-419');
     const sheet = pickInputApplication(es419 as any);
-    expect(within(sheet).getByText('1060 todavía no tiene bloques')).toBeTruthy();
+    expect(within(sheet).getByText('1060 todavía no tiene parcelas')).toBeTruthy();
     expect(within(sheet).getByRole('button', { name: es419['parcel.addABlock'] })).toBeTruthy();
   });
 
@@ -117,6 +117,6 @@ describe('Log activity on a farm with no block', () => {
     ]);
     const sheet = pickInputApplication();
     expect(within(sheet).getByRole('button', { name: 'Block A' })).toBeTruthy();
-    expect(within(sheet).queryByText(/has no blocks yet/)).toBeNull();
+    expect(within(sheet).queryByText(/has no parcels yet/)).toBeNull();
   });
 });
