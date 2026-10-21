@@ -46,9 +46,11 @@ import {
 } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { traceReturnPath } from 'utils/traceReturnPath';
 
 import {
+  GuidanceNote,
   StandardButton,
   StandardCard,
   StandardField,
@@ -198,6 +200,19 @@ const DocumentsPage = () => {
   // `${event_type}:${id}` of the one record this file documents, or '' (pilot rehearsal
   // 2026-10, finding 4: an invoice could point at the season and no finer).
   const [uploadEvent, setUploadEvent] = useState('');
+
+  // Arriving from a traceback gap ("no purchase receipt attached"): the filing dialog opens
+  // already filed to that season and record, and the upload returns to the trace. Each value is
+  // shape-checked; `next` goes through traceReturnPath, so only this farm's trace is honoured.
+  const [searchParams] = useSearchParams();
+  const presetProduction = /^\d+$/.test(searchParams.get('production') || '')
+    ? (searchParams.get('production') as string)
+    : '';
+  const presetRecord =
+    presetProduction && /^\d+:\d+$/.test(searchParams.get('record') || '')
+      ? (searchParams.get('record') as string)
+      : '';
+  const returnTo = traceReturnPath(searchParams.get('next'), farmId, '');
 
   const { data: productions = [] } = useGetFarmProductionsQuery(farmId, {
     skip: !farmId || !isFilingOpen
@@ -370,8 +385,8 @@ const DocumentsPage = () => {
     // Filename without extension is the best title Trazo can offer; the farmer overrides it.
     setUploadTitle(file.name.replace(/\.[^.]+$/, ''));
     setUploadFolder('uploads');
-    setUploadProduction('');
-    setUploadEvent('');
+    setUploadProduction(presetProduction);
+    setUploadEvent(presetRecord);
     onFilingOpen();
     clearInput();
   };
@@ -401,6 +416,7 @@ const DocumentsPage = () => {
       });
       setPendingFile(null);
       onFilingClose();
+      if (returnTo) navigate(returnTo);
     } catch (err) {
       // The server explains itself — too big, wrong type, no active plan, production not on
       // this farm — and a bare "Upload failed" throws that explanation away. `apiErrorMessage`
@@ -689,6 +705,9 @@ const DocumentsPage = () => {
           level, which is where it actually is. 40px exactly, so the toolbar starts flush at
           the hero's bottom edge and nothing straddles it. */}
       <VStack align="stretch" spacing={5} mt="40px">
+        {presetRecord && (
+          <GuidanceNote>{intl.formatMessage({ id: 'documents.fromTraceback' })}</GuidanceNote>
+        )}
         <Flex
           gap={3}
           direction={{ base: 'column', smd: 'row' }}

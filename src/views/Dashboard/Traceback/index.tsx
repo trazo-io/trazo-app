@@ -17,7 +17,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Badge, Box, HStack, Stack, Text, VStack, Wrap, WrapItem } from '@chakra-ui/react';
-import { FaArrowDown, FaRandom, FaRoute, FaSearch } from 'react-icons/fa';
+import { FaArrowDown, FaPaperclip, FaRandom, FaRoute, FaSearch } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
@@ -32,6 +32,8 @@ import {
   StandardSearchInput
 } from 'components/Design/StandardComponents';
 import { useGetSaleTracebackQuery, useSearchTracebackSalesQuery } from 'store/api/historyApi';
+import { DOCUMENT_DOWNLOAD_URL } from 'config';
+import { env } from 'config/environment';
 
 type Gap = { hop: string; code: string; field: string; ref: number | null; kind: string };
 type SearchArgs = { q?: string; random?: number; establishmentId?: string };
@@ -43,6 +45,18 @@ const EVENT_TYPE_BY_KIND: Record<string, number> = {
   chemical: 2,
   amendment: 5,
   beneficial: 6
+};
+
+type TraceDoc = { id: number; title: string; kind: string };
+
+// Sale source kinds reuse the sales row's own labels, so the two never name a file differently.
+const DOC_KIND_KEYS: Record<string, string> = {
+  invoice: 'sales.sources.kind.invoice',
+  bill_of_lading: 'sales.sources.kind.billOfLading',
+  packout: 'sales.sources.kind.packout',
+  other: 'sales.sources.kind.other',
+  receipt: 'traceback.docKind.receipt',
+  attachment: 'traceback.docKind.attachment'
 };
 
 const LABEL_CATEGORY_KEYS: Record<string, string> = {
@@ -126,8 +140,17 @@ export const TracebackPage = () => {
   const fixPath = (gap: Gap) => {
     if (!season?.establishment_id || !season?.parcel_id) return null;
     const kind = gap.hop === 'picks' && gap.field === 'harvest_lot_code' ? 'pick' : gap.kind;
+    const back = encodeURIComponent(`/admin/dashboard/farm/${farmId}/traceback?sale=${saleId}`);
+    if (gap.code === 'input_without_document' && gap.ref && EVENT_TYPE_BY_KIND[kind]) {
+      // A receipt is FILED against the record from Documents, which works on a finished season
+      // too (a correction cannot set a file link). The filing dialog opens pre-filed to this
+      // season and record, and the upload returns here.
+      return `/admin/dashboard/farm/${season.establishment_id}/documents?production=${season.id}&record=${EVENT_TYPE_BY_KIND[kind]}:${gap.ref}&next=${back}`;
+    }
     if (gap.ref && EVENT_TYPE_BY_KIND[kind]) {
-      return `/admin/dashboard/farm/${season.establishment_id}/parcel/${season.parcel_id}/event/${gap.ref}/change?event_type=${EVENT_TYPE_BY_KIND[kind]}`;
+      // `next` brings the farmer back to this trace once the record is saved (NewEvent accepts
+      // only this farm's traceback path there, nothing else).
+      return `/admin/dashboard/farm/${season.establishment_id}/parcel/${season.parcel_id}/event/${gap.ref}/change?event_type=${EVENT_TYPE_BY_KIND[kind]}&next=${back}`;
     }
     return productionPath;
   };
@@ -141,6 +164,31 @@ export const TracebackPage = () => {
       .filter(Boolean)
       .join(' · ');
   };
+
+  // The files behind a hop, opened through the farm's own documents route (company-checked
+  // server-side). 44px buttons: on a phone at inspection this is the tap that matters.
+  // From the trace itself, not the app's loaded company: opened from a link, none is loaded yet.
+  const companyId = season?.company_id != null ? String(season.company_id) : '';
+  const docLabel = (kind: string) => t(DOC_KIND_KEYS[kind] ?? 'traceback.docKind.attachment');
+  const Files = ({ docs }: { docs?: TraceDoc[] }) =>
+    docs && docs.length && season?.establishment_id && companyId ? (
+      <Wrap spacing={2} mt={1}>
+        {docs.map((d) => (
+          <WrapItem key={d.id}>
+            <StandardButton
+              as="a"
+              href={env.getApiUrl(
+                DOCUMENT_DOWNLOAD_URL(companyId, String(season.establishment_id), d.id)
+              )}
+              size="sm"
+              variant="ghost"
+              leftIcon={<FaPaperclip />}>
+              {`${docLabel(d.kind)}: ${d.title}`}
+            </StandardButton>
+          </WrapItem>
+        ))}
+      </Wrap>
+    ) : null;
 
   const gapsFor = (hop: string) =>
     (tb?.gaps || [])
@@ -294,6 +342,7 @@ export const TracebackPage = () => {
             <Fact label={t('traceback.field.quantity')} value={tb.sale.quantity} />
             <Fact label={t('traceback.field.invoice')} value={tb.sale.invoice} />
             <Fact label={t('traceback.field.bol')} value={tb.sale.bol} />
+            <Files docs={tb.sale.documents} />
             <Text fontSize="sm">
               {t(
                 tb.sale.organic_on_invoice
@@ -347,6 +396,7 @@ export const TracebackPage = () => {
                         label={t('traceback.field.handlerDocument')}
                         value={p.handler_document}
                       />
+                      <Files docs={p.documents} />
                     </VStack>
                   </WrapItem>
                 ))}
@@ -403,6 +453,7 @@ export const TracebackPage = () => {
                     <Fact label={t('traceback.field.supplier')} value={r.supplier} />
                     <Fact label={t('traceback.field.invoice')} value={r.invoice} />
                     <Fact label={t('traceback.field.lot')} value={r.lot} />
+                    <Files docs={r.documents} />
                   </Box>
                 ))}
               </VStack>
