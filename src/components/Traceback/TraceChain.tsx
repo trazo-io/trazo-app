@@ -50,7 +50,8 @@ const DESTINATION_KEYS: Record<string, string> = {
   other: 'events.harvestDestination.other'
 };
 
-// A spray's recorded type (ChemicalEvent.type). A reviewer reads a fungicide or pesticide
+// A spray's recorded type: the row's `event_type`, which history/services/traceback.py fills from
+// ChemicalEvent.type (FE/FU/HE/PE). A reviewer reads a fungicide or pesticide
 // differently from a fertilizer (§ 205.206 governs pest-control materials), and the record knows
 // which it is, so "Fertilizer or crop protection" is only the fallback for a type it does not.
 const CHEMICAL_TYPE_KEYS: Record<string, string> = {
