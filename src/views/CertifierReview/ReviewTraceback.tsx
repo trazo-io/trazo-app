@@ -9,7 +9,7 @@
  *
  * Anonymous by design, like the rest of this page: no credentials on any request.
  */
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Box, Divider, Heading, HStack, Stack, Text, VStack } from '@chakra-ui/react';
 import { FaRandom, FaSearch } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
@@ -53,22 +53,48 @@ export const ReviewTraceback = ({ token, apiRoot }: Props) => {
   const [state, setState] = useState<State>({ kind: 'idle' });
   const base = `${apiRoot}/certifier-review/${token}/traceback/`;
 
+  // Only the newest request may change the page (review of app #167): a search answered after a
+  // later "Random recent sale" showed a chain that matched neither. Each request takes a number;
+  // an answer for an older number is dropped. A malformed body is an error, never a spinner left
+  // running forever.
+  const latest = useRef(0);
+  const getJson = async (url: string, n: number): Promise<any | { status: number } | null> => {
+    try {
+      const res = await fetch(url);
+      if (n !== latest.current) return null;
+      if (!res.ok) return { status: res.status };
+      return await res.json();
+    } catch {
+      return n === latest.current ? { status: 0 } : null;
+    }
+  };
+
   const openSale = async (saleId: number) => {
+    const n = ++latest.current;
     setState({ kind: 'loading' });
-    const res = await fetch(`${base}${saleId}/`).catch(() => null);
-    if (!res || !res.ok) return setState({ kind: 'error', status: res?.status ?? 0 });
-    setState({ kind: 'trace', trace: await res.json() });
+    const body = await getJson(`${base}${saleId}/`, n);
+    if (body === null) return;
+    if (!body?.sale) return setState({ kind: 'error', status: body?.status ?? 0 });
+    setState({ kind: 'trace', trace: body });
   };
 
   const search = async (params: URLSearchParams, random: boolean) => {
+    const n = ++latest.current;
     setState({ kind: 'loading' });
-    const res = await fetch(`${base}?${params}`).catch(() => null);
-    if (!res || !res.ok) return setState({ kind: 'error', status: res?.status ?? 0 });
-    const body = await res.json();
+    const body = await getJson(`${base}?${params}`, n);
+    if (body === null) return;
+    if (!Array.isArray(body?.results))
+      return setState({ kind: 'error', status: body?.status ?? 0 });
     // One match is the sale; several are the reviewer's choice, never this page's.
     if (body.results.length === 1) return openSale(body.results[0].sale_id);
-    setState({ kind: 'matches', matches: body.results, truncated: body.truncated, random });
+    setState({
+      kind: 'matches',
+      matches: body.results,
+      truncated: Boolean(body.truncated),
+      random
+    });
   };
+  const busy = state.kind === 'loading';
 
   return (
     <Box w="full" data-testid="certifier-traceback">
@@ -92,12 +118,13 @@ export const ReviewTraceback = ({ token, apiRoot }: Props) => {
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setText(e.target.value)}
             placeholder={t('traceback.search.placeholder')}
           />
-          <StandardButton type="submit" leftIcon={<FaSearch />} isDisabled={!text.trim()}>
+          <StandardButton type="submit" leftIcon={<FaSearch />} isDisabled={!text.trim() || busy}>
             {t('traceback.search.submit')}
           </StandardButton>
           <StandardButton
             variant="outline"
             leftIcon={<FaRandom />}
+            isDisabled={busy}
             onClick={() => search(new URLSearchParams({ random: '1' }), true)}>
             {t('traceback.search.random')}
           </StandardButton>

@@ -97,6 +97,90 @@ afterEach(() => {
 });
 
 describe('ReviewTraceback', () => {
+  it('an answer to an older request never replaces the newer one', async () => {
+    // Enter in the search box submits even while the button is disabled, so a second search can
+    // start before the first answers. The first (SLOW) answers LAST; the page must keep showing
+    // the second's chain, never the stale list (review of app #167).
+    let releaseSlow: (r: Response) => void = () => undefined;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) => {
+        if (url.includes('q=SLOW')) return new Promise<Response>((r) => (releaseSlow = r));
+        if (url.includes('q=FAST'))
+          return reply(200, {
+            truncated: false,
+            results: [
+              {
+                sale_id: 7,
+                date: '',
+                buyer: '',
+                invoice: '',
+                crop: '',
+                parcel: '',
+                season: '',
+                matched_on: 'invoice'
+              }
+            ]
+          });
+        return reply(200, TRACE);
+      })
+    );
+    renderIt();
+    searchFor('SLOW');
+    const input = screen.getByPlaceholderText(messages['traceback.search.placeholder']);
+    fireEvent.change(input, { target: { value: 'FAST' } });
+    fireEvent.submit(input.closest('form') as HTMLFormElement);
+    expect(await screen.findByText(messages['traceback.hop.sale'])).toBeTruthy();
+    releaseSlow(
+      (await reply(200, {
+        truncated: false,
+        results: [
+          {
+            sale_id: 1,
+            date: '',
+            buyer: 'STALE',
+            invoice: '',
+            crop: '',
+            parcel: '',
+            season: '',
+            matched_on: 'invoice'
+          },
+          {
+            sale_id: 2,
+            date: '',
+            buyer: 'STALE2',
+            invoice: '',
+            crop: '',
+            parcel: '',
+            season: '',
+            matched_on: 'invoice'
+          }
+        ]
+      })) as Response
+    );
+    await new Promise((r) => setTimeout(r, 50));
+    expect(screen.getByText(messages['traceback.hop.sale'])).toBeTruthy();
+    expect(screen.queryByText(/STALE/)).toBeNull();
+  });
+
+  it('a malformed answer is an error, not a spinner forever', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.reject(new SyntaxError('bad'))
+        } as Response)
+      )
+    );
+    renderIt();
+    searchFor('X');
+    await waitFor(() =>
+      expect(screen.getByText(messages['certifierReview.traceback.unavailable'])).toBeTruthy()
+    );
+  });
+
   it("several matches are the reviewer's choice", async () => {
     vi.stubGlobal(
       'fetch',
