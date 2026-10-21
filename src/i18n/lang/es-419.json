@@ -8844,7 +8844,7 @@
   "events.multiParcel.amountUnitLabel": "Unidad de cantidad",
   "events.multiParcel.amountUnitHelp": "La cantidad aplicada se pide en cada parcela más abajo, en esta unidad.",
   "events.multiParcel.pausedTitle": "Una parcela a la vez",
-  "events.multiParcel.pausedBody": "{count, plural, one {Esta actividad se registra en una parcela a la vez, así que este registro es solo para {name}. La otra parcela que elegiste se conserva: elige una actividad que pueda cubrir varias parcelas para incluirla.} other {Esta actividad se registra en una parcela a la vez, así que este registro es solo para {name}. Las # parcelas que elegiste se conservan: elige una actividad que pueda cubrir varias parcelas para incluirlas.}}",
+  "events.multiParcel.pausedBody": "{count, plural, one {Esta actividad se registra en una parcela a la vez, así que este registro es solo para {name}. La otra parcela que elegiste se conserva: elige una actividad que pueda cubrir varias parcelas para incluirla.} other {Esta actividad se registra en una parcela a la vez, así que este registro es solo para {name}. Las otras # parcelas que elegiste se conservan: elige una actividad que pueda cubrir varias parcelas para incluirlas.}}",
   "picker.modeLabel": "Mostrar parcelas como",
   "picker.list": "Lista",
   "picker.map": "Mapa",

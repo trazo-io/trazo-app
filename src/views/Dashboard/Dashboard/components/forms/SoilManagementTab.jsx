@@ -1227,7 +1227,11 @@ const SoilManagementTab = forwardRef(
 
                     <StandardField
                       label={
-                        watch('fuel_type') === 'electric' ? 'Energy Amount (kWh)' : 'Fuel Consumed'
+                        multiTarget
+                          ? intl.formatMessage({ id: 'events.multiParcel.fuelUnitLabel' })
+                          : watch('fuel_type') === 'electric'
+                          ? 'Energy Amount (kWh)'
+                          : 'Fuel Consumed'
                       }
                       helpText={
                         multiTarget

@@ -8,7 +8,7 @@
  */
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { render } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 import { ChakraProvider } from '@chakra-ui/react';
 import { Provider } from 'react-redux';
@@ -110,5 +110,19 @@ describe('pest with several parcels', () => {
     }
     expect(several('beneficial_species')).toBe(true);
     expect(several('area_unit')).toBe(true);
+  });
+
+  it('the fuel box says it is a unit, not an amount, on both forms', () => {
+    // The amount is on the cards; a "Fuel Consumed" label over a unit select reads as a
+    // place to type the fuel.
+    for (const [Tab, type] of [
+      [SoilManagementTab, 'TI'],
+      [PestManagementTab, 'BR']
+    ] as const) {
+      mount(Tab, type, true);
+      expect(screen.getAllByText('Fuel unit').length).toBeGreaterThan(0);
+      expect(screen.queryByText('Fuel Consumed')).toBeNull();
+      cleanup();
+    }
   });
 });

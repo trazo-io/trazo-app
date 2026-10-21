@@ -1039,7 +1039,11 @@ const PestManagementTab = forwardRef(
                     {/* Dynamic Fuel Consumed label based on fuel type */}
                     <StandardField
                       label={
-                        watch('fuel_type') === 'electric' ? 'Energy Amount (kWh)' : 'Fuel Consumed'
+                        multiTarget
+                          ? intl.formatMessage({ id: 'events.multiParcel.fuelUnitLabel' })
+                          : watch('fuel_type') === 'electric'
+                          ? 'Energy Amount (kWh)'
+                          : 'Fuel Consumed'
                       }
                       helpText={
                         multiTarget
