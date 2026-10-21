@@ -167,7 +167,12 @@ export const TracebackPage = () => {
       {!saleId && (matches?.length ?? 0) > 0 && (
         <StandardCard
           title={t('traceback.matches.title', { count: matches!.length })}
-          subtitle={t('traceback.matches.subtitle')}>
+          subtitle={t(
+            // An input's lot or invoice is a recall: every row is the answer, none is "the" sale.
+            matches!.every((m: any) => m.matched_on.startsWith('input_'))
+              ? 'traceback.matches.subtitleRecall'
+              : 'traceback.matches.subtitle'
+          )}>
           {truncated && (
             <StandardAlert status="info" mb={3} description={t('traceback.matches.truncated')} />
           )}
@@ -185,7 +190,7 @@ export const TracebackPage = () => {
                     pushed the label into the button edge). */}
                 <Box flex={1} minW={0}>
                   <Text fontWeight="semibold">
-                    {[m.date, m.buyer, m.invoice].filter(Boolean).join(' · ')}
+                    {[m.date, m.buyer, m.quantity, m.invoice].filter(Boolean).join(' · ')}
                   </Text>
                   <Text fontSize="sm" color="gray.600">
                     {[m.crop, m.parcel, m.season].filter(Boolean).join(' · ')} ·{' '}

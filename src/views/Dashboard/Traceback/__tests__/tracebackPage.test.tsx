@@ -233,6 +233,56 @@ describe('TracebackPage', () => {
     expect(screen.getByText(/the sale names no pick/)).toBeTruthy();
   });
 
+  it('a recall search lists who got how much, each match with its quantity', () => {
+    state.search = {
+      truncated: false,
+      results: ['A', 'B'].map((buyer, i) => ({
+        sale_id: i + 1,
+        date: '2026-08-0' + (i + 1),
+        buyer,
+        quantity: `${(i + 1) * 1000} lb`,
+        invoice: `I${i}`,
+        crop: 'Apples',
+        parcel: 'P',
+        season: '2026',
+        matched_on: 'input_lot'
+      }))
+    };
+    renderAt('/admin/dashboard/farm/1/traceback');
+    fireEvent.change(screen.getByPlaceholderText(messages['traceback.search.placeholder']), {
+      target: { value: 'CMP-4471' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: messages['traceback.search.submit'] }));
+    expect(screen.getByText('2026-08-01 · A · 1000 lb · I0')).toBeTruthy();
+    expect(screen.getByText(messages['traceback.matches.subtitleRecall'])).toBeTruthy();
+    expect(
+      screen.getAllByText(
+        new RegExp(messages['traceback.matchedOn.input_lot'].replace(/[()]/g, '\\$&'))
+      )
+    ).toHaveLength(2);
+  });
+
+  it('puts the days to the next pick beside the recorded PHI, and flags a pick inside it', () => {
+    state.trace = {
+      ...TRACE,
+      inputs: [
+        { ...TRACE.inputs[0], event_id: 44, days_to_pick: 3, phi_days: '7', inside_phi: true },
+        { ...TRACE.inputs[0], event_id: 45, days_to_pick: 1, phi_days: '', inside_phi: false },
+        {
+          ...TRACE.inputs[0],
+          kind: 'amendment',
+          event_id: 46,
+          days_to_pick: null,
+          inside_phi: false
+        }
+      ]
+    };
+    renderAt('/admin/dashboard/farm/1/traceback?sale=7');
+    expect(screen.getByText('3 days before the next pick · PHI recorded: 7 days')).toBeTruthy();
+    expect(screen.getByText('1 day before the next pick · no PHI recorded')).toBeTruthy();
+    expect(screen.getAllByText(messages['traceback.input.insidePhi'])).toHaveLength(1);
+  });
+
   it('is a drill-down: it has a Back button', () => {
     renderAt('/admin/dashboard/farm/1/traceback');
     expect(screen.getByRole('button', { name: messages['common.back'] })).toBeTruthy();

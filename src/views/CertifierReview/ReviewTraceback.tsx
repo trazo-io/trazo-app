@@ -27,6 +27,7 @@ type Match = {
   date: string;
   buyer: string;
   invoice: string;
+  quantity: string;
   crop: string;
   parcel: string;
   season: string;
@@ -166,7 +167,11 @@ export const ReviewTraceback = ({ token, apiRoot }: Props) => {
               {t('traceback.matches.title', { count: state.matches.length })}
             </Text>
             <Text fontSize="sm" color="gray.600">
-              {t('traceback.matches.subtitle')}
+              {t(
+                state.matches.every((m) => m.matched_on.startsWith('input_'))
+                  ? 'traceback.matches.subtitleRecall'
+                  : 'traceback.matches.subtitle'
+              )}
             </Text>
             {state.truncated && (
               <StandardAlert status="info" mb={0} description={t('traceback.matches.truncated')} />
@@ -181,7 +186,7 @@ export const ReviewTraceback = ({ token, apiRoot }: Props) => {
                 spacing={3}>
                 <Box flex={1} minW={0}>
                   <Text fontWeight="semibold">
-                    {[m.date, m.buyer, m.invoice].filter(Boolean).join(' · ')}
+                    {[m.date, m.buyer, m.quantity, m.invoice].filter(Boolean).join(' · ')}
                   </Text>
                   <Text fontSize="sm" color="gray.600">
                     {[m.crop, m.parcel, m.season].filter(Boolean).join(' · ')} ·{' '}

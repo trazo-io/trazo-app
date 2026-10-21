@@ -302,6 +302,23 @@ export const TraceChain = ({
                     .filter(Boolean)
                     .join(' · ')}
                 </Text>
+                {/* Sprays only: days to the next pick in this chain beside the PHI the operation
+                    recorded. Arithmetic on its own dates, the first thing a residue finding asks. */}
+                {r.days_to_pick != null && (
+                  <Text fontSize="sm" color="gray.600">
+                    {[
+                      t('traceback.input.daysToPick', { days: r.days_to_pick }),
+                      r.phi_days
+                        ? t('traceback.input.phiRecorded', { phi: r.phi_days })
+                        : t('traceback.input.noPhi')
+                    ].join(' · ')}
+                  </Text>
+                )}
+                {r.inside_phi && (
+                  <Badge variant="warning" mt={1} textTransform="none">
+                    {t('traceback.input.insidePhi')}
+                  </Badge>
+                )}
                 <Fact label={t('traceback.field.supplier')} value={r.supplier} />
                 <Fact label={t('traceback.field.invoice')} value={r.invoice} />
                 <Fact label={t('traceback.field.lot')} value={r.lot} />
