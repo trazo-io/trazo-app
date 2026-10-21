@@ -17,7 +17,8 @@ import type { IntlShape } from 'react-intl';
 import { googleMapsLoaderOptions } from 'components/Map/mapsLoaderOptions';
 import { toLatLngPath } from 'utils/parcelPolygon';
 import { NEIGHBOUR_OUTLINE } from 'components/Map/neighbourOutline';
-import { GoogleMap, Polygon, Marker, OverlayView, useLoadScript } from '@react-google-maps/api';
+import { ParcelNameLabel } from 'components/Map/ParcelNameLabel';
+import { GoogleMap, Polygon, Marker, useLoadScript } from '@react-google-maps/api';
 import { TrazoImageUpload } from '../Upload';
 import {
   FaMapMarkedAlt,
@@ -176,15 +177,6 @@ interface StandardParcelFormTransparencyProps {
    */
   saveFromBoundary?: boolean;
 }
-
-const outlineCenter = (path: Array<{ lat: number; lng: number }>) => {
-  const lats = path.map((p) => p.lat);
-  const lngs = path.map((p) => p.lng);
-  return {
-    lat: (Math.min(...lats) + Math.max(...lats)) / 2,
-    lng: (Math.min(...lngs) + Math.max(...lngs)) / 2
-  };
-};
 
 export const StandardParcelFormTransparency: React.FC<StandardParcelFormTransparencyProps> = ({
   onSubmit,
@@ -798,27 +790,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                       {otherParcels.map((other) => (
                         <React.Fragment key={other.id}>
                           <Polygon path={other.path} options={NEIGHBOUR_OUTLINE} />
-                          {/* OVERLAY_LAYER, not the mouse-target pane, and no pointer events:
-                              the name is a label, and a click on it must reach the map. */}
-                          <OverlayView
-                            position={outlineCenter(other.path)}
-                            mapPaneName={OverlayView.OVERLAY_LAYER}>
-                            <Text
-                              as="span"
-                              display="inline-block"
-                              transform="translate(-50%, -50%)"
-                              pointerEvents="none"
-                              whiteSpace="nowrap"
-                              px={2}
-                              py={0.5}
-                              borderRadius="full"
-                              bg="blackAlpha.600"
-                              color="white"
-                              fontSize="xs"
-                              fontWeight="semibold">
-                              {other.name}
-                            </Text>
-                          </OverlayView>
+                          <ParcelNameLabel name={other.name} path={other.path} />
                         </React.Fragment>
                       ))}
                       {getPolygonLength() > 2 && (

@@ -6566,7 +6566,7 @@
   "parcel.boundary.whyBody": "Your certifier's parcel application needs a map of this parcel. Drawing it here satisfies that — you can also upload a map document instead. It is not shown to shoppers: public pages show an approximate area, never a field outline.",
   "parcel.boundary.whyTitle": "Why your certifier needs this",
   "parcel.boundary.saveOutline": "Save outline",
-  "parcel.boundary.otherParcelsHint": "{count, plural, one {The farm's other parcel is outlined in white, with its name.} other {The farm's other # parcels are outlined in white, with their names.}}",
+  "parcel.boundary.otherParcelsHint": "{count, plural, one {The farm's other parcel is outlined in blue, with its name.} other {The farm's other # parcels are outlined in blue, with their names.}}",
   "parcel.map.menu": "Map options",
   "parcel.map.editOutline": "Edit outline",
   "parcel.map.drawOutline": "Draw outline",

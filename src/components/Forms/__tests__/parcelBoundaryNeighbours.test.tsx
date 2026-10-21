@@ -79,7 +79,7 @@ describe('parcel boundary step: the farm around the outline', () => {
     expect(screen.getByText('South')).toBeInTheDocument();
     expect(screen.getByText('East')).toBeInTheDocument();
     expect(
-      screen.getByText("The farm's other 2 parcels are outlined in white, with their names.")
+      screen.getByText("The farm's other 2 parcels are outlined in blue, with their names.")
     ).toBeInTheDocument();
     // No outline drawn yet for North, so every polygon on the map is a neighbour (renders repeat).
     expect(drawn.polygons.length).toBeGreaterThan(0);

@@ -61,7 +61,7 @@ export default function ParcelView() {
     () =>
       (farmGeometry || [])
         .filter((parcel) => String(parcel.id) !== String(parcelId) && parcel.path?.length >= 3)
-        .map((parcel) => ({ id: parcel.id, path: parcel.path })),
+        .map((parcel) => ({ id: parcel.id, name: parcel.name, path: parcel.path })),
     [farmGeometry, parcelId]
   );
   // Get subscription from the company
@@ -246,6 +246,7 @@ export default function ParcelView() {
           center={isFetching ? null : data?.map_metadata?.center}
           zoom={isFetching ? null : data?.map_metadata?.zoom}
           otherParcels={isFetching ? [] : otherParcels}
+          name={isFetching ? null : data?.name}
           menu={
             canWrite && !isFetching ? (
               // A shortcut to the parcel's boundary step, which also shows the farm's other

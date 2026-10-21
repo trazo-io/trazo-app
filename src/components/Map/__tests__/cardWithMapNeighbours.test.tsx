@@ -5,7 +5,7 @@
  */
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { IntlProvider } from 'react-intl';
 
@@ -17,19 +17,23 @@ const drawn = vi.hoisted(() => ({
   map: {} as Record<string, unknown>
 }));
 
-vi.mock('@react-google-maps/api', () => ({
-  useLoadScript: () => ({ isLoaded: true, loadError: undefined }),
-  GoogleMap: ({ children, ...props }: { children?: React.ReactNode }) => {
-    drawn.map = props;
-    return <div data-testid="google-map">{children}</div>;
-  },
-  Polygon: (props: { options?: Record<string, unknown> }) => {
-    drawn.polygons.push(props.options ?? {});
-    return null;
-  }
-}));
+vi.mock('@react-google-maps/api', () => {
+  const OverlayView = ({ children }: { children?: React.ReactNode }) => <div>{children}</div>;
+  (OverlayView as any).OVERLAY_LAYER = 'overlayLayer';
+  return {
+    OverlayView,
+    useLoadScript: () => ({ isLoaded: true, loadError: undefined }),
+    GoogleMap: ({ children, ...props }: { children?: React.ReactNode }) => {
+      drawn.map = props;
+      return <div data-testid="google-map">{children}</div>;
+    },
+    Polygon: (props: { options?: Record<string, unknown> }) => {
+      drawn.polygons.push(props.options ?? {});
+      return null;
+    }
+  };
+});
 
-// @ts-expect-error CardWithMap is a .jsx module with no type declarations.
 import CardWithMap from '../CardWithMap';
 
 const square = (lat: number) => [
@@ -78,5 +82,18 @@ describe('parcel map card', () => {
     mount({});
     expect(drawn.polygons.some((o) => o === NEIGHBOUR_OUTLINE)).toBe(false);
     expect(drawn.polygons.length).toBeGreaterThan(0);
+  });
+
+  it('names every outline, this parcel included, and cuts a long name', () => {
+    mount({
+      name: 'Hass Avocado Grove',
+      otherParcels: [
+        { id: 2, name: 'South', path: square(10.002) },
+        { id: 3, name: 'A very long parcel name indeed', path: square(10.004) }
+      ]
+    });
+    expect(screen.getByText('Hass Avocado Grove')).toBeInTheDocument();
+    expect(screen.getByText('South')).toBeInTheDocument();
+    expect(screen.getByTitle('A very long parcel name indeed')).toHaveTextContent('…');
   });
 });
