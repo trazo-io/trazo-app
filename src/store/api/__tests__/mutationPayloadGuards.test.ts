@@ -334,6 +334,13 @@ describe('production form — F9: the payload carries no key the subtype does no
     const kept = unrenderedProductionKeys(blank, { amountsPerParcel: true });
     expect(kept).not.toHaveProperty('fuel_unit');
     expect(kept).not.toHaveProperty('irrigation_depth_unit');
+    // The depth unit is irrigation's only: pruning carries its default and never renders it.
+    expect(
+      unrenderedProductionKeys(
+        { type: 'PR', fuel_unit: 'L', irrigation_depth_unit: 'inches' },
+        { amountsPerParcel: true }
+      )
+    ).toEqual(expect.objectContaining({ irrigation_depth_unit: undefined }));
     // Only those two: a unit whose amount is never per parcel is still gated.
     expect(
       unrenderedProductionKeys(

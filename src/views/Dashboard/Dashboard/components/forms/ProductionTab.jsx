@@ -1728,9 +1728,10 @@ const ProductionTab = forwardRef(
         // when no depth was entered, and re-asserting it after the gate would put the phantom
         // straight back — the "a narrow gate OVERWRITTEN by a later spread" shape from the
         // 2026-08-19 rehearsal, in reverse.
-        // With several parcels the depth is on each parcel's card: the unit still travels.
+        // With several parcels an irrigation's depth is on each parcel's card: the unit still
+        // travels. Only irrigation: every subtype carries the unit's default, unrendered.
         irrigation_depth_unit:
-          data.irrigation_depth || multiTarget
+          data.irrigation_depth || (multiTarget && data.type === 'IR')
             ? data.irrigation_depth_unit || undefined
             : undefined,
         // Phase 3: Pump fields for IR events — top-level model fields

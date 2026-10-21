@@ -151,6 +151,10 @@ describe('ProductionTab with several parcels', () => {
     await mount('IR', true, values, (data) => (sent = data)).submit();
     expect(sent).toMatchObject({ fuel_unit: 'L', irrigation_depth_unit: 'cm' });
 
+    // Any other activity: no depth anywhere, so no depth unit either (it carries a default).
+    await mount('PR', true, values, (data) => (sent = data)).submit();
+    expect(sent.irrigation_depth_unit).toBeUndefined();
+
     // One parcel, nothing entered: the gate still drops a unit with no amount.
     await mount('IR', false, values, (data) => (sent = data)).submit();
     expect(sent.fuel_unit).toBeUndefined();

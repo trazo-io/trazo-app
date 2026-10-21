@@ -70,8 +70,17 @@ const UNIT_KEYS: Record<string, string> = {
   irrigation_depth_unit: 'irrigation_depth'
 };
 
-/** Units whose amount is asked per parcel when one activity covers several (the cards). */
-const PER_PARCEL_AMOUNT_UNITS = ['fuel_unit', 'irrigation_depth_unit'];
+/**
+ * Units whose amount is asked per parcel when one activity covers several (the cards), and the
+ * subtypes whose form asks that amount at all (null: any). The depth unit is irrigation's only:
+ * every other subtype carries an `irrigation_depth_unit` default it never renders. The fuel unit
+ * may stay for any subtype: the multi-parcel save takes it out of the shared body and sends it
+ * only beside a fuel amount (`perParcelUnitKeys`).
+ */
+const PER_PARCEL_AMOUNT_UNITS: Record<string, string[] | null> = {
+  fuel_unit: null,
+  irrigation_depth_unit: ['IR']
+};
 
 const isBlank = (value: unknown): boolean =>
   value === undefined || value === null || (typeof value === 'string' && value.trim() === '');
@@ -113,7 +122,13 @@ export function unrenderedProductionKeys(
     if (!rendered) out[key] = undefined;
   }
   for (const [unitKey, quantityKey] of Object.entries(UNIT_KEYS)) {
-    if (amountsPerParcel && PER_PARCEL_AMOUNT_UNITS.includes(unitKey)) continue;
+    const askedOn = PER_PARCEL_AMOUNT_UNITS[unitKey];
+    if (
+      amountsPerParcel &&
+      askedOn !== undefined &&
+      (askedOn === null || askedOn.includes(subtype))
+    )
+      continue;
     if (isBlank(data?.[quantityKey])) out[unitKey] = undefined;
   }
   return out;
