@@ -4682,6 +4682,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                       onDataChange={onDataChange}
                       onPrev={goToPreviousStep}
                       initialValues={eventFormData}
+                      multiTarget={multiActive}
                       hideActions={true}
                     />
                   )}
@@ -4745,6 +4746,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                       onDataChange={onDataChange}
                       onPrev={goToPreviousStep}
                       initialValues={eventFormData}
+                      multiTarget={multiActive}
                       hideActions={true}
                     />
                   )}
@@ -4788,18 +4790,24 @@ function NewEvent({ isEdit = false, eventId = null }) {
                   )}
 
                   {/* After every tab: the per-parcel cards follow the form they complete. */}
-                  {multiActive && cardRules && (
-                    <Box mt={{ base: 5, md: 6 }}>
-                      <PerParcelCards
-                        targets={multiTargets}
-                        onChange={setMultiTargets}
-                        rules={cardRules}
-                        form={multiForm(eventFormData)}
-                        sectionsByParcel={sectionsByParcel}
-                        showIssues={showMultiIssues}
-                      />
-                    </Box>
-                  )}
+                  {multiActive &&
+                    cardRules &&
+                    // Weather asks nothing per parcel (the conditions are shared): no cards.
+                    (cardRules.areaKey ||
+                      cardRules.scope ||
+                      cardRules.sections ||
+                      cardRules.fields.length > 0) && (
+                      <Box mt={{ base: 5, md: 6 }}>
+                        <PerParcelCards
+                          targets={multiTargets}
+                          onChange={setMultiTargets}
+                          rules={cardRules}
+                          form={multiForm(eventFormData)}
+                          sectionsByParcel={sectionsByParcel}
+                          showIssues={showMultiIssues}
+                        />
+                      </Box>
+                    )}
                   {multiParcelPaused && (
                     <Box mt={{ base: 5, md: 6 }}>
                       <StandardAlert

@@ -369,6 +369,55 @@
           ]
         }
       }
+    },
+    "3": {
+      "label": "general",
+      "subtypes": null,
+      "per_target": [
+        "contamination_affected_area",
+        "block_id"
+      ],
+      "per_target_by_subtype": {},
+      "either": [],
+      "refused": [
+        "is_summary",
+        "date_start",
+        "date_end",
+        "event_count"
+      ],
+      "refused_extra_data": [],
+      "ui": {
+        "area_key": null,
+        "fields": [
+          {
+            "key": "contamination_affected_area",
+            "required": false
+          }
+        ],
+        "fields_by_subtype": {}
+      }
+    },
+    "0": {
+      "label": "weather",
+      "subtypes": null,
+      "per_target": [],
+      "per_target_by_subtype": {},
+      "either": [],
+      "refused": [
+        "block_id",
+        "damage_assessment",
+        "crop_impact",
+        "is_summary",
+        "date_start",
+        "date_end",
+        "event_count"
+      ],
+      "refused_extra_data": [],
+      "ui": {
+        "area_key": null,
+        "fields": [],
+        "fields_by_subtype": {}
+      }
     }
   }
 }

@@ -141,7 +141,22 @@ const formSchemaMainInfo = object({
 });
 
 const GeneralTab = forwardRef(
-  ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}, hideActions = false }, ref) => {
+  (
+    {
+      onSubmitHandler,
+      onDataChange,
+      onPrev,
+      initialValues = {},
+      hideActions = false,
+      /**
+       * Several parcels: the area an incident affected (and the section) is asked on each
+       * parcel's card below the form; the cause, the corrective action and the certifier
+       * notice stay here, because the incident is one. Keys from `multiParcelSpec.json`, type 3.
+       */
+      multiTarget = false
+    },
+    ref
+  ) => {
     const intl = useIntl();
 
     // NOP contamination fields arrive from the backend as real booleans/strings;
@@ -639,30 +654,32 @@ const GeneralTab = forwardRef(
                           />
                         </StandardField>
 
-                        <StandardField
-                          label={intl.formatMessage({
-                            id: 'events.general.fields.affectedAreaAcres',
-                            defaultMessage: 'Affected Area (acres)'
-                          })}
-                          error={errors.contamination_affected_area?.message}
-                          helpText={intl.formatMessage({
-                            id: 'events.general.help.approximateAcreageImpacted',
-                            defaultMessage: 'Approximate acreage impacted'
-                          })}>
-                          <Controller
-                            name="contamination_affected_area"
-                            control={mainInfoMethods.control}
-                            render={({ field }) => (
-                              <StandardInput
-                                {...field}
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                placeholder="e.g., 3.5"
-                              />
-                            )}
-                          />
-                        </StandardField>
+                        {!multiTarget && (
+                          <StandardField
+                            label={intl.formatMessage({
+                              id: 'events.general.fields.affectedAreaAcres',
+                              defaultMessage: 'Affected Area (acres)'
+                            })}
+                            error={errors.contamination_affected_area?.message}
+                            helpText={intl.formatMessage({
+                              id: 'events.general.help.approximateAcreageImpacted',
+                              defaultMessage: 'Approximate acreage impacted'
+                            })}>
+                            <Controller
+                              name="contamination_affected_area"
+                              control={mainInfoMethods.control}
+                              render={({ field }) => (
+                                <StandardInput
+                                  {...field}
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  placeholder="e.g., 3.5"
+                                />
+                              )}
+                            />
+                          </StandardField>
+                        )}
                       </SimpleGrid>
 
                       <StandardField
