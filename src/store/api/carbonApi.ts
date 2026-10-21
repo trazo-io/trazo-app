@@ -68,37 +68,6 @@ export interface CarbonEvent {
   photos?: string[];
 }
 
-export interface PendingEvent {
-  id: string;
-  data_point_id: number;
-  device_id: string;
-  device_name: string;
-  event_type: 'fuel_consumption' | 'irrigation_needed' | 'weather_alert' | 'maintenance_required';
-  suggested_carbon_entry?: {
-    type: 'emission' | 'offset';
-    source: string;
-    amount: number;
-    description: string;
-    raw_data: Record<string, any>;
-  };
-  suggested_action?: {
-    type: string;
-    priority: 'low' | 'medium' | 'high';
-    description: string;
-    estimated_water_needed?: string;
-  };
-  timestamp: string;
-  confidence: number;
-  auto_approve_recommended: boolean;
-}
-
-export interface PendingEventsResponse {
-  establishment_id: string;
-  pending_events: PendingEvent[];
-  total_count: number;
-  last_updated: string;
-}
-
 export interface EventApproval {
   data_point_id: number;
   event_data: {
@@ -403,113 +372,6 @@ export interface CompleteSummary {
   api_version: string;
 }
 
-// Weather API interfaces
-export interface WeatherConditions {
-  temperature: number;
-  temperature_c: number;
-  humidity: number;
-  wind_speed: number;
-  wind_direction?: number;
-  pressure?: number;
-  visibility?: number;
-  description: string;
-  timestamp: string;
-  source: 'noaa' | 'openweather';
-  station_id?: string;
-}
-
-export interface WeatherAlert {
-  id: string;
-  title: string;
-  description: string;
-  severity: 'minor' | 'moderate' | 'severe' | 'extreme';
-  urgency: 'immediate' | 'expected' | 'future';
-  certainty: 'observed' | 'likely' | 'possible';
-  event: string;
-  onset?: string;
-  expires?: string;
-  areas: string;
-  instruction?: string;
-}
-
-export interface WeatherRecommendation {
-  type:
-    | 'heat_stress_alert'
-    | 'heat_advisory'
-    | 'freeze_warning'
-    | 'high_wind_alert'
-    | 'low_humidity_alert'
-    | 'high_humidity_alert'
-    | 'optimal_conditions';
-  priority: 'critical' | 'high' | 'medium' | 'low';
-  title: string;
-  description: string;
-  actions: string[];
-  carbon_impact: string;
-  cost_impact: string;
-  timing: string;
-}
-
-export interface WeatherForecast {
-  name: string;
-  temperature: number;
-  temperature_unit: string;
-  wind_speed: string;
-  wind_direction: string;
-  description: string;
-  short_forecast: string;
-  is_daytime: boolean;
-  start_time: string;
-  end_time: string;
-}
-
-export interface WeatherResponse {
-  status: 'success' | 'error';
-  establishment_id?: string;
-  location: {
-    lat: number;
-    lng: number;
-  };
-  weather?: WeatherConditions;
-  alerts?: WeatherAlert[];
-  alert_count?: number;
-  recommendations?: {
-    critical: WeatherRecommendation[];
-    high: WeatherRecommendation[];
-    medium: WeatherRecommendation[];
-    low: WeatherRecommendation[];
-    total_count: number;
-  };
-  summary?: {
-    critical_count: number;
-    high_count: number;
-    medium_count: number;
-    low_count: number;
-    requires_immediate_action: boolean;
-  };
-  forecast?: WeatherForecast[];
-  forecast_days?: number;
-  timestamp: string;
-  error?: string;
-}
-
-export interface WeatherAlertEventRequest {
-  establishment_id: string;
-  weather_data: WeatherConditions;
-  recommendations: WeatherRecommendation[];
-}
-
-export interface WeatherAlertEventResponse {
-  status: 'success' | 'error';
-  message: string;
-  data_point_id?: number;
-  device_id?: number;
-  requires_approval: boolean;
-  confidence: number;
-  recommendations_count: number;
-  error?: string;
-}
-
 export interface CropTemplate {
   id: string;
   template_id?: number; // New field for actual template ID
@@ -668,38 +530,6 @@ export interface USDAMethodologyContent {
   }>;
   confidence_level?: number;
   last_updated?: string;
-}
-
-export interface RegionalBenchmarkData {
-  level: 'excellent' | 'above_average' | 'good' | 'average' | 'below_average' | 'unknown';
-  percentile: number | null;
-  message: string;
-  regional_average: number | null;
-  improvement_vs_average?: number;
-  improvement_potential?: number;
-  establishment_name?: string;
-  crop_type?: string;
-  state?: string;
-  carbon_intensity?: number;
-}
-
-export interface USDACredibilityData {
-  usda_based: boolean;
-  data_source: string;
-  methodology: string;
-  confidence_level: 'high' | 'medium' | 'low';
-  regional_specificity: boolean;
-  compliance_statement: string;
-  credibility_score: number;
-  verification_details: {
-    factors_verified: boolean;
-    usda_compliant: boolean;
-    scientifically_validated: boolean;
-    peer_reviewed: boolean;
-  };
-  establishment_name?: string;
-  establishment_location?: string;
-  regional_optimization?: boolean;
 }
 
 export interface CarbonImpactData {
@@ -914,95 +744,6 @@ export const carbonApi = baseApi.injectEndpoints({
       })
     }),
 
-    // Weather API endpoints
-    getCurrentWeatherConditions: builder.query<
-      WeatherResponse,
-      { farmId?: string; lat?: number; lng?: number }
-    >({
-      query: ({ farmId, lat, lng }) => {
-        const params = new URLSearchParams();
-        if (farmId) params.append('establishment_id', farmId);
-        if (lat !== undefined) params.append('lat', lat.toString());
-        if (lng !== undefined) params.append('lng', lng.toString());
-
-        return {
-          url: `carbon/weather/current/?${params.toString()}`,
-          method: 'GET',
-          credentials: 'include'
-        };
-      },
-      providesTags: ['Weather']
-    }),
-
-    getWeatherAlerts: builder.query<
-      WeatherResponse,
-      { farmId?: string; lat?: number; lng?: number }
-    >({
-      query: ({ farmId, lat, lng }) => {
-        const params = new URLSearchParams();
-        if (farmId) params.append('establishment_id', farmId);
-        if (lat !== undefined) params.append('lat', lat.toString());
-        if (lng !== undefined) params.append('lng', lng.toString());
-
-        return {
-          url: `carbon/weather/alerts/?${params.toString()}`,
-          method: 'GET',
-          credentials: 'include'
-        };
-      },
-      providesTags: ['Weather']
-    }),
-
-    getWeatherRecommendations: builder.query<
-      WeatherResponse,
-      { farmId?: string; lat?: number; lng?: number; farmType?: string }
-    >({
-      query: ({ farmId, lat, lng, farmType }) => {
-        const params = new URLSearchParams();
-        if (farmId) params.append('establishment_id', farmId);
-        if (lat !== undefined) params.append('lat', lat.toString());
-        if (lng !== undefined) params.append('lng', lng.toString());
-        if (farmType) params.append('establishment_type', farmType);
-
-        return {
-          url: `carbon/weather/recommendations/?${params.toString()}`,
-          method: 'GET',
-          credentials: 'include'
-        };
-      },
-      providesTags: ['Weather']
-    }),
-
-    getWeatherForecast: builder.query<
-      WeatherResponse,
-      { farmId?: string; lat?: number; lng?: number; days?: number }
-    >({
-      query: ({ farmId, lat, lng, days = 7 }) => {
-        const params = new URLSearchParams();
-        if (farmId) params.append('establishment_id', farmId);
-        if (lat !== undefined) params.append('lat', lat.toString());
-        if (lng !== undefined) params.append('lng', lng.toString());
-        params.append('days', days.toString());
-
-        return {
-          url: `carbon/weather/forecast/?${params.toString()}`,
-          method: 'GET',
-          credentials: 'include'
-        };
-      },
-      providesTags: ['Weather']
-    }),
-
-    createWeatherAlertEvent: builder.mutation<WeatherAlertEventResponse, WeatherAlertEventRequest>({
-      query: (data) => ({
-        url: 'carbon/weather/create-alert-event/',
-        method: 'POST',
-        body: data,
-        credentials: 'include'
-      }),
-      invalidatesTags: ['Weather', 'PendingEvent']
-    }),
-
     // Phase 2 Optimization: Unified Complete Summary Endpoint
     getCompleteSummary: builder.query<CompleteSummary, string>({
       query: (productionId) => ({
@@ -1071,33 +812,6 @@ export const carbonApi = baseApi.injectEndpoints({
           credentials: 'include'
         };
       },
-      providesTags: ['Education']
-    }),
-
-    getRegionalBenchmark: builder.query<
-      RegionalBenchmarkData,
-      { farmId: number; carbonIntensity?: number; cropType?: string }
-    >({
-      query: ({ farmId, carbonIntensity, cropType }) => {
-        const params = new URLSearchParams();
-        if (carbonIntensity) params.append('carbon_intensity', carbonIntensity.toString());
-        if (cropType) params.append('crop_type', cropType);
-
-        return {
-          url: `carbon/regional-benchmark/${farmId}/?${params.toString()}`,
-          method: 'GET',
-          credentials: 'include'
-        };
-      },
-      providesTags: ['Education']
-    }),
-
-    getUSDACredibilityInfo: builder.query<USDACredibilityData, number>({
-      query: (farmId) => ({
-        url: `carbon/usda-credibility/${farmId}/`,
-        method: 'GET',
-        credentials: 'include'
-      }),
       providesTags: ['Education']
     }),
 
@@ -1655,12 +1369,6 @@ export const {
   useGetProductionTimelineQuery,
   useCreateOffsetMutation,
   useCalculateEventCarbonImpactMutation,
-  // Weather API hooks
-  useGetCurrentWeatherConditionsQuery,
-  useGetWeatherAlertsQuery,
-  useGetWeatherRecommendationsQuery,
-  useGetWeatherForecastQuery,
-  useCreateWeatherAlertEventMutation,
   // Phase 2 Optimization: Unified Complete Summary
   useGetCompleteSummaryQuery,
   useGetCropTemplatesQuery,
@@ -1668,8 +1376,6 @@ export const {
   useGetCropTemplateDetailQuery,
   // Educational Content hooks
   useGetUSDAMethodologyContentQuery,
-  useGetRegionalBenchmarkQuery,
-  useGetUSDACredibilityInfoQuery,
   useGetCarbonImpactExamplesQuery,
   useGetTrustComparisonDataQuery,
   useGetRegionalFarmingPracticesQuery,
