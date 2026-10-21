@@ -117,7 +117,7 @@ import {
   verbForKey
 } from 'config/activityVerbs';
 import { formatFieldValue, getFieldConfig, getSubtypes } from 'config/events';
-import { isDispenserRecord } from 'config/events/enums';
+import { requiredFieldsForSave } from 'config/events/saveRequiredFields';
 import { localizeFieldValue } from 'utils/fieldDisplayUtils';
 import { backToLabel } from 'utils/backToLabel';
 import { useFurthestStep } from 'hooks/useFurthestStep';
@@ -2754,48 +2754,11 @@ function NewEvent({ isEdit = false, eventId = null }) {
       const validateAndEnhanceEventData = (data) => {
         const enhancedData = { ...data };
 
-        // Validate required fields are present - don't add mocked values, instead ensure forms have proper inputs
-        // FIXED: Corrected event type mapping to match backend constants
-        // Backend constants: WEATHER_EVENT_TYPE = 0, PRODUCTION_EVENT_TYPE = 1, CHEMICAL_EVENT_TYPE = 2
-        // Check if this is a summary mode event
-        const isSummaryMode =
-          enhancedData.is_summary === true ||
-          enhancedData.is_summary === 'true' ||
-          enhancedData.is_summary === 'on';
-
-        // Hand-placed pheromone dispensers carry no tank concentration, so the chemical form
-        // does not require one for that method; this second gate must agree with it, or a
-        // valid dispenser record is refused here with "missing: Concentration".
-        const isDispenserApplication = isDispenserRecord(
-          enhancedData.type,
-          enhancedData.application_method ?? enhancedData.way_of_application
-        );
-
-        const requiredFieldsByType = {
-          0: ['type'], // Weather
-          1: ['type'], // Production - other fields are optional but encouraged
-          2: isSummaryMode
-            ? ['type', 'commercial_name', 'application_method'] // Summary mode: AI total used instead of volume/area/concentration
-            : multiActive
-            ? // Several blocks: amount and area are per block, checked on each card before step 1
-              // could continue, so the single totals this list asks for do not exist.
-              ['type', 'commercial_name', 'concentration', 'application_method']
-            : [
-                'type',
-                'commercial_name',
-                'volume_applied',
-                'area_treated',
-                ...(isDispenserApplication ? [] : ['concentration']),
-                'application_method'
-              ], // Chemical
-          3: ['name'], // General
-          4: ['type'], // Equipment - fuel data should come from form inputs
-          5: ['type'], // Soil Management - specific fields should come from form inputs
-          6: ['type'], // Pest Management - specific fields should come from form inputs
-          7: ['business_type'] // Business - uses business_type field, not legacy 'type'
-        };
-
-        const requiredFields = requiredFieldsByType[backendEventType] || [];
+        // The last gate before the request; one list per type, shared rules (dispensers carry no
+        // concentration; with several parcels the amount and area are asked per parcel).
+        const requiredFields = requiredFieldsForSave(backendEventType, enhancedData, {
+          multiParcel: multiActive
+        });
         const missingFields = requiredFields.filter((field) => {
           // The chemical tab commits `way_of_application` (the model name) for the form's
           // `application_method`; either spelling satisfies the requirement.

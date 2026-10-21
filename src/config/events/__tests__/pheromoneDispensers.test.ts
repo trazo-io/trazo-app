@@ -25,6 +25,7 @@ import {
   VOLUME_UNITS
 } from '../enums';
 import { formatVolume } from '../formatters';
+import { requiredFieldsForSave } from '../saveRequiredFields';
 
 const FORMS = path.resolve(__dirname, '../../../views/Dashboard/Dashboard/components/forms');
 const CHEMICAL_TAB = fs.readFileSync(path.join(FORMS, 'ChemicalTab-ENHANCED.jsx'), 'utf8');
@@ -152,9 +153,18 @@ describe('pheromone dispensers', () => {
     }
   });
 
-  it("the wizard's own required-field gate agrees with the form", () => {
-    expect(NEW_EVENT).toMatch(/isDispenserApplication \? \[\] : \['concentration'\]/);
-    expect(NEW_EVENT).toContain('isDispenserRecord(');
+  it("the wizard's own required-field gate agrees with the form, on one parcel and on several", () => {
+    // The gate is one function now. It used to be two inline lists that drifted: the several-
+    // parcels copy required a concentration from dispensers, refusing a valid record at save.
+    expect(NEW_EVENT).toContain('requiredFieldsForSave(backendEventType, enhancedData');
+    const dispenser = { type: 'PE', application_method: 'hand_dispenser' };
+    expect(requiredFieldsForSave(2, dispenser)).not.toContain('concentration');
+    expect(requiredFieldsForSave(2, dispenser, { multiParcel: true })).not.toContain(
+      'concentration'
+    );
+    const spray = { type: 'FU', application_method: 'ground_spray' };
+    expect(requiredFieldsForSave(2, spray)).toContain('concentration');
+    expect(requiredFieldsForSave(2, spray, { multiParcel: true })).toContain('concentration');
   });
 
   it('a record view prints the method in words and the amount as a count', () => {
