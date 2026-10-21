@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useParams, useNavigate } from 'react-router-dom';
 import { useIntl } from 'react-intl';
 import {
   Box,
@@ -2684,9 +2684,10 @@ const EducationTopicDetail: React.FC = () => {
                     <Text fontSize="sm">
                       {intl.formatMessage({ id: 'education.detail.inspectionPrep.tracebackTry' })}{' '}
                       <Link
+                        as={RouterLink}
+                        to="/admin/dashboard/education/topic/traceback"
                         color="green.700"
-                        fontWeight="semibold"
-                        onClick={() => navigate('/admin/dashboard/education/topic/traceback')}>
+                        fontWeight="semibold">
                         {intl.formatMessage({
                           id: 'education.detail.inspectionPrep.tracebackLink'
                         })}
@@ -3255,7 +3256,7 @@ const EducationTopicDetail: React.FC = () => {
         )
       }
     ],
-    [intl, navigate]
+    [intl]
   );
 
   const topic = documentationTopics.find((t) => t.id === topicId);

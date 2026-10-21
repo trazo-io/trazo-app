@@ -237,7 +237,12 @@ describe('traceback topic', () => {
         </IntlProvider>
       </ChakraProvider>
     );
-    fireEvent.click(screen.getByText(enUS['education.detail.inspectionPrep.tracebackLink']));
+    // A real link (review of #178): an href puts it in the tab order and Enter follows it.
+    const link = screen.getByRole('link', {
+      name: enUS['education.detail.inspectionPrep.tracebackLink']
+    });
+    expect(link.getAttribute('href')).toBe('/admin/dashboard/education/topic/traceback');
+    fireEvent.click(link);
     await waitFor(() => expect(landed).toBe('traceback-topic'));
   });
 
