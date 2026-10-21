@@ -8128,7 +8128,7 @@
   "traceback.matches.title": "{count, plural, one {# venta coincide} other {# ventas coinciden}}",
   "traceback.matches.trace": "Rastrear esta venta",
   "traceback.matches.truncated": "Se muestran las 20 coincidencias más recientes. Escribe un número más específico para ver otras.",
-  "traceback.notFound": "No se puede rastrear esta venta. Puede estar anulada o pertenecer a otra operación.",
+  "traceback.notFound": "No se encontró esta venta. No existe en esta finca, fue anulada o pertenece a otra operación.",
   "traceback.pageDescription": "Sigue una venta hacia atrás hasta sus cosechas, su temporada y los insumos aplicados, como lo hace el inspector en cada inspección. Cada vínculo que falta aparece nombrado para que lo corrijas antes.",
   "traceback.pageTitle": "Trazabilidad",
   "traceback.picks.none": "No hay cosechas registradas en esta temporada.",

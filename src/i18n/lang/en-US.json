@@ -8128,7 +8128,7 @@
   "traceback.matches.title": "{count, plural, one {# sale matches} other {# sales match}}",
   "traceback.matches.trace": "Trace this sale",
   "traceback.matches.truncated": "Showing the 20 most recent matches. Type a more specific number to see others.",
-  "traceback.notFound": "This sale cannot be traced. It may have been voided, or it belongs to another operation.",
+  "traceback.notFound": "This sale was not found. It does not exist on this farm, was voided, or belongs to another operation.",
   "traceback.pageDescription": "Walk a sale back to its harvest picks, its season and the inputs applied, the way an inspector does at every inspection. Every missing link is named so you can fix it first.",
   "traceback.pageTitle": "Traceback",
   "traceback.picks.none": "No harvest is recorded for this season.",

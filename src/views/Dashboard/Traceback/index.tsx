@@ -91,7 +91,10 @@ export const TracebackPage = () => {
   const [args, setArgs] = useState<SearchArgs | null>(null);
 
   const search = useSearchTracebackSalesQuery(args, { skip: !args });
-  const trace = useGetSaleTracebackQuery({ saleId }, { skip: !saleId });
+  const trace = useGetSaleTracebackQuery(
+    { saleId, establishmentId: farmId },
+    { skip: !saleId || !farmId }
+  );
 
   // `currentData`, never `data`: RTK keeps `data` from the LAST success for any args, so a failed
   // search or a 404 trace would render the previous answer under the new question.

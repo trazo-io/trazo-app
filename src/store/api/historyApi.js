@@ -366,9 +366,11 @@ export const historyApi = baseApi.injectEndpoints({
       },
       keepUnusedDataFor: 0
     }),
+    // The farm in the page's URL goes along: a sale from the company's other farm is "not
+    // found" here rather than rendered under this farm's breadcrumb.
     getSaleTraceback: build.query({
-      query: ({ saleId }) => ({
-        url: `sales_records/${saleId}/traceback/`,
+      query: ({ saleId, establishmentId }) => ({
+        url: `sales_records/${saleId}/traceback/?establishment_id=${establishmentId}`,
         method: 'GET',
         credentials: 'include'
       }),
