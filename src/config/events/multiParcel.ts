@@ -102,8 +102,15 @@ export const specRulesFor = (
     perTargetKeys,
     eitherKeys: new Set(raw.either),
     refusedKeys: new Set(raw.refused),
-    refusedExtraDataKeys: new Set(raw.refused_extra_data),
-    hiddenKeys: new Set([...perTargetKeys, ...raw.refused])
+    // Same as the server's loader: a top-level refusal holds inside extra_data too.
+    refusedExtraDataKeys: new Set([...raw.refused_extra_data, ...raw.refused]),
+    // Every key that is per parcel for ANY subtype stays out of the shared body (the server
+    // refuses it there), plus the refused ones.
+    hiddenKeys: new Set([
+      ...raw.per_target,
+      ...Object.values(raw.per_target_by_subtype).flat(),
+      ...raw.refused
+    ])
   };
 };
 

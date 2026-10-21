@@ -177,6 +177,12 @@ describe('multiParcel: request body', () => {
     ]);
   });
 
+  it("keeps another subtype's per-parcel keys out of the shared body too", () => {
+    expect(irrigation.hiddenKeys.has('applied_scope')).toBe(true);
+    expect(irrigation.hiddenKeys.has('plants_established')).toBe(true);
+    expect(irrigation.refusedExtraDataKeys.has('yield_quantity')).toBe(true);
+  });
+
   it('irrigation sends area and depth per parcel, and no scope (IR has none)', () => {
     const irBody = buildMultiTargetBody(
       { event_type: 1, type: 'IR', area_covered: '9', irrigation_method: 'drip' },
