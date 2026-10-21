@@ -4588,6 +4588,7 @@
   "events.chemical.validation.volumePositive": "La cantidad de producto debe ser mayor que 0",
   "events.chemical.validation.volumeRequired": "La cantidad de producto aplicada es obligatoria",
   "events.chemical.validation.volumeUnitRequired": "La unidad de la cantidad de producto es obligatoria",
+  "events.chemical.validation.dispensersNeedDispenserMethod": "Los difusores se cuentan solo en un plaguicida aplicado como difusores colocados a mano. Elige ese método o indica la cantidad en peso o volumen.",
   "events.chemical.weather.calmDry": "Calmo y seco — condiciones ideales",
   "events.chemical.weather.humid": "Húmedo — condiciones aceptables",
   "events.chemical.weather.lightWind": "Viento leve — condiciones adecuadas",

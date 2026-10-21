@@ -4588,6 +4588,7 @@
   "events.chemical.validation.volumePositive": "The product amount must be greater than 0",
   "events.chemical.validation.volumeRequired": "The product amount applied is required",
   "events.chemical.validation.volumeUnitRequired": "The unit for the product amount is required",
+  "events.chemical.validation.dispensersNeedDispenserMethod": "Dispensers are counted only for a pesticide applied as hand-applied dispensers. Pick that method, or give the amount by weight or volume.",
   "events.chemical.weather.calmDry": "Calm & Dry - Ideal conditions",
   "events.chemical.weather.humid": "Humid - Acceptable conditions",
   "events.chemical.weather.lightWind": "Light Wind - Suitable conditions",

@@ -73,7 +73,7 @@ import { useIntl } from 'react-intl';
 import {
   APPLICATION_PURPOSES,
   APPLICATION_RATE_UNITS,
-  HAND_DISPENSER_METHOD,
+  isDispenserRecord,
   retiredOrganicApprovedLabelKey
 } from 'config/events/enums';
 import { getSubtypes } from 'config/events';
@@ -413,8 +413,24 @@ export const buildChemicalSchema = (intl) =>
 
     // A pheromone dispenser is counted and hung, not mixed into a tank, so "the strength on the
     // label" is not a number the grower can be made to supply for it. Optional for that method
-    // only; a value typed anyway is still checked below.
-    const concentrationOptional = data.application_method === HAND_DISPENSER_METHOD;
+    // only, and only on a pesticide (the one type that offers it): switching the type away from
+    // PE does not clear the method, so a stale value must not waive the field on a fungicide.
+    // A value typed anyway is still checked below.
+    const isDispenserApplication = isDispenserRecord(data.type, data.application_method);
+    const concentrationOptional = isDispenserApplication;
+    // The count unit belongs to the dispenser method alone. Anything else counted in dispensers
+    // would reach the PUR as "box 24 is a count" on a record that is really a spray.
+    if (data.volume_unit === 'dispensers' && !isDispenserApplication) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['volume_unit'],
+        message: intl.formatMessage({
+          id: 'events.chemical.validation.dispensersNeedDispenserMethod',
+          defaultMessage:
+            'Dispensers are counted only for a pesticide applied as hand-applied dispensers. Pick that method, or give the amount by weight or volume.'
+        })
+      });
+    }
     if ((!data.concentration || data.concentration.length === 0) && !concentrationOptional) {
       ctx.addIssue({
         code: 'custom',
@@ -3201,10 +3217,14 @@ const ChemicalTab = forwardRef(
                                   })}
                                 </option>
                                 {/* A count, not a measure: mating-disruption dispensers are
-                                    hung by hand. Never converted to kg or L downstream. */}
-                                <option value="dispensers">
-                                  {intl.formatMessage({ id: 'app.unit.dispensers' })}
-                                </option>
+                                    hung by hand. Never converted to kg or L downstream.
+                                    Pesticides only, like the method; a record already holding
+                                    it keeps the option so the value never goes blank. */}
+                                {(chemicalType === 'PE' || field.value === 'dispensers') && (
+                                  <option value="dispensers">
+                                    {intl.formatMessage({ id: 'app.unit.dispensers' })}
+                                  </option>
+                                )}
                               </StandardSelect>
                             )}
                           />
@@ -3591,12 +3611,12 @@ const ChemicalTab = forwardRef(
                                 id: 'events.chemical.concentration.productConcentration'
                               })
                         }
-                        required={watch('application_method') !== HAND_DISPENSER_METHOD}
+                        required={!isDispenserRecord(chemicalType, watch('application_method'))}
                         error={errors.concentration?.message}
                         helpText={intl.formatMessage({
                           id: !chemicalType
                             ? 'events.chemical.concentration.help.pickType'
-                            : watch('application_method') === HAND_DISPENSER_METHOD
+                            : isDispenserRecord(chemicalType, watch('application_method'))
                             ? 'events.chemical.concentration.help.dispenser'
                             : chemicalType === 'FE'
                             ? watch('micronutrient_type')
@@ -4311,9 +4331,11 @@ const ChemicalTab = forwardRef(
                               <option value="lbs">
                                 {intl.formatMessage({ id: 'app.unit.pounds' })}
                               </option>
-                              <option value="dispensers">
-                                {intl.formatMessage({ id: 'app.unit.dispensers' })}
-                              </option>
+                              {(chemicalType === 'PE' || field.value === 'dispensers') && (
+                                <option value="dispensers">
+                                  {intl.formatMessage({ id: 'app.unit.dispensers' })}
+                                </option>
+                              )}
                             </StandardSelect>
                           )}
                         />

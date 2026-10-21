@@ -543,6 +543,8 @@ export const FIELD_VALUE_ES: Record<string, string> = {
   // The unit half of formatDurationHours' "<n> hours", which localizeFieldValue translates by
   // suffix. Without it every duration above one hour read "2 hours" on the Spanish page.
   hours: 'horas',
+  // Same suffix mechanism for the count unit (UNIT_VOLUME `dispensers`): "300 dispensers".
+  dispensers: 'difusores',
 
   // --- Tillage practice values (soilEvent.ts, TI). Added 2026-09-06 with the four tillage
   // fields, which had no display declaration at all until then. `Cultivator` is deliberately

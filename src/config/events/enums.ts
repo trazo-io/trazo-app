@@ -190,6 +190,14 @@ export const APPLICATION_METHODS: readonly EnumOption[] = [
  */
 export const HAND_DISPENSER_METHOD = 'hand_dispenser';
 
+/**
+ * True for a pesticide applied as hand-placed dispensers: the one record for which the form
+ * waives concentration and accepts the `dispensers` count unit. Checks the TYPE too, because
+ * switching the type away from PE leaves the stored method behind (review on app#166).
+ */
+export const isDispenserRecord = (type: unknown, method: unknown): boolean =>
+  type === 'PE' && method === HAND_DISPENSER_METHOD;
+
 /** Application methods filtered by chemical main type (FE/PE/FU/HE) */
 export const APPLICATION_METHODS_BY_CHEMICAL_TYPE: Record<string, readonly EnumOption[]> = {
   FE: [

@@ -48,13 +48,14 @@ const record = (overrides: Record<string, string>) => ({
   ...overrides
 });
 
-const concentrationIssues = (data: Record<string, string>): string[] => {
+const issuesOn = (field: string, data: Record<string, string>): string[] => {
   const result = buildChemicalSchema(intl).safeParse(data);
   if (result.success) return [];
   return result.error.issues
-    .filter((issue: { path: (string | number)[] }) => issue.path[0] === 'concentration')
+    .filter((issue: { path: (string | number)[] }) => issue.path[0] === field)
     .map((issue: { message: string }) => issue.message);
 };
+const concentrationIssues = (data: Record<string, string>) => issuesOn('concentration', data);
 
 /** The JSX of the one select for `name` that offers the full unit list. */
 const unitSelect = (name: string): string => {
@@ -99,7 +100,8 @@ describe('pheromone dispensers', () => {
       'events.applicationMethods.handDispenser',
       'events.chemical.methods.handDispenser',
       'events.chemical.concentration.help.dispenser',
-      'app.pur.flag.product_amount_is_count'
+      'app.pur.flag.product_amount_is_count',
+      'events.chemical.validation.dispensersNeedDispenserMethod'
     ]) {
       expect(en[key], key).toBeTruthy();
       expect(es[key], key).toBeTruthy();
@@ -125,8 +127,34 @@ describe('pheromone dispensers', () => {
     ]);
   });
 
+  it('a stale dispenser method on a non-pesticide waives nothing (review on app#166)', () => {
+    // Switching the type away from PE leaves the method behind in the form state.
+    for (const type of ['FU', 'HE', 'FE']) {
+      expect(concentrationIssues(record({ type, volume_unit: 'gal' })), type).not.toEqual([]);
+    }
+  });
+
+  it('the count unit is refused on anything but a dispenser application', () => {
+    expect(issuesOn('volume_unit', record({}))).toEqual([]);
+    expect(
+      issuesOn('volume_unit', record({ application_method: 'ground_spray', concentration: '2%' }))
+    ).toEqual(['events.chemical.validation.dispensersNeedDispenserMethod']);
+    expect(issuesOn('volume_unit', record({ type: 'FU', concentration: '2%' }))).toEqual([
+      'events.chemical.validation.dispensersNeedDispenserMethod'
+    ]);
+  });
+
+  it('the form offers the count unit to pesticides only, or to a record already holding it', () => {
+    for (const name of ['volume_unit', 'quantity_purchased_unit']) {
+      expect(unitSelect(name)).toMatch(
+        /\(chemicalType === 'PE' \|\| field\.value === 'dispensers'\) && \(\s*<option value="dispensers">/
+      );
+    }
+  });
+
   it("the wizard's own required-field gate agrees with the form", () => {
     expect(NEW_EVENT).toMatch(/isDispenserApplication \? \[\] : \['concentration'\]/);
+    expect(NEW_EVENT).toContain('isDispenserRecord(');
   });
 
   it('a record view prints the method in words and the amount as a count', () => {
@@ -139,6 +167,7 @@ describe('pheromone dispensers', () => {
     expect(FIELD_VALUE_ES['Hand-applied dispensers (mating disruption)']).toBe(
       'Difusores colocados a mano (confusión sexual)'
     );
+    expect(FIELD_VALUE_ES.dispensers).toBe('difusores');
     expect(formatVolume(300, { volume_unit: 'dispensers' } as never)).toBe('300 dispensers');
   });
 });
