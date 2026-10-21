@@ -54,6 +54,7 @@ import {
   type ReviewLinkFailure
 } from 'utils/reviewLinkFailure';
 import { awaitCertifierDossier, describeProgress, type ExportJob } from 'utils/exportJobs';
+import ReviewTraceback from './ReviewTraceback';
 
 interface ReviewMetadata {
   operation_name: string;
@@ -631,6 +632,8 @@ const CertifierReview: React.FC = () => {
             )}
           </Box>
         )}
+
+        {token && <ReviewTraceback token={token} apiRoot={apiRoot} />}
 
         <Text fontSize="xs" color="gray.500">
           {intl.formatMessage(
