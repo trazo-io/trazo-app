@@ -48,6 +48,9 @@ const EVENT_TYPE_BY_KIND: Record<string, number> = {
   beneficial: 6
 };
 
+/** Input kinds whose record carries a purchase invoice and so takes a receipt. */
+const RECEIPT_KINDS = new Set(['chemical', 'amendment']);
+
 export const TracebackPage = () => {
   const intl = useIntl();
   const t = (id: string, values?: Record<string, string | number>) =>
@@ -99,11 +102,13 @@ export const TracebackPage = () => {
     if (!season?.establishment_id || !season?.parcel_id) return null;
     const kind = gap.hop === 'picks' && gap.field === 'harvest_lot_code' ? 'pick' : gap.kind;
     const back = encodeURIComponent(`/admin/dashboard/farm/${farmId}/traceback?sale=${saleId}`);
-    if (gap.code === 'input_without_document' && gap.ref && EVENT_TYPE_BY_KIND[kind]) {
+    // Only a spray or amendment record takes a purchase receipt (the server raises this gap for
+    // those two only, and Documents asks "What is this file?" for those two only, review of #175).
+    if (gap.code === 'input_without_document' && gap.ref && RECEIPT_KINDS.has(kind)) {
       // A receipt is FILED against the record from Documents, which works on a finished season
       // too (a correction cannot set a file link). The filing dialog opens pre-filed to this
       // season and record, and the upload returns here.
-      return `/admin/dashboard/farm/${season.establishment_id}/documents?production=${season.id}&record=${EVENT_TYPE_BY_KIND[kind]}:${gap.ref}&next=${back}`;
+      return `/admin/dashboard/farm/${season.establishment_id}/documents?production=${season.id}&record=${EVENT_TYPE_BY_KIND[kind]}:${gap.ref}&kind=receipt&next=${back}`;
     }
     if (gap.ref && EVENT_TYPE_BY_KIND[kind]) {
       // `next` brings the farmer back to this trace once the record is saved (NewEvent accepts

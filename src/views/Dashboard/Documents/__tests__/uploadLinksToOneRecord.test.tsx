@@ -41,11 +41,11 @@ vi.mock('react-redux', () => ({
 
 import DocumentsPage from '../index';
 
-const renderPage = () =>
+const renderPage = (url = '/admin/dashboard/farm/33/documents') =>
   render(
     <ChakraProvider>
       <IntlProvider locale="en-US" messages={enUS as Record<string, string>} onError={() => {}}>
-        <MemoryRouter initialEntries={['/admin/dashboard/farm/33/documents']}>
+        <MemoryRouter initialEntries={[url]}>
           <Routes>
             <Route path="/admin/dashboard/farm/:farmId/documents" element={<DocumentsPage />} />
           </Routes>
@@ -117,6 +117,100 @@ describe('filing a document against one record', () => {
     fireEvent.click(await screen.findByRole('button', { name: enUS['documents.filing.confirm'] }));
     await waitFor(() => expect(upload).toHaveBeenCalled());
     expect(upload.mock.calls[0]?.[0]).not.toHaveProperty('eventId');
+  });
+});
+
+describe('a file on a spray or amendment record is its receipt only when said so (back #207)', () => {
+  const sprayRecord = (id: string, opts: { skip?: boolean }) => ({
+    data:
+      opts?.skip || !id
+        ? undefined
+        : {
+            events: [
+              {
+                id: 801,
+                event_type: 2,
+                type: 'PE',
+                name: 'Entrust SC',
+                date: '2026-05-15T08:00:00Z'
+              }
+            ]
+          }
+  });
+  const stageFile = (container: HTMLElement) =>
+    fireEvent.change(container.querySelector('input[type="file"]') as HTMLInputElement, {
+      target: { files: [new File(['%PDF'], 'invoice.pdf', { type: 'application/pdf' })] }
+    });
+
+  it('asks what the file is, sends no receipt kind for another file, and the receipt kind when chosen', async () => {
+    docs = [];
+    upload.mockClear();
+    historyQuery.mockImplementation(sprayRecord);
+    const { container } = renderPage();
+    stageFile(container);
+    fireEvent.change(await screen.findByLabelText(enUS['documents.filing.field.production']), {
+      target: { value: '5' }
+    });
+    await waitFor(() =>
+      expect(screen.queryByLabelText(enUS['documents.filing.field.record'])).not.toBeNull()
+    );
+    // No record yet: nothing to be a receipt of.
+    expect(screen.queryByLabelText(enUS['documents.filing.field.fileKind'])).toBeNull();
+    fireEvent.change(screen.getByLabelText(enUS['documents.filing.field.record']), {
+      target: { value: '2:801' }
+    });
+    const kind = screen.getByLabelText(
+      enUS['documents.filing.field.fileKind']
+    ) as HTMLSelectElement;
+    // Never a receipt by default from the shelf: a lab report filed here must not read as one.
+    expect(kind.value).toBe('attachment');
+    fireEvent.click(screen.getByRole('button', { name: enUS['documents.filing.confirm'] }));
+    await waitFor(() => expect(upload).toHaveBeenCalled());
+    expect(upload.mock.calls[0]?.[0]).not.toHaveProperty('sourceKind');
+
+    upload.mockClear();
+    stageFile(container);
+    fireEvent.change(await screen.findByLabelText(enUS['documents.filing.field.production']), {
+      target: { value: '5' }
+    });
+    await waitFor(() =>
+      expect(screen.queryByLabelText(enUS['documents.filing.field.record'])).not.toBeNull()
+    );
+    fireEvent.change(screen.getByLabelText(enUS['documents.filing.field.record']), {
+      target: { value: '2:801' }
+    });
+    fireEvent.change(screen.getByLabelText(enUS['documents.filing.field.fileKind']), {
+      target: { value: 'receipt' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: enUS['documents.filing.confirm'] }));
+    await waitFor(() => expect(upload).toHaveBeenCalled());
+    expect(upload.mock.calls[0]?.[0]).toMatchObject({
+      eventType: 2,
+      eventId: 801,
+      sourceKind: 'receipt'
+    });
+  });
+
+  it("arriving from the trace's missing-receipt gap, the file is filed as the receipt", async () => {
+    docs = [];
+    upload.mockClear();
+    historyQuery.mockImplementation(sprayRecord);
+    const { container } = renderPage(
+      '/admin/dashboard/farm/33/documents?production=5&record=2:801&kind=receipt'
+    );
+    stageFile(container);
+    const kind = (await screen.findByLabelText(
+      enUS['documents.filing.field.fileKind']
+    )) as HTMLSelectElement;
+    expect(kind.value).toBe('receipt');
+    fireEvent.click(screen.getByRole('button', { name: enUS['documents.filing.confirm'] }));
+    await waitFor(() => expect(upload).toHaveBeenCalled());
+    expect(upload.mock.calls[0]?.[0]).toMatchObject({
+      history: 5,
+      eventType: 2,
+      eventId: 801,
+      sourceKind: 'receipt'
+    });
   });
 });
 
