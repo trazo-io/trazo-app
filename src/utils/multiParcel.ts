@@ -79,7 +79,10 @@ export interface ParcelTarget {
   areaHa: number;
   /** Unset until the grower answers: a default of "whole block" would be a claim nobody made. */
   scope: BlockScope | null;
-  /** Area treated when `scope === 'part'`, in the form's area unit. */
+  /**
+   * Area typed by the grower, in the form's area unit: the part treated when `scope === 'part'`,
+   * or the block's size when `scope === 'all'` and the parcel has no size on record.
+   */
   partArea: string;
   partDetail: string;
   /** What the grower typed. Empty means "use the derived amount". */
@@ -114,9 +117,17 @@ export const hectaresIn = (hectares: number, unit: string): number | null => {
   return null;
 };
 
+/** True when the parcel's size is on record, so "whole block" needs no number from the grower. */
+export const hasRecordedSize = (target: ParcelTarget): boolean => target.areaHa > 0;
+
 /** The area this target treated, in the form's area unit, or null when not yet answered. */
 export const targetArea = (target: ParcelTarget, areaUnit: string): number | null => {
   if (target.scope === 'all') {
+    if (!hasRecordedSize(target)) {
+      // No size on record: the grower states the block's size, never a guess.
+      const typed = toNumber(target.partArea);
+      return typed !== null && typed > 0 ? typed : null;
+    }
     const area = hectaresIn(target.areaHa, areaUnit);
     return area && area > 0 ? round(area, 2) : null;
   }
@@ -209,11 +220,13 @@ export const buildMultiTargetBody = (
     delete shared[key];
   });
   if (shared.extra_data && typeof shared.extra_data === 'object') {
+    // The chemical tab mirrors some fields into `extra_data` too (fuel, units, summary totals), so
+    // the same per-block and refused keys come out of it: a value left in there would be copied
+    // onto every block's record just as surely as one at the top level.
     const extra = { ...(shared.extra_data as Record<string, unknown>) };
-    SUMMARY_TOTAL_KEYS.forEach((key) => {
+    [...PER_TARGET_KEYS, ...REFUSED_KEYS].forEach((key) => {
       delete extra[key];
     });
-    delete extra.is_summary;
     shared.extra_data = extra;
   }
 

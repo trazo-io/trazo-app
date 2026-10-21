@@ -65,6 +65,14 @@ describe('multiParcel: area and amount per block', () => {
     expect(targetIssues(block({ scope: 'all' }), { ...galPerAcre, rate: '' })).toEqual(['amount']);
   });
 
+  it('whole block with no size on record: the grower states the size, never a guess', () => {
+    const unsized = { ...newTarget({ id: 9, name: 'New block', area: 0 }), scope: 'all' as const };
+    expect(targetArea(unsized, 'acres')).toBeNull();
+    expect(targetIssues(unsized, galPerAcre)).toEqual(['area', 'amount']);
+    expect(targetArea({ ...unsized, partArea: '8' }, 'acres')).toBe(8);
+    expect(derivedAmount({ ...unsized, partArea: '8' }, galPerAcre)).toBe(16);
+  });
+
   it('what the grower typed wins over the derived amount', () => {
     expect(targetAmount(block({ scope: 'all', amountTyped: '20' }), galPerAcre)).toBe(20);
     expect(targetAmount(block({ scope: 'all', amountTyped: '0' }), galPerAcre)).toBeNull();
@@ -93,7 +101,13 @@ describe('multiParcel: request body', () => {
     tank_mix_partners: [{ commercial_name: 'x', volume: '2' }],
     application_fuel_consumed: '3',
     is_summary: 'false',
-    extra_data: { volume_applied_total: '300', active_ingredient: 'copper' }
+    // The chemical tab mirrors fuel into extra_data: it must not ride onto every block from there.
+    extra_data: {
+      volume_applied_total: '300',
+      active_ingredient: 'copper',
+      application_fuel_consumed: '3',
+      is_summary: 'false'
+    }
   };
 
   const targets = [

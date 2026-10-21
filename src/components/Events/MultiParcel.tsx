@@ -21,6 +21,7 @@ import { APPLICATION_RATE_UNIT_SYMBOLS } from 'config/events/enums';
 import { UNIT_CODE_SYMBOLS } from 'config/events/formatters';
 import {
   derivedAmount,
+  hasRecordedSize,
   hectaresIn,
   targetArea,
   targetIssues,
@@ -163,14 +164,45 @@ export const PerParcelAmounts = ({
                 options={[
                   {
                     key: 'all',
-                    label: intl.formatMessage(
-                      { id: 'events.multiParcel.scopeAll' },
-                      { area: wholeArea ? `${fmt(wholeArea)} ${areaUnit}` : '?' }
-                    )
+                    label: wholeArea
+                      ? intl.formatMessage(
+                          { id: 'events.multiParcel.scopeAll' },
+                          { area: `${fmt(wholeArea)} ${areaUnit}` }
+                        )
+                      : intl.formatMessage({ id: 'events.multiParcel.scopeAllNoSize' })
                   },
                   { key: 'part', label: intl.formatMessage({ id: 'events.multiParcel.scopePart' }) }
                 ]}
               />
+              {target.scope === 'all' && !hasRecordedSize(target) && (
+                // No size on record for this parcel: ask for it here rather than leave a "whole
+                // block" that can never resolve, or push the grower to "part", which would
+                // record the wrong scope.
+                <Box mt={3}>
+                  <StandardField
+                    label={intl.formatMessage(
+                      { id: 'events.multiParcel.blockSize' },
+                      { unit: areaUnit }
+                    )}
+                    required
+                    helpText={intl.formatMessage({ id: 'events.multiParcel.blockSizeHelp' })}
+                    error={
+                      issues.includes('area')
+                        ? intl.formatMessage({ id: 'events.multiParcel.issue.area' })
+                        : undefined
+                    }>
+                    <StandardInput
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={target.partArea}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        update(target.parcelId, { partArea: e.target.value })
+                      }
+                    />
+                  </StandardField>
+                </Box>
+              )}
               {target.scope === 'part' && (
                 <Stack direction={{ base: 'column', md: 'row' }} spacing={3} mt={3}>
                   <StandardField

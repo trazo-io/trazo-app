@@ -8725,5 +8725,8 @@
   "events.multiParcel.validationTitle": "Each block needs its area and amount",
   "events.multiParcel.validationBody": "We marked the blocks that are missing something.",
   "events.multiParcel.savedTo": "Saved to {count} blocks",
-  "events.multiParcel.blockFailed": "{name}: {message}"
+  "events.multiParcel.blockFailed": "{name}: {message}",
+  "events.multiParcel.scopeAllNoSize": "Whole block",
+  "events.multiParcel.blockSize": "Block size ({unit})",
+  "events.multiParcel.blockSizeHelp": "This block has no size on record. Enter the size of the whole block."
 }

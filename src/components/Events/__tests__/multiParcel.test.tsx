@@ -117,6 +117,15 @@ describe('PerParcelAmounts', () => {
     expect(screen.getByPlaceholderText('24.8')).toHaveValue(null);
   });
 
+  it('a block with no size on record asks for it under "whole block"', () => {
+    wrap(<Cards initial={[newTarget({ id: 9, name: 'New block', area: 0 })]} showIssues />);
+    fireEvent.click(screen.getByRole('button', { name: 'Whole block' }));
+    expect(screen.getByLabelText(/Block size \(ac\)/)).toBeInTheDocument();
+    expect(screen.getByText('Enter the area treated.')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText(/Block size \(ac\)/), { target: { value: '8' } });
+    expect(screen.getByText('2 gal/ac × 8 ac = 16 gal')).toBeInTheDocument();
+  });
+
   it('says when it cannot derive, instead of guessing', () => {
     wrap(<Cards initial={[{ ...blockA, scope: 'all' }]} rate="" />);
     expect(screen.getByText(/It is not calculated/)).toBeInTheDocument();
