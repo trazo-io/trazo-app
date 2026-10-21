@@ -196,7 +196,14 @@ const PestManagementTab = forwardRef(
       // Who wrote the name ('auto' | 'operator' | 'unknown'), held by NewEvent. Same contract as
       // ProductionTab (Run 8b R4): regenerate only while the name is the tab's own.
       nameOrigin = 'auto',
-      onNameEdited
+      onNameEdited,
+      /**
+       * Several parcels (releases, cultural control): area, section, fuel used, machine hours
+       * and the release quantity are asked on each parcel's card below the form, so their
+       * inputs are left out here; units stay, because the cards read them. Keys from the
+       * server's spec (`multiParcelSpec.json`, type 6).
+       */
+      multiTarget = false
     },
     ref
   ) => {
@@ -972,17 +979,27 @@ const PestManagementTab = forwardRef(
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                     {/* Sprint 2 Epic 2.2: Flexible units - user can select hectares or acres */}
                     <StandardField
-                      label="Area Covered"
-                      helpText="The area you covered. Your certifier checks this against the block acreage; it is one of the fields § 205.103(b)(2) completeness looks for.">
+                      label={
+                        multiTarget
+                          ? intl.formatMessage({ id: 'events.multiParcel.areaUnitLabel' })
+                          : 'Area Covered'
+                      }
+                      helpText={
+                        multiTarget
+                          ? intl.formatMessage({ id: 'events.multiParcel.areaUnitHelp' })
+                          : 'The area you covered. Your certifier checks this against the block acreage; it is one of the fields § 205.103(b)(2) completeness looks for.'
+                      }>
                       <HStack spacing={2}>
-                        <StandardInput
-                          flex={2}
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          placeholder="2.5"
-                          {...methods.register('area_covered')}
-                        />
+                        {!multiTarget && (
+                          <StandardInput
+                            flex={2}
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            placeholder="2.5"
+                            {...methods.register('area_covered')}
+                          />
+                        )}
                         <StandardSelect flex={1} {...methods.register('area_unit')}>
                           <option value="ha">Hectares</option>
                           <option value="acres">Acres</option>
@@ -1025,21 +1042,25 @@ const PestManagementTab = forwardRef(
                         watch('fuel_type') === 'electric' ? 'Energy Amount (kWh)' : 'Fuel Consumed'
                       }
                       helpText={
-                        watch('fuel_type') === 'electric'
+                        multiTarget
+                          ? intl.formatMessage({ id: 'events.multiParcel.fuelUnitHelp' })
+                          : watch('fuel_type') === 'electric'
                           ? 'Energy consumption for carbon emission calculation'
                           : 'Fuel consumption for carbon emission calculation'
                       }>
                       <HStack spacing={2}>
-                        <StandardInput
-                          flex={2}
-                          type="number"
-                          step="0.1"
-                          min="0"
-                          placeholder={
-                            watch('fuel_type') === 'electric' ? 'e.g., 15 kWh' : 'e.g., 15.5'
-                          }
-                          {...methods.register('fuel_consumed')}
-                        />
+                        {!multiTarget && (
+                          <StandardInput
+                            flex={2}
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            placeholder={
+                              watch('fuel_type') === 'electric' ? 'e.g., 15 kWh' : 'e.g., 15.5'
+                            }
+                            {...methods.register('fuel_consumed')}
+                          />
+                        )}
                         <StandardSelect flex={1} {...methods.register('fuel_unit')}>
                           <option value="L">Liters</option>
                           <option value="gal">Gallons</option>
@@ -1050,17 +1071,19 @@ const PestManagementTab = forwardRef(
                     </StandardField>
 
                     {/* Equipment Operating Hours */}
-                    <StandardField
-                      label="Equipment Operating Hours"
-                      helpText="Used for calculating fuel efficiency and carbon per hour">
-                      <StandardInput
-                        type="number"
-                        step="0.1"
-                        min="0"
-                        placeholder="e.g., 3.5"
-                        {...methods.register('equipment_hours')}
-                      />
-                    </StandardField>
+                    {!multiTarget && (
+                      <StandardField
+                        label="Equipment Operating Hours"
+                        helpText="Used for calculating fuel efficiency and carbon per hour">
+                        <StandardInput
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          placeholder="e.g., 3.5"
+                          {...methods.register('equipment_hours')}
+                        />
+                      </StandardField>
+                    )}
 
                     {/* Production Efficiency */}
                     <StandardField
@@ -1292,20 +1315,22 @@ const PestManagementTab = forwardRef(
                         />
                       </StandardField>
 
-                      <StandardField
-                        label={
-                          intl.formatMessage({ id: 'app.releaseQuantity' }) || 'Release Quantity'
-                        }
-                        helpText={
-                          pestType === 'BR'
-                            ? 'Number and density of beneficials released'
-                            : 'Quantity of beneficial organisms used (if applicable)'
-                        }>
-                        <StandardInput
-                          {...methods.register('release_quantity')}
-                          placeholder="e.g., 1000 individuals per hectare"
-                        />
-                      </StandardField>
+                      {!multiTarget && (
+                        <StandardField
+                          label={
+                            intl.formatMessage({ id: 'app.releaseQuantity' }) || 'Release Quantity'
+                          }
+                          helpText={
+                            pestType === 'BR'
+                              ? 'Number and density of beneficials released'
+                              : 'Quantity of beneficial organisms used (if applicable)'
+                          }>
+                          <StandardInput
+                            {...methods.register('release_quantity')}
+                            placeholder="e.g., 1000 individuals per hectare"
+                          />
+                        </StandardField>
+                      )}
                     </SimpleGrid>
                   )}
 
@@ -1575,7 +1600,7 @@ const PestManagementTab = forwardRef(
                     />
                   </StandardField>
 
-                  <BlockIdField control={methods.control} />
+                  {!multiTarget && <BlockIdField control={methods.control} />}
                 </SimpleGrid>
               </SectionBox>
 

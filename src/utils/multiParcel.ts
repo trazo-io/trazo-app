@@ -13,6 +13,7 @@
  * a conversion the grower never saw would be a number on a certifier record that nobody stated.
  */
 
+import { eventTypeMayGoMulti } from '../config/events/multiParcel';
 import type { MultiParcelRules, PerParcelField } from '../config/events/multiParcel';
 import { AREA_CONVERSION_FACTORS } from './areaUnits';
 
@@ -383,4 +384,37 @@ export const planAlsoSeed = ({
     };
   }
   return { kind: 'wait' };
+};
+
+/**
+ * Where the form stands with several parcels:
+ * - `off`: one parcel only (editing, a plan item, a crew note, no open season, a one-parcel
+ *   farm, or an activity logged one parcel at a time).
+ * - `picking`: the picker is offered, nothing picked yet; or the subtype that decides is still
+ *   unanswered (soil and pest ask it in their own tab, after the parcels).
+ * - `active`: parcels picked and the activity covers several: the cards ask what differs.
+ * - `paused`: parcels picked, then a subtype logged one parcel at a time was chosen. They are
+ *   kept, not dropped, and the form says so; switching back puts them to work.
+ */
+export type MultiParcelMode = 'off' | 'picking' | 'active' | 'paused';
+
+export const multiParcelMode = ({
+  open,
+  eventType,
+  subtype,
+  hasRules,
+  pickedCount
+}: {
+  /** Nothing outside the activity rules it out (see the wizard's conditions). */
+  open: boolean;
+  eventType: number | null | undefined;
+  subtype: string | null | undefined;
+  /** The spec has rules for this type and subtype, and the form supports them. */
+  hasRules: boolean;
+  pickedCount: number;
+}): MultiParcelMode => {
+  if (!open || !eventTypeMayGoMulti(eventType)) return 'off';
+  if (hasRules) return pickedCount > 0 ? 'active' : 'picking';
+  if (!subtype) return 'picking';
+  return pickedCount > 0 ? 'paused' : 'off';
 };

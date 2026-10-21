@@ -145,6 +145,7 @@ import { cleanEventPayload, GENERAL_MODEL_TO_FORM } from 'utils/cleanEventPayloa
 import {
   buildMultiTargetBody,
   newApplicationGroup,
+  multiParcelMode,
   newTarget,
   restorableDraftParcels,
   planAlsoSeed,
@@ -915,23 +916,32 @@ function NewEvent({ isEdit = false, eventId = null }) {
       )
     };
   }, [multiRules, activeEventType, eventFormData.type, eventFormData.fuel_type]);
-  const multiParcelEligible =
-    !isEdit &&
-    !isRepeat &&
-    !activePlanItem &&
-    !fieldNoteIdFromUrl &&
-    !planProductionIdFromUrl &&
-    !postHarvestTarget &&
-    !!openSeason &&
-    !!multiRules &&
-    farmParcels.length > 1;
   const [multiParcelIds, setMultiParcelIds] = useState([]);
+  // Soil and pest answer their subtype in their own tab, after the parcels are picked: the
+  // picker is offered while the subtype is unanswered, and settles once it is (multiParcelMode).
+  const multiMode = multiParcelMode({
+    open:
+      !isEdit &&
+      !isRepeat &&
+      !activePlanItem &&
+      !fieldNoteIdFromUrl &&
+      !planProductionIdFromUrl &&
+      !postHarvestTarget &&
+      !!openSeason &&
+      farmParcels.length > 1,
+    eventType: activeEventType,
+    subtype: eventFormData.type,
+    hasRules: !!multiRules,
+    pickedCount: multiParcelIds.length
+  });
+  const multiParcelEligible = multiMode !== 'off';
   const [multiTargets, setMultiTargets] = useState([]);
   const [showMultiIssues, setShowMultiIssues] = useState(false);
   // Minted once per wizard session and sent as the server's idempotency key, so a save retried
   // after a lost response returns the records already written instead of writing them again.
   const applicationGroupRef = useRef(null);
-  const multiActive = multiParcelEligible && multiParcelIds.length > 0;
+  const multiActive = multiMode === 'active';
+  const multiParcelPaused = multiMode === 'paused';
   useEffect(() => {
     if (!multiActive) {
       setMultiTargets([]);
@@ -1010,7 +1020,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
           ...(data || {}),
           area_unit: data?.area_unit || defaultUnits.area,
           fuel_unit: data?.fuel_unit || defaultUnits.fuel,
-          irrigation_depth_unit: data?.irrigation_depth_unit || 'inches'
+          irrigation_depth_unit: data?.irrigation_depth_unit || 'inches',
+          // The soil tab's amendment unit select (bridged to amendment_amount_unit on save).
+          amendment_unit: data?.amendment_unit || 'kg'
         };
   // The farm's outlines (the picker's Map) and each parcel's own sections (its card's chips), in
   // one query for the whole farm, fetched once the activity can go on several parcels.
@@ -4725,18 +4737,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
                       isCalculatingCarbon={isCalculatingCarbon || isCalculating}
                     />
                   )}
-                  {multiActive && cardRules && (
-                    <Box mt={{ base: 5, md: 6 }}>
-                      <PerParcelCards
-                        targets={multiTargets}
-                        onChange={setMultiTargets}
-                        rules={cardRules}
-                        form={multiForm(eventFormData)}
-                        sectionsByParcel={sectionsByParcel}
-                        showIssues={showMultiIssues}
-                      />
-                    </Box>
-                  )}
                   {activeEventType === 3 && (
                     <GeneralTab
                       key={`g-${voiceSeq}`}
@@ -4757,6 +4757,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                       onDataChange={onDataChange}
                       onPrev={goToPreviousStep}
                       initialValues={eventFormData}
+                      multiTarget={multiActive}
                       hideActions={true}
                     />
                   )}
@@ -4768,6 +4769,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                       onDataChange={onDataChange}
                       onPrev={goToPreviousStep}
                       initialValues={eventFormData}
+                      multiTarget={multiActive}
                       hideActions={true}
                       nameOrigin={nameOrigin}
                       onNameEdited={() => setNameOrigin('operator')}
@@ -4783,6 +4785,37 @@ function NewEvent({ isEdit = false, eventId = null }) {
                       initialValues={eventFormData}
                       hideActions={true}
                     />
+                  )}
+
+                  {/* After every tab: the per-parcel cards follow the form they complete. */}
+                  {multiActive && cardRules && (
+                    <Box mt={{ base: 5, md: 6 }}>
+                      <PerParcelCards
+                        targets={multiTargets}
+                        onChange={setMultiTargets}
+                        rules={cardRules}
+                        form={multiForm(eventFormData)}
+                        sectionsByParcel={sectionsByParcel}
+                        showIssues={showMultiIssues}
+                      />
+                    </Box>
+                  )}
+                  {multiParcelPaused && (
+                    <Box mt={{ base: 5, md: 6 }}>
+                      <StandardAlert
+                        status="info"
+                        title={intl.formatMessage({ id: 'events.multiParcel.pausedTitle' })}
+                        description={intl.formatMessage(
+                          { id: 'events.multiParcel.pausedBody' },
+                          {
+                            name:
+                              farmParcels.find((p) => Number(p.id) === Number(parcelId))?.name ??
+                              '',
+                            count: multiParcelIds.length
+                          }
+                        )}
+                      />
+                    </Box>
                   )}
 
                   {/* Preview button integrated with navigation */}

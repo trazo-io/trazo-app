@@ -49,7 +49,7 @@ export const MULTI_PARCEL_SPEC = spec as unknown as {
 };
 
 /** Event types whose form can run in multi mode today. Extended as each tab gains it. */
-export const FORM_SUPPORTS_MULTI: readonly number[] = [2, 1];
+export const FORM_SUPPORTS_MULTI: readonly number[] = [2, 1, 5, 6];
 
 /** What the wizard needs for one event type + subtype in multi mode. */
 export interface MultiParcelRules {
