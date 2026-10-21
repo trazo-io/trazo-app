@@ -93,9 +93,21 @@ export const TraceChain = ({
   const forOperation = Boolean(fixPath);
   const season = tb.season;
 
-  // An input gap names its input: "an input has no supplier" sends the reader hunting through
-  // every row (MEASURED on the walnut showcase: 8 inputs, the gap was the 1st).
+  // A gap names its record: "an input has no supplier" sent the reader hunting through every
+  // row (MEASURED on the walnut showcase: 8 inputs, the gap was the 1st), and two picks without a
+  // lot code read as the same line (review of back #193). A pick is named by date, block, quantity.
   const inputName = (g: TraceGap) => {
+    if (g.hop === 'picks') {
+      const pick = (tb.picks || []).find((p: any) => p.id === g.ref);
+      if (!pick) return '';
+      return [
+        pick.date,
+        pick.block && t('traceback.input.block', { block: pick.block }),
+        pick.quantity
+      ]
+        .filter(Boolean)
+        .join(' · ');
+    }
     const row = (tb.inputs || []).find((r: any) => r.kind === g.kind && r.event_id === g.ref);
     if (!row) return '';
     return [row.date, row.product || t(`traceback.inputKind.${row.kind}`)]

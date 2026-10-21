@@ -83,6 +83,10 @@ const GAP_CODES = [
   ['inputs', 'input_without_document', 'receipt_document', 44, 'chemical']
 ] as const;
 
+const PICK_GAP = (enUS as unknown as Record<string, string>)[
+  'traceback.gap.pick_without_lot_code'
+].replace('{input}', '2026-08-01 · block UT · 13,400 lb');
+
 const TRACE = {
   sale: {
     id: 7,
@@ -269,9 +273,7 @@ describe('TracebackPage', () => {
     state.trace = TRACE;
     renderAt('/admin/dashboard/farm/1/traceback?sale=7');
     // The pick-lot fix opens the harvest record; after saving NewEvent returns to `next`.
-    const gap = screen
-      .getByText(messages['traceback.gap.pick_without_lot_code'])
-      .closest('[role="alert"]');
+    const gap = screen.getByText(PICK_GAP).closest('[role="alert"]');
     fireEvent.click(
       within(gap as HTMLElement).getByRole('button', { name: messages['traceback.gap.fix'] })
     );
@@ -311,7 +313,11 @@ describe('TracebackPage', () => {
     expect(screen.getByText(messages['traceback.hop.sale'])).toBeTruthy();
     for (const [, code] of GAP_CODES) {
       // An input gap names WHICH input (date · product), not "an input".
-      const text = messages[`traceback.gap.${code}`].replace('{input}', '2026-05-02 · X');
+      // Each gap names its record: an input by date and product, a pick by date, block, quantity.
+      const text = messages[`traceback.gap.${code}`].replace(
+        '{input}',
+        code === 'pick_without_lot_code' ? '2026-08-01 · block UT · 13,400 lb' : '2026-05-02 · X'
+      );
       expect(screen.getAllByText(text).length).toBeGreaterThan(0);
       // ...and says HOW to close it: a sale cannot be edited, so "Fix" alone was a dead end.
       expect(screen.getAllByText(messages[`traceback.gapHow.${code}`]).length).toBeGreaterThan(0);

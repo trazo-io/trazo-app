@@ -8094,7 +8094,7 @@
   "traceback.gap.input_without_supplier": "{input}: no supplier recorded.",
   "traceback.gap.label_category_not_recorded": "The sale is marked organic on the invoice but its labeling category is not recorded.",
   "traceback.gap.no_sale_document": "The sale has no invoice number and no bill of lading, so an inspector has nothing to start the trace from.",
-  "traceback.gap.pick_without_lot_code": "A harvest pick has no lot code, so nothing on the bin or the sale can point to it.",
+  "traceback.gap.pick_without_lot_code": "{input}: harvest pick with no lot code, so nothing on the bin or the sale can point to it.",
   "traceback.gap.sale_not_linked_to_pick": "The sale does not name the harvest pick it came from.",
   "traceback.gap.sale_without_document": "No invoice, bill of lading or pack-out file is attached to this sale.",
   "traceback.gap.season_without_lot_id": "The season has no lot ID recorded, so a container tag cannot name it.",

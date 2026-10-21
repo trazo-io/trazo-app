@@ -92,7 +92,9 @@ const searchFor = (q: string) => {
   fireEvent.click(screen.getByRole('button', { name: messages['traceback.search.submit'] }));
 };
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe('ReviewTraceback', () => {
   it("several matches are the reviewer's choice", async () => {

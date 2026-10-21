@@ -8094,7 +8094,7 @@
   "traceback.gap.input_without_supplier": "{input}: no tiene proveedor registrado.",
   "traceback.gap.label_category_not_recorded": "La venta está marcada como orgánica en la factura pero no tiene registrada su categoría de etiquetado.",
   "traceback.gap.no_sale_document": "La venta no tiene número de factura ni conocimiento de embarque, así que el inspector no tiene desde dónde empezar.",
-  "traceback.gap.pick_without_lot_code": "Una cosecha no tiene código de lote, así que nada en la caja ni en la venta puede apuntar a ella.",
+  "traceback.gap.pick_without_lot_code": "{input}: cosecha sin código de lote, así que nada en la caja ni en la venta puede apuntar a ella.",
   "traceback.gap.sale_not_linked_to_pick": "La venta no indica de qué cosecha proviene.",
   "traceback.gap.sale_without_document": "Esta venta no tiene adjunta ninguna factura, conocimiento de embarque ni resumen de empaque.",
   "traceback.gap.season_without_lot_id": "La temporada no tiene ID de lote registrado, así que ninguna etiqueta de envase puede nombrarla.",
