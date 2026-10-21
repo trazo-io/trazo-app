@@ -40,7 +40,8 @@ import {
   FaDownload,
   FaExclamationCircle,
   FaFileAlt,
-  FaInfoCircle
+  FaInfoCircle,
+  FaRoute
 } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import { useParams } from 'react-router-dom';
@@ -316,6 +317,19 @@ const CertifierReview: React.FC = () => {
               { period }
             )}
           </Text>
+        )}
+
+        {/* The trace sits below every readiness finding and the source files, 30+ rows down on a
+            real operation (production review link, 2026-10-21). One link at the top reaches it. */}
+        {token && (
+          <StandardButton
+            as="a"
+            href="#certifier-traceback"
+            variant="outline"
+            alignSelf="flex-start"
+            leftIcon={<FaRoute />}>
+            {intl.formatMessage({ id: 'certifierReview.traceback.jump' })}
+          </StandardButton>
         )}
 
         {/* Readiness findings — read in the browser, no download required. Absent entirely

@@ -50,6 +50,33 @@ const DESTINATION_KEYS: Record<string, string> = {
   other: 'events.harvestDestination.other'
 };
 
+// A spray's recorded type (ChemicalEvent.type). A reviewer reads a fungicide or pesticide
+// differently from a fertilizer (§ 205.206 governs pest-control materials), and the record knows
+// which it is, so "Fertilizer or crop protection" is only the fallback for a type it does not.
+const CHEMICAL_TYPE_KEYS: Record<string, string> = {
+  FE: 'events.chemical.subtypes.fertilizer',
+  FU: 'events.chemical.subtypes.fungicide',
+  HE: 'events.chemical.subtypes.herbicide',
+  PE: 'events.chemical.subtypes.pesticide'
+};
+
+// A missing input identifier, by gap code: which line of the row it belongs on and how to say it.
+const MISSING_ON_ROW: Record<string, { label: string; value: string }> = {
+  input_without_supplier: {
+    label: 'traceback.field.supplier',
+    value: 'traceback.missing.notRecorded'
+  },
+  input_without_invoice: {
+    label: 'traceback.field.invoice',
+    value: 'traceback.missing.notRecorded'
+  },
+  input_without_lot: { label: 'traceback.field.lot', value: 'traceback.missing.notRecorded' },
+  input_without_document: {
+    label: 'traceback.field.receipt',
+    value: 'traceback.missing.notAttached'
+  }
+};
+
 const Fact = ({ label, value }: { label: string; value?: string | null }) =>
   value ? (
     <Text fontSize="sm">
@@ -114,6 +141,26 @@ export const TraceChain = ({
       .filter(Boolean)
       .join(' · ');
   };
+
+  const kindLabel = (r: any) =>
+    t(
+      (r.kind === 'chemical' && CHEMICAL_TYPE_KEYS[r.event_type]) || `traceback.inputKind.${r.kind}`
+    );
+
+  // The reviewer reads each input's missing identifiers ON its row (review on the production link,
+  // 2026-10-21): a 17-line list above the rows had to be matched back to them by hand, and a row
+  // with no invoice simply had no invoice line. The operation's page keeps the list, because each
+  // entry there carries its "Fix it here".
+  const missingOnRow = (r: any) =>
+    forOperation
+      ? []
+      : (tb.gaps || []).filter(
+          (g: TraceGap) =>
+            g.hop === 'inputs' &&
+            g.kind === r.kind &&
+            g.ref === r.event_id &&
+            MISSING_ON_ROW[g.code]
+        );
 
   const docLabel = (d: TraceDoc) =>
     `${t(DOC_KIND_KEYS[d.kind] ?? 'traceback.docKind.attachment')}: ${d.title}`;
@@ -280,7 +327,7 @@ export const TraceChain = ({
       <Connector label={t('traceback.link.seasonToInputs')} />
 
       <StandardCard title={t('traceback.hop.inputs')} subtitle={t('traceback.inputs.subtitle')}>
-        <Box mb={3}>{gapsFor('inputs')}</Box>
+        {forOperation && <Box mb={3}>{gapsFor('inputs')}</Box>}
         {tb.inputs.length === 0 ? (
           <Text fontSize="sm">{t('traceback.inputs.none')}</Text>
         ) : (
@@ -294,7 +341,7 @@ export const TraceChain = ({
                 </Text>
                 <Text fontSize="sm" color="gray.600">
                   {[
-                    t(`traceback.inputKind.${r.kind}`),
+                    kindLabel(r),
                     r.block && t('traceback.input.block', { block: r.block }),
                     r.other_block && t('traceback.input.otherBlock'),
                     t(`traceback.listing.${r.listing}`)
@@ -322,6 +369,16 @@ export const TraceChain = ({
                 <Fact label={t('traceback.field.supplier')} value={r.supplier} />
                 <Fact label={t('traceback.field.invoice')} value={r.invoice} />
                 <Fact label={t('traceback.field.lot')} value={r.lot} />
+                {missingOnRow(r).map((g: TraceGap) => (
+                  <Text key={g.code} fontSize="sm">
+                    <Text as="span" color="gray.600">
+                      {t(MISSING_ON_ROW[g.code].label)}:{' '}
+                    </Text>
+                    <Badge variant="warning" textTransform="none">
+                      {t(MISSING_ON_ROW[g.code].value)}
+                    </Badge>
+                  </Text>
+                ))}
                 <Files docs={r.documents} />
               </Box>
             ))}

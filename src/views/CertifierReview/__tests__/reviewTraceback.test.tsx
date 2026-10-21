@@ -43,6 +43,7 @@ const TRACE = {
     {
       kind: 'chemical',
       event_id: 9,
+      event_type: 'FU',
       date: '2026-04-02',
       product: 'Lime sulfur',
       block: 'NB-1',
@@ -317,10 +318,20 @@ describe('ReviewTraceback', () => {
       expect(String(call[0]).startsWith(`${API}/certifier-review/tok/traceback/`)).toBe(true);
       expect((call as unknown[])[1]).toBeUndefined();
     }
-    // The gap is a fact for the reviewer: no how-to, no fix button.
+    // The gap is a fact for the reviewer, on the input's own row (production review link,
+    // 2026-10-21: a list above the rows had to be matched back to them by hand). No how-to, no
+    // fix button.
     expect(
-      screen.getByText('2026-04-02 · Lime sulfur: no purchase receipt attached.')
-    ).toBeTruthy();
+      screen.queryByText('2026-04-02 · Lime sulfur: no purchase receipt attached.')
+    ).toBeNull();
+    const row = screen.getByText('2026-04-02 · Lime sulfur').parentElement as HTMLElement;
+    expect(row.textContent).toContain(
+      `${messages['traceback.field.receipt']}: ${messages['traceback.missing.notAttached']}`
+    );
+    // The recorded spray type, not "Fertilizer or crop protection": § 205.206 reads a fungicide
+    // differently from a fertilizer.
+    expect(row.textContent).toContain(messages['events.chemical.subtypes.fungicide']);
+    expect(row.textContent).not.toContain(messages['traceback.inputKind.chemical']);
     expect(screen.queryByText(messages['traceback.gapHow.input_without_document'])).toBeNull();
     expect(screen.queryByRole('button', { name: messages['traceback.gap.fix'] })).toBeNull();
     expect(screen.getByText('1 link not recorded in this chain')).toBeTruthy();
