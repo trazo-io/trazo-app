@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useIntl } from 'react-intl';
 import { apiErrorMessage } from 'utils/apiErrorMessage';
 import { backToLabel } from 'utils/backToLabel';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { StandardParcelFormTransparency } from '../../../../components/Forms/StandardParcelForm_Transparency';
 import { WriteAccessGuard } from 'components/Guards/WriteAccessGuard';
@@ -13,6 +13,7 @@ import {
   useGetParcelQuery
 } from 'store/api/productApi';
 import { useGetFarmQuery } from 'store/api/companyApi';
+import { useGetParcelGeometryQuery } from 'store/api/parcelGeometryApi';
 import { setFarmParcel } from 'store/features/companySlice';
 import { useToast } from '@chakra-ui/react';
 import { PlanLimitAlert } from 'components/Subscription/PlanLimitAlert';
@@ -52,6 +53,10 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
   const dispatch = useDispatch();
   const toast = useToast();
   const { farmId, parcelId } = useParams();
+  // `?step=boundary`: the parcel page's "Edit outline" shortcut. The form opens on the boundary
+  // step, and leaving goes back to the parcel, where the grower came from.
+  const [searchParams] = useSearchParams();
+  const fromOutlineShortcut = isEdit && searchParams.get('step') === 'boundary';
   const currentCompany = useSelector((state: RootState) => state.company.currentCompany);
   const currentEstablishment = useSelector(
     (state: RootState) => state.company.currentEstablishment
@@ -85,6 +90,21 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
     {
       skip: !isEdit || !parcelId || !farmId || !currentCompany?.id
     }
+  );
+
+  // The farm's other parcels, drawn read-only beside the outline being drawn or edited.
+  const { data: farmGeometry } = useGetParcelGeometryQuery(
+    { companyId: currentCompany?.id ?? '', farmId: farmId ?? '' },
+    { skip: !farmId || !currentCompany?.id }
+  );
+  const otherParcels = React.useMemo(
+    () =>
+      (farmGeometry || [])
+        .filter(
+          (parcel) => String(parcel.id) !== String(parcelId) && (parcel.path?.length ?? 0) >= 3
+        )
+        .map((parcel) => ({ id: parcel.id, name: parcel.name, path: parcel.path! })),
+    [farmGeometry, parcelId]
   );
 
   // Get establishment coordinates - prefer fresh API data over Redux state
@@ -294,12 +314,18 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
   };
 
   const handleCancel = () => {
-    navigate(`/admin/dashboard/farm/${farmId}`);
+    navigate(
+      fromOutlineShortcut
+        ? `/admin/dashboard/farm/${farmId}/parcel/${parcelId}`
+        : `/admin/dashboard/farm/${farmId}`
+    );
   };
   // Names where handleCancel goes: the form's footer has its own previous-step control.
   // The ROUTE's farm only. The store's active establishment can be a different farm, and
   // naming it here would label the button with one farm while it navigates to another.
-  const backLabel = backToLabel(intl, establishmentData?.name, 'common.backToFarm');
+  const backLabel = fromOutlineShortcut
+    ? backToLabel(intl, parcelData?.name, 'common.backToParcel')
+    : backToLabel(intl, establishmentData?.name, 'common.backToFarm');
 
   // Toast + redirect on a failed fetch, in an EFFECT.
   //
@@ -374,6 +400,8 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
         isEdit={isEdit}
         establishmentName={establishmentData?.name || currentEstablishment?.name || ''}
         establishmentCoordinates={establishmentCoordinates}
+        initialStep={fromOutlineShortcut ? 1 : 0}
+        otherParcels={otherParcels}
         preFormAlert={
           // `isAtParcelLimit` is only ever true for a stated, finite limit, so the value is
           // present here — but narrow explicitly rather than asserting, so that a future change

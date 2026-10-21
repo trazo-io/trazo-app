@@ -8,7 +8,11 @@ import {
   useColorModeValue,
   Box,
   Button,
-  Icon
+  Icon,
+  IconButton,
+  Menu,
+  MenuButton,
+  MenuList
 } from '@chakra-ui/react';
 import React, { useEffect } from 'react';
 import { dashboardTableData, timelineData } from 'variables/general';
@@ -22,11 +26,15 @@ import Shimmer from 'components/Shimmer/Shimmer';
 import HistoryCard from './components/HistoryCard';
 import TrackList from './components/TrackList';
 // assets
-import { FaClipboardCheck } from 'react-icons/fa';
+import { FaClipboardCheck, FaDrawPolygon, FaEllipsisH } from 'react-icons/fa';
+import { StandardMenuItem } from 'components/Design/StandardComponents';
+import { useUserRole } from 'hooks/useUserRole';
+import { toLatLngPath } from 'utils/parcelPolygon';
 import imageMap from 'assets/img/imageMap.png';
 import imageParcel1 from 'assets/img/ImageParcel1.png';
 import { setParcel } from 'store/features/productSlice';
 import { useGetParcelQuery } from 'store/api/productApi';
+import { useGetParcelGeometryQuery } from 'store/api/parcelGeometryApi';
 import LocationDisclosurePrompt from 'components/Parcel/LocationDisclosurePrompt';
 import { useIntl } from 'react-intl';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -38,11 +46,24 @@ export default function ParcelView() {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { canWrite } = useUserRole();
 
   const mainText = useColorModeValue('gray.700', 'gray.200');
   const cardColor = useColorModeValue('white', 'gray.700');
 
   const currentCompany = useSelector((state) => state.company.currentCompany);
+  // The farm's other parcels, drawn around this one on the map card.
+  const { data: farmGeometry } = useGetParcelGeometryQuery(
+    { companyId: currentCompany?.id, farmId },
+    { skip: !farmId || !currentCompany?.id }
+  );
+  const otherParcels = React.useMemo(
+    () =>
+      (farmGeometry || [])
+        .filter((parcel) => String(parcel.id) !== String(parcelId) && parcel.path?.length >= 3)
+        .map((parcel) => ({ id: parcel.id, path: parcel.path })),
+    [farmGeometry, parcelId]
+  );
   // Get subscription from the company
   const subscription = currentCompany?.subscription;
 
@@ -224,6 +245,45 @@ export default function ParcelView() {
           polygon={isFetching ? null : data?.polygon}
           center={isFetching ? null : data?.map_metadata?.center}
           zoom={isFetching ? null : data?.map_metadata?.zoom}
+          otherParcels={isFetching ? [] : otherParcels}
+          menu={
+            canWrite && !isFetching ? (
+              // A shortcut to the parcel's boundary step, which also shows the farm's other
+              // parcels. Styled like Google's own map controls beside it (white, square).
+              <Menu placement="bottom-end">
+                <MenuButton
+                  as={IconButton}
+                  icon={<Icon as={FaEllipsisH} />}
+                  aria-label={intl.formatMessage({ id: 'parcel.map.menu' })}
+                  size="md"
+                  w="40px"
+                  minW="40px"
+                  h="40px"
+                  bg="white"
+                  color="gray.700"
+                  borderRadius="2px"
+                  boxShadow="0 1px 4px rgba(0,0,0,0.3)"
+                  _hover={{ bg: 'gray.50' }}
+                />
+                <MenuList>
+                  <StandardMenuItem
+                    icon={<Icon as={FaDrawPolygon} />}
+                    onClick={() =>
+                      navigate(
+                        `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/change?step=boundary`
+                      )
+                    }>
+                    {intl.formatMessage({
+                      id:
+                        toLatLngPath(data?.polygon).length >= 3
+                          ? 'parcel.map.editOutline'
+                          : 'parcel.map.drawOutline'
+                    })}
+                  </StandardMenuItem>
+                </MenuList>
+              </Menu>
+            ) : null
+          }
         />
       </Grid>
       <Grid

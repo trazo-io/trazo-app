@@ -11,6 +11,7 @@ import Shimmer from 'components/Shimmer/Shimmer';
 import { useIntl } from 'react-intl';
 import { googleMapsLoaderOptions } from 'components/Map/mapsLoaderOptions';
 import { toLatLngPath } from 'utils/parcelPolygon';
+import { NEIGHBOUR_OUTLINE } from 'components/Map/neighbourOutline';
 
 // Utility function to calculate polygon center
 const calculatePolygonCenter = (points) => {
@@ -81,7 +82,15 @@ const calculatePolygonZoom = (points) => {
 // Export utilities for reuse in forms and other components
 export { calculatePolygonCenter, calculatePolygonZoom };
 
-const CardWithMap = ({ polygon: rawPolygon, zoom, center }) => {
+/**
+ * `menu`: optional, rendered over the map's top-right corner, left of Google's fullscreen
+ * control (the parcel page passes its "Edit outline" shortcut).
+ *
+ * `otherParcels`: optional `[{ id, path }]`, the farm's other parcels, drawn in the neighbour
+ * style around this one. The view stays on this parcel: only the neighbours that fall inside
+ * it show, the map never zooms out to fit the farm. The consumer pages pass neither.
+ */
+const CardWithMap = ({ polygon: rawPolygon, zoom, center, menu = null, otherParcels = [] }) => {
   const intl = useIntl();
   // Seeded parcels store GeoJSON; see toLatLngPath. Memoised so the effect below does not
   // re-run on every render.
@@ -180,7 +189,13 @@ const CardWithMap = ({ polygon: rawPolygon, zoom, center }) => {
           borderRadius="15px"
           bg="gray.50"
           border="1px dashed"
-          borderColor="gray.200">
+          borderColor="gray.200"
+          position="relative">
+          {menu && (
+            <Box position="absolute" top="10px" right="10px" zIndex={2}>
+              {menu}
+            </Box>
+          )}
           <Flex direction="column" align="center" justify="center" h="100%" px={4}>
             <VStack spacing={2}>
               <Icon as={FaMapMarkedAlt} boxSize={10} color="gray.500" />
@@ -205,7 +220,18 @@ const CardWithMap = ({ polygon: rawPolygon, zoom, center }) => {
 
   return (
     <Card maxHeight="290.5px" p="0px">
-      <CardBody p="0px" w="100%" h={{ base: '200px', lg: '290px' }} borderRadius="15px">
+      <CardBody
+        p="0px"
+        w="100%"
+        h={{ base: '200px', lg: '290px' }}
+        borderRadius="15px"
+        position="relative">
+        {menu && (
+          // Left of Google's fullscreen button (40px wide, 10px from the edge).
+          <Box position="absolute" top="10px" right="60px" zIndex={2}>
+            {menu}
+          </Box>
+        )}
         <GoogleMap
           mapContainerStyle={{
             width: '100%',
@@ -215,6 +241,9 @@ const CardWithMap = ({ polygon: rawPolygon, zoom, center }) => {
           zoom={mapZoom}
           center={mapCenter}
           mapTypeId="satellite">
+          {otherParcels.map((other) => (
+            <Polygon key={other.id} path={other.path} options={NEIGHBOUR_OUTLINE} />
+          ))}
           {polygon && polygon.length > 0 && (
             <Polygon
               path={polygon}
@@ -223,7 +252,9 @@ const CardWithMap = ({ polygon: rawPolygon, zoom, center }) => {
                 fillOpacity: 0.35,
                 strokeColor: '#2E7D32',
                 strokeOpacity: 1,
-                strokeWeight: 2
+                strokeWeight: 2,
+                // Above the neighbours.
+                zIndex: 1
               }}
             />
           )}
