@@ -46,7 +46,8 @@ import {
   FaCalendarAlt,
   FaClipboardCheck,
   FaFileSignature,
-  FaMapMarkedAlt
+  FaMapMarkedAlt,
+  FaRoute
 } from 'react-icons/fa';
 import { StandardPage } from 'components/Design/StandardComponents';
 import Card from 'components/Card/Card';
@@ -2678,6 +2679,19 @@ const EducationTopicDetail: React.FC = () => {
                         id: 'education.detail.inspectionPrep.tracebackAnswer'
                       })}
                     </Text>
+                    {/* The walk this card describes is a page now: point at the topic that
+                        teaches it rather than repeating it here. */}
+                    <Text fontSize="sm">
+                      {intl.formatMessage({ id: 'education.detail.inspectionPrep.tracebackTry' })}{' '}
+                      <Link
+                        color="green.700"
+                        fontWeight="semibold"
+                        onClick={() => navigate('/admin/dashboard/education/topic/traceback')}>
+                        {intl.formatMessage({
+                          id: 'education.detail.inspectionPrep.tracebackLink'
+                        })}
+                      </Link>
+                    </Text>
                   </VStack>
                 </Box>
 
@@ -2902,6 +2916,160 @@ const EducationTopicDetail: React.FC = () => {
         )
       },
       {
+        // 2026-10-21: the traceback page (back #187/#193/#200/#207, app #164/#169/#170/#175).
+        // Every claim here is what the app does: the search fields, "never picks for you", the
+        // 20-row recall cap with its notice, the PHI line as arithmetic on the farm's own dates,
+        // a receipt counting only when filed as one, and the review link's scope. NEVER:
+        // "recall-ready", "FSMA 204" or a saved "mock recall"; none of those exist.
+        id: 'traceback',
+        title: intl.formatMessage({ id: 'education.topicTracebackTitle' }),
+        description: intl.formatMessage({ id: 'education.topicTracebackDesc' }),
+        icon: FaRoute,
+        category: intl.formatMessage({ id: 'education.categoryCompliance' }),
+        content: (
+          <VStack spacing={6} align="stretch">
+            <Alert status="info">
+              <AlertIcon />
+              <Box>
+                <AlertTitle>
+                  {intl.formatMessage({ id: 'education.detail.traceback.introTitle' })}
+                </AlertTitle>
+                <AlertDescription>
+                  {intl.formatMessage({ id: 'education.detail.traceback.introDesc' })}
+                </AlertDescription>
+              </Box>
+            </Alert>
+
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.traceback.runTitle' })}
+            </Heading>
+            <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+              <VStack spacing={3} align="stretch">
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.traceback.step1Label' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.traceback.step1' })}
+                </Text>
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.traceback.step2Label' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.traceback.step2' })}
+                </Text>
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.traceback.step3Label' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.traceback.step3' })}
+                </Text>
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.traceback.step4Label' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.traceback.step4' })}
+                </Text>
+              </VStack>
+            </Box>
+
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.traceback.gapsTitle' })}
+            </Heading>
+            <Text>{intl.formatMessage({ id: 'education.detail.traceback.gapsIntro' })}</Text>
+            <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+              <VStack spacing={3} align="stretch">
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.traceback.gapSaleLabel' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.traceback.gapSale' })}
+                </Text>
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.traceback.gapPickLabel' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.traceback.gapPick' })}
+                </Text>
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.traceback.gapInputLabel' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.traceback.gapInput' })}
+                </Text>
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.traceback.gapReceiptLabel' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.traceback.gapReceipt' })}
+                </Text>
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.traceback.gapSeasonLabel' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.traceback.gapSeason' })}
+                </Text>
+              </VStack>
+            </Box>
+            <Text>{intl.formatMessage({ id: 'education.detail.traceback.closedNote' })}</Text>
+
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.traceback.callsTitle' })}
+            </Heading>
+            <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+              <VStack spacing={3} align="stretch">
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.traceback.packerLabel' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.traceback.packer' })}
+                </Text>
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.traceback.recallLabel' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.traceback.recall' })}
+                </Text>
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.traceback.residueLabel' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.traceback.residue' })}
+                </Text>
+              </VStack>
+            </Box>
+
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.traceback.certifierTitle' })}
+            </Heading>
+            <Text>{intl.formatMessage({ id: 'education.detail.traceback.certifierDesc' })}</Text>
+
+            <Alert status="warning">
+              <AlertIcon />
+              <Box>
+                <AlertTitle>
+                  {intl.formatMessage({ id: 'education.detail.traceback.limitTitle' })}
+                </AlertTitle>
+                <AlertDescription>
+                  {intl.formatMessage({ id: 'education.detail.traceback.limitDesc' })}
+                </AlertDescription>
+              </Box>
+            </Alert>
+
+            <Alert status="success">
+              <AlertIcon />
+              <Box>
+                <AlertTitle>
+                  {intl.formatMessage({ id: 'education.detail.traceback.habitTitle' })}
+                </AlertTitle>
+                <AlertDescription>
+                  {intl.formatMessage({ id: 'education.detail.traceback.habitDesc' })}
+                </AlertDescription>
+              </Box>
+            </Alert>
+          </VStack>
+        )
+      },
+      {
         id: 'record-corrections',
         title: intl.formatMessage({ id: 'education.topicRecordCorrectionsTitle' }),
         description: intl.formatMessage({ id: 'education.topicRecordCorrectionsDesc' }),
@@ -3087,7 +3255,7 @@ const EducationTopicDetail: React.FC = () => {
         )
       }
     ],
-    [intl]
+    [intl, navigate]
   );
 
   const topic = documentationTopics.find((t) => t.id === topicId);

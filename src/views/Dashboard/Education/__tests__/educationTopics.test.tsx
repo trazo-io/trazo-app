@@ -17,7 +17,7 @@ import React from 'react';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 import { ChakraProvider } from '@chakra-ui/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -46,7 +46,7 @@ const renderTopic = (topicId: string, locale: string) => {
 };
 
 /** Topics written against the Calapooia Bend rehearsal. */
-const TOPICS = ['record-corrections', 'season-lifecycle', 'osp-data', 'farm-events'];
+const TOPICS = ['record-corrections', 'season-lifecycle', 'osp-data', 'farm-events', 'traceback'];
 
 describe.each(TOPICS)('education topic: %s', (topicId) => {
   it.each(['en-US', 'es-419'])('renders in %s with no untranslated ids', (locale) => {
@@ -198,5 +198,54 @@ describe('every hub card leads somewhere', () => {
     // The rehearsal topics are on the hub, not only reachable by typing the URL.
     for (const id of TOPICS) expect(hubIds).toContain(id);
     expect(titles.length).toBeGreaterThan(0);
+  });
+});
+
+describe('traceback topic', () => {
+  it('is on the hub under Compliance and opens from the inspection-prep card', async () => {
+    const { container, unmount } = render(
+      <ChakraProvider>
+        <IntlProvider locale="en-US" messages={enUS} onError={() => undefined}>
+          <MemoryRouter initialEntries={['/education']}>
+            <Routes>
+              <Route path="/education" element={<EducationHub />} />
+            </Routes>
+          </MemoryRouter>
+        </IntlProvider>
+      </ChakraProvider>
+    );
+    expect(container.textContent).toContain(enUS['education.topicTracebackTitle']);
+    unmount();
+
+    let landed = '';
+    const Landed = () => {
+      landed = 'traceback-topic';
+      return null;
+    };
+    render(
+      <ChakraProvider>
+        <IntlProvider locale="en-US" messages={enUS} onError={() => undefined}>
+          <MemoryRouter initialEntries={['/admin/dashboard/education/topic/inspection-prep']}>
+            <Routes>
+              <Route
+                path="/admin/dashboard/education/topic/:topicId"
+                element={<EducationTopicDetail />}
+              />
+              <Route path="/admin/dashboard/education/topic/traceback" element={<Landed />} />
+            </Routes>
+          </MemoryRouter>
+        </IntlProvider>
+      </ChakraProvider>
+    );
+    fireEvent.click(screen.getByText(enUS['education.detail.inspectionPrep.tracebackLink']));
+    await waitFor(() => expect(landed).toBe('traceback-topic'));
+  });
+
+  it('never claims what the trace does not do', () => {
+    // Read something first: the page rendered past its heading.
+    const { text, unmount } = renderTopic('traceback', 'en-US');
+    expect(text).toContain(enUS['education.detail.traceback.recallLabel']);
+    expect(text).not.toMatch(/recall-ready|FSMA|mock recall|compliant|verified|score|%/i);
+    unmount();
   });
 });
