@@ -73,6 +73,7 @@ import { useIntl } from 'react-intl';
 import {
   APPLICATION_PURPOSES,
   APPLICATION_RATE_UNITS,
+  HAND_DISPENSER_METHOD,
   retiredOrganicApprovedLabelKey
 } from 'config/events/enums';
 import { getSubtypes } from 'config/events';
@@ -410,7 +411,11 @@ export const buildChemicalSchema = (intl) =>
       return;
     }
 
-    if (!data.concentration || data.concentration.length === 0) {
+    // A pheromone dispenser is counted and hung, not mixed into a tank, so "the strength on the
+    // label" is not a number the grower can be made to supply for it. Optional for that method
+    // only; a value typed anyway is still checked below.
+    const concentrationOptional = data.application_method === HAND_DISPENSER_METHOD;
+    if ((!data.concentration || data.concentration.length === 0) && !concentrationOptional) {
       ctx.addIssue({
         code: 'custom',
         path: ['concentration'],
@@ -420,7 +425,7 @@ export const buildChemicalSchema = (intl) =>
             'Product concentration is required — the strength on the label (e.g. "1.34%" or "10-10-10"). The amount and rate go in Product Amount Applied, Application Rate and Area Treated below.'
         })
       });
-    } else if (data.type) {
+    } else if (data.type && data.concentration) {
       try {
         const validation = validateConcentration(data.concentration, data.type, {
           // A single-nutrient micronutrient product (zinc sulfate 36% Zn) has no NPK analysis.
@@ -3195,6 +3200,11 @@ const ChemicalTab = forwardRef(
                                     defaultMessage: 'Pounds (lbs)'
                                   })}
                                 </option>
+                                {/* A count, not a measure: mating-disruption dispensers are
+                                    hung by hand. Never converted to kg or L downstream. */}
+                                <option value="dispensers">
+                                  {intl.formatMessage({ id: 'app.unit.dispensers' })}
+                                </option>
                               </StandardSelect>
                             )}
                           />
@@ -3581,11 +3591,13 @@ const ChemicalTab = forwardRef(
                                 id: 'events.chemical.concentration.productConcentration'
                               })
                         }
-                        required
+                        required={watch('application_method') !== HAND_DISPENSER_METHOD}
                         error={errors.concentration?.message}
                         helpText={intl.formatMessage({
                           id: !chemicalType
                             ? 'events.chemical.concentration.help.pickType'
+                            : watch('application_method') === HAND_DISPENSER_METHOD
+                            ? 'events.chemical.concentration.help.dispenser'
                             : chemicalType === 'FE'
                             ? watch('micronutrient_type')
                               ? // §E-3: a single-nutrient product has no NPK analysis.
@@ -3793,6 +3805,13 @@ const ChemicalTab = forwardRef(
                               <option value="soil_incorporation">
                                 {intl.formatMessage({
                                   id: 'events.chemical.methods.soilIncorporationMixed'
+                                })}
+                              </option>
+                              {/* Pheromone dispensers for mating disruption, hung by hand.
+                                  Without it the record printed into the packet as a spray. */}
+                              <option value="hand_dispenser">
+                                {intl.formatMessage({
+                                  id: 'events.chemical.methods.handDispenser'
                                 })}
                               </option>
                             </>
@@ -4291,6 +4310,9 @@ const ChemicalTab = forwardRef(
                               </option>
                               <option value="lbs">
                                 {intl.formatMessage({ id: 'app.unit.pounds' })}
+                              </option>
+                              <option value="dispensers">
+                                {intl.formatMessage({ id: 'app.unit.dispensers' })}
                               </option>
                             </StandardSelect>
                           )}

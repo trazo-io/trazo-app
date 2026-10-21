@@ -184,6 +184,7 @@ export const FIELD_VALUE_ES: Record<string, string> = {
   'Ground Spray': 'Aspersión terrestre',
   Gypsum: 'Yeso',
   'Hand Picking': 'Recolección manual',
+  'Hand-applied dispensers (mating disruption)': 'Difusores colocados a mano (confusión sexual)',
   'Hand Tools': 'Herramientas manuales',
   'Hand Watering': 'Riego manual',
   'Harvest Ready': 'Listo para cosechar',
