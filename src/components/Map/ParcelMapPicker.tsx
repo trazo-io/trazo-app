@@ -39,8 +39,10 @@ const MAP_OPTIONS: google.maps.MapOptions = {
   gestureHandling: 'cooperative',
   streetViewControl: false,
   mapTypeControl: false,
-  // As on the parcel dashboard: a small picker is easier to tap in full screen.
-  fullscreenControl: true,
+  // Off, unlike the parcel dashboard: the map is aria-hidden (the List is the accessible path),
+  // and Google's fullscreen control is a real, tabbable button a screen reader would never
+  // announce there.
+  fullscreenControl: false,
   clickableIcons: false
 };
 
