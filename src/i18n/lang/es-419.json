@@ -6567,7 +6567,7 @@
   "parcel.boundary.whyBody": "La solicitud de parcela de tu certificador necesita un mapa de esta parcela. Dibujarlo aquí lo resuelve; también puedes subir un documento de mapa. No se muestra a los consumidores: las páginas públicas muestran un área aproximada, nunca el contorno de la parcela.",
   "parcel.boundary.whyTitle": "Por qué tu certificador necesita esto",
   "parcel.boundary.saveOutline": "Guardar contorno",
-  "parcel.boundary.otherParcelsHint": "{count, plural, one {La otra parcela de la finca aparece con contorno blanco y el nombre.} other {Las otras # parcelas de la finca aparecen con contorno blanco y el nombre de cada una.}}",
+  "parcel.boundary.otherParcelsHint": "{count, plural, one {La otra parcela de la finca aparece con contorno azul y el nombre.} other {Las otras # parcelas de la finca aparecen con contorno azul y el nombre de cada una.}}",
   "parcel.map.menu": "Opciones del mapa",
   "parcel.map.editOutline": "Editar contorno",
   "parcel.map.drawOutline": "Dibujar contorno",

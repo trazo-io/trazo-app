@@ -12,6 +12,7 @@ import { useIntl } from 'react-intl';
 import { googleMapsLoaderOptions } from 'components/Map/mapsLoaderOptions';
 import { toLatLngPath } from 'utils/parcelPolygon';
 import { NEIGHBOUR_OUTLINE } from 'components/Map/neighbourOutline';
+import { ParcelNameLabel } from 'components/Map/ParcelNameLabel';
 
 // Utility function to calculate polygon center
 const calculatePolygonCenter = (points) => {
@@ -86,11 +87,21 @@ export { calculatePolygonCenter, calculatePolygonZoom };
  * `menu`: optional, rendered over the map's top-right corner, left of Google's fullscreen
  * control (the parcel page passes its "Edit outline" shortcut).
  *
- * `otherParcels`: optional `[{ id, path }]`, the farm's other parcels, drawn in the neighbour
- * style around this one. The view stays on this parcel: only the neighbours that fall inside
- * it show, the map never zooms out to fit the farm. The consumer pages pass neither.
+ * `otherParcels`: optional `[{ id, name, path }]`, the farm's other parcels, drawn in the
+ * neighbour style around this one. The view stays on this parcel: only the neighbours that
+ * fall inside it show, the map never zooms out to fit the farm.
+ *
+ * `name`: optional, this parcel's name, labelled on its outline like the neighbours'.
+ * The consumer pages pass none of these.
  */
-const CardWithMap = ({ polygon: rawPolygon, zoom, center, menu = null, otherParcels = [] }) => {
+const CardWithMap = ({
+  polygon: rawPolygon,
+  zoom,
+  center,
+  menu = null,
+  otherParcels = [],
+  name = null
+}) => {
   const intl = useIntl();
   // Seeded parcels store GeoJSON; see toLatLngPath. Memoised so the effect below does not
   // re-run on every render.
@@ -242,7 +253,10 @@ const CardWithMap = ({ polygon: rawPolygon, zoom, center, menu = null, otherParc
           center={mapCenter}
           mapTypeId="satellite">
           {otherParcels.map((other) => (
-            <Polygon key={other.id} path={other.path} options={NEIGHBOUR_OUTLINE} />
+            <React.Fragment key={other.id}>
+              <Polygon path={other.path} options={NEIGHBOUR_OUTLINE} />
+              {other.name && <ParcelNameLabel name={other.name} path={other.path} />}
+            </React.Fragment>
           ))}
           {polygon && polygon.length > 0 && (
             <Polygon
@@ -258,6 +272,7 @@ const CardWithMap = ({ polygon: rawPolygon, zoom, center, menu = null, otherParc
               }}
             />
           )}
+          {name && polygon && polygon.length > 2 && <ParcelNameLabel name={name} path={polygon} />}
         </GoogleMap>
       </CardBody>
     </Card>
