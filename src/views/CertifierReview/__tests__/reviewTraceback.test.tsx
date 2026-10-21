@@ -163,6 +163,76 @@ describe('ReviewTraceback', () => {
     expect(screen.queryByText(/STALE/)).toBeNull();
   });
 
+  it('a body still parsing when a newer request starts is dropped too', async () => {
+    // Headers arrive (the first check passes), then the body parses slowly; meanwhile a newer
+    // search answers. The slow body must not land (review of app #169).
+    let releaseBody: (v: unknown) => void = () => undefined;
+    const slowStale = {
+      truncated: false,
+      results: [
+        {
+          sale_id: 1,
+          date: '',
+          buyer: 'STALE',
+          invoice: '',
+          crop: '',
+          parcel: '',
+          season: '',
+          matched_on: 'invoice'
+        },
+        {
+          sale_id: 2,
+          date: '',
+          buyer: 'STALE2',
+          invoice: '',
+          crop: '',
+          parcel: '',
+          season: '',
+          matched_on: 'invoice'
+        }
+      ]
+    };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) => {
+        if (url.includes('q=SLOW'))
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: () => new Promise((r) => (releaseBody = r))
+          } as unknown as Response);
+        if (url.includes('q=FAST'))
+          return reply(200, {
+            truncated: false,
+            results: [
+              {
+                sale_id: 7,
+                date: '',
+                buyer: '',
+                invoice: '',
+                crop: '',
+                parcel: '',
+                season: '',
+                matched_on: 'invoice'
+              }
+            ]
+          });
+        return reply(200, TRACE);
+      })
+    );
+    renderIt();
+    searchFor('SLOW');
+    await new Promise((r) => setTimeout(r, 20));
+    const input = screen.getByPlaceholderText(messages['traceback.search.placeholder']);
+    fireEvent.change(input, { target: { value: 'FAST' } });
+    fireEvent.submit(input.closest('form') as HTMLFormElement);
+    expect(await screen.findByText(messages['traceback.hop.sale'])).toBeTruthy();
+    releaseBody(slowStale);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(screen.getByText(messages['traceback.hop.sale'])).toBeTruthy();
+    expect(screen.queryByText(/STALE/)).toBeNull();
+  });
+
   it('a malformed answer is an error, not a spinner forever', async () => {
     vi.stubGlobal(
       'fetch',

@@ -63,7 +63,10 @@ export const ReviewTraceback = ({ token, apiRoot }: Props) => {
       const res = await fetch(url);
       if (n !== latest.current) return null;
       if (!res.ok) return { status: res.status };
-      return await res.json();
+      const body = await res.json();
+      // Checked again after the body: a newer request can start while this one parses (review of
+      // app #169), and the first check only saw the headers arrive.
+      return n === latest.current ? body : null;
     } catch {
       return n === latest.current ? { status: 0 } : null;
     }
