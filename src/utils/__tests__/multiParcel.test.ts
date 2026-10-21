@@ -282,3 +282,73 @@ describe('planAlsoSeed: the parcels the Activities page passed', () => {
     expect(planAlsoSeed({ ...base, also: null })).toEqual({ kind: 'done', ids: [] });
   });
 });
+
+describe('multiParcel: production on several parcels', () => {
+  it('a unit travels with its amount, only on the parcel that has one', () => {
+    const body = buildMultiTargetBody(
+      {
+        event_type: 1,
+        type: 'IR',
+        irrigation_method: 'drip',
+        // What the single-parcel payload carries: units shared, gated on a blank shared amount.
+        irrigation_depth_unit: 'cm',
+        fuel_unit: 'L',
+        extra_data: { fuel_unit: 'L' }
+      },
+      [
+        parcel({ scope: 'all', values: { irrigation_depth: '3', fuel_consumed: '20' } }),
+        {
+          ...newTarget({ id: 12, name: 'South', area: 2 }),
+          scope: 'part' as const,
+          partArea: '1.5',
+          values: { irrigation_depth: '1' }
+        }
+      ],
+      irrigation,
+      { area_unit: 'ha', irrigation_depth_unit: 'cm', fuel_unit: 'L' },
+      'group-3'
+    );
+    // Sent shared AND per parcel would be refused (`either`); the parcel is where it belongs.
+    expect(body).not.toHaveProperty('irrigation_depth_unit');
+    expect(body).not.toHaveProperty('fuel_unit');
+    expect(body.extra_data).toEqual({});
+    expect(body.targets).toEqual([
+      {
+        parcel: 11,
+        area_covered: '5.02',
+        irrigation_depth: '3',
+        irrigation_depth_unit: 'cm',
+        fuel_consumed: '20',
+        fuel_unit: 'L'
+      },
+      { parcel: 12, area_covered: '1.5', irrigation_depth: '1', irrigation_depth_unit: 'cm' }
+    ]);
+  });
+
+  it('a unit whose amount the cards do not ask is not left in the shared body either', () => {
+    // Electric pump: the wizard drops the fuel field from the cards. Its unit must go too,
+    // or the records state a unit for fuel nobody measured.
+    const electric = {
+      ...irrigation,
+      fields: irrigation.fields.filter((field) => field.key !== 'fuel_consumed')
+    };
+    const body = buildMultiTargetBody(
+      { event_type: 1, type: 'IR', fuel_unit: 'kWh', irrigation_depth_unit: 'cm' },
+      [parcel({ scope: 'all', values: { irrigation_depth: '2' } })],
+      electric,
+      { area_unit: 'ha', fuel_unit: 'kWh', irrigation_depth_unit: 'cm' },
+      'group-4'
+    );
+    expect(body).not.toHaveProperty('fuel_unit');
+    expect(body.targets).toEqual([
+      { parcel: 11, area_covered: '5.02', irrigation_depth: '2', irrigation_depth_unit: 'cm' }
+    ]);
+  });
+
+  it('pollination asks no area per parcel; irrigation does', () => {
+    expect(specRulesFor(1, 'PO')!.areaKey).toBeNull();
+    expect(specRulesFor(1, 'IR')!.areaKey).toBe('area_covered');
+    const hives = specRulesFor(1, 'PO')!;
+    expect(targetIssues(newTarget({ id: 1, name: 'A', area: 2 }), hives, {})).toEqual([]);
+  });
+});

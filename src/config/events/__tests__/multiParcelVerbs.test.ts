@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { ACTIVITY_VERBS, verbForKey } from 'config/activityVerbs';
 import { FORM_SUPPORTS_MULTI, MULTI_PARCEL_SPEC, verbMayGoMulti } from '../multiParcel';
+import { AREA_SUBTYPES } from '../productionEvent';
 
 const verb = (key: string) => verbForKey(key)!;
 
@@ -36,5 +37,20 @@ describe('verbMayGoMulti: which activity tiles may cover several parcels', () =>
     expect(production).not.toContain('HA');
     const supported = { eventType: 2, subtypeChoices: ['FE', 'PE'] };
     expect(verbMayGoMulti(supported)).toBe(true);
+  });
+});
+
+describe('the spec agrees with the production form', () => {
+  it('every multi-parcel production subtype the form asks no area for asks none per parcel', () => {
+    const multi = MULTI_PARCEL_SPEC.types['1'].subtypes!;
+    const noArea = multi.filter((code) => !AREA_SUBTYPES.includes(code as never)).sort();
+    expect(noArea.length, 'no subtype without area: this would pass vacuously').toBeGreaterThan(0);
+    expect([...(MULTI_PARCEL_SPEC.types['1'].ui.no_area_subtypes ?? [])].sort()).toEqual(noArea);
+  });
+
+  it('production and sprays can go on several parcels; harvest still cannot', () => {
+    expect(verbMayGoMulti(verb('irrigation'))).toBe(true);
+    expect(verbMayGoMulti(verb('pruning'))).toBe(true);
+    expect(verbMayGoMulti(verb('harvest'))).toBe(false);
   });
 });

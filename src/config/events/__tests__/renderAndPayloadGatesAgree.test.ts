@@ -41,11 +41,16 @@ describe('production form: render gate and payload gate agree', () => {
     ).not.toBeNull();
     const posts = subtypesIn(payload![1]);
 
-    // Render side: the section gate that wraps the two inputs.
-    const render = /\{\(productionType === '[A-Z]{2}'[^)]*\)\s*&&\s*\(/.exec(
-      src.slice(0, src.indexOf('name="applied_scope"'))
-    );
-    expect(render, 'could not locate the section gate above the applied_scope input').not.toBeNull();
+    // Render side: the section gate that wraps the two inputs. `&& !multiTarget` may follow the
+    // subtype list: with several parcels the scope is asked on each parcel's card instead.
+    const render =
+      /\{\(productionType === '[A-Z]{2}'[^)]*\)\s*&&\s*(?:!multiTarget\s*&&\s*)?\(/.exec(
+        src.slice(0, src.indexOf('name="applied_scope"'))
+      );
+    expect(
+      render,
+      'could not locate the section gate above the applied_scope input'
+    ).not.toBeNull();
     const renders = subtypesIn(render![0]);
 
     expect(posts.length, 'the payload gate names no subtypes').toBeGreaterThan(0);
@@ -88,9 +93,7 @@ describe('production form: render gate and payload gate agree', () => {
     );
     expect(render, 'could not locate the gate above the seed inputs').not.toBeNull();
 
-    const allInnerGates = [
-      ...src.matchAll(/\{\[([^\]]+)\]\.includes\(productionType\) && \(/g)
-    ];
+    const allInnerGates = [...src.matchAll(/\{\[([^\]]+)\]\.includes\(productionType\) && \(/g)];
     const beforeReason = allInnerGates.filter(
       (m) => m.index! < src.indexOf('name="seed_nonavailability_reason"')
     );

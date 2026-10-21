@@ -28,6 +28,8 @@ interface RawUi {
   scope_keys_by_subtype?: Record<string, string[]>;
   fields: PerParcelField[];
   fields_by_subtype: Record<string, PerParcelField[]>;
+  /** Subtypes whose form asks no area (pollination, nesting structures): no area per parcel. */
+  no_area_subtypes?: string[];
 }
 
 interface RawType {
@@ -47,7 +49,7 @@ export const MULTI_PARCEL_SPEC = spec as unknown as {
 };
 
 /** Event types whose form can run in multi mode today. Extended as each tab gains it. */
-export const FORM_SUPPORTS_MULTI: readonly number[] = [2];
+export const FORM_SUPPORTS_MULTI: readonly number[] = [2, 1];
 
 /** What the wizard needs for one event type + subtype in multi mode. */
 export interface MultiParcelRules {
@@ -71,6 +73,13 @@ export interface MultiParcelRules {
   refusedKeys: Set<string>;
   /** Keys refused inside `extra_data`. */
   refusedExtraDataKeys: Set<string>;
+  /**
+   * Units of this activity's per-parcel amounts that the server takes per parcel (`either`):
+   * they leave the shared body and travel beside each amount. Listed from the spec, not from
+   * `fields`, so a field the form drops (no fuel on an electric pump) still takes its unit out
+   * of the shared body rather than leaving a unit with no amount.
+   */
+  perParcelUnitKeys: Set<string>;
 }
 
 /**
@@ -95,12 +104,17 @@ export const specRulesFor = (
   return {
     eventType,
     subtype: code,
-    areaKey: raw.ui.area_key,
+    areaKey: code && raw.ui.no_area_subtypes?.includes(code) ? null : raw.ui.area_key,
     scope: scopeKeys.length > 0,
     sections: perTargetKeys.has('block_id'),
     fields,
     perTargetKeys,
     eitherKeys: new Set(raw.either),
+    perParcelUnitKeys: new Set(
+      fields
+        .map((field) => field.unit_key)
+        .filter((key): key is string => !!key && raw.either.includes(key))
+    ),
     refusedKeys: new Set(raw.refused),
     // Same as the server's loader: a top-level refusal holds inside extra_data too.
     refusedExtraDataKeys: new Set([...raw.refused_extra_data, ...raw.refused]),
