@@ -31,8 +31,6 @@ export const baseApi = createApi({
     // was never in this list, so RTK Query rejected it and tsc flagged it. Nothing invalidates
     // it, so declaring it is inert at runtime and keeps the endpoint's stated intent.
     'CarbonBenchmarks',
-    'PendingEvent',
-    'Weather',
     'Education',
     'CropTemplate',
     'CropType',
