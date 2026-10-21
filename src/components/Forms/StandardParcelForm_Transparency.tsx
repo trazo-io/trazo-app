@@ -168,6 +168,13 @@ interface StandardParcelFormTransparencyProps {
    * still adds a point to the outline being drawn.
    */
   otherParcels?: Array<{ id: number; name: string; path: Array<{ lat: number; lng: number }> }>;
+  /**
+   * Opened to change the outline only (the parcel page's shortcut): the boundary step saves
+   * directly. The other steps' fields are the parcel's stored values, sent back unchanged, so
+   * a gate on another step (a description a quick-added parcel never had) cannot stand
+   * between the grower and the outline they came to fix.
+   */
+  saveFromBoundary?: boolean;
 }
 
 const outlineCenter = (path: Array<{ lat: number; lng: number }>) => {
@@ -190,7 +197,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
   establishmentCoordinates,
   preFormAlert,
   initialStep = 0,
-  otherParcels = []
+  otherParcels = [],
+  saveFromBoundary = false
 }) => {
   const intl = useIntl();
   // Rebuilt when the locale changes, so a language switch retranslates the field errors.
@@ -951,9 +959,17 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                     <StandardButton variant="outline" onClick={onCancel}>
                       {intl.formatMessage({ id: 'app.cancel' })}
                     </StandardButton>
-                    <StandardButton onClick={nextStep} rightIcon={<FaChevronRight />}>
-                      {intl.formatMessage({ id: 'app.continue' })}
-                    </StandardButton>
+                    {saveFromBoundary ? (
+                      <StandardButton
+                        isLoading={isLoading}
+                        onClick={() => onSubmitForm(methods.getValues())}>
+                        {intl.formatMessage({ id: 'parcel.boundary.saveOutline' })}
+                      </StandardButton>
+                    ) : (
+                      <StandardButton onClick={nextStep} rightIcon={<FaChevronRight />}>
+                        {intl.formatMessage({ id: 'app.continue' })}
+                      </StandardButton>
+                    )}
                   </HStack>
                 </HStack>
               </VStack>

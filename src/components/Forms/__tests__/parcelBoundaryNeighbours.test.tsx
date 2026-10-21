@@ -8,7 +8,7 @@
  */
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { IntlProvider } from 'react-intl';
 
@@ -35,6 +35,8 @@ vi.mock('@react-google-maps/api', () => {
   };
 });
 vi.mock('../../Upload', () => ({ TrazoImageUpload: () => null }));
+// The corner markers read `google.maps.SymbolPath` once a polygon exists.
+(window as any).google = { maps: { SymbolPath: { CIRCLE: 0 } } };
 
 const m = enMessages as Record<string, string>;
 const square = (lat: number) => [
@@ -87,5 +89,30 @@ describe('parcel boundary step: the farm around the outline', () => {
   it('says nothing about other parcels on a farm with none', () => {
     renderForm({ initialStep: 1 });
     expect(screen.queryByText(/other .*parcel/i)).toBeNull();
+  });
+
+  it('opened from the shortcut, the outline saves from its own step', () => {
+    // A quick-added parcel has no description, and the description step blocks Continue:
+    // without a save here the grower could fix the outline and never keep it.
+    const onSubmit = vi.fn();
+    renderForm({
+      initialStep: 1,
+      saveFromBoundary: true,
+      onSubmit,
+      initialData: {
+        name: 'North',
+        area: 4,
+        transparency_description: '',
+        polygon: square(5)
+      }
+    });
+    expect(screen.queryByRole('button', { name: m['app.continue'] })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: m['parcel.boundary.saveOutline'] }));
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(onSubmit.mock.calls[0][0]).toMatchObject({
+      name: 'North',
+      transparency_description: '',
+      polygon: square(5)
+    });
   });
 });

@@ -401,6 +401,7 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
         establishmentName={establishmentData?.name || currentEstablishment?.name || ''}
         establishmentCoordinates={establishmentCoordinates}
         initialStep={fromOutlineShortcut ? 1 : 0}
+        saveFromBoundary={fromOutlineShortcut}
         otherParcels={otherParcels}
         preFormAlert={
           // `isAtParcelLimit` is only ever true for a stated, finite limit, so the value is

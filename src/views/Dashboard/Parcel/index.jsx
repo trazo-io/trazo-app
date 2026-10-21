@@ -256,9 +256,10 @@ export default function ParcelView() {
                   icon={<Icon as={FaEllipsisH} />}
                   aria-label={intl.formatMessage({ id: 'parcel.map.menu' })}
                   size="md"
-                  w="40px"
-                  minW="40px"
-                  h="40px"
+                  // 44px: the touch floor (Google's own controls beside it are 40px).
+                  w="44px"
+                  minW="44px"
+                  h="44px"
                   bg="white"
                   color="gray.700"
                   borderRadius="2px"
