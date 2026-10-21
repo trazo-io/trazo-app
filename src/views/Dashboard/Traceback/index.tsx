@@ -16,7 +16,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Box, HStack, Stack, Text, VStack, Wrap, WrapItem } from '@chakra-ui/react';
+import { Badge, Box, HStack, Stack, Text, VStack, Wrap, WrapItem } from '@chakra-ui/react';
 import { FaArrowDown, FaRandom, FaRoute, FaSearch } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -69,9 +69,11 @@ const Fact = ({ label, value }: { label: string; value?: string | null }) =>
     </Text>
   ) : null;
 
-const Link = ({ label }: { label: string }) => (
-  <HStack justify="center" color="gray.600" py={1} spacing={2} aria-hidden>
-    <FaArrowDown />
+// The identifier that joins two hops. Its words carry meaning ("no harvest pick named on the
+// sale"), so only the arrow is hidden from assistive tech.
+const Connector = ({ label }: { label: string }) => (
+  <HStack justify="center" color="gray.600" py={1} spacing={2}>
+    <FaArrowDown aria-hidden />
     <Text fontSize="xs">{label}</Text>
   </HStack>
 );
@@ -143,19 +145,21 @@ export const TracebackPage = () => {
       .map((g: Gap, i: number) => {
         const to = fixPath(g);
         return (
+          // The readiness card's finding shape: what is missing, how to close it, and a link to
+          // where. A bare "Fix" sent the farmer to a season page with no hint that a sale cannot
+          // be edited, only voided and entered again (MEASURED in the 2026-10-20 browser run).
           <StandardAlert key={`${hop}-${g.code}-${g.ref}-${i}`} status="warning" mb={2}>
-            <Stack
-              direction={{ base: 'column', md: 'row' }}
-              justify="space-between"
-              w="full"
-              spacing={2}>
-              <Text fontSize="sm">{t(`traceback.gap.${g.code}`, { input: inputName(g) })}</Text>
-              {to && (
-                <StandardButton onClick={() => navigate(to)} size="sm" variant="outline">
-                  {t('traceback.gap.fix')}
-                </StandardButton>
-              )}
-            </Stack>
+            <Text fontSize="sm" fontWeight="semibold">
+              {t(`traceback.gap.${g.code}`, { input: inputName(g) })}
+            </Text>
+            <Text fontSize="sm">{t(`traceback.gapHow.${g.code}`)}</Text>
+            {/* A button, not a text link: MEASURED at 768px the link was 21px tall, under the
+                44px touch floor, and this is the one tap the page exists for. */}
+            {to && (
+              <StandardButton size="sm" variant="outline" mt={1} onClick={() => navigate(to)}>
+                {t('traceback.gap.fix')}
+              </StandardButton>
+            )}
           </StandardAlert>
         );
       });
@@ -260,6 +264,27 @@ export const TracebackPage = () => {
       {saleId && trace.isError && !traceNotFound && <StandardQueryError onRetry={trace.refetch} />}
       {tb && !trace.isFetching && (
         <Box>
+          {/* A count of links to fix, never a grade: the same "N to fix / nothing outstanding"
+              shape as the readiness card. The count rides a warning PILL, not orange text:
+              STATUS_URGENCY_TOKENS.warn.text is 4.57:1 on white but MEASURED 4.19:1 on the page's
+              gray canvas, under the 4.5 a 16px label owes; the warning badge is 7.62:1. */}
+          <Box mb={4}>
+            {tb.gaps.length ? (
+              <Badge
+                variant="warning"
+                fontSize="sm"
+                px={3}
+                py={1}
+                borderRadius="full"
+                textTransform="none">
+                {t('traceback.summary.gaps', { count: tb.gaps.length })}
+              </Badge>
+            ) : (
+              <Text fontSize="md" fontWeight="semibold" color="green.700">
+                {t('traceback.summary.none')}
+              </Text>
+            )}
+          </Box>
           <StandardCard title={t('traceback.hop.sale')}>
             <Fact label={t('traceback.field.date')} value={tb.sale.date} />
             <Fact label={t('traceback.field.buyer')} value={tb.sale.buyer} />
@@ -279,7 +304,7 @@ export const TracebackPage = () => {
             <Box mt={3}>{gapsFor('sale')}</Box>
           </StandardCard>
 
-          <Link
+          <Connector
             label={t(
               tb.picks_linked ? 'traceback.link.saleToPick' : 'traceback.link.saleToPickMissing'
             )}
@@ -326,7 +351,7 @@ export const TracebackPage = () => {
             )}
           </StandardCard>
 
-          <Link label={t('traceback.link.pickToSeason')} />
+          <Connector label={t('traceback.link.pickToSeason')} />
 
           <StandardCard
             title={t('traceback.hop.season')}
@@ -347,7 +372,7 @@ export const TracebackPage = () => {
             <Box mt={3}>{gapsFor('season')}</Box>
           </StandardCard>
 
-          <Link label={t('traceback.link.seasonToInputs')} />
+          <Connector label={t('traceback.link.seasonToInputs')} />
 
           <StandardCard title={t('traceback.hop.inputs')} subtitle={t('traceback.inputs.subtitle')}>
             <Box mb={3}>{gapsFor('inputs')}</Box>

@@ -234,7 +234,10 @@ describe('TracebackPage', () => {
       // An input gap names WHICH input (date · product), not "an input".
       const text = messages[`traceback.gap.${code}`].replace('{input}', '2026-05-02 · X');
       expect(screen.getAllByText(text).length).toBeGreaterThan(0);
+      // ...and says HOW to close it: a sale cannot be edited, so "Fix" alone was a dead end.
+      expect(screen.getAllByText(messages[`traceback.gapHow.${code}`]).length).toBeGreaterThan(0);
     }
+    expect(screen.getByText(`${GAP_CODES.length} missing links to fix in this chain`)).toBeTruthy();
     // The connector must not claim a link the sale does not have.
     expect(screen.getByText(messages['traceback.link.saleToPickMissing'])).toBeTruthy();
     expect(screen.queryByText(messages['traceback.link.saleToPick'])).toBeNull();
