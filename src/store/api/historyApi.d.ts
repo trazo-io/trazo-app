@@ -40,6 +40,8 @@ export declare const useGetRecentInputsQuery: QueryHook;
 export declare const useGetSeedSuppliersQuery: QueryHook;
 export declare const useGetSalesRecordsQuery: QueryHook;
 export declare const useGetHarvestLotsQuery: QueryHook;
+export declare const useSearchTracebackSalesQuery: QueryHook;
+export declare const useGetSaleTracebackQuery: QueryHook;
 
 /** @deprecated Use useGetFarmScansPaginatedQuery instead. */
 export declare const useGetEstablishmentScansPaginatedQuery: QueryHook;

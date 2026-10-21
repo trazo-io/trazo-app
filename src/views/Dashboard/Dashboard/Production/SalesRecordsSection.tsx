@@ -21,7 +21,15 @@ import {
   AlertDialogHeader,
   AlertDialogOverlay
 } from '@chakra-ui/react';
-import { FaBan, FaCheckCircle, FaFileInvoiceDollar, FaTrashAlt, FaTruck } from 'react-icons/fa';
+import {
+  FaBan,
+  FaCheckCircle,
+  FaFileInvoiceDollar,
+  FaRoute,
+  FaTrashAlt,
+  FaTruck
+} from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 import { useIntl } from 'react-intl';
 import {
   StandardButton,
@@ -261,6 +269,7 @@ export function SalesRecordsSection({
   // measurement system — US farms get `lb`, which is how almonds and citrus are actually sold.
   // The old hardcoded 'kg' was neither.
   const defaultUnits = useDefaultUnits(establishmentId);
+  const navigate = useNavigate();
   const resolvedUnit =
     harvestUnit && UNIT_VALUES.includes(harvestUnit) ? harvestUnit : defaultUnits.mass;
 
@@ -629,6 +638,21 @@ export function SalesRecordsSection({
                       historyId={historyId}
                       canWrite={canWrite}
                     />
+                  )}
+                  {/* Same CA/FM gate as the trace endpoint: a voided sale cannot start a trace. */}
+                  {canWrite && establishmentId && !record.is_voided && (
+                    <StandardButton
+                      onClick={() =>
+                        navigate(
+                          `/admin/dashboard/farm/${establishmentId}/traceback?sale=${record.id}`
+                        )
+                      }
+                      size="sm"
+                      variant="ghost"
+                      leftIcon={<FaRoute />}
+                      mt={1}>
+                      {intl.formatMessage({ id: 'sales.records.action.trace' })}
+                    </StandardButton>
                   )}
                 </Box>
                 {canWrite && !record.is_voided && (

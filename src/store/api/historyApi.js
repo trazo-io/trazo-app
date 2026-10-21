@@ -350,6 +350,32 @@ export const historyApi = baseApi.injectEndpoints({
         { type: 'SalesRecords', id: productionId }
       ]
     }),
+    // The traceback drill. Search returns EVERY sale a document number matches (lot codes are not
+    // unique across seasons), never a pick; the trace is the chain behind one live sale.
+    searchTracebackSales: build.query({
+      query: ({ q, random, establishmentId }) => {
+        const params = new URLSearchParams();
+        if (random) params.set('random', '1');
+        else params.set('q', q);
+        if (establishmentId) params.set('establishment_id', establishmentId);
+        return {
+          url: `sales_records/traceback_search/?${params}`,
+          method: 'GET',
+          credentials: 'include'
+        };
+      },
+      keepUnusedDataFor: 0
+    }),
+    // The farm in the page's URL goes along: a sale from the company's other farm is "not
+    // found" here rather than rendered under this farm's breadcrumb.
+    getSaleTraceback: build.query({
+      query: ({ saleId, establishmentId }) => ({
+        url: `sales_records/${saleId}/traceback/?establishment_id=${establishmentId}`,
+        method: 'GET',
+        credentials: 'include'
+      }),
+      keepUnusedDataFor: 0
+    }),
     createSalesRecord: build.mutation({
       query: (salesRecord) => ({
         url: 'sales_records/',
@@ -415,6 +441,8 @@ export const {
   useGetSeedSuppliersQuery,
   useGetSalesRecordsQuery,
   useGetHarvestLotsQuery,
+  useSearchTracebackSalesQuery,
+  useGetSaleTracebackQuery,
   useCreateSalesRecordMutation,
   useDeleteSalesRecordMutation,
   useVoidSalesRecordMutation
