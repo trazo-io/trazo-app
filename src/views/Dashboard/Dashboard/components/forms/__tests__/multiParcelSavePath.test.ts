@@ -2,6 +2,8 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { describe, expect, it } from 'vitest';
 
+import { requiredFieldsForSave } from '../../../../../../config/events/saveRequiredFields';
+
 /**
  * One spray on several blocks: the wizard's save path.
  *
@@ -17,26 +19,26 @@ import { describe, expect, it } from 'vitest';
  */
 const SRC = readFileSync(join(__dirname, '..', 'NewEvent.jsx'), 'utf8');
 
-const listStart = SRC.indexOf('const requiredFieldsByType = {');
-const listEnd = SRC.indexOf('3: [', listStart);
-const chemicalLists = listStart > -1 && listEnd > listStart ? SRC.slice(listStart, listEnd) : '';
-
 const saveStart = SRC.indexOf('let savedEvent;');
 const saveEnd = SRC.indexOf('clearDraft();', saveStart);
 const savePath = saveStart > -1 && saveEnd > saveStart ? SRC.slice(saveStart, saveEnd) : '';
 
 describe('multi-parcel save path', () => {
   it('reads the slices it asserts on', () => {
-    expect(chemicalLists.length).toBeGreaterThan(0);
     expect(savePath.length).toBeGreaterThan(0);
   });
 
-  it('does not require the single total and area when several blocks are picked', () => {
-    const multiBranch = chemicalLists.slice(chemicalLists.indexOf(': multiActive'));
-    const multiList = multiBranch.slice(0, multiBranch.indexOf(']') + 1);
-    expect(multiList).toContain("'commercial_name'");
-    expect(multiList).not.toContain('volume_applied');
-    expect(multiList).not.toContain('area_treated');
+  it('does not require the single total and area when several parcels are picked', () => {
+    // The save gate is config/events/saveRequiredFields; the wizard must pass the multi flag.
+    expect(SRC).toContain('multiParcel: multiActive');
+    const multi = requiredFieldsForSave(
+      2,
+      { type: 'FU', application_method: 'ground_spray' },
+      { multiParcel: true }
+    );
+    expect(multi).toContain('commercial_name');
+    expect(multi).not.toContain('volume_applied');
+    expect(multi).not.toContain('area_treated');
   });
 
   it('sends the multi-target body, built by the one helper, with the session group', () => {
