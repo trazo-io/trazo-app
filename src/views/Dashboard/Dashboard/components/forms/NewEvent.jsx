@@ -100,7 +100,7 @@ import { useGetSeasonPlanQuery } from 'store/api/seasonPlanApi';
 import { EventPreviewModal } from 'components/Events/EventPreviewModal';
 import { PhotoRecommendationsBox } from 'components/Events/PhotoRecommendationsBox';
 import { AlsoAppliedTo, PerParcelCards } from 'components/Events/MultiParcel';
-import { multiParcelRulesFor } from 'config/events/multiParcel';
+import { eventTypeMayGoMulti, multiParcelRulesFor } from 'config/events/multiParcel';
 import { useGetParcelGeometryQuery } from 'store/api/parcelGeometryApi';
 import { useGoogleMap } from '@react-google-maps/api';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -146,6 +146,7 @@ import {
   newApplicationGroup,
   newTarget,
   restorableDraftParcels,
+  planAlsoSeed,
   targetIssues
 } from 'utils/multiParcel';
 import { revealFirstFormError } from 'utils/revealFirstFormError';
@@ -929,6 +930,52 @@ function NewEvent({ isEdit = false, eventId = null }) {
       )
     );
   }, [multiActive, multiParcelIds, farmParcels, parcelId]);
+  // `&also=2,3`: the Activities page asks for the parcels first, opens the form on one of them
+  // and passes the rest. They are seeded ONCE, after the farm's parcels, this parcel's seasons
+  // and the activity's eligibility are known. Nothing is dropped silently: a parcel that cannot
+  // join (no single open production) or an activity logged one parcel at a time is named.
+  const alsoFromUrl = searchParams.get('also');
+  const alsoSeededRef = useRef(false);
+  useEffect(() => {
+    if (alsoSeededRef.current || !alsoFromUrl || isEdit || isRepeat) return;
+    if (farmParcels.length === 0 || parcelHistoriesLoading) return;
+    const seed = planAlsoSeed({
+      also: alsoFromUrl,
+      routeId: Number(parcelId),
+      parcels: farmParcels,
+      eligible: multiParcelEligible,
+      // Undecided while a subtype the eligibility depends on has not been chosen.
+      singleActivity:
+        activeEventType != null &&
+        (!eventTypeMayGoMulti(activeEventType) || (!!eventFormData.type && !multiRules)),
+      routeCannotShare: !!multiRules && !openSeason
+    });
+    if (seed.kind === 'wait') return;
+    alsoSeededRef.current = true;
+    if (seed.ids.length > 0) setMultiParcelIds(seed.ids);
+    if (seed.notice) {
+      toast({
+        status: 'warning',
+        isClosable: true,
+        duration: 9000,
+        description: intl.formatMessage({ id: seed.notice.id }, seed.notice.values)
+      });
+    }
+  }, [
+    alsoFromUrl,
+    isEdit,
+    isRepeat,
+    farmParcels,
+    parcelHistoriesLoading,
+    parcelId,
+    multiParcelEligible,
+    activeEventType,
+    eventFormData.type,
+    multiRules,
+    openSeason,
+    intl,
+    toast
+  ]);
   // The shared form values the per-parcel cards read. Blank units fall back to the tabs' own
   // defaults (gallons, acres), the same values the tab shows before the grower touches them.
   const multiForm = (data) => ({

@@ -7,6 +7,7 @@ import {
   fieldValue,
   newTarget,
   restorableDraftParcels,
+  planAlsoSeed,
   targetArea,
   targetIssues,
   type ParcelTarget
@@ -217,5 +218,67 @@ describe('restorableDraftParcels: what a days-old draft may put back', () => {
       ids: [1, 4],
       droppedNames: ['South', 'East']
     });
+  });
+});
+
+describe('planAlsoSeed: the parcels the Activities page passed', () => {
+  const parcels = [
+    { id: 1, name: 'North', open_season_count: 1 },
+    { id: 2, name: 'South', open_season_count: 1 },
+    { id: 3, name: 'Fallow', open_season_count: 0 },
+    { id: 4, name: 'Two seasons', open_season_count: 2 },
+    { id: 5, name: 'Uncounted', open_season_count: null }
+  ];
+  const base = {
+    routeId: 1,
+    parcels,
+    eligible: true,
+    singleActivity: false,
+    routeCannotShare: false
+  };
+
+  it('seeds the parcels that can share the record, and names the ones that cannot', () => {
+    expect(planAlsoSeed({ ...base, also: '2,3,4,5' })).toEqual({
+      kind: 'done',
+      ids: [2, 5],
+      notice: {
+        id: 'events.multiParcel.alsoDropped',
+        values: { names: 'Fallow, Two seasons' }
+      }
+    });
+  });
+
+  it("ignores ids off this farm, the form's own parcel, duplicates and junk", () => {
+    expect(planAlsoSeed({ ...base, also: '1,2,2,99,abc,' })).toEqual({ kind: 'done', ids: [2] });
+  });
+
+  it('waits while the activity may still go either way (a subtype not yet chosen)', () => {
+    expect(planAlsoSeed({ ...base, eligible: false, also: '2' })).toEqual({ kind: 'wait' });
+  });
+
+  it('an activity logged one parcel at a time says so and seeds nothing', () => {
+    expect(planAlsoSeed({ ...base, eligible: false, singleActivity: true, also: '2,3' })).toEqual({
+      kind: 'done',
+      ids: [],
+      notice: { id: 'events.multiParcel.alsoSingleOnly', values: { name: 'North' } }
+    });
+  });
+
+  it('a form parcel with no open production is named as the blocker, not the others', () => {
+    // North and South each have one open production: the notice must not blame them.
+    expect(
+      planAlsoSeed({ ...base, routeId: 3, eligible: false, routeCannotShare: true, also: '1,2' })
+    ).toEqual({
+      kind: 'done',
+      ids: [],
+      notice: {
+        id: 'events.multiParcel.alsoRouteNoSeason',
+        values: { name: 'Fallow', names: 'North, South' }
+      }
+    });
+  });
+
+  it('nothing passed, nothing to do', () => {
+    expect(planAlsoSeed({ ...base, also: null })).toEqual({ kind: 'done', ids: [] });
   });
 });

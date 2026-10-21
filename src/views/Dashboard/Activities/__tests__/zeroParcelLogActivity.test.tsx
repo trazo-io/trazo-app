@@ -8,7 +8,8 @@
  *
  * The sheet now names the farm, says it has no block, and opens the two-field quick-add. The
  * server's refusal of an event without a parcel is unchanged; this only makes the next step
- * visible.
+ * visible. Since 2026-10-21 the sheet asks for the parcels BEFORE the activity, so this is the
+ * first thing "Log activity" shows on such a farm, one tap earlier than before.
  */
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -42,6 +43,9 @@ vi.mock('store/api/historyApi', async () => ({
   ...((await vi.importActual('store/api/historyApi')) as object),
   useGetEventQuery: () => ({ data: undefined, isFetching: false, isUninitialized: true })
 }));
+vi.mock('store/api/parcelGeometryApi', () => ({
+  useGetParcelGeometryQuery: () => ({ data: undefined })
+}));
 vi.mock('store/api/productApi', () => ({
   useCreateParcelMutation: () => [vi.fn(), { isLoading: false }]
 }));
@@ -72,10 +76,9 @@ function renderActivities(parcels: Array<{ id: number; name: string }>, locale =
   );
 }
 
-/** Log activity, then the verb a grower who came to log a spray picks. */
-function pickInputApplication(messages: Record<string, string> = enUS as any) {
+/** Log activity: the sheet opens on the parcels. */
+function openLogActivity(messages: Record<string, string> = enUS as any) {
   fireEvent.click(screen.getByRole('button', { name: messages['activities.log'] }));
-  fireEvent.click(screen.getByText(messages['activities.verb.input_application']));
   return screen.getByRole('dialog');
 }
 
@@ -84,14 +87,14 @@ describe('Log activity on a farm with no block', () => {
 
   it('names the farm and says it has no block, instead of an empty "Which parcel?" sheet', () => {
     renderActivities([]);
-    const sheet = pickInputApplication();
-    expect(within(sheet).getByText(enUS['activities.pickParcel'])).toBeTruthy();
+    const sheet = openLogActivity();
+    expect(within(sheet).getByText(enUS['activities.pickParcels'])).toBeTruthy();
     expect(within(sheet).getByText('1060 has no parcels yet')).toBeTruthy();
   });
 
   it('opens the quick-add from the sheet, so the next step is one tap', () => {
     renderActivities([]);
-    const sheet = pickInputApplication();
+    const sheet = openLogActivity();
     fireEvent.click(within(sheet).getByRole('button', { name: enUS['parcel.addABlock'] }));
     // The mechanism, not the words: the two-field quick-add dialog is what opens, not a route.
     const dialog = screen.getByRole('dialog');
@@ -104,7 +107,7 @@ describe('Log activity on a farm with no block', () => {
 
   it("speaks the reader's language in es-419", () => {
     renderActivities([], 'es-419');
-    const sheet = pickInputApplication(es419 as any);
+    const sheet = openLogActivity(es419 as any);
     expect(within(sheet).getByText('1060 todavía no tiene parcelas')).toBeTruthy();
     expect(within(sheet).getByRole('button', { name: es419['parcel.addABlock'] })).toBeTruthy();
   });
@@ -115,8 +118,8 @@ describe('Log activity on a farm with no block', () => {
       { id: 311, name: 'Block A' },
       { id: 312, name: 'Block B' }
     ]);
-    const sheet = pickInputApplication();
-    expect(within(sheet).getByRole('button', { name: 'Block A' })).toBeTruthy();
+    const sheet = openLogActivity();
+    expect(within(sheet).getByRole('checkbox', { name: /Block A/ })).toBeTruthy();
     expect(within(sheet).queryByText(/has no parcels yet/)).toBeNull();
   });
 });

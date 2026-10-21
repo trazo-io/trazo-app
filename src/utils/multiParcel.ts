@@ -301,3 +301,75 @@ export const restorableDraftParcels = (
       .map((id) => byId.get(id)!.name)
   };
 };
+
+/** What to do with `&also=` once the form knows enough: wait, or seed these ids with a notice. */
+export type AlsoSeed =
+  | { kind: 'wait' }
+  | { kind: 'done'; ids: number[]; notice?: { id: string; values: Record<string, string> } };
+
+/**
+ * The parcels the Activities page passed in `&also=`, checked against what the form now knows.
+ * Ids that are not on this farm, or are the form's own parcel, are ignored (a hand-edited link).
+ * A parcel joins only when `parcelMayJoin` says so. Everything left out is NAMED in the notice,
+ * never dropped silently.
+ */
+export const planAlsoSeed = ({
+  also,
+  routeId,
+  parcels,
+  eligible,
+  singleActivity,
+  routeCannotShare
+}: {
+  also: string | null;
+  routeId: number;
+  parcels: JoinableParcel[];
+  /** The form can take several parcels for this activity right now. */
+  eligible: boolean;
+  /** Settled: this activity is logged one parcel at a time. */
+  singleActivity: boolean;
+  /** Settled: the form's own parcel has no open production, so it cannot share a record. */
+  routeCannotShare: boolean;
+}): AlsoSeed => {
+  const byId = new Map(parcels.map((p) => [Number(p.id), p]));
+  const wanted = [...new Set((also ?? '').split(',').map(Number))].filter(
+    (id) => Number.isInteger(id) && id !== routeId && byId.has(id)
+  );
+  if (wanted.length === 0) return { kind: 'done', ids: [] };
+  const names = (ids: number[]) => ids.map((id) => byId.get(id)!.name).join(', ');
+
+  if (eligible) {
+    const joins = (id: number) => parcelMayJoin(byId.get(id)!);
+    const ids = wanted.filter(joins);
+    const dropped = wanted.filter((id) => !joins(id));
+    return dropped.length > 0
+      ? {
+          kind: 'done',
+          ids,
+          notice: { id: 'events.multiParcel.alsoDropped', values: { names: names(dropped) } }
+        }
+      : { kind: 'done', ids };
+  }
+  if (singleActivity) {
+    return {
+      kind: 'done',
+      ids: [],
+      notice: {
+        id: 'events.multiParcel.alsoSingleOnly',
+        values: { name: byId.get(routeId)?.name ?? '' }
+      }
+    };
+  }
+  if (routeCannotShare) {
+    // The blocker is the form's OWN parcel, so the notice names it; the others are fine.
+    return {
+      kind: 'done',
+      ids: [],
+      notice: {
+        id: 'events.multiParcel.alsoRouteNoSeason',
+        values: { name: byId.get(routeId)?.name ?? '', names: names(wanted) }
+      }
+    };
+  }
+  return { kind: 'wait' };
+};

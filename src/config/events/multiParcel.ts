@@ -128,3 +128,23 @@ export const eventTypeMayGoMulti = (eventType: number | null | undefined): boole
   eventType != null &&
   FORM_SUPPORTS_MULTI.includes(eventType) &&
   !!MULTI_PARCEL_SPEC.types[String(eventType)];
+
+/**
+ * May an activity tile be logged on several parcels at once? Read before the form opens (the
+ * Activities page asks for parcels first, then the activity), so it answers per TILE:
+ * - its type must be one the form supports in multi mode;
+ * - a tile that pins its subtypes (harvest = HA/PH) needs at least one of them in the spec;
+ * - a tile whose subtype is asked later in the form (soil, pest) stays offered, and the form
+ *   pauses the extra parcels if a single-parcel subtype is then chosen.
+ */
+export const verbMayGoMulti = (verb: {
+  eventType: number;
+  subtype?: string;
+  subtypeChoices?: readonly string[];
+}): boolean => {
+  if (!eventTypeMayGoMulti(verb.eventType)) return false;
+  const allowed = MULTI_PARCEL_SPEC.types[String(verb.eventType)].subtypes;
+  if (allowed === null) return true;
+  const codes = verb.subtypeChoices ?? (verb.subtype ? [verb.subtype] : null);
+  return codes === null || codes.some((code) => allowed.includes(code));
+};
