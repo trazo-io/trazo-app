@@ -1042,6 +1042,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
   const multiForm = (data) => ({
     ...(data || {}),
     volume_unit: data?.volume_unit || 'gal',
+    application_fuel_unit: data?.application_fuel_unit || 'gal',
     area_unit: data?.area_unit || 'acres'
   });
   // Each selected parcel's own sections, for its card's chips (one query for the whole farm).

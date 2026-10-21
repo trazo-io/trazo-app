@@ -114,6 +114,10 @@ describe('multiParcel: request body', () => {
     plan_item_id: 9,
     tank_mix_partners: [{ commercial_name: 'x', volume: '2' }],
     application_fuel_consumed: '3',
+    // A summary toggled on before parcels were picked: one record of many applications.
+    is_summary: 'true',
+    date_start: '2026-03-01',
+    event_count: '6',
     extra_data: {
       volume_applied_total: '300',
       active_ingredient: 'copper',
@@ -135,6 +139,7 @@ describe('multiParcel: request body', () => {
   const body = buildMultiTargetBody(single, targets, chemical, single, 'group-1');
 
   it('sends no per-parcel, refused or single-record key in the shared body', () => {
+    expect(chemical.hiddenKeys.has('is_summary')).toBe(true);
     for (const key of [
       ...chemical.hiddenKeys,
       'parcels',

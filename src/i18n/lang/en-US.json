@@ -8772,5 +8772,9 @@
   "events.multiParcel.field.plants_established": "Plants established",
   "events.multiParcel.field.hive_count": "Hives placed",
   "events.multiParcel.field.amendment_amount": "Amount applied ({unit})",
-  "events.multiParcel.sectionHelp": "Optional. The section or rows of this parcel, if the work did not cover the whole of it the same way."
+  "events.multiParcel.sectionHelp": "Optional. The section or rows of this parcel, if the work did not cover the whole of it the same way.",
+  "events.multiParcel.field.release_quantity": "Released ({unit})",
+  "events.multiParcel.field.habitat_structure_count": "Structures installed",
+  "events.multiParcel.fuelUnitLabel": "Fuel unit",
+  "events.multiParcel.fuelUnitHelp": "Fuel used is asked on each parcel below, in this unit."
 }
