@@ -190,33 +190,40 @@ const formSchemaSoilManagement = object({
       photo_id: string().optional()
     })
   ).optional()
-}).superRefine((data, ctx) => {
-  // NS (nesting/shelter structures) has no meaningful area; HD (habitat development) area is optional.
-  // Every other soil subtype still requires area > 0.
-  const areaOptional = data.type === 'NS' || data.type === 'HD';
-  if (!areaOptional) {
-    if (!data.area_covered || parseFloat(data.area_covered) <= 0) {
+});
+
+/**
+ * With several parcels (`multiTarget`) the area is asked on each parcel's card, so the form
+ * itself requires none; everything else is the same schema.
+ */
+const buildSoilSchema = (multiTarget = false) =>
+  formSchemaSoilManagement.superRefine((data, ctx) => {
+    // NS (nesting/shelter structures) has no meaningful area; HD (habitat development) area is optional.
+    // Every other soil subtype still requires area > 0.
+    const areaOptional = multiTarget || data.type === 'NS' || data.type === 'HD';
+    if (!areaOptional) {
+      if (!data.area_covered || parseFloat(data.area_covered) <= 0) {
+        ctx.addIssue({
+          path: ['area_covered'],
+          code: 'custom',
+          message: 'Area must be greater than 0'
+        });
+      }
+      if (!data.area_unit) {
+        ctx.addIssue({ path: ['area_unit'], code: 'custom', message: 'Area unit is required' });
+      }
+    }
+    // §E-2: a lab analysis without its matrix cannot support a deficiency claim — a certifier
+    // needs to know the deficiency was shown in LEAF tissue or in SOIL. Mirrors the backend
+    // SoilManagementEvent.clean() guard so the farmer sees it before the round trip.
+    if (data.type === 'LA' && !data.sample_matrix) {
       ctx.addIssue({
-        path: ['area_covered'],
+        path: ['sample_matrix'],
         code: 'custom',
-        message: 'Area must be greater than 0'
+        message: 'Select what was sampled (soil, leaf, petiole, hull, compost or water)'
       });
     }
-    if (!data.area_unit) {
-      ctx.addIssue({ path: ['area_unit'], code: 'custom', message: 'Area unit is required' });
-    }
-  }
-  // §E-2: a lab analysis without its matrix cannot support a deficiency claim — a certifier
-  // needs to know the deficiency was shown in LEAF tissue or in SOIL. Mirrors the backend
-  // SoilManagementEvent.clean() guard so the farmer sees it before the round trip.
-  if (data.type === 'LA' && !data.sample_matrix) {
-    ctx.addIssue({
-      path: ['sample_matrix'],
-      code: 'custom',
-      message: 'Select what was sampled (soil, leaf, petiole, hull, compost or water)'
-    });
-  }
-});
+  });
 
 // Sprint 2 Epic 2.1.3: Removed soil_moisture, weather_conditions, temperature_range from defaults
 // V3 hardening (2026-06): MEASUREMENT fields (soil_ph, organic_matter_percentage, soil_texture)
@@ -335,8 +342,25 @@ export const getSoilManagementDefaults = (soilType) => {
 };
 
 const SoilManagementTab = forwardRef(
-  ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}, hideActions = false }, ref) => {
+  (
+    {
+      onSubmitHandler,
+      onDataChange,
+      onPrev,
+      initialValues = {},
+      hideActions = false,
+      /**
+       * Several parcels: area, section, fuel used, machine hours, the amendment amount and
+       * the structure count are asked on each parcel's card below the form, so their inputs
+       * are left out here; units stay, because the cards read them. Keys from the server's
+       * spec (`multiParcelSpec.json`, type 5).
+       */
+      multiTarget = false
+    },
+    ref
+  ) => {
     const intl = useIntl();
+    const soilSchema = useMemo(() => buildSoilSchema(multiTarget), [multiTarget]);
     // US-first unit defaults. Trazo's crops, emission factors and ICP are United States,
     // but every form defaulted to hectares/litres — so a CA grower converted 42.5 acres
     // to 17.2 ha by hand on every entry. Defaults only; the dropdowns still offer both.
@@ -372,7 +396,7 @@ const SoilManagementTab = forwardRef(
     );
 
     const methods = useForm({
-      resolver: zodResolver(formSchemaSoilManagement),
+      resolver: zodResolver(soilSchema),
       // CRITICAL FIX: Prevent tillage fields from losing values when conditionally hidden
       // Without this, fields rendered only when type='TI' would be unregistered and their values lost
       shouldUnregister: false,
@@ -772,7 +796,10 @@ const SoilManagementTab = forwardRef(
         isTillageEvent: data.type === 'TI'
       });
 
-      const requiredFields = ['type', 'area_covered', 'area_unit'];
+      // With several parcels the area is on the cards, never back-filled here.
+      const requiredFields = multiTarget
+        ? ['type', 'area_unit']
+        : ['type', 'area_covered', 'area_unit'];
 
       const invalidFields = requiredFields.filter((field) => {
         const value = data[field]?.toString().toLowerCase();
@@ -1101,17 +1128,30 @@ const SoilManagementTab = forwardRef(
                         and optional for HD (habitat development); required for every other subtype. */}
                   {watch('type') !== 'NS' && (
                     <StandardField
-                      label={watch('type') === 'HD' ? 'Area Covered (optional)' : 'Area Covered'}
-                      required={watch('type') !== 'HD'}
+                      label={
+                        multiTarget
+                          ? intl.formatMessage({ id: 'events.multiParcel.areaUnitLabel' })
+                          : watch('type') === 'HD'
+                          ? 'Area Covered (optional)'
+                          : 'Area Covered'
+                      }
+                      helpText={
+                        multiTarget
+                          ? intl.formatMessage({ id: 'events.multiParcel.areaUnitHelp' })
+                          : undefined
+                      }
+                      required={!multiTarget && watch('type') !== 'HD'}
                       error={errors.area_covered?.message || errors.area_unit?.message}>
                       <HStack spacing={2}>
-                        <StandardInput
-                          flex={2}
-                          type="number"
-                          step="0.1"
-                          placeholder="2.0"
-                          {...register('area_covered')}
-                        />
+                        {!multiTarget && (
+                          <StandardInput
+                            flex={2}
+                            type="number"
+                            step="0.1"
+                            placeholder="2.0"
+                            {...register('area_covered')}
+                          />
+                        )}
                         <StandardSelect flex={1} {...register('area_unit')}>
                           <option value="ha">Hectares</option>
                           <option value="acres">Acres</option>
@@ -1187,21 +1227,31 @@ const SoilManagementTab = forwardRef(
 
                     <StandardField
                       label={
-                        watch('fuel_type') === 'electric' ? 'Energy Amount (kWh)' : 'Fuel Consumed'
+                        multiTarget
+                          ? intl.formatMessage({ id: 'events.multiParcel.fuelUnitLabel' })
+                          : watch('fuel_type') === 'electric'
+                          ? 'Energy Amount (kWh)'
+                          : 'Fuel Consumed'
                       }
                       helpText={
-                        watch('fuel_type') === 'electric'
+                        multiTarget
+                          ? intl.formatMessage({ id: 'events.multiParcel.fuelUnitHelp' })
+                          : watch('fuel_type') === 'electric'
                           ? 'Energy consumption for carbon emission calculation'
                           : 'Total fuel used for soil management equipment'
                       }>
                       <HStack spacing={2}>
-                        <StandardInput
-                          flex={2}
-                          type="number"
-                          step="0.1"
-                          placeholder={watch('fuel_type') === 'electric' ? 'e.g., 15 kWh' : '15.5'}
-                          {...register('fuel_consumed')}
-                        />
+                        {!multiTarget && (
+                          <StandardInput
+                            flex={2}
+                            type="number"
+                            step="0.1"
+                            placeholder={
+                              watch('fuel_type') === 'electric' ? 'e.g., 15 kWh' : '15.5'
+                            }
+                            {...register('fuel_consumed')}
+                          />
+                        )}
                         <StandardSelect flex={1} {...register('fuel_unit')}>
                           <option value="L">Liters</option>
                           <option value="gal">Gallons</option>
@@ -1211,16 +1261,18 @@ const SoilManagementTab = forwardRef(
                       </HStack>
                     </StandardField>
 
-                    <StandardField
-                      label="Equipment Hours"
-                      helpText="Total equipment operating time">
-                      <StandardInput
-                        type="number"
-                        step="0.1"
-                        placeholder="3.5"
-                        {...register('equipment_hours')}
-                      />
-                    </StandardField>
+                    {!multiTarget && (
+                      <StandardField
+                        label="Equipment Hours"
+                        helpText="Total equipment operating time">
+                        <StandardInput
+                          type="number"
+                          step="0.1"
+                          placeholder="3.5"
+                          {...register('equipment_hours')}
+                        />
+                      </StandardField>
+                    )}
 
                     <StandardField
                       label="Production Efficiency"
@@ -1354,16 +1406,26 @@ const SoilManagementTab = forwardRef(
                     )}
 
                     <StandardField
-                      label="Amendment Amount"
-                      helpText="Total quantity of amendment applied">
+                      label={
+                        multiTarget
+                          ? intl.formatMessage({ id: 'events.multiParcel.amountUnitLabel' })
+                          : 'Amendment Amount'
+                      }
+                      helpText={
+                        multiTarget
+                          ? intl.formatMessage({ id: 'events.multiParcel.amountUnitHelp' })
+                          : 'Total quantity of amendment applied'
+                      }>
                       <HStack spacing={2}>
-                        <StandardInput
-                          flex={2}
-                          type="number"
-                          step="0.1"
-                          placeholder="500"
-                          {...register('amendment_amount')}
-                        />
+                        {!multiTarget && (
+                          <StandardInput
+                            flex={2}
+                            type="number"
+                            step="0.1"
+                            placeholder="500"
+                            {...register('amendment_amount')}
+                          />
+                        )}
                         {/* F11 fix (2026-06): removed "short_tons" — it bridges to the
                               model amendment_amount_unit ChoiceField (kg/lbs/tons/gal),
                               which rejects "short_tons" with a DRF 400 on submit. */}
@@ -2531,14 +2593,16 @@ const SoilManagementTab = forwardRef(
                         <option value="brush_pile_hibernacula">Brush Pile / Hibernacula</option>
                       </StandardSelect>
                     </StandardField>
-                    <StandardField label="Number Installed" helpText="How many structures">
-                      <StandardInput
-                        type="number"
-                        min="1"
-                        placeholder="e.g., 6"
-                        {...register('habitat_structure_count')}
-                      />
-                    </StandardField>
+                    {!multiTarget && (
+                      <StandardField label="Number Installed" helpText="How many structures">
+                        <StandardInput
+                          type="number"
+                          min="1"
+                          placeholder="e.g., 6"
+                          {...register('habitat_structure_count')}
+                        />
+                      </StandardField>
+                    )}
                   </SimpleGrid>
                   <StandardField
                     label="Installed (optional)"
@@ -2592,7 +2656,7 @@ const SoilManagementTab = forwardRef(
                     />
                   </StandardField>
 
-                  <BlockIdField control={methods.control} />
+                  {!multiTarget && <BlockIdField control={methods.control} />}
 
                   <StandardField
                     label={intl.formatMessage({ id: 'fieldDetails.growthStage' })}

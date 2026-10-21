@@ -5,6 +5,7 @@ import {
   buildMultiTargetBody,
   derivedValue,
   fieldValue,
+  multiParcelMode,
   newTarget,
   restorableDraftParcels,
   planAlsoSeed,
@@ -350,5 +351,33 @@ describe('multiParcel: production on several parcels', () => {
     expect(specRulesFor(1, 'IR')!.areaKey).toBe('area_covered');
     const hives = specRulesFor(1, 'PO')!;
     expect(targetIssues(newTarget({ id: 1, name: 'A', area: 2 }), hives, {})).toEqual([]);
+  });
+});
+
+describe('multiParcelMode: where the form stands with several parcels', () => {
+  const base = { open: true, eventType: 5, subtype: '', hasRules: false, pickedCount: 0 };
+
+  it('soil before its subtype is answered: the picker is offered', () => {
+    expect(multiParcelMode(base)).toBe('picking');
+    expect(multiParcelMode({ ...base, pickedCount: 2 })).toBe('picking');
+  });
+
+  it('a subtype that covers several parcels: picking, then active', () => {
+    expect(multiParcelMode({ ...base, subtype: 'PA', hasRules: true })).toBe('picking');
+    expect(multiParcelMode({ ...base, subtype: 'PA', hasRules: true, pickedCount: 2 })).toBe(
+      'active'
+    );
+  });
+
+  it('a subtype logged one parcel at a time: the picked parcels are paused, never dropped', () => {
+    expect(multiParcelMode({ ...base, subtype: 'ST', pickedCount: 2 })).toBe('paused');
+    expect(multiParcelMode({ ...base, subtype: 'ST' })).toBe('off');
+  });
+
+  it('off whenever the wizard rules it out, or the type never covers several', () => {
+    expect(multiParcelMode({ ...base, open: false, hasRules: true, pickedCount: 2 })).toBe('off');
+    expect(multiParcelMode({ ...base, eventType: 7 })).toBe('off');
+    // Harvest: production covers several, harvest does not, and its subtype is always known.
+    expect(multiParcelMode({ ...base, eventType: 1, subtype: 'HA' })).toBe('off');
   });
 });
