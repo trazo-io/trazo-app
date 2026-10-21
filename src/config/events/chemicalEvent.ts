@@ -160,7 +160,9 @@ export const APPLICATION_METHOD_LABELS: Record<string, string> = {
   drip: 'Drip Irrigation',
   fumigation: 'Fumigation',
   seed_treatment: 'Seed Treatment',
-  soil_incorporation: 'Soil Incorporation'
+  soil_incorporation: 'Soil Incorporation',
+  // Spanish twin in `utils/fieldValues.es.ts`, keyed by this exact English string.
+  hand_dispenser: 'Hand-applied dispensers (mating disruption)'
 };
 
 export const formatApplicationMethod = (v: unknown): string | null => {
