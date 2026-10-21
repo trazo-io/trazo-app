@@ -79,6 +79,9 @@ import {
 import type { RootState } from 'store/index';
 import { useTour } from 'hooks/useTour';
 
+/** Spray (2) and amendment (5) records carry a purchase invoice, so a file on one can be its receipt. */
+const RECEIPT_EVENT_TYPES = new Set([2, 5]);
+
 const FOLDERS = [
   'organic_system_plan',
   'certifications',
@@ -200,6 +203,11 @@ const DocumentsPage = () => {
   // `${event_type}:${id}` of the one record this file documents, or '' (pilot rehearsal
   // 2026-10, finding 4: an invoice could point at the season and no finer).
   const [uploadEvent, setUploadEvent] = useState('');
+  // Whether the file on a spray or amendment record IS its purchase receipt (review of back
+  // #207). Only a receipt counts as the record's receipt in the trace, the audit export and the
+  // packet's receipts/ folder; a lab report or photo on the same record is an attachment.
+  const [uploadIsReceipt, setUploadIsReceipt] = useState(false);
+  const uploadTakesReceipt = RECEIPT_EVENT_TYPES.has(Number(uploadEvent.split(':')[0]));
 
   // Arriving from a traceback gap ("no purchase receipt attached"): the filing dialog opens
   // already filed to that season and record, and the upload returns to the trace. Each value is
@@ -213,6 +221,8 @@ const DocumentsPage = () => {
       ? (searchParams.get('record') as string)
       : '';
   const returnTo = traceReturnPath(searchParams.get('next'), farmId, '');
+  // The trace's "no purchase receipt" gap sends `kind=receipt`: the file it asks for is one.
+  const presetReceipt = Boolean(presetRecord) && searchParams.get('kind') === 'receipt';
 
   const { data: productions = [] } = useGetFarmProductionsQuery(farmId, {
     skip: !farmId || !isFilingOpen
@@ -387,6 +397,7 @@ const DocumentsPage = () => {
     setUploadFolder('uploads');
     setUploadProduction(presetProduction);
     setUploadEvent(presetRecord);
+    setUploadIsReceipt(presetReceipt);
     onFilingOpen();
     clearInput();
   };
@@ -405,7 +416,8 @@ const DocumentsPage = () => {
         ...(uploadProduction && uploadEvent
           ? {
               eventType: Number(uploadEvent.split(':')[0]),
-              eventId: Number(uploadEvent.split(':')[1])
+              eventId: Number(uploadEvent.split(':')[1]),
+              ...(uploadTakesReceipt && uploadIsReceipt ? { sourceKind: 'receipt' as const } : {})
             }
           : {})
       }).unwrap();
@@ -978,6 +990,24 @@ const DocumentsPage = () => {
                         {o.label}
                       </option>
                     ))}
+                  </StandardSelect>
+                </StandardField>
+              ) : null}
+              {uploadProduction && uploadTakesReceipt ? (
+                <StandardField
+                  label={intl.formatMessage({ id: 'documents.filing.field.fileKind' })}
+                  helpText={intl.formatMessage({ id: 'documents.filing.field.fileKindHelp' })}>
+                  <StandardSelect
+                    value={uploadIsReceipt ? 'receipt' : 'attachment'}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                      setUploadIsReceipt(e.target.value === 'receipt')
+                    }>
+                    <option value="receipt">
+                      {intl.formatMessage({ id: 'documents.filing.field.fileKindReceipt' })}
+                    </option>
+                    <option value="attachment">
+                      {intl.formatMessage({ id: 'documents.filing.field.fileKindOther' })}
+                    </option>
                   </StandardSelect>
                 </StandardField>
               ) : null}

@@ -115,7 +115,9 @@ const documentsApi = baseApi.injectEndpoints({
         requirement?: string;
         /** The sale this file documents, and what kind of document it is. */
         salesRecord?: number | null;
-        sourceKind?: SaleSourceKind;
+        /** A sale's document kind, or `receipt` for the purchase receipt filed on a spray or
+         *  amendment record (the only kind that counts as that record's receipt). */
+        sourceKind?: SaleSourceKind | 'receipt';
         /** The activity record this file documents (the invoice behind one spray). The server
          *  files it under that record's production and refuses a record from another farm. */
         eventType?: number | null;

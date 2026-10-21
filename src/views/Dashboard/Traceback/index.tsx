@@ -103,7 +103,7 @@ export const TracebackPage = () => {
       // A receipt is FILED against the record from Documents, which works on a finished season
       // too (a correction cannot set a file link). The filing dialog opens pre-filed to this
       // season and record, and the upload returns here.
-      return `/admin/dashboard/farm/${season.establishment_id}/documents?production=${season.id}&record=${EVENT_TYPE_BY_KIND[kind]}:${gap.ref}&next=${back}`;
+      return `/admin/dashboard/farm/${season.establishment_id}/documents?production=${season.id}&record=${EVENT_TYPE_BY_KIND[kind]}:${gap.ref}&kind=receipt&next=${back}`;
     }
     if (gap.ref && EVENT_TYPE_BY_KIND[kind]) {
       // `next` brings the farmer back to this trace once the record is saved (NewEvent accepts

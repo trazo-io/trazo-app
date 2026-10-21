@@ -392,6 +392,8 @@ describe('TracebackPage', () => {
       '2:44',
       '/admin/dashboard/farm/1/traceback?sale=7'
     ]);
+    // The file the gap asks for IS the purchase receipt: only that kind closes it (back #207).
+    expect(q.get('kind')).toBe('receipt');
   });
 
   it('renders every gap code with its own message', () => {
