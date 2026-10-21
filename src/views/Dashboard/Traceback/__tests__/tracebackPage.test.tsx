@@ -283,6 +283,44 @@ describe('TracebackPage', () => {
     expect(screen.getAllByText(messages['traceback.input.insidePhi'])).toHaveLength(1);
   });
 
+  it('a 0 or 1-day PHI is recorded, singular where it is one (review of #170)', () => {
+    state.trace = {
+      ...TRACE,
+      inputs: [
+        { ...TRACE.inputs[0], event_id: 44, days_to_pick: 5, phi_days: '0', inside_phi: false },
+        { ...TRACE.inputs[0], event_id: 45, days_to_pick: 5, phi_days: '1', inside_phi: false }
+      ]
+    };
+    renderAt('/admin/dashboard/farm/1/traceback?sale=7');
+    expect(screen.getByText('5 days before the next pick · PHI recorded: 0 days')).toBeTruthy();
+    expect(screen.getByText('5 days before the next pick · PHI recorded: 1 day')).toBeTruthy();
+  });
+
+  it('a capped recall list never claims to be the whole list (review of #170)', () => {
+    state.search = {
+      truncated: true,
+      results: [1, 2].map((id) => ({
+        sale_id: id,
+        date: '2026-08-01',
+        buyer: 'A',
+        quantity: '10 bins',
+        invoice: `I${id}`,
+        crop: 'Apples',
+        parcel: 'P',
+        season: '2026',
+        matched_on: 'input_invoice'
+      }))
+    };
+    renderAt('/admin/dashboard/farm/1/traceback');
+    fireEvent.change(screen.getByPlaceholderText(messages['traceback.search.placeholder']), {
+      target: { value: 'WE-1' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: messages['traceback.search.submit'] }));
+    expect(screen.getByText(messages['traceback.matches.truncatedRecall'])).toBeTruthy();
+    expect(screen.getByText(messages['traceback.matches.subtitleRecallPartial'])).toBeTruthy();
+    expect(screen.queryByText(messages['traceback.matches.subtitleRecall'])).toBeNull();
+  });
+
   it('is a drill-down: it has a Back button', () => {
     renderAt('/admin/dashboard/farm/1/traceback');
     expect(screen.getByRole('button', { name: messages['common.back'] })).toBeTruthy();

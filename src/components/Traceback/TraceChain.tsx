@@ -308,8 +308,8 @@ export const TraceChain = ({
                   <Text fontSize="sm" color="gray.600">
                     {[
                       t('traceback.input.daysToPick', { days: r.days_to_pick }),
-                      r.phi_days
-                        ? t('traceback.input.phiRecorded', { phi: r.phi_days })
+                      r.phi_days != null && r.phi_days !== ''
+                        ? t('traceback.input.phiRecorded', { phi: Number(r.phi_days) })
                         : t('traceback.input.noPhi')
                     ].join(' · ')}
                   </Text>

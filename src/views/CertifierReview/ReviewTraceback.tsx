@@ -99,6 +99,8 @@ export const ReviewTraceback = ({ token, apiRoot }: Props) => {
     });
   };
   const busy = state.kind === 'loading';
+  const recall =
+    state.kind === 'matches' && state.matches.every((m) => m.matched_on.startsWith('input_'));
 
   return (
     <Box w="full" data-testid="certifier-traceback">
@@ -168,13 +170,24 @@ export const ReviewTraceback = ({ token, apiRoot }: Props) => {
             </Text>
             <Text fontSize="sm" color="gray.600">
               {t(
-                state.matches.every((m) => m.matched_on.startsWith('input_'))
-                  ? 'traceback.matches.subtitleRecall'
-                  : 'traceback.matches.subtitle'
+                // A capped recall list must never claim to be the whole list (review of app #170).
+                !recall
+                  ? 'traceback.matches.subtitle'
+                  : state.truncated
+                  ? 'traceback.matches.subtitleRecallPartial'
+                  : 'traceback.matches.subtitleRecall'
               )}
             </Text>
             {state.truncated && (
-              <StandardAlert status="info" mb={0} description={t('traceback.matches.truncated')} />
+              <StandardAlert
+                status={recall ? 'warning' : 'info'}
+                mb={0}
+                description={t(
+                  recall
+                    ? 'certifierReview.traceback.truncatedRecall'
+                    : 'traceback.matches.truncated'
+                )}
+              />
             )}
             {state.matches.map((m) => (
               <HStack
