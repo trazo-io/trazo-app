@@ -43,6 +43,7 @@ import { useTourStore } from 'store/tourStore';
 import { object, string } from 'zod';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { traceReturnPath } from 'utils/traceReturnPath';
 
 import {
   StandardCard,
@@ -417,6 +418,14 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
   // Get event type from URL parameters when editing
   const eventTypeFromUrl = searchParams.get('event_type');
+
+  // Arriving from a traceback's "Fix it here" (?next=), the save lands back on that trace, so the
+  // farmer sees the gap close instead of hunting for the page again (see traceReturnPath).
+  const afterSavePath = traceReturnPath(
+    searchParams.get('next'),
+    farmId,
+    `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/`
+  );
 
   // WS-4b entry convergence: arriving from a verb entry point (Activities picker,
   // parcel Add Event menu) carries ?event_type=&verb= — the type is already known, so
@@ -3117,8 +3126,8 @@ function NewEvent({ isEdit = false, eventId = null }) {
       // to restore work that already exists as a real event, inviting a duplicate.
       clearDraft();
 
-      // Navigate back to the parcel details
-      navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`, {
+      // Navigate back to the parcel details (or to the traceback that sent the farmer here)
+      navigate(afterSavePath, {
         replace: true
       });
     } catch (error) {
@@ -3242,9 +3251,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
   useEffect(() => {
     if (isCreateSuccess || isUpdateSuccess) {
       dispatch(clearForm());
-      navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/`);
+      navigate(afterSavePath);
     }
-  }, [isCreateSuccess, isUpdateSuccess, dispatch, navigate, farmId, parcelId]);
+  }, [isCreateSuccess, isUpdateSuccess, dispatch, navigate, afterSavePath]);
 
   // REMOVED: Watch for form data changes and recalculate carbon when on event details step
   // This was causing infinite loops with ChemicalTab's debounced onDataChange
@@ -3382,7 +3391,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
           onClose={() => setIsCorrectOpen(false)}
           eventId={parseInt(eventId || '0')}
           eventType={eventTypeFromUrl ? parseInt(eventTypeFromUrl) : backendEventType}
-          onCorrected={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/`)}
+          onCorrected={() => navigate(afterSavePath)}
         />
       </StandardPage>
     );

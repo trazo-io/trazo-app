@@ -6,8 +6,10 @@
  * score, a percentage or a verification.
  */
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { fireEvent, render, screen, within } from '@testing-library/react';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
+import { Provider } from 'react-redux';
+import { configureStore } from '@reduxjs/toolkit';
 import { ChakraProvider } from '@chakra-ui/react';
 import { IntlProvider } from 'react-intl';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -45,17 +47,27 @@ import TracebackPage from '..';
 
 const messages = enUS as unknown as Record<string, string>;
 
+const Landed = () => {
+  const loc = useLocation();
+  return <span data-testid="landed">{loc.pathname + loc.search}</span>;
+};
+
 const renderAt = (url: string) =>
   render(
-    <ChakraProvider>
-      <IntlProvider locale="en-US" messages={messages}>
-        <MemoryRouter initialEntries={[url]}>
-          <Routes>
-            <Route path="/admin/dashboard/farm/:farmId/traceback" element={<TracebackPage />} />
-          </Routes>
-        </MemoryRouter>
-      </IntlProvider>
-    </ChakraProvider>
+    // A company in the store: file links are built on the company-scoped documents route.
+    <Provider
+      store={configureStore({ reducer: { company: () => ({ currentCompany: { id: 77 } }) } })}>
+      <ChakraProvider>
+        <IntlProvider locale="en-US" messages={messages}>
+          <MemoryRouter initialEntries={[url]}>
+            <Routes>
+              <Route path="/admin/dashboard/farm/:farmId/traceback" element={<TracebackPage />} />
+              <Route path="*" element={<Landed />} />
+            </Routes>
+          </MemoryRouter>
+        </IntlProvider>
+      </ChakraProvider>
+    </Provider>
   );
 
 const GAP_CODES = [
@@ -66,8 +78,14 @@ const GAP_CODES = [
   ['season', 'season_without_lot_id', 'lot_id', null, ''],
   ['inputs', 'input_without_supplier', 'supplier', 44, 'chemical'],
   ['inputs', 'input_without_invoice', 'invoice', 44, 'chemical'],
-  ['inputs', 'input_without_lot', 'lot', 44, 'chemical']
+  ['inputs', 'input_without_lot', 'lot', 44, 'chemical'],
+  ['sale', 'sale_without_document', 'source_documents', 7, ''],
+  ['inputs', 'input_without_document', 'receipt_document', 44, 'chemical']
 ] as const;
+
+const PICK_GAP = (enUS as unknown as Record<string, string>)[
+  'traceback.gap.pick_without_lot_code'
+].replace('{input}', '2026-08-01 · block UT · 13,400 lb');
 
 const TRACE = {
   sale: {
@@ -78,17 +96,20 @@ const TRACE = {
     invoice: '',
     bol: '',
     organic_on_invoice: true,
-    label_category: ''
+    label_category: '',
+    documents: [] as { id: number; title: string; kind: string }[]
   },
   picks_linked: false,
   picks: [{ id: 31, lot_code: '', date: '2026-08-01', block: 'UT', quantity: '13,400 lb' }],
   season: {
+    id: 55,
     public_id: 'abc',
     name: '2026',
     crop: 'Blueberries',
     parcel: 'Upper',
     parcel_id: 3,
     establishment_id: 1,
+    company_id: 9,
     lot_id: ''
   },
   inputs: [
@@ -102,7 +123,8 @@ const TRACE = {
       invoice: '',
       lot: '',
       listing: 'not_classified',
-      other_block: false
+      other_block: false,
+      documents: [] as { id: number; title: string; kind: string }[]
     }
   ],
   balance: {
@@ -225,6 +247,65 @@ describe('TracebackPage', () => {
     expect(screen.getByText(/counted apart: 400 lb in 1 sale\./)).toBeTruthy();
   });
 
+  it('opens each file through the company-scoped documents route, labelled by kind', () => {
+    state.trace = {
+      ...TRACE,
+      sale: {
+        ...TRACE.sale,
+        documents: [{ id: 501, title: 'BR-5602.pdf', kind: 'bill_of_lading' }]
+      },
+      inputs: [
+        { ...TRACE.inputs[0], documents: [{ id: 502, title: 'VAS-0520.pdf', kind: 'receipt' }] }
+      ]
+    };
+    renderAt('/admin/dashboard/farm/1/traceback?sale=7');
+    const bol = screen.getByRole('link', { name: /Bill of lading: BR-5602\.pdf/ });
+    // The FULL path, company from the trace (the store holds a different one): the first browser
+    // run caught `/companies//establishments/...`, which an end-anchored match let through.
+    expect(bol.getAttribute('href')).toMatch(
+      /\/api\/companies\/9\/establishments\/1\/documents\/501\/download\/$/
+    );
+    const receipt = screen.getByRole('link', { name: /Purchase receipt: VAS-0520\.pdf/ });
+    expect(receipt.getAttribute('href')).toMatch(/documents\/502\/download\/$/);
+  });
+
+  it('a fix on a record carries the way back to this trace', () => {
+    state.trace = TRACE;
+    renderAt('/admin/dashboard/farm/1/traceback?sale=7');
+    // The pick-lot fix opens the harvest record; after saving NewEvent returns to `next`.
+    const gap = screen.getByText(PICK_GAP).closest('[role="alert"]');
+    fireEvent.click(
+      within(gap as HTMLElement).getByRole('button', { name: messages['traceback.gap.fix'] })
+    );
+    const landed = screen.getByTestId('landed').textContent || '';
+    expect(landed).toContain('/admin/dashboard/farm/1/parcel/3/event/31/change');
+    expect(new URLSearchParams(landed.split('?')[1]).get('next')).toBe(
+      '/admin/dashboard/farm/1/traceback?sale=7'
+    );
+  });
+
+  it('a missing receipt is filed from Documents, pre-filed to the record, then back here', () => {
+    state.trace = TRACE;
+    renderAt('/admin/dashboard/farm/1/traceback?sale=7');
+    const text = messages['traceback.gap.input_without_document'].replace(
+      '{input}',
+      '2026-05-02 · X'
+    );
+    const gap = screen.getByText(text).closest('[role="alert"]');
+    fireEvent.click(
+      within(gap as HTMLElement).getByRole('button', { name: messages['traceback.gap.fix'] })
+    );
+    const landed = screen.getByTestId('landed').textContent || '';
+    expect(landed.split('?')[0]).toBe('/admin/dashboard/farm/1/documents');
+    const q = new URLSearchParams(landed.split('?')[1]);
+    // A correction cannot set a file link on a finished season; filing from Documents can.
+    expect([q.get('production'), q.get('record'), q.get('next')]).toEqual([
+      '55',
+      '2:44',
+      '/admin/dashboard/farm/1/traceback?sale=7'
+    ]);
+  });
+
   it('renders every gap code with its own message', () => {
     state.trace = TRACE;
     renderAt('/admin/dashboard/farm/1/traceback?sale=7');
@@ -232,7 +313,11 @@ describe('TracebackPage', () => {
     expect(screen.getByText(messages['traceback.hop.sale'])).toBeTruthy();
     for (const [, code] of GAP_CODES) {
       // An input gap names WHICH input (date · product), not "an input".
-      const text = messages[`traceback.gap.${code}`].replace('{input}', '2026-05-02 · X');
+      // Each gap names its record: an input by date and product, a pick by date, block, quantity.
+      const text = messages[`traceback.gap.${code}`].replace(
+        '{input}',
+        code === 'pick_without_lot_code' ? '2026-08-01 · block UT · 13,400 lb' : '2026-05-02 · X'
+      );
       expect(screen.getAllByText(text).length).toBeGreaterThan(0);
       // ...and says HOW to close it: a sale cannot be edited, so "Fix" alone was a dead end.
       expect(screen.getAllByText(messages[`traceback.gapHow.${code}`]).length).toBeGreaterThan(0);

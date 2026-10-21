@@ -16,8 +16,8 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Badge, Box, HStack, Stack, Text, VStack, Wrap, WrapItem } from '@chakra-ui/react';
-import { FaArrowDown, FaRandom, FaRoute, FaSearch } from 'react-icons/fa';
+import { Box, HStack, Stack, Text, VStack } from '@chakra-ui/react';
+import { FaRandom, FaRoute, FaSearch } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
@@ -32,8 +32,11 @@ import {
   StandardSearchInput
 } from 'components/Design/StandardComponents';
 import { useGetSaleTracebackQuery, useSearchTracebackSalesQuery } from 'store/api/historyApi';
+import TraceChain, { type TraceDoc, type TraceGap } from 'components/Traceback/TraceChain';
+import { DOCUMENT_DOWNLOAD_URL } from 'config';
+import { env } from 'config/environment';
 
-type Gap = { hop: string; code: string; field: string; ref: number | null; kind: string };
+type Gap = TraceGap;
 type SearchArgs = { q?: string; random?: number; establishmentId?: string };
 
 // Backend event families, as the activity edit route takes them (`?event_type=`).
@@ -44,39 +47,6 @@ const EVENT_TYPE_BY_KIND: Record<string, number> = {
   amendment: 5,
   beneficial: 6
 };
-
-const LABEL_CATEGORY_KEYS: Record<string, string> = {
-  '100_percent_organic': 'sales.records.labelCategory.hundredPercent',
-  organic: 'sales.records.labelCategory.organic',
-  made_with_organic: 'sales.records.labelCategory.madeWith'
-};
-
-const DESTINATION_KEYS: Record<string, string> = {
-  stored: 'events.harvestDestination.stored',
-  sold_direct: 'events.harvestDestination.soldDirect',
-  handler: 'events.harvestDestination.handler',
-  livestock_feed: 'events.harvestDestination.livestockFeed',
-  other: 'events.harvestDestination.other'
-};
-
-const Fact = ({ label, value }: { label: string; value?: string | null }) =>
-  value ? (
-    <Text fontSize="sm">
-      <Text as="span" color="gray.600">
-        {label}:{' '}
-      </Text>
-      {value}
-    </Text>
-  ) : null;
-
-// The identifier that joins two hops. Its words carry meaning ("no harvest pick named on the
-// sale"), so only the arrow is hidden from assistive tech.
-const Connector = ({ label }: { label: string }) => (
-  <HStack justify="center" color="gray.600" py={1} spacing={2}>
-    <FaArrowDown aria-hidden />
-    <Text fontSize="xs">{label}</Text>
-  </HStack>
-);
 
 export const TracebackPage = () => {
   const intl = useIntl();
@@ -126,46 +96,20 @@ export const TracebackPage = () => {
   const fixPath = (gap: Gap) => {
     if (!season?.establishment_id || !season?.parcel_id) return null;
     const kind = gap.hop === 'picks' && gap.field === 'harvest_lot_code' ? 'pick' : gap.kind;
+    const back = encodeURIComponent(`/admin/dashboard/farm/${farmId}/traceback?sale=${saleId}`);
+    if (gap.code === 'input_without_document' && gap.ref && EVENT_TYPE_BY_KIND[kind]) {
+      // A receipt is FILED against the record from Documents, which works on a finished season
+      // too (a correction cannot set a file link). The filing dialog opens pre-filed to this
+      // season and record, and the upload returns here.
+      return `/admin/dashboard/farm/${season.establishment_id}/documents?production=${season.id}&record=${EVENT_TYPE_BY_KIND[kind]}:${gap.ref}&next=${back}`;
+    }
     if (gap.ref && EVENT_TYPE_BY_KIND[kind]) {
-      return `/admin/dashboard/farm/${season.establishment_id}/parcel/${season.parcel_id}/event/${gap.ref}/change?event_type=${EVENT_TYPE_BY_KIND[kind]}`;
+      // `next` brings the farmer back to this trace once the record is saved (NewEvent accepts
+      // only this farm's traceback path there, nothing else).
+      return `/admin/dashboard/farm/${season.establishment_id}/parcel/${season.parcel_id}/event/${gap.ref}/change?event_type=${EVENT_TYPE_BY_KIND[kind]}&next=${back}`;
     }
     return productionPath;
   };
-
-  // An input gap names its input: "an input has no supplier" sends the operator hunting
-  // through every row (MEASURED on the walnut showcase: 8 inputs, the gap was the 1st).
-  const inputName = (g: Gap) => {
-    const row = (tb?.inputs || []).find((r: any) => r.kind === g.kind && r.event_id === g.ref);
-    if (!row) return '';
-    return [row.date, row.product || t(`traceback.inputKind.${row.kind}`)]
-      .filter(Boolean)
-      .join(' · ');
-  };
-
-  const gapsFor = (hop: string) =>
-    (tb?.gaps || [])
-      .filter((g: Gap) => g.hop === hop)
-      .map((g: Gap, i: number) => {
-        const to = fixPath(g);
-        return (
-          // The readiness card's finding shape: what is missing, how to close it, and a link to
-          // where. A bare "Fix" sent the farmer to a season page with no hint that a sale cannot
-          // be edited, only voided and entered again (MEASURED in the 2026-10-20 browser run).
-          <StandardAlert key={`${hop}-${g.code}-${g.ref}-${i}`} status="warning" mb={2}>
-            <Text fontSize="sm" fontWeight="semibold">
-              {t(`traceback.gap.${g.code}`, { input: inputName(g) })}
-            </Text>
-            <Text fontSize="sm">{t(`traceback.gapHow.${g.code}`)}</Text>
-            {/* A button, not a text link: MEASURED at 768px the link was 21px tall, under the
-                44px touch floor, and this is the one tap the page exists for. */}
-            {to && (
-              <StandardButton size="sm" variant="outline" mt={1} onClick={() => navigate(to)}>
-                {t('traceback.gap.fix')}
-              </StandardButton>
-            )}
-          </StandardAlert>
-        );
-      });
 
   return (
     // A drill-down (no sidebar entry), so it has a Back button. Two entry points (Documents and a
@@ -266,176 +210,32 @@ export const TracebackPage = () => {
       )}
       {saleId && trace.isError && !traceNotFound && <StandardQueryError onRetry={trace.refetch} />}
       {tb && !trace.isFetching && (
-        <Box>
-          {/* A count of links to fix, never a grade: the same "N to fix / nothing outstanding"
-              shape as the readiness card. The count rides a warning PILL, not orange text:
-              STATUS_URGENCY_TOKENS.warn.text is 4.57:1 on white but MEASURED 4.19:1 on the page's
-              gray canvas, under the 4.5 a 16px label owes; the warning badge is 7.62:1. */}
-          <Box mb={4}>
-            {tb.gaps.length ? (
-              <Badge
-                variant="warning"
-                fontSize="sm"
-                px={3}
-                py={1}
-                borderRadius="full"
-                textTransform="none">
-                {t('traceback.summary.gaps', { count: tb.gaps.length })}
-              </Badge>
-            ) : (
-              <Text fontSize="md" fontWeight="semibold" color="green.700">
-                {t('traceback.summary.none')}
-              </Text>
-            )}
-          </Box>
-          <StandardCard title={t('traceback.hop.sale')}>
-            <Fact label={t('traceback.field.date')} value={tb.sale.date} />
-            <Fact label={t('traceback.field.buyer')} value={tb.sale.buyer} />
-            <Fact label={t('traceback.field.quantity')} value={tb.sale.quantity} />
-            <Fact label={t('traceback.field.invoice')} value={tb.sale.invoice} />
-            <Fact label={t('traceback.field.bol')} value={tb.sale.bol} />
-            <Text fontSize="sm">
-              {t(
-                tb.sale.organic_on_invoice
-                  ? 'traceback.sale.organicOnInvoice'
-                  : 'traceback.sale.notOrganicOnInvoice'
-              )}
-              {tb.sale.label_category && LABEL_CATEGORY_KEYS[tb.sale.label_category]
-                ? ` · ${t(LABEL_CATEGORY_KEYS[tb.sale.label_category])}`
-                : ''}
-            </Text>
-            <Box mt={3}>{gapsFor('sale')}</Box>
-          </StandardCard>
-
-          <Connector
-            label={t(
-              tb.picks_linked ? 'traceback.link.saleToPick' : 'traceback.link.saleToPickMissing'
-            )}
-          />
-
-          <StandardCard
-            title={t('traceback.hop.picks')}
-            subtitle={tb.picks_linked ? undefined : t('traceback.picks.unlinkedSubtitle')}>
-            <Box mb={3}>{gapsFor('picks')}</Box>
-            {tb.picks.length === 0 ? (
-              <Text fontSize="sm">{t('traceback.picks.none')}</Text>
-            ) : (
-              <Wrap spacing={3}>
-                {tb.picks.map((p: any) => (
-                  <WrapItem key={p.id} borderWidth="1px" borderRadius="md" p={3} minW="220px">
-                    <VStack align="start" spacing={0}>
-                      <Fact label={t('traceback.field.lotCode')} value={p.lot_code} />
-                      <Fact label={t('traceback.field.date')} value={p.date} />
-                      <Fact label={t('traceback.field.block')} value={p.block} />
-                      <Fact label={t('traceback.field.quantity')} value={p.quantity} />
-                      <Fact label={t('traceback.field.storage')} value={p.storage} />
-                      <Fact
-                        label={t('traceback.field.destination')}
-                        value={
-                          DESTINATION_KEYS[p.destination] ? t(DESTINATION_KEYS[p.destination]) : ''
-                        }
-                      />
-                      <Fact
-                        label={t('traceback.field.sentToHandler')}
-                        value={p.quantity_sent_to_handler}
-                      />
-                      <Fact
-                        label={t('traceback.field.returnedFromHandler')}
-                        value={p.quantity_returned_from_handler}
-                      />
-                      <Fact
-                        label={t('traceback.field.handlerDocument')}
-                        value={p.handler_document}
-                      />
-                    </VStack>
-                  </WrapItem>
-                ))}
-              </Wrap>
-            )}
-          </StandardCard>
-
-          <Connector label={t('traceback.link.pickToSeason')} />
-
-          <StandardCard
-            title={t('traceback.hop.season')}
-            headerAction={
-              productionPath && (
-                <StandardButton
-                  onClick={() => navigate(productionPath)}
-                  size="sm"
-                  variant="outline">
-                  {t('traceback.season.open')}
-                </StandardButton>
-              )
-            }>
-            <Fact label={t('traceback.field.season')} value={season.name} />
-            <Fact label={t('traceback.field.crop')} value={season.crop} />
-            <Fact label={t('traceback.field.parcel')} value={season.parcel} />
-            <Fact label={t('traceback.field.lotId')} value={season.lot_id} />
-            <Box mt={3}>{gapsFor('season')}</Box>
-          </StandardCard>
-
-          <Connector label={t('traceback.link.seasonToInputs')} />
-
-          <StandardCard title={t('traceback.hop.inputs')} subtitle={t('traceback.inputs.subtitle')}>
-            <Box mb={3}>{gapsFor('inputs')}</Box>
-            {tb.inputs.length === 0 ? (
-              <Text fontSize="sm">{t('traceback.inputs.none')}</Text>
-            ) : (
-              <VStack align="stretch" spacing={2}>
-                {tb.inputs.map((r: any) => (
-                  <Box key={`${r.kind}-${r.event_id}`} borderWidth="1px" borderRadius="md" p={3}>
-                    <Text fontWeight="semibold">
-                      {[r.date, r.product || t(`traceback.inputKind.${r.kind}`)]
-                        .filter(Boolean)
-                        .join(' · ')}
-                    </Text>
-                    <Text fontSize="sm" color="gray.600">
-                      {[
-                        t(`traceback.inputKind.${r.kind}`),
-                        r.block && t('traceback.input.block', { block: r.block }),
-                        r.other_block && t('traceback.input.otherBlock'),
-                        t(`traceback.listing.${r.listing}`)
-                      ]
-                        .filter(Boolean)
-                        .join(' · ')}
-                    </Text>
-                    <Fact label={t('traceback.field.supplier')} value={r.supplier} />
-                    <Fact label={t('traceback.field.invoice')} value={r.invoice} />
-                    <Fact label={t('traceback.field.lot')} value={r.lot} />
-                  </Box>
-                ))}
-              </VStack>
-            )}
-          </StandardCard>
-
-          <StandardCard title={t('traceback.hop.balance')}>
-            {tb.balance.not_computed ? (
-              <Text fontSize="sm">{t('traceback.balance.notComputed')}</Text>
-            ) : (
-              <>
-                <Fact label={t('traceback.balance.harvested')} value={tb.balance.harvested} />
-                <Fact label={t('traceback.balance.packedOut')} value={tb.balance.packed_out} />
-                <Fact label={t('traceback.balance.sold')} value={tb.balance.sold} />
-                <Fact label={t('traceback.balance.difference')} value={tb.balance.difference} />
-              </>
-            )}
-            {/* Counted apart, never dropped: without this line a conventional (buffer) sale made
-                "sold" read short with nothing to say why. */}
-            {tb.balance.sold_not_organic_count > 0 && (
-              <Text fontSize="sm" mt={2} color="gray.600">
-                {tb.balance.sold_not_organic
-                  ? t('traceback.balance.soldNotOrganic', {
-                      quantity: tb.balance.sold_not_organic,
-                      count: tb.balance.sold_not_organic_count
-                    })
-                  : t('traceback.balance.soldNotOrganicCount', {
-                      count: tb.balance.sold_not_organic_count
-                    })}
-              </Text>
-            )}
-          </StandardCard>
-        </Box>
+        <TraceChain
+          trace={tb}
+          fixPath={fixPath}
+          onNavigate={navigate}
+          // The files behind a hop, opened through the farm's own documents route
+          // (company-checked server-side), with the company from the trace itself: opened from
+          // a link, the app has none loaded yet.
+          fileHref={(d: TraceDoc) =>
+            d.id != null && season?.establishment_id && season?.company_id != null
+              ? env.getApiUrl(
+                  DOCUMENT_DOWNLOAD_URL(
+                    String(season.company_id),
+                    String(season.establishment_id),
+                    d.id
+                  )
+                )
+              : null
+          }
+          seasonAction={
+            productionPath && (
+              <StandardButton onClick={() => navigate(productionPath)} size="sm" variant="outline">
+                {t('traceback.season.open')}
+              </StandardButton>
+            )
+          }
+        />
       )}
     </StandardPage>
   );

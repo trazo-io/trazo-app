@@ -334,7 +334,9 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
     production: {
       id: 'certifierLink.activity.production',
       defaultMessage: 'Viewed a production page'
-    }
+    },
+    // A search or a sale traced from the review page's "Trace a sale".
+    traceback: { id: 'certifierLink.activity.traceback', defaultMessage: 'Traced a sale' }
   };
   const activityLabel = (entry: CertifierAccessLink['accesses'][number]) => {
     // A source-file open names the file, so the grower sees which invoice was read.
