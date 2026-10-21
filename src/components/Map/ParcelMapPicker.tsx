@@ -33,6 +33,14 @@ const MAX_NAME = 16;
 const shortName = (name: string) =>
   name.length > MAX_NAME ? `${name.slice(0, MAX_NAME - 1)}…` : name;
 
+// A DOM element in an overlay pane does not get its clicks by default: the map captures the
+// pointer for its own drag and tap handling, so a real tap on a name pill never reached the
+// button (a synthetic click did, which is why only a browser showed it). This hands the pill's
+// pointer events back to the DOM.
+const keepClicksOnThePill = (element: HTMLElement | null) => {
+  if (element) window.google?.maps?.OverlayView?.preventMapHitsAndGesturesFrom?.(element);
+};
+
 const boxCenter = (path: { lat: number; lng: number }[]) => {
   const lats = path.map((p) => p.lat);
   const lngs = path.map((p) => p.lng);
@@ -157,6 +165,7 @@ const ParcelMapPicker = ({
                     as="button"
                     type="button"
                     tabIndex={-1}
+                    ref={keepClicksOnThePill}
                     onClick={canToggle ? () => onToggle(parcel.id) : undefined}
                     spacing={1}
                     minH="44px"

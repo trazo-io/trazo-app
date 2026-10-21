@@ -39,6 +39,11 @@ vi.mock('@react-google-maps/api', () => {
   };
 });
 
+const preventMapHits = vi.fn();
+(window as any).google = {
+  maps: { OverlayView: { preventMapHitsAndGesturesFrom: preventMapHits } }
+};
+
 const SQUARE = [
   { lat: 1, lng: 1 },
   { lat: 1, lng: 2 },
@@ -114,6 +119,9 @@ describe('ParcelPicker', () => {
     render(<Harness onIds={(ids) => (last = ids)} />);
     fireEvent.click(screen.getByRole('button', { name: 'Map' }));
     await waitFor(() => expect(screen.getByTestId('google-map')).toBeInTheDocument());
+
+    // Each pill takes its clicks back from the map (a real tap is captured by it otherwise).
+    expect(preventMapHits).toHaveBeenCalledWith(screen.getByText('South').closest('button'));
 
     fireEvent.click(screen.getByText('South'));
     expect(last).toEqual([2]);
