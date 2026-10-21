@@ -261,8 +261,13 @@ const GeneralTab = forwardRef(
       'certifier_notification_date',
       'custom_fields'
     ]);
-    const isContaminationIncident = watchedFields[5] === 'true';
-    const isCertifierNotified = watchedFields[10] === 'true';
+    // By NAME, never by position in the list above. These read `watchedFields[5]` and `[10]`,
+    // and when 'private_note' was inserted into the list every index after it moved by one:
+    // [5] became the private note and [10] the corrective-action date. The incident switch
+    // turned on and nothing appeared (no source, area or corrective action), while the schema
+    // still required a source, so an incident could not be saved at all.
+    const isContaminationIncident = watch('is_contamination_incident') === 'true';
+    const isCertifierNotified = watch('certifier_notified') === 'true';
     const previousValuesRef = useRef({});
 
     useEffect(() => {
