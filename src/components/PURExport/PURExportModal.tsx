@@ -59,6 +59,8 @@ interface PURFlag {
   expected?: string;
   unit?: string;
   factor?: string;
+  /** product_amount_is_count: box 24 exactly as printed ("1200.00 dispensers"). */
+  amount?: string;
 }
 
 /** A hired application: listed, never exported — the business files it (3 CCR 6626(b)). */
@@ -154,7 +156,9 @@ const FLAG_LABEL_IDS: Record<string, string> = {
   // ("schoolsite_method_code_required") to the farmer in place of a sentence.
   schoolsite_method_code_required: 'app.pur.flag.schoolsite_method_code_required',
   schoolsite_proximity_unknown: 'app.pur.flag.schoolsite_proximity_unknown',
-  quantity_rate_mismatch: 'app.pur.flag.quantity_rate_mismatch'
+  quantity_rate_mismatch: 'app.pur.flag.quantity_rate_mismatch',
+  // A dispenser count in box 24: printed as recorded, never converted to pounds or gallons.
+  product_amount_is_count: 'app.pur.flag.product_amount_is_count'
 };
 
 /**
@@ -320,7 +324,8 @@ const PURExportModal: React.FC<PURExportModalProps> = ({
             logged: flag.logged,
             expected: flag.expected,
             unit: flag.unit,
-            factor: flag.factor
+            factor: flag.factor,
+            amount: flag.amount
           }
         )
       : flag.code;

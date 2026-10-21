@@ -115,6 +115,7 @@ import {
   verbForKey
 } from 'config/activityVerbs';
 import { formatFieldValue, getFieldConfig, getSubtypes } from 'config/events';
+import { isDispenserRecord } from 'config/events/enums';
 import { localizeFieldValue } from 'utils/fieldDisplayUtils';
 import { backToLabel } from 'utils/backToLabel';
 import { useFurthestStep } from 'hooks/useFurthestStep';
@@ -2701,6 +2702,14 @@ function NewEvent({ isEdit = false, eventId = null }) {
           enhancedData.is_summary === 'true' ||
           enhancedData.is_summary === 'on';
 
+        // Hand-placed pheromone dispensers carry no tank concentration, so the chemical form
+        // does not require one for that method; this second gate must agree with it, or a
+        // valid dispenser record is refused here with "missing: Concentration".
+        const isDispenserApplication = isDispenserRecord(
+          enhancedData.type,
+          enhancedData.application_method ?? enhancedData.way_of_application
+        );
+
         const requiredFieldsByType = {
           0: ['type'], // Weather
           1: ['type'], // Production - other fields are optional but encouraged
@@ -2711,7 +2720,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                 'commercial_name',
                 'volume_applied',
                 'area_treated',
-                'concentration',
+                ...(isDispenserApplication ? [] : ['concentration']),
                 'application_method'
               ], // Chemical
           3: ['name'], // General

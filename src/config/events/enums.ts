@@ -101,7 +101,10 @@ export const VOLUME_UNITS: readonly EnumOption[] = [
   { value: 'oz_wt', labelKey: 'events.units.volume.ouncesWeight' },
   { value: 'oz', labelKey: 'events.units.volume.ounces', legacyOnly: true },
   { value: 'kg', labelKey: 'events.units.volume.kilograms' },
-  { value: 'lbs', labelKey: 'events.units.volume.pounds' }
+  { value: 'lbs', labelKey: 'events.units.volume.pounds' },
+  // A COUNT, not a measure (2026-10-20): mating-disruption dispensers are hung by hand, a few
+  // hundred per acre. Mirrors UNIT_VOLUME `dispensers`; the backend never converts it to kg or L.
+  { value: 'dispensers', labelKey: 'events.units.volume.dispensers' }
 ] as const;
 
 /** Fuel units — diesel, gasoline, electricity */
@@ -180,6 +183,21 @@ export const APPLICATION_METHODS: readonly EnumOption[] = [
   { value: 'banding', labelKey: 'events.applicationMethods.banding' }
 ] as const;
 
+/**
+ * Hand-placed pheromone dispensers (mating disruption). Mirrors APPLICATION_METHOD
+ * `hand_dispenser` in common/field_registry. The one method for which the chemical form does not
+ * require a concentration: a dispenser is counted and hung, never mixed into a tank.
+ */
+export const HAND_DISPENSER_METHOD = 'hand_dispenser';
+
+/**
+ * True for a pesticide applied as hand-placed dispensers: the one record for which the form
+ * waives concentration and accepts the `dispensers` count unit. Checks the TYPE too, because
+ * switching the type away from PE leaves the stored method behind (review on app#166).
+ */
+export const isDispenserRecord = (type: unknown, method: unknown): boolean =>
+  type === 'PE' && method === HAND_DISPENSER_METHOD;
+
 /** Application methods filtered by chemical main type (FE/PE/FU/HE) */
 export const APPLICATION_METHODS_BY_CHEMICAL_TYPE: Record<string, readonly EnumOption[]> = {
   FE: [
@@ -201,7 +219,10 @@ export const APPLICATION_METHODS_BY_CHEMICAL_TYPE: Record<string, readonly EnumO
     // Fumigation was in the backend choices and in the PUR exporter (box 21 "Fume" + the
     // FFM-code requirement) but in no form list, so the FFM input — rendered only when the
     // method is fumigation — could never appear and box 21a was dead code (2026-09-05).
-    { value: 'fumigation', labelKey: 'events.applicationMethods.fumigation' }
+    { value: 'fumigation', labelKey: 'events.applicationMethods.fumigation' },
+    // Pheromone dispensers for mating disruption (2026-10-20). Without it the grower picked a
+    // spray method and the record printed into the packet as a spray. Insecticide only.
+    { value: 'hand_dispenser', labelKey: 'events.applicationMethods.handDispenser' }
   ],
   HE: [
     { value: 'ground_spray', labelKey: 'events.applicationMethods.groundSpray' },
