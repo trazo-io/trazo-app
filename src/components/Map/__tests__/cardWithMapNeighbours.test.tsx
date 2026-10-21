@@ -84,7 +84,7 @@ describe('parcel map card', () => {
     expect(drawn.polygons.length).toBeGreaterThan(0);
   });
 
-  it('names every outline, this parcel included, and cuts a long name', () => {
+  it('names every outline, this parcel included, and never cuts a long name', () => {
     mount({
       name: 'Hass Avocado Grove',
       otherParcels: [
@@ -94,6 +94,7 @@ describe('parcel map card', () => {
     });
     expect(screen.getByText('Hass Avocado Grove')).toBeInTheDocument();
     expect(screen.getByText('South')).toBeInTheDocument();
-    expect(screen.getByTitle('A very long parcel name indeed')).toHaveTextContent('…');
+    // In full: the label takes no pointer events, so no tooltip could show a cut name's rest.
+    expect(screen.getByText('A very long parcel name indeed')).toBeInTheDocument();
   });
 });
