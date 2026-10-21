@@ -218,7 +218,7 @@ describe('the field notes inbox', () => {
     renderInbox(TWO_PARCELS);
     const logThis = screen.getByRole('button', { name: /Log this/i });
     expect(logThis.hasAttribute('disabled')).toBe(true);
-    expect(screen.getByText(/the block is what a certifier follows/i)).toBeTruthy();
+    expect(screen.getByText(/the parcel is what a certifier follows/i)).toBeTruthy();
   });
 
   /*
@@ -228,7 +228,7 @@ describe('the field notes inbox', () => {
    */
   it('gives the reason before the disabled button, not after it', () => {
     renderInbox(TWO_PARCELS);
-    const why = screen.getByText(/the block is what a certifier follows/i);
+    const why = screen.getByText(/the parcel is what a certifier follows/i);
     const logThis = screen.getByRole('button', { name: /Log this/i });
 
     // DOCUMENT_POSITION_FOLLOWING: `logThis` comes after `why` in document order.
@@ -241,7 +241,7 @@ describe('the field notes inbox', () => {
     const describedBy = logThis.getAttribute('aria-describedby');
     expect(describedBy, 'a disabled button states no reason without this').toBeTruthy();
     const target = document.getElementById(describedBy as string);
-    expect(target?.textContent).toMatch(/the block is what a certifier follows/i);
+    expect(target?.textContent).toMatch(/the parcel is what a certifier follows/i);
   });
 
   it('drops the aria-describedby once there is nothing left to explain', () => {
@@ -257,7 +257,7 @@ describe('the field notes inbox', () => {
     // dropdowns: "Home Ranch" and "Choose the block".
     renderInbox(TWO_PARCELS);
     expect(screen.getByLabelText(/^Farm/)).toBeTruthy();
-    expect(screen.getByLabelText(/^Block/)).toBeTruthy();
+    expect(screen.getByLabelText(/^Parcel/)).toBeTruthy();
   });
 
   it('stamps the arrival to the minute, not the second', () => {
@@ -532,7 +532,7 @@ describe('notes that could not be read', () => {
      */
     expect(screen.queryAllByRole('combobox')).toHaveLength(0);
     expect(screen.queryByLabelText(/^Farm/)).toBeNull();
-    expect(screen.queryByLabelText(/^Block/)).toBeNull();
+    expect(screen.queryByLabelText(/^Parcel/)).toBeNull();
   });
 
   it('renders copy for an unrecognised reason instead of leaking the raw key', () => {
@@ -853,21 +853,21 @@ describe('a farm with no blocks', () => {
 
   it('names the farm and says it has no blocks, instead of asking for one', () => {
     renderInbox(NO_PARCELS);
-    expect(screen.getByText(/Home Ranch has no blocks yet/)).toBeTruthy();
+    expect(screen.getByText(/Home Ranch has no parcels yet/)).toBeTruthy();
     // The generic hint is the thing being replaced. Leaving both would tell the supervisor to pick
     // a block in the same breath as saying there are none.
-    expect(screen.queryByText(/Pick the farm and the block this happened on/)).toBeNull();
+    expect(screen.queryByText(/Pick the farm and the parcel this happened on/)).toBeNull();
   });
 
   it('offers the way out, pointed at that farm', () => {
     renderInbox(NO_PARCELS);
-    fireEvent.click(screen.getByRole('button', { name: /Add a block/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Add a parcel/i }));
     expect(mocks.navigate).toHaveBeenCalledWith('/admin/dashboard/farm/7/parcel/add');
   });
 
   it('does not leave an empty required select open', () => {
     renderInbox(NO_PARCELS);
-    const block = screen.getByLabelText(/Block/i) as HTMLSelectElement;
+    const block = screen.getByLabelText(/Parcel/i) as HTMLSelectElement;
     expect(block.hasAttribute('disabled')).toBe(true);
   });
 
@@ -881,8 +881,8 @@ describe('a farm with no blocks', () => {
     // The new branch must not swallow the ordinary case: a farm WITH blocks and none chosen yet.
     mocks.notes = [NOTE];
     renderInbox(TWO_PARCELS);
-    expect(screen.getByText(/Pick the farm and the block this happened on/)).toBeTruthy();
-    expect(screen.queryByText(/has no blocks yet/)).toBeNull();
+    expect(screen.getByText(/Pick the farm and the parcel this happened on/)).toBeTruthy();
+    expect(screen.queryByText(/has no parcels yet/)).toBeNull();
   });
 });
 

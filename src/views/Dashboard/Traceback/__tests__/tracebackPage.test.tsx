@@ -85,7 +85,7 @@ const GAP_CODES = [
 
 const PICK_GAP = (enUS as unknown as Record<string, string>)[
   'traceback.gap.pick_without_lot_code'
-].replace('{input}', '2026-08-01 · block UT · 13,400 lb');
+].replace('{input}', '2026-08-01 · section UT · 13,400 lb');
 
 const TRACE = {
   sale: {
@@ -316,7 +316,7 @@ describe('TracebackPage', () => {
       // Each gap names its record: an input by date and product, a pick by date, block, quantity.
       const text = messages[`traceback.gap.${code}`].replace(
         '{input}',
-        code === 'pick_without_lot_code' ? '2026-08-01 · block UT · 13,400 lb' : '2026-05-02 · X'
+        code === 'pick_without_lot_code' ? '2026-08-01 · section UT · 13,400 lb' : '2026-05-02 · X'
       );
       expect(screen.getAllByText(text).length).toBeGreaterThan(0);
       // ...and says HOW to close it: a sale cannot be edited, so "Fix" alone was a dead end.

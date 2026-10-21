@@ -1267,7 +1267,7 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
                         }
                         placeholder={intl.formatMessage({
                           id: 'osp.annual.additionsPlaceholder',
-                          defaultMessage: 'e.g., New 2-acre block; new OMRI compost supplier'
+                          defaultMessage: 'e.g., New 2-acre parcel; new OMRI compost supplier'
                         })}
                       />
                     </StandardField>
