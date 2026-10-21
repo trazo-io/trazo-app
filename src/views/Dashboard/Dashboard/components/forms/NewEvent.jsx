@@ -145,6 +145,7 @@ import {
   buildMultiTargetBody,
   newApplicationGroup,
   newTarget,
+  restorableDraftParcels,
   targetIssues
 } from 'utils/multiParcel';
 import { revealFirstFormError } from 'utils/revealFirstFormError';
@@ -988,12 +989,24 @@ function NewEvent({ isEdit = false, eventId = null }) {
     setEventFormData(draft.eventFormData || {});
     // A draft does not say who wrote its name, so the name it carries is kept as it is.
     setNameOrigin('unknown');
-    // Several parcels: put back the ones still on this farm, with what their cards held.
+    // Several parcels: put back the ones still on this farm AND still able to join, with what
+    // their cards held; a parcel whose season changed since the draft is left out and named.
     if (draft.multi?.parcelIds?.length) {
-      const onFarm = new Set(farmParcels.map((p) => Number(p.id)));
-      const ids = draft.multi.parcelIds.filter((id) => onFarm.has(Number(id)));
-      setMultiTargets((draft.multi.targets || []).filter((t) => onFarm.has(Number(t?.parcelId))));
+      const { ids, droppedNames } = restorableDraftParcels(draft.multi.parcelIds, farmParcels);
+      const kept = new Set([Number(parcelId), ...ids]);
+      setMultiTargets((draft.multi.targets || []).filter((t) => kept.has(Number(t?.parcelId))));
       setMultiParcelIds(ids);
+      if (droppedNames.length > 0) {
+        toast({
+          status: 'warning',
+          isClosable: true,
+          duration: 9000,
+          description: intl.formatMessage(
+            { id: 'events.multiParcel.alsoDropped' },
+            { names: droppedNames.join(', ') }
+          )
+        });
+      }
     }
     toast({
       title: intl.formatMessage({ id: 'events.draft.restored', defaultMessage: 'Draft restored' }),
@@ -1016,7 +1029,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
       duration: 7000,
       isClosable: true
     });
-  }, [restoreDraft, intl, toast, farmParcels]);
+  }, [restoreDraft, intl, toast, farmParcels, parcelId]);
 
   // Form methods for each step
   const basicMethods = useForm({

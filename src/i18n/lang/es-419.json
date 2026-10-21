@@ -8773,6 +8773,7 @@
   "events.multiParcel.field.hive_count": "Colmenas colocadas",
   "events.multiParcel.field.amendment_amount": "Cantidad aplicada ({unit})",
   "events.multiParcel.sectionHelp": "Opcional. La sección o las hileras de esta parcela, si el trabajo no la cubrió completa de la misma forma.",
+  "events.multiParcel.alsoDropped": "No se agregó: {names}. Cada una necesita exactamente una producción abierta para compartir este registro. Regístrala desde la página de esa parcela.",
   "events.multiParcel.field.release_quantity": "Liberado ({unit})",
   "events.multiParcel.field.habitat_structure_count": "Estructuras instaladas",
   "events.multiParcel.fuelUnitLabel": "Unidad de combustible",

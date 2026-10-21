@@ -26,7 +26,7 @@ import type { ParcelGeometry } from 'store/api/parcelGeometryApi';
 const STYLE = {
   available: { fillColor: '#FFFFFF', fillOpacity: 0.15, strokeColor: '#FFFFFF', strokeWeight: 2 },
   selected: { fillColor: '#4CAF50', fillOpacity: 0.45, strokeColor: '#2E7D32', strokeWeight: 3 },
-  disabled: { fillColor: '#A0AEC0', fillOpacity: 0.3, strokeColor: '#A0AEC0', strokeWeight: 1 }
+  disabled: { fillColor: '#9E9E9E', fillOpacity: 0.3, strokeColor: '#9E9E9E', strokeWeight: 1 }
 };
 
 const MAX_NAME = 16;
