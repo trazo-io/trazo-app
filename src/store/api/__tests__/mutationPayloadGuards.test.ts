@@ -323,12 +323,44 @@ describe('production form — F9: the payload carries no key the subtype does no
     ).toBe('inches');
   });
 
+  it('with several parcels a unit stays, because its amount is on the parcel cards', () => {
+    // Blank amounts in the form are the normal case then; dropping the unit let the model
+    // default (gal, inches) stand against figures entered in litres or centimetres.
+    const blank = { type: 'IR', fuel_unit: 'L', irrigation_depth_unit: 'cm' };
+    expect(unrenderedProductionKeys(blank)).toMatchObject({
+      fuel_unit: undefined,
+      irrigation_depth_unit: undefined
+    });
+    const kept = unrenderedProductionKeys(blank, { amountsPerParcel: true });
+    expect(kept).not.toHaveProperty('fuel_unit');
+    expect(kept).not.toHaveProperty('irrigation_depth_unit');
+    // The depth unit is irrigation's only: pruning carries its default and never renders it.
+    expect(
+      unrenderedProductionKeys(
+        { type: 'PR', fuel_unit: 'L', irrigation_depth_unit: 'inches' },
+        { amountsPerParcel: true }
+      )
+    ).toEqual(expect.objectContaining({ irrigation_depth_unit: undefined }));
+    // Only those two: a unit whose amount is never per parcel is still gated.
+    expect(
+      unrenderedProductionKeys(
+        { type: 'IR', transportation_unit: 'km' },
+        { amountsPerParcel: true }
+      )
+    ).toHaveProperty('transportation_unit', undefined);
+  });
+
   it('the wizard actually calls the gate, and does not re-assert a gated key afterwards', () => {
     // The source check that the behavioural ones cannot make: a later `key: data.key` line in
     // the same object literal would put the phantom straight back, which is exactly how the
     // 2026-08-19 rehearsal found a narrow gate overwritten by a wider spread.
     const source = read('views/Dashboard/Dashboard/components/forms/ProductionTab.jsx');
-    expect(source.includes('...unrenderedProductionKeys(data)')).toBe(true);
+    // `(data)` or `(data, { amountsPerParcel: multiTarget })`: the options only ever keep a unit.
+    expect(
+      /\.\.\.unrenderedProductionKeys\(data(?:, \{ amountsPerParcel: multiTarget \})?\)/.test(
+        source
+      )
+    ).toBe(true);
     expect(
       /^\s*irrigation_depth_unit:\s*data\.irrigation_depth_unit\s*\|\|\s*undefined,/m.test(source),
       'irrigation_depth_unit is re-asserted after the gate'

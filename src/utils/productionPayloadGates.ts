@@ -70,6 +70,18 @@ const UNIT_KEYS: Record<string, string> = {
   irrigation_depth_unit: 'irrigation_depth'
 };
 
+/**
+ * Units whose amount is asked per parcel when one activity covers several (the cards), and the
+ * subtypes whose form asks that amount at all (null: any). The depth unit is irrigation's only:
+ * every other subtype carries an `irrigation_depth_unit` default it never renders. The fuel unit
+ * may stay for any subtype: the multi-parcel save takes it out of the shared body and sends it
+ * only beside a fuel amount (`perParcelUnitKeys`).
+ */
+const PER_PARCEL_AMOUNT_UNITS: Record<string, string[] | null> = {
+  fuel_unit: null,
+  irrigation_depth_unit: ['IR']
+};
+
 const isBlank = (value: unknown): boolean =>
   value === undefined || value === null || (typeof value === 'string' && value.trim() === '');
 
@@ -81,7 +93,20 @@ type FormData = Record<string, unknown>;
  * Returns the keys explicitly rather than deleting them, so the caller spreads the result and
  * the omission is visible in the payload object rather than hidden in a mutation.
  */
-export function unrenderedProductionKeys(data: FormData): Record<string, undefined> {
+export function unrenderedProductionKeys(
+  data: FormData,
+  {
+    amountsPerParcel = false
+  }: {
+    /**
+     * Several parcels: fuel used and irrigation depth are entered on each parcel's card, so they
+     * are always blank in this form while their units are still the grower's answer. Dropping
+     * the unit there let the model default ("gal", "inches") stand against figures entered in
+     * litres or centimetres. The multi-parcel save moves each unit beside its amount.
+     */
+    amountsPerParcel?: boolean;
+  } = {}
+): Record<string, undefined> {
   const subtype = String(data?.type ?? '');
   // The toggle stores 'true'/'false' STRINGS. `data.is_summary === true` alone reads a saved
   // "true" as false — the mistake the comment on the field's own defaultValue warns about
@@ -97,6 +122,13 @@ export function unrenderedProductionKeys(data: FormData): Record<string, undefin
     if (!rendered) out[key] = undefined;
   }
   for (const [unitKey, quantityKey] of Object.entries(UNIT_KEYS)) {
+    const askedOn = PER_PARCEL_AMOUNT_UNITS[unitKey];
+    if (
+      amountsPerParcel &&
+      askedOn !== undefined &&
+      (askedOn === null || askedOn.includes(subtype))
+    )
+      continue;
     if (isBlank(data?.[quantityKey])) out[unitKey] = undefined;
   }
   return out;

@@ -492,38 +492,47 @@ const formSchemaMainInfo = object({
       photo_id: string().optional()
     })
   ).optional()
-}).superRefine((data, ctx) => {
-  // The asterisks below used to be decorative — `required` props over `.optional()`
-  // keys (and eleven props using a name StandardField does not have, silently dropped), so an EM
-  // record could save with no operation type and a summary event could save with
-  // no period at all. Each rule here backs a rendered asterisk; keep them paired.
-  const req = (path, message) => {
-    const value = data[path];
-    if (value == null || value === '') {
-      ctx.addIssue({ code: 'custom', path: [path], message });
-    }
-  };
-  if (data.type === 'EM') {
-    req('equipment_operation_type', 'Select what kind of equipment operation this was');
-  }
-  // Scoped to the three subtypes that RENDER a summary toggle: a stale is_summary
-  // carried across a subtype switch must not demand fields the form no longer shows.
-  if (['HA', 'PR', 'IR'].includes(data.type) && data.is_summary === 'true') {
-    req('date_start', 'A summary needs the period start date');
-    req('date_end', 'A summary needs the period end date');
-    if (data.type === 'HA') {
-      req('event_count', 'How many harvest picks does this summary cover?');
-      req('yield_total', 'A harvest summary needs the total yield');
-    }
-    if (data.type === 'PR') {
-      req('pruning_passes', 'A pruning summary needs the number of passes');
-    }
-    if (data.type === 'IR') {
-      req('event_count', 'How many irrigation events does this summary cover?');
-      req('water_volume_total', 'An irrigation summary needs the total water volume');
-    }
-  }
 });
+
+/**
+ * The tab's schema. With several parcels (`multiTarget`) there is no summary mode: a summary
+ * stands for many applications over a period, never one application on several parcels, and the
+ * server refuses its keys in a multi-parcel save. A stale `is_summary` left on from before the
+ * parcels were picked must not demand summary fields the form no longer shows.
+ */
+const buildProductionSchema = (multiTarget = false) =>
+  formSchemaMainInfo.superRefine((data, ctx) => {
+    // The asterisks below used to be decorative — `required` props over `.optional()`
+    // keys (and eleven props using a name StandardField does not have, silently dropped), so an EM
+    // record could save with no operation type and a summary event could save with
+    // no period at all. Each rule here backs a rendered asterisk; keep them paired.
+    const req = (path, message) => {
+      const value = data[path];
+      if (value == null || value === '') {
+        ctx.addIssue({ code: 'custom', path: [path], message });
+      }
+    };
+    if (data.type === 'EM') {
+      req('equipment_operation_type', 'Select what kind of equipment operation this was');
+    }
+    // Scoped to the three subtypes that RENDER a summary toggle: a stale is_summary
+    // carried across a subtype switch must not demand fields the form no longer shows.
+    if (!multiTarget && ['HA', 'PR', 'IR'].includes(data.type) && data.is_summary === 'true') {
+      req('date_start', 'A summary needs the period start date');
+      req('date_end', 'A summary needs the period end date');
+      if (data.type === 'HA') {
+        req('event_count', 'How many harvest picks does this summary cover?');
+        req('yield_total', 'A harvest summary needs the total yield');
+      }
+      if (data.type === 'PR') {
+        req('pruning_passes', 'A pruning summary needs the number of passes');
+      }
+      if (data.type === 'IR') {
+        req('event_count', 'How many irrigation events does this summary cover?');
+        req('water_volume_total', 'An irrigation summary needs the total water volume');
+      }
+    }
+  });
 
 const FUEL_CONSUMED_INPUT_ID = 'production-fuel-consumed';
 
@@ -564,6 +573,18 @@ const FUEL_REPORTING_SUBTYPES = [
   'TP'
 ];
 
+/**
+ * Which per-parcel amounts this form itself asks, for the cards that ask them with several
+ * parcels: the cards must never ask what the single-parcel form does not. Fuel and machine hours
+ * live in the fuel section (FUEL_REPORTING_SUBTYPES only; not pollination), and irrigation on
+ * anything but a diesel pump asks no fuel at all: its energy is calculated from the water.
+ * Mirrors the render gates below; `productionTabSeveralParcels.test.tsx` holds them together.
+ */
+export const productionAsksPerParcel = (type, fuelType) => ({
+  fuel: FUEL_REPORTING_SUBTYPES.includes(type) && !(type === 'IR' && fuelType !== 'diesel'),
+  hours: FUEL_REPORTING_SUBTYPES.includes(type)
+});
+
 const ProductionTab = forwardRef(
   (
     {
@@ -592,11 +613,19 @@ const ProductionTab = forwardRef(
       /** Called when the operator types in the name field, so the wizard records the origin. */
       onNameEdited,
       carbonCalculation = null,
-      isCalculatingCarbon = false
+      isCalculatingCarbon = false,
+      /**
+       * Several parcels: what differs per parcel (area, scope, section, fuel, hours, depth,
+       * plants, hives) is asked on each parcel's card below the form, so its input is left out
+       * here; units stay, because the cards read them. Summary mode is off. The keys come from
+       * the server's spec (`multiParcelSpec.json`, type 1).
+       */
+      multiTarget = false
     },
     ref
   ) => {
     const intl = useIntl();
+    const productionSchema = React.useMemo(() => buildProductionSchema(multiTarget), [multiTarget]);
 
     /**
      * Send the operator to the fuel input the carbon panel is talking about. When fuel is
@@ -700,7 +729,7 @@ const ProductionTab = forwardRef(
     }, [currentProduction, initialValues.id]);
 
     const methods = useForm({
-      resolver: zodResolver(formSchemaMainInfo),
+      resolver: zodResolver(productionSchema),
       defaultValues: {
         type: initialValues.type || 'PL',
         // Sprint 2: Auto-generate name from type - fallback to initial name if provided
@@ -1119,7 +1148,7 @@ const ProductionTab = forwardRef(
      */
     const subtypeOptions = React.useMemo(() => getSubtypes(1), []);
     // Sprint 4: Watch for summary mode toggle
-    const isSummaryMode = watch('is_summary') === 'true';
+    const isSummaryMode = !multiTarget && watch('is_summary') === 'true';
     // NOP: Watch shared_with_conventional for visual feedback on cleaning section
     const isSharedWithConventional = watch('shared_with_conventional') === 'true';
 
@@ -1429,7 +1458,8 @@ const ProductionTab = forwardRef(
         }
       }
 
-      const isSummaryEvent = data.is_summary === 'true' || data.is_summary === true;
+      const isSummaryEvent =
+        !multiTarget && (data.is_summary === 'true' || data.is_summary === true);
       const OFFERS_SUMMARY_MODE = offersSummaryMode(data.type);
 
       // See the note inside processedData below. TP / BU / SS reuse these columns because the
@@ -1449,7 +1479,7 @@ const ProductionTab = forwardRef(
         // `ProductionEventSerializer.to_internal_value` lifts exactly those names out of the
         // top level into `extra_data`. The gates live in one testable module rather than as
         // more ternaries here; see utils/productionPayloadGates.ts for the reasoning.
-        ...unrenderedProductionKeys(data),
+        ...unrenderedProductionKeys(data, { amountsPerParcel: multiTarget }),
         // The Switch stores 'true'/'false' strings; the model field is a BooleanField.
         // Coerced explicitly rather than trusting DRF's string parsing, and to match the
         // Chemical and Soil tabs.
@@ -1698,9 +1728,12 @@ const ProductionTab = forwardRef(
         // when no depth was entered, and re-asserting it after the gate would put the phantom
         // straight back — the "a narrow gate OVERWRITTEN by a later spread" shape from the
         // 2026-08-19 rehearsal, in reverse.
-        irrigation_depth_unit: data.irrigation_depth
-          ? data.irrigation_depth_unit || undefined
-          : undefined,
+        // With several parcels an irrigation's depth is on each parcel's card: the unit still
+        // travels. Only irrigation: every subtype carries the unit's default, unrendered.
+        irrigation_depth_unit:
+          data.irrigation_depth || (multiTarget && data.type === 'IR')
+            ? data.irrigation_depth_unit || undefined
+            : undefined,
         // Phase 3: Pump fields for IR events — top-level model fields
         pump_depth_ft:
           data.type === 'IR' && data.pump_depth_ft ? parseFloat(data.pump_depth_ft) : undefined,
@@ -2021,27 +2054,31 @@ const ProductionTab = forwardRef(
                       that could neither be displayed nor honestly entered. */}
                   {AREA_SUBTYPES.includes(productionType) && (
                     <HStack spacing={4} align="stretch">
-                      <Box flex={2}>
-                        <StandardField
-                          label={intl.formatMessage({ id: 'events.common.fields.areaCovered' })}
-                          error={errors.area_covered?.message}
-                          helpText={intl.formatMessage({ id: 'quickAdd.fields.areaCoveredHelp' })}>
-                          <Controller
-                            name="area_covered"
-                            control={methods.control}
-                            render={({ field }) => (
-                              <StandardNumberInput
-                                min={0}
-                                precision={2}
-                                step={0.01}
-                                value={field.value || ''}
-                                onChange={(valueString) => field.onChange(valueString)}
-                                placeholder="0.00"
-                              />
-                            )}
-                          />
-                        </StandardField>
-                      </Box>
+                      {!multiTarget && (
+                        <Box flex={2}>
+                          <StandardField
+                            label={intl.formatMessage({ id: 'events.common.fields.areaCovered' })}
+                            error={errors.area_covered?.message}
+                            helpText={intl.formatMessage({
+                              id: 'quickAdd.fields.areaCoveredHelp'
+                            })}>
+                            <Controller
+                              name="area_covered"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardNumberInput
+                                  min={0}
+                                  precision={2}
+                                  step={0.01}
+                                  value={field.value || ''}
+                                  onChange={(valueString) => field.onChange(valueString)}
+                                  placeholder="0.00"
+                                />
+                              )}
+                            />
+                          </StandardField>
+                        </Box>
+                      )}
 
                       <Box flex={1}>
                         <StandardField
@@ -2569,141 +2606,143 @@ const ProductionTab = forwardRef(
                   yield_quantity/unit"), but the form gated it to HA and PL, so a Post-Harvest
                   event could never record the yield the registry promises to display on the
                   timeline and consumer card. Caught by formRenderConformance. */}
-              {(productionType === 'HA' || productionType === 'PL' || productionType === 'PH') && (
-                <SectionBox>
-                  {/* NOT collapsible and NOT optional. Quantity harvested, its unit and
+              {(productionType === 'HA' || productionType === 'PL' || productionType === 'PH') &&
+                !multiTarget && (
+                  <SectionBox>
+                    {/* NOT collapsible and NOT optional. Quantity harvested, its unit and
                       "Amount Determined By" are the mass-balance inputs § 205.103(b)(2) turns
                       on, and NOP Harvest Record C14 asks for Quantity outright. This section
                       was badged "Efficiency Calculation" historically, which is how it briefly
                       became "Optional — carbon only" and got folded shut by default. The
                       crop metrics beside them (Brix, moisture) are the odd ones out here,
                       not the yield. */}
-                  <SectionHeader
-                    icon={FaBalanceScale}
-                    title={intl.formatMessage({ id: 'events.section.production.yield' })}
-                    badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
-                  />
-                  <VStack spacing={4} align="stretch">
-                    <HStack spacing={4} align="stretch">
-                      <Box flex={2}>
+                    <SectionHeader
+                      icon={FaBalanceScale}
+                      title={intl.formatMessage({ id: 'events.section.production.yield' })}
+                      badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
+                    />
+                    <VStack spacing={4} align="stretch">
+                      <HStack spacing={4} align="stretch">
+                        <Box flex={2}>
+                          <StandardField
+                            label={intl.formatMessage({
+                              // Three subtypes render this section, not two. PH (post-harvest
+                              // washing / cooling / packing) fell through to the planting
+                              // default and asked a packing-shed operator for "Quantity
+                              // planted".
+                              id:
+                                productionType === 'HA'
+                                  ? 'production.field.quantityHarvested'
+                                  : productionType === 'PH'
+                                  ? 'production.field.quantityProcessed'
+                                  : 'production.field.quantityPlanted'
+                            })}
+                            error={errors.yield_quantity?.message}
+                            helpText={intl.formatMessage({ id: 'production.field.quantityHelp' })}>
+                            <Controller
+                              name="yield_quantity"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardNumberInput
+                                  min={0}
+                                  precision={1}
+                                  step={0.1}
+                                  value={field.value || ''}
+                                  onChange={(valueString) => field.onChange(valueString)}
+                                  placeholder="0.0"
+                                />
+                              )}
+                            />
+                          </StandardField>
+                        </Box>
+
+                        <Box flex={1}>
+                          <StandardField
+                            label={intl.formatMessage({ id: 'production.field.unit' })}>
+                            <Controller
+                              name="yield_unit"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardSelect {...field}>
+                                  <option value="kg">
+                                    {intl.formatMessage({ id: 'events.units.kilograms' })}
+                                  </option>
+                                  <option value="tons">
+                                    {intl.formatMessage({ id: 'events.units.tonnes' })}
+                                  </option>
+                                  <option value="lbs">
+                                    {intl.formatMessage({ id: 'events.units.pounds' })}
+                                  </option>
+                                  <option value="boxes">
+                                    {intl.formatMessage({ id: 'events.units.boxes' })}
+                                  </option>
+                                  <option value="bins">
+                                    {intl.formatMessage({ id: 'events.units.bins' })}
+                                  </option>
+                                  <option value="plants">
+                                    {intl.formatMessage({ id: 'events.units.plants' })}
+                                  </option>
+                                  <option value="seeds">
+                                    {intl.formatMessage({ id: 'events.units.seeds' })}
+                                  </option>
+                                </StandardSelect>
+                              )}
+                            />
+                          </StandardField>
+                        </Box>
+                      </HStack>
+
+                      {/* Whole-vs-part coverage (§ 205.103(b)(2)) — mirrors the
+                        ChemicalEvent applied_scope pair. */}
+                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                         <StandardField
                           label={intl.formatMessage({
-                            // Three subtypes render this section, not two. PH (post-harvest
-                            // washing / cooling / packing) fell through to the planting
-                            // default and asked a packing-shed operator for "Quantity
-                            // planted".
-                            id:
-                              productionType === 'HA'
-                                ? 'production.field.quantityHarvested'
-                                : productionType === 'PH'
-                                ? 'production.field.quantityProcessed'
-                                : 'production.field.quantityPlanted'
+                            id: 'events.production.fields.appliedScope'
                           })}
-                          error={errors.yield_quantity?.message}
-                          helpText={intl.formatMessage({ id: 'production.field.quantityHelp' })}>
+                          error={errors.applied_scope?.message}
+                          helpText={intl.formatMessage({ id: 'production.appliedScopeHelp' })}>
                           <Controller
-                            name="yield_quantity"
+                            name="applied_scope"
                             control={methods.control}
                             render={({ field }) => (
-                              <StandardNumberInput
-                                min={0}
-                                precision={1}
-                                step={0.1}
-                                value={field.value || ''}
-                                onChange={(valueString) => field.onChange(valueString)}
-                                placeholder="0.0"
-                              />
-                            )}
-                          />
-                        </StandardField>
-                      </Box>
-
-                      <Box flex={1}>
-                        <StandardField label={intl.formatMessage({ id: 'production.field.unit' })}>
-                          <Controller
-                            name="yield_unit"
-                            control={methods.control}
-                            render={({ field }) => (
-                              <StandardSelect {...field}>
-                                <option value="kg">
-                                  {intl.formatMessage({ id: 'events.units.kilograms' })}
+                              <StandardSelect
+                                {...field}
+                                placeholder={intl.formatMessage({ id: 'app.select' })}>
+                                <option value="all">
+                                  {intl.formatMessage({ id: 'events.appliedScope.all' })}
                                 </option>
-                                <option value="tons">
-                                  {intl.formatMessage({ id: 'events.units.tonnes' })}
-                                </option>
-                                <option value="lbs">
-                                  {intl.formatMessage({ id: 'events.units.pounds' })}
-                                </option>
-                                <option value="boxes">
-                                  {intl.formatMessage({ id: 'events.units.boxes' })}
-                                </option>
-                                <option value="bins">
-                                  {intl.formatMessage({ id: 'events.units.bins' })}
-                                </option>
-                                <option value="plants">
-                                  {intl.formatMessage({ id: 'events.units.plants' })}
-                                </option>
-                                <option value="seeds">
-                                  {intl.formatMessage({ id: 'events.units.seeds' })}
+                                <option value="part">
+                                  {intl.formatMessage({ id: 'events.appliedScope.part' })}
                                 </option>
                               </StandardSelect>
                             )}
                           />
                         </StandardField>
-                      </Box>
-                    </HStack>
 
-                    {/* Whole-vs-part coverage (§ 205.103(b)(2)) — mirrors the
-                        ChemicalEvent applied_scope pair. */}
-                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                      <StandardField
-                        label={intl.formatMessage({
-                          id: 'events.production.fields.appliedScope'
-                        })}
-                        error={errors.applied_scope?.message}
-                        helpText={intl.formatMessage({ id: 'production.appliedScopeHelp' })}>
-                        <Controller
-                          name="applied_scope"
-                          control={methods.control}
-                          render={({ field }) => (
-                            <StandardSelect
-                              {...field}
-                              placeholder={intl.formatMessage({ id: 'app.select' })}>
-                              <option value="all">
-                                {intl.formatMessage({ id: 'events.appliedScope.all' })}
-                              </option>
-                              <option value="part">
-                                {intl.formatMessage({ id: 'events.appliedScope.part' })}
-                              </option>
-                            </StandardSelect>
-                          )}
-                        />
-                      </StandardField>
-
-                      {watch('applied_scope') === 'part' && (
-                        <StandardField
-                          label={intl.formatMessage({
-                            id: 'events.production.fields.appliedScopeDetail'
-                          })}
-                          error={errors.applied_scope_detail?.message}>
-                          <Controller
-                            name="applied_scope_detail"
-                            control={methods.control}
-                            render={({ field }) => (
-                              <StandardInput
-                                {...field}
-                                placeholder={intl.formatMessage({
-                                  id: 'events.production.fields.appliedScopeDetailPlaceholder'
-                                })}
-                              />
-                            )}
-                          />
-                        </StandardField>
-                      )}
-                    </SimpleGrid>
-                  </VStack>
-                </SectionBox>
-              )}
+                        {watch('applied_scope') === 'part' && (
+                          <StandardField
+                            label={intl.formatMessage({
+                              id: 'events.production.fields.appliedScopeDetail'
+                            })}
+                            error={errors.applied_scope_detail?.message}>
+                            <Controller
+                              name="applied_scope_detail"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardInput
+                                  {...field}
+                                  placeholder={intl.formatMessage({
+                                    id: 'events.production.fields.appliedScopeDetailPlaceholder'
+                                  })}
+                                />
+                              )}
+                            />
+                          </StandardField>
+                        )}
+                      </SimpleGrid>
+                    </VStack>
+                  </SectionBox>
+                )}
 
               {/* Harvest Quality - For premium fruit & grain markets */}
               {productionType === 'HA' && (
@@ -3580,7 +3619,7 @@ const ProductionTab = forwardRef(
                       />
                     </StandardField>
 
-                    <BlockIdField control={methods.control} />
+                    {!multiTarget && <BlockIdField control={methods.control} />}
 
                     {/* Perennial planting stock — PL/TR only. Added 2026-08-15: for a
                         California orchard "40 Hass on Duke 7" is the sentence a grower says,
@@ -3612,24 +3651,26 @@ const ProductionTab = forwardRef(
                           />
                         </StandardField>
 
-                        <StandardField
-                          label={intl.formatMessage({
-                            id: 'events.production.fields.plantsEstablished',
-                            defaultMessage: 'Trees / Plants Planted'
-                          })}
-                          helpText={intl.formatMessage({
-                            id: 'events.production.fields.plantsEstablishedHelp',
-                            defaultMessage:
-                              'The number a certifier reconciles against the nursery invoice.'
-                          })}>
-                          <Controller
-                            name="plants_established"
-                            control={methods.control}
-                            render={({ field }) => (
-                              <StandardInput {...field} type="number" min={0} placeholder="0" />
-                            )}
-                          />
-                        </StandardField>
+                        {!multiTarget && (
+                          <StandardField
+                            label={intl.formatMessage({
+                              id: 'events.production.fields.plantsEstablished',
+                              defaultMessage: 'Trees / Plants Planted'
+                            })}
+                            helpText={intl.formatMessage({
+                              id: 'events.production.fields.plantsEstablishedHelp',
+                              defaultMessage:
+                                'The number a certifier reconciles against the nursery invoice.'
+                            })}>
+                            <Controller
+                              name="plants_established"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardInput {...field} type="number" min={0} placeholder="0" />
+                              )}
+                            />
+                          </StandardField>
+                        )}
 
                         <StandardField
                           label={intl.formatMessage({
@@ -3741,7 +3782,7 @@ const ProductionTab = forwardRef(
                         />
                       </StandardField>
 
-                      <BlockIdField control={methods.control} />
+                      {!multiTarget && <BlockIdField control={methods.control} />}
 
                       <StandardField
                         label={intl.formatMessage({
@@ -3781,30 +3822,32 @@ const ProductionTab = forwardRef(
                         />
                       </StandardField>
 
-                      <StandardField
-                        label={intl.formatMessage({ id: 'production.pollination.hiveCount' })}
-                        error={errors.hive_count?.message}
-                        helpText={intl.formatMessage({
-                          id: 'production.pollination.hiveCountHelp'
-                        })}>
-                        <Controller
-                          name="hive_count"
-                          control={methods.control}
-                          render={({ field }) => (
-                            <StandardNumberInput
-                              min={0}
-                              precision={0}
-                              step={1}
-                              value={field.value || ''}
-                              onChange={(valueString) => field.onChange(valueString)}
-                              placeholder={intl.formatMessage(
-                                { id: 'events.production.fields.examplePlaceholder' },
-                                { value: '4' }
-                              )}
-                            />
-                          )}
-                        />
-                      </StandardField>
+                      {!multiTarget && (
+                        <StandardField
+                          label={intl.formatMessage({ id: 'production.pollination.hiveCount' })}
+                          error={errors.hive_count?.message}
+                          helpText={intl.formatMessage({
+                            id: 'production.pollination.hiveCountHelp'
+                          })}>
+                          <Controller
+                            name="hive_count"
+                            control={methods.control}
+                            render={({ field }) => (
+                              <StandardNumberInput
+                                min={0}
+                                precision={0}
+                                step={1}
+                                value={field.value || ''}
+                                onChange={(valueString) => field.onChange(valueString)}
+                                placeholder={intl.formatMessage(
+                                  { id: 'events.production.fields.examplePlaceholder' },
+                                  { value: '4' }
+                                )}
+                              />
+                            )}
+                          />
+                        </StandardField>
+                      )}
 
                       <StandardField
                         label={intl.formatMessage({ id: 'production.pollination.placementDate' })}
@@ -4023,7 +4066,7 @@ const ProductionTab = forwardRef(
                         />
                       </StandardField>
 
-                      <BlockIdField control={methods.control} />
+                      {!multiTarget && <BlockIdField control={methods.control} />}
 
                       <StandardField
                         label={intl.formatMessage({ id: 'fieldDetails.growthStage' })}
@@ -4292,7 +4335,7 @@ const ProductionTab = forwardRef(
               )}
 
               {/* Phase 2: Pruning Summary Mode (mirrors IR and HA summary pattern) */}
-              {productionType === 'PR' && (
+              {productionType === 'PR' && !multiTarget && (
                 <SectionBox>
                   <SectionHeader
                     icon={FaSeedling}
@@ -4518,49 +4561,58 @@ const ProductionTab = forwardRef(
                         ) : (
                           <>
                             <HStack spacing={4} align="stretch">
-                              <Box flex={2}>
-                                <StandardField
-                                  label={intl.formatMessage({
-                                    id:
+                              {!multiTarget && (
+                                <Box flex={2}>
+                                  <StandardField
+                                    label={intl.formatMessage({
+                                      id:
+                                        watch('fuel_type') === 'electric'
+                                          ? 'production.field.energyAmount'
+                                          : 'events.common.fields.fuelConsumed'
+                                    })}
+                                    error={errors.fuel_consumed?.message}
+                                    helpText={
                                       watch('fuel_type') === 'electric'
-                                        ? 'production.field.energyAmount'
-                                        : 'events.common.fields.fuelConsumed'
-                                  })}
-                                  error={errors.fuel_consumed?.message}
-                                  helpText={
-                                    watch('fuel_type') === 'electric'
-                                      ? 'Energy consumption for carbon emission calculation'
-                                      : 'Fuel consumption for carbon emission calculation'
-                                  }>
-                                  <Controller
-                                    name="fuel_consumed"
-                                    control={methods.control}
-                                    render={({ field }) => (
-                                      // Explicit id because the carbon panel below links
-                                      // straight to this input, and Chakra's
-                                      // NumberInputField renders no `name` attribute of its
-                                      // own to find it by.
-                                      <StandardNumberInput
-                                        min={0}
-                                        precision={1}
-                                        step={0.1}
-                                        value={field.value || ''}
-                                        onChange={(valueString) => field.onChange(valueString)}
-                                        id={FUEL_CONSUMED_INPUT_ID}
-                                        placeholder={
-                                          watch('fuel_type') === 'electric'
-                                            ? 'e.g., 50 kWh'
-                                            : 'Optional'
-                                        }
-                                      />
-                                    )}
-                                  />
-                                </StandardField>
-                              </Box>
+                                        ? 'Energy consumption for carbon emission calculation'
+                                        : 'Fuel consumption for carbon emission calculation'
+                                    }>
+                                    <Controller
+                                      name="fuel_consumed"
+                                      control={methods.control}
+                                      render={({ field }) => (
+                                        // Explicit id because the carbon panel below links
+                                        // straight to this input, and Chakra's
+                                        // NumberInputField renders no `name` attribute of its
+                                        // own to find it by.
+                                        <StandardNumberInput
+                                          min={0}
+                                          precision={1}
+                                          step={0.1}
+                                          value={field.value || ''}
+                                          onChange={(valueString) => field.onChange(valueString)}
+                                          id={FUEL_CONSUMED_INPUT_ID}
+                                          placeholder={
+                                            watch('fuel_type') === 'electric'
+                                              ? 'e.g., 50 kWh'
+                                              : 'Optional'
+                                          }
+                                        />
+                                      )}
+                                    />
+                                  </StandardField>
+                                </Box>
+                              )}
 
                               <Box flex={1}>
                                 <StandardField
-                                  label={intl.formatMessage({ id: 'production.field.unit' })}>
+                                  label={intl.formatMessage({ id: 'production.field.unit' })}
+                                  helpText={
+                                    multiTarget
+                                      ? intl.formatMessage({
+                                          id: 'events.multiParcel.fuelUnitHelp'
+                                        })
+                                      : undefined
+                                  }>
                                   <Controller
                                     name="fuel_unit"
                                     control={methods.control}
@@ -4618,10 +4670,11 @@ const ProductionTab = forwardRef(
                     )}
 
                     {/* Equipment Hours */}
-                    <StandardField
-                      label={intl.formatMessage({ id: 'events.common.fields.equipmentHours' })}
-                      error={errors.equipment_hours?.message}
-                      /* Was "Used for calculating fuel efficiency and carbon per hour".
+                    {!multiTarget && (
+                      <StandardField
+                        label={intl.formatMessage({ id: 'events.common.fields.equipmentHours' })}
+                        error={errors.equipment_hours?.message}
+                        /* Was "Used for calculating fuel efficiency and carbon per hour".
                          That is not true and has not been since the hours multiplier was
                          removed in 2025 (USDA per-hectare factors are area-based; scaling
                          them by time double-counted). MEASURED 2026-08-20: entering 10
@@ -4630,24 +4683,25 @@ const ProductionTab = forwardRef(
                          cannot touch is the same defect class as a form key nothing
                          downstream reads — the farmer fills it in expecting an effect and
                          calibrates their trust on the result. */
-                      helpText={intl.formatMessage({ id: 'production.equipmentHours.help' })}>
-                      <Controller
-                        name="equipment_hours"
-                        control={methods.control}
-                        render={({ field }) => (
-                          <StandardNumberInput
-                            min={0}
-                            precision={1}
-                            step={0.1}
-                            value={field.value || ''}
-                            onChange={(valueString) => field.onChange(valueString)}
-                            placeholder={intl.formatMessage({
-                              id: 'events.production.fields.optionalPlaceholder'
-                            })}
-                          />
-                        )}
-                      />
-                    </StandardField>
+                        helpText={intl.formatMessage({ id: 'production.equipmentHours.help' })}>
+                        <Controller
+                          name="equipment_hours"
+                          control={methods.control}
+                          render={({ field }) => (
+                            <StandardNumberInput
+                              min={0}
+                              precision={1}
+                              step={0.1}
+                              value={field.value || ''}
+                              onChange={(valueString) => field.onChange(valueString)}
+                              placeholder={intl.formatMessage({
+                                id: 'events.production.fields.optionalPlaceholder'
+                              })}
+                            />
+                          )}
+                        />
+                      </StandardField>
+                    )}
 
                     {/* The carbon panel lives HERE, not in a sidebar. It reports on the
                         fields directly above it, and when fuel is left blank its "Enter
@@ -5223,47 +5277,49 @@ const ProductionTab = forwardRef(
                     {productionType === 'IR' && (
                       <>
                         {/* Sprint 4: Aggregate Irrigation Toggle */}
-                        <Box gridColumn={{ md: 'span 2' }} mb={2}>
-                          <HStack
-                            p={3}
-                            bg={isSummaryMode ? 'blue.50' : 'gray.50'}
-                            borderRadius="md"
-                            borderWidth="1px"
-                            borderColor={isSummaryMode ? 'blue.200' : 'gray.200'}
-                            justify="space-between">
-                            <VStack align="start" spacing={0}>
-                              <HStack>
-                                <Text fontWeight="semibold" fontSize="sm">
-                                  Irrigation Summary Mode
+                        {!multiTarget && (
+                          <Box gridColumn={{ md: 'span 2' }} mb={2}>
+                            <HStack
+                              p={3}
+                              bg={isSummaryMode ? 'blue.50' : 'gray.50'}
+                              borderRadius="md"
+                              borderWidth="1px"
+                              borderColor={isSummaryMode ? 'blue.200' : 'gray.200'}
+                              justify="space-between">
+                              <VStack align="start" spacing={0}>
+                                <HStack>
+                                  <Text fontWeight="semibold" fontSize="sm">
+                                    Irrigation Summary Mode
+                                  </Text>
+                                  {isSummaryMode && (
+                                    <Badge colorScheme="blue" size="sm">
+                                      Active
+                                    </Badge>
+                                  )}
+                                </HStack>
+                                <Text fontSize="xs" color="gray.600">
+                                  {isSummaryMode
+                                    ? 'Log multiple irrigations as one summary (e.g., "12 irrigations in May")'
+                                    : 'Enable to log multiple irrigation events at once'}
                                 </Text>
-                                {isSummaryMode && (
-                                  <Badge colorScheme="blue" size="sm">
-                                    Active
-                                  </Badge>
+                              </VStack>
+                              <Controller
+                                name="is_summary"
+                                control={methods.control}
+                                render={({ field }) => (
+                                  <Switch
+                                    colorScheme="blue"
+                                    size="lg"
+                                    isChecked={field.value === 'true'}
+                                    onChange={(e) =>
+                                      field.onChange(e.target.checked ? 'true' : 'false')
+                                    }
+                                  />
                                 )}
-                              </HStack>
-                              <Text fontSize="xs" color="gray.600">
-                                {isSummaryMode
-                                  ? 'Log multiple irrigations as one summary (e.g., "12 irrigations in May")'
-                                  : 'Enable to log multiple irrigation events at once'}
-                              </Text>
-                            </VStack>
-                            <Controller
-                              name="is_summary"
-                              control={methods.control}
-                              render={({ field }) => (
-                                <Switch
-                                  colorScheme="blue"
-                                  size="lg"
-                                  isChecked={field.value === 'true'}
-                                  onChange={(e) =>
-                                    field.onChange(e.target.checked ? 'true' : 'false')
-                                  }
-                                />
-                              )}
-                            />
-                          </HStack>
-                        </Box>
+                              />
+                            </HStack>
+                          </Box>
+                        )}
 
                         {/* Sprint 4: Aggregate Irrigation Fields (shown when summary mode is active) */}
                         {isSummaryMode && (
@@ -5463,23 +5519,31 @@ const ProductionTab = forwardRef(
                         {/* ENHANCED: Irrigation depth for USDA NASS 2023 water volume calculation */}
                         <StandardField
                           label={intl.formatMessage({
-                            id: 'events.production.fields.irrigationDepth'
+                            id: multiTarget
+                              ? 'events.multiParcel.depthUnitLabel'
+                              : 'events.production.fields.irrigationDepth'
                           })}
-                          helpText="Water depth applied (USDA: 27,154 gal/acre per inch)">
+                          helpText={
+                            multiTarget
+                              ? intl.formatMessage({ id: 'events.multiParcel.depthUnitHelp' })
+                              : 'Water depth applied (USDA: 27,154 gal/acre per inch)'
+                          }>
                           <HStack spacing={2}>
-                            <Controller
-                              name="irrigation_depth"
-                              control={methods.control}
-                              render={({ field }) => (
-                                <StandardInput
-                                  {...field}
-                                  flex={2}
-                                  type="number"
-                                  step="0.1"
-                                  placeholder="1.0"
-                                />
-                              )}
-                            />
+                            {!multiTarget && (
+                              <Controller
+                                name="irrigation_depth"
+                                control={methods.control}
+                                render={({ field }) => (
+                                  <StandardInput
+                                    {...field}
+                                    flex={2}
+                                    type="number"
+                                    step="0.1"
+                                    placeholder="1.0"
+                                  />
+                                )}
+                              />
+                            )}
                             <Controller
                               name="irrigation_depth_unit"
                               control={methods.control}

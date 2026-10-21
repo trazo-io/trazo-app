@@ -214,15 +214,22 @@ export const buildMultiTargetBody = (
   applicationGroup: string
 ): Record<string, unknown> => {
   const shared: Record<string, unknown> = { ...singleBody };
-  const stripFromShared = new Set([...rules.hiddenKeys, ...SINGLE_RECORD_KEYS]);
+  // The unit of a per-parcel amount travels WITH the amount, on the parcel that has one, when
+  // the server takes it per parcel (an `either` key). Left shared, a form that only sends a unit
+  // beside its amount drops it, and the model default ("gal", "inches") would stand against a
+  // figure entered in litres or centimetres.
+  const unitsPerParcel = [...rules.perParcelUnitKeys];
+  const stripFromShared = new Set([...rules.hiddenKeys, ...SINGLE_RECORD_KEYS, ...unitsPerParcel]);
   stripFromShared.forEach((key) => {
     delete shared[key];
   });
   if (shared.extra_data && typeof shared.extra_data === 'object') {
     const extra = { ...(shared.extra_data as Record<string, unknown>) };
-    new Set([...rules.hiddenKeys, ...rules.refusedExtraDataKeys]).forEach((key) => {
-      delete extra[key];
-    });
+    new Set([...rules.hiddenKeys, ...rules.refusedExtraDataKeys, ...unitsPerParcel]).forEach(
+      (key) => {
+        delete extra[key];
+      }
+    );
     shared.extra_data = extra;
   }
 
@@ -245,7 +252,11 @@ export const buildMultiTargetBody = (
       if (rules.sections && target.section.trim()) body.block_id = target.section.trim();
       for (const field of rules.fields) {
         const value = fieldValue(target, field, form);
-        if (value !== null) body[field.key] = String(value);
+        if (value === null) continue;
+        body[field.key] = String(value);
+        const unit =
+          field.unit_key && unitsPerParcel.includes(field.unit_key) && unitOf(field, form);
+        if (unit) body[field.unit_key!] = unit;
       }
       return body;
     })

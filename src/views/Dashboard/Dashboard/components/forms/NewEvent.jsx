@@ -76,7 +76,7 @@ import SoilManagementTab from './SoilManagementTab';
 import BusinessTab from './BusinessTab-SIMPLIFIED';
 import PestManagementTab from './PestManagementTab';
 import Header from 'views/Pages/Profile/Overview/components/Header';
-import ProductionTab from './ProductionTab';
+import ProductionTab, { productionAsksPerParcel } from './ProductionTab';
 import ProfileBgImage from 'assets/img/ProfileBackground.png';
 import { RocketIcon } from 'components/Icons/Icons';
 import Select from 'react-select';
@@ -101,6 +101,7 @@ import { EventPreviewModal } from 'components/Events/EventPreviewModal';
 import { PhotoRecommendationsBox } from 'components/Events/PhotoRecommendationsBox';
 import { AlsoAppliedTo, PerParcelCards } from 'components/Events/MultiParcel';
 import { eventTypeMayGoMulti, multiParcelRulesFor } from 'config/events/multiParcel';
+import { useDefaultUnits } from 'hooks/useMeasurementSystem';
 import { useGetParcelGeometryQuery } from 'store/api/parcelGeometryApi';
 import { useGoogleMap } from '@react-google-maps/api';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -899,6 +900,21 @@ function NewEvent({ isEdit = false, eventId = null }) {
     () => multiParcelRulesFor(activeEventType, eventFormData.type),
     [activeEventType, eventFormData.type]
   );
+  // What the cards ask and the save sends: the spec's per-parcel fields, less any amount the
+  // form itself would not ask for this activity (no fuel on an electric irrigation pump, none
+  // on pollination). A value left on a card for a field that disappeared is not sent.
+  const cardRules = useMemo(() => {
+    if (!multiRules || activeEventType !== 1) return multiRules;
+    const asks = productionAsksPerParcel(eventFormData.type, eventFormData.fuel_type);
+    return {
+      ...multiRules,
+      fields: multiRules.fields.filter(
+        (field) =>
+          (field.key !== 'fuel_consumed' || asks.fuel) &&
+          (field.key !== 'equipment_hours' || asks.hours)
+      )
+    };
+  }, [multiRules, activeEventType, eventFormData.type, eventFormData.fuel_type]);
   const multiParcelEligible =
     !isEdit &&
     !isRepeat &&
@@ -976,14 +992,26 @@ function NewEvent({ isEdit = false, eventId = null }) {
     intl,
     toast
   ]);
-  // The shared form values the per-parcel cards read. Blank units fall back to the tabs' own
-  // defaults (gallons, acres), the same values the tab shows before the grower touches them.
-  const multiForm = (data) => ({
-    ...(data || {}),
-    volume_unit: data?.volume_unit || 'gal',
-    application_fuel_unit: data?.application_fuel_unit || 'gal',
-    area_unit: data?.area_unit || 'acres'
-  });
+  // The shared form values the per-parcel cards read. A blank unit falls back to the tab's own
+  // default, the value its select shows before the grower touches it: the chemical tab defaults
+  // to gallons and acres; the production tab to the farm's measurement system, and inches of
+  // water. The cards label each amount with it and the save sends it beside the amount.
+  // Same call as ProductionTab's, so the fallback is the unit its select shows.
+  const defaultUnits = useDefaultUnits();
+  const multiForm = (data) =>
+    activeEventType === 2
+      ? {
+          ...(data || {}),
+          volume_unit: data?.volume_unit || 'gal',
+          application_fuel_unit: data?.application_fuel_unit || 'gal',
+          area_unit: data?.area_unit || 'acres'
+        }
+      : {
+          ...(data || {}),
+          area_unit: data?.area_unit || defaultUnits.area,
+          fuel_unit: data?.fuel_unit || defaultUnits.fuel,
+          irrigation_depth_unit: data?.irrigation_depth_unit || 'inches'
+        };
   // The farm's outlines (the picker's Map) and each parcel's own sections (its card's chips), in
   // one query for the whole farm, fetched once the activity can go on several parcels.
   const { data: farmGeometry } = useGetParcelGeometryQuery(
@@ -1685,7 +1713,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
     // the grower just entered and not the debounced copy.
     if (multiActive) {
       const form = multiForm(updatedData);
-      if (multiTargets.some((target) => targetIssues(target, multiRules, form).length > 0)) {
+      if (multiTargets.some((target) => targetIssues(target, cardRules, form).length > 0)) {
         setShowMultiIssues(true);
         toast({
           title: intl.formatMessage({ id: 'events.multiParcel.validationTitle' }),
@@ -3054,7 +3082,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
         // Step 1's Continue already refused an unanswered block; a block added afterwards (back
         // to step 0, tick another) must not reach the server as an amount of "null".
         const saveForm = multiForm(eventFormData);
-        if (multiTargets.some((target) => targetIssues(target, multiRules, saveForm).length > 0)) {
+        if (multiTargets.some((target) => targetIssues(target, cardRules, saveForm).length > 0)) {
           setShowMultiIssues(true);
           setActiveStep(1);
           toast({
@@ -3073,7 +3101,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
           ...buildMultiTargetBody(
             finalEventData,
             multiTargets,
-            multiRules,
+            cardRules,
             multiForm(eventFormData),
             applicationGroupRef.current
           )
@@ -4669,6 +4697,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                       nameOrigin={nameOrigin}
                       onNameEdited={() => setNameOrigin('operator')}
                       carbonCalculation={carbonCalculation}
+                      multiTarget={multiActive}
                       isCalculatingCarbon={isCalculatingCarbon || isCalculating}
                     />
                   )}
@@ -4696,12 +4725,12 @@ function NewEvent({ isEdit = false, eventId = null }) {
                       isCalculatingCarbon={isCalculatingCarbon || isCalculating}
                     />
                   )}
-                  {multiActive && multiRules && (
+                  {multiActive && cardRules && (
                     <Box mt={{ base: 5, md: 6 }}>
                       <PerParcelCards
                         targets={multiTargets}
                         onChange={setMultiTargets}
-                        rules={multiRules}
+                        rules={cardRules}
                         form={multiForm(eventFormData)}
                         sectionsByParcel={sectionsByParcel}
                         showIssues={showMultiIssues}
