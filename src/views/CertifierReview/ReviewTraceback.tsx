@@ -103,7 +103,8 @@ export const ReviewTraceback = ({ token, apiRoot }: Props) => {
     state.kind === 'matches' && state.matches.every((m) => m.matched_on.startsWith('input_'));
 
   return (
-    <Box w="full" data-testid="certifier-traceback">
+    // `id` is the target of the "Trace a sale" link at the top of the review page.
+    <Box w="full" data-testid="certifier-traceback" id="certifier-traceback" scrollMarginTop={4}>
       <Divider mb={4} />
       <Heading size="sm" color="gray.700" mb={1}>
         {t('certifierReview.traceback.title')}

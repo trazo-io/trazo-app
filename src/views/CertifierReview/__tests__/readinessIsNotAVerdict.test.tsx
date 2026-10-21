@@ -87,12 +87,26 @@ describe('readiness on the certifier review page is not a verdict', () => {
     expect(screen.queryByText('For review')).not.toBeNull();
     expect(container.textContent).not.toMatch(/\bFAIL\b/);
     const text = container.textContent || '';
-    const disclaimer = text.indexOf((enMessages as Record<string, string>)['certifierReview.readinessDisclaimer']);
+    const disclaimer = text.indexOf(
+      (enMessages as Record<string, string>)['certifierReview.readinessDisclaimer']
+    );
     expect(disclaimer).toBeGreaterThan(-1);
     expect(disclaimer).toBeLessThan(text.indexOf('2 applications lack a lot number'));
   });
 
-  it('names the rows in the reader\'s language', async () => {
+  it('opens with a link to the trace, above the readiness findings (production review, 2026-10-21)', async () => {
+    const { container } = renderAt('en-US', enMessages as Record<string, string>);
+    await waitFor(() => expect(screen.queryByText('Missing')).not.toBeNull());
+    const jump = screen.getByRole('link', {
+      name: (enMessages as Record<string, string>)['certifierReview.traceback.jump']
+    });
+    expect(jump.getAttribute('href')).toBe('#certifier-traceback');
+    expect(container.querySelector('#certifier-traceback')).not.toBeNull();
+    const text = container.textContent || '';
+    expect(text.indexOf(jump.textContent || '')).toBeLessThan(text.indexOf('Missing'));
+  });
+
+  it("names the rows in the reader's language", async () => {
     const { container } = renderAt('es-419', esMessages as Record<string, string>);
     await waitFor(() => expect(screen.queryByText('Falta')).not.toBeNull());
     expect(container.textContent).toContain('Trazabilidad de insumos (§ 205.103)');
@@ -104,7 +118,10 @@ describe('readiness on the certifier review page is not a verdict', () => {
       require('node:path').resolve(process.cwd(), 'src/views/CertifierReview/CertifierReview.tsx'),
       'utf8'
     );
-    const fn = src.slice(src.indexOf('function findingStyle'), src.indexOf('function findingLabel'));
+    const fn = src.slice(
+      src.indexOf('function findingStyle'),
+      src.indexOf('function findingLabel')
+    );
     expect(fn).not.toMatch(/red|orange/);
   });
 });
