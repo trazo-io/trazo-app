@@ -98,6 +98,35 @@ describe('useEventDraft', () => {
     ).toBe('Zinc Sulfate 36%');
   });
 
+  it('brings back the parcels picked for one activity on several parcels, and their cards', () => {
+    const multi = {
+      parcelIds: [12, 13],
+      targets: [{ parcelId: 12, scope: 'all', values: { volume_applied: '20' } }]
+    };
+    const first = renderHook(() => useEventDraft({ parcelId: 231 }));
+    act(() => first.result.current.saveDraft(2, FILLED, 0, multi));
+    flushDebounce();
+
+    const second = renderHook(() => useEventDraft({ parcelId: 231 }));
+    let restored: { multi?: unknown } | null = null;
+    act(() => {
+      restored = second.result.current.restoreDraft();
+    });
+    expect(restored!.multi).toEqual(multi);
+  });
+
+  it('a single-parcel draft carries no multi block', () => {
+    const first = renderHook(() => useEventDraft({ parcelId: 232 }));
+    act(() => first.result.current.saveDraft(2, FILLED, 0, { parcelIds: [], targets: [] }));
+    flushDebounce();
+    const second = renderHook(() => useEventDraft({ parcelId: 232 }));
+    let restored: { multi?: unknown } | null = null;
+    act(() => {
+      restored = second.result.current.restoreDraft();
+    });
+    expect(restored).not.toHaveProperty('multi');
+  });
+
   it('discard removes it for good', () => {
     const first = renderHook(() => useEventDraft({ parcelId: 231 }));
     act(() => first.result.current.saveDraft(2, FILLED, 0));

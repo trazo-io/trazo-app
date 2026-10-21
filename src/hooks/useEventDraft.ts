@@ -27,11 +27,19 @@ const STORAGE_PREFIX = 'trazo.eventDraft.';
 const DEBOUNCE_MS = 2000;
 const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
+/** One activity on several parcels: the parcels picked and what each parcel's card holds. */
+export interface EventDraftMulti {
+  parcelIds: number[];
+  targets: unknown[];
+}
+
 export interface EventDraftPayload {
   activeEventType: number | null;
   eventFormData: Record<string, unknown>;
   photoCount: number;
   savedAt: string;
+  /** Absent on a single-parcel draft, and on every draft written before this field existed. */
+  multi?: EventDraftMulti;
 }
 
 interface UseEventDraftOptions {
@@ -145,7 +153,12 @@ export function useEventDraft({ parcelId, eventId = null, enabled = true }: UseE
   );
 
   const saveDraft = useCallback(
-    (activeEventType: number | null, eventFormData: Record<string, unknown>, photoCount = 0) => {
+    (
+      activeEventType: number | null,
+      eventFormData: Record<string, unknown>,
+      photoCount = 0,
+      multi?: EventDraftMulti
+    ) => {
       if (!isActive) return;
       if (!hasMeaningfulContent(eventFormData)) return;
 
@@ -165,7 +178,10 @@ export function useEventDraft({ parcelId, eventId = null, enabled = true }: UseE
           activeEventType,
           eventFormData: serialisable,
           photoCount,
-          savedAt: new Date().toISOString()
+          savedAt: new Date().toISOString(),
+          // Without it a restored multi-parcel draft came back on the origin parcel only, and the
+          // per-parcel amounts the grower had typed were gone.
+          ...(multi && multi.parcelIds.length > 0 ? { multi } : {})
         });
         setIsSaving(false);
         // Only claim it was saved if it was. A "Draft saved" line over a failed write (private

@@ -882,115 +882,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
     focusStepHeading();
   }, [activeStep, focusStepHeading]);
 
-  // D9 — persist the in-progress event so a refresh, a locked phone or a stray Back does not
-  // discard a half-filled chemical application. Scoped per parcel and per create/edit target.
-  const {
-    hasDraft,
-    draftSavedAt,
-    draftPhotoCount,
-    lastSaved: draftLastSaved,
-    isSaving: isSavingDraft,
-    saveDraft,
-    restoreDraft,
-    discardDraft,
-    clearDraft
-  } = useEventDraft({
-    parcelId,
-    eventId,
-    // Repeat mode prefills from the SOURCE record; letting a stale per-parcel
-    // draft restore over it (or the prefill silently overwrite a draft the
-    // farmer meant to finish) makes the form's contents unexplainable.
-    enabled: !isEdit && !isRepeat
-  });
-
-  // D9 — write a draft whenever the form state or the chosen type changes. The hook debounces
-  // and refuses to store an empty form, so this stays cheap and does not arm a restore banner
-  // for someone who merely opened the wizard.
-  useEffect(() => {
-    saveDraft(activeEventType, eventFormData, acceptedFiles?.length || 0);
-  }, [activeEventType, eventFormData, acceptedFiles, saveDraft]);
-
-  const handleRestoreDraft = useCallback(() => {
-    const draft = restoreDraft();
-    if (!draft) return;
-    if (draft.activeEventType != null) setActiveEventType(draft.activeEventType);
-    setEventFormData(draft.eventFormData || {});
-    // A draft does not say who wrote its name, so the name it carries is kept as it is.
-    setNameOrigin('unknown');
-    toast({
-      title: intl.formatMessage({ id: 'events.draft.restored', defaultMessage: 'Draft restored' }),
-      // Photos are the one thing a draft cannot carry, so say so rather than let the farmer
-      // submit an event they believe still has its photo evidence attached.
-      description: draft.photoCount
-        ? intl.formatMessage(
-            {
-              id: 'events.draft.restoredPhotos',
-              defaultMessage:
-                'Your entries are back. {count, plural, one {# photo} other {# photos}} could not be saved with the draft — please attach them again.'
-            },
-            { count: draft.photoCount }
-          )
-        : intl.formatMessage({
-            id: 'events.draft.restoredBody',
-            defaultMessage: 'Your entries are back where you left them.'
-          }),
-      status: 'success',
-      duration: 7000,
-      isClosable: true
-    });
-  }, [restoreDraft, intl, toast]);
-
-  // Form methods for each step
-  const basicMethods = useForm({
-    resolver: zodResolver(formSchemaBasic),
-    defaultValues: {
-      date: nowLocalDateTimeInput()
-    }
-  });
-
-  // What step 0 seeded the date field with. Read off react-hook-form rather than recomputed, so
-  // it is byte-identical to the value the operator was shown and cannot drift by a minute.
-  const wizardDefaultDate = basicMethods.formState.defaultValues?.date;
-
-  const mainInfoMethods = useForm({
-    resolver: zodResolver(formSchemaMainInfo)
-  });
-
-  // Removed descriptionMethods - observations handled in event tabs
-
-  const mediaMethods = useForm({
-    resolver: zodResolver(formSchemaMedia)
-  });
-
-  // API mutations
-  const [createEvent, { isLoading: isCreatingEvent, isSuccess: isCreateSuccess }] =
-    useCreateEventMutation();
-  const [updateEvent, { isLoading: isUpdatingEvent, isSuccess: isUpdateSuccess }] =
-    useUpdateEventMutation();
-  const [calculateCarbonImpact, { isLoading: isCalculating }] =
-    useCalculateEventCarbonImpactMutation();
-
-  // Load existing event data when editing - now using event type from URL
-  const {
-    data: existingEvent,
-    isLoading: isLoadingEvent,
-    error: eventError
-  } = useGetEventQuery(
-    {
-      companyId: currentCompany?.id,
-      farmId: parseInt(farmId || '0'),
-      eventId: parseInt(eventId || repeatIdFromUrl || '0'),
-      eventType: eventTypeFromUrl ? parseInt(eventTypeFromUrl) : undefined
-    },
-    {
-      skip:
-        !(isEdit || isRepeat) ||
-        !currentCompany?.id ||
-        !(eventId || repeatIdFromUrl) ||
-        !eventTypeFromUrl
-    }
-  );
-
   // One spray on several blocks of THIS farm (components/Events/MultiParcel, utils/multiParcel).
   // Same farm only: the packet, the certificate and the route are per farm, and the server
   // refuses a mix. Create only, and only from the plain entry: a plan item, a crew note, a named
@@ -1045,15 +936,137 @@ function NewEvent({ isEdit = false, eventId = null }) {
     application_fuel_unit: data?.application_fuel_unit || 'gal',
     area_unit: data?.area_unit || 'acres'
   });
-  // Each selected parcel's own sections, for its card's chips (one query for the whole farm).
+  // The farm's outlines (the picker's Map) and each parcel's own sections (its card's chips), in
+  // one query for the whole farm, fetched once the activity can go on several parcels.
   const { data: farmGeometry } = useGetParcelGeometryQuery(
     { companyId: currentCompany?.id, farmId },
-    { skip: !multiActive || !currentCompany?.id || !farmId }
+    { skip: !multiParcelEligible || !currentCompany?.id || !farmId }
   );
   const sectionsByParcel = useMemo(
     () =>
       Object.fromEntries((farmGeometry || []).map((parcel) => [parcel.id, parcel.known_block_ids])),
     [farmGeometry]
+  );
+
+  // D9 — persist the in-progress event so a refresh, a locked phone or a stray Back does not
+  // discard a half-filled chemical application. Scoped per parcel and per create/edit target.
+  const {
+    hasDraft,
+    draftSavedAt,
+    draftPhotoCount,
+    lastSaved: draftLastSaved,
+    isSaving: isSavingDraft,
+    saveDraft,
+    restoreDraft,
+    discardDraft,
+    clearDraft
+  } = useEventDraft({
+    parcelId,
+    eventId,
+    // Repeat mode prefills from the SOURCE record; letting a stale per-parcel
+    // draft restore over it (or the prefill silently overwrite a draft the
+    // farmer meant to finish) makes the form's contents unexplainable.
+    enabled: !isEdit && !isRepeat
+  });
+
+  // D9 — write a draft whenever the form state or the chosen type changes. The hook debounces
+  // and refuses to store an empty form, so this stays cheap and does not arm a restore banner
+  // for someone who merely opened the wizard.
+  useEffect(() => {
+    saveDraft(
+      activeEventType,
+      eventFormData,
+      acceptedFiles?.length || 0,
+      multiParcelIds.length > 0 ? { parcelIds: multiParcelIds, targets: multiTargets } : undefined
+    );
+  }, [activeEventType, eventFormData, acceptedFiles, saveDraft, multiParcelIds, multiTargets]);
+
+  const handleRestoreDraft = useCallback(() => {
+    const draft = restoreDraft();
+    if (!draft) return;
+    if (draft.activeEventType != null) setActiveEventType(draft.activeEventType);
+    setEventFormData(draft.eventFormData || {});
+    // A draft does not say who wrote its name, so the name it carries is kept as it is.
+    setNameOrigin('unknown');
+    // Several parcels: put back the ones still on this farm, with what their cards held.
+    if (draft.multi?.parcelIds?.length) {
+      const onFarm = new Set(farmParcels.map((p) => Number(p.id)));
+      const ids = draft.multi.parcelIds.filter((id) => onFarm.has(Number(id)));
+      setMultiTargets((draft.multi.targets || []).filter((t) => onFarm.has(Number(t?.parcelId))));
+      setMultiParcelIds(ids);
+    }
+    toast({
+      title: intl.formatMessage({ id: 'events.draft.restored', defaultMessage: 'Draft restored' }),
+      // Photos are the one thing a draft cannot carry, so say so rather than let the farmer
+      // submit an event they believe still has its photo evidence attached.
+      description: draft.photoCount
+        ? intl.formatMessage(
+            {
+              id: 'events.draft.restoredPhotos',
+              defaultMessage:
+                'Your entries are back. {count, plural, one {# photo} other {# photos}} could not be saved with the draft — please attach them again.'
+            },
+            { count: draft.photoCount }
+          )
+        : intl.formatMessage({
+            id: 'events.draft.restoredBody',
+            defaultMessage: 'Your entries are back where you left them.'
+          }),
+      status: 'success',
+      duration: 7000,
+      isClosable: true
+    });
+  }, [restoreDraft, intl, toast, farmParcels]);
+
+  // Form methods for each step
+  const basicMethods = useForm({
+    resolver: zodResolver(formSchemaBasic),
+    defaultValues: {
+      date: nowLocalDateTimeInput()
+    }
+  });
+
+  // What step 0 seeded the date field with. Read off react-hook-form rather than recomputed, so
+  // it is byte-identical to the value the operator was shown and cannot drift by a minute.
+  const wizardDefaultDate = basicMethods.formState.defaultValues?.date;
+
+  const mainInfoMethods = useForm({
+    resolver: zodResolver(formSchemaMainInfo)
+  });
+
+  // Removed descriptionMethods - observations handled in event tabs
+
+  const mediaMethods = useForm({
+    resolver: zodResolver(formSchemaMedia)
+  });
+
+  // API mutations
+  const [createEvent, { isLoading: isCreatingEvent, isSuccess: isCreateSuccess }] =
+    useCreateEventMutation();
+  const [updateEvent, { isLoading: isUpdatingEvent, isSuccess: isUpdateSuccess }] =
+    useUpdateEventMutation();
+  const [calculateCarbonImpact, { isLoading: isCalculating }] =
+    useCalculateEventCarbonImpactMutation();
+
+  // Load existing event data when editing - now using event type from URL
+  const {
+    data: existingEvent,
+    isLoading: isLoadingEvent,
+    error: eventError
+  } = useGetEventQuery(
+    {
+      companyId: currentCompany?.id,
+      farmId: parseInt(farmId || '0'),
+      eventId: parseInt(eventId || repeatIdFromUrl || '0'),
+      eventType: eventTypeFromUrl ? parseInt(eventTypeFromUrl) : undefined
+    },
+    {
+      skip:
+        !(isEdit || isRepeat) ||
+        !currentCompany?.id ||
+        !(eventId || repeatIdFromUrl) ||
+        !eventTypeFromUrl
+    }
   );
 
   // Carbon calculation with debouncing
@@ -3858,6 +3871,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                         {multiParcelEligible && (
                           <AlsoAppliedTo
                             parcels={farmParcels}
+                            geometry={farmGeometry}
                             originParcelId={Number(parcelId)}
                             selectedIds={multiParcelIds}
                             onChange={setMultiParcelIds}
