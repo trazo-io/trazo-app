@@ -13,7 +13,7 @@
  */
 
 import React from 'react';
-import { Box, Icon, SimpleGrid, Text } from '@chakra-ui/react';
+import { Box, type BoxProps, Icon, SimpleGrid, Text } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
 
 import { ACTIVITY_VERBS } from 'config/activityVerbs';
@@ -24,12 +24,28 @@ interface VerbPickerGridProps {
   /** Highlighted verb (NewEvent chooser); omit on navigate-away surfaces. */
   selectedKey?: string | null;
   columns?: Record<string, number>;
+  /**
+   * Why a tile cannot be picked right now, or undefined. The Activities page uses it once
+   * several parcels are chosen: an activity logged one parcel at a time stays visible, greyed,
+   * with its reason, rather than disappearing from a grid the grower knows by heart.
+   */
+  unavailableReason?: (verb: ActivityVerb) => string | undefined;
 }
+
+// Spread AFTER the regular tile props so it wins. Kept apart from the `isSelected` ternaries,
+// which the contrast guards read (an unavailable tile is never selected).
+const UNAVAILABLE_TILE: BoxProps = {
+  bg: 'gray.50',
+  borderStyle: 'dashed',
+  cursor: 'not-allowed',
+  _hover: { transform: 'none', boxShadow: 'none', borderColor: 'gray.200' }
+};
 
 export const VerbPickerGrid: React.FC<VerbPickerGridProps> = ({
   onSelect,
   selectedKey = null,
-  columns = { base: 2, smd: 2, md: 3, lg: 5 }
+  columns = { base: 2, smd: 2, md: 3, lg: 5 },
+  unavailableReason
 }) => {
   const intl = useIntl();
 
@@ -37,12 +53,15 @@ export const VerbPickerGrid: React.FC<VerbPickerGridProps> = ({
     <SimpleGrid columns={columns} spacing={{ base: 2, md: 3 }} width="100%">
       {ACTIVITY_VERBS.map((verb) => {
         const isSelected = selectedKey === verb.key;
+        const reason = unavailableReason?.(verb);
         return (
           <Box
             key={verb.key}
             as="button"
             type="button"
-            onClick={() => onSelect(verb)}
+            // aria-disabled, not disabled: the tile stays focusable so its reason is announced.
+            aria-disabled={reason ? true : undefined}
+            onClick={reason ? undefined : () => onSelect(verb)}
             /*
              * ONE colour for fourteen tiles.
              *
@@ -92,11 +111,12 @@ export const VerbPickerGrid: React.FC<VerbPickerGridProps> = ({
               boxShadow: 'field-focus',
               borderColor: isSelected ? 'green.800' : 'green.600'
             }}
-            aria-pressed={isSelected}>
+            aria-pressed={isSelected}
+            {...(reason ? UNAVAILABLE_TILE : {})}>
             <Icon
               as={verb.icon}
               boxSize={{ base: 5, md: 6 }}
-              color={isSelected ? 'white' : 'green.700'}
+              color={isSelected ? 'white' : reason ? 'gray.600' : 'green.700'}
             />
             {/* `as="span"`, not Text's default <p>.
                 MEASURED 2026-08-22 in the a11y tree: a <p> inside a <button> is invalid flow
@@ -113,6 +133,11 @@ export const VerbPickerGrid: React.FC<VerbPickerGridProps> = ({
               overflowWrap="break-word">
               {intl.formatMessage({ id: `activities.verb.${verb.key}` })}
             </Text>
+            {reason && (
+              <Text as="span" fontSize="xs" color="gray.700" textAlign="center" lineHeight="1.25">
+                {reason}
+              </Text>
+            )}
           </Box>
         );
       })}

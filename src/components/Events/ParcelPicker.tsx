@@ -50,6 +50,13 @@ export interface ParcelPickerProps {
   legend: string;
   /** For the size shown under each parcel. */
   areaUnit?: string;
+  /**
+   * Grey out parcels a multi-parcel save would refuse (default). Off on the Activities page,
+   * where parcels are picked before the activity: one parcel with no open production can still
+   * log post-harvest work, so it must stay pickable there, and the form drops it (naming it)
+   * only when it would join a multi-parcel record.
+   */
+  refuseUnavailable?: boolean;
 }
 
 export const disabledReasonFor = (
@@ -72,7 +79,8 @@ export const ParcelPicker = ({
   selectedIds,
   onChange,
   legend,
-  areaUnit = 'acres'
+  areaUnit = 'acres',
+  refuseUnavailable = true
 }: ParcelPickerProps) => {
   const intl = useIntl();
   const [mode, setMode] = useState<Mode>('list');
@@ -85,14 +93,18 @@ export const ParcelPicker = ({
   const mapOffered = outlined.length > 0 && !mapFailed;
   const activeMode: Mode = mapOffered ? mode : 'list';
 
+  const reasonFor = useCallback(
+    (parcel: PickerParcel) => (refuseUnavailable ? disabledReasonFor(parcel, intl) : undefined),
+    [refuseUnavailable, intl]
+  );
   const disabledIds = useMemo(
     () =>
       new Set(
         parcels
-          .filter((p) => Number(p.id) !== originParcelId && disabledReasonFor(p, intl))
+          .filter((p) => Number(p.id) !== originParcelId && reasonFor(p))
           .map((p) => Number(p.id))
       ),
-    [parcels, originParcelId, intl]
+    [parcels, originParcelId, reasonFor]
   );
 
   const options: StandardCheckboxListOption[] = parcels.map((parcel) => {
@@ -111,7 +123,7 @@ export const ParcelPicker = ({
           )
         : undefined,
       isFixed: isOrigin,
-      disabledReason: isOrigin ? undefined : disabledReasonFor(parcel, intl)
+      disabledReason: isOrigin ? undefined : reasonFor(parcel)
     };
   });
 

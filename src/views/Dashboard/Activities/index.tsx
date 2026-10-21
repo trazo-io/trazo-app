@@ -58,11 +58,14 @@ import {
 } from 'components/Design/StandardComponents';
 import type { Parcel } from 'types/company';
 import { ACTIVITY_VERBS } from 'config/activityVerbs';
+import { verbMayGoMulti } from 'config/events/multiParcel';
 import { activitySummary, activityTitle } from 'config/events/narrative';
 import { ResponsiveModal } from 'components/Design/ResponsiveModal';
+import { ParcelPicker } from 'components/Events/ParcelPicker';
 import { VerbPickerGrid } from 'components/Events/VerbPickerGrid';
 import { QuickAddParcelModal } from 'components/Parcels/QuickAddParcelModal';
 import { useGetActivityFeedQuery } from 'store/api/activityFeedApi';
+import { useGetParcelGeometryQuery } from 'store/api/parcelGeometryApi';
 import type { ActivityRow } from 'store/api/activityFeedApi';
 import type { RootState } from 'store/index';
 import { useTour } from 'hooks/useTour';
@@ -189,7 +192,11 @@ const ActivitiesPage = () => {
   const [search, setSearch] = useState('');
   const verbModal = useDisclosure();
   const quickAddParcel = useDisclosure();
-  const [pendingVerb, setPendingVerb] = useState<(typeof VERBS)[number] | null>(null);
+  // "Log activity" asks for the parcels first, then the activity (owner decision 2026-10-21):
+  // a grower thinks "I sprayed these three", and the map is most useful before anything else.
+  // `pickedIds` keeps the order of picking; `pickStep` is which half of the sheet is showing.
+  const [pickedIds, setPickedIds] = useState<number[]>([]);
+  const [pickStep, setPickStep] = useState<'parcels' | 'verb'>('parcels');
   // Which activity is open for reading, and which day is open in full. Both are plain row/
   // key state rather than useDisclosure: the identity IS the open condition, so they cannot
   // fall out of sync with a separate boolean.
@@ -323,16 +330,49 @@ const ActivitiesPage = () => {
 
   const daySheetRows = daySheetIso ? byDay.get(daySheetIso) ?? [] : [];
 
-  const startVerb = (verb: (typeof VERBS)[number]) => {
-    if (parcels.length === 1) {
-      verbModal.onClose();
-      navigate(
-        `/admin/dashboard/farm/${farmId}/parcel/${parcels[0].id}/event/add?event_type=${verb.eventType}&verb=${verb.key}`
-      );
-      return;
-    }
-    setPendingVerb(verb);
+  const openLogActivity = () => {
+    // One parcel: nothing to choose, straight to the activity (as before). None: the sheet
+    // says so and offers the quick-add.
+    setPickedIds(parcels.length === 1 ? [Number(parcels[0].id)] : []);
+    setPickStep(parcels.length > 1 ? 'parcels' : 'verb');
+    verbModal.onOpen();
   };
+  const closeLogActivity = () => {
+    verbModal.onClose();
+    setPickedIds([]);
+    setPickStep('parcels');
+  };
+
+  // An activity logged one parcel at a time stays on the grid, greyed with its reason, once
+  // several parcels are picked.
+  const severalPicked = pickedIds.length > 1;
+  const verbUnavailable = (verb: (typeof VERBS)[number]) =>
+    severalPicked && !verbMayGoMulti(verb)
+      ? intl.formatMessage({ id: 'activities.verbOneParcelOnly' })
+      : undefined;
+
+  const startVerb = (verb: (typeof VERBS)[number]) => {
+    if (pickedIds.length === 0 || verbUnavailable(verb)) return;
+    // The form opens on one parcel and takes the others as "also applied to". Open it on a
+    // parcel with exactly one open production when there is one: on any other, the form
+    // cannot add parcels at all and would drop the rest.
+    const seasonOf = (id: number) =>
+      (parcels.find((p) => Number(p.id) === id) as { open_season_count?: number | null })
+        ?.open_season_count;
+    const first = pickedIds.find((id) => seasonOf(id) === 1) ?? pickedIds[0];
+    const also = pickedIds.filter((id) => id !== first);
+    closeLogActivity();
+    navigate(
+      `/admin/dashboard/farm/${farmId}/parcel/${first}/event/add?event_type=${verb.eventType}&verb=${verb.key}` +
+        (also.length > 0 ? `&also=${also.join(',')}` : '')
+    );
+  };
+
+  // Outlines for the Map, fetched only once the sheet is open on a farm with parcels to choose.
+  const { data: farmGeometry } = useGetParcelGeometryQuery(
+    { companyId, farmId: farmId ?? '' },
+    { skip: !verbModal.isOpen || parcels.length < 2 || !companyId || !farmId }
+  );
 
   const monthTitle = cursor.toLocaleDateString(intl.locale, { month: 'long', year: 'numeric' });
 
@@ -344,7 +384,7 @@ const ActivitiesPage = () => {
       // a row of filters. Same slot the OSP/parcel pages put their action in.
       rightAction={
         <Box data-tour="activities-log">
-          <StandardButton minH="44px" leftIcon={<FaPlus />} onClick={verbModal.onOpen}>
+          <StandardButton minH="44px" leftIcon={<FaPlus />} onClick={openLogActivity}>
             {intl.formatMessage({ id: 'activities.log' })}
           </StandardButton>
         </Box>
@@ -869,24 +909,37 @@ const ActivitiesPage = () => {
 
       <ResponsiveModal
         isOpen={verbModal.isOpen}
-        onClose={() => {
-          setPendingVerb(null);
-          verbModal.onClose();
-        }}
+        onClose={closeLogActivity}
         size="lg"
         header={
           <Text fontSize="lg" fontWeight="semibold">
-            {pendingVerb
-              ? intl.formatMessage({ id: 'activities.pickParcel' })
+            {pickStep === 'parcels' || parcels.length === 0
+              ? intl.formatMessage({ id: 'activities.pickParcels' })
               : intl.formatMessage({ id: 'activities.pickVerb' })}
           </Text>
+        }
+        footer={
+          pickStep === 'parcels' && parcels.length > 1 ? (
+            <StandardButton
+              minH="44px"
+              isDisabled={pickedIds.length === 0}
+              onClick={() => setPickStep('verb')}>
+              {pickedIds.length === 0
+                ? intl.formatMessage({ id: 'activities.continue' })
+                : intl.formatMessage(
+                    { id: 'activities.continueWithParcels' },
+                    { count: pickedIds.length }
+                  )}
+            </StandardButton>
+          ) : undefined
         }>
-        {pendingVerb && parcels.length === 0 ? (
-          /* A farm with no block used to open this sheet EMPTY: the heading, a close button and
+        {parcels.length === 0 ? (
+          /* A farm with no parcel used to open this sheet EMPTY: the heading, a close button and
              nothing else, the dead end a new Starter account hits the first time it tries to log
-             a spray (2026-10-15, the first inbound grower made a farm and no block). Name the farm, say
-             why, and offer the two-field quick-add; the server refuses an event without a parcel
-             (`history/views.py`, "No matching parcel found.") and that stays. */
+             a spray (2026-10-15, the first inbound grower made a farm and no parcel). Name the
+             farm, say why, and offer the two-field quick-add; the server refuses an event without
+             a parcel (`history/views.py`, "No matching parcel found.") and that stays. With the
+             parcels asked first, this is now the first thing the sheet shows. */
           <StandardEmptyState
             size="sm"
             icon={FaSeedling}
@@ -899,61 +952,54 @@ const ActivitiesPage = () => {
               <StandardButton
                 leftIcon={<FaPlus />}
                 onClick={() => {
-                  verbModal.onClose();
-                  setPendingVerb(null);
+                  closeLogActivity();
                   quickAddParcel.onOpen();
                 }}>
                 {intl.formatMessage({ id: 'parcel.addABlock' })}
               </StandardButton>
             }
           />
-        ) : pendingVerb ? (
-          <VStack align="stretch" spacing={2}>
-            {/*
-              Neutral option rows, not outline BUTTONS.
-              Step 2 used `variant="outline"`, so six parcels arrived as six green-bordered
-              calls to action — six things to do rather than one choice among six — and it
-              looked like a different product from step 1, which is white tiles with a grey
-              border. Same tile treatment here: grey at rest, green on hover/focus, the choice
-              signalled by fill and border rather than by every row shouting.
-            */}
-            {parcels.map((p) => (
-              <Box
-                key={p.id}
-                as="button"
-                type="button"
-                textAlign="left"
-                bg="white"
-                color="gray.700"
-                fontWeight="semibold"
-                fontSize="sm"
-                borderWidth="2px"
-                borderColor="gray.200"
-                borderRadius="xl"
-                px={4}
-                minH="44px"
-                display="flex"
-                alignItems="center"
-                transition="all 0.2s ease"
-                _hover={{
-                  borderColor: 'green.600',
-                  transform: 'translateY(-1px)',
-                  boxShadow: 'lg'
-                }}
-                _focus={{ outline: 'none', borderColor: 'green.700', boxShadow: 'field-focus' }}
-                onClick={() => {
-                  verbModal.onClose();
-                  setPendingVerb(null);
-                  navigate(
-                    `/admin/dashboard/farm/${farmId}/parcel/${p.id}/event/add?event_type=${pendingVerb.eventType}&verb=${pendingVerb.key}`
-                  );
-                }}>
-                {p.name}
-              </Box>
-            ))}
+        ) : pickStep === 'parcels' ? (
+          <VStack align="stretch" spacing={3}>
+            <Text fontSize="sm" color="gray.700">
+              {intl.formatMessage({ id: 'activities.pickParcelsHint' })}
+            </Text>
+            <ParcelPicker
+              parcels={parcels}
+              geometry={farmGeometry}
+              selectedIds={pickedIds}
+              onChange={setPickedIds}
+              legend={intl.formatMessage({ id: 'events.multiParcel.legend' })}
+              refuseUnavailable={false}
+            />
           </VStack>
         ) : (
-          <VerbPickerGrid onSelect={startVerb} columns={{ base: 2, smd: 2 }} />
+          <VStack align="stretch" spacing={3}>
+            {parcels.length > 1 && (
+              <Flex align="center" justify="space-between" gap={2} wrap="wrap">
+                <Text fontSize="sm" color="gray.700">
+                  {intl.formatMessage(
+                    { id: 'activities.onParcels' },
+                    {
+                      count: pickedIds.length,
+                      names: pickedIds
+                        .map((id) => parcels.find((p) => Number(p.id) === id)?.name)
+                        .filter(Boolean)
+                        .join(', ')
+                    }
+                  )}
+                </Text>
+                <StandardButton variant="ghost" size="sm" onClick={() => setPickStep('parcels')}>
+                  {intl.formatMessage({ id: 'activities.changeParcels' })}
+                </StandardButton>
+              </Flex>
+            )}
+            <VerbPickerGrid
+              onSelect={startVerb}
+              columns={{ base: 2, smd: 2 }}
+              unavailableReason={verbUnavailable}
+            />
+          </VStack>
         )}
       </ResponsiveModal>
 
