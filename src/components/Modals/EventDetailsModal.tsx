@@ -1,3 +1,4 @@
+import { ApplicationGroupNotice } from 'components/Events/ApplicationGroupNotice';
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   VStack,
@@ -1002,10 +1003,10 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
             <Icon as={FaCalendarAlt} boxSize={4} />
             <Text>
               {event.extra_data?.date_start && event.extra_data?.date_end
-                ? `${formatDateFromTimestamp(event.extra_data.date_start, intl.locale)} - ${formatDateFromTimestamp(
-                    event.extra_data.date_end,
+                ? `${formatDateFromTimestamp(
+                    event.extra_data.date_start,
                     intl.locale
-                  )}`
+                  )} - ${formatDateFromTimestamp(event.extra_data.date_end, intl.locale)}`
                 : formatDateFromTimestamp(event.date, intl.locale)}
             </Text>
           </HStack>
@@ -1046,6 +1047,15 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
     <>
       <ResponsiveModal isOpen={isOpen} onClose={onClose} size="4xl" header={header} footer={footer}>
         <VStack spacing={6} align="stretch">
+          {/* One application on several parcels: say so before anything else, so the record
+              is not read (or edited) as the whole application. */}
+          <ApplicationGroupNotice
+            farmId={farmId}
+            eventId={event.id}
+            eventType={event.event_type}
+            parcelName={parcelName}
+            variant="detail"
+          />
           {/* Buyer-page visibility, stated up front. Certifier-only subtypes (BU/SS/EM/TP)
               never reach the anonymous payload; everything else publishes, with the
               buyer-visible fields marked individually by the field renderer below. */}
@@ -1374,32 +1384,32 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                   {intl.formatMessage({ id: 'carbon.notEstimated' })}
                 </Text>
               ) : (
-              <HStack justify="space-between" align="center">
-                <VStack spacing={0} align="start">
-                  <HStack spacing={2}>
-                    <Text fontSize="2xl" fontWeight="bold" color={textColor}>
-                      {formatCO2e(carbonData.co2e)}
-                    </Text>
-                    <Text fontSize="sm" color="gray.600">
-                      kg CO₂e
-                    </Text>
-                    {/* One branch for both cases: zero IS impact level 0, so read the label
+                <HStack justify="space-between" align="center">
+                  <VStack spacing={0} align="start">
+                    <HStack spacing={2}>
+                      <Text fontSize="2xl" fontWeight="bold" color={textColor}>
+                        {formatCO2e(carbonData.co2e)}
+                      </Text>
+                      <Text fontSize="sm" color="gray.600">
+                        kg CO₂e
+                      </Text>
+                      {/* One branch for both cases: zero IS impact level 0, so read the label
                         from the same helper rather than hardcoding an English "None" that no
                         locale could translate. */}
-                    <Badge variant={impactBadgeVariant} fontSize="xs">
-                      {intl.formatMessage({ id: getImpactLevel(carbonData.co2e).level })}
-                    </Badge>
-                  </HStack>
-                  <Text fontSize="xs" color="gray.600">
-                    {intl.formatMessage({
-                      id:
-                        carbonData.co2e === 0
-                          ? 'eventDetails.noDirectEmissions'
-                          : 'eventDetails.carbonEstimate'
-                    })}
-                  </Text>
-                </VStack>
-              </HStack>
+                      <Badge variant={impactBadgeVariant} fontSize="xs">
+                        {intl.formatMessage({ id: getImpactLevel(carbonData.co2e).level })}
+                      </Badge>
+                    </HStack>
+                    <Text fontSize="xs" color="gray.600">
+                      {intl.formatMessage({
+                        id:
+                          carbonData.co2e === 0
+                            ? 'eventDetails.noDirectEmissions'
+                            : 'eventDetails.carbonEstimate'
+                      })}
+                    </Text>
+                  </VStack>
+                </HStack>
               )}
             </Box>
           )}

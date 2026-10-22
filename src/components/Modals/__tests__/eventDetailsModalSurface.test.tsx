@@ -32,7 +32,9 @@ import esMessages from '../../../i18n/lang/es-419.json';
 import { EventDetailsModal } from '../EventDetailsModal';
 
 vi.mock('store/api/historyApi', () => ({
-  useDeleteEventMutation: () => [vi.fn(), { isLoading: false }]
+  useDeleteEventMutation: () => [vi.fn(), { isLoading: false }],
+  // ApplicationGroupNotice reads the record's detail; none of these records is grouped.
+  useGetEventQuery: () => ({ data: undefined })
 }));
 
 // EventDetailsModal mounts CorrectRecordModal (the locked-record correction path), which

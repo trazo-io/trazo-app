@@ -99,6 +99,7 @@ import { isApplicationRecord, withoutInputValues } from 'config/events/crewNoteA
 import { useGetSeasonPlanQuery } from 'store/api/seasonPlanApi';
 import { EventPreviewModal } from 'components/Events/EventPreviewModal';
 import { PhotoRecommendationsBox } from 'components/Events/PhotoRecommendationsBox';
+import { ApplicationGroupNotice } from 'components/Events/ApplicationGroupNotice';
 import { AlsoAppliedTo, PerParcelCards } from 'components/Events/MultiParcel';
 import { eventTypeMayGoMulti, multiParcelRulesFor } from 'config/events/multiParcel';
 import { useDefaultUnits } from 'hooks/useMeasurementSystem';
@@ -3706,6 +3707,17 @@ function NewEvent({ isEdit = false, eventId = null }) {
               lastSaved={draftSavedAt}
               onRestore={handleRestoreDraft}
               onDiscard={discardDraft}
+            />
+          )}
+
+          {/* Editing one record of an application logged on several parcels: the change is
+              this parcel's only, and the form says so before the first field. */}
+          {isEdit && (
+            <ApplicationGroupNotice
+              farmId={farmId}
+              eventId={eventId}
+              eventType={eventTypeFromUrl}
+              variant="edit"
             />
           )}
 
