@@ -1,5 +1,14 @@
 // Sprint 3 Epic 3.1: Cleaned unused Chakra imports - using StandardComponents only
-import { Icon, useColorModeValue, HStack, Box, SimpleGrid, VStack, Flex } from '@chakra-ui/react';
+import {
+  Icon,
+  useColorModeValue,
+  HStack,
+  Box,
+  SimpleGrid,
+  VStack,
+  Flex,
+  Text
+} from '@chakra-ui/react';
 import {
   StandardCard,
   StandardButton,
@@ -174,7 +183,13 @@ const WeatherTab = forwardRef(
       onValidationChange,
       onPrev,
       initialValues = {},
-      hideActions = false
+      hideActions = false,
+      /**
+       * Several parcels: the conditions are shared, one record per parcel. Damage and crop
+       * impact describe one place and have no per-parcel card, so they are recorded on each
+       * parcel's own record after saving (the server refuses them in a multi-parcel save).
+       */
+      multiTarget = false
     },
     ref
   ) => {
@@ -910,11 +925,17 @@ const WeatherTab = forwardRef(
                           id: 'events.weather.help.descriptionOfDamageToCropsInfrastructure',
                           defaultMessage: 'Description of damage to crops/infrastructure'
                         })}>
-                        <StandardInput
-                          type="text"
-                          placeholder="e.g., minor leaf damage, no structural damage"
-                          {...register('damage_assessment')}
-                        />
+                        {multiTarget ? (
+                          <Text fontSize="sm" color="gray.600">
+                            {intl.formatMessage({ id: 'events.multiParcel.weatherDamageLater' })}
+                          </Text>
+                        ) : (
+                          <StandardInput
+                            type="text"
+                            placeholder="e.g., minor leaf damage, no structural damage"
+                            {...register('damage_assessment')}
+                          />
+                        )}
                       </StandardField>
                     </SimpleGrid>
                   ) : type === 'HW' ? (
@@ -1022,11 +1043,17 @@ const WeatherTab = forwardRef(
                           id: 'events.weather.help.effectsOnCropHealthAndGrowth',
                           defaultMessage: 'Effects on crop health and growth'
                         })}>
-                        <StandardInput
-                          type="text"
-                          placeholder="e.g., increased disease pressure, slower growth"
-                          {...register('crop_impact')}
-                        />
+                        {multiTarget ? (
+                          <Text fontSize="sm" color="gray.600">
+                            {intl.formatMessage({ id: 'events.multiParcel.weatherDamageLater' })}
+                          </Text>
+                        ) : (
+                          <StandardInput
+                            type="text"
+                            placeholder="e.g., increased disease pressure, slower growth"
+                            {...register('crop_impact')}
+                          />
+                        )}
                       </StandardField>
                     </SimpleGrid>
                   ) : null}
@@ -1064,7 +1091,9 @@ const WeatherTab = forwardRef(
                   label={intl.formatMessage({ id: 'events.common.fields.privateNote' })}
                   helpText={intl.formatMessage({ id: 'events.common.help.privateNoteAudience' })}>
                   <StandardTextarea
-                    placeholder={intl.formatMessage({ id: 'events.common.placeholders.privateNote' })}
+                    placeholder={intl.formatMessage({
+                      id: 'events.common.placeholders.privateNote'
+                    })}
                     rows={3}
                     {...register('private_note')}
                   />

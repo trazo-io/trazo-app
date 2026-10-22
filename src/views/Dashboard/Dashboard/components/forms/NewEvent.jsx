@@ -70,7 +70,7 @@ import CardHeader from 'components/Card/CardHeader';
 import CardWithMap from 'components/Map/CardWithMap';
 import ChemicalTab from './ChemicalTab-ENHANCED';
 import FormLayout from 'components/Forms/FormLayout';
-import GeneralTab from './GeneralTab';
+import GeneralTab, { generalAsksPerParcel } from './GeneralTab';
 // EquipmentTab removed - Sprint 2 Epic 2.1: Equipment merged into Production as "Equipment Maintenance (EQ)" subtype
 import SoilManagementTab from './SoilManagementTab';
 import BusinessTab from './BusinessTab-SIMPLIFIED';
@@ -905,17 +905,35 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // form itself would not ask for this activity (no fuel on an electric irrigation pump, none
   // on pollination). A value left on a card for a field that disappeared is not sent.
   const cardRules = useMemo(() => {
-    if (!multiRules || activeEventType !== 1) return multiRules;
-    const asks = productionAsksPerParcel(eventFormData.type, eventFormData.fuel_type);
-    return {
-      ...multiRules,
-      fields: multiRules.fields.filter(
-        (field) =>
-          (field.key !== 'fuel_consumed' || asks.fuel) &&
-          (field.key !== 'equipment_hours' || asks.hours)
-      )
-    };
-  }, [multiRules, activeEventType, eventFormData.type, eventFormData.fuel_type]);
+    if (!multiRules) return multiRules;
+    if (activeEventType === 1) {
+      const asks = productionAsksPerParcel(eventFormData.type, eventFormData.fuel_type);
+      return {
+        ...multiRules,
+        fields: multiRules.fields.filter(
+          (field) =>
+            (field.key !== 'fuel_consumed' || asks.fuel) &&
+            (field.key !== 'equipment_hours' || asks.hours)
+        )
+      };
+    }
+    if (activeEventType === 3) {
+      const asks = generalAsksPerParcel(eventFormData.is_contamination_incident);
+      return {
+        ...multiRules,
+        fields: multiRules.fields.filter(
+          (field) => field.key !== 'contamination_affected_area' || asks.affectedArea
+        )
+      };
+    }
+    return multiRules;
+  }, [
+    multiRules,
+    activeEventType,
+    eventFormData.type,
+    eventFormData.fuel_type,
+    eventFormData.is_contamination_incident
+  ]);
   const [multiParcelIds, setMultiParcelIds] = useState([]);
   // Soil and pest answer their subtype in their own tab, after the parcels are picked: the
   // picker is offered while the subtype is unanswered, and settles once it is (multiParcelMode).
@@ -4682,6 +4700,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                       onDataChange={onDataChange}
                       onPrev={goToPreviousStep}
                       initialValues={eventFormData}
+                      multiTarget={multiActive}
                       hideActions={true}
                     />
                   )}
@@ -4745,6 +4764,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                       onDataChange={onDataChange}
                       onPrev={goToPreviousStep}
                       initialValues={eventFormData}
+                      multiTarget={multiActive}
                       hideActions={true}
                     />
                   )}
@@ -4788,18 +4808,24 @@ function NewEvent({ isEdit = false, eventId = null }) {
                   )}
 
                   {/* After every tab: the per-parcel cards follow the form they complete. */}
-                  {multiActive && cardRules && (
-                    <Box mt={{ base: 5, md: 6 }}>
-                      <PerParcelCards
-                        targets={multiTargets}
-                        onChange={setMultiTargets}
-                        rules={cardRules}
-                        form={multiForm(eventFormData)}
-                        sectionsByParcel={sectionsByParcel}
-                        showIssues={showMultiIssues}
-                      />
-                    </Box>
-                  )}
+                  {multiActive &&
+                    cardRules &&
+                    // Weather asks nothing per parcel (the conditions are shared): no cards.
+                    (cardRules.areaKey ||
+                      cardRules.scope ||
+                      cardRules.sections ||
+                      cardRules.fields.length > 0) && (
+                      <Box mt={{ base: 5, md: 6 }}>
+                        <PerParcelCards
+                          targets={multiTargets}
+                          onChange={setMultiTargets}
+                          rules={cardRules}
+                          form={multiForm(eventFormData)}
+                          sectionsByParcel={sectionsByParcel}
+                          showIssues={showMultiIssues}
+                        />
+                      </Box>
+                    )}
                   {multiParcelPaused && (
                     <Box mt={{ base: 5, md: 6 }}>
                       <StandardAlert

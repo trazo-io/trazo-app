@@ -140,8 +140,33 @@ const formSchemaMainInfo = object({
   }
 });
 
+/**
+ * What this form asks per parcel when one activity covers several, for the cards that ask it:
+ * the affected area belongs to a contamination incident only. The form renders it inside the
+ * incident block and blanks it on submit when the switch is off, so a card must not ask it for
+ * an ordinary activity either.
+ */
+export const generalAsksPerParcel = (isContaminationIncident) => ({
+  affectedArea: isContaminationIncident === true || isContaminationIncident === 'true'
+});
+
 const GeneralTab = forwardRef(
-  ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}, hideActions = false }, ref) => {
+  (
+    {
+      onSubmitHandler,
+      onDataChange,
+      onPrev,
+      initialValues = {},
+      hideActions = false,
+      /**
+       * Several parcels: the area an incident affected (and the section) is asked on each
+       * parcel's card below the form; the cause, the corrective action and the certifier
+       * notice stay here, because the incident is one. Keys from `multiParcelSpec.json`, type 3.
+       */
+      multiTarget = false
+    },
+    ref
+  ) => {
     const intl = useIntl();
 
     // NOP contamination fields arrive from the backend as real booleans/strings;
@@ -639,30 +664,32 @@ const GeneralTab = forwardRef(
                           />
                         </StandardField>
 
-                        <StandardField
-                          label={intl.formatMessage({
-                            id: 'events.general.fields.affectedAreaAcres',
-                            defaultMessage: 'Affected Area (acres)'
-                          })}
-                          error={errors.contamination_affected_area?.message}
-                          helpText={intl.formatMessage({
-                            id: 'events.general.help.approximateAcreageImpacted',
-                            defaultMessage: 'Approximate acreage impacted'
-                          })}>
-                          <Controller
-                            name="contamination_affected_area"
-                            control={mainInfoMethods.control}
-                            render={({ field }) => (
-                              <StandardInput
-                                {...field}
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                placeholder="e.g., 3.5"
-                              />
-                            )}
-                          />
-                        </StandardField>
+                        {!multiTarget && (
+                          <StandardField
+                            label={intl.formatMessage({
+                              id: 'events.general.fields.affectedAreaAcres',
+                              defaultMessage: 'Affected Area (acres)'
+                            })}
+                            error={errors.contamination_affected_area?.message}
+                            helpText={intl.formatMessage({
+                              id: 'events.general.help.approximateAcreageImpacted',
+                              defaultMessage: 'Approximate acreage impacted'
+                            })}>
+                            <Controller
+                              name="contamination_affected_area"
+                              control={mainInfoMethods.control}
+                              render={({ field }) => (
+                                <StandardInput
+                                  {...field}
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  placeholder="e.g., 3.5"
+                                />
+                              )}
+                            />
+                          </StandardField>
+                        )}
                       </SimpleGrid>
 
                       <StandardField
