@@ -121,6 +121,15 @@ export const historyApi = baseApi.injectEndpoints({
       providesTags: ['History']
     }),
     getEvent: build.query({
+      // One cache entry per record, whatever the caller's types: the Activities detail passes
+      // string ids, the edit form numbers, ApplicationGroupNotice the raw route strings. The
+      // default key JSON-stringifies the args, so 7 and "7" were three fetches of one record.
+      serializeQueryArgs: ({ queryArgs }) => {
+        const { companyId, farmId, eventId, eventType } = queryArgs || {};
+        return `getEvent(${[companyId, farmId, eventId, eventType]
+          .map((v) => String(v ?? ''))
+          .join('/')})`;
+      },
       query: ({ companyId, farmId, eventId, eventType }) => ({
         url: EVENT_URL(companyId, farmId, eventId, eventType),
         method: 'GET',
