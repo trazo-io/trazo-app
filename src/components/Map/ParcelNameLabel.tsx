@@ -23,9 +23,16 @@ export const ParcelNameLabel = ({
       display="inline-block"
       transform="translate(-50%, -50%)"
       pointerEvents="none"
+      // The overlay pane gives its children no width, so a wrapping label shrank to its
+      // narrowest box and broke every word into letters. Its own text width, up to 140px,
+      // wrapping between words; only a single word longer than 140px breaks inside itself
+      // (break-word does not change the max-content width, so ordinary names are unaffected).
+      w="max-content"
       maxW="140px"
       textAlign="center"
       whiteSpace="normal"
+      wordBreak="normal"
+      overflowWrap="break-word"
       px={1.5}
       py={0.5}
       borderRadius="md"
