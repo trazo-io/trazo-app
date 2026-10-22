@@ -140,6 +140,16 @@ const formSchemaMainInfo = object({
   }
 });
 
+/**
+ * What this form asks per parcel when one activity covers several, for the cards that ask it:
+ * the affected area belongs to a contamination incident only. The form renders it inside the
+ * incident block and blanks it on submit when the switch is off, so a card must not ask it for
+ * an ordinary activity either.
+ */
+export const generalAsksPerParcel = (isContaminationIncident) => ({
+  affectedArea: isContaminationIncident === true || isContaminationIncident === 'true'
+});
+
 const GeneralTab = forwardRef(
   (
     {

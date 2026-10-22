@@ -29,7 +29,7 @@ vi.mock('store/api/productApi', () => ({
 }));
 
 // @ts-expect-error GeneralTab is a .jsx module with no type declarations.
-import GeneralTab from '../GeneralTab';
+import GeneralTab, { generalAsksPerParcel } from '../GeneralTab';
 // @ts-expect-error WeatherTab is a .jsx module with no type declarations.
 import WeatherTab from '../WeatherTab';
 
@@ -84,6 +84,17 @@ describe('general with several parcels', () => {
     const several = mount(GeneralTab, incident, true);
     expect(several('contamination_affected_area')).toBe(false);
     expect(several('corrective_action_taken')).toBe(true);
+  });
+});
+
+describe('general cards ask the affected area for an incident only', () => {
+  it('mirrors the form, which asks it inside the incident block alone', () => {
+    expect(generalAsksPerParcel('true')).toEqual({ affectedArea: true });
+    expect(generalAsksPerParcel(true)).toEqual({ affectedArea: true });
+    // An ordinary activity, and the switch's untouched states.
+    for (const off of ['false', false, '', undefined]) {
+      expect(generalAsksPerParcel(off as never)).toEqual({ affectedArea: false });
+    }
   });
 });
 

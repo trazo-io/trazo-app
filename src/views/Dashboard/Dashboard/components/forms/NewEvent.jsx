@@ -70,7 +70,7 @@ import CardHeader from 'components/Card/CardHeader';
 import CardWithMap from 'components/Map/CardWithMap';
 import ChemicalTab from './ChemicalTab-ENHANCED';
 import FormLayout from 'components/Forms/FormLayout';
-import GeneralTab from './GeneralTab';
+import GeneralTab, { generalAsksPerParcel } from './GeneralTab';
 // EquipmentTab removed - Sprint 2 Epic 2.1: Equipment merged into Production as "Equipment Maintenance (EQ)" subtype
 import SoilManagementTab from './SoilManagementTab';
 import BusinessTab from './BusinessTab-SIMPLIFIED';
@@ -905,17 +905,35 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // form itself would not ask for this activity (no fuel on an electric irrigation pump, none
   // on pollination). A value left on a card for a field that disappeared is not sent.
   const cardRules = useMemo(() => {
-    if (!multiRules || activeEventType !== 1) return multiRules;
-    const asks = productionAsksPerParcel(eventFormData.type, eventFormData.fuel_type);
-    return {
-      ...multiRules,
-      fields: multiRules.fields.filter(
-        (field) =>
-          (field.key !== 'fuel_consumed' || asks.fuel) &&
-          (field.key !== 'equipment_hours' || asks.hours)
-      )
-    };
-  }, [multiRules, activeEventType, eventFormData.type, eventFormData.fuel_type]);
+    if (!multiRules) return multiRules;
+    if (activeEventType === 1) {
+      const asks = productionAsksPerParcel(eventFormData.type, eventFormData.fuel_type);
+      return {
+        ...multiRules,
+        fields: multiRules.fields.filter(
+          (field) =>
+            (field.key !== 'fuel_consumed' || asks.fuel) &&
+            (field.key !== 'equipment_hours' || asks.hours)
+        )
+      };
+    }
+    if (activeEventType === 3) {
+      const asks = generalAsksPerParcel(eventFormData.is_contamination_incident);
+      return {
+        ...multiRules,
+        fields: multiRules.fields.filter(
+          (field) => field.key !== 'contamination_affected_area' || asks.affectedArea
+        )
+      };
+    }
+    return multiRules;
+  }, [
+    multiRules,
+    activeEventType,
+    eventFormData.type,
+    eventFormData.fuel_type,
+    eventFormData.is_contamination_incident
+  ]);
   const [multiParcelIds, setMultiParcelIds] = useState([]);
   // Soil and pest answer their subtype in their own tab, after the parcels are picked: the
   // picker is offered while the subtype is unanswered, and settles once it is (multiParcelMode).
