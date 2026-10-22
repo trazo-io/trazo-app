@@ -149,6 +149,7 @@ import {
   multiParcelMode,
   newTarget,
   restorableDraftParcels,
+  voiceFieldsAskedPerParcel,
   planAlsoSeed,
   targetIssues
 } from 'utils/multiParcel';
@@ -2054,6 +2055,18 @@ function NewEvent({ isEdit = false, eventId = null }) {
   const voiceFilledLabels = useMemo(
     () => voiceFilledEntries.map((entry) => entry.label),
     [voiceFilledEntries]
+  );
+  /**
+   * What was heard that, with several parcels, is asked on each parcel's card: fuel used, the
+   * area, an irrigation depth, an amount. The form drops those keys from the shared save (each
+   * parcel's value is its own), so a spoken "20 litres of diesel" would otherwise vanish without
+   * a word. It is never copied onto the cards: one figure for one parcel is not the figure for
+   * all of them.
+   */
+  const voiceHeardPerParcel = useMemo(
+    () =>
+      multiActive ? entriesForFieldNames(voiceFieldsAskedPerParcel(cardRules, voiceBanner)) : [],
+    [multiActive, cardRules, voiceBanner, entriesForFieldNames]
   );
 
   // What an OFFER would write, value included: "Equipment Hours: 2 hours", not "Equipment Hours".
@@ -4700,6 +4713,22 @@ function NewEvent({ isEdit = false, eventId = null }) {
                               ✕
                             </Button>
                           </HStack>
+                        </Box>
+                      )}
+                      {voiceHeardPerParcel.length > 0 && !showVoiceCapture && (
+                        <Box mt={3}>
+                          <StandardAlert
+                            status="info"
+                            title={intl.formatMessage({
+                              id: 'events.multiParcel.voicePerParcelTitle'
+                            })}
+                            description={intl.formatMessage(
+                              { id: 'events.multiParcel.voicePerParcelBody' },
+                              {
+                                fields: voiceHeardPerParcel.map((entry) => entry.label).join(', ')
+                              }
+                            )}
+                          />
                         </Box>
                       )}
                     </Box>

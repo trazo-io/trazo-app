@@ -8,6 +8,7 @@ import {
   multiParcelMode,
   newTarget,
   restorableDraftParcels,
+  voiceFieldsAskedPerParcel,
   planAlsoSeed,
   targetArea,
   targetIssues,
@@ -379,5 +380,23 @@ describe('multiParcelMode: where the form stands with several parcels', () => {
     expect(multiParcelMode({ ...base, eventType: 7 })).toBe('off');
     // Harvest: production covers several, harvest does not, and its subtype is always known.
     expect(multiParcelMode({ ...base, eventType: 1, subtype: 'HA' })).toBe('off');
+  });
+});
+
+describe('voiceFieldsAskedPerParcel: a spoken value for a per-parcel field is named, not lost', () => {
+  it('picks the heard fields the cards ask per parcel, and nothing shared', () => {
+    const heard = {
+      filledFields: ['irrigation_method', 'fuel_consumed'],
+      keptFields: ['area_covered', 'fuel_consumed', 'water_source']
+    };
+    expect(voiceFieldsAskedPerParcel(irrigation, heard).sort()).toEqual([
+      'area_covered',
+      'fuel_consumed'
+    ]);
+  });
+
+  it('nothing to say without rules or a voice result', () => {
+    expect(voiceFieldsAskedPerParcel(null, { filledFields: ['fuel_consumed'] })).toEqual([]);
+    expect(voiceFieldsAskedPerParcel(irrigation, null)).toEqual([]);
   });
 });
