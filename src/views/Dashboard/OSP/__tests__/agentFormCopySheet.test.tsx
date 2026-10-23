@@ -215,6 +215,26 @@ describe('the agent-form copy sheet', () => {
     );
   });
 
+  it('says when new land is not compared, and asks the grower to list it', () => {
+    result = {
+      data: {
+        ...sheet,
+        rows: [
+          {
+            step: '4',
+            item: 'new_land',
+            kind: 'not_recorded',
+            value: null,
+            source: '',
+            extra: { reason: 'no_new_version' }
+          }
+        ]
+      }
+    };
+    renderSheet();
+    expect(screen.getByTestId('agent-sheet-new_land')).toHaveTextContent('list any land you added');
+  });
+
   it('renders nothing for an agent without a copy sheet', () => {
     result = { isError: true };
     const { container } = renderSheet();

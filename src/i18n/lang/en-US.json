@@ -8964,5 +8964,6 @@
   "osp.agentSheet.detail.continue": "Answer it on the form. Ticking \"continue\" also states that your sales information is included and that you have paid your fees or arranged a payment plan.",
   "osp.agentSheet.detail.services": "Answer it on the form: USDA NOP, plus any other programme you sell under (for example US-Canada equivalency for Canadian buyers). Each box checked may add a fee.",
   "osp.agentSheet.detail.production_partners": "Answer it on the form. It applies only if at least 75% of your certified sales go to one certified company that pays your fees, as the agent's fee schedule defines it.",
-  "osp.agentSheet.detail.signature_authorized": "Signed and dated on the agent's form by someone authorized to sign for the operation{name, select, none {} other {, usually the responsible person ({name})}}."
+  "osp.agentSheet.detail.signature_authorized": "Signed and dated on the agent's form by someone authorized to sign for the operation{name, select, none {} other {, usually the responsible person ({name})}}.",
+  "osp.agentSheet.detail.land_not_compared": "New land is checked once this year's update creates a new plan version. Until then, list any land you added since your last renewal on the form yourself."
 }

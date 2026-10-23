@@ -465,6 +465,15 @@ const AgentFormCopySheet: React.FC<Props> = ({ companyId, farmId, ospId }) => {
       }
       case 'new_land': {
         const parts: string[] = [];
+        // No second plan version this year, so there is no date to count from (review of back #218).
+        if (e.reason)
+          parts.push(
+            intl.formatMessage({
+              id: 'osp.agentSheet.detail.land_not_compared',
+              defaultMessage:
+                "New land is checked once this year's update creates a new plan version. Until then, list any land you added since your last renewal on the form yourself."
+            })
+          );
         if (e.since)
           parts.push(
             row.kind === 'value'
