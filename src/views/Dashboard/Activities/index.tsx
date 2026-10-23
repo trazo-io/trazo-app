@@ -1010,9 +1010,15 @@ const ActivitiesPage = () => {
       )}
 
       {/* The day sheet: every activity on one date, in full, with nothing truncated and
-          nothing hidden behind a chip cap. */}
+          nothing hidden behind a chip cap.
+          Stepped aside while an activity is open, never stacked under it: Chakra gives the
+          scroll lock only to the BOTTOM modal (`enabled: index === 1` in modal-focus), and
+          react-remove-scroll lets the wheel through only inside that modal's own DOM node.
+          The detail modal portals to a different node, so stacked on the sheet its body
+          could not scroll at all. `daySheetIso` survives, so closing the detail returns
+          the grower to the same day. */}
       <ResponsiveModal
-        isOpen={!!daySheetIso}
+        isOpen={!!daySheetIso && !detailRow}
         onClose={() => setDaySheetIso(null)}
         size="lg"
         header={
