@@ -8968,5 +8968,6 @@
   "osp.agentSheet.detail.land_not_compared": "New land is checked once this year's update creates a new plan version. Until then, list any land you added since your last renewal on the form yourself.",
   "farm.form.contactPerson.label": "Responsible person",
   "farm.form.contactPerson.helpText": "The person responsible for the operation, named on your renewal packet and as the signer of your annual update (7 CFR 205.401(b)). Never shown to buyers.",
-  "farm.form.contactPerson.placeholder": "e.g., Laurel Brandt"
+  "farm.form.contactPerson.placeholder": "e.g., Laurel Brandt",
+  "osp.agentSheet.detail.sales_not_over": "Calendar {year} is not over yet, so there is no figure to copy. Set the 12 months your agent asks for on your annual update above."
 }

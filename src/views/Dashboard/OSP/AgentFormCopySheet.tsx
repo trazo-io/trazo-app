@@ -555,6 +555,16 @@ const AgentFormCopySheet: React.FC<Props> = ({ companyId, farmId, ospId }) => {
             id: 'osp.agentSheet.detail.sales_no_filing',
             defaultMessage: "Start this year's annual update to get a figure."
           });
+        // The calendar-year fallback can still be running (a January cohort renews in November).
+        if (e.reason === 'period_not_over')
+          return intl.formatMessage(
+            {
+              id: 'osp.agentSheet.detail.sales_not_over',
+              defaultMessage:
+                'Calendar {year} is not over yet, so there is no figure to copy. Set the 12 months your agent asks for on your annual update above.'
+            },
+            { year: String(e.period_start).slice(0, 4) }
+          );
         const period = e.period_stated
           ? intl.formatMessage(
               { id: 'osp.agentSheet.detail.sales_period', defaultMessage: '{start} to {end}' },
