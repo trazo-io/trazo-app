@@ -22,7 +22,9 @@ const documentsQuery = vi.fn();
 let canWrite = true;
 
 vi.mock('store/api/historyApi', () => ({
-  useDeleteEventMutation: () => [vi.fn(), { isLoading: false }]
+  useDeleteEventMutation: () => [vi.fn(), { isLoading: false }],
+  // ApplicationGroupNotice reads the record's detail; none of these records is grouped.
+  useGetEventQuery: () => ({ data: undefined })
 }));
 vi.mock('store/api/amendmentsApi', () => ({
   useGetEventAmendmentsQuery: (...args: unknown[]) => amendmentsQuery(...args),
