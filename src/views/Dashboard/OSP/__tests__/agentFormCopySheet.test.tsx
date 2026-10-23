@@ -7,7 +7,7 @@
  */
 import React from 'react';
 import { ChakraProvider } from '@chakra-ui/react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -34,7 +34,41 @@ const sheet = {
       source: 'company',
       extra: {}
     },
-    { step: '1', item: 'client_id', kind: 'not_in_trazo', value: null, source: '', extra: {} },
+    {
+      step: '1',
+      item: 'client_id',
+      kind: 'not_recorded',
+      value: null,
+      source: '',
+      extra: {
+        where: 'agent_certificate_and_letters',
+        edit: { target: 'establishment', field: 'certifier_client_id', agent: 'otco' }
+      }
+    },
+    {
+      step: '1',
+      item: 'contact_email',
+      kind: 'value',
+      value: 'laurel@calapooiabend.example',
+      source: 'establishment',
+      extra: {}
+    },
+    {
+      step: '1',
+      item: 'public_email',
+      kind: 'yours',
+      value: null,
+      source: '',
+      extra: { same_as_above: true }
+    },
+    {
+      step: '4',
+      item: 'submit_changes_early',
+      kind: 'note',
+      value: null,
+      source: '',
+      extra: { osp_portal_url: 'https://myotco.org/Login.aspx' }
+    },
     { step: '2', item: 'continue_or_withdraw', kind: 'yours', value: null, source: '', extra: {} },
     {
       step: '4',
@@ -68,6 +102,15 @@ let result: { data?: unknown; isError?: boolean } = { data: sheet };
 vi.mock('store/api/ospApi', () => ({
   useGetAgentFormSheetQuery: () => result
 }));
+
+const editFarm = vi.fn((_args: Record<string, unknown>) => ({ unwrap: () => Promise.resolve({}) }));
+vi.mock('store/api/companyApi', () => ({
+  useEditFarmMutation: () => [editFarm, { isLoading: false }],
+  useUpdateCompanyMutation: () => [vi.fn(), { isLoading: false }]
+}));
+
+let role = { canWrite: true, canManageCompany: true };
+vi.mock('hooks/useUserRole', () => ({ useUserRole: () => role }));
 
 import AgentFormCopySheet from '../AgentFormCopySheet';
 
@@ -132,6 +175,43 @@ describe('the agent-form copy sheet', () => {
     expect(screen.getByText('Paso 1')).toBeInTheDocument();
     expect(screen.getByTestId('agent-sheet-continue_or_withdraw')).toHaveTextContent(
       'Lo respondes tú'
+    );
+  });
+
+  it('lets the grower add the Client ID once, saved with the agent that issued it', async () => {
+    result = { data: sheet };
+    role = { canWrite: true, canManageCompany: true };
+    editFarm.mockClear();
+    renderSheet();
+    const row = screen.getByTestId('agent-sheet-client_id');
+    expect(row).toHaveTextContent('not your certificate number');
+    fireEvent.click(within(row).getByRole('button', { name: 'Add it to Trazo' }));
+    fireEvent.change(within(row).getByLabelText('Value'), { target: { value: 'OT-4471' } });
+    fireEvent.click(within(row).getByRole('button', { name: 'Save' }));
+    await Promise.resolve();
+    expect(editFarm).toHaveBeenCalledWith({
+      companyId: '1',
+      farmId: '2',
+      establishmentData: { certifier_client_id: 'OT-4471', certifier_client_id_agent: 'otco' }
+    });
+  });
+
+  it('offers no edit to a viewer', () => {
+    result = { data: sheet };
+    role = { canWrite: false, canManageCompany: false };
+    renderSheet();
+    expect(screen.queryByRole('button', { name: 'Add it to Trazo' })).toBeNull();
+    role = { canWrite: true, canManageCompany: true };
+  });
+
+  it('names a form instruction as the form\'s, and offers "same as above" with the value', () => {
+    result = { data: sheet };
+    renderSheet();
+    expect(screen.getByTestId('agent-sheet-submit_changes_early')).toHaveTextContent(
+      'From the form'
+    );
+    expect(screen.getByTestId('agent-sheet-public_email')).toHaveTextContent(
+      'only if it should be laurel@calapooiabend.example'
     );
   });
 
