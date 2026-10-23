@@ -21,7 +21,7 @@ const updateUpdate = vi.fn((_args: { data: Record<string, unknown> }) => ({
 const lastYear = {
   id: 5,
   reporting_year: 2026,
-  revision_number: 1,
+  revision_number: 2,
   changes_summary: 'Codling moth traps moved.',
   additions: [],
   deletions: [],
@@ -32,6 +32,16 @@ const lastYear = {
   submitted_at: '2025-11-03T00:00:00Z',
   signed_at: '2025-11-03T00:00:00Z',
   is_locked: true
+};
+// Revision 1 of 2026 stated the calendar year; the agent wanted Oct-Sep, so revision 2 corrected it
+// and revision 1 was superseded. Listed first, as a server may return it.
+const supersededLastYear = {
+  ...lastYear,
+  id: 4,
+  revision_number: 1,
+  sales_period_start: '2024-01-01',
+  sales_period_end: '2024-12-31',
+  superseded_at: '2025-11-10T00:00:00Z'
 };
 const draft = {
   id: 7,
@@ -50,7 +60,7 @@ const draft = {
 };
 
 vi.mock('store/api/ospAnnualUpdateApi', () => ({
-  useGetOSPAnnualUpdatesQuery: () => ({ data: [lastYear, draft] }),
+  useGetOSPAnnualUpdatesQuery: () => ({ data: [supersededLastYear, lastYear, draft] }),
   useCreateOSPAnnualUpdateMutation: () => [vi.fn(), { isLoading: false }],
   useUpdateOSPAnnualUpdateMutation: () => [updateUpdate, { isLoading: false }],
   useSignOSPAnnualUpdateMutation: () => [vi.fn(), { isLoading: false }],
@@ -129,5 +139,10 @@ describe('the sales period on the annual update', () => {
       screen.getByText(/Your 2026 update used Oct 1, 2024 to Sep 30, 2025/)
     ).toBeInTheDocument();
     expect((screen.getByLabelText('From') as HTMLInputElement).value).toBe('');
+  });
+
+  it('takes the hint from the revision the year stands on, never a superseded one', () => {
+    editDraft();
+    expect(screen.queryByText(/Jan 1, 2024 to Dec 31, 2024/)).toBeNull();
   });
 });

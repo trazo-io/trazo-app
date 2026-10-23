@@ -591,9 +591,15 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
             u.reporting_year < current &&
             u.sales_period_start &&
             u.sales_period_end &&
-            !u.withdrawn_at
+            // The revision the year stands on: a corrected period must not come back as the
+            // hint (review of app #191).
+            isCurrentRevision(u)
         )
-        .sort((a, b) => b.reporting_year - a.reporting_year)[0] ?? null
+        .sort(
+          (a, b) =>
+            b.reporting_year - a.reporting_year ||
+            (b.revision_number ?? 1) - (a.revision_number ?? 1)
+        )[0] ?? null
     );
   }, [updates, form.reporting_year, editingId]);
 
