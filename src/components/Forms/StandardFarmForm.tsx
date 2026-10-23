@@ -173,6 +173,9 @@ const establishmentSchema = object({
   zipCode: string().optional(),
   // CA DPR Operator ID / restricted-materials permit number (PUR box 3). California only.
   caOperatorId: string().max(30).optional(),
+  // § 205.401(b): the person responsible for the operation, named on the renewal packet and the
+  // signer of the annual update. Withheld from every public payload (CONSUMER_WITHHELD_FARM_FIELDS).
+  contactPerson: string().max(100).optional(),
   description: string().optional(),
   custom_message: string().optional(),
   establishmentType: string().optional(),
@@ -208,6 +211,7 @@ interface EstablishmentFormData {
   zone?: string;
   zipCode?: string;
   caOperatorId?: string;
+  contactPerson?: string;
   description?: string;
   custom_message?: string;
   establishmentType?: string;
@@ -633,6 +637,26 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                     />
                   </StandardField>
                 </SimpleGrid>
+
+                {/* The person responsible for the operation (§ 205.401(b)). The renewal packet's cover
+                    and the annual update's signer read it; until 2026-10-23 nothing in the app could
+                    set it, while the packet told growers to set it here. */}
+                <StandardField
+                  label={intl.formatMessage({ id: 'farm.form.contactPerson.label' })}
+                  error={errors.contactPerson?.message}
+                  helpText={t('farm.form.contactPerson.helpText')}>
+                  <Controller
+                    name="contactPerson"
+                    control={methods.control}
+                    render={({ field }) => (
+                      <StandardInput
+                        {...field}
+                        value={field.value ?? ''}
+                        placeholder={t('farm.form.contactPerson.placeholder')}
+                      />
+                    )}
+                  />
+                </StandardField>
 
                 {/* Description */}
                 <StandardField

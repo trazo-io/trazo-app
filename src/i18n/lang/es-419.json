@@ -6054,7 +6054,7 @@
   "osp.annual.signHelp": "Al firmar se registran tu nombre y la fecha junto a lo que dice exactamente esta actualización. Después de firmarla no se puede editar; un cambio se hace como corrección.",
   "osp.annual.signerTitle": "Cargo (opcional)",
   "osp.annual.signerName": "Firmado por (la persona responsable)",
-  "osp.annual.signerHint": "Quien firma es la persona responsable del perfil de la finca; cámbiala allí. Registrado en Trazo por {account}.",
+  "osp.annual.signerHint": "Quien firma es la persona responsable que defines al editar la finca; cámbiala allí. Registrado en Trazo por {account}.",
   "osp.annual.signIsTheGrowers": "El productor firma desde su propia cuenta. Esta cuenta de configuración no puede hacerlo.",
   "osp.annual.filedWithoutSummary": "Esta presentación no tiene resumen de cambios",
   "osp.annual.summaryNotWritten": "Resumen sin escribir",
@@ -6372,7 +6372,7 @@
   "osp.review.finding.new_ground": "Tierra que la operación comenzó a manejar después de escribir las respuestas del plan",
   "osp.review.finding.record_types_carried_forward": "Tipos de registro confirmados en un plan anterior y no reafirmados en este — declara sin cambios la sección de registros en tu actualización anual, o vuelve a marcarlos",
   "osp.review.finding.record_types_evidenced_not_confirmed": "Tus registros muestran estos, pero el plan no confirma que los mantengas",
-  "osp.review.finding.responsible_person_missing": "El perfil de la finca no tiene persona de contacto — § 205.401(b) pide el nombre de la persona responsable",
+  "osp.review.finding.responsible_person_missing": "La finca no tiene persona responsable (defínela al editar la finca); § 205.401(b) pide el nombre de la persona responsable",
   "osp.review.finding.seasons_closed": "Producciones cerradas después de escribir las respuestas del plan",
   "osp.review.finding.seasons_started": "Producciones iniciadas después de escribir las respuestas del plan",
   "osp.review.more": "… y {n} más",
@@ -8965,5 +8965,8 @@
   "osp.agentSheet.detail.services": "Respóndelo en el formulario: USDA NOP, más cualquier otro programa con el que vendas (por ejemplo, la equivalencia de Estados Unidos para compradores canadienses). Cada casilla marcada puede sumar una tarifa.",
   "osp.agentSheet.detail.production_partners": "Respóndelo en el formulario. Corresponde solo si al menos el 75% de tus ventas certificadas van a una empresa certificada que paga tus tarifas, según la tabla de tarifas del agente.",
   "osp.agentSheet.detail.signature_authorized": "Lo firma y fecha en el formulario del agente alguien autorizado a firmar por la operación{name, select, none {} other {, por lo general la persona responsable ({name})}}.",
-  "osp.agentSheet.detail.land_not_compared": "La tierra nueva se revisa cuando la actualización de este año crea una nueva versión del plan. Hasta entonces, anota tú en el formulario cualquier tierra que agregaste desde tu última renovación."
+  "osp.agentSheet.detail.land_not_compared": "La tierra nueva se revisa cuando la actualización de este año crea una nueva versión del plan. Hasta entonces, anota tú en el formulario cualquier tierra que agregaste desde tu última renovación.",
+  "farm.form.contactPerson.label": "Persona responsable",
+  "farm.form.contactPerson.helpText": "La persona responsable de la operación, nombrada en tu paquete de renovación y como firmante de tu actualización anual (7 CFR 205.401(b)). Nunca se muestra a los compradores.",
+  "farm.form.contactPerson.placeholder": "p. ej., Laurel Brandt"
 }

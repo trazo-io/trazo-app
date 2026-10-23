@@ -168,6 +168,18 @@ describe('farm form — June-era and wiped fields stay out of the payload', () =
   });
 });
 
+describe('farm form: the responsible person has an input, and an edit never blanks it', () => {
+  // The renewal packet's cover and the annual update's signer read `contact_person`, and the packet
+  // told growers to set it on the farm while no screen could (2026-10-23).
+  it('the form binds an input to it, and AddFarm sends it on create and edit and loads it back', () => {
+    const form = read('components/Forms/StandardFarmForm.tsx');
+    expect(form).toContain('name="contactPerson"');
+    const source = read('views/Dashboard/Dashboard/Farm/AddFarm.tsx');
+    expect(source.match(/contact_person: data\.contactPerson/g)?.length).toBe(2);
+    expect(source).toContain('contactPerson: establishmentData.contact_person');
+  });
+});
+
 describe('parcel compliance card mutation — pump-plant only', () => {
   it('updateParcelCompliance sends no §205.202 keys', () => {
     const source = read('store/api/productApi.js');

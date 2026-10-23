@@ -6054,7 +6054,7 @@
   "osp.annual.signHelp": "Signing records your name and the date against exactly what this update says. After signing it cannot be edited; a change is made as a correction.",
   "osp.annual.signerTitle": "Title (optional)",
   "osp.annual.signerName": "Signed by (the responsible person)",
-  "osp.annual.signerHint": "The signer is the responsible person on the farm profile; change it there. Recorded in Trazo by {account}.",
+  "osp.annual.signerHint": "The signer is the responsible person set when you edit the farm; change it there. Recorded in Trazo by {account}.",
   "osp.annual.signIsTheGrowers": "The grower signs from their own account. This setup account cannot.",
   "osp.annual.filedWithoutSummary": "No summary of changes on this filing",
   "osp.annual.summaryNotWritten": "Summary not written",
@@ -6372,7 +6372,7 @@
   "osp.review.finding.new_ground": "Ground the operation began managing after the plan's answers were written",
   "osp.review.finding.record_types_carried_forward": "Record types confirmed on an earlier plan and not re-stated on this one — attest the recordkeeping section unchanged on your annual update, or re-tick them",
   "osp.review.finding.record_types_evidenced_not_confirmed": "Your records show these, but the plan does not confirm you keep them",
-  "osp.review.finding.responsible_person_missing": "No contact person is set on the farm profile — § 205.401(b) asks for the responsible person by name",
+  "osp.review.finding.responsible_person_missing": "No responsible person is set for the farm (set it when you edit the farm); § 205.401(b) asks for the responsible person by name",
   "osp.review.finding.seasons_closed": "Productions closed after the plan's answers were written",
   "osp.review.finding.seasons_started": "Productions started after the plan's answers were written",
   "osp.review.more": "… and {n} more",
@@ -8965,5 +8965,8 @@
   "osp.agentSheet.detail.services": "Answer it on the form: USDA NOP, plus any other programme you sell under (for example US-Canada equivalency for Canadian buyers). Each box checked may add a fee.",
   "osp.agentSheet.detail.production_partners": "Answer it on the form. It applies only if at least 75% of your certified sales go to one certified company that pays your fees, as the agent's fee schedule defines it.",
   "osp.agentSheet.detail.signature_authorized": "Signed and dated on the agent's form by someone authorized to sign for the operation{name, select, none {} other {, usually the responsible person ({name})}}.",
-  "osp.agentSheet.detail.land_not_compared": "New land is checked once this year's update creates a new plan version. Until then, list any land you added since your last renewal on the form yourself."
+  "osp.agentSheet.detail.land_not_compared": "New land is checked once this year's update creates a new plan version. Until then, list any land you added since your last renewal on the form yourself.",
+  "farm.form.contactPerson.label": "Responsible person",
+  "farm.form.contactPerson.helpText": "The person responsible for the operation, named on your renewal packet and as the signer of your annual update (7 CFR 205.401(b)). Never shown to buyers.",
+  "farm.form.contactPerson.placeholder": "e.g., Laurel Brandt"
 }

@@ -13,7 +13,7 @@
  * - `climate_zone`, `employee_count`: wire-killed 2026-08-07, no input in this form.
  * - `about`, `main_activities`, `location_highlights`: prose fields with no input in
  *   this form (round-trip only); display-only legacy data on ProfileFarm.
- * - `email`, `phone`, `country`, `contact_person`, `contact_phone`, `contact_email`:
+ * - `email`, `phone`, `country`, `contact_phone`, `contact_email`:
  *   no inputs in this form; a form should not send fields it never asks for.
  *
  * Kept: identity/location/operations fields with live readers (ProfileFarm and the
@@ -94,6 +94,7 @@ function AddFarm({ isEdit = false }: Props) {
           state: data.state || '',
           zip_code: data.zipCode || '',
           ca_operator_id: data.caOperatorId || '',
+          contact_person: data.contactPerson || '',
           description: data.description || '',
           custom_message: data.custom_message || '',
           establishment_type: data.establishmentType || '',
@@ -143,6 +144,7 @@ function AddFarm({ isEdit = false }: Props) {
           state: data.state || '',
           zip_code: data.zipCode || '',
           ca_operator_id: data.caOperatorId || '',
+          contact_person: data.contactPerson || '',
           description: data.description || '',
           custom_message: data.custom_message || '',
           establishment_type: data.establishmentType || '',
@@ -249,6 +251,7 @@ function AddFarm({ isEdit = false }: Props) {
       state: establishmentData.state || '',
       zipCode: establishmentData.zip_code || '',
       caOperatorId: establishmentData.ca_operator_id || '',
+      contactPerson: establishmentData.contact_person || '',
       description: establishmentData.description || '',
       custom_message: establishmentData.custom_message || '',
       establishmentType: establishmentData.establishment_type || establishmentData.type || '',
