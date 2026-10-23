@@ -85,6 +85,8 @@ import StateOrganicRegistrationCard, {
 import OSPAnnualUpdateCard, { OSPRenewalSummary } from './OSPAnnualUpdateCard';
 import { selectPlanOnFile } from './selectPlanOnFile';
 import { selectWorkingOsp } from './selectWorkingOsp';
+import AgentFormCopySheet from './AgentFormCopySheet';
+import { useComplianceExports } from 'components/Guards/ComplianceExportsGuard';
 import { FIRST_SECTION_WITHOUT_TEXT } from './ospLinks';
 import { useFarm, useFarmState } from 'hooks/useMeasurementSystem';
 import { useUserRole } from 'hooks/useUserRole';
@@ -378,6 +380,10 @@ const OSPView: React.FC = () => {
   const [selectedOspId, setSelectedOspId] = useState<number | null>(null);
 
   const focusedOspId = selectedOspId ?? newestSummaryId;
+
+  const hasComplianceExports = useComplianceExports();
+  // The packet's default (PacketDownloadControl): the working version, a draft during renewal.
+  const workingOspForSheet = selectWorkingOsp(ospSummaries);
 
   // The § 205.406 filing continues the plan the CERTIFIER holds, which is not the version the
   // page is focused on. Focus defaults to the newest version — the working draft — and the
@@ -1274,6 +1280,13 @@ const OSPView: React.FC = () => {
           signer={{ responsiblePerson: farmContactPerson, account: accountName }}
           isSetupOperator={isSetupOperator}
         />
+      )}
+
+      {/* What to copy onto the agent's own renewal form, for the plan the packet is built from
+          by default. Compliance only, like the packet it is read from; nothing for an agent
+          Trazo has no copy sheet for. */}
+      {companyId && farmId && hasComplianceExports && workingOspForSheet && (
+        <AgentFormCopySheet companyId={companyId} farmId={farmId} ospId={workingOspForSheet.id} />
       )}
 
       {/* CDFA State Organic Program producer registration (CA Food & Ag Code §§ 46000-46029).

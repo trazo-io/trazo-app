@@ -27,6 +27,11 @@ export interface OSPAnnualUpdate {
    *  agent asked for nothing further; null is unanswered. */
   agent_requested_info?: string;
   agent_requested_info_none?: boolean | null;
+  /** The 12 months the operation reports its sales for (ISO dates, both or neither). Each agent's
+   *  fee form sets its own; with none stated, 02 counts the prior calendar year. Signed with the
+   *  filing. */
+  sales_period_start?: string | null;
+  sales_period_end?: string | null;
   /** Revision chain. A filed update is never edited; a correction is the next revision. */
   revision_number?: number;
   /** On a correction: what it corrects in the revision before it, in the operator's words. Printed
@@ -82,6 +87,8 @@ export type OSPAnnualUpdateContent = Pick<
   | 'application_info_changes'
   | 'agent_requested_info'
   | 'agent_requested_info_none'
+  | 'sales_period_start'
+  | 'sales_period_end'
   | 'correction_note'
 >;
 

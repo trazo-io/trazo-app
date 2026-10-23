@@ -234,6 +234,12 @@ export const OSP_MODULE_PDF_URL = (
   (parcelId != null ? `&parcel=${parcelId}` : '');
 export const OSP_PACKET_URL = (companyId: string, farmId: string, ospId: string | number) =>
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/packet/`;
+// What to copy onto the certifying agent's own renewal form (404 for an agent without one).
+export const OSP_AGENT_FORM_SHEET_URL = (
+  companyId: string,
+  farmId: string,
+  ospId: string | number
+) => `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/agent-form-sheet/`;
 
 // Guided OSP modules — WS-2.4 (questionnaire definitions + per-module answers)
 export const OSP_MODULE_DEFINITIONS_URL = (

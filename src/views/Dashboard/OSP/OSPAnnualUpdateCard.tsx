@@ -21,7 +21,7 @@ import {
 import { FaCalendarCheck } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
-import { formatDateFromTimestamp } from 'utils/dateOnly';
+import { formatDateFromTimestamp, formatDateOnly, todayLocalISODate } from 'utils/dateOnly';
 
 import {
   StandardButton,
@@ -140,7 +140,9 @@ const FIELD_KEYS = [
   'additions',
   'deletions',
   'application_info_changes',
-  'agent_requested_info'
+  'agent_requested_info',
+  'sales_period_start',
+  'sales_period_end'
 ] as const;
 type FieldKey = (typeof FIELD_KEYS)[number];
 type FieldErrors = Partial<Record<FieldKey, string>>;
@@ -388,6 +390,8 @@ const emptyForm = (year: number) => ({
   application_info_changes: '',
   agent_requested_info: '',
   agent_requested_info_none: false,
+  sales_period_start: '',
+  sales_period_end: '',
   correction_note: '',
   sections_unchanged: emptyAttestation()
 });
@@ -534,6 +538,16 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
     if (additions) errors.additions = additions;
     const deletions = entryListError(form.deletions);
     if (deletions) errors.deletions = deletions;
+    // Half a period is no period. The server also refuses one longer than 12 months or still
+    // running; those come back as field errors on the same inputs.
+    if (Boolean(form.sales_period_start) !== Boolean(form.sales_period_end)) {
+      const message = intl.formatMessage({
+        id: 'osp.annual.salesPeriod.bothEnds',
+        defaultMessage: 'State both ends of the sales period, or leave both empty.'
+      });
+      if (!form.sales_period_start) errors.sales_period_start = message;
+      else errors.sales_period_end = message;
+    }
     return errors;
   };
 
@@ -565,6 +579,24 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
   // at the bottom, after the grower had filled it in.
   const selectedYearIsFiled = editingId == null && Boolean(duplicateForYear?.is_locked);
 
+  // The period the operation stated last time, shown as a hint and never filled in for them:
+  // Oregon Tilth asks for the same 12 months every year, and the grower is the one who says so.
+  const previousSalesPeriod = useMemo(() => {
+    const current = Number(form.reporting_year);
+    return (
+      [...updates]
+        .filter(
+          (u) =>
+            u.id !== editingId &&
+            u.reporting_year < current &&
+            u.sales_period_start &&
+            u.sales_period_end &&
+            !u.withdrawn_at
+        )
+        .sort((a, b) => b.reporting_year - a.reporting_year)[0] ?? null
+    );
+  }, [updates, form.reporting_year, editingId]);
+
   const startEdit = (u: OSPAnnualUpdate) => {
     setEditingId(u.id);
     setFieldErrors({});
@@ -576,6 +608,8 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
       application_info_changes: u.application_info_changes || '',
       agent_requested_info: u.agent_requested_info || '',
       agent_requested_info_none: u.agent_requested_info_none === true,
+      sales_period_start: u.sales_period_start || '',
+      sales_period_end: u.sales_period_end || '',
       correction_note: u.correction_note || '',
       sections_unchanged: { ...emptyAttestation(), ...(u.sections_unchanged_attestation || {}) }
     });
@@ -660,6 +694,9 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
       agent_requested_info: form.agent_requested_info.trim(),
       // Unticked is "not answered", never "the agent asked for something".
       agent_requested_info_none: form.agent_requested_info_none ? true : null,
+      // Both or neither; an empty box is "not stated", sent as null, never an empty string.
+      sales_period_start: form.sales_period_start || null,
+      sales_period_end: form.sales_period_end || null,
       // Only a correction says what it corrects (run 3, 2026-10-02).
       ...(editingIsCorrection ? { correction_note: form.correction_note.trim() } : {})
     };
@@ -1433,6 +1470,84 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
                         })}
                       </Text>
                     </Checkbox>
+                  </Box>
+
+                  <Box>
+                    <FormLabel fontSize="sm" fontWeight="semibold" mb={1}>
+                      {intl.formatMessage({
+                        id: 'osp.annual.salesPeriod.label',
+                        defaultMessage: 'Sales reporting period'
+                      })}
+                    </FormLabel>
+                    <Text fontSize="sm" color="gray.600" mb={2}>
+                      {intl.formatMessage({
+                        id: 'osp.annual.salesPeriod.help',
+                        defaultMessage:
+                          "The 12 months your certifying agent's fee form asks you to report sales for. Use the same period every year. Left empty, the sales subtotal on your annual update covers the previous calendar year."
+                      })}
+                    </Text>
+                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+                      <Box
+                        ref={(el: HTMLDivElement | null) => {
+                          fieldRefs.current.sales_period_start = el;
+                        }}>
+                        <StandardField
+                          label={intl.formatMessage({
+                            id: 'osp.annual.salesPeriod.start',
+                            defaultMessage: 'From'
+                          })}
+                          error={fieldErrors.sales_period_start}>
+                          <StandardInput
+                            type="date"
+                            value={form.sales_period_start}
+                            max={form.sales_period_end || todayLocalISODate()}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                              set('sales_period_start', e.target.value)
+                            }
+                          />
+                        </StandardField>
+                      </Box>
+                      <Box
+                        ref={(el: HTMLDivElement | null) => {
+                          fieldRefs.current.sales_period_end = el;
+                        }}>
+                        <StandardField
+                          label={intl.formatMessage({
+                            id: 'osp.annual.salesPeriod.end',
+                            defaultMessage: 'To'
+                          })}
+                          error={fieldErrors.sales_period_end}>
+                          <StandardInput
+                            type="date"
+                            value={form.sales_period_end}
+                            min={form.sales_period_start || undefined}
+                            max={todayLocalISODate()}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                              set('sales_period_end', e.target.value)
+                            }
+                          />
+                        </StandardField>
+                      </Box>
+                    </SimpleGrid>
+                    {previousSalesPeriod && (
+                      <Text fontSize="xs" color="gray.600" mt={2}>
+                        {intl.formatMessage(
+                          {
+                            id: 'osp.annual.salesPeriod.previous',
+                            defaultMessage:
+                              'Your {year} update used {start} to {end}. Your agent expects the same months each year.'
+                          },
+                          {
+                            year: previousSalesPeriod.reporting_year,
+                            start: formatDateOnly(
+                              previousSalesPeriod.sales_period_start,
+                              intl.locale
+                            ),
+                            end: formatDateOnly(previousSalesPeriod.sales_period_end, intl.locale)
+                          }
+                        )}
+                      </Text>
+                    )}
                   </Box>
 
                   <Divider />
