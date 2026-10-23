@@ -80,11 +80,12 @@ interface OSPCreate extends OSPScope {
  *   not_recorded  Trazo has a place for it and it is empty.
  *   not_in_trazo  Trazo keeps no such record.
  *   yours         the operator's own election, commitment or signature. Never pre-answered.
+ *   note          an instruction the agent's form gives; nothing to answer.
  */
 export interface AgentFormSheetRow {
   step: string;
   item: string;
-  kind: 'value' | 'not_recorded' | 'not_in_trazo' | 'yours';
+  kind: 'value' | 'not_recorded' | 'not_in_trazo' | 'yours' | 'note';
   value: unknown;
   source: string;
   extra: Record<string, unknown>;
@@ -96,6 +97,8 @@ export interface AgentFormSheet {
   form: { title: string; document_id: string; revision: string; url: string };
   plan_version: number;
   filing_id: number | null;
+  establishment_id: number;
+  company_id: number | null;
   rows: AgentFormSheetRow[];
 }
 
@@ -325,9 +328,12 @@ const ospApi = baseApi.injectEndpoints({
         method: 'GET',
         credentials: 'include'
       }),
+      // 'Farm' and 'Company': a Client ID, contact or DBA filled from the sheet is saved there.
       providesTags: (_r, _e, { ospId }) => [
         { type: 'OSP', id: Number(ospId) },
-        { type: 'OSPAnnualUpdate', id: 'LIST' }
+        { type: 'OSPAnnualUpdate', id: 'LIST' },
+        'Farm',
+        'Company'
       ]
     }),
 
