@@ -235,6 +235,35 @@ describe('the agent-form copy sheet', () => {
     expect(screen.getByTestId('agent-sheet-new_land')).toHaveTextContent('list any land you added');
   });
 
+  it('gives no sales figure for a calendar year that is not over', () => {
+    result = {
+      data: {
+        ...sheet,
+        rows: [
+          {
+            step: '6',
+            item: 'gross_sales',
+            kind: 'not_recorded',
+            value: null,
+            source: 'sales_records',
+            extra: {
+              period_start: '2026-01-01',
+              period_end: '2026-12-31',
+              period_stated: false,
+              n_sales: 7,
+              n_unpriced: 0,
+              reason: 'period_not_over'
+            }
+          }
+        ]
+      }
+    };
+    renderSheet();
+    const row = screen.getByTestId('agent-sheet-gross_sales');
+    expect(row).toHaveTextContent('Calendar 2026 is not over yet');
+    expect(row).not.toHaveTextContent('No sale invoiced');
+  });
+
   it('renders nothing for an agent without a copy sheet', () => {
     result = { isError: true };
     const { container } = renderSheet();
