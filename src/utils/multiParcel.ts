@@ -418,3 +418,24 @@ export const multiParcelMode = ({
   if (!subtype) return 'picking';
   return pickedCount > 0 ? 'paused' : 'off';
 };
+
+/**
+ * The fields a voice result filled or offered that, with several parcels, the parcel CARDS ask:
+ * the rules' fields and area, as the wizard narrows them (`cardRules`: no fuel on an electric
+ * pump, no affected area outside an incident). Not the spec's whole per-parcel set, or the
+ * notice would point to an input no card has. The wizard drops those keys from the shared save,
+ * so it tells the grower instead of letting a spoken value vanish; it never copies one onto the
+ * cards, because one parcel's figure is not every parcel's.
+ */
+export const voiceFieldsAskedPerParcel = (
+  rules: Pick<MultiParcelRules, 'fields' | 'areaKey'> | null | undefined,
+  banner: { filledFields?: string[]; keptFields?: string[] } | null | undefined
+): string[] => {
+  if (!rules || !banner) return [];
+  const onCards = new Set([
+    ...rules.fields.map((field) => field.key),
+    ...(rules.areaKey ? [rules.areaKey] : [])
+  ]);
+  const heard = [...(banner.filledFields || []), ...(banner.keptFields || [])];
+  return Array.from(new Set(heard.filter((name) => onCards.has(name))));
+};

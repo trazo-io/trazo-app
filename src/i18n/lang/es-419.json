@@ -8854,6 +8854,8 @@
   "events.group.title": "{count, plural, other {Una aplicación en # parcelas}}",
   "events.group.detailBody": "La misma aplicación también está registrada en {names}. Cada parcela tiene un registro propio, con la superficie y las cantidades de esa parcela.",
   "events.group.editBody": "Los cambios que guardes aquí se aplican solo a esta parcela. La misma aplicación también está registrada en {names}: edita esos registros para cambiarlos.",
+  "events.multiParcel.voicePerParcelTitle": "Se pide en cada parcela",
+  "events.multiParcel.voicePerParcelBody": "Escuchamos {fields}. Con varias parcelas esto se pide en cada parcela más abajo, así que no se completó para todas. Escribe el valor de cada parcela en la tarjeta de esa parcela.",
   "picker.modeLabel": "Mostrar parcelas como",
   "picker.list": "Lista",
   "picker.map": "Mapa",

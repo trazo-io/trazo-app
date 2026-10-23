@@ -8854,6 +8854,8 @@
   "events.group.title": "{count, plural, other {One application on # parcels}}",
   "events.group.detailBody": "The same application is also recorded on {names}. Each parcel has its own record, with its own area and amounts.",
   "events.group.editBody": "Changes you save here apply to this parcel only. The same application is also recorded on {names}: edit those records to change them.",
+  "events.multiParcel.voicePerParcelTitle": "Asked on each parcel",
+  "events.multiParcel.voicePerParcelBody": "We heard {fields}. With several parcels these are asked on each parcel below, so they were not filled in for all of them. Enter each parcel's own value on its card.",
   "picker.modeLabel": "Show parcels as",
   "picker.list": "List",
   "picker.map": "Map",
