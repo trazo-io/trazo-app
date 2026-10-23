@@ -10,6 +10,7 @@ import {
   INPUT_VERIFY_URL,
   OSP_ACTIVATE_URL,
   OSP_ADD_APPROVED_INPUT_URL,
+  OSP_AGENT_FORM_SHEET_URL,
   OSP_PLAN_MATERIAL_DETAIL_URL,
   OSP_PLAN_MATERIALS_URL,
   OSP_CHANGE_NOTIFICATIONS_URL,
@@ -70,6 +71,32 @@ interface OSPOne extends OSPScope {
 
 interface OSPCreate extends OSPScope {
   data: CreateOSPData;
+}
+
+/**
+ * One line of the copy sheet for the agent's renewal form. Keys, not sentences: the client words
+ * every row in the operator's language.
+ *   value         Trazo holds it; copy `value`.
+ *   not_recorded  Trazo has a place for it and it is empty.
+ *   not_in_trazo  Trazo keeps no such record.
+ *   yours         the operator's own election, commitment or signature. Never pre-answered.
+ */
+export interface AgentFormSheetRow {
+  step: string;
+  item: string;
+  kind: 'value' | 'not_recorded' | 'not_in_trazo' | 'yours';
+  value: unknown;
+  source: string;
+  extra: Record<string, unknown>;
+}
+
+export interface AgentFormSheet {
+  agent: string;
+  agent_name: string;
+  form: { title: string; document_id: string; revision: string; url: string };
+  plan_version: number;
+  filing_id: number | null;
+  rows: AgentFormSheetRow[];
 }
 
 interface OSPUpdate extends OSPOne {
@@ -287,6 +314,20 @@ const ospApi = baseApi.injectEndpoints({
       invalidatesTags: (_r, _e, { ospId }) => [
         { type: 'OSP', id: Number(ospId) },
         { type: 'OSPRecordTypes', id: Number(ospId) }
+      ]
+    }),
+
+    // Refetched with the plan and with the annual updates: the sales period, the changed
+    // sections and the sales figure all move when either is saved.
+    getAgentFormSheet: build.query<AgentFormSheet, OSPOne>({
+      query: ({ companyId, farmId, ospId }) => ({
+        url: OSP_AGENT_FORM_SHEET_URL(companyId, farmId, ospId),
+        method: 'GET',
+        credentials: 'include'
+      }),
+      providesTags: (_r, _e, { ospId }) => [
+        { type: 'OSP', id: Number(ospId) },
+        { type: 'OSPAnnualUpdate', id: 'LIST' }
       ]
     }),
 
@@ -611,6 +652,7 @@ export const {
   useGetOSPMaterialsListQuery,
   useGetMaterialIdentitiesQuery,
   useGetMaterialRestrictionsQuery,
+  useGetAgentFormSheetQuery,
   useRecordRestrictionStatementMutation,
   useWithdrawMaterialIdentityMutation,
   useWithdrawRestrictionStatementMutation,
