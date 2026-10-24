@@ -268,7 +268,7 @@ export interface InputVerifyResult {
 }
 
 /**
- * A material the operator put on the plan in their own words — CCOF NOPB41 §A–§D, WSDA AGR 2196.
+ * A material the operator put on the plan in their own words — CCOF ORGB41 §A–§D, WSDA AGR 2196.
  *
  * `listing_basis` is what may be SAID about the material and nothing more. `none_unlisted` renders
  * as "operator-entered; no third-party listing on file" — never as listed, approved or verified.

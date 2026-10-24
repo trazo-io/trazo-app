@@ -234,7 +234,7 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
   const omriList = osp.approved_omri_products || [];
   const wsdaList = osp.approved_wsda_materials || [];
 
-  // The fourth source, and the one CCOF NOPB41 §A's own prompt asks for: compost, manure,
+  // The fourth source, and the one CCOF ORGB41 §A's own prompt asks for: compost, manure,
   // gypsum, limestone, a home-formulated spray. Until 2026-08-28 the only way onto this list
   // was a catalog match, so those materials had nowhere to go while the module below attested
   // that everything in use was on the list.

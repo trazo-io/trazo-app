@@ -477,7 +477,7 @@ const QuestionField = ({
 };
 
 /**
- * The operator's own parcel map — CCOF NOPB49 §E, WSDA AGR 2264.
+ * The operator's own parcel map — CCOF ORGB49 §E, WSDA AGR 2264.
  *
  * 🔴 The last register defect that stops a filing rather than merely overstating one. Both
  * certifiers require the map as a MANDATORY ATTACHMENT ("must be reviewed by CCOF prior to
@@ -835,7 +835,7 @@ const ParcelApplicationWizard = () => {
                 </StandardButton>
               </VStack>
             )}
-            {/* CCOF NOPB49 §E prefers satellite imagery and lists eleven required elements —
+            {/* CCOF ORGB49 §E prefers satellite imagery and lists eleven required elements —
                 roads and landmarks, block identifiers, other operation areas, livestock and
                 treated-lumber notes — most of which a drawn boundary cannot carry. WSDA AGR 2264
                 additionally wants the operation and site name printed ON the map. So the drawn

@@ -272,7 +272,7 @@ export const OSP_REMOVE_APPROVED_INPUT_URL = (
 ) =>
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/remove-approved-input/`;
 
-// Operator-authored materials-list rows (CCOF NOPB41 §A–§D, WSDA AGR 2196). The catalog is a
+// Operator-authored materials-list rows (CCOF ORGB41 §A–§D, WSDA AGR 2196). The catalog is a
 // shortcut onto this list, never the gate — § 205.201(a) makes the producer the plan's author.
 export const OSP_PLAN_MATERIALS_URL = (companyId: string, farmId: string, ospId: string | number) =>
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/plan-materials/`;

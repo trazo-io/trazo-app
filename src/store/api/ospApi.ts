@@ -224,7 +224,7 @@ const ospApi = baseApi.injectEndpoints({
     }),
 
     // --- Operator-authored materials-list rows -------------------------------------------
-    // The materials list could hold only what a catalog already knew, so CCOF NOPB41 §A's own
+    // The materials list could hold only what a catalog already knew, so CCOF ORGB41 §A's own
     // examples (compost, manure, gypsum, limestone) and every home-formulated product had
     // nowhere to go — while the module attested that everything in use was on the list.
     getPlanMaterials: build.query<PlanMaterialEntry[], OSPOne>({
