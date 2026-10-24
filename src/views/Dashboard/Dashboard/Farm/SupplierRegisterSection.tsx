@@ -126,7 +126,12 @@ const CertificateUpload = ({
             type="file"
             accept=".pdf,.jpg,.jpeg,.png"
             style={{ display: 'none' }}
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
+            onChange={(e) => {
+              setFile(e.target.files?.[0] || null);
+              // Cleared at once, so picking the same file again (next year's scan saved under the
+              // same name, or a copy removed and filed again) still fires a change.
+              e.target.value = '';
+            }}
           />
           <StandardButton
             variant="outline"

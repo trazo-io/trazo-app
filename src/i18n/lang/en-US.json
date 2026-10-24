@@ -3234,6 +3234,7 @@
   "documents.col.title": "Document",
   "documents.delete": "Delete",
   "documents.deleteFailed": "That document could not be deleted.",
+  "documents.deleteBlocked.supplierCertificate": "This file is a supplier's organic certificate copy. Remove it from the supplier on the farm page first.",
   "documents.deleted": "Document deleted",
   "documents.download": "Download",
   "documents.emptyBody": "Generate an audit dossier, a PUR export, or submit your OSP — dated copies file here automatically. Or upload your first document now.",

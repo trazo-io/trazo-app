@@ -149,6 +149,27 @@ describe('SupplierRegisterSection', () => {
     );
   });
 
+  it('clears the file picker after each pick, so the same file can be chosen again', () => {
+    state.suppliers = [COLUMBIA];
+    const { container } = renderAt();
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+    // jsdom reports a file input's value as empty whatever happens, so watch the write itself: a
+    // browser fires no change for a file whose name equals the input's current value.
+    let cleared = false;
+    Object.defineProperty(input, 'value', {
+      configurable: true,
+      get: () => '',
+      set: (v: string) => {
+        if (v === '') cleared = true;
+      }
+    });
+    const file = new File(['%PDF'], 'columbia-2025.pdf', { type: 'application/pdf' });
+    fireEvent.change(input, { target: { files: [file] } });
+    // The chosen file is held in state, and shown on the button.
+    expect(screen.getByRole('button', { name: 'columbia-2025.pdf' })).toBeTruthy();
+    expect(cleared).toBe(true);
+  });
+
   it('never calls anything verified', () => {
     state.suppliers = [COLUMBIA];
     const { container } = renderAt();

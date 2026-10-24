@@ -481,7 +481,12 @@ const DocumentsPage = () => {
     } catch (err: unknown) {
       toast({
         title: intl.formatMessage({ id: 'documents.deleteFailed' }),
-        description: apiErrorMessage(err) ?? undefined,
+        // A supplier's certificate copy is refused with a stable code, said here in the reader's
+        // language; any other refusal shows the server's own message.
+        description:
+          (err as { data?: { code?: unknown } })?.data?.code === 'supplier_certificate_in_use'
+            ? intl.formatMessage({ id: 'documents.deleteBlocked.supplierCertificate' })
+            : apiErrorMessage(err) ?? undefined,
         status: 'error',
         duration: 5000
       });

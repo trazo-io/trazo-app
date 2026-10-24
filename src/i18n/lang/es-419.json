@@ -3234,6 +3234,7 @@
   "documents.col.title": "Documento",
   "documents.delete": "Eliminar",
   "documents.deleteFailed": "No se pudo eliminar el documento.",
+  "documents.deleteBlocked.supplierCertificate": "Este archivo es la copia del certificado orgánico de un proveedor. Primero quítalo del proveedor en la página de la finca.",
   "documents.deleted": "Documento eliminado",
   "documents.download": "Descargar",
   "documents.emptyBody": "Genera un expediente de auditoría, una exportación PUR o envía tu OSP: las copias fechadas se archivan aquí automáticamente. O sube tu primer documento ahora.",
