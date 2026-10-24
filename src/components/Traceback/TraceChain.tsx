@@ -41,7 +41,19 @@ const DOC_KIND_KEYS: Record<string, string> = {
   packout: 'sales.sources.kind.packout',
   other: 'sales.sources.kind.other',
   receipt: 'traceback.docKind.receipt',
+  supplier_certificate: 'traceback.docKind.supplierCertificate',
   attachment: 'traceback.docKind.attachment'
+};
+
+// A seed row's supplier certificate, by status (back history/services/supplier_certificates.py).
+// `unresolved` has no line: the record's supplier text matches no supplier on file, and when the
+// record claims certified organic stock its gap already says so.
+const SUPPLIER_CERT_KEYS: Record<string, string> = {
+  covering: 'traceback.supplierCert.covering',
+  stale: 'traceback.supplierCert.stale',
+  postdates_purchase: 'traceback.supplierCert.postdates',
+  none_on_file: 'traceback.supplierCert.noneOnFile',
+  not_certified: 'traceback.supplierCert.notCertified'
 };
 
 const LABEL_CATEGORY_KEYS: Record<string, string> = {
@@ -83,6 +95,10 @@ const MISSING_ON_ROW: Record<string, { label: string; value: string }> = {
   input_without_document: {
     label: 'traceback.field.receipt',
     value: 'traceback.missing.notAttached'
+  },
+  supplier_certificate_missing: {
+    label: 'traceback.field.supplierCertificate',
+    value: 'traceback.missing.noCoveringCopy'
   }
 };
 
@@ -170,6 +186,33 @@ export const TraceChain = ({
             g.ref === r.event_id &&
             MISSING_ON_ROW[g.code]
         );
+
+  // What the operation holds of the supplier's organic certificate for this purchase: the
+  // operation's own record, worded as such, never "verified".
+  const supplierCertLine = (sc: any) => {
+    const key = sc && SUPPLIER_CERT_KEYS[sc.status];
+    if (!key) return null;
+    const who = [
+      sc.supplier?.certifier,
+      sc.supplier?.nop_operation_id &&
+        t('traceback.supplierCert.nopId', { id: sc.supplier.nop_operation_id })
+    ]
+      .filter(Boolean)
+      .join(', ');
+    const line = t(key, { date: sc.certificate?.issued_on ?? '' });
+    return who ? `${line} (${who})` : line;
+  };
+
+  const supplierCertDocs = (sc: any): TraceDoc[] =>
+    sc?.certificate?.document
+      ? [
+          {
+            id: sc.certificate.document.id,
+            title: sc.certificate.document.title,
+            kind: 'supplier_certificate'
+          }
+        ]
+      : [];
 
   const docLabel = (d: TraceDoc) =>
     `${t(DOC_KIND_KEYS[d.kind] ?? 'traceback.docKind.attachment')}: ${d.title}` +
@@ -381,6 +424,11 @@ export const TraceChain = ({
                 <Fact label={t('traceback.field.supplier')} value={r.supplier} />
                 <Fact label={t('traceback.field.invoice')} value={r.invoice} />
                 <Fact label={t('traceback.field.lot')} value={r.lot} />
+                <Fact
+                  label={t('traceback.field.supplierCertificate')}
+                  value={supplierCertLine(r.supplier_certificate)}
+                />
+                <Files docs={supplierCertDocs(r.supplier_certificate)} />
                 {missingOnRow(r).map((g: TraceGap) => (
                   <Text key={g.code} fontSize="sm">
                     <Text as="span" color="gray.600">

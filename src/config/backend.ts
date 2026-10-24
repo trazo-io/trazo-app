@@ -116,6 +116,12 @@ export const POST_HARVEST_FACILITY_VERIFY_URL = (
   facilityId: string | number
 ) =>
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/post-harvest-facilities/${facilityId}/verify/`;
+// Seed and planting-stock suppliers and their organic certificates (CCOF G3.0, OTCO C3, WSDA
+// 2121-B). Company admins and farm managers only: a supplier list is commercial data.
+export const SUPPLIER_URL = (companyId: string, farmId: string, supplierId?: string | number) =>
+  supplierId != null
+    ? `${ROOT_URL}companies/${companyId}/establishments/${farmId}/suppliers/${supplierId}/`
+    : `${ROOT_URL}companies/${companyId}/establishments/${farmId}/suppliers/`;
 // Which handler ONE production was sent to. Owner-side: the handler's identity is
 // supply-chain data and the public production payload deliberately omits it.
 export const PRODUCTION_HANDLER_URL = (productionId: string) =>

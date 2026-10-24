@@ -93,6 +93,7 @@ import PURExportModal from 'components/PURExport/PURExportModal';
 import { normalizeState } from 'utils/usStates';
 import { fileNameFromUrl } from 'utils/fileNameFromUrl';
 import CertifierLinkCard from 'components/Certifications/CertifierLinkCard';
+import SupplierRegisterSection from './SupplierRegisterSection';
 import { ComplianceExportsGuard } from 'components/Guards/ComplianceExportsGuard';
 import { useTour } from 'hooks/useTour';
 import { apiErrorMessage } from 'utils/apiErrorMessage';
@@ -505,6 +506,16 @@ function ProfileFarm() {
                 />
               </StandardCard>
             </Box>
+
+            {/* Seed and planting-stock suppliers and their organic certificates. Writers only, like
+                the server: a supplier list is commercial data a viewer does not read. */}
+            {canWrite && currentCompany?.id && farmId && (
+              <SupplierRegisterSection
+                companyId={String(currentCompany.id)}
+                farmId={String(farmId)}
+                state={establishmentData?.state ?? undefined}
+              />
+            )}
 
             {/* SOE + Split merged. Both are operation-level attestations a certifier reads
                 together — §205.201(a)(3) fraud prevention and §205.272 commingling — and as
