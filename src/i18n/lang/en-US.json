@@ -8818,7 +8818,7 @@
   "events.multiParcel.noOpenSeason": "No open production on this parcel. Start one first, or log post-harvest work from the parcel's own page.",
   "events.multiParcel.twoOpenSeasons": "This parcel has two open productions. Log it from the season you mean.",
   "events.multiParcel.amountsTitle": "Per parcel",
-  "events.multiParcel.amountsHint": "One record per parcel. Say how much of each parcel the work covered, and fill in what differs. An amount that follows from a label rate is suggested, and you can change it.",
+  "events.multiParcel.amountsHint": "One record per parcel.{area, select, yes { Say how much of each parcel the work covered.} other {}}{fields, select, yes { Fill in what differs.} other {}}{derive, select, yes { An amount that follows from a label rate is suggested, and you can change it.} other {}}",
   "events.multiParcel.scopeLabel": "How much of {name}?",
   "events.multiParcel.scopeAll": "Whole parcel ({area})",
   "events.multiParcel.scopePart": "Part of it",

@@ -181,6 +181,21 @@ describe('PerParcelCards', () => {
     expect(screen.queryByText(/Product applied/)).not.toBeInTheDocument();
   });
 
+  it('the hint names only what these cards ask: no area or label rate on a weather record', () => {
+    const weather = specRulesFor(0, null) as MultiParcelRules;
+    const { unmount } = wrap(<Cards initial={[blockA]} rules={weather} form={{}} />);
+    expect(screen.getByText('One record per parcel.')).toBeInTheDocument();
+    unmount();
+
+    wrap(<Cards initial={[blockA]} />);
+    expect(
+      screen.getByText(
+        'One record per parcel. Say how much of each parcel the work covered. Fill in what ' +
+          'differs. An amount that follows from a label rate is suggested, and you can change it.'
+      )
+    ).toBeInTheDocument();
+  });
+
   it('after a refused Continue, marks what each parcel is missing', () => {
     wrap(
       <Cards

@@ -8818,7 +8818,7 @@
   "events.multiParcel.noOpenSeason": "Esta parcela no tiene una producción abierta. Inicia una primero o registra el trabajo de poscosecha desde la página de la parcela.",
   "events.multiParcel.twoOpenSeasons": "Esta parcela tiene dos producciones abiertas. Regístralo desde la temporada que corresponde.",
   "events.multiParcel.amountsTitle": "Por parcela",
-  "events.multiParcel.amountsHint": "Un registro por parcela. Indica cuánto de cada parcela cubrió el trabajo y completa lo que cambia. Una cantidad que sale de una dosis de etiqueta se sugiere, y puedes cambiarla.",
+  "events.multiParcel.amountsHint": "Un registro por parcela.{area, select, yes { Indica cuánto de cada parcela cubrió el trabajo.} other {}}{fields, select, yes { Completa lo que cambia.} other {}}{derive, select, yes { Una cantidad que sale de una dosis de etiqueta se sugiere, y puedes cambiarla.} other {}}",
   "events.multiParcel.scopeLabel": "¿Cuánto de {name}?",
   "events.multiParcel.scopeAll": "Parcela completa ({area})",
   "events.multiParcel.scopePart": "Una parte",

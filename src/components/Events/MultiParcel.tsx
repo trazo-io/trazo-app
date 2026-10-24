@@ -152,7 +152,15 @@ export const PerParcelCards = ({
       <SectionHeader
         icon={FaBalanceScale}
         title={intl.formatMessage({ id: 'events.multiParcel.amountsTitle' })}
-        description={intl.formatMessage({ id: 'events.multiParcel.amountsHint' })}
+        description={intl.formatMessage(
+          { id: 'events.multiParcel.amountsHint' },
+          {
+            // Only what these cards ask: no area or label rate on a general or weather record.
+            area: rules.areaKey ? 'yes' : 'no',
+            fields: rules.fields.length ? 'yes' : 'no',
+            derive: rules.fields.some((field) => field.derive) ? 'yes' : 'no'
+          }
+        )}
       />
       <VStack align="stretch" spacing={3}>
         {targets.map((target) => {
