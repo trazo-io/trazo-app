@@ -20,7 +20,7 @@
  * dossier forever.
  */
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link as RouterLink } from 'react-router-dom';
 import {
@@ -152,6 +152,11 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
   const [method, setMethod] = useState<OSPNotificationMethod | ''>('');
   const [docTiming, setDocTiming] = useState<OSPDocumentationTiming | ''>('');
   const [parcelId, setParcelId] = useState<string>('');
+  // WSDA AGR 2516: removed acreage needs the reason it left organic production and a map of the
+  // new boundaries. The map is the notice's own file, which now ships in the renewal packet.
+  const [removalReason, setRemovalReason] = useState('');
+  const [supportingFile, setSupportingFile] = useState<File | null>(null);
+  const documentInputRef = useRef<HTMLInputElement>(null);
   // The last notice filed, so the panel can say what to update next. A notice records what the
   // certifier was told; the plan and records must describe the same change, and nothing in
   // the product writes them from the notice — § 205.201(a) keeps the producer the author.
@@ -171,23 +176,31 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
   // morning must be able to record it before they have phoned the certifier; blocking that
   // would make the most urgent category the only one that cannot be entered promptly. The
   // backend allows it and the certifier packet raises the missing date as a [REVIEW] finding.
+  const isRemoval = category === 'field_removal';
+  const REQUIRED_DEFAULTS: Record<string, string> = {
+    'osp.changeNotifications.field.category': 'Change category',
+    'osp.changeNotifications.field.description': 'What changed?',
+    'osp.changeNotifications.field.removalReason': 'Why did this acreage leave organic production?'
+  };
   const missingRequired = [
     !category && 'osp.changeNotifications.field.category',
-    !description.trim() && 'osp.changeNotifications.field.description'
+    !description.trim() && 'osp.changeNotifications.field.description',
+    isRemoval && !removalReason.trim() && 'osp.changeNotifications.field.removalReason'
   ]
     .filter((id): id is string => Boolean(id))
-    .map((id) =>
-      intl.formatMessage({
-        id,
-        defaultMessage:
-          id === 'osp.changeNotifications.field.category' ? 'Change category' : 'What changed?'
-      })
-    );
+    .map((id) => intl.formatMessage({ id, defaultMessage: REQUIRED_DEFAULTS[id] }));
 
   // Only explain the disabled button once they have started; on a pristine form the list is
   // just the required markers restated as an accusation.
   const isDirty = Boolean(
-    category || description.trim() || dateNotified || method || docTiming || parcelId
+    category ||
+      description.trim() ||
+      dateNotified ||
+      method ||
+      docTiming ||
+      parcelId ||
+      removalReason.trim() ||
+      supportingFile
   );
 
   const resetForm = () => {
@@ -197,6 +210,9 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
     setMethod('');
     setDocTiming('');
     setParcelId('');
+    setRemovalReason('');
+    setSupportingFile(null);
+    if (documentInputRef.current) documentInputRef.current.value = '';
   };
 
   const handleDelete = async (notificationId: number) => {
@@ -237,7 +253,9 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
       ...(dateNotified ? { date_notified: dateNotified } : {}),
       ...(method ? { method } : {}),
       ...(docTiming ? { documentation_timing: docTiming } : {}),
-      ...(parcelId ? { parcel: Number(parcelId) } : {})
+      ...(parcelId ? { parcel: Number(parcelId) } : {}),
+      ...(isRemoval ? { removal_reason: removalReason.trim() } : {}),
+      ...(supportingFile ? { supporting_document: supportingFile } : {})
     };
     try {
       await createNotification({ companyId, farmId, ospId, data }).unwrap();
@@ -380,6 +398,25 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
               <Text fontSize="xs" color={subtextColor}>
                 {cn.description}
               </Text>
+              {cn.removal_reason && (
+                <Text fontSize="xs" color={subtextColor}>
+                  {intl.formatMessage(
+                    {
+                      id: 'osp.changeNotifications.removalReasonLabel',
+                      defaultMessage: 'Why removed: {reason}'
+                    },
+                    { reason: cn.removal_reason }
+                  )}
+                </Text>
+              )}
+              {cn.supporting_document && (
+                <Badge variant="neutral" fontSize="11px" mt={1}>
+                  {intl.formatMessage({
+                    id: 'osp.changeNotifications.documentAttached',
+                    defaultMessage: 'Document attached'
+                  })}
+                </Badge>
+              )}
             </Box>
           ))
         )}
@@ -432,6 +469,32 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
           />
         </StandardField>
 
+        {isRemoval && (
+          <StandardField
+            label={intl.formatMessage({
+              id: 'osp.changeNotifications.field.removalReason',
+              defaultMessage: 'Why did this acreage leave organic production?'
+            })}
+            helpText={intl.formatMessage({
+              id: 'osp.changeNotifications.field.removalReasonHelp',
+              defaultMessage:
+                'Certifiers ask why removed acreage left organic production. It prints with the notice in your renewal packet.'
+            })}
+            required>
+            <StandardTextarea
+              rows={2}
+              value={removalReason}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                setRemovalReason(e.target.value)
+              }
+              placeholder={intl.formatMessage({
+                id: 'osp.changeNotifications.field.removalReasonPlaceholder',
+                defaultMessage: 'e.g., transferred to another grower, converted to conventional'
+              })}
+            />
+          </StandardField>
+        )}
+
         {/* A notice about a field names the field, and then prints on that field's Parcel
             Application beside its buffer and land-history rows — so "buffer widened to 45 ft"
             and "buffer width 30 ft" meet on one page instead of one living on this screen and
@@ -463,6 +526,30 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
             </StandardSelect>
           </StandardField>
         )}
+
+        <StandardField
+          label={intl.formatMessage({
+            id: 'osp.changeNotifications.field.document',
+            defaultMessage: 'Supporting document'
+          })}
+          helpText={intl.formatMessage({
+            id: isRemoval
+              ? 'osp.changeNotifications.field.documentHelpRemoval'
+              : 'osp.changeNotifications.field.documentHelp',
+            defaultMessage: isRemoval
+              ? 'Attach a map of the new boundaries. It goes into your renewal packet with this notice.'
+              : 'Optional. A file attached here goes into your renewal packet with this notice.'
+          })}>
+          <StandardInput
+            ref={documentInputRef}
+            type="file"
+            accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,.tif,.tiff"
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setSupportingFile(e.target.files?.[0] || null)
+            }
+            p={1}
+          />
+        </StandardField>
 
         <SimpleGrid columns={{ base: 1, smd: 3 }} spacing={3}>
           <StandardField
@@ -518,9 +605,9 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
             </StandardSelect>
           </StandardField>
 
-          {/* Labelled for the field it actually is. "Supporting documentation" over a dropdown
-              of TIMINGS promised a file upload this panel does not offer, while a real
-              `supporting_document` FileField sits on the model with no writer. */}
+          {/* Labelled for the field it actually is: a TIMING. The file itself is the
+              "Supporting document" input above (since 2026-10-24 it has a writer and ships in the
+              packet). */}
           <StandardField
             label={intl.formatMessage({
               id: 'osp.changeNotifications.field.docTiming',
