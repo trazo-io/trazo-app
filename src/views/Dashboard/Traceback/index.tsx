@@ -48,8 +48,11 @@ const EVENT_TYPE_BY_KIND: Record<string, number> = {
   beneficial: 6
 };
 
-/** Input kinds whose record carries a purchase invoice and so takes a receipt. */
-const RECEIPT_KINDS = new Set(['chemical', 'amendment']);
+/**
+ * Input kinds whose record carries a purchase invoice and so takes a receipt. A seed row is a
+ * planting or transplanting that names a purchase; the server raises its receipt gap only then.
+ */
+const RECEIPT_KINDS = new Set(['chemical', 'amendment', 'seed']);
 
 export const TracebackPage = () => {
   const intl = useIntl();
@@ -102,8 +105,9 @@ export const TracebackPage = () => {
     if (!season?.establishment_id || !season?.parcel_id) return null;
     const kind = gap.hop === 'picks' && gap.field === 'harvest_lot_code' ? 'pick' : gap.kind;
     const back = encodeURIComponent(`/admin/dashboard/farm/${farmId}/traceback?sale=${saleId}`);
-    // Only a spray or amendment record takes a purchase receipt (the server raises this gap for
-    // those two only, and Documents asks "What is this file?" for those two only, review of #175).
+    // Only a spray, amendment or seed purchase record takes a purchase receipt (the server raises
+    // this gap for those only, and Documents asks "What is this file?" for those only, review of
+    // #175).
     if (gap.code === 'input_without_document' && gap.ref && RECEIPT_KINDS.has(kind)) {
       // A receipt is FILED against the record from Documents, which works on a finished season
       // too (a correction cannot set a file link). The filing dialog opens pre-filed to this

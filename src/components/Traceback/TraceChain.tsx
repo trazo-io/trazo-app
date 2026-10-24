@@ -24,7 +24,15 @@ export type TraceGap = {
   ref: number | null;
   kind: string;
 };
-export type TraceDoc = { id?: number; file_id?: string | null; title: string; kind: string };
+export type TraceDoc = {
+  id?: number;
+  file_id?: string | null;
+  title: string;
+  kind: string;
+  // The parcels whose records a receipt was filed on, when it reaches this record through the
+  // same activity logged on several parcels (back record_receipts). Absent for its own files.
+  filed_on?: string[];
+};
 
 // Sale source kinds reuse the sales row's own labels, so the two never name a file differently.
 const DOC_KIND_KEYS: Record<string, string> = {
@@ -164,7 +172,10 @@ export const TraceChain = ({
         );
 
   const docLabel = (d: TraceDoc) =>
-    `${t(DOC_KIND_KEYS[d.kind] ?? 'traceback.docKind.attachment')}: ${d.title}`;
+    `${t(DOC_KIND_KEYS[d.kind] ?? 'traceback.docKind.attachment')}: ${d.title}` +
+    (d.filed_on?.length
+      ? ` (${t('traceback.file.filedOn', { parcels: d.filed_on.join(', ') })})`
+      : '');
 
   // 44px buttons: on a phone at inspection this is the tap that matters. A file this surface
   // cannot open is still named, so the reader knows it exists.
