@@ -124,6 +124,24 @@ interface OSPActivate extends OSPOne {
   approval_certifier_name: string;
 }
 
+/**
+ * The POST body for a change notification: JSON unless a file rides along, multipart with one.
+ * fetchBaseQuery sees FormData and lets the browser set the boundary, the same path the activation
+ * upload takes. The file is a removed field's map (WSDA AGR 2516); it ships in the renewal packet.
+ */
+export const changeNotificationBody = (
+  data: CreateOSPChangeNotificationData
+): Omit<CreateOSPChangeNotificationData, 'supporting_document'> | FormData => {
+  const { supporting_document, ...fields } = data;
+  if (!supporting_document) return fields;
+  const form = new FormData();
+  Object.entries(fields).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) form.append(key, String(value));
+  });
+  form.append('supporting_document', supporting_document);
+  return form;
+};
+
 const ospApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     getOSPs: build.query<OSPSummary[], OSPScope>({
@@ -440,7 +458,7 @@ const ospApi = baseApi.injectEndpoints({
       query: ({ companyId, farmId, ospId, data }) => ({
         url: OSP_CHANGE_NOTIFICATIONS_URL(companyId, farmId, ospId),
         method: 'POST',
-        body: data,
+        body: changeNotificationBody(data),
         credentials: 'include'
       }),
       invalidatesTags: (_r, _e, { ospId }) => [

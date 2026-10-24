@@ -142,6 +142,8 @@ export interface OSPChangeNotification {
   documentation_timing: OSPDocumentationTiming | null;
   documentation_timing_display: string;
   supporting_document: string | null;
+  /** Why the acreage left organic production; field removals only ("" on older notices). */
+  removal_reason: string;
   certifier_acknowledged_at: string | null;
   cfr_reference: string;
   is_immediate: boolean;
@@ -158,6 +160,10 @@ export interface CreateOSPChangeNotificationData {
   documentation_timing?: OSPDocumentationTiming;
   /** The parcel this notice concerns, when it concerns one. It then prints on that parcel's application. */
   parcel?: number | null;
+  /** Required by the backend for a new `field_removal` notice (WSDA AGR 2516 asks why). */
+  removal_reason?: string;
+  /** For a removed field, the map of the new boundaries. Sent as multipart; it ships in the packet. */
+  supporting_document?: File | null;
 }
 
 export interface OSP extends OSPSummary {
