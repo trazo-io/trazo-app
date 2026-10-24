@@ -4442,52 +4442,57 @@ const ChemicalTab = forwardRef(
                           )}
                         />
                       </StandardField>
-                      <StandardField
-                        label={intl.formatMessage({
-                          id: 'events.chemical.fields.plantedArea',
-                          defaultMessage: 'Total Planted Area'
-                        })}
-                        helpText={intl.formatMessage({
-                          id: 'events.chemical.form.plantedAreaHelp',
-                          defaultMessage:
-                            'DPR box 9 — total planted acres/units at the site (distinct from area treated)'
-                        })}>
-                        <HStack spacing={2}>
-                          <Controller
-                            name="planted_area"
-                            control={methods.control}
-                            render={({ field }) => (
-                              <StandardInput
-                                {...field}
-                                type="number"
-                                step="0.01"
-                                placeholder="0.00"
-                                flex={2}
-                              />
-                            )}
-                          />
-                          <Controller
-                            name="planted_area_unit"
-                            control={methods.control}
-                            render={({ field }) => (
-                              <StandardSelect {...field} flex={1}>
-                                <option value="acres">
-                                  {intl.formatMessage({ id: 'app.unit.acres' })}
-                                </option>
-                                <option value="ha">
-                                  {intl.formatMessage({ id: 'app.unit.hectares' })}
-                                </option>
-                                <option value="sq_ft">
-                                  {intl.formatMessage({ id: 'app.unit.squareFeet' })}
-                                </option>
-                                <option value="units">
-                                  {intl.formatMessage({ id: 'app.unit.units' })}
-                                </option>
-                              </StandardSelect>
-                            )}
-                          />
-                        </HStack>
-                      </StandardField>
+                      {/* Planted area is a fact of each site, so with several parcels the shared
+                          body drops it; it is not offered there, and each record can take its own
+                          afterwards. */}
+                      {!multiTarget && (
+                        <StandardField
+                          label={intl.formatMessage({
+                            id: 'events.chemical.fields.plantedArea',
+                            defaultMessage: 'Total Planted Area'
+                          })}
+                          helpText={intl.formatMessage({
+                            id: 'events.chemical.form.plantedAreaHelp',
+                            defaultMessage:
+                              'DPR box 9 — total planted acres/units at the site (distinct from area treated)'
+                          })}>
+                          <HStack spacing={2}>
+                            <Controller
+                              name="planted_area"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardInput
+                                  {...field}
+                                  type="number"
+                                  step="0.01"
+                                  placeholder="0.00"
+                                  flex={2}
+                                />
+                              )}
+                            />
+                            <Controller
+                              name="planted_area_unit"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardSelect {...field} flex={1}>
+                                  <option value="acres">
+                                    {intl.formatMessage({ id: 'app.unit.acres' })}
+                                  </option>
+                                  <option value="ha">
+                                    {intl.formatMessage({ id: 'app.unit.hectares' })}
+                                  </option>
+                                  <option value="sq_ft">
+                                    {intl.formatMessage({ id: 'app.unit.squareFeet' })}
+                                  </option>
+                                  <option value="units">
+                                    {intl.formatMessage({ id: 'app.unit.units' })}
+                                  </option>
+                                </StandardSelect>
+                              )}
+                            />
+                          </HStack>
+                        </StandardField>
+                      )}
                       <StandardField
                         label={intl.formatMessage({
                           id: 'events.chemical.fields.applicationStart',

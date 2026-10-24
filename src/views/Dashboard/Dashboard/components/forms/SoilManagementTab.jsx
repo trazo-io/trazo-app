@@ -2108,34 +2108,40 @@ const SoilManagementTab = forwardRef(
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                   />{' '}
                   <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-                    <StandardField
-                      label={intl.formatMessage({ id: 'app.soilPH' }) || 'Soil pH'}
-                      helpText="pH affects nutrient availability">
-                      <StandardInput
-                        type="number"
-                        min="0"
-                        max="14"
-                        step="0.1"
-                        placeholder="6.5"
-                        {...register('soil_ph')}
-                      />
-                    </StandardField>
+                    {/* With several parcels these are refused (one reading copied onto every
+                        parcel), and the shared body drops them, so they are not offered. */}
+                    {!multiTarget && (
+                      <>
+                        <StandardField
+                          label={intl.formatMessage({ id: 'app.soilPH' }) || 'Soil pH'}
+                          helpText="pH affects nutrient availability">
+                          <StandardInput
+                            type="number"
+                            min="0"
+                            max="14"
+                            step="0.1"
+                            placeholder="6.5"
+                            {...register('soil_ph')}
+                          />
+                        </StandardField>
 
-                    <StandardField
-                      label={
-                        intl.formatMessage({ id: 'app.organicMatterPercentage' }) ||
-                        'Organic Matter (%)'
-                      }
-                      helpText="Higher organic matter improves soil carbon">
-                      <StandardInput
-                        type="number"
-                        min="0"
-                        max="100"
-                        step="0.1"
-                        placeholder="3.5"
-                        {...register('organic_matter_percentage')}
-                      />
-                    </StandardField>
+                        <StandardField
+                          label={
+                            intl.formatMessage({ id: 'app.organicMatterPercentage' }) ||
+                            'Organic Matter (%)'
+                          }
+                          helpText="Higher organic matter improves soil carbon">
+                          <StandardInput
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.1"
+                            placeholder="3.5"
+                            {...register('organic_matter_percentage')}
+                          />
+                        </StandardField>
+                      </>
+                    )}
 
                     <StandardField
                       label="Soil Texture"

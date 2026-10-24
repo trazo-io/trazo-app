@@ -9,7 +9,7 @@
  */
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 import { ChakraProvider } from '@chakra-ui/react';
 import { Provider } from 'react-redux';
@@ -18,6 +18,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 import baseApi from 'store/api/baseApi';
 import enUS from '../../../../../../i18n/lang/en-US.json';
+import { specRulesFor } from 'config/events/multiParcel';
 
 vi.mock('store/api/historyApi', () => ({
   useGetCurrentHistoryQuery: () => ({ data: undefined, isLoading: false }),
@@ -105,4 +106,39 @@ describe('weather with several parcels', () => {
     expect(several('damage_assessment')).toBe(false);
     expect(screen.getByText(m['events.multiParcel.weatherDamageLater'])).toBeInTheDocument();
   });
+});
+
+describe('no shared control for a key the spec takes per parcel or refuses', () => {
+  // See soilPestSeveralParcels: the body builder drops these keys from the shared body.
+  const cases: [
+    string,
+    React.ComponentType<Record<string, unknown>>,
+    number,
+    Record<string, unknown>
+  ][] = [
+    ['general', GeneralTab, 3, {}],
+    [
+      'general incident',
+      GeneralTab,
+      3,
+      { is_contamination_incident: true, contamination_source: 'spray_drift' }
+    ],
+    ...['FR', 'DR', 'HL', 'HT', 'TS', 'HW', 'HH', 'LH'].map(
+      (type) =>
+        [`weather ${type}`, WeatherTab, 0, { type }] as [
+          string,
+          React.ComponentType<Record<string, unknown>>,
+          number,
+          Record<string, unknown>
+        ]
+    )
+  ];
+  for (const [label, Tab, eventType, initialValues] of cases) {
+    it(label, () => {
+      const has = mount(Tab, initialValues, true);
+      const offered = [...specRulesFor(eventType)!.hiddenKeys].filter((key) => has(key));
+      expect(offered).toEqual([]);
+      cleanup();
+    });
+  }
 });

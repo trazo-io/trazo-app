@@ -12,7 +12,7 @@
  */
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { act, render } from '@testing-library/react';
+import { act, cleanup, render } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 import { ChakraProvider } from '@chakra-ui/react';
 import { Provider } from 'react-redux';
@@ -21,6 +21,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 import baseApi from 'store/api/baseApi';
 import enUS from '../../../../../../i18n/lang/en-US.json';
+import { MULTI_PARCEL_SPEC, specRulesFor } from 'config/events/multiParcel';
 
 vi.mock('store/api/historyApi', () => ({
   useGetCurrentHistoryQuery: () => ({ data: undefined, isLoading: false }),
@@ -160,4 +161,16 @@ describe('ProductionTab with several parcels', () => {
     expect(sent.fuel_unit).toBeUndefined();
     expect(sent.irrigation_depth_unit).toBeUndefined();
   });
+});
+
+describe('no shared control for a key the spec takes per parcel or refuses', () => {
+  // See soilPestSeveralParcels: the body builder drops these keys from the shared body.
+  for (const subtype of MULTI_PARCEL_SPEC.types['1'].subtypes ?? []) {
+    it(subtype, () => {
+      const { has } = mount(subtype, true);
+      const offered = [...specRulesFor(1, subtype)!.hiddenKeys].filter((key) => has(key));
+      expect(offered).toEqual([]);
+      cleanup();
+    });
+  }
 });
