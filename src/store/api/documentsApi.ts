@@ -26,7 +26,8 @@ export interface FarmDocument {
   history: number | null;
   /** The sale this is a source document of (invoice, bill of lading, pack-out). */
   sales_record?: number | null;
-  source_kind?: SaleSourceKind | '';
+  /** A sale's document kind, or `receipt` for the purchase receipt filed on a record. */
+  source_kind?: SaleSourceKind | 'receipt' | '';
   /** The one activity record this file belongs to (both set or both null). */
   event_type?: number | null;
   event_id?: number | null;
@@ -115,8 +116,9 @@ const documentsApi = baseApi.injectEndpoints({
         requirement?: string;
         /** The sale this file documents, and what kind of document it is. */
         salesRecord?: number | null;
-        /** A sale's document kind, or `receipt` for the purchase receipt filed on a spray or
-         *  amendment record (the only kind that counts as that record's receipt). */
+        /** A sale's document kind, or `receipt` for the purchase receipt filed on a spray,
+         *  amendment or seed purchase record (the only kind that counts as that record's
+         *  receipt). */
         sourceKind?: SaleSourceKind | 'receipt';
         /** The activity record this file documents (the invoice behind one spray). The server
          *  files it under that record's production and refuses a record from another farm. */

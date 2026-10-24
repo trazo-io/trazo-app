@@ -943,6 +943,19 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     }
   },
   {
+    // The receipt FILE behind the seed purchase invoice (2026-10-24), filed on this record (or
+    // on another record of the same multi-parcel planting) from Documents. Modal-only, as on a
+    // spray: supplier-chain identity never reaches consumer surfaces, and the packet carries the
+    // file itself in receipts/.
+    name: 'receipt_document_title',
+    labelKey: 'events.receipt.label',
+    valueType: 'string',
+    visibleForSubtypes: SEED_SOURCED,
+    surfaces: {
+      modal: 'secondary'
+    }
+  },
+  {
     name: 'seed_lot_number',
     labelKey: 'events.production.fields.seedLotNumber',
     valueType: 'text',

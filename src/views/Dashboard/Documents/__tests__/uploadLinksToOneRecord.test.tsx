@@ -214,6 +214,97 @@ describe('a file on a spray or amendment record is its receipt only when said so
   });
 });
 
+describe('a seed purchase record takes a receipt; a harvest does not (2026-10-24)', () => {
+  // `type` on these rows is the i18n key the server sends; `production_type` is the code.
+  const seasonRecords = (id: string, opts: { skip?: boolean }) => ({
+    data:
+      opts?.skip || !id
+        ? undefined
+        : {
+            events: [
+              {
+                id: 901,
+                event_type: 1,
+                type: 'event.production.planting',
+                production_type: 'PL',
+                name: 'Draper, Fall Creek',
+                date: '2026-04-02T08:00:00Z'
+              },
+              {
+                id: 902,
+                event_type: 1,
+                type: 'event.production.harvesting',
+                production_type: 'HA',
+                name: 'First pick',
+                date: '2026-07-20T08:00:00Z'
+              }
+            ]
+          }
+  });
+  const stageFile = (container: HTMLElement) =>
+    fireEvent.change(container.querySelector('input[type="file"]') as HTMLInputElement, {
+      target: { files: [new File(['%PDF'], 'invoice.pdf', { type: 'application/pdf' })] }
+    });
+
+  it('asks what the file is on a planting, with the seed-tag warning, and never on a harvest', async () => {
+    docs = [];
+    upload.mockClear();
+    historyQuery.mockImplementation(seasonRecords);
+    const { container } = renderPage();
+    stageFile(container);
+    fireEvent.change(await screen.findByLabelText(enUS['documents.filing.field.production']), {
+      target: { value: '5' }
+    });
+    await waitFor(() =>
+      expect(screen.queryByLabelText(enUS['documents.filing.field.record'])).not.toBeNull()
+    );
+    fireEvent.change(screen.getByLabelText(enUS['documents.filing.field.record']), {
+      target: { value: '1:902' }
+    });
+    expect(screen.queryByLabelText(enUS['documents.filing.field.fileKind'])).toBeNull();
+
+    fireEvent.change(screen.getByLabelText(enUS['documents.filing.field.record']), {
+      target: { value: '1:901' }
+    });
+    fireEvent.change(screen.getByLabelText(enUS['documents.filing.field.fileKind']), {
+      target: { value: 'receipt' }
+    });
+    expect(
+      screen.getByText(new RegExp(enUS['documents.filing.field.fileKindSeedHelp']))
+    ).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: enUS['documents.filing.confirm'] }));
+    await waitFor(() => expect(upload).toHaveBeenCalled());
+    expect(upload.mock.calls[0]?.[0]).toMatchObject({
+      eventType: 1,
+      eventId: 901,
+      sourceKind: 'receipt'
+    });
+  });
+
+  it("files the trace's seed receipt as a receipt even before the season's records load", async () => {
+    docs = [];
+    upload.mockClear();
+    // The history query is still pending: no records, so no subtype to read.
+    historyQuery.mockReturnValue({ data: undefined, isLoading: true });
+    const { container } = renderPage(
+      '/admin/dashboard/farm/33/documents?production=5&record=1:901&kind=receipt'
+    );
+    stageFile(container);
+    const kind = (await screen.findByLabelText(
+      enUS['documents.filing.field.fileKind']
+    )) as HTMLSelectElement;
+    expect(kind.value).toBe('receipt');
+    fireEvent.click(screen.getByRole('button', { name: enUS['documents.filing.confirm'] }));
+    await waitFor(() => expect(upload).toHaveBeenCalled());
+    expect(upload.mock.calls[0]?.[0]).toMatchObject({
+      history: 5,
+      eventType: 1,
+      eventId: 901,
+      sourceKind: 'receipt'
+    });
+  });
+});
+
 describe('who an upload came from', () => {
   it('names the uploader and never claims farmer authorship', () => {
     historyQuery.mockReturnValue({ data: undefined });

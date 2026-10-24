@@ -81,6 +81,12 @@ import { useTour } from 'hooks/useTour';
 
 /** Spray (2) and amendment (5) records carry a purchase invoice, so a file on one can be its receipt. */
 const RECEIPT_EVENT_TYPES = new Set([2, 5]);
+/**
+ * A production record (1) carries one only when it is a seed or stock purchase: planting,
+ * transplanting or seed search. The same set the backend decides once
+ * (`history/services/record_receipts.RECEIPT_PRODUCTION_SUBTYPES`); it refuses any other.
+ */
+const SEED_PURCHASE_SUBTYPES = new Set(['PL', 'TR', 'SS']);
 
 const FOLDERS = [
   'organic_system_plan',
@@ -203,11 +209,11 @@ const DocumentsPage = () => {
   // `${event_type}:${id}` of the one record this file documents, or '' (pilot rehearsal
   // 2026-10, finding 4: an invoice could point at the season and no finer).
   const [uploadEvent, setUploadEvent] = useState('');
-  // Whether the file on a spray or amendment record IS its purchase receipt (review of back
-  // #207). Only a receipt counts as the record's receipt in the trace, the audit export and the
-  // packet's receipts/ folder; a lab report or photo on the same record is an attachment.
+  // Whether the file on a spray, amendment or seed purchase record IS its purchase receipt
+  // (review of back #207). Only a receipt counts as the record's receipt in the trace, the audit
+  // export and the packet's receipts/ folder; a lab report or photo on the same record is an
+  // attachment.
   const [uploadIsReceipt, setUploadIsReceipt] = useState(false);
-  const uploadTakesReceipt = RECEIPT_EVENT_TYPES.has(Number(uploadEvent.split(':')[0]));
 
   // Arriving from a traceback gap ("no purchase receipt attached"): the filing dialog opens
   // already filed to that season and record, and the upload returns to the trace. Each value is
@@ -232,6 +238,27 @@ const DocumentsPage = () => {
   const { data: uploadProductionDetail } = useGetHistoryQuery(uploadProduction, {
     skip: !uploadProduction || !isFilingOpen
   });
+  // Each production record's subtype code ('PL', 'HA', ...). `type` on these rows is an i18n
+  // key ("event.production.planting"), never the code: `production_type` is.
+  const productionSubtypeOf = useMemo(() => {
+    const out: Record<string, string> = {};
+    for (const ev of (uploadProductionDetail?.events ?? []) as Array<{
+      id: number;
+      event_type: number;
+      production_type?: string;
+    }>) {
+      if (ev?.event_type === 1 && ev.production_type) out[`1:${ev.id}`] = ev.production_type;
+    }
+    return out;
+  }, [uploadProductionDetail]);
+  const uploadEventType = Number(uploadEvent.split(':')[0]);
+  const uploadTakesReceipt =
+    RECEIPT_EVENT_TYPES.has(uploadEventType) ||
+    (uploadEventType === 1 && SEED_PURCHASE_SUBTYPES.has(productionSubtypeOf[uploadEvent] ?? '')) ||
+    // Arriving from the trace's "no purchase receipt" gap, the record is known to take one before
+    // the season's records have loaded. Without this a fast confirm on a seed record filed the
+    // receipt as an attachment and the gap stayed open. The server re-checks the subtype.
+    (presetReceipt && uploadEvent === presetRecord);
   const uploadEventOptions = useMemo(() => {
     const events = (uploadProductionDetail?.events ?? []) as Array<{
       id: number;
@@ -996,7 +1023,16 @@ const DocumentsPage = () => {
               {uploadProduction && uploadTakesReceipt ? (
                 <StandardField
                   label={intl.formatMessage({ id: 'documents.filing.field.fileKind' })}
-                  helpText={intl.formatMessage({ id: 'documents.filing.field.fileKindHelp' })}>
+                  helpText={[
+                    intl.formatMessage({ id: 'documents.filing.field.fileKindHelp' }),
+                    // A seed tag is the file growers hold most, and filing it as the receipt
+                    // would clear the trace gap with no invoice behind it.
+                    uploadEventType === 1
+                      ? intl.formatMessage({ id: 'documents.filing.field.fileKindSeedHelp' })
+                      : ''
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}>
                   <StandardSelect
                     value={uploadIsReceipt ? 'receipt' : 'attachment'}
                     onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>

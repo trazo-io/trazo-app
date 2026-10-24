@@ -396,6 +396,77 @@ describe('TracebackPage', () => {
     expect(q.get('kind')).toBe('receipt');
   });
 
+  it("a seed purchase's missing receipt is filed from Documents too, on its planting record", () => {
+    state.trace = {
+      ...TRACE,
+      inputs: [
+        {
+          ...TRACE.inputs[0],
+          kind: 'seed',
+          event_id: 61,
+          date: '2026-04-02',
+          product: 'Draper',
+          supplier: 'Fall Creek',
+          invoice: 'FC-26-1182'
+        }
+      ],
+      gaps: [
+        {
+          hop: 'inputs',
+          code: 'input_without_document',
+          field: 'receipt_document',
+          ref: 61,
+          kind: 'seed'
+        }
+      ]
+    };
+    renderAt('/admin/dashboard/farm/1/traceback?sale=7');
+    const text = messages['traceback.gap.input_without_document'].replace(
+      '{input}',
+      '2026-04-02 · Draper'
+    );
+    const gap = screen.getByText(text).closest('[role="alert"]');
+    fireEvent.click(
+      within(gap as HTMLElement).getByRole('button', { name: messages['traceback.gap.fix'] })
+    );
+    const landed = screen.getByTestId('landed').textContent || '';
+    // Not the planting's edit form: a correction cannot set a file link; Documents files it.
+    expect(landed.split('?')[0]).toBe('/admin/dashboard/farm/1/documents');
+    const q = new URLSearchParams(landed.split('?')[1]);
+    expect([q.get('record'), q.get('kind')]).toEqual(['1:61', 'receipt']);
+  });
+
+  it('a receipt shared by the same planting on another parcel says where it was filed', () => {
+    state.trace = {
+      ...TRACE,
+      inputs: [
+        {
+          ...TRACE.inputs[0],
+          kind: 'seed',
+          event_id: 62,
+          product: 'Draper',
+          documents: [
+            {
+              id: 5,
+              title: 'Fall Creek invoice 1182',
+              kind: 'receipt',
+              filed_on: ['Home Field West']
+            }
+          ]
+        }
+      ],
+      gaps: []
+    };
+    renderAt('/admin/dashboard/farm/1/traceback?sale=7');
+    const filedOn = messages['traceback.file.filedOn'].replace('{parcels}', 'Home Field West');
+    expect(
+      screen.getByText(
+        `${messages['traceback.docKind.receipt']}: Fall Creek invoice 1182 (${filedOn})`,
+        { exact: false }
+      )
+    ).toBeTruthy();
+  });
+
   it('renders every gap code with its own message', () => {
     state.trace = TRACE;
     renderAt('/admin/dashboard/farm/1/traceback?sale=7');
