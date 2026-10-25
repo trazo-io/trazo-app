@@ -51,3 +51,18 @@ describe('multi-parcel save path', () => {
     expect(multiOnly).not.toContain('field_note');
   });
 });
+
+describe('the voice banner counts only what reached the shared form', () => {
+  // MEASURED 2026-10-24: an irrigation on two parcels said "5 campos completados" and listed hours
+  // and depth, which with several parcels are asked on each card and held by no field.
+  it('every "filled" list goes through the per-parcel filter', () => {
+    expect(SRC).toMatch(/const filledEntriesFor = useCallback/);
+    for (const list of ['voiceFilledEntries', 'voiceWrittenLabels', 'voiceAllFilledLabels']) {
+      const start = SRC.indexOf(`const ${list} = useMemo(`);
+      expect(start, list).toBeGreaterThan(-1);
+      const body = SRC.slice(start, SRC.indexOf('\n  );', start) + 5);
+      expect(body, list).toContain('filledEntriesFor(');
+      expect(body, list).not.toContain('entriesForFieldNames(');
+    }
+  });
+});
