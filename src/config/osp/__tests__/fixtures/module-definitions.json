@@ -5489,8 +5489,8 @@
                   {
                     "value": "sold_standing",
                     "label": {
-                      "en": "We do not harvest: the crop is sold standing in the field",
-                      "es": "No cosechamos: el cultivo se vende en pie en el campo"
+                      "en": "The buyer of the standing crop, or whoever the buyer hires (we sell it in the field and do not harvest)",
+                      "es": "El comprador del cultivo en pie, o quien el comprador contrate (lo vendemos en el campo y no cosechamos)"
                     },
                     "exclusive": true
                   }
@@ -5520,6 +5520,31 @@
                     "question": "who_harvests",
                     "op": "includes",
                     "value": "other_harvester"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "sold_standing_details",
+                "kind": "textarea",
+                "label": {
+                  "en": "Describe the sale: who buys the standing crop, and who harvests and hauls it?",
+                  "es": "Describe la venta: ¿quién compra el cultivo en pie, y quién lo cosecha y lo transporta?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "who_harvests",
+                    "op": "includes",
+                    "value": "sold_standing"
                   }
                 ],
                 "nop_cite": null,
@@ -11191,6 +11216,7 @@
       },
       "visible_questions": [
         "who_harvests",
+        "sold_standing_details",
         "container_types",
         "container_safeguards",
         "containers_reused_from_prohibited",
@@ -11202,6 +11228,7 @@
         "handled_by_another_operation"
       ],
       "missing_required": [
+        "sold_standing_details",
         "container_types",
         "container_safeguards",
         "containers_reused_from_prohibited",
@@ -11212,6 +11239,7 @@
         "handled_by_another_operation"
       ],
       "missing_required_na": [
+        "sold_standing_details",
         "container_types",
         "container_safeguards",
         "containers_reused_from_prohibited",
