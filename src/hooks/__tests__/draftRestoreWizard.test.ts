@@ -13,7 +13,7 @@ import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { describe, expect, it } from 'vitest';
 
-import { ACTIVITY_VERBS, verbForEvent } from 'config/activityVerbs';
+import { ACTIVITY_VERBS, verbForEvent, verbForKey } from 'config/activityVerbs';
 
 const wizard = readFileSync(
   resolve(__dirname, '../../views/Dashboard/Dashboard/components/forms/NewEvent.jsx'),
@@ -40,9 +40,14 @@ describe('restoring a draft in the event wizard', () => {
     expect(wizard).toMatch(/isOperatorChosenDate\(step0Date, wizardDefaultDate\)/);
   });
 
-  it('selects the restored activity tile', () => {
-    expect(restoreHandler).toMatch(/verbForEvent\(draft\.activeEventType, draftFields\.type\)/);
+  it('selects the tile the farmer had picked, and none when none was', () => {
+    // Review of app #201: 0 is both "nothing picked" and Weather, so a draft holding only a name
+    // restored as a Weather record when the tile was inferred from `activeEventType`.
+    expect(wizard).toMatch(/verbKey: activeVerbKey \?\? null/);
+    expect(restoreHandler).toMatch(/'verbKey' in draft\s*\?\s*verbForKey\(draft\.verbKey\)/);
+    expect(restoreHandler).toMatch(/draftFields\.type\s*\?\s*verbForEvent\(/);
     expect(restoreHandler).toMatch(/setPickedVerbKey\(restoredVerb\.key\)/);
+    expect(verbForKey(null)).toBeUndefined();
   });
 
   it('every saved activity resolves to a tile the restore can select', () => {

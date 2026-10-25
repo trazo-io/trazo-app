@@ -273,7 +273,10 @@ describe('useEventDraft', () => {
   it('records whether the date was set by the operator', () => {
     const { result } = renderHook(() => useEventDraft({ parcelId: 231 }));
     act(() =>
-      result.current.saveDraft(2, { ...FILLED, date: '2026-10-22T07:00' }, 0, undefined, true)
+      result.current.saveDraft(2, { ...FILLED, date: '2026-10-22T07:00' }, 0, undefined, {
+        dateChosen: true,
+        verbKey: 'input_application'
+      })
     );
     flushDebounce();
     let restored: { dateChosen?: boolean } | null = null;
@@ -281,6 +284,7 @@ describe('useEventDraft', () => {
       restored = result.current.restoreDraft();
     });
     expect(restored!.dateChosen).toBe(true);
+    expect((restored as { verbKey?: string } | null)!.verbKey).toBe('input_application');
   });
 
   it('writes the last edit when the wizard closes inside the debounce', () => {

@@ -47,6 +47,17 @@ export interface EventDraftPayload {
    * the work was done. Absent on drafts written before this field existed.
    */
   dateChosen?: boolean;
+  /**
+   * The activity tile the farmer had picked, null when none was. Stored rather than derived from
+   * `activeEventType`, whose 0 means both "nothing picked" and Weather. Absent on older drafts.
+   */
+  verbKey?: string | null;
+}
+
+/** What the wizard knows about a draft beyond the form's own fields. */
+export interface EventDraftContext {
+  dateChosen?: boolean;
+  verbKey?: string | null;
 }
 
 interface UseEventDraftOptions {
@@ -209,7 +220,7 @@ export function useEventDraft({
       eventFormData: Record<string, unknown>,
       photoCount = 0,
       multi?: EventDraftMulti,
-      dateChosen?: boolean
+      context: EventDraftContext = {}
     ) => {
       if (!isActive) return;
       if (!hasMeaningfulContent(eventFormData, ignoredKeysRef.current)) return;
@@ -234,7 +245,8 @@ export function useEventDraft({
           // Without it a restored multi-parcel draft came back on the origin parcel only, and the
           // per-parcel amounts the grower had typed were gone.
           ...(multi && multi.parcelIds.length > 0 ? { multi } : {}),
-          ...(dateChosen != null ? { dateChosen } : {})
+          ...(context.dateChosen != null ? { dateChosen: context.dateChosen } : {}),
+          ...(context.verbKey !== undefined ? { verbKey: context.verbKey } : {})
         });
       };
       pendingWriteRef.current = write;

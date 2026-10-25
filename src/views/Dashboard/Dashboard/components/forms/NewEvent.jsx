@@ -1120,7 +1120,10 @@ function NewEvent({ isEdit = false, eventId = null }) {
       },
       acceptedFiles?.length || 0,
       multiParcelIds.length > 0 ? { parcelIds: multiParcelIds, targets: multiTargets } : undefined,
-      isOperatorChosenDate(step0Date, wizardDefaultDate)
+      {
+        dateChosen: isOperatorChosenDate(step0Date, wizardDefaultDate),
+        verbKey: activeVerbKey ?? null
+      }
     );
   }, [
     activeEventType,
@@ -1131,12 +1134,15 @@ function NewEvent({ isEdit = false, eventId = null }) {
     multiTargets,
     step0Date,
     step0PerformedBy,
-    wizardDefaultDate
+    wizardDefaultDate,
+    activeVerbKey
   ]);
 
   const handleRestoreDraft = useCallback(() => {
     const draft = restoreDraft();
     if (!draft) return;
+    // A draft does not say who wrote its name, so the name it carries is kept as it is.
+    setNameOrigin('unknown');
     const { date: draftDate, ...draftFields } = draft.eventFormData || {};
     // The day comes back only if the operator set it. A draft's untouched default is the moment
     // the draft was started, and restoring it would file the record under that day. Drafts from
@@ -1159,13 +1165,20 @@ function NewEvent({ isEdit = false, eventId = null }) {
     );
     // Put the activity back on the tile too. Left unpicked, the grid asked "What did you do?"
     // again, and tapping the answer ran the type-change reset that clears every restored field.
-    const restoredVerb = verbForEvent(draft.activeEventType, draftFields.type);
+    // `verbKey` is the tile the farmer had picked, null when none was. Never inferred from
+    // `activeEventType` alone: 0 is both "nothing picked yet" and Weather, so a draft holding only a
+    // name came back as a Weather record (review of app #201). Drafts from before `verbKey` existed
+    // name a tile only through their subtype.
+    const restoredVerb =
+      'verbKey' in draft
+        ? verbForKey(draft.verbKey)
+        : draftFields.type
+        ? verbForEvent(draft.activeEventType, draftFields.type)
+        : undefined;
     if (restoredVerb) {
       setPickedVerbKey(restoredVerb.key);
       setChooserReopened(false);
     }
-    // A draft does not say who wrote its name, so the name it carries is kept as it is.
-    setNameOrigin('unknown');
     // Several parcels: put back the ones still on this farm AND still able to join, with what
     // their cards held; a parcel whose season changed since the draft is left out and named.
     if (draft.multi?.parcelIds?.length) {
