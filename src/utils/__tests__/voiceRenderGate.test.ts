@@ -1218,6 +1218,13 @@ describe("the panel speaks the farmer's language, not the database's", () => {
     }
   });
 
+  it('chips the spoken time when the parser puts it only in `duration`', () => {
+    // MEASURED 2026-10-24: the hours reached the form with no chip to check them against.
+    expect(capture).toMatch(/\.\.\.spokenDuration/);
+    expect(capture).toMatch(/\{amountChips\.map\(/);
+    expect(capture).not.toMatch(/formatAmountsForDisplay\(parsedData\.detected_amounts\)/);
+  });
+
   it('the duplicate filter compares against the label too', () => {
     // `detected_systems` holds the farmer's word. Once the method became `air_blast` it stopped
     // overlapping with "nebulizadora", so the same fact would print as two chips.

@@ -797,6 +797,24 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
     ];
   };
 
+  // The parser may answer the time ONLY in `duration` (MEASURED 2026-10-24: "around 3 hours"
+  // filled the hours and showed no chip, while the same sentence a minute earlier had put it in
+  // `detected_amounts` too). Shown once either way.
+  const TIME_UNIT = /^(hours?|hrs?|horas?|minutes?|mins?|minutos?)$/i;
+  const spokenDuration =
+    parsedData?.duration &&
+    typeof parsedData.duration === 'object' &&
+    parsedData.duration.value != null &&
+    !(parsedData.detected_amounts ?? []).some(
+      (a: any) => typeof a === 'object' && TIME_UNIT.test(String(a?.unit ?? ''))
+    )
+      ? [parsedData.duration]
+      : [];
+  const amountChips = formatAmountsForDisplay([
+    ...(parsedData?.detected_amounts ?? []),
+    ...spokenDuration
+  ]);
+
   // Spent for the day. Says what still works: voice is an accelerator, and the form and the
   // templates are always open — so this is a pause, not a wall.
   // Both dead ends below REPLACE the panel — and the panel itself replaced the "Fill by
@@ -1196,17 +1214,15 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                 cyan / orange BY CATEGORY — six hues carrying no meaning in a system where
                 colour means status (frontend.md), and four of them from palettes this theme
                 does not define. A heard value is a plain fact: `variant="neutral"`. */}
-            {(formatAmountsForDisplay(parsedData.detected_amounts).length > 0 ||
+            {(amountChips.length > 0 ||
               parsedData.detected_products?.length > 0 ||
               parsedData.npk_ratio) && (
               <Flex flexWrap="wrap" gap={2}>
-                {formatAmountsForDisplay(parsedData.detected_amounts).map(
-                  (amount: string, index: number) => (
-                    <Badge key={`amt-${index}`} variant="neutral" px={3} py={1} borderRadius="full">
-                      {amount}
-                    </Badge>
-                  )
-                )}
+                {amountChips.map((amount: string, index: number) => (
+                  <Badge key={`amt-${index}`} variant="neutral" px={3} py={1} borderRadius="full">
+                    {amount}
+                  </Badge>
+                ))}
                 {parsedData.detected_products
                   ?.filter(
                     (product: string) =>
