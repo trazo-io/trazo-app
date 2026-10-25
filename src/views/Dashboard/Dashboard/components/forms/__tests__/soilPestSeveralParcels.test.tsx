@@ -17,6 +17,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 import baseApi from 'store/api/baseApi';
 import enUS from '../../../../../../i18n/lang/en-US.json';
+import { MULTI_PARCEL_SPEC, specRulesFor } from 'config/events/multiParcel';
 
 vi.mock('store/api/historyApi', () => ({
   useGetCurrentHistoryQuery: () => ({ data: undefined, isLoading: false }),
@@ -31,6 +32,8 @@ vi.mock('store/api/productApi', () => ({
 import SoilManagementTab from '../SoilManagementTab';
 // @ts-expect-error PestManagementTab is a .jsx module with no type declarations.
 import PestManagementTab from '../PestManagementTab';
+// @ts-expect-error ChemicalTab-ENHANCED is a .jsx module with no type declarations.
+import ChemicalTab from '../ChemicalTab-ENHANCED';
 
 const store = () =>
   configureStore({
@@ -125,4 +128,32 @@ describe('pest with several parcels', () => {
       cleanup();
     }
   });
+});
+
+describe('no shared control for a key the spec takes per parcel or refuses', () => {
+  // The body builder strips these keys from the shared body (the server refuses them there), so
+  // a control left on the form takes the grower's answer and drops it without a word. Found
+  // 2026-10-24: a release on two parcels offered pest pressure and crop damage, and both were
+  // lost on save. Every covered subtype, from the spec itself.
+  for (const [Tab, eventType] of [
+    [SoilManagementTab, 5],
+    [PestManagementTab, 6],
+    [ChemicalTab, 2]
+  ] as const) {
+    // Chemical covers every subtype (`subtypes: null`).
+    for (const subtype of MULTI_PARCEL_SPEC.types[String(eventType)].subtypes ?? [
+      'FE',
+      'PE',
+      'FU',
+      'HE'
+    ]) {
+      it(`${eventType}/${subtype}`, () => {
+        const rules = specRulesFor(eventType, subtype)!;
+        const has = mount(Tab, subtype, true);
+        const offered = [...rules.hiddenKeys].filter((key) => has(key));
+        expect(offered).toEqual([]);
+        cleanup();
+      });
+    }
+  }
 });

@@ -1,7 +1,10 @@
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { describe, expect, it } from 'vitest';
 
 import { specRulesFor, type MultiParcelRules } from '../../config/events/multiParcel';
 import {
+  MAX_DECIMALS,
   buildMultiTargetBody,
   derivedValue,
   fieldValue,
@@ -409,5 +412,39 @@ describe('voiceFieldsAskedPerParcel: a spoken value for a per-parcel field is na
   it('nothing to say without rules or a voice result', () => {
     expect(voiceFieldsAskedPerParcel(null, { filledFields: ['fuel_consumed'] })).toEqual([]);
     expect(voiceFieldsAskedPerParcel(irrigation, null)).toEqual([]);
+  });
+});
+
+describe('decimal limits match the server', () => {
+  // A value past the model's decimal_places came back as an English DRF error naming no field.
+  const models = readFileSync(join(__dirname, '../../../../trazo-back/history/models.py'), 'utf8');
+
+  it('every limit is the decimal_places (or integer) of every model field with that name', () => {
+    for (const [key, max] of Object.entries(MAX_DECIMALS)) {
+      const decls = [
+        ...models.matchAll(
+          new RegExp(`^    ${key} = models\\.(\\w+)\\(([\\s\\S]*?)\\n    [a-z_]`, 'gm')
+        )
+      ];
+      expect(decls.length, `${key} not declared in history/models.py`).toBeGreaterThan(0);
+      for (const [, kind, args] of decls) {
+        // A text field keeps any precision (another model's `area_covered` is one).
+        if (kind === 'CharField') continue;
+        const places = kind.includes('Integer')
+          ? 0
+          : Number(/decimal_places=(\d+)/.exec(args)?.[1] ?? NaN);
+        expect(places, `${key} (${kind})`).toBe(max);
+      }
+    }
+  });
+
+  it('flags a value with too many decimals, and accepts trailing zeros', () => {
+    const rules = specRulesFor(1, 'IR')!;
+    const target = { ...newTarget({ id: 1, name: 'A', area: 1 }), scope: 'all' as const };
+    const issues = (depth: string) =>
+      targetIssues({ ...target, values: { irrigation_depth: depth } }, rules, {});
+    expect(issues('0.125')).toContain('decimals:irrigation_depth');
+    expect(issues('0.50')).not.toContain('decimals:irrigation_depth');
+    expect(issues('0.5')).not.toContain('decimals:irrigation_depth');
   });
 });

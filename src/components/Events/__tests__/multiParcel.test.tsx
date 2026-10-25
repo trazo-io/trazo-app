@@ -181,6 +181,47 @@ describe('PerParcelCards', () => {
     expect(screen.queryByText(/Product applied/)).not.toBeInTheDocument();
   });
 
+  it('the hint names only what these cards ask: no area or label rate on a weather record', () => {
+    const weather = specRulesFor(0, null) as MultiParcelRules;
+    const { unmount } = wrap(<Cards initial={[blockA]} rules={weather} form={{}} />);
+    expect(screen.getByText('One record per parcel.')).toBeInTheDocument();
+    unmount();
+
+    wrap(<Cards initial={[blockA]} />);
+    expect(
+      screen.getByText(
+        'One record per parcel. Say how much of each parcel the work covered. Fill in what ' +
+          'differs. An amount that follows from a label rate is suggested, and you can change it.'
+      )
+    ).toBeInTheDocument();
+  });
+
+  it('writes the depth unit as a symbol, never the stored word', () => {
+    const irrigation = specRulesFor(1, 'IR') as MultiParcelRules;
+    wrap(
+      <Cards
+        initial={[{ ...blockA, scope: 'all' }]}
+        rules={irrigation}
+        form={{ area_unit: 'acres', irrigation_depth_unit: 'inches' }}
+      />
+    );
+    expect(screen.getByText(/\(in\)/)).toBeInTheDocument();
+    expect(screen.queryByText(/\(inches\)/)).not.toBeInTheDocument();
+  });
+
+  it('refuses more decimals than the server keeps, on the field, before the save', () => {
+    const irrigation = specRulesFor(1, 'IR') as MultiParcelRules;
+    wrap(
+      <Cards
+        initial={[{ ...blockA, scope: 'all', values: { irrigation_depth: '0.125' } }]}
+        rules={irrigation}
+        form={{ area_unit: 'acres', irrigation_depth_unit: 'inches' }}
+        showIssues
+      />
+    );
+    expect(screen.getByText('Use at most 2 decimals.')).toBeInTheDocument();
+  });
+
   it('after a refused Continue, marks what each parcel is missing', () => {
     wrap(
       <Cards

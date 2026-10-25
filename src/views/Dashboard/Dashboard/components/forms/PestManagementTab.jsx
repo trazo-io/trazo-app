@@ -1174,92 +1174,97 @@ const PestManagementTab = forwardRef(
                       />
                     </StandardField>
 
-                    <StandardField
-                      label={
-                        intl.formatMessage({ id: 'app.damagePercentage' }) ||
-                        'Crop Impact Level (%)'
-                      }
-                      helpText="Percentage of crop damage observed (for transparency)">
-                      <StandardInput
-                        type="number"
-                        min="0"
-                        max="100"
-                        step="0.1"
-                        {...methods.register('damage_percentage')}
-                        placeholder="0.0"
-                      />
-                    </StandardField>
+                    {/* With several parcels crop damage and pressure are refused (they describe
+                        one place), and the shared body drops them, so they are not offered. */}
+                    {!multiTarget && (
+                      <StandardField
+                        label={
+                          intl.formatMessage({ id: 'app.damagePercentage' }) ||
+                          'Crop Impact Level (%)'
+                        }
+                        helpText="Percentage of crop damage observed (for transparency)">
+                        <StandardInput
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="0.1"
+                          {...methods.register('damage_percentage')}
+                          placeholder="0.0"
+                        />
+                      </StandardField>
+                    )}
                   </SimpleGrid>
 
                   {/* Pest Pressure Assessment - Most Types */}
-                  {(pestType === 'SC' ||
-                    pestType === 'PI' ||
-                    pestType === 'TA' ||
-                    pestType === 'TM' ||
-                    pestType === 'BR' ||
-                    pestType === 'IP') && (
-                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={6}>
-                      <StandardField
-                        label={
-                          intl.formatMessage({ id: 'app.pestPressureLevel' }) ||
-                          'Pest Pressure Level'
-                        }
-                        helpText={
-                          pestType === 'TM'
-                            ? 'Pressure level detected through monitoring'
-                            : pestType === 'BR'
-                            ? 'Pressure level that prompted beneficial release'
-                            : pestType === 'IP'
-                            ? 'Pressure level that triggered IPM implementation'
-                            : 'Current pest population assessment'
-                        }>
-                        {/* F37 fix (2026-06): lowercase values to match the scouting
+                  {!multiTarget &&
+                    (pestType === 'SC' ||
+                      pestType === 'PI' ||
+                      pestType === 'TA' ||
+                      pestType === 'TM' ||
+                      pestType === 'BR' ||
+                      pestType === 'IP') && (
+                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={6}>
+                        <StandardField
+                          label={
+                            intl.formatMessage({ id: 'app.pestPressureLevel' }) ||
+                            'Pest Pressure Level'
+                          }
+                          helpText={
+                            pestType === 'TM'
+                              ? 'Pressure level detected through monitoring'
+                              : pestType === 'BR'
+                              ? 'Pressure level that prompted beneficial release'
+                              : pestType === 'IP'
+                              ? 'Pressure level that triggered IPM implementation'
+                              : 'Current pest population assessment'
+                          }>
+                          {/* F37 fix (2026-06): lowercase values to match the scouting
                               `average_pest_pressure` field and the registry/tests
                               (pestEvent.ts, pestEvent.test.ts use 'low'/'moderate').
                               Previously Capitalized ("Low"/"Critical"), giving two
                               casings for one concept and risking visibleWhen/normalizer
                               mismatches. Labels (i18n) unchanged; formatPestPressure
                               already lowercases on lookup so display is unaffected. */}
-                        <StandardSelect {...methods.register('pest_pressure_level')}>
-                          <option value="">Select pressure level</option>
-                          <option value="low">
-                            {intl.formatMessage({ id: 'app.low' }) || 'Low'}
-                          </option>
-                          <option value="medium">
-                            {intl.formatMessage({ id: 'app.medium' }) || 'Medium'}
-                          </option>
-                          <option value="high">
-                            {intl.formatMessage({ id: 'app.high' }) || 'High'}
-                          </option>
-                          <option value="critical">
-                            {intl.formatMessage({ id: 'app.critical' }) || 'Critical'}
-                          </option>
-                        </StandardSelect>
-                      </StandardField>
-
-                      {/* Economic Threshold Assessment - SC, TA, IP Types (NOP 7 CFR 205.206(e)) */}
-                      {(pestType === 'SC' || pestType === 'TA' || pestType === 'IP') && (
-                        <StandardField
-                          label="Action Threshold Met"
-                          helpText={
-                            pestType === 'SC'
-                              ? 'Was the economic action threshold met during scouting?'
-                              : pestType === 'TA'
-                              ? 'Main threshold assessment decision'
-                              : 'Was IPM triggered by reaching economic threshold?'
-                          }>
-                          <StandardSelect {...methods.register('action_threshold_met')}>
-                            <option value="">Select status</option>
-                            <option value="true">
-                              {intl.formatMessage({ id: 'app.actionThresholdMet' }) ||
-                                'Yes - Economic threshold met, action required'}
+                          <StandardSelect {...methods.register('pest_pressure_level')}>
+                            <option value="">Select pressure level</option>
+                            <option value="low">
+                              {intl.formatMessage({ id: 'app.low' }) || 'Low'}
                             </option>
-                            <option value="false">No - Below action threshold</option>
+                            <option value="medium">
+                              {intl.formatMessage({ id: 'app.medium' }) || 'Medium'}
+                            </option>
+                            <option value="high">
+                              {intl.formatMessage({ id: 'app.high' }) || 'High'}
+                            </option>
+                            <option value="critical">
+                              {intl.formatMessage({ id: 'app.critical' }) || 'Critical'}
+                            </option>
                           </StandardSelect>
                         </StandardField>
-                      )}
-                    </SimpleGrid>
-                  )}
+
+                        {/* Economic Threshold Assessment - SC, TA, IP Types (NOP 7 CFR 205.206(e)) */}
+                        {(pestType === 'SC' || pestType === 'TA' || pestType === 'IP') && (
+                          <StandardField
+                            label="Action Threshold Met"
+                            helpText={
+                              pestType === 'SC'
+                                ? 'Was the economic action threshold met during scouting?'
+                                : pestType === 'TA'
+                                ? 'Main threshold assessment decision'
+                                : 'Was IPM triggered by reaching economic threshold?'
+                            }>
+                            <StandardSelect {...methods.register('action_threshold_met')}>
+                              <option value="">Select status</option>
+                              <option value="true">
+                                {intl.formatMessage({ id: 'app.actionThresholdMet' }) ||
+                                  'Yes - Economic threshold met, action required'}
+                              </option>
+                              <option value="false">No - Below action threshold</option>
+                            </StandardSelect>
+                          </StandardField>
+                        )}
+                      </SimpleGrid>
+                    )}
 
                   {/* F44: quantitative UC-IPM monitoring count — the measured number behind the
                         scouting/trap decision (e.g. 5 mites/leaf, 12% fruit infested). */}

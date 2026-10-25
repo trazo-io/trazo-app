@@ -46,6 +46,8 @@ import { getFieldNamesForSurface } from '../../config/events';
 import {
   APPLICATION_RATE_UNITS,
   APPLICATION_RATE_UNIT_SYMBOLS,
+  IRRIGATION_METHODS,
+  WATER_SOURCES,
   applicationMethodLabelKey
 } from '../../config/events/enums';
 import enUS from '../../i18n/lang/en-US.json';
@@ -522,6 +524,27 @@ describe('a real parse that the mapper used to choke on', () => {
     expect(parse('bushels').wrote).not.toContain('irrigation_depth');
     expect(parse('bushels').wrote).not.toContain('irrigation_depth_unit');
     expect(parse('centimetros').wrote).toContain('irrigation_depth');
+  });
+
+  it('keeps a spoken depth when the sentence also names another unit', () => {
+    // MEASURED 2026-10-24 on a real dictation. "around 3 hours" switched the spoken-unit filter
+    // on, the transcript said "inch" while the parser answered "inches", and the depth was judged
+    // unsaid: the hours reached the form, the half inch of water never did.
+    const parsed = {
+      type: 'irrigation',
+      description: '',
+      confidence: 90,
+      detected_amounts: [{ value: 0.5, unit: 'inches', category: 'water depth' }],
+      detected_products: [],
+      detected_systems: ['drip'],
+      duration: { value: 3, unit: 'hours' },
+      original_transcript:
+        'Drip irrigation this morning, both blocks around 3 hours. About 0.5 an inch of water, electric pump from the well.'
+    } as never;
+    const result = mapVoiceDataToFieldValues(parsed, 'irrigation');
+    expect(result.overriddenFields).toContain('irrigation_depth');
+    expect(result.values.irrigation_depth).toBe(0.5);
+    expect(result.values.irrigation_depth_unit).toBe('inches');
   });
 });
 
@@ -1179,6 +1202,27 @@ describe("the panel speaks the farmer's language, not the database's", () => {
     expect(capture).toMatch(/applicationMethodChip/);
     // The raw passthrough must be gone, not merely shadowed.
     expect(capture).not.toMatch(/\{parsedData\.application_method\}/);
+  });
+
+  it('the water source and detected-system chips render labels too', () => {
+    // MEASURED 2026-10-24 on a Spanish page: an irrigation dictation showed "well_groundwater"
+    // and "drip" chips, the water source and the system printed raw.
+    expect(capture).not.toMatch(/\{parsedData\.water_source\}/);
+    expect(capture).toMatch(/catalogueLabel\(parsedData\.water_source, WATER_SOURCES\)/);
+    expect(capture).toMatch(/\.map\(\(system: string\) => systemLabel\(system\)\)/);
+    const es = es419 as Record<string, string>;
+    const en = enUS as Record<string, string>;
+    for (const option of [...WATER_SOURCES, ...IRRIGATION_METHODS]) {
+      expect(en[option.labelKey], `${option.value} has no en-US label`).toBeTruthy();
+      expect(es[option.labelKey], `${option.value} has no es-419 label`).toBeTruthy();
+    }
+  });
+
+  it('chips the spoken time when the parser puts it only in `duration`', () => {
+    // MEASURED 2026-10-24: the hours reached the form with no chip to check them against.
+    expect(capture).toMatch(/\.\.\.spokenDuration/);
+    expect(capture).toMatch(/\{amountChips\.map\(/);
+    expect(capture).not.toMatch(/formatAmountsForDisplay\(parsedData\.detected_amounts\)/);
   });
 
   it('the duplicate filter compares against the label too', () => {

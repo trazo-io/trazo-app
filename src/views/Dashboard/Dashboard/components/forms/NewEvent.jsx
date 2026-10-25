@@ -2017,10 +2017,25 @@ function NewEvent({ isEdit = false, eventId = null }) {
     [activeEventType, intl]
   );
 
+  /**
+   * The same, minus what several parcels ask on each card. Those keys stay off the shared form,
+   * so "N fields filled" must not count them: MEASURED 2026-10-24, an irrigation on two parcels
+   * said "5 campos completados" and listed hours and depth, which no field held. They are named
+   * once, in the "asked on each parcel" notice.
+   */
+  const filledEntriesFor = useCallback(
+    (fieldNames) => {
+      if (!multiActive) return entriesForFieldNames(fieldNames);
+      const onCards = new Set(voiceFieldsAskedPerParcel(cardRules, voiceBanner));
+      return entriesForFieldNames((fieldNames || []).filter((name) => !onCards.has(name)));
+    },
+    [multiActive, cardRules, voiceBanner, entriesForFieldNames]
+  );
+
   /** What is still on OFFER (or, once applied, what that tap wrote). */
   const voiceFilledEntries = useMemo(
-    () => entriesForFieldNames(voiceBanner?.keptFields),
-    [entriesForFieldNames, voiceBanner]
+    () => filledEntriesFor(voiceBanner?.keptFields),
+    [filledEntriesFor, voiceBanner]
   );
 
   /**
@@ -2030,8 +2045,8 @@ function NewEvent({ isEdit = false, eventId = null }) {
    * immediately while the field offer is still waiting behind "Fill in N values".
    */
   const voiceWrittenLabels = useMemo(
-    () => entriesForFieldNames(voiceBanner?.filledFields).map((entry) => entry.label),
-    [entriesForFieldNames, voiceBanner]
+    () => filledEntriesFor(voiceBanner?.filledFields).map((entry) => entry.label),
+    [filledEntriesFor, voiceBanner]
   );
 
   /**
@@ -2050,8 +2065,8 @@ function NewEvent({ isEdit = false, eventId = null }) {
         ...(voiceBanner?.seededPending ? [] : voiceBanner?.keptFields || [])
       ])
     );
-    return entriesForFieldNames(names).map((entry) => entry.label);
-  }, [entriesForFieldNames, voiceBanner]);
+    return filledEntriesFor(names).map((entry) => entry.label);
+  }, [filledEntriesFor, voiceBanner]);
   const voiceFilledLabels = useMemo(
     () => voiceFilledEntries.map((entry) => entry.label),
     [voiceFilledEntries]

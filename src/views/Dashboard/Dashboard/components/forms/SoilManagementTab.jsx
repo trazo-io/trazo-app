@@ -193,6 +193,27 @@ const formSchemaSoilManagement = object({
 });
 
 /**
+ * The stored description when the grower writes no observation (the backend requires one). It
+ * names the subtype the grower picked, in the backend's own labels (`SOIL_TYPE_CHOICES`): it was
+ * "Soil Testing" whatever the type, so an organic matter record said it was a soil test.
+ */
+export const SOIL_TYPE_LABELS = {
+  ST: 'Soil Test',
+  PA: 'pH Adjustment',
+  OM: 'Organic Matter Addition',
+  CC: 'Cover Crop',
+  TI: 'Tillage',
+  CO: 'Composting',
+  GR: 'Grazing Management',
+  HD: 'Habitat Development',
+  NS: 'Nesting / Shelter Structures',
+  LA: 'Lab Analysis'
+};
+
+export const soilDescriptionFallback = (data) =>
+  `Soil management event: ${data.name || SOIL_TYPE_LABELS[data.type] || 'Soil Test'}`;
+
+/**
  * With several parcels (`multiTarget`) the area is asked on each parcel's card, so the form
  * itself requires none; everything else is the same schema.
  */
@@ -915,9 +936,7 @@ const SoilManagementTab = forwardRef(
         processed_manure_attestation: cleanedCoreData.processed_manure_attestation || null,
         // Map observation field to description (required by backend CommonEvent model)
         // Backend requires non-empty description, so provide fallback if observation is empty
-        description:
-          cleanedCoreData.observation ||
-          `Soil management event: ${cleanedCoreData.name || 'Soil Testing'}`,
+        description: cleanedCoreData.observation || soilDescriptionFallback(cleanedCoreData),
         // Store tillage-specific fields in extra_data for backend compatibility
         // Ensure all values are JSON-serializable (convert any potential Decimal objects to strings)
         extra_data: {
@@ -2089,34 +2108,40 @@ const SoilManagementTab = forwardRef(
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                   />{' '}
                   <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-                    <StandardField
-                      label={intl.formatMessage({ id: 'app.soilPH' }) || 'Soil pH'}
-                      helpText="pH affects nutrient availability">
-                      <StandardInput
-                        type="number"
-                        min="0"
-                        max="14"
-                        step="0.1"
-                        placeholder="6.5"
-                        {...register('soil_ph')}
-                      />
-                    </StandardField>
+                    {/* With several parcels these are refused (one reading copied onto every
+                        parcel), and the shared body drops them, so they are not offered. */}
+                    {!multiTarget && (
+                      <>
+                        <StandardField
+                          label={intl.formatMessage({ id: 'app.soilPH' }) || 'Soil pH'}
+                          helpText="pH affects nutrient availability">
+                          <StandardInput
+                            type="number"
+                            min="0"
+                            max="14"
+                            step="0.1"
+                            placeholder="6.5"
+                            {...register('soil_ph')}
+                          />
+                        </StandardField>
 
-                    <StandardField
-                      label={
-                        intl.formatMessage({ id: 'app.organicMatterPercentage' }) ||
-                        'Organic Matter (%)'
-                      }
-                      helpText="Higher organic matter improves soil carbon">
-                      <StandardInput
-                        type="number"
-                        min="0"
-                        max="100"
-                        step="0.1"
-                        placeholder="3.5"
-                        {...register('organic_matter_percentage')}
-                      />
-                    </StandardField>
+                        <StandardField
+                          label={
+                            intl.formatMessage({ id: 'app.organicMatterPercentage' }) ||
+                            'Organic Matter (%)'
+                          }
+                          helpText="Higher organic matter improves soil carbon">
+                          <StandardInput
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.1"
+                            placeholder="3.5"
+                            {...register('organic_matter_percentage')}
+                          />
+                        </StandardField>
+                      </>
+                    )}
 
                     <StandardField
                       label="Soil Texture"
