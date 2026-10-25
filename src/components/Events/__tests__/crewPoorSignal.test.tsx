@@ -39,12 +39,14 @@ describe('crew flows under poor signal', () => {
       expect(c['app.errorSavingOffline']).not.toMatch(/nothing was lost|no se perdió nada/i);
   });
 
-  it('an edit or repeat offline promises no draft, because none is kept there', () => {
-    // Review of app #88: useEventDraft is disabled in edit and repeat flows.
+  it('an edit, repeat or crew-note save offline promises no draft, because none is kept there', () => {
+    // Review of app #88: useEventDraft is disabled in edit and repeat flows, and (2026-10-25) on a
+    // crew note. ONE flag decides both what is kept and what the offline message promises.
     const wizard = src('views/Dashboard/Dashboard/components/forms/NewEvent.jsx');
-    expect(wizard).toMatch(/enabled: !isEdit && !isRepeat/);
+    expect(wizard).toMatch(/const draftKept = !isEdit && !isRepeat && !fieldNoteIdFromUrl;/);
+    expect(wizard).toMatch(/enabled: draftKept\b/);
     expect(wizard).toMatch(
-      /isEdit \|\| isRepeat \? 'app\.errorSavingOfflineNoDraft' : 'app\.errorSavingOffline'/
+      /draftKept \? 'app\.errorSavingOffline' : 'app\.errorSavingOfflineNoDraft'/
     );
     for (const c of cats) {
       expect(c['app.errorSavingOfflineNoDraft']).toBeTruthy();
