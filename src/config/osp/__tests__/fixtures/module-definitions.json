@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.10.25",
+  "content_version": "2026.10.25.2",
   "registry": {
-    "content_version": "2026.10.25",
+    "content_version": "2026.10.25.2",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -4751,6 +4751,80 @@
                 "max_length": null
               },
               {
+                "key": "harvest_transport_separation",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How are organic and non-organic crops kept apart during harvest and transport? Check all that apply.",
+                  "es": "¿Cómo se mantienen separados los cultivos orgánicos y no orgánicos durante la cosecha y el transporte? Marca todas las que correspondan."
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "closed_containers",
+                    "label": {
+                      "en": "Closed, labeled containers",
+                      "es": "Contenedores cerrados y etiquetados"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "different_times",
+                    "label": {
+                      "en": "Harvested at different times",
+                      "es": "Se cosechan en momentos distintos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "visually_distinct",
+                    "label": {
+                      "en": "The crops are visually distinct",
+                      "es": "Los cultivos se distinguen a simple vista"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "separate_vehicles",
+                    "label": {
+                      "en": "Separate vehicles",
+                      "es": "Vehículos separados"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "separate_destinations",
+                    "label": {
+                      "en": "Separate destinations",
+                      "es": "Destinos separados"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otro"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "split_operation",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.272(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
                 "key": "parallel_production",
                 "kind": "boolean",
                 "label": {
@@ -5684,6 +5758,414 @@
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
+              },
+              {
+                "key": "harvest_method",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How is the crop harvested? Check all that apply.",
+                  "es": "¿Cómo se cosecha el cultivo? Marca todas las que correspondan."
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "by_hand",
+                    "label": {
+                      "en": "By hand",
+                      "es": "A mano"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "mechanical",
+                    "label": {
+                      "en": "Mechanical",
+                      "es": "Mecánica"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otra"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "harvest_records_kept",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Which harvest records are kept for each harvest?",
+                  "es": "¿Qué registros de cosecha se guardan de cada cosecha?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "harvest_date",
+                    "label": {
+                      "en": "Harvest date",
+                      "es": "Fecha de cosecha"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "quantity",
+                    "label": {
+                      "en": "Quantity harvested",
+                      "es": "Cantidad cosechada"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "crop_variety",
+                    "label": {
+                      "en": "Crop and variety",
+                      "es": "Cultivo y variedad"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "parcel_field",
+                    "label": {
+                      "en": "Parcel, field or block",
+                      "es": "Parcela, campo o cuartel"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "lot_number",
+                    "label": {
+                      "en": "Harvest lot number",
+                      "es": "Número de lote de cosecha"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "weigh_tickets",
+                    "label": {
+                      "en": "Weigh tickets or receiving records",
+                      "es": "Tickets de pesaje o registros de recepción"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otros"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "who_harvests",
+                    "op": "not_includes",
+                    "value": "sold_standing"
+                  }
+                ],
+                "nop_cite": "§ 205.103(b)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "harvest_transport_records_source",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Who generates the harvest and transport records? Check all that apply.",
+                  "es": "¿Quién genera los registros de cosecha y transporte? Marca todas las que correspondan."
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "we_generate",
+                    "label": {
+                      "en": "We generate them",
+                      "es": "Los generamos nosotros"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "contractor_provides",
+                    "label": {
+                      "en": "The harvester or carrier provides them to us",
+                      "es": "El cosechador o transportista nos los entrega"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "handler_obtains",
+                    "label": {
+                      "en": "Our organic handler or buyer obtains them",
+                      "es": "Nuestro manipulador orgánico o comprador los obtiene"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otro"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "not_applicable",
+                    "label": {
+                      "en": "Not applicable: no one else harvests or transports our crop",
+                      "es": "No aplica: nadie más cosecha ni transporta nuestro cultivo"
+                    },
+                    "exclusive": true
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.103(b)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "third_party_activities",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Which production work do other companies do for you? Check all that apply.",
+                  "es": "¿Qué trabajos de producción hacen otras empresas por ti? Marca todos los que correspondan."
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "harvest",
+                    "label": {
+                      "en": "Custom harvest",
+                      "es": "Cosecha contratada"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "planting",
+                    "label": {
+                      "en": "Custom planting",
+                      "es": "Plantación contratada"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "material_application",
+                    "label": {
+                      "en": "Material application",
+                      "es": "Aplicación de insumos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "pest_control",
+                    "label": {
+                      "en": "Pest control",
+                      "es": "Control de plagas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "transport",
+                    "label": {
+                      "en": "Transportation",
+                      "es": "Transporte"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otro"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "none",
+                    "label": {
+                      "en": "None",
+                      "es": "Ninguno"
+                    },
+                    "exclusive": true
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.272(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "third_party_equipment_controls",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How do you keep their equipment from contaminating your organic crops? Check all that apply.",
+                  "es": "¿Cómo evitas que su equipo contamine tus cultivos orgánicos? Marca todas las que correspondan."
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "inspect",
+                    "label": {
+                      "en": "We inspect it before use",
+                      "es": "Lo inspeccionamos antes de usarlo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "cleaned",
+                    "label": {
+                      "en": "It is cleaned before use",
+                      "es": "Se limpia antes de usarlo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "review_records",
+                    "label": {
+                      "en": "We review their cleaning records",
+                      "es": "Revisamos sus registros de limpieza"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "sop",
+                    "label": {
+                      "en": "They follow our written procedure",
+                      "es": "Siguen nuestro procedimiento escrito"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "dedicated",
+                    "label": {
+                      "en": "Their equipment is dedicated to organic use",
+                      "es": "Su equipo es exclusivo para uso orgánico"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otro"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "third_party_activities",
+                    "op": "includes_any",
+                    "value": [
+                      "harvest",
+                      "planting",
+                      "material_application",
+                      "pest_control",
+                      "transport",
+                      "other"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.272(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "third_party_cleaning_documentation",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "What documentation do you keep of their equipment cleaning?",
+                  "es": "¿Qué documentación guardas de la limpieza de su equipo?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "affidavits",
+                    "label": {
+                      "en": "Clean equipment affidavits",
+                      "es": "Declaraciones juradas de equipo limpio"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "cleanout_records",
+                    "label": {
+                      "en": "Clean-out records",
+                      "es": "Registros de limpieza"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "sop",
+                    "label": {
+                      "en": "A written cleaning procedure",
+                      "es": "Un procedimiento escrito de limpieza"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otra"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "third_party_activities",
+                    "op": "includes_any",
+                    "value": [
+                      "harvest",
+                      "planting",
+                      "material_application",
+                      "pest_control",
+                      "transport",
+                      "other"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.103",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
               }
             ]
           },
@@ -5715,6 +6197,31 @@
                     "label": {
                       "en": "Field bins",
                       "es": "Bins de campo"
+                    },
+                    "exclusive": false,
+                    "retired": true
+                  },
+                  {
+                    "value": "wooden_bins",
+                    "label": {
+                      "en": "Wooden bins",
+                      "es": "Bins de madera"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "plastic_bins",
+                    "label": {
+                      "en": "Plastic bins",
+                      "es": "Bins de plástico"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "picking_bags",
+                    "label": {
+                      "en": "Picking bags",
+                      "es": "Bolsas de cosecha"
                     },
                     "exclusive": false
                   },
@@ -6006,6 +6513,391 @@
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
+              },
+              {
+                "key": "harvest_container_material",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "What are your harvest containers made of? Check all that apply.",
+                  "es": "¿De qué material son tus contenedores de cosecha? Marca todos los que correspondan."
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "plastic",
+                    "label": {
+                      "en": "Plastic",
+                      "es": "Plástico"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "metal",
+                    "label": {
+                      "en": "Metal",
+                      "es": "Metal"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "cloth",
+                    "label": {
+                      "en": "Cloth",
+                      "es": "Tela"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "wood",
+                    "label": {
+                      "en": "Wood",
+                      "es": "Madera"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "cardboard",
+                    "label": {
+                      "en": "Cardboard",
+                      "es": "Cartón"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otro"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.272",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "container_cleaning_records",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "What records show your harvest containers are cleaned? Check all that apply.",
+                  "es": "¿Qué registros muestran que tus contenedores de cosecha se limpian? Marca todos los que correspondan."
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "cleaning_logs",
+                    "label": {
+                      "en": "Cleaning logs",
+                      "es": "Registros de limpieza"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "sop_attached",
+                    "label": {
+                      "en": "A written procedure (attached below)",
+                      "es": "Un procedimiento escrito (adjunto abajo)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otros"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "container_safeguards",
+                    "op": "includes",
+                    "value": "cleaned_prior"
+                  }
+                ],
+                "nop_cite": "§ 205.103",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "container_cleaning_sop_upload",
+                "kind": "upload",
+                "label": {
+                  "en": "Attach your container cleaning procedure",
+                  "es": "Adjunta tu procedimiento de limpieza de contenedores"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "container_cleaning_records",
+                    "op": "includes",
+                    "value": "sop_attached"
+                  }
+                ],
+                "nop_cite": "§ 205.272",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "harvest_containers_stamped_organic",
+                "kind": "radio",
+                "label": {
+                  "en": "Are your harvest containers permanently and clearly stamped organic?",
+                  "es": "¿Tus contenedores de cosecha están marcados como orgánicos de forma permanente y clara?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "all",
+                    "label": {
+                      "en": "All of them",
+                      "es": "Todos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "some",
+                    "label": {
+                      "en": "Some of them",
+                      "es": "Algunos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "none",
+                    "label": {
+                      "en": "None",
+                      "es": "Ninguno"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.272",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "unstamped_container_safeguards",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How are containers that are not stamped organic kept from contaminating the crop? Check all that apply.",
+                  "es": "¿Cómo evitas que los contenedores no marcados como orgánicos contaminen el cultivo? Marca todas las que correspondan."
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "cleaned_after_nonorganic",
+                    "label": {
+                      "en": "Plastic, metal or cloth containers are cleaned after non-organic use",
+                      "es": "Los de plástico, metal o tela se limpian después de un uso no orgánico"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "cardboard_not_exposed",
+                    "label": {
+                      "en": "Cardboard was never exposed to non-organic product or prohibited substances",
+                      "es": "El cartón nunca estuvo expuesto a producto no orgánico ni a sustancias prohibidas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "wood_fully_lined",
+                    "label": {
+                      "en": "Wooden containers are fully lined",
+                      "es": "Los de madera van totalmente forrados"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "new_only",
+                    "label": {
+                      "en": "Only new containers are used",
+                      "es": "Solo se usan contenedores nuevos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otra"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "harvest_containers_stamped_organic",
+                    "op": "one_of",
+                    "value": [
+                      "some",
+                      "none"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.272",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "receives_nondedicated_wood_bins",
+                "kind": "boolean",
+                "label": {
+                  "en": "Do you receive wooden bins from a packer or processor that are also used for non-organic fruit?",
+                  "es": "¿Recibes bins de madera de un empacador o procesador que también se usan para fruta no orgánica?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "container_types",
+                    "op": "includes",
+                    "value": "wooden_bins"
+                  }
+                ],
+                "nop_cite": "§ 205.272(b)(2)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "handler_bin_practice",
+                "kind": "radio",
+                "label": {
+                  "en": "Do those bins never enter the packer's dump tank, and are they fully lined before organic fruit goes in?",
+                  "es": "¿Esos bins nunca entran al tanque de vaciado del empacador, y se forran por completo antes de poner fruta orgánica?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "confirmed",
+                    "label": {
+                      "en": "Yes, confirmed in writing by the packer or processor",
+                      "es": "Sí, confirmado por escrito por el empacador o procesador"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "unconfirmed",
+                    "label": {
+                      "en": "We believe so, but it is not confirmed in writing",
+                      "es": "Creemos que sí, pero no está confirmado por escrito"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "no",
+                    "label": {
+                      "en": "No",
+                      "es": "No"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "receives_nondedicated_wood_bins",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.272(b)(2)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "handler_bin_documentation_upload",
+                "kind": "upload",
+                "label": {
+                  "en": "Attach the packer's or processor's documentation of how the bins are handled",
+                  "es": "Adjunta la documentación del empacador o procesador sobre cómo se manejan los bins"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "receives_nondedicated_wood_bins",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.272(b)(2)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "empty_bin_storage",
+                "kind": "textarea",
+                "label": {
+                  "en": "Where are empty bins kept between harvests, and how are they protected from drift or contamination?",
+                  "es": "¿Dónde se guardan los bins vacíos entre cosechas, y cómo se protegen de la deriva o la contaminación?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "container_types",
+                    "op": "includes_any",
+                    "value": [
+                      "wooden_bins",
+                      "plastic_bins",
+                      "field_bins"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.272",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
               }
             ]
           },
@@ -6184,6 +7076,277 @@
                   }
                 ],
                 "nop_cite": "§ 205.103",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "carrier_handles_beyond_transport",
+                "kind": "boolean",
+                "label": {
+                  "en": "Does any carrier do more than move the load, such as pack, repack, treat, sort, open, enclose or label it?",
+                  "es": "¿Algún transportista hace algo más que mover la carga, como empacar, reempacar, tratar, clasificar, abrir, envolver o etiquetar?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "who_transports",
+                    "op": "includes_any",
+                    "value": [
+                      "commercial_carrier",
+                      "broker",
+                      "warehouse_packer",
+                      "other_transporter"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.101(f)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "transport_container_types",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How is the crop transported? Check all that apply.",
+                  "es": "¿Cómo se transporta el cultivo? Marca todas las que correspondan."
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "bins_totes",
+                    "label": {
+                      "en": "Bins or totes",
+                      "es": "Bins o totes"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "bulk_trailer",
+                    "label": {
+                      "en": "Bulk trailer",
+                      "es": "Remolque a granel"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "cardboard_boxes",
+                    "label": {
+                      "en": "Cardboard boxes",
+                      "es": "Cajas de cartón"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otro"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.272",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "transport_unit_cleaning_documentation",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How do you show transport units are clean before loose or bulk organic product is loaded? Check all that apply.",
+                  "es": "¿Cómo demuestras que las unidades de transporte están limpias antes de cargar producto orgánico suelto o a granel? Marca todas las que correspondan."
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "cleanout_records",
+                    "label": {
+                      "en": "Clean-out records",
+                      "es": "Registros de limpieza"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "clean_truck_affidavits",
+                    "label": {
+                      "en": "Clean truck or equipment affidavits",
+                      "es": "Declaraciones juradas de camión o equipo limpio"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otra"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "packaged_only",
+                    "label": {
+                      "en": "Not applicable: only packaged product is shipped",
+                      "es": "No aplica: solo se envía producto empacado"
+                    },
+                    "exclusive": true
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.272(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "transport_shared_with_noncertified",
+                "kind": "boolean",
+                "label": {
+                  "en": "Is organic product ever shipped in the same transport unit as non-organic product?",
+                  "es": "¿Alguna vez se envía producto orgánico en la misma unidad de transporte que producto no orgánico?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.272(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "shared_transport_segregation",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How is organic product kept separate in a shared unit? Check all that apply.",
+                  "es": "¿Cómo se mantiene separado el producto orgánico en una unidad compartida? Marca todas las que correspondan."
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "sealed_impermeable",
+                    "label": {
+                      "en": "Organic product is sealed in impermeable containers",
+                      "es": "El producto orgánico va sellado en contenedores impermeables"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "separate_area",
+                    "label": {
+                      "en": "A separate area of the unit",
+                      "es": "Un área separada de la unidad"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "separate_pallets",
+                    "label": {
+                      "en": "Separate, labeled pallets",
+                      "es": "Tarimas separadas y etiquetadas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otra"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "transport_shared_with_noncertified",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.272(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "first_stop_before_buyer",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Before the buyer, does the crop go anywhere else? Check all that apply.",
+                  "es": "Antes de llegar al comprador, ¿el cultivo pasa por otro lugar? Marca todos los que correspondan."
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "hydrocooler",
+                    "label": {
+                      "en": "A hydrocooler or cooling facility",
+                      "es": "Un hidroenfriador o centro de enfriamiento"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "cold_storage",
+                    "label": {
+                      "en": "Cold storage",
+                      "es": "Almacenamiento en frío"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "consolidation",
+                    "label": {
+                      "en": "A consolidation point",
+                      "es": "Un punto de consolidación"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otro"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "none",
+                    "label": {
+                      "en": "No, it goes straight to the buyer",
+                      "es": "No, va directo al comprador"
+                    },
+                    "exclusive": true
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.272",
                 "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
@@ -11031,13 +12194,23 @@
       "answers": {},
       "visible_questions": [
         "who_harvests",
+        "harvest_method",
+        "harvest_records_kept",
+        "harvest_transport_records_source",
+        "third_party_activities",
         "container_types",
         "container_safeguards",
         "containers_reused_from_prohibited",
         "packaging_free_of_prohibited",
+        "harvest_container_material",
+        "harvest_containers_stamped_organic",
         "who_transports",
         "transport_units_inspected_clean",
         "lot_identification_on_every_load",
+        "transport_container_types",
+        "transport_unit_cleaning_documentation",
+        "transport_shared_with_noncertified",
+        "first_stop_before_buyer",
         "handled_by_another_operation"
       ],
       "missing_required": [
@@ -11076,13 +12249,23 @@
       },
       "visible_questions": [
         "who_harvests",
+        "harvest_method",
+        "harvest_records_kept",
+        "harvest_transport_records_source",
+        "third_party_activities",
         "container_types",
         "container_safeguards",
         "containers_reused_from_prohibited",
         "packaging_free_of_prohibited",
+        "harvest_container_material",
+        "harvest_containers_stamped_organic",
         "who_transports",
         "transport_units_inspected_clean",
         "lot_identification_on_every_load",
+        "transport_container_types",
+        "transport_unit_cleaning_documentation",
+        "transport_shared_with_noncertified",
+        "first_stop_before_buyer",
         "handled_by_another_operation"
       ],
       "missing_required": [
@@ -11118,13 +12301,23 @@
         "custom_harvester_cleanout_verified",
         "custom_harvester_instructions",
         "custom_harvester_records",
+        "harvest_method",
+        "harvest_records_kept",
+        "harvest_transport_records_source",
+        "third_party_activities",
         "container_types",
         "container_safeguards",
         "containers_reused_from_prohibited",
         "packaging_free_of_prohibited",
+        "harvest_container_material",
+        "harvest_containers_stamped_organic",
         "who_transports",
         "transport_units_inspected_clean",
         "lot_identification_on_every_load",
+        "transport_container_types",
+        "transport_unit_cleaning_documentation",
+        "transport_shared_with_noncertified",
+        "first_stop_before_buyer",
         "handled_by_another_operation"
       ],
       "missing_required": [
@@ -11167,15 +12360,26 @@
       "visible_questions": [
         "who_harvests",
         "who_harvests_other",
+        "harvest_method",
+        "harvest_records_kept",
+        "harvest_transport_records_source",
+        "third_party_activities",
         "container_types",
         "container_safeguards",
         "containers_reused_from_prohibited",
         "packaging_free_of_prohibited",
+        "harvest_container_material",
+        "harvest_containers_stamped_organic",
         "who_transports",
         "who_transports_other",
         "transport_units_inspected_clean",
         "lot_identification_on_every_load",
         "non_own_transport_records",
+        "carrier_handles_beyond_transport",
+        "transport_container_types",
+        "transport_unit_cleaning_documentation",
+        "transport_shared_with_noncertified",
+        "first_stop_before_buyer",
         "handled_by_another_operation"
       ],
       "missing_required": [
@@ -11217,14 +12421,24 @@
       "visible_questions": [
         "who_harvests",
         "sold_standing_details",
+        "harvest_method",
+        "harvest_transport_records_source",
+        "third_party_activities",
         "container_types",
         "container_safeguards",
         "containers_reused_from_prohibited",
         "packaging_free_of_prohibited",
+        "harvest_container_material",
+        "harvest_containers_stamped_organic",
         "who_transports",
         "transport_units_inspected_clean",
         "lot_identification_on_every_load",
         "non_own_transport_records",
+        "carrier_handles_beyond_transport",
+        "transport_container_types",
+        "transport_unit_cleaning_documentation",
+        "transport_shared_with_noncertified",
+        "first_stop_before_buyer",
         "handled_by_another_operation"
       ],
       "missing_required": [
@@ -11248,6 +12462,439 @@
         "lot_identification_on_every_load",
         "non_own_transport_records",
         "handled_by_another_operation"
+      ]
+    },
+    {
+      "module": "g6_1_harvest_transport",
+      "label": "wooden_bins_from_packer",
+      "answers": {
+        "container_types": [
+          "wooden_bins"
+        ],
+        "receives_nondedicated_wood_bins": true,
+        "harvest_containers_stamped_organic": "none"
+      },
+      "visible_questions": [
+        "who_harvests",
+        "harvest_method",
+        "harvest_records_kept",
+        "harvest_transport_records_source",
+        "third_party_activities",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "harvest_container_material",
+        "harvest_containers_stamped_organic",
+        "unstamped_container_safeguards",
+        "receives_nondedicated_wood_bins",
+        "handler_bin_practice",
+        "handler_bin_documentation_upload",
+        "empty_bin_storage",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "transport_container_types",
+        "transport_unit_cleaning_documentation",
+        "transport_shared_with_noncertified",
+        "first_stop_before_buyer",
+        "handled_by_another_operation"
+      ],
+      "missing_required": [
+        "who_harvests",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "handled_by_another_operation"
+      ],
+      "missing_required_na": [
+        "who_harvests",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "handled_by_another_operation"
+      ]
+    },
+    {
+      "module": "g6_1_harvest_transport",
+      "label": "stamped_plastic_bins",
+      "answers": {
+        "container_types": [
+          "plastic_bins"
+        ],
+        "harvest_containers_stamped_organic": "all"
+      },
+      "visible_questions": [
+        "who_harvests",
+        "harvest_method",
+        "harvest_records_kept",
+        "harvest_transport_records_source",
+        "third_party_activities",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "harvest_container_material",
+        "harvest_containers_stamped_organic",
+        "empty_bin_storage",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "transport_container_types",
+        "transport_unit_cleaning_documentation",
+        "transport_shared_with_noncertified",
+        "first_stop_before_buyer",
+        "handled_by_another_operation"
+      ],
+      "missing_required": [
+        "who_harvests",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "handled_by_another_operation"
+      ],
+      "missing_required_na": [
+        "who_harvests",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "handled_by_another_operation"
+      ]
+    },
+    {
+      "module": "g6_1_harvest_transport",
+      "label": "shared_truck",
+      "answers": {
+        "transport_shared_with_noncertified": true,
+        "who_transports": [
+          "commercial_carrier"
+        ]
+      },
+      "visible_questions": [
+        "who_harvests",
+        "harvest_method",
+        "harvest_records_kept",
+        "harvest_transport_records_source",
+        "third_party_activities",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "harvest_container_material",
+        "harvest_containers_stamped_organic",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "non_own_transport_records",
+        "carrier_handles_beyond_transport",
+        "transport_container_types",
+        "transport_unit_cleaning_documentation",
+        "transport_shared_with_noncertified",
+        "shared_transport_segregation",
+        "first_stop_before_buyer",
+        "handled_by_another_operation"
+      ],
+      "missing_required": [
+        "who_harvests",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "non_own_transport_records",
+        "handled_by_another_operation"
+      ],
+      "missing_required_na": [
+        "who_harvests",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "non_own_transport_records",
+        "handled_by_another_operation"
+      ]
+    },
+    {
+      "module": "g6_1_harvest_transport",
+      "label": "custom_work",
+      "answers": {
+        "third_party_activities": [
+          "harvest",
+          "material_application"
+        ]
+      },
+      "visible_questions": [
+        "who_harvests",
+        "harvest_method",
+        "harvest_records_kept",
+        "harvest_transport_records_source",
+        "third_party_activities",
+        "third_party_equipment_controls",
+        "third_party_cleaning_documentation",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "harvest_container_material",
+        "harvest_containers_stamped_organic",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "transport_container_types",
+        "transport_unit_cleaning_documentation",
+        "transport_shared_with_noncertified",
+        "first_stop_before_buyer",
+        "handled_by_another_operation"
+      ],
+      "missing_required": [
+        "who_harvests",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "handled_by_another_operation"
+      ],
+      "missing_required_na": [
+        "who_harvests",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "handled_by_another_operation"
+      ]
+    },
+    {
+      "module": "g6_1_harvest_transport",
+      "label": "no_custom_work",
+      "answers": {
+        "third_party_activities": [
+          "none"
+        ]
+      },
+      "visible_questions": [
+        "who_harvests",
+        "harvest_method",
+        "harvest_records_kept",
+        "harvest_transport_records_source",
+        "third_party_activities",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "harvest_container_material",
+        "harvest_containers_stamped_organic",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "transport_container_types",
+        "transport_unit_cleaning_documentation",
+        "transport_shared_with_noncertified",
+        "first_stop_before_buyer",
+        "handled_by_another_operation"
+      ],
+      "missing_required": [
+        "who_harvests",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "handled_by_another_operation"
+      ],
+      "missing_required_na": [
+        "who_harvests",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "handled_by_another_operation"
+      ]
+    },
+    {
+      "module": "g6_1_harvest_transport",
+      "label": "sop_said_attached",
+      "answers": {
+        "container_safeguards": [
+          "cleaned_prior"
+        ],
+        "container_cleaning_records": [
+          "sop_attached"
+        ]
+      },
+      "visible_questions": [
+        "who_harvests",
+        "harvest_method",
+        "harvest_records_kept",
+        "harvest_transport_records_source",
+        "third_party_activities",
+        "container_types",
+        "container_safeguards",
+        "containers_cleaning_method",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "harvest_container_material",
+        "container_cleaning_records",
+        "container_cleaning_sop_upload",
+        "harvest_containers_stamped_organic",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "transport_container_types",
+        "transport_unit_cleaning_documentation",
+        "transport_shared_with_noncertified",
+        "first_stop_before_buyer",
+        "handled_by_another_operation"
+      ],
+      "missing_required": [
+        "who_harvests",
+        "container_types",
+        "containers_cleaning_method",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "handled_by_another_operation"
+      ],
+      "missing_required_na": [
+        "who_harvests",
+        "container_types",
+        "containers_cleaning_method",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "handled_by_another_operation"
+      ]
+    },
+    {
+      "module": "g6_0_production",
+      "label": "unanswered",
+      "answers": {},
+      "visible_questions": [
+        "split_operation",
+        "parallel_production",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ],
+      "missing_required": [
+        "split_operation",
+        "parallel_production",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ],
+      "missing_required_na": [
+        "split_operation",
+        "parallel_production",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ]
+    },
+    {
+      "module": "g6_0_production",
+      "label": "split",
+      "answers": {
+        "split_operation": true
+      },
+      "visible_questions": [
+        "split_operation",
+        "split_operation_separation",
+        "harvest_transport_separation",
+        "parallel_production",
+        "nonorganic_system_materials",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ],
+      "missing_required": [
+        "split_operation_separation",
+        "parallel_production",
+        "nonorganic_system_materials",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ],
+      "missing_required_na": [
+        "split_operation_separation",
+        "parallel_production",
+        "nonorganic_system_materials",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ]
+    },
+    {
+      "module": "g6_0_production",
+      "label": "not_split",
+      "answers": {
+        "split_operation": false
+      },
+      "visible_questions": [
+        "split_operation",
+        "parallel_production",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ],
+      "missing_required": [
+        "parallel_production",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ],
+      "missing_required_na": [
+        "parallel_production",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
       ]
     },
     {
