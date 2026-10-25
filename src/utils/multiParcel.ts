@@ -179,7 +179,34 @@ export const fieldValue = (
   return derivedValue(target, field, form);
 };
 
-export type TargetIssue = 'scope' | 'area' | `field:${string}`;
+export type TargetIssue = 'scope' | 'area' | `field:${string}` | `decimals:${string}`;
+
+/**
+ * How many decimals the server keeps for a per-parcel number (the model's `decimal_places`;
+ * 0 for a PositiveIntegerField). Absent = no limit (a CharField such as `volume_applied`).
+ *
+ * A value past the limit was refused by the server as "Ensure that there are no more than 2
+ * decimal places.", in English on a Spanish page and naming no field (2026-10-24). The card
+ * now says it on the input, before the save.
+ */
+export const MAX_DECIMALS: Record<string, number> = {
+  area_covered: 2,
+  contamination_affected_area: 2,
+  equipment_hours: 2,
+  irrigation_depth: 2,
+  fuel_consumed: 2,
+  application_fuel_consumed: 2,
+  plants_established: 0,
+  habitat_structure_count: 0
+};
+
+const decimalsIn = (typed: string): number => {
+  const match = typed.trim().match(/\.(\d+)$/);
+  return match ? match[1].replace(/0+$/, '').length : 0;
+};
+
+const tooPrecise = (key: string | null, typed: string): boolean =>
+  key !== null && key in MAX_DECIMALS && decimalsIn(typed) > MAX_DECIMALS[key];
 
 /** What is still missing before this target can be saved, in the order the card asks. */
 export const targetIssues = (
@@ -191,8 +218,14 @@ export const targetIssues = (
   if (rules.areaKey) {
     if (target.scope === null) return ['scope'];
     if (targetArea(target, areaUnitOf(form)) === null) issues.push('area');
+    // The typed area is what is sent when the grower types one (part, or a parcel with no size).
+    const typedArea = target.scope === 'part' || !hasRecordedSize(target);
+    if (typedArea && tooPrecise(rules.areaKey, target.partArea)) {
+      issues.push(`decimals:${rules.areaKey}`);
+    }
   }
   for (const field of rules.fields) {
+    if (tooPrecise(field.key, target.values[field.key] ?? '')) issues.push(`decimals:${field.key}`);
     if (!field.required) continue;
     const value = fieldValue(target, field, form);
     if (value === null || value <= 0) issues.push(`field:${field.key}`);

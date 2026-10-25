@@ -8830,6 +8830,7 @@
   "events.multiParcel.issue.scope": "Elige parcela completa o una parte.",
   "events.multiParcel.issue.area": "Ingresa el área tratada.",
   "events.multiParcel.issue.amount": "Ingresa la cantidad aplicada.",
+  "events.multiParcel.issue.decimals": "{max, plural, =0 {Usa un número entero.} one {Usa como máximo # decimal.} other {Usa como máximo # decimales.}}",
   "events.multiParcel.validationTitle": "Cada parcela necesita el área y la cantidad",
   "events.multiParcel.validationBody": "Marcamos las parcelas a las que les falta algo.",
   "events.multiParcel.savedTo": "{count, plural, one {Guardado en # parcela} other {Guardado en # parcelas}}",

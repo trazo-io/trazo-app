@@ -487,7 +487,23 @@ const UNIT_NORMALIZE: Record<string, string> = {
   hectares: 'ha',
   hectare: 'ha',
   ha: 'ha',
-  m2: 'm2'
+  m2: 'm2',
+  // Irrigation depth. Missing until 2026-10-24, so in a sentence that also named a known unit
+  // ("around 3 hours ... 0.5 an inch of water") `amountsActuallySpoken` judged the parser's
+  // "inches" unsaid (the transcript has "inch") and the depth never reached the form. No bare
+  // "in": the preposition would make every sentence look like it said inches.
+  inches: 'inches',
+  inch: 'inches',
+  pulgadas: 'inches',
+  pulgada: 'inches',
+  cm: 'cm',
+  cms: 'cm',
+  centimeters: 'cm',
+  centimeter: 'cm',
+  centimetres: 'cm',
+  centimetre: 'cm',
+  centimetros: 'cm',
+  centimetro: 'cm'
 };
 
 /**

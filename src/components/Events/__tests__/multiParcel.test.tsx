@@ -196,6 +196,32 @@ describe('PerParcelCards', () => {
     ).toBeInTheDocument();
   });
 
+  it('writes the depth unit as a symbol, never the stored word', () => {
+    const irrigation = specRulesFor(1, 'IR') as MultiParcelRules;
+    wrap(
+      <Cards
+        initial={[{ ...blockA, scope: 'all' }]}
+        rules={irrigation}
+        form={{ area_unit: 'acres', irrigation_depth_unit: 'inches' }}
+      />
+    );
+    expect(screen.getByText(/\(in\)/)).toBeInTheDocument();
+    expect(screen.queryByText(/\(inches\)/)).not.toBeInTheDocument();
+  });
+
+  it('refuses more decimals than the server keeps, on the field, before the save', () => {
+    const irrigation = specRulesFor(1, 'IR') as MultiParcelRules;
+    wrap(
+      <Cards
+        initial={[{ ...blockA, scope: 'all', values: { irrigation_depth: '0.125' } }]}
+        rules={irrigation}
+        form={{ area_unit: 'acres', irrigation_depth_unit: 'inches' }}
+        showIssues
+      />
+    );
+    expect(screen.getByText('Use at most 2 decimals.')).toBeInTheDocument();
+  });
+
   it('after a refused Continue, marks what each parcel is missing', () => {
     wrap(
       <Cards

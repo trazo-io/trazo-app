@@ -23,6 +23,7 @@ import { ParcelPicker } from 'components/Events/ParcelPicker';
 import type { ParcelGeometry } from 'store/api/parcelGeometryApi';
 import type { MultiParcelRules, PerParcelField } from 'config/events/multiParcel';
 import {
+  MAX_DECIMALS,
   areaUnitOf,
   derivedValue,
   hasRecordedSize,
@@ -103,7 +104,11 @@ interface PerParcelCardsProps {
   showIssues: boolean;
 }
 
-const unitSymbol = (unit: string) => AREA_SYMBOLS[unit] ?? volumeSymbol(unit);
+// The irrigation depth unit is stored as the word "inches", which read "(inches)" on a Spanish
+// card (2026-10-24). Written as its symbol, like the area and volume units.
+const DEPTH_SYMBOLS: Record<string, string> = { inches: 'in' };
+const unitSymbol = (unit: string) =>
+  AREA_SYMBOLS[unit] ?? DEPTH_SYMBOLS[unit] ?? volumeSymbol(unit);
 
 export const PerParcelCards = ({
   targets,
@@ -126,6 +131,11 @@ export const PerParcelCards = ({
       { unit: unit ? unitSymbol(unit) : '' }
     );
   };
+
+  const decimalsError = (issues: string[], key: string | null) =>
+    key && issues.includes(`decimals:${key}`)
+      ? intl.formatMessage({ id: 'events.multiParcel.issue.decimals' }, { max: MAX_DECIMALS[key] })
+      : undefined;
 
   const derivationText = (target: ParcelTarget, field: PerParcelField) => {
     const derived = derivedValue(target, field, form);
@@ -224,7 +234,7 @@ export const PerParcelCards = ({
                     error={
                       issues.includes('area')
                         ? intl.formatMessage({ id: 'events.multiParcel.issue.area' })
-                        : undefined
+                        : decimalsError(issues, rules.areaKey)
                     }>
                     <StandardInput
                       type="number"
@@ -249,7 +259,7 @@ export const PerParcelCards = ({
                     error={
                       issues.includes('area')
                         ? intl.formatMessage({ id: 'events.multiParcel.issue.area' })
-                        : undefined
+                        : decimalsError(issues, rules.areaKey)
                     }>
                     <StandardInput
                       type="number"
@@ -300,7 +310,7 @@ export const PerParcelCards = ({
                         error={
                           issues.includes(`field:${field.key}`)
                             ? intl.formatMessage({ id: 'events.multiParcel.issue.amount' })
-                            : undefined
+                            : decimalsError(issues, field.key)
                         }>
                         <StandardInput
                           type="number"
