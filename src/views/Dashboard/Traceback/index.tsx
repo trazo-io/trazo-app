@@ -114,6 +114,17 @@ export const TracebackPage = () => {
       // season and record, and the upload returns here.
       return `/admin/dashboard/farm/${season.establishment_id}/documents?production=${season.id}&record=${EVENT_TYPE_BY_KIND[kind]}:${gap.ref}&kind=receipt&next=${back}`;
     }
+    if (gap.code === 'supplier_certificate_missing' && gap.ref) {
+      // A supplier's certificate is filed once on the supplier, on the farm page, never on the
+      // record: it covers every purchase from that supplier. The page opens at the supplier the
+      // record resolves to, or with the record's spelling ready to attach or add.
+      const row = (tb?.inputs || []).find((r: any) => r.kind === 'seed' && r.event_id === gap.ref);
+      const resolved = row?.supplier_certificate?.supplier?.id;
+      const query = resolved
+        ? `supplier=${resolved}`
+        : `supplierSpelling=${encodeURIComponent(row?.supplier ?? '')}`;
+      return `/admin/dashboard/farm/${season.establishment_id}/profile?${query}#suppliers`;
+    }
     if (gap.ref && EVENT_TYPE_BY_KIND[kind]) {
       // `next` brings the farmer back to this trace once the record is saved (NewEvent accepts
       // only this farm's traceback path there, nothing else).

@@ -467,6 +467,96 @@ describe('TracebackPage', () => {
     ).toBeTruthy();
   });
 
+  const supplierGapTrace = (supplierCertificate: any) => ({
+    ...TRACE,
+    inputs: [
+      {
+        ...TRACE.inputs[0],
+        kind: 'seed',
+        event_id: 63,
+        date: '2025-04-02',
+        product: 'Honeycrisp',
+        supplier: 'columbia nursery',
+        invoice: 'CN-25-118',
+        supplier_certificate: supplierCertificate
+      }
+    ],
+    gaps: [
+      {
+        hop: 'inputs',
+        code: 'supplier_certificate_missing',
+        field: 'supplier',
+        ref: 63,
+        kind: 'seed'
+      }
+    ]
+  });
+
+  const clickSupplierGapFix = () => {
+    const text = messages['traceback.gap.supplier_certificate_missing'].replace(
+      '{input}',
+      '2025-04-02 · Honeycrisp'
+    );
+    const gap = screen.getByText(text).closest('[role="alert"]');
+    fireEvent.click(
+      within(gap as HTMLElement).getByRole('button', { name: messages['traceback.gap.fix'] })
+    );
+    return screen.getByTestId('landed').textContent || '';
+  };
+
+  it('a missing supplier certificate is filed on the supplier, at the farm page', () => {
+    state.trace = supplierGapTrace({
+      supplier: { id: 12, name: 'Columbia Nursery', certifier: '', nop_operation_id: '' },
+      status: 'none_on_file',
+      certificate: null
+    });
+    renderAt('/admin/dashboard/farm/1/traceback?sale=7');
+    const landed = clickSupplierGapFix();
+    expect(landed).toBe('/admin/dashboard/farm/1/profile?supplier=12');
+  });
+
+  it('a supplier name no supplier holds yet arrives ready to attach or add', () => {
+    state.trace = supplierGapTrace({ supplier: null, status: 'unresolved', certificate: null });
+    renderAt('/admin/dashboard/farm/1/traceback?sale=7');
+    const landed = clickSupplierGapFix();
+    expect(landed.split('?')[0]).toBe('/admin/dashboard/farm/1/profile');
+    expect(new URLSearchParams(landed.split('?')[1]).get('supplierSpelling')).toBe(
+      'columbia nursery'
+    );
+  });
+
+  it("a seed row names the supplier certificate copy that covered the purchase, as the operation's record", () => {
+    state.trace = {
+      ...supplierGapTrace({
+        supplier: {
+          id: 12,
+          name: 'Columbia Nursery',
+          certifier: 'Washington State Department of Agriculture',
+          nop_operation_id: '8150001234'
+        },
+        status: 'covering',
+        certificate: {
+          id: 3,
+          issued_on: '2025-02-10',
+          document: { id: 88, title: 'Columbia Nursery certificate 2025' }
+        }
+      }),
+      gaps: []
+    };
+    const { container } = renderAt('/admin/dashboard/farm/1/traceback?sale=7');
+    const line = messages['traceback.supplierCert.covering'].replace('{date}', '2025-02-10');
+    expect(
+      screen.getByText(`${line} (Washington State Department of Agriculture, NOP ID 8150001234)`, {
+        exact: false
+      })
+    ).toBeTruthy();
+    const link = screen.getByRole('link', {
+      name: `${messages['traceback.docKind.supplierCertificate']}: Columbia Nursery certificate 2025`
+    });
+    expect(link.getAttribute('href')).toContain('/documents/88/');
+    expect(container.textContent || '').not.toMatch(/verified/i);
+  });
+
   it('renders every gap code with its own message', () => {
     state.trace = TRACE;
     renderAt('/admin/dashboard/farm/1/traceback?sale=7');

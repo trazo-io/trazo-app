@@ -70,6 +70,7 @@ export const baseApi = createApi({
     'OSPReview',
     'OSPRecordTypes',
     'PostHarvestFacility',
+    'Supplier',
     'SeasonPlan',
     'FieldNote',
     'CrewSender'
