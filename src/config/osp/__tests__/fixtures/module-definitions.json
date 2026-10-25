@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.09.30",
+  "content_version": "2026.10.25",
   "registry": {
-    "content_version": "2026.09.30",
+    "content_version": "2026.10.25",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -5439,10 +5439,10 @@
             "questions": [
               {
                 "key": "who_harvests",
-                "kind": "radio",
+                "kind": "checkbox_group",
                 "label": {
-                  "en": "Who harvests this crop?",
-                  "es": "¿Quién cosecha este cultivo?"
+                  "en": "Who harvests this crop? Check all that apply.",
+                  "es": "¿Quién cosecha este cultivo? Marca todas las que correspondan."
                 },
                 "coaching": null,
                 "options": [
@@ -5465,15 +5465,64 @@
                   {
                     "value": "buyer_harvests",
                     "label": {
-                      "en": "Buyer harvests",
-                      "es": "El comprador cosecha"
+                      "en": "Buyer or customer harvests",
+                      "es": "El comprador o cliente cosecha"
                     },
                     "exclusive": false
+                  },
+                  {
+                    "value": "processor_harvests",
+                    "label": {
+                      "en": "Processor or packer harvests",
+                      "es": "El procesador o empacador cosecha"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other_harvester",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otro"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "sold_standing",
+                    "label": {
+                      "en": "We do not harvest: the crop is sold standing in the field",
+                      "es": "No cosechamos: el cultivo se vende en pie en el campo"
+                    },
+                    "exclusive": true
                   }
                 ],
                 "required": true,
                 "visible_when": [],
                 "nop_cite": "§ 205.272(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "who_harvests_other",
+                "kind": "text",
+                "label": {
+                  "en": "Who else harvests?",
+                  "es": "¿Quién más cosecha?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "who_harvests",
+                    "op": "includes",
+                    "value": "other_harvester"
+                  }
+                ],
+                "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
@@ -5497,7 +5546,7 @@
                 "visible_when": [
                   {
                     "question": "who_harvests",
-                    "op": "eq",
+                    "op": "includes",
                     "value": "custom_harvester"
                   }
                 ],
@@ -5522,7 +5571,7 @@
                 "visible_when": [
                   {
                     "question": "who_harvests",
-                    "op": "eq",
+                    "op": "includes",
                     "value": "custom_harvester"
                   }
                 ],
@@ -5599,7 +5648,7 @@
                 "visible_when": [
                   {
                     "question": "who_harvests",
-                    "op": "eq",
+                    "op": "includes",
                     "value": "custom_harvester"
                   }
                 ],
@@ -5951,10 +6000,10 @@
             "questions": [
               {
                 "key": "who_transports",
-                "kind": "radio",
+                "kind": "checkbox_group",
                 "label": {
-                  "en": "Who transports this product off the operation?",
-                  "es": "¿Quién transporta este producto fuera de la operación?"
+                  "en": "Who transports this product off the operation? Check all that apply.",
+                  "es": "¿Quién transporta este producto fuera de la operación? Marca todas las que correspondan."
                 },
                 "coaching": null,
                 "options": [
@@ -5981,11 +6030,60 @@
                       "es": "Recolección por el comprador"
                     },
                     "exclusive": false
+                  },
+                  {
+                    "value": "broker",
+                    "label": {
+                      "en": "A broker arranges it",
+                      "es": "Un corredor lo organiza"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "warehouse_packer",
+                    "label": {
+                      "en": "Warehouse or packer",
+                      "es": "Almacén o empacador"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other_transporter",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otro"
+                    },
+                    "exclusive": false
                   }
                 ],
                 "required": true,
                 "visible_when": [],
                 "nop_cite": "§ 205.272(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "who_transports_other",
+                "kind": "text",
+                "label": {
+                  "en": "Who else transports it?",
+                  "es": "¿Quién más lo transporta?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "who_transports",
+                    "op": "includes",
+                    "value": "other_transporter"
+                  }
+                ],
+                "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
@@ -6050,10 +6148,13 @@
                 "visible_when": [
                   {
                     "question": "who_transports",
-                    "op": "one_of",
+                    "op": "includes_any",
                     "value": [
                       "commercial_carrier",
-                      "buyer_pickup"
+                      "buyer_pickup",
+                      "broker",
+                      "warehouse_packer",
+                      "other_transporter"
                     ]
                   }
                 ],
@@ -8554,8 +8655,8 @@
                 "key": "records_retention_attestation",
                 "kind": "boolean",
                 "label": {
-                  "en": "Do you maintain the records confirmed above, keep them for at least 5 years, and make them available at inspection?",
-                  "es": "¿Mantiene los registros confirmados arriba, los conserva al menos 5 años y los tiene disponibles en la inspección?"
+                  "en": "Do you maintain all the records your plan's activities require (confirmed above), keep them for at least 5 years, and make them available at inspection?",
+                  "es": "¿Mantiene todos los registros que requieren las actividades de su plan (confirmados arriba), los conserva al menos 5 años y los tiene disponibles en la inspección?"
                 },
                 "coaching": null,
                 "options": [],
@@ -10897,6 +10998,228 @@
         "tillage_practices",
         "monitoring_frequency",
         "erosion_practices"
+      ]
+    },
+    {
+      "module": "g6_1_harvest_transport",
+      "label": "unanswered",
+      "answers": {},
+      "visible_questions": [
+        "who_harvests",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "handled_by_another_operation"
+      ],
+      "missing_required": [
+        "who_harvests",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "handled_by_another_operation"
+      ],
+      "missing_required_na": [
+        "who_harvests",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "handled_by_another_operation"
+      ]
+    },
+    {
+      "module": "g6_1_harvest_transport",
+      "label": "own_crew_only",
+      "answers": {
+        "who_harvests": [
+          "own_crew"
+        ],
+        "who_transports": [
+          "own_vehicles"
+        ]
+      },
+      "visible_questions": [
+        "who_harvests",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "handled_by_another_operation"
+      ],
+      "missing_required": [
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "handled_by_another_operation"
+      ],
+      "missing_required_na": [
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "handled_by_another_operation"
+      ]
+    },
+    {
+      "module": "g6_1_harvest_transport",
+      "label": "own_crew_and_custom",
+      "answers": {
+        "who_harvests": [
+          "own_crew",
+          "custom_harvester"
+        ]
+      },
+      "visible_questions": [
+        "who_harvests",
+        "custom_harvester_cleanout_verified",
+        "custom_harvester_instructions",
+        "custom_harvester_records",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "handled_by_another_operation"
+      ],
+      "missing_required": [
+        "custom_harvester_cleanout_verified",
+        "custom_harvester_instructions",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "handled_by_another_operation"
+      ],
+      "missing_required_na": [
+        "custom_harvester_cleanout_verified",
+        "custom_harvester_instructions",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "handled_by_another_operation"
+      ]
+    },
+    {
+      "module": "g6_1_harvest_transport",
+      "label": "other_parties",
+      "answers": {
+        "who_harvests": [
+          "other_harvester"
+        ],
+        "who_transports": [
+          "broker",
+          "other_transporter"
+        ]
+      },
+      "visible_questions": [
+        "who_harvests",
+        "who_harvests_other",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "who_transports_other",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "non_own_transport_records",
+        "handled_by_another_operation"
+      ],
+      "missing_required": [
+        "who_harvests_other",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports_other",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "non_own_transport_records",
+        "handled_by_another_operation"
+      ],
+      "missing_required_na": [
+        "who_harvests_other",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports_other",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "non_own_transport_records",
+        "handled_by_another_operation"
+      ]
+    },
+    {
+      "module": "g6_1_harvest_transport",
+      "label": "sold_standing",
+      "answers": {
+        "who_harvests": [
+          "sold_standing"
+        ],
+        "who_transports": [
+          "warehouse_packer"
+        ]
+      },
+      "visible_questions": [
+        "who_harvests",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "non_own_transport_records",
+        "handled_by_another_operation"
+      ],
+      "missing_required": [
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "non_own_transport_records",
+        "handled_by_another_operation"
+      ],
+      "missing_required_na": [
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "non_own_transport_records",
+        "handled_by_another_operation"
       ]
     },
     {
