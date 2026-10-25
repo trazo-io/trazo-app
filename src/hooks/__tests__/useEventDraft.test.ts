@@ -201,4 +201,107 @@ describe('useEventDraft', () => {
     expect(window.localStorage.length).toBe(0);
     expect(result.current.hasDraft).toBe(false);
   });
+
+  // MEASURED in a browser 2026-10-25: a tile tap alone stored `{type: "IR"}`, and the details
+  // step's own defaults stored the rest, so the banner offered drafts nobody had typed.
+  it('a picked activity and the form defaults alone are not a draft', () => {
+    const { result } = renderHook(() =>
+      useEventDraft({ parcelId: 231, ignoredKeys: ['equipment_operation_type'] })
+    );
+    act(() =>
+      result.current.saveDraft(
+        1,
+        {
+          type: 'IR',
+          event_type: 1,
+          name: 'Irrigation',
+          irrigation_depth_unit: 'inches',
+          reviewed: 'false',
+          temperature_control: 'false',
+          equipment_operation_type: 'CL',
+          performed_by: '',
+          seed_search_attempts: []
+        },
+        0
+      )
+    );
+    flushDebounce();
+    expect(window.localStorage.length).toBe(0);
+  });
+
+  it('does not hide an offered draft because the wizard prefilled a tile', () => {
+    // A `?verb=` link seeds `type` on mount. Taking that as "the farmer started over" hid the
+    // banner and, two seconds later, overwrote the draft it was offering.
+    const first = renderHook(() => useEventDraft({ parcelId: 231 }));
+    act(() => first.result.current.saveDraft(2, FILLED, 0));
+    flushDebounce();
+
+    const second = renderHook(() => useEventDraft({ parcelId: 231 }));
+    act(() => second.result.current.saveDraft(1, { type: 'PL' }, 0));
+    flushDebounce();
+    expect(second.result.current.hasDraft).toBe(true);
+    const stored = JSON.parse(window.localStorage.getItem('trazo.eventDraft.231.new')!);
+    expect(stored.eventFormData.commercial_name).toBe('Zinc Sulfate 36%');
+  });
+
+  it('a step-0 name is content worth keeping', () => {
+    const { result } = renderHook(() => useEventDraft({ parcelId: 231 }));
+    act(() => result.current.saveDraft(1, { type: 'IR', performed_by: 'Juan' }, 0));
+    flushDebounce();
+    expect(window.localStorage.length).toBe(1);
+  });
+
+  it('keeps a season-plan item draft apart from the parcel draft', () => {
+    // A spray restored into "Log this: Annual Structural Pruning" would be saved as the record
+    // that closes the pruning item.
+    const plain = renderHook(() => useEventDraft({ parcelId: 231 }));
+    act(() => plain.result.current.saveDraft(2, FILLED, 0));
+    flushDebounce();
+
+    const plan = renderHook(() => useEventDraft({ parcelId: 231, scope: 'plan-41' }));
+    expect(plan.result.current.hasDraft).toBe(false);
+    act(() => plan.result.current.saveDraft(1, { type: 'PR', pruning_passes: '2' }, 0));
+    flushDebounce();
+
+    expect(renderHook(() => useEventDraft({ parcelId: 231 })).result.current.hasDraft).toBe(true);
+    expect(
+      renderHook(() => useEventDraft({ parcelId: 231, scope: 'plan-41' })).result.current.hasDraft
+    ).toBe(true);
+    expect(window.localStorage.getItem('trazo.eventDraft.231.plan-41')).not.toBeNull();
+  });
+
+  it('records whether the date was set by the operator', () => {
+    const { result } = renderHook(() => useEventDraft({ parcelId: 231 }));
+    act(() =>
+      result.current.saveDraft(2, { ...FILLED, date: '2026-10-22T07:00' }, 0, undefined, true)
+    );
+    flushDebounce();
+    let restored: { dateChosen?: boolean } | null = null;
+    act(() => {
+      restored = result.current.restoreDraft();
+    });
+    expect(restored!.dateChosen).toBe(true);
+  });
+
+  it('writes the last edit when the wizard closes inside the debounce', () => {
+    const { result, unmount } = renderHook(() => useEventDraft({ parcelId: 231 }));
+    act(() => result.current.saveDraft(2, FILLED, 0));
+    unmount();
+    expect(window.localStorage.getItem('trazo.eventDraft.231.new')).not.toBeNull();
+  });
+
+  it('a saved or discarded event does not come back when the wizard closes', () => {
+    const saved = renderHook(() => useEventDraft({ parcelId: 231 }));
+    act(() => saved.result.current.saveDraft(2, FILLED, 0));
+    act(() => saved.result.current.clearDraft());
+    saved.unmount();
+    expect(window.localStorage.length).toBe(0);
+
+    const discarded = renderHook(() => useEventDraft({ parcelId: 232 }));
+    act(() => discarded.result.current.saveDraft(2, FILLED, 0));
+    act(() => discarded.result.current.discardDraft());
+    discarded.unmount();
+    flushDebounce();
+    expect(window.localStorage.length).toBe(0);
+  });
 });

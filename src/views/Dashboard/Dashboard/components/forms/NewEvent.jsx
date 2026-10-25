@@ -172,6 +172,12 @@ const formSchemaBasic = object({
   performed_by: string().optional() // Optional — helps with traceability but not required
 });
 
+// A verb tile's preset fields name the tile (Cleanout => "Cleaning"); they are not entries, so a
+// form holding only those is not a draft worth offering back (useEventDraft `ignoredKeys`).
+const DRAFT_PRESET_KEYS = [
+  ...new Set(ACTIVITY_VERBS.flatMap((verb) => Object.keys(verb.presetFields || {})))
+];
+
 const formSchemaMainInfo = object({
   type: string().min(1, 'Event type is required')
 });
@@ -1056,6 +1062,29 @@ function NewEvent({ isEdit = false, eventId = null }) {
     [farmGeometry]
   );
 
+  // Form methods for each step
+  const basicMethods = useForm({
+    resolver: zodResolver(formSchemaBasic),
+    defaultValues: {
+      date: nowLocalDateTimeInput()
+    }
+  });
+
+  // What step 0 seeded the date field with. Read off react-hook-form rather than recomputed, so
+  // it is byte-identical to the value the operator was shown and cannot drift by a minute.
+  const wizardDefaultDate = basicMethods.formState.defaultValues?.date;
+
+  // Where the wizard keeps a draft at all. Repeat mode prefills from the SOURCE record; letting a
+  // stale per-parcel draft restore over it (or the prefill silently overwrite a draft the farmer
+  // meant to finish) makes the form's contents unexplainable. A crew note is the same: the words
+  // are the server's, and a restored draft would be saved as that note's confirmation although
+  // nobody had read the note into it.
+  const draftKept = !isEdit && !isRepeat && !fieldNoteIdFromUrl;
+
+  // Step 0's own fields live in react-hook-form and reach `eventFormData` only on Continue, so
+  // the draft reads them here. Without this a refresh on step 0 lost the operator's name.
+  const [step0Date, step0PerformedBy] = basicMethods.watch(['date', 'performed_by']);
+
   // D9 — persist the in-progress event so a refresh, a locked phone or a stray Back does not
   // discard a half-filled chemical application. Scoped per parcel and per create/edit target.
   const {
@@ -1071,10 +1100,11 @@ function NewEvent({ isEdit = false, eventId = null }) {
   } = useEventDraft({
     parcelId,
     eventId,
-    // Repeat mode prefills from the SOURCE record; letting a stale per-parcel
-    // draft restore over it (or the prefill silently overwrite a draft the
-    // farmer meant to finish) makes the form's contents unexplainable.
-    enabled: !isEdit && !isRepeat
+    // A plan item's draft is its own: restoring the parcel's plain draft here would save some
+    // other activity as the record that closes this item (`plan_item_id` rides on the POST).
+    scope: planItemIdFromUrl ? `plan-${planItemIdFromUrl}` : null,
+    ignoredKeys: DRAFT_PRESET_KEYS,
+    enabled: draftKept
   });
 
   // D9 — write a draft whenever the form state or the chosen type changes. The hook debounces
@@ -1083,17 +1113,57 @@ function NewEvent({ isEdit = false, eventId = null }) {
   useEffect(() => {
     saveDraft(
       activeEventType,
-      eventFormData,
+      {
+        ...eventFormData,
+        ...(step0Date != null ? { date: step0Date } : {}),
+        ...(step0PerformedBy != null ? { performed_by: step0PerformedBy } : {})
+      },
       acceptedFiles?.length || 0,
-      multiParcelIds.length > 0 ? { parcelIds: multiParcelIds, targets: multiTargets } : undefined
+      multiParcelIds.length > 0 ? { parcelIds: multiParcelIds, targets: multiTargets } : undefined,
+      isOperatorChosenDate(step0Date, wizardDefaultDate)
     );
-  }, [activeEventType, eventFormData, acceptedFiles, saveDraft, multiParcelIds, multiTargets]);
+  }, [
+    activeEventType,
+    eventFormData,
+    acceptedFiles,
+    saveDraft,
+    multiParcelIds,
+    multiTargets,
+    step0Date,
+    step0PerformedBy,
+    wizardDefaultDate
+  ]);
 
   const handleRestoreDraft = useCallback(() => {
     const draft = restoreDraft();
     if (!draft) return;
+    const { date: draftDate, ...draftFields } = draft.eventFormData || {};
+    // The day comes back only if the operator set it. A draft's untouched default is the moment
+    // the draft was started, and restoring it would file the record under that day. Drafts from
+    // before `dateChosen` existed keep their date: it is shown on step 0 either way.
+    const restoredDate =
+      draftDate && draft.dateChosen !== false ? draftDate : basicMethods.getValues('date');
     if (draft.activeEventType != null) setActiveEventType(draft.activeEventType);
-    setEventFormData(draft.eventFormData || {});
+    setEventFormData({ ...draftFields, ...(restoredDate ? { date: restoredDate } : {}) });
+    // Step 0 renders from react-hook-form, not from `eventFormData`. MEASURED in a browser
+    // 2026-10-25: without this the restored name and date never reached the screen, and the
+    // empty field then overwrote them on Continue. `keepDefaultValues`: the default is what
+    // `wizardDefaultDate` compares against, and replacing it with the restored day made that day
+    // read as untouched, so the next draft dropped it.
+    basicMethods.reset(
+      {
+        date: restoredDate || '',
+        performed_by: draftFields.performed_by ?? basicMethods.getValues('performed_by') ?? ''
+      },
+      { keepDefaultValues: true }
+    );
+    // Put the activity back on the tile too. Left unpicked, the grid asked "What did you do?"
+    // again, and tapping the answer ran the type-change reset that clears every restored field.
+    const restoredVerb = verbForEvent(draft.activeEventType, draftFields.type);
+    if (restoredVerb) {
+      setPickedVerbKey(restoredVerb.key);
+      setChooserReopened(false);
+    }
     // A draft does not say who wrote its name, so the name it carries is kept as it is.
     setNameOrigin('unknown');
     // Several parcels: put back the ones still on this farm AND still able to join, with what
@@ -1136,19 +1206,8 @@ function NewEvent({ isEdit = false, eventId = null }) {
       duration: 7000,
       isClosable: true
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- basicMethods is stable
   }, [restoreDraft, intl, toast, farmParcels, parcelId]);
-
-  // Form methods for each step
-  const basicMethods = useForm({
-    resolver: zodResolver(formSchemaBasic),
-    defaultValues: {
-      date: nowLocalDateTimeInput()
-    }
-  });
-
-  // What step 0 seeded the date field with. Read off react-hook-form rather than recomputed, so
-  // it is byte-identical to the value the operator was shown and cannot drift by a minute.
-  const wizardDefaultDate = basicMethods.formState.defaultValues?.date;
 
   const mainInfoMethods = useForm({
     resolver: zodResolver(formSchemaMainInfo)
@@ -2706,6 +2765,15 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // production subtype where the verb implies it (same clearing rules as a
   // raw type change, then the subtype seed on top).
   const handleVerbSelect = (verb) => {
+    // The activity already in force, picked again (after "Not {verb}?", or on a restored draft):
+    // nothing changed, so nothing is cleared. Running the type-change reset here wiped every
+    // field of a restored draft for a farmer who had only confirmed what it was.
+    if (verb.key === activeVerbKey && verb.eventType === activeEventType) {
+      setPickedVerbKey(verb.key);
+      setChooserReopened(false);
+      focusStepHeading();
+      return;
+    }
     handleEventTypeChange(verb.eventType);
     setPickedVerbKey(verb.key);
     if (verb.subtype) {
@@ -3315,10 +3383,10 @@ function NewEvent({ isEdit = false, eventId = null }) {
           // event", which does not say the connection is the cause or that nothing was lost.
           (error?.status === 'FETCH_ERROR' ||
           (typeof navigator !== 'undefined' && navigator.onLine === false)
-            ? // The draft hook is off in edit and repeat flows (enabled: !isEdit && !isRepeat),
-              // so only a new record can promise one (review of app #88).
+            ? // The draft hook is off in edit, repeat and crew-note flows (`draftKept`), so only
+              // a flow that keeps one can promise one (review of app #88).
               intl.formatMessage({
-                id: isEdit || isRepeat ? 'app.errorSavingOfflineNoDraft' : 'app.errorSavingOffline'
+                id: draftKept ? 'app.errorSavingOffline' : 'app.errorSavingOfflineNoDraft'
               })
             : isEdit
             ? intl.formatMessage({ id: 'app.errorUpdatingEvent' }) ||
