@@ -11,7 +11,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 
-import { useEventDraft } from '../useEventDraft';
+import { clearAllEventDrafts, useEventDraft } from '../useEventDraft';
 
 const FILLED = { commercial_name: 'Zinc Sulfate 36%', area_numeric: '44.5' };
 
@@ -307,5 +307,57 @@ describe('useEventDraft', () => {
     discarded.unmount();
     flushDebounce();
     expect(window.localStorage.length).toBe(0);
+  });
+
+  it('sign-out removes every draft and keeps other storage', () => {
+    window.localStorage.setItem('trazo.eventDraft.231.new', '{"savedAt":"2026-10-25T10:00:00Z"}');
+    window.localStorage.setItem(
+      'trazo.eventDraft.232.plan-9',
+      '{"savedAt":"2026-10-25T10:00:00Z"}'
+    );
+    window.localStorage.setItem('trazo_pending_auth_action', 'keep');
+    clearAllEventDrafts();
+    expect(window.localStorage.getItem('trazo.eventDraft.231.new')).toBeNull();
+    expect(window.localStorage.getItem('trazo.eventDraft.232.plan-9')).toBeNull();
+    expect(window.localStorage.getItem('trazo.eventDraftEpoch')).toBe('1');
+    expect(window.localStorage.getItem('trazo_pending_auth_action')).toBe('keep');
+  });
+
+  it('a wizard open during sign-out cannot write its draft back', () => {
+    // The navbar sign-out runs while the wizard is still mounted; navigating away unmounts it,
+    // and the unmount flush would otherwise put the draft straight back.
+    const flushed = renderHook(() => useEventDraft({ parcelId: 231 }));
+    act(() => flushed.result.current.saveDraft(2, FILLED, 0));
+    clearAllEventDrafts();
+    flushed.unmount();
+    expect(window.localStorage.getItem('trazo.eventDraft.231.new')).toBeNull();
+
+    const debounced = renderHook(() => useEventDraft({ parcelId: 232 }));
+    act(() => debounced.result.current.saveDraft(2, FILLED, 0));
+    clearAllEventDrafts();
+    flushDebounce();
+    act(() => debounced.result.current.saveDraft(2, { ...FILLED, area_numeric: '50' }, 0));
+    flushDebounce();
+    expect(window.localStorage.getItem('trazo.eventDraft.232.new')).toBeNull();
+    expect(debounced.result.current.lastSaved).toBeNull();
+  });
+
+  it('the next sign-in can save drafts again', () => {
+    clearAllEventDrafts();
+    const { result } = renderHook(() => useEventDraft({ parcelId: 231 }));
+    act(() => result.current.saveDraft(2, FILLED, 0));
+    flushDebounce();
+    expect(window.localStorage.getItem('trazo.eventDraft.231.new')).not.toBeNull();
+  });
+
+  it('a sign-out in another tab also stops this tab writing the draft back', () => {
+    // Tabs share localStorage but not module state. Another tab's clearAllEventDrafts shows up
+    // here only as the storage it changed, so simulate exactly that.
+    const { result, unmount } = renderHook(() => useEventDraft({ parcelId: 231 }));
+    act(() => result.current.saveDraft(2, FILLED, 0));
+    window.localStorage.removeItem('trazo.eventDraft.231.new');
+    window.localStorage.setItem('trazo.eventDraftEpoch', '7');
+    unmount();
+    expect(window.localStorage.getItem('trazo.eventDraft.231.new')).toBeNull();
   });
 });

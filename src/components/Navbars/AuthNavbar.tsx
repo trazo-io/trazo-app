@@ -39,6 +39,7 @@ import routes from 'routes.tsx';
 import { useIntl } from 'react-intl';
 import { useLogoutMutation } from 'store/api/authApi';
 import baseApi from 'store/api/baseApi';
+import { clearAllEventDrafts } from 'hooks/useEventDraft';
 import { useNavigate } from 'react-router-dom';
 
 type AuthNavbarProps = {
@@ -118,6 +119,7 @@ export default function AuthNavbar(props: AuthNavbarProps) {
     dispatch(logoutAction());
     dispatch(clearCurrentCompany());
     dispatch(clearUser());
+    clearAllEventDrafts();
     // Flush RTK Query cache BEFORE navigation to prevent stale data from previous user
     dispatch(baseApi.util.resetApiState());
     navigate('/auth/signin', { replace: true });

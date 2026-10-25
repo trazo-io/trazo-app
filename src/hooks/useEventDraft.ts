@@ -118,6 +118,35 @@ const safeRemove = (key: string) => {
   }
 };
 
+// Bumped by clearAllEventDrafts. A wizard mounted before the bump may not write again, so the
+// draft cannot come back from its debounce timer or its unmount flush once the user signs out.
+// It lives in localStorage, not in a module variable: a wizard left open in another tab shares
+// the drafts but not this tab's module, and would otherwise write the draft straight back.
+// The key sits outside STORAGE_PREFIX so clearing the drafts does not reset it.
+const EPOCH_KEY = 'trazo.eventDraftEpoch';
+
+const readEpoch = (): string => {
+  try {
+    return window.localStorage.getItem(EPOCH_KEY) ?? '0';
+  } catch {
+    return '0';
+  }
+};
+
+export const clearAllEventDrafts = () => {
+  try {
+    window.localStorage.setItem(EPOCH_KEY, String(Number(readEpoch()) + 1));
+    const keys: string[] = [];
+    for (let i = 0; i < window.localStorage.length; i += 1) {
+      const k = window.localStorage.key(i);
+      if (k?.startsWith(STORAGE_PREFIX)) keys.push(k);
+    }
+    keys.forEach(safeRemove);
+  } catch {
+    /* storage unavailable: nothing was saved either */
+  }
+};
+
 /**
  * A draft is only worth offering if the farmer actually entered something. Without this, merely
  * opening the wizard would arm a "restore draft?" banner on the next visit — training people to
@@ -197,6 +226,7 @@ export function useEventDraft({
   // The write still waiting out the debounce, if any. Leaving the wizard (Back, a nav link) inside
   // the debounce used to drop it, so the last two seconds of typing were the part never saved.
   const pendingWriteRef = useRef<(() => boolean) | null>(null);
+  const mountEpochRef = useRef(readEpoch());
 
   const cancelPendingWrite = () => {
     if (timerRef.current) window.clearTimeout(timerRef.current);
@@ -235,6 +265,7 @@ export function useEventDraft({
       if (timerRef.current) window.clearTimeout(timerRef.current);
       setIsSaving(true);
       const write = () => {
+        if (mountEpochRef.current !== readEpoch()) return false;
         // Strip the File objects: they cannot be serialised, and their bytes would blow the quota.
         const { acceptedFiles: _files, album: _album, ...serialisable } = eventFormData;
         return safeWrite(key, {
