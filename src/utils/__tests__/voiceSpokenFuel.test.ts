@@ -160,16 +160,69 @@ describe('spokenFuelAmount', () => {
     expect(spokenFuelAmount(note)).toBeNull();
   });
 
-  it('takes a number said in words from the parser, only when one candidate fits', () => {
-    expect(spokenFuelAmount('five gallons of diesel', [{ value: 5, unit: 'gallons' }])).toEqual({
-      value: 5,
+  it.each([
+    ['five gallons of diesel', { value: 5, unit: 'gal' }],
+    ['twenty five gallons of diesel', { value: 25, unit: 'gal' }],
+    ['a hundred gallons of diesel', { value: 100, unit: 'gal' }],
+    ['treinta y cinco litros de gasoil', { value: 35, unit: 'L' }]
+  ])('reads a number said in words from the transcript: "%s"', (note, expected) => {
+    expect(spokenFuelAmount(note)).toEqual(expected);
+  });
+
+  it('reads "1,200" as twelve hundred, not 1.2 (review of app #205)', () => {
+    expect(spokenFuelAmount('filled the tank, 1,200 gallons of diesel')).toEqual({
+      value: 1200,
       unit: 'gal'
     });
-    expect(
-      spokenFuelAmount('a hundred gallons of water and five gallons of diesel', [
-        { value: 100, unit: 'gallons' },
-        { value: 5, unit: 'gallons' }
-      ])
-    ).toBeNull();
+  });
+
+  it('a liquid word vetoes the amount even with a fuel word before it (review of app #205)', () => {
+    expect(spokenFuelAmount('Sprayed copper, airblast, diesel, 200 gallons of water.')).toBeNull();
+    expect(spokenFuelAmount('diesel, 100 gallon tank mix')).toBeNull();
+  });
+});
+
+describe('the spray volume survives next to spoken fuel (review of app #205)', () => {
+  it('never takes the water as fuel when the fuel is said in words', () => {
+    // Only the 300 was detected. The old candidate fallback found exactly one gallon amount,
+    // the WATER, filed it as fuel and then stripped it from the product total.
+    const note =
+      'Sprayed copper, 300 gallons of water, airblast, the tractor burned five gallons of diesel.';
+    const { values } = mapVoiceDataToFieldValues(
+      {
+        ...sprayReply,
+        detected_amounts: [{ value: 300, unit: 'gallons', category: 'volume' }],
+        original_transcript: note
+      } as never,
+      'fungicide'
+    );
+    expect(values.application_fuel_consumed).toBe(5);
+    expect(values.volume_applied).toBe(300);
+  });
+
+  it('fills the fuel when the model reports it in both fuel_amount and detected_amounts', () => {
+    const { values } = mapVoiceDataToFieldValues(
+      {
+        ...mowingReply,
+        detected_amounts: [{ value: 5, unit: 'gallons', category: 'fuel' }],
+        fuel_amount: { value: 5, unit: 'gallons' },
+        original_transcript: 'Mowed both blocks, five gallons of diesel.'
+      } as never,
+      'mowing'
+    );
+    expect(values.fuel_consumed).toBe(5);
+  });
+
+  it('keeps a water volume when diesel is named just before it', () => {
+    const { values } = mapVoiceDataToFieldValues(
+      {
+        ...sprayReply,
+        detected_amounts: [{ value: 200, unit: 'gallons', category: 'volume' }],
+        original_transcript: 'Sprayed copper, airblast, diesel, 200 gallons of water.'
+      } as never,
+      'fungicide'
+    );
+    expect(values.application_fuel_consumed).toBeUndefined();
+    expect(values.volume_applied).toBe(200);
   });
 });

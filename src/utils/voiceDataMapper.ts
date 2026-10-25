@@ -288,7 +288,7 @@ export const VOICE_TYPE_MAP: Record<string, VoiceTemplateMapping> = {
     backendSubtype: 'ST',
     verbKey: 'soil'
   },
-  // 2026-10-25 — a pest Beneficial Release had no slug, so the activity the farmer picked never
+  // 2026-10-25: a pest Beneficial Release had no slug, so the activity the farmer picked never
   // reached the parser as context, and "Released ladybugs on both blocks, 2000 per acre" came back
   // POLLINATION (insects on a block): the banner offered "It sounded like Pollination, switch?"
   // on the right form. ROUTE only, like transport and pollination: the release's species and
@@ -991,32 +991,40 @@ const FUEL_HEDGES = new Set([
  * mix" stay volumes, and so does "sprayed 100 gallons, used diesel": with no connector only the
  * word directly after the unit counts.
  *
- * The value is read off the transcript when it is written in digits. A number written in words
- * ("five gallons of diesel") is taken from the parser's own amounts only when exactly one of them
- * is in that unit; two candidates is a sentence we cannot resolve, and the farmer types it.
+ * The value is ALWAYS read off the transcript: digits ("6", "2,5", "1,200"), or a number said in
+ * words in English or Spanish ("five", "twenty five", "treinta y cinco", "a hundred"). Anything
+ * else fills nothing. It used to fall back to the parser's amounts when exactly one shared the
+ * unit, and review of app #205 showed why that is unsafe: in "300 gallons of water ... five
+ * gallons of diesel" with only the 300 detected, the one gallon candidate is the WATER.
+ *
+ * ⛔ A liquid word VETOES the amount outright. Breaking the forward search was not enough: in
+ * "airblast, diesel, 200 gallons of water" the backward check then found "diesel" two tokens
+ * back and filed the water as fuel (review of app #205).
  */
-export function spokenFuelAmount(
-  transcript: string,
-  candidates: ReadonlyArray<{ value: number; unit?: string } | null | undefined> = []
-): { value: number; unit: string } | null {
+export function spokenFuelAmount(transcript: string): { value: number; unit: string } | null {
   const tokens: string[] =
-    (transcript || '').toLowerCase().match(/\d+(?:[.,]\d+)?|[\p{L}]+/gu) ?? [];
-  const isDigits = (token: string | undefined) => /^\d/.test(token ?? '');
+    (transcript || '').toLowerCase().match(/\d+(?:[.,]\d+)*|[\p{L}]+/gu) ?? [];
 
   for (let i = 1; i < tokens.length; i++) {
     const unit = FUEL_VOLUME_UNIT[tokens[i]];
     if (!unit) continue;
 
     let tied = FUEL_WORDS.has(tokens[i + 1] ?? '');
-    if (!tied && FUEL_CONNECTORS.has(tokens[i + 1] ?? '')) {
+    let vetoed = NOT_FUEL_LIQUID.has(tokens[i + 1] ?? '');
+    if (!tied && !vetoed && FUEL_CONNECTORS.has(tokens[i + 1] ?? '')) {
       for (let j = i + 2; j < Math.min(i + 5, tokens.length); j++) {
-        if (isDigits(tokens[j]) || NOT_FUEL_LIQUID.has(tokens[j])) break;
+        if (NOT_FUEL_LIQUID.has(tokens[j])) {
+          vetoed = true;
+          break;
+        }
+        if (isNumberToken(tokens[j])) break;
         if (FUEL_WORDS.has(tokens[j])) {
           tied = true;
           break;
         }
       }
     }
+    if (vetoed) continue;
     if (!tied) {
       tied =
         FUEL_WORDS.has(tokens[i - 2] ?? '') ||
@@ -1024,22 +1032,111 @@ export function spokenFuelAmount(
     }
     if (!tied) continue;
 
-    if (isDigits(tokens[i - 1])) {
-      const value = parseFloat(tokens[i - 1].replace(',', '.'));
-      if (value > 0) return { value, unit };
-      continue;
-    }
-    const inUnit = candidates.filter(
-      (c): c is { value: number; unit?: string } =>
-        Boolean(c) &&
-        Number(c?.value) > 0 &&
-        FUEL_VOLUME_UNIT[
-          String(c?.unit ?? '')
-            .toLowerCase()
-            .trim()
-        ] === unit
-    );
-    if (inUnit.length === 1) return { value: inUnit[0].value, unit };
+    const value = spokenNumberBefore(tokens, i);
+    if (value !== null && value > 0) return { value, unit };
+  }
+  return null;
+}
+
+/** Number words, English and Spanish, the two families the parser serves. */
+const NUMBER_UNITS: Record<string, number> = {
+  one: 1,
+  two: 2,
+  three: 3,
+  four: 4,
+  five: 5,
+  six: 6,
+  seven: 7,
+  eight: 8,
+  nine: 9,
+  ten: 10,
+  eleven: 11,
+  twelve: 12,
+  thirteen: 13,
+  fourteen: 14,
+  fifteen: 15,
+  sixteen: 16,
+  seventeen: 17,
+  eighteen: 18,
+  nineteen: 19,
+  un: 1,
+  uno: 1,
+  una: 1,
+  dos: 2,
+  tres: 3,
+  cuatro: 4,
+  cinco: 5,
+  seis: 6,
+  siete: 7,
+  ocho: 8,
+  nueve: 9,
+  diez: 10,
+  once: 11,
+  doce: 12,
+  trece: 13,
+  catorce: 14,
+  quince: 15,
+  dieciséis: 16,
+  dieciseis: 16,
+  diecisiete: 17,
+  dieciocho: 18,
+  diecinueve: 19,
+  veinte: 20
+};
+const NUMBER_TENS: Record<string, number> = {
+  twenty: 20,
+  thirty: 30,
+  forty: 40,
+  fifty: 50,
+  sixty: 60,
+  seventy: 70,
+  eighty: 80,
+  ninety: 90,
+  treinta: 30,
+  cuarenta: 40,
+  cincuenta: 50,
+  sesenta: 60,
+  setenta: 70,
+  ochenta: 80,
+  noventa: 90
+};
+const NUMBER_HUNDRED = new Set(['hundred', 'cien']);
+
+function isNumberToken(token: string | undefined): boolean {
+  const t = token ?? '';
+  return /^\d/.test(t) || t in NUMBER_UNITS || t in NUMBER_TENS || NUMBER_HUNDRED.has(t);
+}
+
+/**
+ * The number spoken directly before `tokens[unitIndex]`, or null.
+ *
+ * A comma followed by exactly three digits groups thousands ("1,200" is 1200, not 1.2, review of
+ * app #205); any other comma is a decimal ("2,5 litros"). Words compose one level: "twenty five",
+ * "treinta y cinco", "a hundred". A bare "five" right after a tens word is never read alone.
+ */
+function spokenNumberBefore(tokens: readonly string[], unitIndex: number): number | null {
+  const last = tokens[unitIndex - 1] ?? '';
+  if (/^\d/.test(last)) {
+    const normalized = /^\d{1,3}(,\d{3})+$/.test(last)
+      ? last.replace(/,/g, '')
+      : last.replace(',', '.');
+    const value = Number(normalized);
+    return Number.isFinite(value) ? value : null;
+  }
+  if (NUMBER_HUNDRED.has(last)) {
+    const before = tokens[unitIndex - 2] ?? '';
+    return before in NUMBER_UNITS ? NUMBER_UNITS[before] * 100 : 100;
+  }
+  if (last in NUMBER_TENS) return NUMBER_TENS[last];
+  if (last in NUMBER_UNITS) {
+    const before = tokens[unitIndex - 2] ?? '';
+    const tens =
+      before in NUMBER_TENS
+        ? NUMBER_TENS[before]
+        : before === 'y' && (tokens[unitIndex - 3] ?? '') in NUMBER_TENS
+        ? NUMBER_TENS[tokens[unitIndex - 3]]
+        : 0;
+    return tens + NUMBER_UNITS[last];
   }
   return null;
 }
@@ -1514,21 +1611,16 @@ export function mapVoiceDataToFieldValues(
     .filter((entry) => entry.denominator !== null);
   const rateValues = new Set(spokenRates.map((entry) => entry.amount.value));
 
-  // Fuel, decided by the words — see spokenFuelAmount. With no transcript there is nothing to
+  // Fuel, decided by the words: see spokenFuelAmount. With no transcript there is nothing to
   // test, so the parser's own `fuel_amount` is the only answer, as it always was.
-  const fuelCandidates = [
+  const modelFuel =
     parsedData.fuel_amount && typeof parsedData.fuel_amount === 'object'
       ? parsedData.fuel_amount
-      : null,
-    ...extractStructuredAmounts(parsedData.detected_amounts)
-  ];
+      : null;
   const spokenFuel = spokenNotes
-    ? spokenFuelAmount(spokenNotes, fuelCandidates)
-    : fuelCandidates[0]
-    ? {
-        value: fuelCandidates[0].value,
-        unit: UNIT_NORMALIZE[fuelCandidates[0].unit] || fuelCandidates[0].unit
-      }
+    ? spokenFuelAmount(spokenNotes)
+    : modelFuel
+    ? { value: modelFuel.value, unit: UNIT_NORMALIZE[modelFuel.unit] || modelFuel.unit }
     : null;
   // The same gallons must not ALSO be read as another fact (the product total on a spray).
   const isSpokenFuel = (a: StructuredAmount) =>
@@ -1679,7 +1771,7 @@ export function mapVoiceDataToFieldValues(
       overrides.equipment_hours = parsedData.duration.value;
     }
 
-    // Fuel — only a volume a fuel word is tied to (spokenFuelAmount). This replaced a guess that
+    // Fuel: only a volume a fuel word is tied to (spokenFuelAmount). This replaced a guess that
     // read ANY gallons as diesel on cultivation and equipment maintenance, and read nothing at
     // all on mowing.
     if (spokenFuel) {
