@@ -4316,7 +4316,7 @@
   "events.business.subtypes.inspection": "Inspection",
   "events.business.validation.activityTypeRequired": "Business activity type is required",
   "events.business.validation.certificationTypeRequired": "Select the certification obtained or renewed (e.g. USDA Organic)",
-  "events.business.validation.verificationNeedsStatus": "A verification record needs a status: passed, in progress or failed. Choose in progress while you wait for the result.",
+  "events.business.validation.verificationNeedsStatus": "This record needs a status: passed, in progress or failed. Choose in progress while you wait for the result.",
   "events.callout.production.bodySeedSearch": "Record the suppliers you contacted and what they said. § 205.204 lets you plant non-organic untreated seed only when organic seed is not commercially available — this documented search is the evidence your certifier asks for.",
   "events.callout.production.title": "Production record",
   "events.certifierOnly.reason.BU": "Buffer-strip disposition is § 205.202(c) compliance detail. Out of context it reads as a non-organic admission, so it stays off your buyer page and in your certifier record.",
