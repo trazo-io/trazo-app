@@ -54,14 +54,24 @@ import { BlockIdField } from 'components/Fields/BlockIdField';
 
 // Phase 3: Fuel types with EPA-verified emission factors (matching ProductionTab pattern)
 // UPDATED 2026-02-15: All factors corrected to match EPA 40 CFR Part 98 Table C-1
+// Labels are message ids resolved at render: a `label:` in a module-scope array is beyond intl
+// (src/config/events/ADDING_FIELDS.md), which is how this list stayed English on a Spanish form.
 const FUEL_TYPES = [
-  { value: 'diesel', label: 'Diesel', factor: '2.70 kg CO₂e/L' },
-  { value: 'gasoline', label: 'Gasoline', factor: '2.32 kg CO₂e/L' },
-  { value: 'natural_gas', label: 'Natural Gas', factor: '1.92 kg CO₂e/m³' },
-  { value: 'propane', label: 'LPG / Propane', factor: '1.51 kg CO₂e/L' },
-  { value: 'electric', label: 'Electric', factor: '0.365 kg CO₂e/kWh' },
-  { value: 'biodiesel', label: 'Biodiesel', factor: '2.31 kg CO₂e/L' },
-  { value: 'none', label: 'No Fuel / Manual', factor: '0 kg CO₂e' }
+  { value: 'diesel', labelKey: 'events.chemical.fuelTypes.diesel', factor: '2.70 kg CO₂e/L' },
+  { value: 'gasoline', labelKey: 'events.chemical.fuelTypes.gasoline', factor: '2.32 kg CO₂e/L' },
+  {
+    value: 'natural_gas',
+    labelKey: 'events.chemical.fuelTypes.naturalGas',
+    factor: '1.92 kg CO₂e/m³'
+  },
+  { value: 'propane', labelKey: 'events.chemical.fuelTypes.propane', factor: '1.51 kg CO₂e/L' },
+  {
+    value: 'electric',
+    labelKey: 'events.chemical.fuelTypes.electric',
+    factor: '0.365 kg CO₂e/kWh'
+  },
+  { value: 'biodiesel', labelKey: 'events.chemical.fuelTypes.biodiesel', factor: '2.31 kg CO₂e/L' },
+  { value: 'none', labelKey: 'events.chemical.fuelTypes.none', factor: '0 kg CO₂e' }
 ];
 
 const formSchemaSoilManagement = object({
@@ -1141,24 +1151,48 @@ const SoilManagementTab = forwardRef(
                     }`}
                     required
                     error={errors.type?.message}>
-                    <StandardSelect placeholder="Select soil management type" {...register('type')}>
-                      <option value="ST">Soil Testing</option>
+                    <StandardSelect
+                      placeholder={intl.formatMessage({
+                        id: 'events.soil.placeholders.soilManagementType'
+                      })}
+                      {...register('type')}>
+                      <option value="ST">
+                        {intl.formatMessage({ id: 'events.soil.subtypes.soilTest' })}
+                      </option>
                       {/* F35 fix (2026-06): backend display for PA is "pH Adjustment"
                             (history/models.py:2181). The form said "Soil Amendment", so
                             consumer/export surfaces showed a different label than the
                             farmer picked. Aligned to the backend display. */}
-                      <option value="PA">pH Adjustment</option>
-                      <option value="CC">Cover Crop Management</option>
-                      <option value="OM">Organic Matter Addition</option>
-                      <option value="TI">Tillage</option>
-                      <option value="CO">Composting Operation</option>
-                      <option value="GR">Grazing Management</option>
-                      <option value="HD">Habitat Development</option>
-                      <option value="NS">Nesting / Shelter Structures</option>
+                      <option value="PA">
+                        {intl.formatMessage({ id: 'events.soil.subtypes.phAdjustment' })}
+                      </option>
+                      <option value="CC">
+                        {intl.formatMessage({ id: 'events.soil.subtypes.coverCrop' })}
+                      </option>
+                      <option value="OM">
+                        {intl.formatMessage({ id: 'events.soil.subtypes.organicMatter' })}
+                      </option>
+                      <option value="TI">
+                        {intl.formatMessage({ id: 'events.soil.subtypes.tillage' })}
+                      </option>
+                      <option value="CO">
+                        {intl.formatMessage({ id: 'events.soil.subtypes.composting' })}
+                      </option>
+                      <option value="GR">
+                        {intl.formatMessage({ id: 'events.soil.subtypes.grazing' })}
+                      </option>
+                      <option value="HD">
+                        {intl.formatMessage({ id: 'events.soil.subtypes.habitatDevelopment' })}
+                      </option>
+                      <option value="NS">
+                        {intl.formatMessage({ id: 'events.soil.subtypes.nestingShelter' })}
+                      </option>
                       {/* §E-2: one subtype for every sampled matrix (leaf, petiole, hull,
                             compost, water) — what a certifier reads is the same record; only
                             sample_matrix differs. "Soil Testing" (ST) stays for soil. */}
-                      <option value="LA">Lab Analysis (leaf / hull / compost / water)</option>
+                      <option value="LA">
+                        {intl.formatMessage({ id: 'events.soil.options.type.labAnalysis' })}
+                      </option>
                     </StandardSelect>
                   </StandardField>
 
@@ -1202,8 +1236,12 @@ const SoilManagementTab = forwardRef(
                           />
                         )}
                         <StandardSelect flex={1} {...register('area_unit')}>
-                          <option value="ha">Hectares</option>
-                          <option value="acres">Acres</option>
+                          <option value="ha">
+                            {intl.formatMessage({ id: 'events.units.hectares' })}
+                          </option>
+                          <option value="acres">
+                            {intl.formatMessage({ id: 'events.units.acres' })}
+                          </option>
                         </StandardSelect>
                       </HStack>
                     </StandardField>
@@ -1228,8 +1266,10 @@ const SoilManagementTab = forwardRef(
                           {...register('depth')}
                         />
                         <StandardSelect flex={1} {...register('depth_unit')}>
-                          <option value="cm">Centimeters</option>
-                          <option value="inches">Inches</option>
+                          <option value="cm">
+                            {intl.formatMessage({ id: 'app.centimeters' })}
+                          </option>
+                          <option value="inches">{intl.formatMessage({ id: 'app.inches' })}</option>
                         </StandardSelect>
                       </HStack>
                     </StandardField>
@@ -1265,10 +1305,14 @@ const SoilManagementTab = forwardRef(
                     <StandardField
                       label="Fuel Type"
                       helpText="Select a fuel type only if powered equipment was used. Leave blank for hand/manual operations.">
-                      <StandardSelect placeholder="Select fuel type..." {...register('fuel_type')}>
+                      <StandardSelect
+                        placeholder={intl.formatMessage({
+                          id: 'events.chemical.form.fuelTypePlaceholder'
+                        })}
+                        {...register('fuel_type')}>
                         {FUEL_TYPES.map((type) => (
                           <option key={type.value} value={type.value}>
-                            {type.label} ({type.factor})
+                            {intl.formatMessage({ id: type.labelKey })} ({type.factor})
                           </option>
                         ))}
                       </StandardSelect>
@@ -1302,10 +1346,18 @@ const SoilManagementTab = forwardRef(
                           />
                         )}
                         <StandardSelect flex={1} {...register('fuel_unit')}>
-                          <option value="L">Liters</option>
-                          <option value="gal">Gallons</option>
-                          <option value="kg">Kilograms</option>
-                          <option value="kWh">Kilowatt-hours</option>
+                          <option value="L">
+                            {intl.formatMessage({ id: 'events.units.liters' })}
+                          </option>
+                          <option value="gal">
+                            {intl.formatMessage({ id: 'events.units.gallons' })}
+                          </option>
+                          <option value="kg">
+                            {intl.formatMessage({ id: 'events.units.kilograms' })}
+                          </option>
+                          <option value="kWh">
+                            {intl.formatMessage({ id: 'events.units.kilowattHours' })}
+                          </option>
                         </StandardSelect>
                       </HStack>
                     </StandardField>
@@ -1327,10 +1379,18 @@ const SoilManagementTab = forwardRef(
                       label="Production Efficiency"
                       helpText="Optional. Your own read on how the operation went — used only in the carbon estimate, never in your certifier record.">
                       <StandardSelect {...register('production_efficiency')}>
-                        <option value="">Select efficiency level</option>
-                        <option value="high">High Efficiency</option>
-                        <option value="normal">Normal Efficiency</option>
-                        <option value="low">Low Efficiency</option>
+                        <option value="">
+                          {intl.formatMessage({ id: 'events.production.help.efficiencyUnset' })}
+                        </option>
+                        <option value="high">
+                          {intl.formatMessage({ id: 'events.productionEfficiency.high' })}
+                        </option>
+                        <option value="normal">
+                          {intl.formatMessage({ id: 'events.productionEfficiency.normal' })}
+                        </option>
+                        <option value="low">
+                          {intl.formatMessage({ id: 'events.productionEfficiency.low' })}
+                        </option>
                       </StandardSelect>
                     </StandardField>
 
@@ -1378,18 +1438,46 @@ const SoilManagementTab = forwardRef(
                   <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
                     <StandardField label="Amendment Type" helpText="Type of soil amendment applied">
                       <StandardSelect
-                        placeholder="Select amendment type"
+                        placeholder={intl.formatMessage({
+                          id: 'events.soil.placeholders.amendmentType'
+                        })}
                         {...register('amendment_type')}>
-                        <option value="limestone">Limestone (CaCO3) - 0.44 kg CO2/kg</option>
-                        <option value="dolomite">Dolomite (CaMg(CO3)2) - 0.477 kg CO2/kg</option>
-                        <option value="calcium_oxide">Quick Lime (CaO) - High reactivity</option>
-                        <option value="calcium_hydroxide">Hydrated Lime (Ca(OH)2)</option>
-                        <option value="gypsum">Gypsum (CaSO4) - No CO2 emissions</option>
-                        <option value="sulfur">Elemental Sulfur (S) - Lowers pH</option>
-                        <option value="compost">Compost - Organic amendment</option>
-                        <option value="manure">Manure - Organic fertilizer</option>
-                        <option value="mulch">Mulch - Surface organic cover</option>
-                        <option value="other">Other Amendment</option>
+                        <option value="limestone">
+                          {intl.formatMessage({
+                            id: 'events.soil.options.amendmentType.limestone'
+                          })}
+                        </option>
+                        <option value="dolomite">
+                          {intl.formatMessage({ id: 'events.soil.options.amendmentType.dolomite' })}
+                        </option>
+                        <option value="calcium_oxide">
+                          {intl.formatMessage({
+                            id: 'events.soil.options.amendmentType.calciumOxide'
+                          })}
+                        </option>
+                        <option value="calcium_hydroxide">
+                          {intl.formatMessage({
+                            id: 'events.soil.options.amendmentType.calciumHydroxide'
+                          })}
+                        </option>
+                        <option value="gypsum">
+                          {intl.formatMessage({ id: 'events.soil.options.amendmentType.gypsum' })}
+                        </option>
+                        <option value="sulfur">
+                          {intl.formatMessage({ id: 'events.soil.options.amendmentType.sulfur' })}
+                        </option>
+                        <option value="compost">
+                          {intl.formatMessage({ id: 'events.soil.options.amendmentType.compost' })}
+                        </option>
+                        <option value="manure">
+                          {intl.formatMessage({ id: 'events.soil.options.amendmentType.manure' })}
+                        </option>
+                        <option value="mulch">
+                          {intl.formatMessage({ id: 'events.soil.options.amendmentType.mulch' })}
+                        </option>
+                        <option value="other">
+                          {intl.formatMessage({ id: 'events.soil.options.amendmentType.other' })}
+                        </option>
                       </StandardSelect>
                     </StandardField>
 
@@ -1479,9 +1567,15 @@ const SoilManagementTab = forwardRef(
                               model amendment_amount_unit ChoiceField (kg/lbs/tons/gal),
                               which rejects "short_tons" with a DRF 400 on submit. */}
                         <StandardSelect flex={1} {...register('amendment_unit')}>
-                          <option value="kg">kg</option>
-                          <option value="tons">Metric Tons</option>
-                          <option value="lbs">Pounds</option>
+                          <option value="kg">
+                            {intl.formatMessage({ id: 'events.units.kilograms' })}
+                          </option>
+                          <option value="tons">
+                            {intl.formatMessage({ id: 'app.unit.tons' })}
+                          </option>
+                          <option value="lbs">
+                            {intl.formatMessage({ id: 'events.units.pounds' })}
+                          </option>
                         </StandardSelect>
                       </HStack>
                     </StandardField>
@@ -1498,8 +1592,10 @@ const SoilManagementTab = forwardRef(
                           {...register('depth')}
                         />
                         <StandardSelect flex={1} {...register('depth_unit')}>
-                          <option value="cm">cm</option>
-                          <option value="inches">inches</option>
+                          <option value="cm">
+                            {intl.formatMessage({ id: 'app.centimeters' })}
+                          </option>
+                          <option value="inches">{intl.formatMessage({ id: 'app.inches' })}</option>
                         </StandardSelect>
                       </HStack>
                     </StandardField>
@@ -1586,10 +1682,18 @@ const SoilManagementTab = forwardRef(
                             the purchased amount are the two halves of the mass balance, and the
                             export can only subtract them when the unit strings match. */}
                         <StandardSelect flex={1} {...register('amendment_quantity_purchased_unit')}>
-                          <option value="kg">kg</option>
-                          <option value="lbs">Pounds</option>
-                          <option value="tons">Tons</option>
-                          <option value="gal">Gallons</option>
+                          <option value="kg">
+                            {intl.formatMessage({ id: 'events.units.kilograms' })}
+                          </option>
+                          <option value="lbs">
+                            {intl.formatMessage({ id: 'events.units.pounds' })}
+                          </option>
+                          <option value="tons">
+                            {intl.formatMessage({ id: 'app.unit.tons' })}
+                          </option>
+                          <option value="gal">
+                            {intl.formatMessage({ id: 'events.units.gallons' })}
+                          </option>
                         </StandardSelect>
                       </HStack>
                     </StandardField>
@@ -1760,11 +1864,19 @@ const SoilManagementTab = forwardRef(
                           label="Compost Method"
                           helpText="Determines required duration/turnings (7 CFR 205.203(c)(2))">
                           <StandardSelect
-                            placeholder="Select method..."
+                            placeholder={intl.formatMessage({
+                              id: 'events.soil.placeholders.compostMethod'
+                            })}
                             {...register('compost_method')}>
-                            <option value="windrow">Windrow (turned, open air)</option>
-                            <option value="static_aerated">Static Aerated Pile</option>
-                            <option value="in_vessel">In-Vessel</option>
+                            <option value="windrow">
+                              {intl.formatMessage({ id: 'enums.compost_methods.windrow' })}
+                            </option>
+                            <option value="static_aerated">
+                              {intl.formatMessage({ id: 'enums.compost_methods.static_aerated' })}
+                            </option>
+                            <option value="in_vessel">
+                              {intl.formatMessage({ id: 'enums.compost_methods.in_vessel' })}
+                            </option>
                           </StandardSelect>
                         </StandardField>
                         <StandardField
@@ -1917,15 +2029,19 @@ const SoilManagementTab = forwardRef(
                           label="Manure Harvest Interval"
                           helpText="Required wait period before harvest">
                           <StandardSelect
-                            placeholder="Select harvest interval"
+                            placeholder={intl.formatMessage({
+                              id: 'events.soil.placeholders.manureHarvestInterval'
+                            })}
                             {...register('manure_harvest_interval')}>
                             <option value="120">
-                              120 days — edible portion contacts soil (root crops, leafy greens)
+                              {intl.formatMessage({ id: 'enums.manure_harvest_intervals.120' })}
                             </option>
                             <option value="90">
-                              90 days — edible portion does NOT contact soil (tree fruit, trellised)
+                              {intl.formatMessage({ id: 'enums.manure_harvest_intervals.90' })}
                             </option>
-                            <option value="na">N/A — composted manure or no manure applied</option>
+                            <option value="na">
+                              {intl.formatMessage({ id: 'enums.manure_harvest_intervals.na' })}
+                            </option>
                           </StandardSelect>
                         </StandardField>
                         <StandardField
@@ -2083,16 +2199,20 @@ const SoilManagementTab = forwardRef(
                             helpText="Raw manure follows the 90/120-day interval. Composted (c)(2) and processed (NOP 5006) manure are interval-exempt when documented."
                             mt={4}>
                             <StandardSelect
-                              placeholder="Select manure treatment"
+                              placeholder={intl.formatMessage({
+                                id: 'events.soil.placeholders.manureTreatment'
+                              })}
                               {...register('manure_treatment')}>
                               <option value="raw">
-                                Raw / uncomposted — 90/120-day interval applies
+                                {intl.formatMessage({ id: 'enums.manure_treatments.raw' })}
                               </option>
                               <option value="composted">
-                                Composted (7 CFR 205.203(c)(2)) — no interval
+                                {intl.formatMessage({ id: 'enums.manure_treatments.composted' })}
                               </option>
                               <option value="processed_5006">
-                                Processed to reduce pathogens (NOP 5006) — no interval
+                                {intl.formatMessage({
+                                  id: 'enums.manure_treatments.processed_5006'
+                                })}
                               </option>
                             </StandardSelect>
                           </StandardField>
@@ -2177,15 +2297,21 @@ const SoilManagementTab = forwardRef(
                       label="Soil Texture"
                       helpText="Soil type affects carbon retention">
                       <StandardSelect
-                        placeholder="Select soil texture"
+                        placeholder={intl.formatMessage({ id: 'app.selectSoilTexture' })}
                         {...register('soil_texture')}>
-                        <option value="clay">Clay</option>
-                        <option value="clay_loam">Clay Loam</option>
-                        <option value="loam">Loam</option>
-                        <option value="sandy_loam">Sandy Loam</option>
-                        <option value="sand">Sand</option>
-                        <option value="silt">Silt</option>
-                        <option value="silt_loam">Silt Loam</option>
+                        <option value="clay">{intl.formatMessage({ id: 'app.clay' })}</option>
+                        <option value="clay_loam">
+                          {intl.formatMessage({ id: 'app.clayLoam' })}
+                        </option>
+                        <option value="loam">{intl.formatMessage({ id: 'app.loam' })}</option>
+                        <option value="sandy_loam">
+                          {intl.formatMessage({ id: 'app.sandyLoam' })}
+                        </option>
+                        <option value="sand">{intl.formatMessage({ id: 'app.sand' })}</option>
+                        <option value="silt">{intl.formatMessage({ id: 'app.silt' })}</option>
+                        <option value="silt_loam">
+                          {intl.formatMessage({ id: 'app.siltLoam' })}
+                        </option>
                       </StandardSelect>
                     </StandardField>
                   </SimpleGrid>
@@ -2223,14 +2349,28 @@ const SoilManagementTab = forwardRef(
                         required
                         error={errors.sample_matrix?.message}>
                         <StandardSelect
-                          placeholder="Select what was sampled"
+                          placeholder={intl.formatMessage({
+                            id: 'events.soil.placeholders.sampleMatrix'
+                          })}
                           {...register('sample_matrix')}>
-                          <option value="soil">Soil</option>
-                          <option value="leaf">Leaf tissue</option>
-                          <option value="petiole">Petiole</option>
-                          <option value="hull">Hull</option>
-                          <option value="compost">Compost</option>
-                          <option value="water">Irrigation water</option>
+                          <option value="soil">
+                            {intl.formatMessage({ id: 'events.soil.options.sampleMatrix.soil' })}
+                          </option>
+                          <option value="leaf">
+                            {intl.formatMessage({ id: 'events.soil.options.sampleMatrix.leaf' })}
+                          </option>
+                          <option value="petiole">
+                            {intl.formatMessage({ id: 'events.soil.options.sampleMatrix.petiole' })}
+                          </option>
+                          <option value="hull">
+                            {intl.formatMessage({ id: 'events.soil.options.sampleMatrix.hull' })}
+                          </option>
+                          <option value="compost">
+                            {intl.formatMessage({ id: 'events.soil.options.sampleMatrix.compost' })}
+                          </option>
+                          <option value="water">
+                            {intl.formatMessage({ id: 'events.soil.options.sampleMatrix.water' })}
+                          </option>
                         </StandardSelect>
                       </StandardField>
                     )}
@@ -2352,18 +2492,36 @@ const SoilManagementTab = forwardRef(
                       label="Tillage Type"
                       helpText="Primary tillage operation performed">
                       <StandardSelect
-                        placeholder="Select tillage type"
+                        placeholder={intl.formatMessage({ id: 'app.selectTillageType' })}
                         {...register('tillage_type')}>
                         <option value="conventional_plow">
-                          Conventional Plow - Deep inversion
+                          {intl.formatMessage({
+                            id: 'events.soil.options.tillageType.conventionalPlow'
+                          })}
                         </option>
-                        <option value="chisel_plow">Chisel Plow - Reduced tillage</option>
-                        <option value="disk_harrow">Disk Harrow - Surface cultivation</option>
-                        <option value="no_till">No-Till - Direct seeding</option>
-                        <option value="strip_till">Strip Till - Zonal tillage</option>
-                        <option value="minimum_till">Minimum Till - Conservation</option>
-                        <option value="subsoiling">Subsoiling - Deep loosening</option>
-                        <option value="cultivator">Cultivator - Shallow cultivation</option>
+                        <option value="chisel_plow">
+                          {intl.formatMessage({ id: 'events.soil.options.tillageType.chiselPlow' })}
+                        </option>
+                        <option value="disk_harrow">
+                          {intl.formatMessage({ id: 'events.soil.options.tillageType.diskHarrow' })}
+                        </option>
+                        <option value="no_till">
+                          {intl.formatMessage({ id: 'events.soil.options.tillageType.noTill' })}
+                        </option>
+                        <option value="strip_till">
+                          {intl.formatMessage({ id: 'events.soil.options.tillageType.stripTill' })}
+                        </option>
+                        <option value="minimum_till">
+                          {intl.formatMessage({
+                            id: 'events.soil.options.tillageType.minimumTill'
+                          })}
+                        </option>
+                        <option value="subsoiling">
+                          {intl.formatMessage({ id: 'events.soil.options.tillageType.subsoiling' })}
+                        </option>
+                        <option value="cultivator">
+                          {intl.formatMessage({ id: 'events.soil.options.tillageType.cultivator' })}
+                        </option>
                       </StandardSelect>
                     </StandardField>
 
@@ -2371,12 +2529,24 @@ const SoilManagementTab = forwardRef(
                       label="Tillage Intensity"
                       helpText="Intensity affects carbon emissions">
                       <StandardSelect
-                        placeholder="Select intensity"
+                        placeholder={intl.formatMessage({ id: 'app.selectIntensity' })}
                         {...register('tillage_intensity')}>
-                        <option value="high">High - Heavy disturbance</option>
-                        <option value="medium">Medium - Moderate disturbance</option>
-                        <option value="low">Low - Minimal disturbance</option>
-                        <option value="conservation">Conservation - Protective tillage</option>
+                        <option value="high">
+                          {intl.formatMessage({ id: 'events.soil.options.tillageIntensity.high' })}
+                        </option>
+                        <option value="medium">
+                          {intl.formatMessage({
+                            id: 'events.soil.options.tillageIntensity.medium'
+                          })}
+                        </option>
+                        <option value="low">
+                          {intl.formatMessage({ id: 'events.soil.options.tillageIntensity.low' })}
+                        </option>
+                        <option value="conservation">
+                          {intl.formatMessage({
+                            id: 'events.soil.options.tillageIntensity.conservation'
+                          })}
+                        </option>
                       </StandardSelect>
                     </StandardField>
 
@@ -2384,12 +2554,28 @@ const SoilManagementTab = forwardRef(
                       label="Tillage Direction"
                       helpText="Direction affects soil erosion and carbon retention">
                       <StandardSelect
-                        placeholder="Select direction"
+                        placeholder={intl.formatMessage({ id: 'app.selectDirection' })}
                         {...register('tillage_direction')}>
-                        <option value="across_slope">Across Slope - Erosion control</option>
-                        <option value="up_down_slope">Up/Down Slope - Standard</option>
-                        <option value="contour">Contour - Following natural lines</option>
-                        <option value="random">Random - Variable direction</option>
+                        <option value="across_slope">
+                          {intl.formatMessage({
+                            id: 'events.soil.options.tillageDirection.acrossSlope'
+                          })}
+                        </option>
+                        <option value="up_down_slope">
+                          {intl.formatMessage({
+                            id: 'events.soil.options.tillageDirection.upDownSlope'
+                          })}
+                        </option>
+                        <option value="contour">
+                          {intl.formatMessage({
+                            id: 'events.soil.options.tillageDirection.contour'
+                          })}
+                        </option>
+                        <option value="random">
+                          {intl.formatMessage({
+                            id: 'events.soil.options.tillageDirection.random'
+                          })}
+                        </option>
                       </StandardSelect>
                     </StandardField>
 
@@ -2397,13 +2583,33 @@ const SoilManagementTab = forwardRef(
                       label="Residue Management"
                       helpText="Crop residue handling affects carbon sequestration">
                       <StandardSelect
-                        placeholder="Select residue management"
+                        placeholder={intl.formatMessage({ id: 'app.selectResidueManagement' })}
                         {...register('residue_management')}>
-                        <option value="incorporated">Incorporated - Mixed into soil</option>
-                        <option value="surface_left">Surface Left - Protective cover</option>
-                        <option value="removed">Removed - Harvested/burned</option>
-                        <option value="mulched">Mulched - Chopped in place</option>
-                        <option value="partial_removal">Partial Removal - Mixed approach</option>
+                        <option value="incorporated">
+                          {intl.formatMessage({
+                            id: 'events.soil.options.residueManagement.incorporated'
+                          })}
+                        </option>
+                        <option value="surface_left">
+                          {intl.formatMessage({
+                            id: 'events.soil.options.residueManagement.surfaceLeft'
+                          })}
+                        </option>
+                        <option value="removed">
+                          {intl.formatMessage({
+                            id: 'events.soil.options.residueManagement.removed'
+                          })}
+                        </option>
+                        <option value="mulched">
+                          {intl.formatMessage({
+                            id: 'events.soil.options.residueManagement.mulched'
+                          })}
+                        </option>
+                        <option value="partial_removal">
+                          {intl.formatMessage({
+                            id: 'events.soil.options.residueManagement.partialRemoval'
+                          })}
+                        </option>
                       </StandardSelect>
                     </StandardField>
                   </SimpleGrid>
@@ -2531,13 +2737,35 @@ const SoilManagementTab = forwardRef(
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                     <StandardField label="Animal Type" helpText="Type of animal used for grazing">
                       <StandardSelect
-                        placeholder="Select animal type..."
+                        placeholder={intl.formatMessage({
+                          id: 'events.soil.placeholders.animalType'
+                        })}
                         {...register('animal_type')}>
-                        <option value="sheep">Sheep</option>
-                        <option value="goats">Goats</option>
-                        <option value="cattle">Cattle</option>
-                        <option value="poultry">Poultry</option>
-                        <option value="other">Other</option>
+                        <option value="sheep">
+                          {intl.formatMessage({
+                            id: 'app.soilManagement.grazing.animalType.sheep'
+                          })}
+                        </option>
+                        <option value="goats">
+                          {intl.formatMessage({
+                            id: 'app.soilManagement.grazing.animalType.goats'
+                          })}
+                        </option>
+                        <option value="cattle">
+                          {intl.formatMessage({
+                            id: 'app.soilManagement.grazing.animalType.cattle'
+                          })}
+                        </option>
+                        <option value="poultry">
+                          {intl.formatMessage({
+                            id: 'app.soilManagement.grazing.animalType.poultry'
+                          })}
+                        </option>
+                        <option value="other">
+                          {intl.formatMessage({
+                            id: 'app.soilManagement.grazing.animalType.other'
+                          })}
+                        </option>
                       </StandardSelect>
                     </StandardField>
                     <StandardField label="Number of Animals" helpText="How many animals were used">
@@ -2560,12 +2788,30 @@ const SoilManagementTab = forwardRef(
                       label="Grazing Purpose"
                       helpText="Primary purpose of the grazing activity">
                       <StandardSelect
-                        placeholder="Select purpose..."
+                        placeholder={intl.formatMessage({
+                          id: 'events.soil.placeholders.grazingPurpose'
+                        })}
                         {...register('grazing_purpose')}>
-                        <option value="weed_control">Weed Control</option>
-                        <option value="cover_crop">Cover Crop Termination</option>
-                        <option value="soil_health">Soil Health</option>
-                        <option value="vegetation_management">Vegetation Management</option>
+                        <option value="weed_control">
+                          {intl.formatMessage({
+                            id: 'app.soilManagement.grazing.purpose.weedControl'
+                          })}
+                        </option>
+                        <option value="cover_crop">
+                          {intl.formatMessage({
+                            id: 'app.soilManagement.grazing.purpose.coverCrop'
+                          })}
+                        </option>
+                        <option value="soil_health">
+                          {intl.formatMessage({
+                            id: 'app.soilManagement.grazing.purpose.soilHealth'
+                          })}
+                        </option>
+                        <option value="vegetation_management">
+                          {intl.formatMessage({
+                            id: 'app.soilManagement.grazing.purpose.vegetationManagement'
+                          })}
+                        </option>
                       </StandardSelect>
                     </StandardField>
                   </SimpleGrid>
@@ -2585,18 +2831,48 @@ const SoilManagementTab = forwardRef(
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                     <StandardField label="Habitat Type" helpText="What habitat was established">
                       <StandardSelect
-                        placeholder="Select habitat type..."
+                        placeholder={intl.formatMessage({
+                          id: 'events.soil.placeholders.habitatType'
+                        })}
                         {...register('habitat_type')}>
-                        <option value="hedgerow">Hedgerow (NRCS 422)</option>
-                        <option value="insectary_strip">Insectary / Beneficial-Insect Strip</option>
-                        <option value="native_planting">Native Planting</option>
-                        <option value="pollinator_habitat">Pollinator Habitat (NRCS 327)</option>
-                        <option value="field_border">Field Border (NRCS 386)</option>
-                        <option value="riparian_buffer">Riparian Buffer (NRCS 391)</option>
-                        <option value="living_groundcover_habitat">
-                          Living Groundcover Habitat
+                        <option value="hedgerow">
+                          {intl.formatMessage({ id: 'events.soil.options.habitatType.hedgerow' })}
                         </option>
-                        <option value="wildlife_corridor">Wildlife Corridor</option>
+                        <option value="insectary_strip">
+                          {intl.formatMessage({
+                            id: 'events.soil.options.habitatType.insectaryStrip'
+                          })}
+                        </option>
+                        <option value="native_planting">
+                          {intl.formatMessage({
+                            id: 'events.soil.options.habitatType.nativePlanting'
+                          })}
+                        </option>
+                        <option value="pollinator_habitat">
+                          {intl.formatMessage({
+                            id: 'events.soil.options.habitatType.pollinatorHabitat'
+                          })}
+                        </option>
+                        <option value="field_border">
+                          {intl.formatMessage({
+                            id: 'events.soil.options.habitatType.fieldBorder'
+                          })}
+                        </option>
+                        <option value="riparian_buffer">
+                          {intl.formatMessage({
+                            id: 'events.soil.options.habitatType.riparianBuffer'
+                          })}
+                        </option>
+                        <option value="living_groundcover_habitat">
+                          {intl.formatMessage({
+                            id: 'events.soil.options.habitatType.livingGroundcoverHabitat'
+                          })}
+                        </option>
+                        <option value="wildlife_corridor">
+                          {intl.formatMessage({
+                            id: 'events.soil.options.habitatType.wildlifeCorridor'
+                          })}
+                        </option>
                       </StandardSelect>
                     </StandardField>
                     <StandardField
@@ -2636,16 +2912,44 @@ const SoilManagementTab = forwardRef(
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                     <StandardField label="Structure Type" helpText="What was installed">
                       <StandardSelect
-                        placeholder="Select structure type..."
+                        placeholder={intl.formatMessage({
+                          id: 'events.soil.placeholders.structureType'
+                        })}
                         {...register('habitat_type')}>
-                        <option value="barn_owl_box">Barn-Owl Box</option>
-                        <option value="raptor_perch">Raptor Perch</option>
-                        <option value="songbird_box">Songbird Box</option>
-                        <option value="native_bee_block">Native-Bee Nest Block</option>
-                        <option value="bat_box">Bat Box</option>
-                        <option value="insect_hotel">Insect Hotel</option>
-                        <option value="beetle_bank">Beetle Bank</option>
-                        <option value="brush_pile_hibernacula">Brush Pile / Hibernacula</option>
+                        <option value="barn_owl_box">
+                          {intl.formatMessage({ id: 'events.soil.options.habitatType.barnOwlBox' })}
+                        </option>
+                        <option value="raptor_perch">
+                          {intl.formatMessage({
+                            id: 'events.soil.options.habitatType.raptorPerch'
+                          })}
+                        </option>
+                        <option value="songbird_box">
+                          {intl.formatMessage({
+                            id: 'events.soil.options.habitatType.songbirdBox'
+                          })}
+                        </option>
+                        <option value="native_bee_block">
+                          {intl.formatMessage({
+                            id: 'events.soil.options.habitatType.nativeBeeBlock'
+                          })}
+                        </option>
+                        <option value="bat_box">
+                          {intl.formatMessage({ id: 'events.soil.options.habitatType.batBox' })}
+                        </option>
+                        <option value="insect_hotel">
+                          {intl.formatMessage({
+                            id: 'events.soil.options.habitatType.insectHotel'
+                          })}
+                        </option>
+                        <option value="beetle_bank">
+                          {intl.formatMessage({ id: 'events.soil.options.habitatType.beetleBank' })}
+                        </option>
+                        <option value="brush_pile_hibernacula">
+                          {intl.formatMessage({
+                            id: 'events.soil.options.habitatType.brushPileHibernacula'
+                          })}
+                        </option>
                       </StandardSelect>
                     </StandardField>
                     {!multiTarget && (
@@ -2720,7 +3024,11 @@ const SoilManagementTab = forwardRef(
                       name="growth_stage"
                       control={methods.control}
                       render={({ field }) => (
-                        <StandardSelect {...field} placeholder="Select growth stage...">
+                        <StandardSelect
+                          {...field}
+                          placeholder={intl.formatMessage({
+                            id: 'events.chemical.form.growthStagePlaceholder'
+                          })}>
                           <option value="dormant">
                             {intl.formatMessage({ id: 'fieldDetails.growthStage.dormant' })}
                           </option>

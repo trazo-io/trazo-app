@@ -61,14 +61,24 @@ const CROP_STAGE_TO_COMMON = {
   harvest: 'harvest_ready'
 };
 
+// Labels are message ids resolved at render: a `label:` in a module-scope array is beyond intl
+// (src/config/events/ADDING_FIELDS.md), which is how this list stayed English on a Spanish form.
 const FUEL_TYPES = [
-  { value: 'diesel', label: 'Diesel', factor: '2.70 kg CO₂e/L' },
-  { value: 'gasoline', label: 'Gasoline', factor: '2.32 kg CO₂e/L' },
-  { value: 'natural_gas', label: 'Natural Gas', factor: '1.92 kg CO₂e/m³' },
-  { value: 'propane', label: 'LPG / Propane', factor: '1.51 kg CO₂e/L' },
-  { value: 'electric', label: 'Electric', factor: '0.365 kg CO₂e/kWh' },
-  { value: 'biodiesel', label: 'Biodiesel', factor: '2.31 kg CO₂e/L' },
-  { value: 'none', label: 'No Fuel / Manual', factor: '0 kg CO₂e' }
+  { value: 'diesel', labelKey: 'events.chemical.fuelTypes.diesel', factor: '2.70 kg CO₂e/L' },
+  { value: 'gasoline', labelKey: 'events.chemical.fuelTypes.gasoline', factor: '2.32 kg CO₂e/L' },
+  {
+    value: 'natural_gas',
+    labelKey: 'events.chemical.fuelTypes.naturalGas',
+    factor: '1.92 kg CO₂e/m³'
+  },
+  { value: 'propane', labelKey: 'events.chemical.fuelTypes.propane', factor: '1.51 kg CO₂e/L' },
+  {
+    value: 'electric',
+    labelKey: 'events.chemical.fuelTypes.electric',
+    factor: '0.365 kg CO₂e/kWh'
+  },
+  { value: 'biodiesel', labelKey: 'events.chemical.fuelTypes.biodiesel', factor: '2.31 kg CO₂e/L' },
+  { value: 'none', labelKey: 'events.chemical.fuelTypes.none', factor: '0 kg CO₂e' }
 ];
 
 const pestSchema = object({
@@ -706,12 +716,36 @@ const PestManagementTab = forwardRef(
                         defaultMessage: 'Select the practice performed'
                       })}
                       {...methods.register('cultural_practice')}>
-                      <option value="mummy_removal">Mummy nut removal (hand poling)</option>
-                      <option value="sanitation_shake">Sanitation shake</option>
-                      <option value="brush_shred">Brush / mummy shredding</option>
-                      <option value="pruning_removal">Pruning removal and destruction</option>
-                      <option value="field_sanitation">Field sanitation / debris removal</option>
-                      <option value="trap_crop">Trap crop</option>
+                      <option value="mummy_removal">
+                        {intl.formatMessage({
+                          id: 'events.pest.options.culturalPractice.mummyRemoval'
+                        })}
+                      </option>
+                      <option value="sanitation_shake">
+                        {intl.formatMessage({
+                          id: 'events.pest.options.culturalPractice.sanitationShake'
+                        })}
+                      </option>
+                      <option value="brush_shred">
+                        {intl.formatMessage({
+                          id: 'events.pest.options.culturalPractice.brushShred'
+                        })}
+                      </option>
+                      <option value="pruning_removal">
+                        {intl.formatMessage({
+                          id: 'events.pest.options.culturalPractice.pruningRemoval'
+                        })}
+                      </option>
+                      <option value="field_sanitation">
+                        {intl.formatMessage({
+                          id: 'events.pest.options.culturalPractice.fieldSanitation'
+                        })}
+                      </option>
+                      <option value="trap_crop">
+                        {intl.formatMessage({
+                          id: 'events.pest.options.culturalPractice.trapCrop'
+                        })}
+                      </option>
                     </StandardSelect>
                   </StandardField>
                 </SectionBox>
@@ -849,8 +883,12 @@ const PestManagementTab = forwardRef(
                           control={methods.control}
                           render={({ field }) => (
                             <StandardSelect {...field} flex={1}>
-                              <option value="ha">Hectares</option>
-                              <option value="acres">Acres</option>
+                              <option value="ha">
+                                {intl.formatMessage({ id: 'events.units.hectares' })}
+                              </option>
+                              <option value="acres">
+                                {intl.formatMessage({ id: 'events.units.acres' })}
+                              </option>
                             </StandardSelect>
                           )}
                         />
@@ -881,10 +919,18 @@ const PestManagementTab = forwardRef(
                           control={methods.control}
                           render={({ field }) => (
                             <StandardSelect {...field} flex={1}>
-                              <option value="L">Liters</option>
-                              <option value="gal">Gallons</option>
-                              <option value="kg">Kilograms</option>
-                              <option value="kWh">Kilowatt-hours</option>
+                              <option value="L">
+                                {intl.formatMessage({ id: 'events.units.liters' })}
+                              </option>
+                              <option value="gal">
+                                {intl.formatMessage({ id: 'events.units.gallons' })}
+                              </option>
+                              <option value="kg">
+                                {intl.formatMessage({ id: 'events.units.kilograms' })}
+                              </option>
+                              <option value="kWh">
+                                {intl.formatMessage({ id: 'events.units.kilowattHours' })}
+                              </option>
                             </StandardSelect>
                           )}
                         />
@@ -900,7 +946,9 @@ const PestManagementTab = forwardRef(
                   </Text>
 
                   <StandardField
-                    label="Pest Species Observed"
+                    label={intl.formatMessage({
+                      id: 'events.pest.fields.pestSpeciesObservedPeriod'
+                    })}
                     helpText="List all pest species observed during the scouting period (comma-separated)">
                     <Controller
                       name="pest_species_observed"
@@ -922,12 +970,34 @@ const PestManagementTab = forwardRef(
                       control={methods.control}
                       render={({ field }) => (
                         <StandardSelect {...field}>
-                          <option value="">Select pressure level</option>
-                          <option value="none">None - No pests observed</option>
-                          <option value="low">Low - Below treatment threshold</option>
-                          <option value="moderate">Moderate - At treatment threshold</option>
-                          <option value="high">High - Above treatment threshold</option>
-                          <option value="severe">Severe - Immediate action required</option>
+                          <option value="">
+                            {intl.formatMessage({ id: 'events.pest.options.selectPressureLevel' })}
+                          </option>
+                          <option value="none">
+                            {intl.formatMessage({
+                              id: 'events.pest.options.averagePestPressure.none'
+                            })}
+                          </option>
+                          <option value="low">
+                            {intl.formatMessage({
+                              id: 'events.pest.options.averagePestPressure.low'
+                            })}
+                          </option>
+                          <option value="moderate">
+                            {intl.formatMessage({
+                              id: 'events.pest.options.averagePestPressure.moderate'
+                            })}
+                          </option>
+                          <option value="high">
+                            {intl.formatMessage({
+                              id: 'events.pest.options.averagePestPressure.high'
+                            })}
+                          </option>
+                          <option value="severe">
+                            {intl.formatMessage({
+                              id: 'events.pest.options.averagePestPressure.severe'
+                            })}
+                          </option>
                         </StandardSelect>
                       )}
                     />
@@ -1001,8 +1071,12 @@ const PestManagementTab = forwardRef(
                           />
                         )}
                         <StandardSelect flex={1} {...methods.register('area_unit')}>
-                          <option value="ha">Hectares</option>
-                          <option value="acres">Acres</option>
+                          <option value="ha">
+                            {intl.formatMessage({ id: 'events.units.hectares' })}
+                          </option>
+                          <option value="acres">
+                            {intl.formatMessage({ id: 'events.units.acres' })}
+                          </option>
                         </StandardSelect>
                       </HStack>
                     </StandardField>
@@ -1026,11 +1100,13 @@ const PestManagementTab = forwardRef(
                       label="Fuel Type"
                       helpText="Select a fuel type only if powered equipment was used. Leave blank for hand/manual operations.">
                       <StandardSelect
-                        placeholder="Select fuel type..."
+                        placeholder={intl.formatMessage({
+                          id: 'events.chemical.form.fuelTypePlaceholder'
+                        })}
                         {...methods.register('fuel_type')}>
                         {FUEL_TYPES.map((type) => (
                           <option key={type.value} value={type.value}>
-                            {type.label} ({type.factor})
+                            {intl.formatMessage({ id: type.labelKey })} ({type.factor})
                           </option>
                         ))}
                       </StandardSelect>
@@ -1066,10 +1142,18 @@ const PestManagementTab = forwardRef(
                           />
                         )}
                         <StandardSelect flex={1} {...methods.register('fuel_unit')}>
-                          <option value="L">Liters</option>
-                          <option value="gal">Gallons</option>
-                          <option value="kg">Kilograms</option>
-                          <option value="kWh">Kilowatt-hours</option>
+                          <option value="L">
+                            {intl.formatMessage({ id: 'events.units.liters' })}
+                          </option>
+                          <option value="gal">
+                            {intl.formatMessage({ id: 'events.units.gallons' })}
+                          </option>
+                          <option value="kg">
+                            {intl.formatMessage({ id: 'events.units.kilograms' })}
+                          </option>
+                          <option value="kWh">
+                            {intl.formatMessage({ id: 'events.units.kilowattHours' })}
+                          </option>
                         </StandardSelect>
                       </HStack>
                     </StandardField>
@@ -1094,10 +1178,18 @@ const PestManagementTab = forwardRef(
                       label="Production Efficiency"
                       helpText="Optional. Your own read on how the operation went — used only in the carbon estimate, never in your certifier record.">
                       <StandardSelect {...methods.register('production_efficiency')}>
-                        <option value="">Select efficiency level</option>
-                        <option value="high">High Efficiency</option>
-                        <option value="normal">Normal Efficiency</option>
-                        <option value="low">Low Efficiency</option>
+                        <option value="">
+                          {intl.formatMessage({ id: 'events.production.help.efficiencyUnset' })}
+                        </option>
+                        <option value="high">
+                          {intl.formatMessage({ id: 'events.productionEfficiency.high' })}
+                        </option>
+                        <option value="normal">
+                          {intl.formatMessage({ id: 'events.productionEfficiency.normal' })}
+                        </option>
+                        <option value="low">
+                          {intl.formatMessage({ id: 'events.productionEfficiency.low' })}
+                        </option>
                       </StandardSelect>
                     </StandardField>
                   </SimpleGrid>
@@ -1117,13 +1209,33 @@ const PestManagementTab = forwardRef(
                     label="Crop Growth Stage"
                     helpText="Current crop development stage">
                     <StandardSelect {...methods.register('crop_growth_stage')}>
-                      <option value="">Select growth stage</option>
-                      <option value="seedling">Seedling</option>
-                      <option value="vegetative">Vegetative Growth</option>
-                      <option value="flowering">Flowering</option>
-                      <option value="fruit_development">Fruit Development</option>
-                      <option value="maturity">Maturity</option>
-                      <option value="harvest">Harvest</option>
+                      <option value="">
+                        {intl.formatMessage({ id: 'events.pest.options.selectGrowthStage' })}
+                      </option>
+                      <option value="seedling">
+                        {intl.formatMessage({ id: 'events.pest.options.cropGrowthStage.seedling' })}
+                      </option>
+                      <option value="vegetative">
+                        {intl.formatMessage({
+                          id: 'events.pest.options.cropGrowthStage.vegetative'
+                        })}
+                      </option>
+                      <option value="flowering">
+                        {intl.formatMessage({
+                          id: 'events.pest.options.cropGrowthStage.flowering'
+                        })}
+                      </option>
+                      <option value="fruit_development">
+                        {intl.formatMessage({
+                          id: 'events.pest.options.cropGrowthStage.fruitDevelopment'
+                        })}
+                      </option>
+                      <option value="maturity">
+                        {intl.formatMessage({ id: 'events.pest.options.cropGrowthStage.maturity' })}
+                      </option>
+                      <option value="harvest">
+                        {intl.formatMessage({ id: 'events.pest.options.cropGrowthStage.harvest' })}
+                      </option>
                     </StandardSelect>
                   </StandardField>
 
@@ -1226,7 +1338,11 @@ const PestManagementTab = forwardRef(
                               mismatches. Labels (i18n) unchanged; formatPestPressure
                               already lowercases on lookup so display is unaffected. */}
                           <StandardSelect {...methods.register('pest_pressure_level')}>
-                            <option value="">Select pressure level</option>
+                            <option value="">
+                              {intl.formatMessage({
+                                id: 'events.pest.options.selectPressureLevel'
+                              })}
+                            </option>
                             <option value="low">
                               {intl.formatMessage({ id: 'app.low' }) || 'Low'}
                             </option>
@@ -1254,12 +1370,18 @@ const PestManagementTab = forwardRef(
                                 : 'Was IPM triggered by reaching economic threshold?'
                             }>
                             <StandardSelect {...methods.register('action_threshold_met')}>
-                              <option value="">Select status</option>
+                              <option value="">
+                                {intl.formatMessage({ id: 'events.pest.options.selectStatus' })}
+                              </option>
                               <option value="true">
                                 {intl.formatMessage({ id: 'app.actionThresholdMet' }) ||
                                   'Yes - Economic threshold met, action required'}
                               </option>
-                              <option value="false">No - Below action threshold</option>
+                              <option value="false">
+                                {intl.formatMessage({
+                                  id: 'events.pest.options.actionThresholdMet.false'
+                                })}
+                              </option>
                             </StandardSelect>
                           </StandardField>
                         )}
@@ -1291,13 +1413,39 @@ const PestManagementTab = forwardRef(
                         }
                         helpText="UC IPM monitoring unit">
                         <StandardSelect {...methods.register('monitoring_unit')}>
-                          <option value="">Select unit…</option>
-                          <option value="per_leaf">per leaf</option>
-                          <option value="per_trap">per trap</option>
-                          <option value="per_tree">per tree</option>
-                          <option value="per_100_fruit">per 100 fruit</option>
-                          <option value="percent_infested">% infested</option>
-                          <option value="per_sample">per sample</option>
+                          <option value="">
+                            {intl.formatMessage({ id: 'events.pest.options.selectUnit' })}
+                          </option>
+                          <option value="per_leaf">
+                            {intl.formatMessage({
+                              id: 'events.pest.options.monitoringUnit.perLeaf'
+                            })}
+                          </option>
+                          <option value="per_trap">
+                            {intl.formatMessage({
+                              id: 'events.pest.options.monitoringUnit.perTrap'
+                            })}
+                          </option>
+                          <option value="per_tree">
+                            {intl.formatMessage({
+                              id: 'events.pest.options.monitoringUnit.perTree'
+                            })}
+                          </option>
+                          <option value="per_100_fruit">
+                            {intl.formatMessage({
+                              id: 'events.pest.options.monitoringUnit.per100Fruit'
+                            })}
+                          </option>
+                          <option value="percent_infested">
+                            {intl.formatMessage({
+                              id: 'events.pest.options.monitoringUnit.percentInfested'
+                            })}
+                          </option>
+                          <option value="per_sample">
+                            {intl.formatMessage({
+                              id: 'events.pest.options.monitoringUnit.perSample'
+                            })}
+                          </option>
                         </StandardSelect>
                       </StandardField>
                     </SimpleGrid>
@@ -1379,7 +1527,9 @@ const PestManagementTab = forwardRef(
                           id: 'events.pest.fields.beneficialOrganicBasisHelp'
                         })}>
                         <StandardSelect {...methods.register('beneficial_organic_approved')}>
-                          <option value="">Select…</option>
+                          <option value="">
+                            {intl.formatMessage({ id: 'events.pest.options.select' })}
+                          </option>
                           <option value="yes">
                             {intl.formatMessage({ id: 'app.yes' }) || 'Yes'}
                           </option>
@@ -1411,16 +1561,34 @@ const PestManagementTab = forwardRef(
                         }
                         helpText="Kind of trap deployed">
                         <StandardSelect {...methods.register('trap_type')}>
-                          <option value="">Select…</option>
-                          <option value="sticky">Sticky card</option>
-                          <option value="pheromone">Pheromone lure</option>
-                          <option value="delta">Delta trap</option>
-                          <option value="bucket_funnel">Bucket / funnel</option>
+                          <option value="">
+                            {intl.formatMessage({ id: 'events.pest.options.select' })}
+                          </option>
+                          <option value="sticky">
+                            {intl.formatMessage({ id: 'events.pest.options.trapType.sticky' })}
+                          </option>
+                          <option value="pheromone">
+                            {intl.formatMessage({ id: 'events.pest.options.trapType.pheromone' })}
+                          </option>
+                          <option value="delta">
+                            {intl.formatMessage({ id: 'events.pest.options.trapType.delta' })}
+                          </option>
+                          <option value="bucket_funnel">
+                            {intl.formatMessage({
+                              id: 'events.pest.options.trapType.bucketFunnel'
+                            })}
+                          </option>
                           {/* Vertebrate traps (§E-7): UC Davis organic-almond practice is
                               gopher traps 2x/yr and ground-squirrel traps 6x/yr. */}
-                          <option value="gopher_trap">Gopher trap</option>
-                          <option value="ground_squirrel_trap">Ground squirrel trap</option>
-                          <option value="other">Other</option>
+                          <option value="gopher_trap">
+                            {intl.formatMessage({ id: 'events.pest.options.trapType.gopherTrap' })}
+                          </option>
+                          <option value="ground_squirrel_trap">
+                            {intl.formatMessage({
+                              id: 'events.pest.options.trapType.groundSquirrelTrap'
+                            })}
+                          </option>
+                          <option value="other">{intl.formatMessage({ id: 'app.other' })}</option>
                         </StandardSelect>
                       </StandardField>
                       <StandardField
@@ -1502,10 +1670,22 @@ const PestManagementTab = forwardRef(
                     label="Beneficial Insects Used"
                     helpText="Are you using beneficial insects as part of your IPM strategy?">
                     <StandardSelect {...methods.register('beneficial_insects_used')}>
-                      <option value="">Select status</option>
-                      <option value="yes">Yes - Using beneficial insects</option>
-                      <option value="no">No - Not currently using</option>
-                      <option value="planning">Planning to introduce</option>
+                      <option value="">
+                        {intl.formatMessage({ id: 'events.pest.options.selectStatus' })}
+                      </option>
+                      <option value="yes">
+                        {intl.formatMessage({
+                          id: 'events.pest.options.beneficialInsectsUsed.yes'
+                        })}
+                      </option>
+                      <option value="no">
+                        {intl.formatMessage({ id: 'events.pest.options.beneficialInsectsUsed.no' })}
+                      </option>
+                      <option value="planning">
+                        {intl.formatMessage({
+                          id: 'events.pest.options.beneficialInsectsUsed.planning'
+                        })}
+                      </option>
                     </StandardSelect>
                   </StandardField>
 
@@ -1551,13 +1731,35 @@ const PestManagementTab = forwardRef(
                         label="Pest Identified By"
                         helpText="Who identified the pest species (NOP 7 CFR 205.206)">
                         <StandardSelect {...methods.register('identified_by')}>
-                          <option value="">Select identifier</option>
-                          <option value="farmer">Farmer</option>
-                          <option value="agronomist">Agronomist</option>
-                          <option value="entomologist">Entomologist</option>
-                          <option value="extension_service">Extension Service</option>
-                          <option value="crop_consultant">Crop Consultant</option>
-                          <option value="lab">Laboratory Analysis</option>
+                          <option value="">
+                            {intl.formatMessage({ id: 'events.pest.options.selectIdentifier' })}
+                          </option>
+                          <option value="farmer">
+                            {intl.formatMessage({ id: 'events.pest.options.identifiedBy.farmer' })}
+                          </option>
+                          <option value="agronomist">
+                            {intl.formatMessage({
+                              id: 'events.pest.options.identifiedBy.agronomist'
+                            })}
+                          </option>
+                          <option value="entomologist">
+                            {intl.formatMessage({
+                              id: 'events.pest.options.identifiedBy.entomologist'
+                            })}
+                          </option>
+                          <option value="extension_service">
+                            {intl.formatMessage({
+                              id: 'events.pest.options.identifiedBy.extensionService'
+                            })}
+                          </option>
+                          <option value="crop_consultant">
+                            {intl.formatMessage({
+                              id: 'events.pest.options.identifiedBy.cropConsultant'
+                            })}
+                          </option>
+                          <option value="lab">
+                            {intl.formatMessage({ id: 'events.pest.options.identifiedBy.lab' })}
+                          </option>
                         </StandardSelect>
                       </StandardField>
 
