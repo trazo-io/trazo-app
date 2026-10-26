@@ -50,6 +50,7 @@ import {
 } from 'utils/voiceLanguagePreference';
 import type { VoiceFieldRequest } from 'config/events/voiceFields';
 import {
+  APPLICATION_METHOD_VALUES,
   IRRIGATION_METHODS,
   WATER_SOURCES,
   applicationMethodLabelKey,
@@ -777,13 +778,37 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   // an irrigation, and on an application the same label as the method chip, so the overlap
   // filter below drops it instead of printing the fact twice.
   const squash = (text: string) => text.toLowerCase().replace(/[^a-z]/g, '');
+  // Containment alone would hide a mismatch: "micro sprinkler" contains `sprinkler`, and a chip
+  // reading "sprinkler" would drop the very word that tells the grower the parser got it wrong.
+  // So the wording must name the resolved method and no longer catalogue value besides it.
+  const namesOnly = (value: string, method: string, catalogue: readonly string[]): boolean => {
+    const said = squash(value);
+    const resolved = squash(method);
+    if (!said.includes(resolved)) return false;
+    return !catalogue.some((other) => {
+      const code = squash(other);
+      return code.length > resolved.length && said.includes(code);
+    });
+  };
   const spokenMethodLabel = (value: string): string | null => {
     const irrigation = parsedData?.irrigation_method;
     const irrigationLabel = catalogueLabel(irrigation, IRRIGATION_METHODS);
-    if (irrigation && irrigationLabel && squash(value).includes(squash(irrigation)))
+    if (
+      irrigation &&
+      irrigationLabel &&
+      namesOnly(
+        value,
+        irrigation,
+        IRRIGATION_METHODS.map((o) => o.value)
+      )
+    )
       return irrigationLabel;
     const application = parsedData?.application_method;
-    if (application && applicationMethodChip && squash(value).includes(squash(application)))
+    if (
+      application &&
+      applicationMethodChip &&
+      namesOnly(value, application, APPLICATION_METHOD_VALUES)
+    )
       return applicationMethodChip;
     return null;
   };
@@ -1303,6 +1328,11 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                     if (['pump', 'engine', 'motor', 'hose'].includes(sysLower)) return false;
                     return true;
                   })
+                  // Two wordings of one method ("drip irrigation", "drip tape") now share a
+                  // label; print it once.
+                  .filter(
+                    (system: string, index: number, all: string[]) => all.indexOf(system) === index
+                  )
                   .map((system: string, index: number) => (
                     <Badge key={`sys-${index}`} variant="neutral" px={3} py={1} borderRadius="full">
                       {system}

@@ -492,6 +492,11 @@ const APPLICATION_METHOD_LABEL_KEYS: Record<string, string> = [
   return acc;
 }, {} as Record<string, string>);
 
+/** Every application method code the catalogue labels, across all chemical types. */
+export const APPLICATION_METHOD_VALUES: readonly string[] = Object.keys(
+  APPLICATION_METHOD_LABEL_KEYS
+);
+
 export function applicationMethodLabelKey(value: string | null | undefined): string | null {
   if (!value) return null;
   return APPLICATION_METHOD_LABEL_KEYS[value] ?? null;

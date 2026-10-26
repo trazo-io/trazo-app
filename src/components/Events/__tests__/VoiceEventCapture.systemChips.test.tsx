@@ -137,4 +137,26 @@ describe('a system the grower named reads as the method it resolved to', () => {
     });
     expect(screen.getByText('flail mower')).toBeTruthy();
   });
+
+  it('two wordings of the resolved method print its label once', async () => {
+    await hear({
+      type: 'irrigation',
+      original_transcript: 'Ran the drip, drip tape on both blocks, 3 hours.',
+      detected_systems: ['drip irrigation', 'drip tape'],
+      irrigation_method: 'drip'
+    });
+    expect(screen.getAllByText(es419['events.irrigationMethods.drip'])).toHaveLength(1);
+  });
+
+  it('wording that names a longer method than the one resolved stays as said', async () => {
+    // "micro sprinkler" contains `sprinkler`; relabelling it would hide the parser's mismatch.
+    await hear({
+      type: 'irrigation',
+      original_transcript: 'Micro sprinkler on both blocks, 3 hours.',
+      detected_systems: ['micro sprinkler'],
+      irrigation_method: 'sprinkler'
+    });
+    expect(screen.getByText('micro sprinkler')).toBeTruthy();
+    expect(screen.queryByText(es419['events.irrigationMethods.sprinkler'])).toBeNull();
+  });
 });
