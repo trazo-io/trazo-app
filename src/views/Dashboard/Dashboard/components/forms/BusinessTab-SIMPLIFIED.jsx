@@ -230,7 +230,20 @@ const BusinessTab = forwardRef(
     // an untouched 'pending' to 'in_progress' (a state the record can be saved in), and switching
     // away moves it back. A status the farmer chose is never overwritten.
     useEffect(() => {
-      if (!businessType || methods.getFieldState('verification_status').isDirty) return;
+      if (!businessType) return;
+      // A verification record can never be saved as 'pending' (the schema and the backend both
+      // refuse it), so replacing a 'pending' there overrides no choice the record could keep. This
+      // rule needs no notion of who set the value, which matters: the wizard echoes the form's own
+      // defaults back as `initialValues` (NewEvent's onDataChange round-trip), so "was it in
+      // initialValues?" cannot tell a farmer's pick from the form's default (review on #211).
+      if (
+        businessType === 'verification' &&
+        methods.getValues('verification_status') === 'pending'
+      ) {
+        methods.setValue('verification_status', 'in_progress', { shouldDirty: false });
+        return;
+      }
+      if (methods.getFieldState('verification_status').isDirty) return;
       if (initialValues.verification_status) return;
       const next = defaultVerificationStatus(businessType);
       if (methods.getValues('verification_status') !== next) {

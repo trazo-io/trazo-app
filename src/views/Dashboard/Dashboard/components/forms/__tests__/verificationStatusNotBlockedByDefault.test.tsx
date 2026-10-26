@@ -40,7 +40,7 @@ const store = () =>
 
 type Handle = { submitForm: () => Promise<void> };
 
-const mount = (locale: 'en' | 'es-419') => {
+const mount = (locale: 'en' | 'es-419', initialValues?: Record<string, unknown>) => {
   const ref = createRef<Handle>();
   const onSubmitHandler = vi.fn();
   const messages = (locale === 'en' ? enUS : esLA) as Record<string, string>;
@@ -49,7 +49,12 @@ const mount = (locale: 'en' | 'es-419') => {
       <MemoryRouter>
         <ChakraProvider>
           <IntlProvider locale={locale} messages={messages} onError={() => {}}>
-            <BusinessTab ref={ref} hideActions onSubmitHandler={onSubmitHandler} />
+            <BusinessTab
+              ref={ref}
+              hideActions
+              onSubmitHandler={onSubmitHandler}
+              {...(initialValues ? { initialValues } : {})}
+            />
           </IntlProvider>
         </ChakraProvider>
       </MemoryRouter>
@@ -144,5 +149,21 @@ describe('activity names do not presume the result', () => {
     const labels = [...select('business_type').options].map((o) => o.textContent);
     expect(labels).toContain('Evaluación de sostenibilidad');
     expect(labels).toContain('Cumplimiento regulatorio');
+  });
+});
+
+describe('the wizard round-trip cannot pin a verification to pending (review on #211)', () => {
+  it('a pending echoed back as initialValues still becomes in_progress for a verification', async () => {
+    // NewEvent echoes the form's own defaults back through onDataChange, so ~300ms after mount
+    // initialValues.verification_status is the form's 'pending', indistinguishable from a pick.
+    const { select } = mount('es-419', { verification_status: 'pending' });
+    await choose(select('business_type'), 'verification');
+    expect(select('verification_status').value).toBe('in_progress');
+  });
+
+  it('a status the farmer picked for a verification is kept', async () => {
+    const { select } = mount('en', { verification_status: 'failed' });
+    await choose(select('business_type'), 'verification');
+    expect(select('verification_status').value).toBe('failed');
   });
 });

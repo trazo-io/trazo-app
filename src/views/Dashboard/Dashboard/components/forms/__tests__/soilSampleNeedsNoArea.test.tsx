@@ -19,6 +19,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 import baseApi from 'store/api/baseApi';
 import enUS from '../../../../../../i18n/lang/en-US.json';
+import esLAForSchema from '../../../../../../i18n/lang/es-419.json';
 
 vi.mock('store/api/historyApi', () => ({
   useGetCurrentHistoryQuery: () => ({ data: undefined, isLoading: false }),
@@ -30,7 +31,10 @@ vi.mock('store/api/productApi', () => ({
 }));
 
 // @ts-expect-error SoilManagementTab is a .jsx module with no type declarations.
-import SoilManagementTab, { SOIL_AREA_OPTIONAL_SUBTYPES } from '../SoilManagementTab';
+import SoilManagementTab, {
+  SOIL_AREA_OPTIONAL_SUBTYPES,
+  buildSoilSchema
+} from '../SoilManagementTab';
 
 afterEach(cleanup);
 
@@ -139,5 +143,23 @@ describe('a sample record needs no area', () => {
     expect(outcome.ok).toBe(false);
     if (!outcome.ok) expect(outcome.errors).toHaveProperty('area_covered');
     expect(onSubmitHandler).not.toHaveBeenCalled();
+  });
+});
+
+describe('soil area errors speak the form language (review on #211)', () => {
+  it('a zero area on a sample is refused in Spanish under es-419', () => {
+    const es = esLAForSchema as Record<string, string>;
+    const intl = { formatMessage: ({ id }: { id: string }) => es[id] ?? id };
+    const result = buildSoilSchema(false, intl).safeParse({
+      type: 'LA',
+      area_covered: '0',
+      sample_matrix: 'water'
+    });
+    expect(result.success).toBe(false);
+    const messages = result.success
+      ? []
+      : result.error.issues.map((i: { message: string }) => i.message);
+    expect(messages).toContain(es['events.chemical.validation.areaPositive']);
+    expect(messages).not.toContain('Area must be greater than 0');
   });
 });

@@ -233,8 +233,12 @@ export const soilAreaIsOptional = (type, multiTarget = false) =>
  * With several parcels (`multiTarget`) the area is asked on each parcel's card, so the form
  * itself requires none; everything else is the same schema.
  */
-export const buildSoilSchema = (multiTarget = false) =>
-  formSchemaSoilManagement.superRefine((data, ctx) => {
+export const buildSoilSchema = (multiTarget = false, intl = null) => {
+  // Messages through intl when the form passes it (review on #211: an English error on an
+  // es-419 form). The English fallback keeps callers without intl working.
+  const t = (id, defaultMessage) =>
+    intl ? intl.formatMessage({ id, defaultMessage }) : defaultMessage;
+  return formSchemaSoilManagement.superRefine((data, ctx) => {
     // An area the grower did type on an area-optional subtype must still be a real area.
     if (
       soilAreaIsOptional(data.type, multiTarget) &&
@@ -245,7 +249,7 @@ export const buildSoilSchema = (multiTarget = false) =>
       ctx.addIssue({
         path: ['area_covered'],
         code: 'custom',
-        message: 'Area must be greater than 0'
+        message: t('events.chemical.validation.areaPositive', 'Area must be greater than 0')
       });
     }
     if (!soilAreaIsOptional(data.type, multiTarget)) {
@@ -253,11 +257,15 @@ export const buildSoilSchema = (multiTarget = false) =>
         ctx.addIssue({
           path: ['area_covered'],
           code: 'custom',
-          message: 'Area must be greater than 0'
+          message: t('events.chemical.validation.areaPositive', 'Area must be greater than 0')
         });
       }
       if (!data.area_unit) {
-        ctx.addIssue({ path: ['area_unit'], code: 'custom', message: 'Area unit is required' });
+        ctx.addIssue({
+          path: ['area_unit'],
+          code: 'custom',
+          message: t('events.chemical.validation.areaUnitRequired', 'Area unit is required')
+        });
       }
     }
     // §E-2: a lab analysis without its matrix cannot support a deficiency claim — a certifier
@@ -267,10 +275,14 @@ export const buildSoilSchema = (multiTarget = false) =>
       ctx.addIssue({
         path: ['sample_matrix'],
         code: 'custom',
-        message: 'Select what was sampled (soil, leaf, petiole, hull, compost or water)'
+        message: t(
+          'events.soil.validation.sampleMatrixRequired',
+          'Select what was sampled (soil, leaf, petiole, hull, compost or water)'
+        )
       });
     }
   });
+};
 
 // Sprint 2 Epic 2.1.3: Removed soil_moisture, weather_conditions, temperature_range from defaults
 // V3 hardening (2026-06): MEASUREMENT fields (soil_ph, organic_matter_percentage, soil_texture)
@@ -407,7 +419,7 @@ const SoilManagementTab = forwardRef(
     ref
   ) => {
     const intl = useIntl();
-    const soilSchema = useMemo(() => buildSoilSchema(multiTarget), [multiTarget]);
+    const soilSchema = useMemo(() => buildSoilSchema(multiTarget, intl), [multiTarget, intl]);
     // US-first unit defaults. Trazo's crops, emission factors and ICP are United States,
     // but every form defaulted to hectares/litres — so a CA grower converted 42.5 acres
     // to 17.2 ha by hand on every entry. Defaults only; the dropdowns still offer both.
