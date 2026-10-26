@@ -515,6 +515,8 @@ const TrackList = ({ amount }) => {
         // first place. If `current_history` ever points at a finished row, this shows
         // the locked state instead of an Edit button that 423s.
         isProductionFinished={!!(currentHistory?.finish_date || currentHistory?.published)}
+        // AC-15: the buyer-page hint says "appears" only when the season is published.
+        isSeasonPublished={!!currentHistory?.published}
         onEventUpdated={handleEventUpdated}
         onEventDeleted={handleEventDeleted}
       />

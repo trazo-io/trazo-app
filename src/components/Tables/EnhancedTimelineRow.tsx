@@ -83,7 +83,12 @@ import { MdEco } from 'react-icons/md';
 import type { VerificationLevel } from '../../utils/verificationTierHelpers';
 import { formatCO2e, getImpactLevel } from '../../utils/carbonDisplayUtils';
 import { formatDateFromTimestamp, formatWallClockTime } from 'utils/dateOnly';
-import { isNotEstimated, showsInputsBadge } from 'utils/carbonStatus';
+import {
+  hasNoCarbonCalculation,
+  isNotEstimated,
+  NO_CARBON_CALCULATION_STATUS,
+  showsInputsBadge
+} from 'utils/carbonStatus';
 
 // Real interfaces matching API data
 interface Member {
@@ -125,7 +130,9 @@ interface EnhancedTimelineRowProps {
 
 // Real carbon calculation result from API
 interface CarbonCalculationResult {
-  co2e: number;
+  /** Null when nothing was estimated (see `utils/carbonStatus`). Unknown is not zero. */
+  co2e: number | null;
+  not_estimated?: boolean;
   // Still sent by the API, no longer rendered — see the removal note in the footer row.
   efficiency_score?: number;
   usda_factors_based?: boolean;
@@ -1169,17 +1176,15 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
   // Mobile responsiveness
   const isMobile = useBreakpointValue({ base: true, md: false });
 
-  // Use embedded carbon data — weather (0), general (3), and business (7) events always have 0 emissions
-  const isZeroEmissionType =
-    event.event_type === 0 || event.event_type === 3 || event.event_type === 7;
-  const zeroEmissionLabels: Record<number, string> = { 0: 'weather', 3: 'general', 7: 'business' };
+  // Weather (0), general (3) and business (7) records have no carbon calculation, so they read
+  // as not estimated rather than as a 0 nobody computed (AC-14).
   // Annotated rather than inferred: without it the synthetic branch produced a narrower object
   // type, so `carbonData` became a union and every optional field read off it (usda_factors_based,
   // error) was a type error on the synthetic side. One declared type, one shape.
-  const carbonData: CarbonCalculationResult | null = isZeroEmissionType
+  const noCarbonCalculation = hasNoCarbonCalculation(event.event_type);
+  const carbonData: CarbonCalculationResult | null = noCarbonCalculation
     ? {
-        co2e: 0,
-        calculation_method: `${zeroEmissionLabels[event.event_type]}_transparency`,
+        ...NO_CARBON_CALCULATION_STATUS,
         event_type: String(event.event_type),
         timestamp: event.date || ''
       }
@@ -1542,7 +1547,9 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
 
               <Flex wrap="wrap" justify="space-between" align="center" gap={2}>
                 {/* Carbon Impact */}
-                {carbonData && !carbonData.error && isNotEstimated(carbonData) ? (
+                {carbonData &&
+                !carbonData.error &&
+                (isNotEstimated(carbonData) || typeof carbonData.co2e !== 'number') ? (
                   // Run 8 (R8-04): nothing recorded to count from. Said, never shown as 0.
                   // A sentence, not a figure: it must shrink and wrap inside the card. With
                   // flexShrink={0} it ran 120px past a 375px screen (manual pass, 2026-10-06).
@@ -1551,16 +1558,20 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                       <Icon as={MdEco} color="gray.400" boxSize={3} />
                     </Circle>
                     <Text fontSize="sm" color="gray.600">
-                      {intl.formatMessage({ id: 'carbon.notEstimated' })}
+                      {intl.formatMessage({
+                        id: noCarbonCalculation
+                          ? 'event.recordValue.zeroEmissions'
+                          : 'carbon.notEstimated'
+                      })}
                     </Text>
                   </HStack>
-                ) : carbonData && !carbonData.error ? (
+                ) : carbonData && !carbonData.error && typeof carbonData.co2e === 'number' ? (
                   <Tooltip
-                    label={`Environmental Impact: ${formatCO2e(carbonData.co2e)} kg CO₂e ${
-                      carbonData.co2e === 0
-                        ? '(no emissions estimated)'
-                        : '(estimated emissions: operation and purchased inputs)'
-                    }`}
+                    // One wording for every computed figure, zero included: "(no emissions
+                    // estimated)" beside "0 kg CO2e" said both at once (AC-14).
+                    label={`${formatCO2e(carbonData.co2e)} kg CO₂e: ${intl.formatMessage({
+                      id: 'eventDetails.carbonEstimate'
+                    })}`}
                     placement="top"
                     hasArrow
                     bg="gray.700"

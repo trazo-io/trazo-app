@@ -68,7 +68,12 @@ import { useUserRole } from 'hooks/useUserRole';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { formatDateFromTimestamp } from 'utils/dateOnly';
-import { isNotEstimated, showsInputsBadge } from 'utils/carbonStatus';
+import {
+  hasNoCarbonCalculation,
+  isNotEstimated,
+  NO_CARBON_CALCULATION_STATUS,
+  showsInputsBadge
+} from 'utils/carbonStatus';
 import { apiErrorMessage, apiErrorStatus } from 'utils/apiErrorMessage';
 
 // Types
@@ -233,8 +238,10 @@ interface Event {
 }
 
 interface CarbonCalculationResult {
-  co2e: number;
-  efficiency_score: number;
+  /** Null when nothing was estimated (see `utils/carbonStatus`). Unknown is not zero. */
+  co2e: number | null;
+  efficiency_score?: number;
+  not_estimated?: boolean;
   usda_factors_based?: boolean;
   verification_status?: string;
   data_source?: string;
@@ -271,6 +278,14 @@ interface EventDetailsModalProps {
    * than one parcel; the parcel timeline already answers it with the page around it.
    */
   parcelName?: string;
+  /**
+   * Whether the season this record belongs to is published (AC-15). A record on an unpublished
+   * season is not on the buyer page yet, so the visibility hint says it WILL appear once the
+   * season is published. Undefined means the caller does not know (the activity feed carries
+   * no published flag), and the hint uses that conditional wording too: never "appears" unless
+   * it is known to.
+   */
+  isSeasonPublished?: boolean;
 }
 
 /**
@@ -705,7 +720,8 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
   isProductionFinished = false,
   farmId: farmIdProp,
   parcelId: parcelIdProp,
-  parcelName
+  parcelName,
+  isSeasonPublished
 }) => {
   const intl = useIntl();
   const navigate = useNavigate();
@@ -752,20 +768,13 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
   // Load carbon data when modal opens - now uses embedded data
   useEffect(() => {
     if (isOpen && event) {
-      // Zero-emission event types: Weather (0), General/Other Farm Activity (3), Business (7)
-      // These are observational/administrative events that produce no direct emissions
-      const isZeroEmissionType =
-        event.event_type === 0 || event.event_type === 3 || event.event_type === 7;
-      if (isZeroEmissionType) {
-        const typeLabels: Record<number, string> = { 0: 'weather', 3: 'general', 7: 'business' };
+      // Weather (0), general (3) and business (7) records have no carbon calculation. They
+      // used to get a `co2e: 0` made up here, which printed "0 kg CO2e" and a "Minimal" level
+      // under a caption saying nothing was estimated (AC-14). No figure, not a zero.
+      if (hasNoCarbonCalculation(event.event_type)) {
         setCarbonData({
-          co2e: 0,
-          efficiency_score: 100,
-          usda_factors_based: false,
-          verification_status: 'verified',
-          data_source: `${typeLabels[event.event_type]}_transparency`,
-          calculation_method: `${typeLabels[event.event_type]}_transparency`,
-          event_type: typeLabels[event.event_type] || 'general',
+          ...NO_CARBON_CALCULATION_STATUS,
+          event_type: String(event.event_type),
           timestamp: new Date().toISOString()
         });
         setDataLoaded(true);
@@ -1071,29 +1080,21 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
               );
             }
 
+            // AC-15: "appears on your buyer page" is true only once the season is published.
+            // Unpublished, or not known (the activity feed), says when it will appear instead.
             return (
               <Text fontSize="xs" color="gray.500">
-                {intl.formatMessage({ id: 'producer.event.buyerPageFieldsHint' })}
+                {intl.formatMessage({
+                  id: isSeasonPublished
+                    ? 'producer.event.buyerPageFieldsHint'
+                    : 'producer.event.buyerPageFieldsHintUnpublished'
+                })}
               </Text>
             );
           })()}
-          {/* Zero-emissions note, DEMOTED from a second info box to one muted line
-              (2026-08-27). Two stacked banners opened every certifier-only record's
-              modal, both ending in "it's for your certifier" — banner fatigue that
-              devalued the visibility notice above, and the "Why this record matters"
-              title promised a compliance story while the body explained emissions
-              accounting. The fact survives as a caption where a carbon number would
-              otherwise appear; on certifier-only records it is dropped entirely —
-              the notice above already carries the certifier-reads-the-season story. */}
-          {carbonData &&
-            !carbonData.error &&
-            !isNotEstimated(carbonData) &&
-            carbonData.co2e === 0 &&
-            !buyerPageWithheldReasonId(event as Record<string, unknown>) && (
-              <Text fontSize="sm" color="gray.600">
-                {intl.formatMessage({ id: 'event.recordValue.zeroEmissions' })}
-              </Text>
-            )}
+          {/* The "no emissions estimated" line that sat here (2026-08-27) now lives inside
+              the carbon card, where a figure would otherwise appear (AC-14). Here it ran above
+              a card that said "0 kg CO2e" and "Minimal", so the screen said both. */}
 
           {/* The farmer's own note.
               Was headed "Event Details" over a box separately labelled "Field Notes" — a
@@ -1378,10 +1379,16 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                   ⚠️ Still live in `components/Events/CarbonImpactPreview.tsx` and
                   `components/Events/EnhancedEventDetailModal.tsx`, both as hardcoded English,
                   both therefore invisible to the guard. */}
-              {isNotEstimated(carbonData) ? (
-                // Run 8 (R8-04): no figure, and why, instead of a 0.
+              {isNotEstimated(carbonData) || typeof carbonData.co2e !== 'number' ? (
+                // Run 8 (R8-04): no figure, and why, instead of a 0. A type with no
+                // calculation says so; anything else names what was missing (AC-14). A figure
+                // reaches the level badge below only when there is one.
                 <Text fontSize="md" color="gray.700">
-                  {intl.formatMessage({ id: 'carbon.notEstimated' })}
+                  {intl.formatMessage({
+                    id: hasNoCarbonCalculation(event.event_type)
+                      ? 'event.recordValue.zeroEmissions'
+                      : 'carbon.notEstimated'
+                  })}
                 </Text>
               ) : (
                 <HStack justify="space-between" align="center">

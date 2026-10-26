@@ -63,7 +63,9 @@ vi.mock('store/api/documentsApi', () => ({
 vi.mock('hooks/useUserRole', () => ({ useUserRole: () => ({ canWrite: true }) }));
 // The crew-message provenance block (audit T29) reads its own endpoint; this suite is about the
 // modal's surface, so it answers "not from a crew message".
-vi.mock('store/api/crewNoteApi', () => ({ useGetCrewNoteQuery: () => ({ data: { crew_note: null } }) }));
+vi.mock('store/api/crewNoteApi', () => ({
+  useGetCrewNoteQuery: () => ({ data: { crew_note: null } })
+}));
 
 // The component reads exactly one slice — `state.company.currentCompany`, for the delete
 // call. Feeding the selector directly beats standing up a store (and beats adding
@@ -300,13 +302,20 @@ describe('EventDetailsModal — action colours are semantic, not decorative', ()
   });
 
   it('states the kg CO₂e fact instead', () => {
-    renderModal();
-    // What replaces the grade: a measured quantity, not a verdict. Scoped to the carbon card
-    // — "no emissions estimated" also appears inside the record-value alert's prose, and an
-    // unscoped query would pass on that sentence alone even if the readout were deleted.
+    // What replaces the grade: a measured quantity, not a verdict. A computed figure, because
+    // the general record above has no carbon calculation and shows no figure at all (AC-14,
+    // 2026-10-26: it used to get a made-up 0 here; see eventDetailsCarbonAndPublishState).
+    renderModal({
+      event: {
+        ...PEST_EVENT,
+        carbon_data: { co2e: 0, verification_status: 'verified_zero', calculation_method: 'x' }
+      } as never
+    });
     expect(screen.getByText('kg CO₂e')).toBeInTheDocument();
     const carbonCard = screen.getByText('kg CO₂e').closest('div')?.parentElement?.parentElement;
-    expect(within(carbonCard as HTMLElement).getByText('No emissions estimated')).toBeInTheDocument();
+    expect(
+      within(carbonCard as HTMLElement).getByText('No emissions estimated')
+    ).toBeInTheDocument();
   });
 });
 

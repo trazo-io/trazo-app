@@ -6985,6 +6985,7 @@
   "parcelForm.toast.updateFailed": "Error al actualizar",
   "producer.event.buyerPageBadge": "En tu página de comprador",
   "producer.event.buyerPageFieldsHint": "Este registro aparece en tu página de comprador. Los campos marcados “En tu página de comprador” son los que ve un comprador; todo lo demás queda en tu registro para el certificador.",
+  "producer.event.buyerPageFieldsHintUnpublished": "Este registro aparecerá en tu página de comprador cuando publiques la temporada. Los campos marcados “En tu página de comprador” son los que verá un comprador; todo lo demás queda en tu registro para el certificador.",
   "producer.event.certifierOnlyBadge": "Solo certificador",
   "producer.event.correct": "Corregir este registro",
   "producer.event.fieldOnBuyerPageHelp": "Quien escanee tu código QR ve este valor en la tarjeta del evento.",
