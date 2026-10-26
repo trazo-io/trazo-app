@@ -63,7 +63,7 @@ vi.mock('../SaleSourceDocuments', () => ({ default: () => null }));
 
 import { SalesRecordsSection, singlePickUnit } from '../SalesRecordsSection';
 
-const renderOpenSeason = () =>
+const renderOpenSeason = (harvestUnit: string | null = null) =>
   render(
     <ChakraProvider>
       <IntlProvider locale="en-US" messages={enUS as Record<string, string>}>
@@ -72,7 +72,7 @@ const renderOpenSeason = () =>
             productionId="uuid-open-season"
             canWrite
             establishmentId={3}
-            harvestUnit={null}
+            harvestUnit={harvestUnit}
             isFinished={false}
             companyId={1}
             historyId={686}
@@ -120,6 +120,14 @@ describe('sales while the season is open', () => {
     // season is finished; the editor offers the matching control.
     const src = readFileSync(resolve(__dirname, '../ProfileProduction.tsx'), 'utf8');
     expect(src).toMatch(/isFinished=\{Boolean\(historyData\?\.finish_date\)\}/);
+  });
+
+  it('a stored header unit off the dropdown still reads as differing, never as matching', () => {
+    // Legacy rows can carry a production_unit the sale dropdown does not offer. The picks agree
+    // on lb, but the lot's own unit is what the grower is told about.
+    renderOpenSeason('pallets');
+    expect(screen.getByText(/This lot was harvested in pallets/)).toBeInTheDocument();
+    expect(screen.queryByText(/Matches this lot’s harvest unit/)).toBeNull();
   });
 
   it('takes the picks’ unit only when they agree on one', () => {

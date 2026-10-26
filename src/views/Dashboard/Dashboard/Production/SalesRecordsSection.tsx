@@ -303,9 +303,11 @@ export function SalesRecordsSection({
   // US farms get `lb`, which is how almonds and citrus are actually sold.
   const defaultUnits = useDefaultUnits(establishmentId);
   const navigate = useNavigate();
-  const pickUnit = singlePickUnit(harvestLots);
-  const lotUnit = harvestUnit && UNIT_VALUES.includes(harvestUnit) ? harvestUnit : pickUnit;
-  const resolvedUnit = lotUnit || defaultUnits.mass;
+  // `lotUnit` is what the help text compares against, so a stored header unit wins even when it
+  // is off this dropdown's vocabulary (legacy rows): the grower must then read "differs", never
+  // "matches". Only a unit on the dropdown can be the default.
+  const lotUnit = harvestUnit || singlePickUnit(harvestLots);
+  const resolvedUnit = lotUnit && UNIT_VALUES.includes(lotUnit) ? lotUnit : defaultUnits.mass;
 
   const [formData, setFormData] = useState({ ...EMPTY_FORM });
   // Empty state means "grower has not chosen", so the default is resolved at RENDER rather than
