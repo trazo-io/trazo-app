@@ -21,6 +21,8 @@ import es419 from '../lang/es-419.json';
 const ALLOWED: Record<string, string> = {
   'consumer.habitat.structure.native_bee_block':
     'a nesting structure ("native-bee blocks"), not land',
+  'events.soil.options.habitatType.nativeBeeBlock':
+    'the same nesting structure, as the form option that records it',
   'education.detail.inspectionPrep.mapAnswer':
     "quotes the certifier's own map checklist (block identifiers)",
   'parcelApp.map.uploadHint': "quotes the certifier's own map checklist (block or lot identifiers)",
