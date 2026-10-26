@@ -772,8 +772,24 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
    * A detected system ("drip"), in the farmer's language when it is a catalogue value. It was
    * printed raw, so a Spanish page read "drip" under "Esto es lo que escuchamos" (2026-10-24).
    */
+  // The parser also answers with the grower's wording ("drip irrigation", "airblast"). When
+  // that wording names the method it resolved, it reads as the method's label: a new chip on
+  // an irrigation, and on an application the same label as the method chip, so the overlap
+  // filter below drops it instead of printing the fact twice.
+  const squash = (text: string) => text.toLowerCase().replace(/[^a-z]/g, '');
+  const spokenMethodLabel = (value: string): string | null => {
+    const irrigation = parsedData?.irrigation_method;
+    const irrigationLabel = catalogueLabel(irrigation, IRRIGATION_METHODS);
+    if (irrigation && irrigationLabel && squash(value).includes(squash(irrigation)))
+      return irrigationLabel;
+    const application = parsedData?.application_method;
+    if (application && applicationMethodChip && squash(value).includes(squash(application)))
+      return applicationMethodChip;
+    return null;
+  };
   const systemLabel = (value: string): string =>
     catalogueLabel(value, IRRIGATION_METHODS) ??
+    spokenMethodLabel(value) ??
     (applicationMethodLabelKey(value) ? applicationMethodLabel(value) : value);
   const applicationMethodChip = applicationMethodLabel(parsedData?.application_method);
 
