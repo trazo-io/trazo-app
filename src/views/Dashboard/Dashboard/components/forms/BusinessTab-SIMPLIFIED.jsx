@@ -105,7 +105,7 @@ export const buildBusinessSchema = (intl) =>
         message: intl.formatMessage({
           id: 'events.business.validation.verificationNeedsStatus',
           defaultMessage:
-            'A verification record needs a status: passed, in progress or failed. Choose in progress while you wait for the result.'
+            'This record needs a status: passed, in progress or failed. Choose in progress while you wait for the result.'
         })
       });
     }
@@ -762,7 +762,9 @@ const BusinessTab = forwardRef(
                       render={({ field }) => (
                         <StandardTextarea
                           {...field}
-                          placeholder={intl.formatMessage({ id: 'events.common.placeholders.privateNote' })}
+                          placeholder={intl.formatMessage({
+                            id: 'events.common.placeholders.privateNote'
+                          })}
                           rows={3}
                         />
                       )}

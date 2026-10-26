@@ -4316,7 +4316,7 @@
   "events.business.subtypes.inspection": "Inspección",
   "events.business.validation.activityTypeRequired": "Elige el tipo de actividad",
   "events.business.validation.certificationTypeRequired": "Selecciona la certificación obtenida o renovada (p. ej., USDA Organic)",
-  "events.business.validation.verificationNeedsStatus": "Un registro de verificación necesita un estado: aprobada, en curso o fallida. Elige en curso mientras esperas el resultado.",
+  "events.business.validation.verificationNeedsStatus": "Este registro necesita un estado: aprobado, en curso o fallido. Elige en curso mientras esperas el resultado.",
   "events.callout.production.bodySeedSearch": "Registra los proveedores que contactaste y qué respondieron. El § 205.204 permite sembrar semilla no orgánica sin tratar solo cuando la semilla orgánica no está disponible comercialmente — esta búsqueda documentada es la evidencia que tu certificador pide.",
   "events.callout.production.title": "Registro de producción",
   "events.certifierOnly.reason.BU": "La disposición de la franja de amortiguamiento es detalle de cumplimiento del § 205.202(c). Fuera de contexto se lee como una admisión no orgánica, así que queda fuera de tu página de comprador y dentro de tu registro para el certificador.",
