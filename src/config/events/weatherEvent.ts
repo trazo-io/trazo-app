@@ -9,10 +9,27 @@
  * can reference them by name as if they were model fields.
  */
 
-import type { EventRegistryEntry, FieldConfig, WeatherSubtype } from './registry';
-import { formatDate, formatTemperature } from './formatters';
+import type { EventRegistryEntry, FieldConfig, FieldFormatter, WeatherSubtype } from './registry';
+import {
+  formatDate,
+  formatDurationHours,
+  formatDurationMinutes,
+  formatHumidityPercent,
+  formatKilometersPerHour,
+  formatMillimeters,
+  formatTemperature
+} from './formatters';
 
 type WeatherData = Record<string, unknown>;
+
+// A zero or negative duration is "nothing recorded", not "0 hours": the card used to drop it
+// and must keep doing so now that the unit text lives in the shared formatters.
+const positiveOnly =
+  (format: FieldFormatter<number | string>): FieldFormatter<number | string, WeatherData> =>
+  (value, event, intl) => {
+    const num = typeof value === 'number' ? value : parseFloat(String(value));
+    return Number.isFinite(num) && num > 0 ? format(value, event, intl) : null;
+  };
 
 const WEATHER_FIELDS: readonly FieldConfig<unknown, WeatherData>[] = [
   // ---- Core (ALL subtypes) ----
@@ -104,6 +121,7 @@ const WEATHER_FIELDS: readonly FieldConfig<unknown, WeatherData>[] = [
     labelKey: 'events.weather.fields.waterDeficit',
     valueType: 'string',
     visibleForSubtypes: ['DR'],
+    formatter: formatMillimeters,
     surfaces: {
       timeline: 'hero',
       card: 'hero',
@@ -170,6 +188,7 @@ const WEATHER_FIELDS: readonly FieldConfig<unknown, WeatherData>[] = [
     labelKey: 'events.weather.fields.windSpeed',
     valueType: 'string',
     visibleForSubtypes: ['TS', 'HW'],
+    formatter: formatKilometersPerHour,
     surfaces: {
       timeline: 'hero',
       card: 'hero',
@@ -184,6 +203,7 @@ const WEATHER_FIELDS: readonly FieldConfig<unknown, WeatherData>[] = [
     labelKey: 'events.weather.fields.precipitationAmount',
     valueType: 'string',
     visibleForSubtypes: ['TS'],
+    formatter: formatMillimeters,
     surfaces: {
       timeline: 'immediate',
       modal: 'immediate',
@@ -198,6 +218,7 @@ const WEATHER_FIELDS: readonly FieldConfig<unknown, WeatherData>[] = [
     labelKey: 'events.weather.fields.humidityLevel',
     valueType: 'string',
     visibleForSubtypes: ['HH', 'LH'],
+    formatter: formatHumidityPercent,
     surfaces: {
       timeline: 'hero',
       card: 'hero',
@@ -212,21 +233,37 @@ const WEATHER_FIELDS: readonly FieldConfig<unknown, WeatherData>[] = [
   // Duration is only captured by the form for HL/TS/HW/HH/LH. FR uses
   // lower_temperature only, DR uses water_deficit only, HT uses start_date/
   // end_date instead. Restrict visibility to avoid rendering empty slots.
+  //
+  // ONE storage key, TWO units (AC-01, 2026-10-26): the hail form asks "Duration (minutes)"
+  // and the other four ask hours (WeatherTab.jsx), both writing `duration`. A single hours
+  // formatter printed a 7-minute hailstorm as "7 hours". The resolver gates each entry by
+  // subtype and loops entry by entry, so two entries with disjoint `visibleForSubtypes` give
+  // each subtype its own unit without the formatter having to guess the subtype from the event.
+  // Keep the two surface blocks identical.
   {
     name: 'duration',
     labelKey: 'events.weather.fields.duration',
     valueType: 'string',
-    visibleForSubtypes: ['HL', 'TS', 'HW', 'HH', 'LH'],
+    visibleForSubtypes: ['HL'],
+    formatter: positiveOnly(formatDurationMinutes),
+    surfaces: {
+      timeline: 'immediate',
+      card: 'immediate',
+      modal: 'immediate',
+      form: 'immediate',
+      consumer_card: 'immediate'
+    }
+  },
+  {
+    name: 'duration',
+    labelKey: 'events.weather.fields.duration',
+    valueType: 'string',
+    visibleForSubtypes: ['TS', 'HW', 'HH', 'LH'],
     // Rendered as a bare "Duration: 2" — two what? The form labels this field
     // "Storm duration in hours" (WeatherTab.jsx), so the unit is known; it was just never
     // attached on the way out. On several weather subtypes this is the ONLY field on the
     // card, so a unitless number was most of what a shopper got.
-    formatter: (v) => {
-      if (v == null || v === '') return null;
-      const num = typeof v === 'number' ? v : parseFloat(String(v));
-      if (!Number.isFinite(num) || num <= 0) return null;
-      return num === 1 ? '1 hour' : `${num} hours`;
-    },
+    formatter: positiveOnly(formatDurationHours),
     surfaces: {
       timeline: 'immediate',
       card: 'immediate',

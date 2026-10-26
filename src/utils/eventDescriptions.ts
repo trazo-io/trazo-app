@@ -28,7 +28,7 @@ export const eventDescriptions: Record<string, string> = {
   'pest scouting': 'The crop was checked for pests and damage',
   'trap monitoring': 'Pest traps around the block were checked and the counts written down',
   'beneficial release': 'Beneficial insects were released into the block',
-  'pest identification': 'The pest was identified before any decision about treating it',
+  'pest identification': 'A pest on this block was identified',
   'threshold assessment': 'Pest counts were compared with a treatment threshold',
   'ipm implementation':
     'Several pest-control methods were used together rather than relying on one',
@@ -45,7 +45,7 @@ export const eventDescriptions: Record<string, string> = {
   'planning activity': 'Farm activities planned',
   documentation: 'Farming practices were documented',
   training: 'A training session was held',
-  'safety inspection': 'Farm facilities and equipment were inspected for safety',
+  'safety inspection': 'An internal inspection was recorded',
   'general maintenance': 'General maintenance recorded',
   default: 'A farming activity was recorded on this date'
 };
@@ -633,6 +633,36 @@ export function getConsumerEventDescription(
   const safeDescription = typeof eventDescription === 'string' ? eventDescription : '';
   const lowerDesc = safeDescription.toLowerCase();
 
+  // A sentence that names an act, an amount, a cause or a detail "you can see" must read the
+  // field that holds it (Astra AC-02..05, 2026-10-26). The copy below used to be one fixed
+  // sentence per subtype, so a compost-PROCESS record told a shopper compost "was spread", a hail
+  // record with the damage field blank said "the damage was assessed", and a certification
+  // logged as in progress read as a completed third-party certification. Fields ride flat on the
+  // payload or inside extra_data depending on the family, so look in both.
+  // A blank flat column must not hide a value the serializer lifted into extra_data, so fall
+  // through on empty, not only on null (same rule as productionEvent.ts floor_management_type).
+  const fieldValue = (name: string): unknown => {
+    const flat = event?.[name];
+    return flat === undefined || flat === null || flat === '' ? event?.extra_data?.[name] : flat;
+  };
+  const recorded = (...names: string[]): boolean =>
+    names.some((name) => {
+      const value = fieldValue(name);
+      if (value === undefined || value === null || value === false) return false;
+      if (Array.isArray(value)) return value.length > 0;
+      return String(value).trim() !== '';
+    });
+  const recordedAmount = (...names: string[]): boolean =>
+    names.some((name) => {
+      const value = fieldValue(name);
+      const num = typeof value === 'number' ? value : parseFloat(String(value ?? ''));
+      return Number.isFinite(num) && num > 0;
+    });
+  const recordedValue = (name: string): string =>
+    String(fieldValue(name) ?? '')
+      .trim()
+      .toLowerCase();
+
   // For production events (event_type: 1), create specific descriptions based on production data
   if (event && (event.event_type === 1 || event.type?.includes('production'))) {
     let icon = '🌱';
@@ -946,11 +976,28 @@ export function getConsumerEventDescription(
 
     // Get production type from event data
     const eventType = event.production_type || event.type || 'Agricultural Activity';
-    const typeInfo = typeMap[eventType] || {
+    let typeInfo = typeMap[eventType] || {
       title: 'Agricultural Activity',
       icon: '🌱',
       description: 'A farming activity was recorded for this crop'
     };
+
+    // Orchard floor: "was mown" was printed for every floor record, including mulching, cover-crop
+    // work and weeding by hand. The sentence follows the operation the farm picked, and says
+    // nothing about the method when none was picked.
+    const floorType = recordedValue('floor_management_type');
+    const isFloorEvent = eventType.includes('mowing') || eventType === 'MO';
+    if (isFloorEvent && floorType !== 'mow') {
+      const floorDescriptions: Record<string, string> = {
+        mulch: 'Mulch was laid on this block',
+        cover_crop_mgmt: 'The cover crop on this block was managed',
+        flame_weed: 'Unwanted growth on this block was burned off'
+      };
+      typeInfo = {
+        ...typeInfo,
+        description: floorDescriptions[floorType] || 'Vegetation on this block was managed'
+      };
+    }
 
     icon = typeInfo.icon;
 
@@ -1077,9 +1124,16 @@ export function getConsumerEventDescription(
         'You can see which week this lot left the block, and how much came off that day.';
       sustainabilityBenefit = `Recording the date, volume and grade is what lets a batch be traced back to one block and one week.`;
     } else if (eventType.includes('irrigation') || eventType === 'IR') {
-      consumerImpact =
-        'You can see where the irrigation water came from and how it reached the crop.';
-      sustainabilityBenefit = `Recording the source and method makes water use checkable instead of assumed.`;
+      // The source-and-method promise only where the record holds one of them (AC-05 extras:
+      // an irrigation logged with the source left unknown promised to show the source).
+      if (recorded('water_source', 'irrigation_method')) {
+        consumerImpact =
+          'You can see where the irrigation water came from and how it reached the crop.';
+        sustainabilityBenefit = `Recording the source and method makes water use checkable instead of assumed.`;
+      } else {
+        consumerImpact = 'The irrigation date is on record for this lot.';
+        sustainabilityBenefit = 'Water use on this block is part of the season record.';
+      }
     } else if (eventType.includes('pruning') || eventType === 'PR') {
       consumerImpact = 'You can see when this lot was shaped.';
       // Was: "Prunings are chipped back onto the orchard floor, returning the material to the
@@ -1097,7 +1151,9 @@ export function getConsumerEventDescription(
       // The bee story is the strongest consumer content in the product and had no copy at
       // all — PO fell through to the family default. UC Davis organic-almond practice: two
       // hives per acre, set in the orchard in February before bloom.
-      consumerImpact = 'Honey bee hives were brought into this block during bloom.';
+      // Was "Honey bee hives were brought into this block during bloom": the record holds a
+      // pollinator type and a hive count, not the bloom stage and not always honey bees (AC-05).
+      consumerImpact = 'The pollination record carries its date.';
       sustainabilityBenefit =
         'Hive placement is on record beside the spray log, so applications can be checked against the days bees were on the block.';
     } else if (eventType.includes('post_harvest') || eventType === 'PH') {
@@ -1112,21 +1168,30 @@ export function getConsumerEventDescription(
       sustainabilityBenefit =
         'The night, the method and the low temperature are on record, so frost protection is documented rather than assumed.';
     } else if (eventType.includes('canopy') || eventType === 'CM') {
-      consumerImpact = 'You can see when the leaves around this crop were pulled or hedged.';
+      // Leaves "pulled or hedged" only when that is the operation recorded. Tying (Amarre),
+      // shoot positioning or suckering is not leaf removal (AC-05).
+      const canopyOperation = recordedValue('canopy_operation');
+      consumerImpact =
+        canopyOperation === 'leaf_pulling' || canopyOperation === 'hedging'
+          ? 'You can see when the leaves around this crop were pulled or hedged.'
+          : 'The date of this pass is on file for anyone tracing the lot.';
       sustainabilityBenefit = 'Canopy work on this block is dated and on record.';
-    } else if (eventType.includes('mowing') || eventType === 'MO') {
+    } else if (isFloorEvent) {
       // Orchard-floor management is the organic answer to weeds, so the copy splits on
-      // HOW: flame weeding is the visible "no herbicide" story a shopper understands,
-      // while mowing / mulching / cover-crop management is habitat and soil cover.
+      // HOW, read from `floor_management_type` (resolved above for the short description).
+      // "Mowed" only for a mow: a record of weeding by hand was told it had been mown (AC-04).
       // Static sentences so eventDescriptions.es.ts can localize them (Stage 2 rule above).
-      const floorType =
-        (event as any).floor_management_type || (event as any).extra_data?.floor_management_type;
       if (floorType === 'flame_weed') {
         consumerImpact = 'Weeds were flamed with a propane burner.';
         sustainabilityBenefit = 'The weeding method and the date are on record.';
-      } else {
+      } else if (floorType === 'mow') {
         consumerImpact = 'You can see when the ground under this crop was mowed.';
         sustainabilityBenefit = 'Ground-cover work on this block is dated and on record.';
+      } else {
+        consumerImpact = 'You can see when the ground cover here was worked.';
+        sustainabilityBenefit = floorType
+          ? 'The method the farm picked and the date are on record.'
+          : 'This pass is dated and on file.';
       }
     } else if (eventType.includes('equipment') || eventType === 'EM') {
       // EM had NO branch at all, so all 40 equipment events on published productions fell
@@ -1421,6 +1486,22 @@ export function getConsumerEventDescription(
       consumerImpact = 'The dry spell is on record with its dates.';
     }
 
+    // "Damage was assessed", "the crop was checked afterwards", "wind damage was recorded": each
+    // names a follow-up that lives in `damage_assessment` / `crop_impact`. With both blank the
+    // record holds the weather and nothing else, and so does the sentence (AC-04).
+    if (!recorded('damage_assessment', 'crop_impact')) {
+      const weatherOnly: Record<string, string> = {
+        FR: 'Frost was recorded on the block',
+        HL: 'A hailstorm was recorded on this block',
+        HT: 'A heat wave crossed the block',
+        TS: 'Storm conditions were recorded',
+        HW: 'High winds crossed the block'
+      };
+      if (weatherOnly[weatherTypeCode]) {
+        weatherInfo = { ...weatherInfo, description: weatherOnly[weatherTypeCode] };
+      }
+    }
+
     // For weather events, use the standardized description without prepending user observations
     // User observations are displayed separately in "Farmer's Field Notes" section
     let description = weatherInfo.description;
@@ -1586,9 +1667,13 @@ export function getConsumerEventDescription(
         consumerImpact = 'A copper-based treatment was applied against a disease.';
         sustainabilityBenefit =
           'Organic rules allow copper only where it does not build up in the soil, so the amount and timing are recorded.';
-      } else {
+      } else if (recorded('target_pest_disease', 'target_pest_disease_need')) {
         consumerImpact = 'Both the target and the material are on file here, with the date.';
         sustainabilityBenefit = 'The disease and the product used against it are on record.';
+      } else {
+        // No target on the record, so no promise that one is on file (AC-05 extras).
+        consumerImpact = 'The material and the date are on file here.';
+        sustainabilityBenefit = 'The fungicide application is on record with its date.';
       }
     } else if (chemicalType === 'herbicide application') {
       // Special case for glyphosate products
@@ -1694,7 +1779,9 @@ export function getConsumerEventDescription(
       TI: {
         title: 'Tillage Implementation',
         icon: '🚜',
-        description: 'The ground was worked to prepare a seedbed',
+        // Was "to prepare a seedbed": tillage in an orchard is rarely that, and the record does
+        // not say why the ground was worked (AC-05 extras).
+        description: 'The ground on this block was tilled',
         impact: 'MEDIUM'
       },
       CO: {
@@ -1706,21 +1793,24 @@ export function getConsumerEventDescription(
       GR: {
         title: 'Grazing Management',
         icon: '🐑',
-        description: 'Livestock were grazed through the block to eat down the cover crop',
+        // The purpose follows `grazing_purpose` below; this line asserts only the grazing.
+        description: 'Livestock were grazed on this block',
         impact: 'HIGH'
       },
       HD: {
         title: 'Habitat Development',
         icon: '🌿',
-        description:
-          'Hedgerows, flowering strips and living groundcover were planted along the field edges',
+        // Was "Hedgerows, flowering strips and living groundcover were planted…" on a record
+        // of native yarrow (AC-05): a list of examples read as a list of completed work.
+        description: 'Habitat for wildlife was established on this farm',
         impact: 'HIGH'
       },
       NS: {
         title: 'Nesting / Shelter Structures',
         icon: '🦉',
-        description:
-          'Owl and songbird boxes, raptor perches and native-bee blocks were installed around the block',
+        // Was "Owl and songbird boxes, raptor perches and native-bee blocks…" on a record of two
+        // barn-owl boxes (AC-05). The structure type and count are Key Details beside this line.
+        description: 'Nesting or shelter structures were installed on this farm',
         impact: 'HIGH'
       },
       // §E-2: an outside laboratory is genuine third-party evidence, so the consumer copy says
@@ -1737,12 +1827,25 @@ export function getConsumerEventDescription(
 
     // Determine soil management type from various possible fields
     const soilType = event.soil_management_type || event.type || '';
-    const typeInfo = soilTypeMap[soilType] || {
+    let typeInfo = soilTypeMap[soilType] || {
       title: 'Soil work',
       icon: '🌱',
       description: 'Work on the soil was recorded for this block',
       impact: 'MEDIUM' as 'HIGH' | 'MEDIUM' | 'LOW'
     };
+
+    // What went onto the ground, and how much, are separate fields; the sentences below name an
+    // application only when the record holds one (AC-03). A composting record that logs the pile
+    // (method, C:N, temperatures, turns) and no amount applied is the PROCESS, not a spreading.
+    const amendmentNamed = recorded('amendment_type', 'amendment_product_name');
+    const amountApplied = recordedAmount('amendment_amount_numeric', 'amendment_amount');
+    const isPhAdjustment = soilType === 'PA' || soilType.includes('pH');
+    const isCompost = soilType === 'CO' || soilType.includes('Compost');
+    if (isCompost && !amountApplied) {
+      typeInfo = { ...typeInfo, description: 'Compost making was recorded for this farm' };
+    } else if (isPhAdjustment && !amendmentNamed) {
+      typeInfo = { ...typeInfo, description: 'A pH adjustment was recorded for this block' };
+    }
 
     icon = typeInfo.icon;
     impactLevel = typeInfo.impact;
@@ -1799,10 +1902,21 @@ export function getConsumerEventDescription(
       consumerImpact = 'A lab analysis is on record for this block.';
       sustainabilityBenefit =
         'The test and the inputs that followed are on record, so one can be checked against the other.';
-    } else if (soilType === 'PA' || soilType.includes('pH')) {
-      consumerImpact = 'You can see what the farm added to this ground, and how much.';
-      sustainabilityBenefit =
-        'The amendment, the amount and the area are on record, so the correction can be checked against the soil test that prompted it.';
+    } else if (isPhAdjustment) {
+      if (amendmentNamed && amountApplied) {
+        consumerImpact = 'You can see what the farm added to this ground, and how much.';
+        sustainabilityBenefit =
+          'The amendment, the amount and the area are on record, so the correction can be checked against the soil test that prompted it.';
+      } else {
+        // "What and how much" on a record holding neither (AC-03). Each fallback denies only the
+        // field that is actually missing.
+        consumerImpact = amendmentNamed
+          ? 'The material is on record; no amount was entered.'
+          : amountApplied
+          ? 'An amount is on record; the material was not named.'
+          : 'Nothing was entered about the material or the amount used.';
+        sustainabilityBenefit = 'This soil correction is part of the season record for this block.';
+      }
     } else if (soilType === 'OM' || soilType.includes('Organic')) {
       consumerImpact = 'You can see what went into the ground this lot grew in.';
       sustainabilityBenefit = 'The material, the amount and the area are on record.';
@@ -1810,9 +1924,14 @@ export function getConsumerEventDescription(
       consumerImpact = 'You can see what grew on this ground before this crop.';
       sustainabilityBenefit = 'The cover crop work is dated and on record.';
     } else if (soilType === 'TI' || soilType.includes('Tillage')) {
-      consumerImpact = 'You can see how many passes went over this field.';
+      // Was "how many passes went over this field": no tillage field holds a pass count.
+      consumerImpact = 'You can line this pass up against the other work in the season.';
       sustainabilityBenefit = 'Tillage recorded.';
-    } else if (soilType === 'CO' || soilType.includes('Compost')) {
+    } else if (isCompost && !amountApplied) {
+      consumerImpact =
+        "Organic rules set how hot and how long a pile must run; this entry is the grower's own log.";
+      sustainabilityBenefit = 'Making compost is logged separately from spreading it.';
+    } else if (isCompost) {
       consumerImpact = 'You can see what went onto this ground before the crop.';
       // Was: "Composting turns orchard waste back into soil…". The event carries
       // `compost_feedstock`, and on real records it reads "green waste, yard trimmings and horse
@@ -1821,13 +1940,19 @@ export function getConsumerEventDescription(
       sustainabilityBenefit =
         'Recording the amount, the area and the composting process is what makes soil building checkable rather than asserted.';
     } else if (soilType === 'GR' || soilType.includes('Grazing')) {
-      consumerImpact = 'You can see when animals were on this ground.';
+      // The description used to add "to eat down the cover crop" whatever `grazing_purpose`
+      // said (AC-05). That purpose is now stated only when it is the one recorded.
+      consumerImpact =
+        recordedValue('grazing_purpose') === 'cover_crop'
+          ? 'Animals grazed this ground to take down the cover crop.'
+          : 'You can see when animals were on this ground.';
       sustainabilityBenefit = 'The grazing dates and the block are on record.';
     } else if (soilType === 'HD' || soilType.includes('Habitat')) {
-      consumerImpact = 'You can see what grows around this block besides the crop.';
+      consumerImpact = "This is the farm's own record of what grows here besides the crop.";
       sustainabilityBenefit = 'The habitat, where it is and when it was planted are on record.';
     } else if (soilType === 'NS' || soilType.includes('Nesting') || soilType.includes('Shelter')) {
-      consumerImpact = 'You can see what was put up for birds and bees here.';
+      // Not "for birds and bees": the structure type is recorded, so the line does not guess it.
+      consumerImpact = 'You can see what was put up here, as the farm described it.';
       sustainabilityBenefit =
         'Structures and their locations are on record, so the habitat can be checked on the ground.';
     }
@@ -1916,7 +2041,9 @@ export function getConsumerEventDescription(
       PI: {
         title: 'Pest Identification',
         icon: '🔬',
-        description: 'The pest was identified before any decision about treating it',
+        // Was "identified before any decision about treating it": the record holds the species
+        // and who identified it, not what came after (AC-05 extras).
+        description: 'A pest on this block was identified',
         impact: 'MEDIUM'
       },
       TA: {
@@ -1960,7 +2087,9 @@ export function getConsumerEventDescription(
       pest_identification: {
         title: 'Pest Identification',
         icon: '🔬',
-        description: 'The pest was identified before any decision about treating it',
+        // Was "identified before any decision about treating it": the record holds the species
+        // and who identified it, not what came after (AC-05 extras).
+        description: 'A pest on this block was identified',
         impact: 'MEDIUM'
       },
       threshold_assessment: {
@@ -2110,9 +2239,11 @@ export function getConsumerEventDescription(
         impact: 'LOW'
       },
       inspection: {
-        title: 'Safety Inspection',
+        title: 'Internal Inspection',
         icon: '🛡️',
-        description: 'Farm facilities and equipment were inspected for safety',
+        // Was "Farm facilities and equipment were inspected for safety" on a record of a generic
+        // internal visual inspection (AC-05 extras). What was inspected is the farm's to say.
+        description: 'An internal inspection was recorded',
         impact: 'HIGH'
       },
       meeting: {
@@ -2136,7 +2267,9 @@ export function getConsumerEventDescription(
       emergency: {
         title: 'Emergency/Storm Response',
         icon: '⚠️',
-        description: 'Emergency cleanup and repair were recorded',
+        // Was "Emergency cleanup and repair were recorded" on a record of a warning cone set out
+        // (AC-04). The response is in the farm's own note, not in this line.
+        description: 'An emergency response was recorded',
         impact: 'MEDIUM'
       },
       other: {
@@ -2250,11 +2383,11 @@ export function getConsumerEventDescription(
       consumerImpact = 'The documentation of this work is on record.';
       sustainabilityBenefit = 'This record is part of the documentation of the farm.';
     } else if (eventActivityType === 'inspection') {
-      consumerImpact = 'Safety inspection recorded.';
-      sustainabilityBenefit = 'The safety inspection is on record.';
+      consumerImpact = 'The inspection is on record with its date.';
+      sustainabilityBenefit = 'The internal inspection is on record.';
     } else if (eventActivityType === 'emergency') {
-      consumerImpact = 'Emergency response recorded.';
-      sustainabilityBenefit = 'Damage repair recorded.';
+      consumerImpact = 'The emergency is on record with its date.';
+      sustainabilityBenefit = 'The emergency response is on record.';
     } else if (eventActivityType === 'precision_ag') {
       consumerImpact = 'Precision agriculture work recorded.';
       sustainabilityBenefit = 'The precision agriculture work is on record.';
@@ -2542,19 +2675,25 @@ export function getConsumerEventDescription(
       certification: {
         title: 'Certification Achievement',
         icon: '🏆',
-        description: 'A third-party certification was recorded for this crop',
+        // Was "A third-party certification was recorded for this crop", printed for a record the
+        // farm marked as still in progress (AC-02). The status is farmer-entered and stripped
+        // from the public payload (`_CERTIFIER_ONLY_EVENT_FIELDS`), so the page cannot tell a held
+        // certificate from an application: the line says only that the farm logged one.
+        description: 'The farm logged a certification record for this crop',
         impact: 'HIGH'
       },
       sustainability_audit: {
         title: 'Sustainability Assessment',
         icon: '📊',
-        description: 'An audit of the operation was carried out and recorded',
+        description: 'The farm logged an audit record for this operation',
         impact: 'MEDIUM'
       },
       verification: {
         title: 'Third-Party Verification',
         icon: '✅',
-        description: 'An outside body reviewed this operation against a written standard',
+        // Was "An outside body reviewed this operation against a written standard" on a review
+        // logged as in progress, with no body named (AC-02). Same rule as certification above.
+        description: 'The farm logged a review against a written standard',
         impact: 'MEDIUM'
       },
       compliance: {
@@ -2645,19 +2784,11 @@ export function getConsumerEventDescription(
       fullDescription = certDesc;
     }
 
-    // Add verification status with consumer-friendly messaging
-    if (event.verification_status && event.verification_status !== 'pending') {
-      const statusMessages: Record<string, string> = {
-        verified: 'Successfully verified by independent third-party auditor',
-        in_progress: 'Currently undergoing verification process',
-        failed: 'Verification process identified areas for improvement',
-        not_applicable: 'Verification not required for this activity'
-      };
-      const statusMsg =
-        statusMessages[event.verification_status] ||
-        `Verification status: ${event.verification_status}`;
-      fullDescription += `. ${statusMsg}`;
-    }
+    // No verification-status suffix (AC-02, 2026-10-26). `verification_status` is farmer-entered
+    // and stripped from every non-owner payload (`_CERTIFIER_ONLY_EVENT_FIELDS`), so a suffix here
+    // only ever reached the owner and made the owner's preview differ from what a shopper reads.
+    // It also read "Successfully verified by independent third-party auditor" off a self-entered
+    // value.
 
     // Add sustainability practice details with consumer-friendly explanations
     if (event.sustainability_practice) {
@@ -2708,8 +2839,10 @@ export function getConsumerEventDescription(
       // to contact an issuer the page will not name is a promise the page cannot keep.
       //
       // The certificate NUMBER is published, and that is the checkable part.
-      consumerImpact =
-        'The certificate number is published here, so this is a claim a buyer can check rather than take on trust.';
+      // Only when there IS a number (AC-02): the line promised one on a record with none.
+      consumerImpact = recorded('certificate_number')
+        ? 'The certificate number is published here, so this is a claim a buyer can check rather than take on trust.'
+        : 'No certificate number was entered on this record.';
     } else if (businessType === 'verification') {
       // Same correction: the audit BODY is not on the wire for a consumer (see above), so the
       // page cannot say it is "on record" for them. What is on record here is the farm's own
@@ -3366,7 +3499,7 @@ export function getTimelineEventTitle(event: any, intl?: any): string {
     SP: 'Soil Preparation',
     'event.soil.preparation': 'Soil Preparation',
     SA: 'Soil Amendment',
-    'event.soil.amendment': 'Soil Amendment',
+    'event.soil.amendment': 'pH Adjustment',
     // SM ("Soil Management") deleted 2026-08-29: a phantom subtype. It is absent from the
     // soil registry (ST/PA/OM/CC/TI/CO/GR/HD/NS/LA) and from SoilManagementEvent's
     // SOIL_TYPE_CHOICES in the backend, so no record could ever carry it — it existed only to

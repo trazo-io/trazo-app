@@ -109,6 +109,7 @@ describe('specific copy still renders', () => {
       type: 'CE',
       business_type: 'certification',
       verification_status: 'verified',
+      certificate_number: 'GGN-4063061234567',
       name: 'GlobalG.A.P. Certification',
       description: 'GlobalG.A.P. Certification',
       date: '2026-02-09T08:00:00Z'
@@ -117,7 +118,7 @@ describe('specific copy still renders', () => {
     // farming practices and product quality" — "validating" asserts an outcome from a
     // self-reported record, on a card whose own chip says "Self Reported". It now states what
     // was recorded, and the impact line points at the certificate number a buyer can check.
-    expect(screen.getByText(/third-party certification was recorded/i)).toBeTruthy();
+    expect(screen.getByText(/farm logged a certification record/i)).toBeTruthy();
     expect(screen.getByText(/certificate number is published here/i)).toBeTruthy();
     expect(screen.queryByText(/certifier inspected this farm/i)).toBeNull();
     expect(screen.queryByText(/validating sustainable farming practices/i)).toBeNull();

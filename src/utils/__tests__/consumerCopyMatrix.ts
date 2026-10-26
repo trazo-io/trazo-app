@@ -33,12 +33,37 @@ export const EVENT_TYPES = [
  * code; `{}` (the default shape) is always swept in addition to these.
  */
 const VARIANTS: Record<number, Array<{ label: string; patch: Record<string, unknown> }>> = {
+  // Astra AC-02..05 (2026-10-26): sentences that name an act or a detail are gated on the field
+  // that holds it, so the copy forks on these fields and each fork is swept here. Forks that
+  // interpolate the value into the sentence (fungicide target, certificate number, status) cannot
+  // be dictionary keys; consumerNarrativeIsFieldBacked.test.ts covers those.
+  0: [
+    {
+      label: 'damage recorded',
+      patch: { damage_assessment: 'Some fruit marked on the south rows' }
+    }
+  ],
+  1: [
+    ...['mow', 'mulch', 'cover_crop_mgmt', 'flame_weed'].map((floor_management_type) => ({
+      label: `floor/${floor_management_type}`,
+      patch: { floor_management_type }
+    })),
+    { label: 'canopy/leaf_pulling', patch: { canopy_operation: 'leaf_pulling' } },
+    { label: 'water source', patch: { water_source: 'well' } }
+  ],
   // chemicalEvent: organic-approved inputs get their own sentences.
   2: [
     {
       label: 'organic',
       patch: { chemical_subtype: 'organic_pesticide', organic_approved: 'omri_listed' }
     }
+  ],
+  5: [
+    {
+      label: 'amendment applied',
+      patch: { amendment_type: 'Agricultural lime', amendment_amount_numeric: 2 }
+    },
+    { label: 'grazing/cover_crop', patch: { grazing_purpose: 'cover_crop' } }
   ],
   // businessEvent: business_type selects the branch; the subtype code does not.
   7: [

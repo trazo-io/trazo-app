@@ -515,6 +515,11 @@ const TrackList = ({ amount }) => {
         // first place. If `current_history` ever points at a finished row, this shows
         // the locked state instead of an Edit button that 423s.
         isProductionFinished={!!(currentHistory?.finish_date || currentHistory?.published)}
+        // AC-15: the buyer-page hint says "appears" only when the season is published.
+        // `current_history` points at the open season and publishing needs `finish_date`, so
+        // this is false in practice and the hint reads "once the season is published". The
+        // published case is wired where the season lives: ProfileProduction.
+        isSeasonPublished={!!currentHistory?.published}
         onEventUpdated={handleEventUpdated}
         onEventDeleted={handleEventDeleted}
       />
