@@ -32,6 +32,7 @@ import { FaChevronDown, FaChevronUp, FaExclamationTriangle, FaShieldAlt } from '
 import { useIntl } from 'react-intl';
 
 import type { PriorityTier, ResolvedField, ResolvedFieldSet } from 'src/config/events';
+import { localizeFieldValue } from 'src/utils/fieldDisplayUtils';
 
 // ============================================================================
 // Label resolution (converts i18n keys → human-readable labels)
@@ -142,7 +143,10 @@ const FieldItem: React.FC<FieldItemProps> = ({
         )}
       </HStack>
       <Text fontWeight="medium" color={textColor} fontSize={compact ? 'sm' : 'md'}>
-        {field.formattedValue}
+        {/* Registry formatters return English ("7 hours", "Tucking"); the consumer card has
+            always run them through localizeFieldValue, the producer detail never did, so a
+            Spanish operator read English values under Spanish labels (AC-09). */}
+        {localizeFieldValue(field.formattedValue, intl.locale)}
       </Text>
     </Box>
   );
@@ -249,6 +253,21 @@ export const RegistryFieldRenderer: React.FC<RegistryFieldRendererProps> = ({
   const defaultTextColor = useColorModeValue('gray.800', 'white');
   const cardBg = cardBgProp || defaultCardBg;
   const textColor = textColorProp || defaultTextColor;
+  const intl = useIntl();
+  // Section titles go through intl: the keys exist in both locales, and a hardcoded English
+  // heading above Spanish rows was AC-09's "Additional Details" on the Spanish detail view.
+  const keyDetailsTitle = intl.formatMessage({
+    id: 'consumer.eventCard.keyDetails',
+    defaultMessage: 'Key Details'
+  });
+  const additionalDetailsTitle = intl.formatMessage({
+    id: 'eventDetails.additionalDetails',
+    defaultMessage: 'Additional Details'
+  });
+  const technicalDetailsTitle = intl.formatMessage({
+    id: 'eventDetails.technicalDetails',
+    defaultMessage: 'Technical Details'
+  });
 
   const allEmpty =
     fields.hero.length +
@@ -300,14 +319,14 @@ export const RegistryFieldRenderer: React.FC<RegistryFieldRendererProps> = ({
           </SimpleGrid>
         )}
         <FieldSection
-          title="Key Details"
+          title={keyDetailsTitle}
           fields={fields.immediate}
           cardBg={cardBg}
           textColor={textColor}
           columns={{ base: 1, sm: 2 }}
         />
         <FieldSection
-          title="Additional Details"
+          title={additionalDetailsTitle}
           fields={fields.secondary}
           cardBg={cardBg}
           textColor={textColor}
@@ -315,7 +334,7 @@ export const RegistryFieldRenderer: React.FC<RegistryFieldRendererProps> = ({
           defaultCollapsed
         />
         <FieldSection
-          title="Technical Details"
+          title={technicalDetailsTitle}
           fields={fields.details}
           cardBg={cardBg}
           textColor={textColor}
@@ -347,7 +366,7 @@ export const RegistryFieldRenderer: React.FC<RegistryFieldRendererProps> = ({
         </SimpleGrid>
       )}
       <FieldSection
-        title="Additional Details"
+        title={additionalDetailsTitle}
         buyerVisibleFields={buyerVisibleFields}
         fields={fields.secondary}
         cardBg={cardBg}
@@ -355,7 +374,7 @@ export const RegistryFieldRenderer: React.FC<RegistryFieldRendererProps> = ({
         columns={{ base: 1, md: 2 }}
       />
       <FieldSection
-        title="Technical Details"
+        title={technicalDetailsTitle}
         buyerVisibleFields={buyerVisibleFields}
         fields={fields.details}
         cardBg={cardBg}

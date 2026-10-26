@@ -347,7 +347,7 @@ const formatCompostMethod = (v: unknown): string | null => {
 
 const SOIL_SUBTYPE_LABELS: Record<string, string> = {
   ST: 'Soil Testing',
-  PA: 'Soil Amendment',
+  PA: 'pH Adjustment',
   CC: 'Cover Crop Management',
   OM: 'Organic Matter Addition',
   TI: 'Tillage',

@@ -347,6 +347,19 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     }
   },
   {
+    // The operation's own name. The modal's title comes from `activityLabel`, which maps
+    // CU/PR/MO/TH/CM/PO/FP (and TP/BU/SS by default) to the single verb "field work", so a
+    // Cultivation record and an Orchard-Floor record both read "Production" and the reader
+    // could not tell what had been entered (AC-11). PL/TR/IR/HA/PH/EM already have a verb of
+    // their own, so the row is withheld there rather than repeating the title.
+    name: 'production_type',
+    labelKey: 'events.production.fields.activityType',
+    valueType: 'enum',
+    enumSource: 'production_subtypes',
+    visibleForSubtypes: ['CU', 'PR', 'MO', 'TH', 'CM', 'PO', 'FP', 'TP', 'BU', 'SS'],
+    surfaces: { modal: 'immediate' }
+  },
+  {
     // Mirrors ProductionTab's own gate, `!['EM','PO'].includes(productionType)`. Equipment
     // cleaning and pollination are not AREA operations — a hive placement covers no acreage —
     // so declaring area for them put a value on two modals that no input could set or clear.
@@ -1573,7 +1586,8 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
   {
     name: 'canopy_operation',
     labelKey: 'production.canopy.operation',
-    valueType: 'string',
+    valueType: 'enum',
+    enumSource: 'canopy_operations',
     visibleForSubtypes: ['CM'],
     // consumer_card since 2026-09-06: the operation IS the activity ("leaf pulling", "hedging")
     // and the card for a canopy pass read as a date, an acreage and nothing else.
