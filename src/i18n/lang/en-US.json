@@ -6987,6 +6987,7 @@
   "parcelForm.toast.updateFailed": "Update Failed",
   "producer.event.buyerPageBadge": "On your buyer page",
   "producer.event.buyerPageFieldsHint": "This record appears on your buyer page. Fields marked “On your buyer page” are the ones a shopper sees; everything else stays in your certifier record.",
+  "producer.event.buyerPageFieldsHintUnpublished": "This record will appear on your buyer page once the season is published. Fields marked “On your buyer page” are the ones a shopper will see; everything else stays in your certifier record.",
   "producer.event.certifierOnlyBadge": "Certifier-only",
   "producer.event.correct": "Correct this record",
   "producer.event.fieldOnBuyerPageHelp": "A shopper who scans your QR code sees this value on the event card.",

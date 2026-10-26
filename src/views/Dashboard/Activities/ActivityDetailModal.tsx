@@ -31,13 +31,20 @@ interface ActivityDetailModalProps {
   farmId: string;
   /** Refetch the feed — deleting an event does not invalidate the activity-feed tag. */
   onDeleted?: () => void;
+  /**
+   * Whether the season this record belongs to is published (AC-15). Only a caller that holds
+   * the season knows; the activity feed row does not carry it, so the feed leaves it undefined
+   * and the modal uses the conditional "once the season is published" wording.
+   */
+  isSeasonPublished?: boolean;
 }
 
 export const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({
   row,
   onClose,
   farmId,
-  onDeleted
+  onDeleted,
+  isSeasonPublished
 }) => {
   const intl = useIntl();
   const currentCompany = useSelector((s: RootState) => s.company.currentCompany);
@@ -120,6 +127,7 @@ export const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({
         // feed now carries `production_finished` per row (company/views.py) so this is
         // answerable without a second request.
         isProductionFinished={!!row?.production_finished}
+        isSeasonPublished={isSeasonPublished}
         onEventDeleted={onDeleted}
       />
     </>

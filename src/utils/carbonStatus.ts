@@ -30,3 +30,28 @@ export function showsInputsBadge(c?: CarbonStatusLike | null): boolean {
   if (typeof c.co2e !== 'number' || !(c.co2e > 0)) return false;
   return Boolean(c.usda_factors_based || c.usda_factors_used);
 }
+
+/**
+ * Event types Trazo does not estimate carbon for: weather (0), general activity (3) and
+ * business (7). A weather record documents conditions, and general and business records are
+ * admin or observation; any fuel burned in response is logged on its own activity. The backend
+ * stores no figure for them (`history/signals.py`).
+ *
+ * AC-14 (2026-10-26): the detail modal and the timeline row used to fill these in with
+ * `co2e: 0`, and the modal then printed "No emissions estimated" beside "0 kg CO2e" and a
+ * "Minimal" level. A zero nobody computed is not an answer, so these read as not estimated.
+ */
+const NO_CARBON_CALCULATION_EVENT_TYPES = new Set([0, 3, 7]);
+
+export function hasNoCarbonCalculation(eventType?: number | null): boolean {
+  return typeof eventType === 'number' && NO_CARBON_CALCULATION_EVENT_TYPES.has(eventType);
+}
+
+/** The status a surface shows for a type with no calculation: no figure, not a zero. */
+export const NO_CARBON_CALCULATION_STATUS = {
+  co2e: null,
+  calculation_method: 'not_estimated_no_calculation',
+  verification_status: 'not_estimated',
+  usda_factors_based: false,
+  not_estimated: true
+} as const;

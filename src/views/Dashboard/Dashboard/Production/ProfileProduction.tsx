@@ -1644,6 +1644,9 @@ function ProfileProduction() {
         row={viewTarget}
         onClose={() => setViewTarget(null)}
         farmId={farmId || ''}
+        // AC-15: this page holds the season, so the buyer-page hint can say "appears" when it
+        // is published. It is the only producer surface that opens records of a published season.
+        isSeasonPublished={!!historyData?.published}
       />
 
       <CorrectRecordModal
