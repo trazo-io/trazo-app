@@ -389,7 +389,7 @@ const getEventDisplayName = (event: Event, intl: any): string => {
     'event.soil.soil_test': intl.formatMessage({ id: 'event.soil.soil_test' }) || 'Soil Testing',
     'event.soil.preparation':
       intl.formatMessage({ id: 'event.soil.preparation' }) || 'Soil Preparation',
-    'event.soil.amendment': intl.formatMessage({ id: 'event.soil.amendment' }) || 'Soil Amendment',
+    'event.soil.amendment': intl.formatMessage({ id: 'event.soil.amendment' }) || 'pH Adjustment',
 
     // Soil events (additional)
     'event.soil.organic_matter_addition':

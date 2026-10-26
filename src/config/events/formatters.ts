@@ -347,6 +347,44 @@ export const formatDurationHours: FieldFormatter<number | string> = (value) => {
 };
 
 /**
+ * Format duration in minutes. A hailstorm's duration is entered in MINUTES (WeatherTab.jsx
+ * labels it "Duration (minutes)") while every other weather subtype enters HOURS in the same
+ * `duration` key, so the two cannot share one formatter. The en strings are keyed in
+ * FIELD_VALUE_ES ("1 minute", and the "minutes" unit suffix) so the es page reads in Spanish.
+ */
+export const formatDurationMinutes: FieldFormatter<number | string> = (value) => {
+  if (value == null || value === '') return null;
+  const num = typeof value === 'string' ? parseFloat(value) : value;
+  if (Number.isNaN(num)) return null;
+  if (num === 1) return '1 minute';
+  return `${num} minutes`;
+};
+
+/**
+ * Build a formatter for a field whose unit is fixed by its form label (mm, km/h, %). The
+ * stored value is a bare number, so without this the card prints "Water Deficit 15" and the
+ * reader has to guess the unit. A value that is not a plain number (free text, or text that
+ * already names its unit) is passed through untouched rather than dropped or double-suffixed.
+ */
+export const makeFixedUnitFormatter =
+  (unit: string): FieldFormatter<number | string> =>
+  (value) => {
+    if (value == null || value === '') return null;
+    if (typeof value === 'string' && !/^\s*-?\d+(\.\d+)?\s*$/.test(value)) {
+      const text = value.trim();
+      return text || null;
+    }
+    const num = typeof value === 'string' ? parseFloat(value) : value;
+    if (Number.isNaN(num)) return null;
+    const grouped = num.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    return unit === '%' ? `${grouped}%` : `${grouped} ${unit}`;
+  };
+
+export const formatMillimeters = makeFixedUnitFormatter('mm');
+export const formatKilometersPerHour = makeFixedUnitFormatter('km/h');
+export const formatHumidityPercent = makeFixedUnitFormatter('%');
+
+/**
  * Format duration in days.
  */
 export const formatDurationDays: FieldFormatter<number | string> = (value) => {
@@ -517,7 +555,13 @@ export const formatSeedSearchAttempts: FieldFormatter<unknown> = (value) => {
       const r = row as Record<string, unknown>;
       // `supplier` is the pre-2026-08-15 key; rows written before migration 0205 still carry it.
       const name = (r.supplier_name ?? r.supplier ?? '') as string;
-      return typeof name === 'string' && name.trim() ? name.trim() : null;
+      if (typeof name !== 'string' || !name.trim()) return null;
+      // The outcome is what the search EVIDENCES (§205.204(a)(1): which supplier, and what
+      // they said). The form shows it beside the supplier; the detail view dropped it, so a
+      // reader could not tell "not available organic" from "no answer yet". It is the
+      // farmer's own text, so it is carried as typed, not translated.
+      const result = typeof r.result === 'string' ? r.result.trim() : '';
+      return result ? `${name.trim()} (${result})` : name.trim();
     })
     .filter((n): n is string => Boolean(n));
 

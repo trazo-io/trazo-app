@@ -12,6 +12,8 @@ import React from 'react';
 import { Box, Stack, Text } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
 
+import { getFieldConfig } from 'config/events';
+import type { EventTypeCode } from 'config/events';
 import { useGetCrewNoteQuery } from 'store/api/crewNoteApi';
 
 const CrewNoteProvenance = ({ eventId, eventType }: { eventId?: number; eventType?: number }) => {
@@ -50,6 +52,24 @@ const CrewNoteProvenance = ({ eventId, eventType }: { eventId?: number; eventTyp
           timeZone: 'UTC'
         })
       : intl.formatMessage({ id: 'crewNote.notRecorded' });
+
+  // The server reports STORED field names (`server_matched`, `commercial_name`). Printing them
+  // joined showed an operator `server_matched` style keys (AC-09). Name each by the label the
+  // form uses for it, in the viewer's language; a name the registry does not know is humanised
+  // from its snake_case so it never prints raw.
+  const fieldNames = (names: string[]) =>
+    names
+      .map((name) => {
+        const labelKey =
+          eventType != null
+            ? getFieldConfig(Number(eventType) as EventTypeCode, name)?.labelKey
+            : null;
+        const translated = labelKey ? intl.formatMessage({ id: labelKey }) : '';
+        if (translated && translated !== labelKey) return translated;
+        const words = name.replace(/_/g, ' ').trim();
+        return words.charAt(0).toUpperCase() + words.slice(1);
+      })
+      .join(', ');
 
   return (
     <Box
@@ -113,7 +133,7 @@ const CrewNoteProvenance = ({ eventId, eventType }: { eventId?: number; eventTyp
             ? note.server_matched.length
               ? intl.formatMessage(
                   { id: 'crewNote.serverMatched' },
-                  { fields: note.server_matched.join(', ') }
+                  { fields: fieldNames(note.server_matched) }
                 )
               : intl.formatMessage({ id: 'crewNote.serverNoMatch' })
             : intl.formatMessage({ id: 'crewNote.serverNoReading' })}
@@ -122,7 +142,7 @@ const CrewNoteProvenance = ({ eventId, eventType }: { eventId?: number; eventTyp
           {note.machine_values_applied.length
             ? intl.formatMessage(
                 { id: 'crewNote.machineApplied' },
-                { fields: note.machine_values_applied.join(', ') }
+                { fields: fieldNames(note.machine_values_applied) }
               )
             : intl.formatMessage({ id: 'crewNote.machineNone' })}
         </Text>

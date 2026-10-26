@@ -3366,7 +3366,7 @@ export function getTimelineEventTitle(event: any, intl?: any): string {
     SP: 'Soil Preparation',
     'event.soil.preparation': 'Soil Preparation',
     SA: 'Soil Amendment',
-    'event.soil.amendment': 'Soil Amendment',
+    'event.soil.amendment': 'pH Adjustment',
     // SM ("Soil Management") deleted 2026-08-29: a phantom subtype. It is absent from the
     // soil registry (ST/PA/OM/CC/TI/CO/GR/HD/NS/LA) and from SoilManagementEvent's
     // SOIL_TYPE_CHOICES in the backend, so no record could ever carry it — it existed only to

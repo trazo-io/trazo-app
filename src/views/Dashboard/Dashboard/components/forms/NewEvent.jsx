@@ -4121,8 +4121,14 @@ function NewEvent({ isEdit = false, eventId = null }) {
                               <StandardInput
                                 placeholder={
                                   activeEventType === 0
-                                    ? 'Optional for weather observations'
-                                    : 'Enter operator/worker name'
+                                    ? intl.formatMessage({
+                                        id: 'events.wizard.performedByWeatherPlaceholder',
+                                        defaultMessage: 'Optional for weather observations'
+                                      })
+                                    : intl.formatMessage({
+                                        id: 'quickAdd.performedByPlaceholder',
+                                        defaultMessage: 'Enter operator/worker name'
+                                      })
                                 }
                                 {...basicMethods.register('performed_by')}
                               />

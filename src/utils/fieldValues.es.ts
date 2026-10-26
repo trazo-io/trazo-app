@@ -417,7 +417,7 @@ export const FIELD_VALUE_ES: Record<string, string> = {
   'Truck / Transport': 'Camión / transporte',
   'Truck/Transport': 'Camión / transporte',
   'Trunk Injection': 'Inyección al tronco',
-  Tucking: 'Acomodo de brotes',
+  Tucking: 'Amarre',
   'Under-Tree Sprinklers': 'Aspersores bajo el árbol',
   'Under-tree sprinklers': 'Aspersores bajo el árbol',
   Unknown: 'Desconocido',
@@ -540,9 +540,11 @@ export const FIELD_VALUE_ES: Record<string, string> = {
   'Chlorine — the same treatment used in drinking water, and permitted for washing organic produce':
     'Cloro — el mismo tratamiento que se usa en el agua potable, y permitido para lavar productos orgánicos',
   '1 hour': '1 hora',
+  '1 minute': '1 minuto',
   // The unit half of formatDurationHours' "<n> hours", which localizeFieldValue translates by
   // suffix. Without it every duration above one hour read "2 hours" on the Spanish page.
   hours: 'horas',
+  minutes: 'minutos',
   // Same suffix mechanism for the count unit (UNIT_VOLUME `dispensers`): "300 dispensers".
   dispensers: 'difusores',
 
