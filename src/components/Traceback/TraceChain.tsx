@@ -447,6 +447,13 @@ export const TraceChain = ({
       </StandardCard>
 
       <StandardCard title={t('traceback.hop.balance')}>
+        {/* A sale can be recorded before the season is finished. Its balance is then the picks
+            and sales on file so far, not a season total, and the reader is told so first. */}
+        {tb.balance.season_open && (
+          <Text fontSize="sm" mb={2} color="gray.600">
+            {t('traceback.balance.seasonOpen')}
+          </Text>
+        )}
         {tb.balance.not_computed ? (
           <Text fontSize="sm">{t('traceback.balance.notComputed')}</Text>
         ) : (

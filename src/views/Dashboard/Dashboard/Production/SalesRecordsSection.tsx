@@ -97,7 +97,10 @@ interface SalesRecordsSectionProps {
   canWrite: boolean;
   /** Establishment (farm) id, so the unit default resolves against THIS farm's country. */
   establishmentId?: string | number | null;
-  /** The production's own harvest unit (History.production_unit), when it has finished. */
+  /**
+   * The production's own harvest unit (History.production_unit), set when it finishes. While
+   * the season is open this is empty and the unit of the picks logged so far is used instead.
+   */
   harvestUnit?: string | null;
   /**
    * Whether the season is closed. Once it is, the server refuses to DELETE a sale
@@ -136,6 +139,26 @@ const UNIT_CHOICES = [
 ];
 
 const UNIT_VALUES = UNIT_CHOICES.map((u) => u.value);
+
+// Harvest picks are recorded in the yield vocabulary ("lbs"); sales in this one ("lb"). Same
+// fold as `UNIT_SYNONYMS` in the audit export, so the unit offered here is the one the
+// packet's reconciliation will compare as equal.
+const PICK_UNIT_SYNONYMS: Record<string, string> = { lbs: 'lb' };
+
+/** The one unit every weighed pick shares, in sale vocabulary; null when they mix or none. */
+export function singlePickUnit(lots: HarvestLotOption[]): string | null {
+  const units = new Set(
+    lots
+      .filter((lot) => lot.yield_quantity && lot.yield_unit)
+      .map((lot) => {
+        const unit = String(lot.yield_unit).trim().toLowerCase();
+        return PICK_UNIT_SYNONYMS[unit] || unit;
+      })
+  );
+  if (units.size !== 1) return null;
+  const [unit] = Array.from(units);
+  return UNIT_VALUES.includes(unit) ? unit : null;
+}
 
 const EMPTY_FORM = {
   sale_date: '',
@@ -263,15 +286,26 @@ export function SalesRecordsSection({
   const labelFg = useColorModeValue('gray.500', 'gray.400');
   const rowBg = useColorModeValue('gray.50', 'gray.700');
 
+  // Fetched here rather than passed down: the lot code is owner-side (§ 205.103(b)(2)) and is
+  // deliberately absent from the public history payload the parent page loads, so the parent
+  // has nothing to hand over. `harvest_lots` reuses the sales list's own CA/FM company gate.
+  const { data: harvestLotsData } = useGetHarvestLotsQuery(
+    { productionId },
+    { skip: !productionId || !canWrite }
+  );
+  const harvestLots: HarvestLotOption[] = Array.isArray(harvestLotsData) ? harvestLotsData : [];
+
   // The lot's own harvest unit wins: matching it is what makes the packet's mass-balance
-  // reconciliation render at all, and a grower who harvested in boxes sells in boxes. Only when
-  // the production has not finished (no harvest unit yet) does this fall back to the farm's
-  // measurement system — US farms get `lb`, which is how almonds and citrus are actually sold.
-  // The old hardcoded 'kg' was neither.
+  // reconciliation render at all, and a grower who harvested in boxes sells in boxes. A season
+  // still OPEN has no header unit yet (`production_unit` is written at finish), so the picks
+  // logged so far stand in for it when they agree on one unit, the same rule the packet uses
+  // to total them. Only with neither does this fall back to the farm's measurement system:
+  // US farms get `lb`, which is how almonds and citrus are actually sold.
   const defaultUnits = useDefaultUnits(establishmentId);
   const navigate = useNavigate();
-  const resolvedUnit =
-    harvestUnit && UNIT_VALUES.includes(harvestUnit) ? harvestUnit : defaultUnits.mass;
+  const pickUnit = singlePickUnit(harvestLots);
+  const lotUnit = harvestUnit && UNIT_VALUES.includes(harvestUnit) ? harvestUnit : pickUnit;
+  const resolvedUnit = lotUnit || defaultUnits.mass;
 
   const [formData, setFormData] = useState({ ...EMPTY_FORM });
   // Empty state means "grower has not chosen", so the default is resolved at RENDER rather than
@@ -291,30 +325,22 @@ export function SalesRecordsSection({
   // certifier packet. Both ids are written out in full so the i18n used-key gate can see them;
   // a `{ id: cond ? a : b }` reads as a dynamic id and is skipped by that scanner.
   let unitHelpText: string | undefined;
-  if (harvestUnit) {
+  if (lotUnit) {
     unitHelpText =
-      effectiveUnit === harvestUnit
+      effectiveUnit === lotUnit
         ? intl.formatMessage(
             { id: 'sales.records.field.unit.matchesHarvest' },
-            { unit: unitLabel(harvestUnit) }
+            { unit: unitLabel(lotUnit) }
           )
         : intl.formatMessage(
             { id: 'sales.records.field.unit.differsFromHarvest' },
-            { unit: unitLabel(harvestUnit) }
+            { unit: unitLabel(lotUnit) }
           );
   }
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
   const cancelDeleteRef = useRef<HTMLButtonElement>(null);
 
   const { data: records = [] } = useGetSalesRecordsQuery({ productionId }, { skip: !productionId });
-  // Fetched here rather than passed down: the lot code is owner-side (§ 205.103(b)(2)) and is
-  // deliberately absent from the public history payload the parent page loads, so the parent
-  // has nothing to hand over. `harvest_lots` reuses the sales list's own CA/FM company gate.
-  const { data: harvestLotsData } = useGetHarvestLotsQuery(
-    { productionId },
-    { skip: !productionId || !canWrite }
-  );
-  const harvestLots: HarvestLotOption[] = Array.isArray(harvestLotsData) ? harvestLotsData : [];
 
   const [createSalesRecord, { isLoading: isCreating }] = useCreateSalesRecordMutation();
   const [deleteSalesRecord, { isLoading: isDeleting }] = useDeleteSalesRecordMutation();

@@ -355,8 +355,12 @@ export const historyApi = baseApi.injectEndpoints({
         method: 'GET',
         credentials: 'include'
       }),
+      // 'Event' too: sales are recorded while the season is still being picked, so a pick
+      // logged a minute ago has to be offered as a link target now, not after the 60s cache
+      // expires. Every event create/update/delete invalidates 'Event'.
       providesTags: (result, error, { productionId }) => [
-        { type: 'SalesRecords', id: productionId }
+        { type: 'SalesRecords', id: productionId },
+        'Event'
       ]
     }),
     // The traceback drill. Search returns EVERY sale a document number matches (lot codes are not
