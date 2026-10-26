@@ -425,7 +425,19 @@ export function formatFieldValue(
   fieldName: string,
   event: Record<string, unknown>
 ): string | null {
-  const field = getFieldConfig(eventType, fieldName);
+  // A name can be declared twice with disjoint `visibleForSubtypes` (weather `duration`: minutes
+  // for hail, hours for the rest). Prefer the declaration that owns this event's subtype, and
+  // fall back to the first by name, which is what every single-declaration field gets.
+  const entry = getRegistryEntry(eventType);
+  const code = event.weather_type ?? event.type ?? event.subtype;
+  const field =
+    (entry && typeof code === 'string'
+      ? entry.fields.find(
+          (f) =>
+            f.name === fieldName &&
+            (f.visibleForSubtypes as readonly string[] | undefined)?.includes(code)
+        )
+      : null) ?? getFieldConfig(eventType, fieldName);
   if (!field) return null;
   const fmt = field.formatter ?? defaultFormatter;
   return fmt(event[fieldName], event);

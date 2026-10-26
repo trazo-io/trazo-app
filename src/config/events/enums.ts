@@ -779,6 +779,50 @@ export const COMPOST_METHODS: readonly EnumOption[] = [
   { value: 'in_vessel', labelKey: 'enums.compost_methods.in_vessel' }
 ] as const;
 
+/**
+ * ProductionEvent.canopy_operation (CM). The seven values ProductionTab.jsx offers, labelled
+ * with the SAME `production.canopy.*` keys the form's <option>s use, so the detail view says
+ * what the grower picked. It had no enumSource, so the resolver printed a capitalised slug
+ * ("Tucking") that the Spanish map then rendered as "Acomodo de brotes" while the form said
+ * "Amarre" (AC-11). A stored value outside this list (an older record) still renders, as a
+ * capitalised slug.
+ */
+export const CANOPY_OPERATIONS: readonly EnumOption[] = [
+  { value: 'pruning', labelKey: 'production.canopy.pruning' },
+  { value: 'leaf_pulling', labelKey: 'production.canopy.leaf_pulling' },
+  { value: 'hedging', labelKey: 'production.canopy.hedging' },
+  { value: 'shoot_positioning', labelKey: 'production.canopy.shoot_positioning' },
+  { value: 'thinning', labelKey: 'production.canopy.thinning' },
+  { value: 'tucking', labelKey: 'production.canopy.tucking' },
+  { value: 'suckering', labelKey: 'production.canopy.suckering' }
+] as const;
+
+/**
+ * ProductionEvent.production_type, the sixteen subtype codes, labelled with the same
+ * `events.production.subtypes.*` keys the activity chooser and the registry's own subtype
+ * list use. Feeds the detail view's "Activity type" row (AC-11): Cultivation and
+ * Orchard-Floor records both read the generic "Production" because several subtypes share the
+ * `field_work` verb, so nothing on the modal said which operation it was.
+ */
+export const PRODUCTION_SUBTYPES: readonly EnumOption[] = [
+  { value: 'PL', labelKey: 'events.production.subtypes.planting' },
+  { value: 'HA', labelKey: 'events.production.subtypes.harvesting' },
+  { value: 'IR', labelKey: 'events.production.subtypes.irrigation' },
+  { value: 'PR', labelKey: 'events.production.subtypes.pruning' },
+  { value: 'TR', labelKey: 'events.production.subtypes.transplanting' },
+  { value: 'EM', labelKey: 'events.production.subtypes.equipmentMaintenance' },
+  { value: 'CU', labelKey: 'events.production.subtypes.cultivation' },
+  { value: 'TH', labelKey: 'events.production.subtypes.thinning' },
+  { value: 'PO', labelKey: 'events.production.subtypes.pollination' },
+  { value: 'PH', labelKey: 'events.production.subtypes.postHarvest' },
+  { value: 'CM', labelKey: 'events.production.subtypes.canopyManagement' },
+  { value: 'FP', labelKey: 'events.production.subtypes.frostProtection' },
+  { value: 'MO', labelKey: 'events.production.subtypes.mowing' },
+  { value: 'TP', labelKey: 'events.production.subtypes.transport' },
+  { value: 'BU', labelKey: 'events.production.subtypes.bufferUse' },
+  { value: 'SS', labelKey: 'events.production.subtypes.seedSearch' }
+] as const;
+
 // ============================================================================
 // ENUM REGISTRY (keyed access for FieldConfig.enumSource)
 // ============================================================================
@@ -836,6 +880,8 @@ export const ENUM_OPTIONS = {
   nitrogen_sources: NITROGEN_SOURCES,
   chemical_subtypes: CHEMICAL_SUBTYPES,
   compost_methods: COMPOST_METHODS,
+  canopy_operations: CANOPY_OPERATIONS,
+  production_subtypes: PRODUCTION_SUBTYPES,
   application_purposes: APPLICATION_PURPOSES,
   seed_treatment_bases: SEED_TREATMENT_BASES,
   seed_nonavailability_reasons: SEED_NONAVAILABILITY_REASONS,

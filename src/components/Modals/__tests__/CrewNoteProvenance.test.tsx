@@ -9,6 +9,7 @@ import { IntlProvider } from 'react-intl';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import enUS from '../../../i18n/lang/en-US.json';
+import es419 from '../../../i18n/lang/es-419.json';
 
 const mocks = vi.hoisted(() => ({ data: undefined as any }));
 vi.mock('store/api/crewNoteApi', () => ({ useGetCrewNoteQuery: () => ({ data: mocks.data }) }));
@@ -66,7 +67,41 @@ describe('crew-note provenance block', () => {
     expect(text).toContain('Stated occurrence:');
     expect(text).toContain('No review recorded.');
     expect(text).not.toMatch(/Performer: Miguel/);
-    expect(text).toContain('(checked by Trazo): amendment_product_name');
+    // A field the registry does not know for this event type is humanised, never printed as the
+    // stored key (AC-09).
+    expect(text).toContain('(checked by Trazo): Amendment product name');
+    expect(text).not.toContain('amendment_product_name');
+  });
+
+  it('names stored fields by the form label, in the viewer language, not by their keys', () => {
+    mocks.data = {
+      crew_note: {
+        ...NOTE,
+        server_matched: ['commercial_name'],
+        machine_values_applied: ['commercial_name']
+      }
+    };
+    const { unmount } = render(
+      <ChakraProvider>
+        <IntlProvider locale="en-US" messages={enUS as Record<string, string>}>
+          <CrewNoteProvenance eventId={7} eventType={2} />
+        </IntlProvider>
+      </ChakraProvider>
+    );
+    let text = screen.getByTestId('crew-note-provenance').textContent ?? '';
+    expect(text).toContain('Product Name');
+    expect(text).not.toContain('commercial_name');
+    unmount();
+    render(
+      <ChakraProvider>
+        <IntlProvider locale="es-419" messages={es419 as Record<string, string>}>
+          <CrewNoteProvenance eventId={7} eventType={2} />
+        </IntlProvider>
+      </ChakraProvider>
+    );
+    text = screen.getByTestId('crew-note-provenance').textContent ?? '';
+    expect(text).toContain('Nombre del producto');
+    expect(text).not.toContain('commercial_name');
   });
 
   it('shows the stated occurrence as the record says it, not in the viewer zone', () => {

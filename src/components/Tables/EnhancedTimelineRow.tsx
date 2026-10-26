@@ -89,6 +89,7 @@ import {
   NO_CARBON_CALCULATION_STATUS,
   showsInputsBadge
 } from 'utils/carbonStatus';
+import { localizeFieldValue } from 'utils/fieldDisplayUtils';
 
 // Real interfaces matching API data
 interface Member {
@@ -1199,25 +1200,49 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
   const registryTimelineFields = useMemo(() => {
     if (!USE_FIELD_REGISTRY) return null;
     const subtype = subtypeOf(event as never);
-    const result = getFieldsForSurface(event.event_type, subtype, 'timeline', event as any);
+    // Same translate function `useEventFields` hands the resolver, so an enum value (canopy
+    // operation, seed source, ...) renders as the label the form shows instead of a slug that
+    // only the exact-string ES map can rescue.
+    const translate = (id: string): string | null => {
+      if (!id) return null;
+      const translated = intl.formatMessage({ id });
+      return translated && translated !== id ? translated : null;
+    };
+    const result = getFieldsForSurface(
+      event.event_type,
+      subtype,
+      'timeline',
+      event as any,
+      translate
+    );
     return [
       ...result.hero.filter((f) => f.name !== 'name' && f.name !== 'commercial_name'),
       ...result.immediate
     ]
       .slice(0, 3)
-      .map((f) => ({
-        label:
+      .map((f) => {
+        // The authored label, in the operator's language. The de-camelCased key segment this
+        // replaced was English everywhere ("Water Deficit" authored as "Déficit hídrico") and
+        // wrong where the authored wording differs from the key (AC-09). The humanised segment
+        // survives only as the fallback for a key with no message.
+        const translated = f.labelKey ? intl.formatMessage({ id: f.labelKey }) : '';
+        const fallback =
           f.labelKey
             .split('.')
             .pop()
             ?.replace(/([A-Z])/g, ' $1')
             .replace(/^./, (s) => s.toUpperCase())
-            .trim() || f.name,
-        value: f.formattedValue || '',
-        icon: undefined,
-        color: undefined
-      }));
-  }, [event]);
+            .trim() || f.name;
+        return {
+          label: translated && translated !== f.labelKey ? translated : fallback,
+          // Registry formatters emit English; the consumer card localizes them, the producer
+          // timeline never did.
+          value: localizeFieldValue(f.formattedValue || '', intl.locale),
+          icon: undefined,
+          color: undefined
+        };
+      });
+  }, [event, intl]);
   const eventFields = registryTimelineFields || extractEventFields(event);
   const operatorName = getOperatorName(event, members);
   const enhancedDescription = getEnhancedDescription(event);

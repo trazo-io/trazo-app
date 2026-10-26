@@ -21,7 +21,7 @@ const GENERIC_PRODUCTION_IMPACT = 'This agricultural practice follows sustainabl
 
 describe('C9 — production sub-types have dedicated consumer copy', () => {
   const subtypes: Array<[string, RegExp]> = [
-    ['PO', /bee|bloom/i],
+    ['PO', /pollination/i],
     ['PH', /hulled|dried|cooled/i],
     // 2026-08-01: FP impact was re-voiced away from restating the description; it now names
     // the stake rather than repeating "frost".
@@ -29,7 +29,7 @@ describe('C9 — production sub-types have dedicated consumer copy', () => {
     // the record does not establish (carrot lots read "no fruit from this block"). The stake is
     // unchanged; only the noun moved.
     ['FP', /frost|cold night|no crop from this block/i],
-    ['CM', /leaves/i],
+    ['CM', /canopy|this pass/i],
     // 2026-08-01: MO copy was re-voiced (short = what happened, impact = why it matters), so
     // the impact line now talks about mechanical weed control rather than repeating "orchard
     // floor" from the description. Widened to the concept, not the old wording.
