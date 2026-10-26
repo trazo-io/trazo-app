@@ -64,8 +64,8 @@ import {
 } from 'components/Design/StandardComponents';
 import { useGetFarmProductionsQuery, useGetHistoryQuery } from 'store/api/historyApi';
 import { documentSourceLabel } from 'utils/documentSource';
-import { eventTitle } from 'config/events/narrative';
-import { formatDateFromTimestamp } from 'utils/dateOnly';
+import { eventTitle, subtypeOf } from 'config/events/narrative';
+import { formatDateFromTimestamp, formatWallClockTime } from 'utils/dateOnly';
 import { DOCUMENT_DOWNLOAD_URL, RECORDS_EXPORT_URL } from 'config';
 import { env } from 'config/environment';
 import { useDebounce } from 'hooks/useDebounce';
@@ -259,22 +259,36 @@ const DocumentsPage = () => {
     // the season's records have loaded. Without this a fast confirm on a seed record filed the
     // receipt as an attachment and the gap stayed open. The server re-checks the subtype.
     (presetReceipt && uploadEvent === presetRecord);
+  // Astra activity-capture audit AC-12 (2026-10-26): two unnamed input applications on one day
+  // both read "Oct 18, 2026 · Input application". The label now carries the stored wall-clock
+  // time and the product, so same-day rows can be told apart. The subtype comes from
+  // `subtypeOf`: `type` on these rows is an i18n key, never the code `eventTitle` expects.
   const uploadEventOptions = useMemo(() => {
-    const events = (uploadProductionDetail?.events ?? []) as Array<{
-      id: number;
-      event_type: number;
-      name?: string;
-      type?: string;
-      date?: string;
-    }>;
+    const events = (uploadProductionDetail?.events ?? []) as Array<
+      Record<string, unknown> & {
+        id: number;
+        event_type: number;
+        name?: string;
+        type?: string;
+        date?: string;
+        commercial_name?: string;
+      }
+    >;
     return events
       .filter((ev) => ev?.id != null && ev?.event_type != null)
       .map((ev) => {
         const date = formatDateFromTimestamp(ev.date, intl.locale);
-        const title = eventTitle(ev.event_type, ev.type, ev.name, intl);
+        const time = formatWallClockTime(ev.date, intl.locale);
+        const title = eventTitle(ev.event_type, subtypeOf(ev), ev.name, intl);
+        const product = (ev.commercial_name || '').trim();
+        const parts = [
+          [date, time].filter(Boolean).join(' '),
+          title,
+          product && !title.toLowerCase().includes(product.toLowerCase()) ? product : ''
+        ].filter(Boolean);
         return {
           value: `${ev.event_type}:${ev.id}`,
-          label: date ? `${date} · ${title}` : title
+          label: parts.join(' · ')
         };
       });
   }, [uploadProductionDetail, intl]);

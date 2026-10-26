@@ -15,7 +15,14 @@ import {
 } from 'components/Design/StandardComponents';
 import { FaChevronLeft, FaChevronRight, FaLeaf, FaSeedling, FaClipboardList } from 'react-icons/fa';
 import { FormProvider, useForm, Controller } from 'react-hook-form';
-import React, { useEffect, useState, useRef, forwardRef, useImperativeHandle } from 'react';
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+  forwardRef,
+  useImperativeHandle
+} from 'react';
 import { object, string, array } from 'zod';
 import CustomFieldsForm from './CustomFieldsForm';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -35,70 +42,105 @@ const BUSINESS_TYPE_NAMES = {
   compliance: 'Regulatory Compliance'
 };
 
-// TRANSPARENCY-FOCUSED BUSINESS SCHEMA - Activities that build consumer trust
-const formSchemaMainInfo = object({
-  business_type: string().min(1, 'Business activity type is required'),
-  name: string().optional(),
-  certification_type: string().optional(),
-  verification_status: string().optional(),
-  sustainability_practice: string().optional(),
-  observation: string().optional(),
-  private_note: string().optional(),
-  // Sprint 3 Epic 3.2: Consumer Trust Field for transparency
-  verified_certifier_name: string().optional(), // Name of the certifying organization
-  certificate_number: string().optional(), // Certificate reference number
-  performed_by: string().optional(), // Inspector / auditor / performer (NOP audit trail)
-  custom_fields: array(
-    object({
-      id: string().optional(),
-      label: string(),
-      value: string(),
-      field_type: string(),
-      visibility: string(),
-      link_url: string().optional(),
-      verification: string().optional(),
-      created_at: string().optional(),
-      photo_id: string().optional()
-    })
-  ).optional()
-}).superRefine((data, ctx) => {
-  // Mirrors the backend rule in history/serializers.py: a verification event may not be left
-  // "pending" or "not applicable". The form offered both, so a farmer could pick an option the
-  // API then refused — the round trip surfaced it, but only after they thought they were done.
-  if (
-    data.business_type === 'verification' &&
-    ['pending', 'not_applicable'].includes(data.verification_status)
-  ) {
-    ctx.addIssue({
-      path: ['verification_status'],
-      code: 'custom',
-      message: 'A verification event needs a definitive status: verified, in progress or failed'
-    });
-  }
-  // Same shape again: the field renders with a required asterisk for certification events and
-  // the API rejects a blank one, but the schema left it optional — so the step advanced, the
-  // farmer uploaded photos, and only the POST failed, with a raw "certification_type: ..."
-  // toast on a screen that no longer showed the field. Fail here, on the field, instead.
-  if (data.business_type === 'certification' && !data.certification_type) {
-    ctx.addIssue({
-      path: ['certification_type'],
-      code: 'custom',
-      message: 'Select the certification obtained or renewed (e.g. USDA Organic)'
-    });
-  }
-});
+/**
+ * The status a record starts on when the farmer has not chosen one.
+ *
+ * A verification record may not be "pending" (backend rule in history/serializers.py, mirrored
+ * in the schema below), so defaulting every record to 'pending' opened the verification form in
+ * a state it would refuse at Continue, with an English error (Astra activity-capture audit AC-13,
+ * 2026-10-26). A verification starts "in progress": the honest state of a result not yet in.
+ * Every other activity keeps the backend default, because '' fails the non-blank ChoiceField.
+ */
+export const defaultVerificationStatus = (businessType, stored) =>
+  stored || (businessType === 'verification' ? 'in_progress' : 'pending');
+
+/**
+ * A BUILDER, not a constant: a zod `message:` at module scope is beyond `intl` by construction
+ * (src/config/events/ADDING_FIELDS.md), which is how a Spanish form answered in English.
+ * Memoise on `intl` at the call site.
+ */
+export const buildBusinessSchema = (intl) =>
+  object({
+    business_type: string().min(
+      1,
+      intl.formatMessage({
+        id: 'events.business.validation.activityTypeRequired',
+        defaultMessage: 'Business activity type is required'
+      })
+    ),
+    name: string().optional(),
+    certification_type: string().optional(),
+    verification_status: string().optional(),
+    sustainability_practice: string().optional(),
+    observation: string().optional(),
+    private_note: string().optional(),
+    // Sprint 3 Epic 3.2: Consumer Trust Field for transparency
+    verified_certifier_name: string().optional(), // Name of the certifying organization
+    certificate_number: string().optional(), // Certificate reference number
+    performed_by: string().optional(), // Inspector / auditor / performer (NOP audit trail)
+    custom_fields: array(
+      object({
+        id: string().optional(),
+        label: string(),
+        value: string(),
+        field_type: string(),
+        visibility: string(),
+        link_url: string().optional(),
+        verification: string().optional(),
+        created_at: string().optional(),
+        photo_id: string().optional()
+      })
+    ).optional()
+  }).superRefine((data, ctx) => {
+    // Mirrors the backend rule in history/serializers.py: a verification event may not be left
+    // "pending" or "not applicable". The form offered both, so a farmer could pick an option the
+    // API then refused. The round trip surfaced it, but only after they thought they were done.
+    if (
+      data.business_type === 'verification' &&
+      ['pending', 'not_applicable'].includes(data.verification_status)
+    ) {
+      ctx.addIssue({
+        path: ['verification_status'],
+        code: 'custom',
+        message: intl.formatMessage({
+          id: 'events.business.validation.verificationNeedsStatus',
+          defaultMessage:
+            'A verification record needs a status: passed, in progress or failed. Choose in progress while you wait for the result.'
+        })
+      });
+    }
+    // Same shape again: the field renders with a required asterisk for certification events and
+    // the API rejects a blank one, but the schema left it optional, so the step advanced, the
+    // farmer uploaded photos, and only the POST failed, with a raw "certification_type: ..."
+    // toast on a screen that no longer showed the field. Fail here, on the field, instead.
+    if (data.business_type === 'certification' && !data.certification_type) {
+      ctx.addIssue({
+        path: ['certification_type'],
+        code: 'custom',
+        message: intl.formatMessage({
+          id: 'events.business.validation.certificationTypeRequired',
+          defaultMessage: 'Select the certification obtained or renewed (e.g. USDA Organic)'
+        })
+      });
+    }
+  });
 
 const BusinessTab = forwardRef(
   ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}, hideActions = false }, ref) => {
     const intl = useIntl();
+    const businessSchema = useMemo(() => buildBusinessSchema(intl), [intl]);
 
     const methods = useForm({
-      resolver: zodResolver(formSchemaMainInfo),
+      resolver: zodResolver(businessSchema),
       defaultValues: {
         business_type: initialValues.business_type || '',
         certification_type: initialValues.certification_type || '',
         name: initialValues.name || '',
-        verification_status: initialValues.verification_status || 'pending', // F13: backend default; '' fails non-blank ChoiceField (400)
+        // F13: '' fails the non-blank ChoiceField (400). AC-13: a verification starts in progress.
+        verification_status: defaultVerificationStatus(
+          initialValues.business_type,
+          initialValues.verification_status
+        ),
         sustainability_practice: initialValues.sustainability_practice || '',
         observation: initialValues.observation || '',
         private_note: initialValues.private_note || '',
@@ -150,7 +192,11 @@ const BusinessTab = forwardRef(
           business_type: initialValues.business_type || '',
           name: initialValues.name || '',
           certification_type: initialValues.certification_type || '',
-          verification_status: initialValues.verification_status || 'pending', // F13: backend default; '' fails non-blank ChoiceField (400)
+          // F13: '' fails the non-blank ChoiceField (400). AC-13: a verification starts in progress.
+          verification_status: defaultVerificationStatus(
+            initialValues.business_type,
+            initialValues.verification_status
+          ),
           sustainability_practice: initialValues.sustainability_practice || '',
           observation: initialValues.observation || '',
           private_note: initialValues.private_note || '',
@@ -179,6 +225,18 @@ const BusinessTab = forwardRef(
     } = methods;
 
     const businessType = watch('business_type');
+
+    // Until the farmer picks a status, it follows the activity: switching to verification moves
+    // an untouched 'pending' to 'in_progress' (a state the record can be saved in), and switching
+    // away moves it back. A status the farmer chose is never overwritten.
+    useEffect(() => {
+      if (!businessType || methods.getFieldState('verification_status').isDirty) return;
+      if (initialValues.verification_status) return;
+      const next = defaultVerificationStatus(businessType);
+      if (methods.getValues('verification_status') !== next) {
+        methods.setValue('verification_status', next, { shouldDirty: false });
+      }
+    }, [businessType, methods, initialValues.verification_status]);
 
     // Auto-generate event name from business type (matches Production/Soil/Pest/Weather pattern)
     useEffect(() => {
@@ -307,20 +365,19 @@ const BusinessTab = forwardRef(
                             <option value="certification">
                               {intl.formatMessage({
                                 id: 'events.business.options.certificationAchievementOrganicFairTradeEtc',
-                                defaultMessage:
-                                  'Certification Achievement (Organic, Fair Trade, etc.)'
+                                defaultMessage: 'Certification (Organic, Fair Trade, etc.)'
                               })}
                             </option>
                             <option value="verification">
                               {intl.formatMessage({
                                 id: 'events.business.options.thirdPartyVerificationCompleted',
-                                defaultMessage: 'Third-Party Verification Completed'
+                                defaultMessage: 'Third-party verification (reported by the farm)'
                               })}
                             </option>
                             <option value="sustainability_audit">
                               {intl.formatMessage({
                                 id: 'events.business.options.sustainabilityAssessmentPassed',
-                                defaultMessage: 'Sustainability Assessment Passed'
+                                defaultMessage: 'Sustainability assessment'
                               })}
                             </option>
                             <option value="transparency">
@@ -332,7 +389,7 @@ const BusinessTab = forwardRef(
                             <option value="compliance">
                               {intl.formatMessage({
                                 id: 'events.business.options.regulatoryComplianceAchieved',
-                                defaultMessage: 'Regulatory Compliance Achieved'
+                                defaultMessage: 'Regulatory compliance'
                               })}
                             </option>
                           </StandardSelect>
