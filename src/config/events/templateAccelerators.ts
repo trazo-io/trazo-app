@@ -68,12 +68,6 @@ export const TEMPLATE_ACCELERATORS: TemplateAccelerator[] = [
     subtype: 'EM',
     nameKey: 'quickAdd.template.equipmentMaintenance.name'
   },
-  {
-    id: 'organic_seed_sourcing',
-    backendEventType: 1,
-    subtype: 'PL',
-    nameKey: 'quickAdd.template.organicSeedSourcing.name'
-  },
   // Chemical (event_type 2)
   {
     id: 'fertilization',

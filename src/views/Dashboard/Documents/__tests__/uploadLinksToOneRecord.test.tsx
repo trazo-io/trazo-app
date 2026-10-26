@@ -305,6 +305,83 @@ describe('a seed purchase record takes a receipt; a harvest does not (2026-10-24
   });
 });
 
+describe('same-day records can be told apart in the picker (Astra AC-12, 2026-10-26)', () => {
+  // Two unnamed input applications on one day, as the server sends them: `type` is the i18n
+  // key, `chemical_type` / `production_type` the code, and no `name` (nulls are dropped).
+  const sameDay = (id: string, opts: { skip?: boolean }) => ({
+    data:
+      opts?.skip || !id
+        ? undefined
+        : {
+            events: [
+              {
+                id: 811,
+                event_type: 2,
+                type: 'event.chemical.pesticide',
+                chemical_type: 'PE',
+                commercial_name: 'Entrust SC',
+                date: '2026-10-18T07:15:00Z'
+              },
+              {
+                id: 812,
+                event_type: 2,
+                type: 'event.chemical.fungicide',
+                chemical_type: 'FU',
+                commercial_name: 'Kocide 3000',
+                date: '2026-10-18T15:40:00Z'
+              },
+              {
+                id: 813,
+                event_type: 1,
+                type: 'event.production.harvesting',
+                production_type: 'HA',
+                date: '2026-10-18T09:05:00Z'
+              }
+            ]
+          }
+  });
+
+  it('labels each record with its time, activity and product', async () => {
+    docs = [];
+    historyQuery.mockImplementation(sameDay);
+    const { container } = renderPage();
+    fireEvent.change(container.querySelector('input[type="file"]') as HTMLInputElement, {
+      target: { files: [new File(['%PDF'], 'invoice.pdf', { type: 'application/pdf' })] }
+    });
+    fireEvent.change(await screen.findByLabelText(enUS['documents.filing.field.production']), {
+      target: { value: '5' }
+    });
+    await waitFor(() =>
+      expect(screen.queryByLabelText(enUS['documents.filing.field.record'])).not.toBeNull()
+    );
+    const picker = screen.getByLabelText(
+      enUS['documents.filing.field.record']
+    ) as HTMLSelectElement;
+    const label = (value: string) =>
+      [...picker.options].find((o) => o.value === value)?.textContent ?? '';
+    const time = (iso: string) =>
+      new Date(iso).toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'UTC'
+      });
+
+    const spray = label('2:811');
+    const copper = label('2:812');
+    expect(spray).not.toBe(copper);
+    expect(spray).toContain('Entrust SC');
+    expect(spray).toContain(time('2026-10-18T07:15:00Z'));
+    expect(copper).toContain('Kocide 3000');
+    expect(copper).toContain(time('2026-10-18T15:40:00Z'));
+    expect(spray).toContain(enUS['activities.verb.input_application']);
+
+    // The subtype comes from the code, not from the i18n key in `type`.
+    const harvest = label('1:813');
+    expect(harvest).toContain(enUS['activities.verb.harvest']);
+    expect(harvest).not.toContain(enUS['activities.verb.field_work']);
+  });
+});
+
 describe('who an upload came from', () => {
   it('names the uploader and never claims farmer authorship', () => {
     historyQuery.mockReturnValue({ data: undefined });
