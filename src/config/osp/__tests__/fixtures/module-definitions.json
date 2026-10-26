@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.10.25.2",
+  "content_version": "2026.10.26.1",
   "registry": {
-    "content_version": "2026.10.25.2",
+    "content_version": "2026.10.26.1",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -7630,6 +7630,193 @@
                 "max_length": null
               },
               {
+                "key": "stored_in_sealed_packaging",
+                "kind": "boolean",
+                "label": {
+                  "en": "Is all the organic product you store kept in sealed, impermeable packages?",
+                  "es": "¿Todo el producto orgánico que almacenas está en empaques sellados e impermeables?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.272",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "unsealed_storage_controls",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How is organic product that is not in sealed packages kept from prohibited substances and from non-organic product in storage? Check all that apply.",
+                  "es": "¿Cómo proteges el producto orgánico que no está en empaques sellados de las sustancias prohibidas y del producto no orgánico durante el almacenamiento? Marca todas las que correspondan."
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "rooms_permanently_dedicated",
+                    "label": {
+                      "en": "It is stored in rooms permanently dedicated to organic product",
+                      "es": "Se almacena en cuartos dedicados de forma permanente al producto orgánico"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "rooms_dedicated_for_season",
+                    "label": {
+                      "en": "It is stored in rooms cleaned and dedicated to organic product for the whole season",
+                      "es": "Se almacena en cuartos limpiados y dedicados al producto orgánico toda la temporada"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "areas_with_organic_signage",
+                    "label": {
+                      "en": "It is stored in areas or on shelves marked with organic signage",
+                      "es": "Se almacena en áreas o estantes señalizados como orgánicos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otra (describe abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "stored_in_sealed_packaging",
+                    "op": "eq",
+                    "value": false
+                  }
+                ],
+                "nop_cite": "§ 205.272",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "unsealed_storage_controls_other",
+                "kind": "text",
+                "label": {
+                  "en": "Describe the other way",
+                  "es": "Describe la otra forma"
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "stored_in_sealed_packaging",
+                    "op": "eq",
+                    "value": false
+                  },
+                  {
+                    "question": "unsealed_storage_controls",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "storage_location_records",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "What records show where organic product is stored and how the area was cleaned for it? Check all that apply.",
+                  "es": "¿Qué registros muestran dónde se almacena el producto orgánico y cómo se limpió el área para recibirlo? Marca todas las que correspondan."
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "storage_location_on_harvest_records",
+                    "label": {
+                      "en": "The storage location written on harvest or post-harvest records",
+                      "es": "La ubicación de almacenamiento anotada en los registros de cosecha o poscosecha"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "storage_cleaning_log",
+                    "label": {
+                      "en": "A cleaning log for storage areas or coolers",
+                      "es": "Un registro de limpieza de las áreas de almacenamiento o cámaras frías"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otros (describe abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "stored_in_sealed_packaging",
+                    "op": "eq",
+                    "value": false
+                  }
+                ],
+                "nop_cite": "§ 205.103",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "storage_location_records_other",
+                "kind": "text",
+                "label": {
+                  "en": "Describe the other records",
+                  "es": "Describe los otros registros"
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "stored_in_sealed_packaging",
+                    "op": "eq",
+                    "value": false
+                  },
+                  {
+                    "question": "storage_location_records",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
                 "key": "storage_shared_with_nonorganic",
                 "kind": "boolean",
                 "label": {
@@ -7661,6 +7848,34 @@
                 },
                 "options": [],
                 "required": true,
+                "visible_when": [
+                  {
+                    "question": "storage_shared_with_nonorganic",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.272(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "organic_storage_area_identification",
+                "kind": "textarea",
+                "label": {
+                  "en": "How are organic storage areas marked?",
+                  "es": "¿Cómo se señalan las áreas de almacenamiento orgánico?"
+                },
+                "coaching": {
+                  "en": "For example signs on the door or the rack, a painted floor area, or a room used only for organic product.",
+                  "es": "Por ejemplo, letreros en la puerta o en el estante, un área del piso pintada, o un cuarto que se usa solo para producto orgánico."
+                },
+                "options": [],
+                "required": false,
                 "visible_when": [
                   {
                     "question": "storage_shared_with_nonorganic",
@@ -9566,6 +9781,34 @@
                 "max_length": null
               },
               {
+                "key": "unlabeled_bulk_notice",
+                "kind": "info",
+                "label": {
+                  "en": "Bulk containers need an organic marking",
+                  "es": "Los contenedores a granel necesitan una marca orgánica"
+                },
+                "coaching": {
+                  "en": "Bins, totes, trailers and other containers used to ship or store organic product must identify it as organic (\"organic\", \"ORG\" or similar) and carry a lot number or other identifier that links to your records (§ 205.307(a)). Invoices alone do not meet this. The one exception is a container holding retail packages whose organic label shows through it (§ 205.307(c)). Your plan says what you do today, and the packet shows this answer to your certifier for review.",
+                  "es": "Los bins, contenedores, remolques y demás envases usados para enviar o almacenar producto orgánico deben identificarlo como orgánico (\"organic\", \"ORG\" o similar) y llevar un número de lote u otro identificador que se vincule con tus registros (§ 205.307(a)). Las facturas solas no cumplen con esto. La única excepción es un envase que contiene empaques al por menor cuya etiqueta orgánica se ve a través de él (§ 205.307(c)). Tu plan dice lo que haces hoy, y el paquete muestra esta respuesta a tu certificador para su revisión."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "product_leaves_as",
+                    "op": "includes",
+                    "value": "unlabeled_bulk_documents"
+                  }
+                ],
+                "nop_cite": "§ 205.307",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
                 "key": "organic_label_categories",
                 "kind": "checkbox_group",
                 "label": {
@@ -9713,6 +9956,229 @@
             "visible_when": [],
             "questions": [
               {
+                "key": "nonretail_container_types",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "What nonretail containers are used to store or ship your organic crops? Check all that apply.",
+                  "es": "¿Qué envases no destinados a la venta al por menor se usan para almacenar o enviar tus cultivos orgánicos? Marca todas las que correspondan."
+                },
+                "coaching": {
+                  "en": "A nonretail container is any storage or shipping container that is not the package the shopper sees.",
+                  "es": "Un envase no destinado a la venta al por menor es cualquier envase de almacenamiento o envío que no es el empaque que ve el comprador final."
+                },
+                "options": [
+                  {
+                    "value": "produce_boxes",
+                    "label": {
+                      "en": "Produce boxes",
+                      "es": "Cajas para productos frescos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "totes_bulk_bags",
+                    "label": {
+                      "en": "Totes or bulk bags",
+                      "es": "Totes o sacos a granel"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "harvest_crates_bins",
+                    "label": {
+                      "en": "Harvest crates or bins",
+                      "es": "Cajas o bins de cosecha"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "bulk_trailers_tanks",
+                    "label": {
+                      "en": "Bulk trailers or tanks",
+                      "es": "Remolques o tanques a granel"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "elevators_silos_bulk_storage",
+                    "label": {
+                      "en": "Grain elevators or bins, silos, or other bulk storage",
+                      "es": "Elevadores o bins de grano, silos u otro almacenamiento a granel"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "master_cases_pallets",
+                    "label": {
+                      "en": "Master cases or pallets of retail packages",
+                      "es": "Cajas master o pallets de empaques al por menor"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otros"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.307",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "nonretail_organic_identification",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How do those containers show that the product inside is organic? Check all that apply.",
+                  "es": "¿Cómo muestran esos envases que el producto que contienen es orgánico? Marca todas las que correspondan."
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "permanent_stamp",
+                    "label": {
+                      "en": "Containers are permanently and clearly stamped \"organic\", \"ORG\" or similar",
+                      "es": "Los envases están marcados de forma permanente y clara con \"organic\", \"ORG\" o similar"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "container_label_or_tag",
+                    "label": {
+                      "en": "A label or tag on each container (bin tag, pallet label) says \"organic\", \"ORG\" or similar",
+                      "es": "Una etiqueta en cada envase (etiqueta de bin, de pallet) dice \"organic\", \"ORG\" o similar"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "temporary_signage",
+                    "label": {
+                      "en": "Temporary signage marks bulk storage or transport units \"organic\", \"ORG\" or similar",
+                      "es": "Letreros temporales marcan el almacenamiento a granel o las unidades de transporte como \"organic\", \"ORG\" o similar"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "certifier_statement",
+                    "label": {
+                      "en": "A \"Certified organic by [certifying agent]\" statement",
+                      "es": "Una leyenda \"Certificado orgánico por [agente certificador]\""
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "certifier_seal",
+                    "label": {
+                      "en": "The certifying agent's seal",
+                      "es": "El sello del agente certificador"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "usda_seal",
+                    "label": {
+                      "en": "The USDA organic seal",
+                      "es": "El sello orgánico del USDA"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "visible_through_container",
+                    "label": {
+                      "en": "The container holds retail packages whose organic label shows through it",
+                      "es": "El envase contiene empaques al por menor cuya etiqueta orgánica se ve a través de él"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otra (describe abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.307(a)(1)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "nonretail_identification_other",
+                "kind": "textarea",
+                "label": {
+                  "en": "Describe the other way containers show the product is organic",
+                  "es": "Describe la otra forma en que los envases muestran que el producto es orgánico"
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "nonretail_organic_identification",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": "§ 205.307(a)(1)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "nonretail_label_upload",
+                "kind": "upload",
+                "label": {
+                  "en": "Attach an example of each nonretail container label, tag or stamp",
+                  "es": "Adjunta un ejemplo de cada etiqueta, marca o sello de envase no destinado a la venta al por menor"
+                },
+                "coaching": {
+                  "en": "A photo of a stamped bin or a printed bin tag is enough. If the USDA seal is on it, include it in color.",
+                  "es": "Basta una foto de un bin marcado o de una etiqueta de bin impresa. Si lleva el sello del USDA, inclúyela a color."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "nonretail_organic_identification",
+                    "op": "includes_any",
+                    "value": [
+                      "permanent_stamp",
+                      "container_label_or_tag",
+                      "temporary_signage",
+                      "certifier_statement",
+                      "certifier_seal",
+                      "usda_seal"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.307",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
                 "key": "invoices_identify_lot",
                 "kind": "boolean",
                 "label": {
@@ -9749,6 +10215,84 @@
                 "required": true,
                 "visible_when": [],
                 "nop_cite": "§ 205.307",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "container_lot_identifier_types",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Which identifier is on your storage and shipping containers? Check all that apply.",
+                  "es": "¿Qué identificador llevan tus envases de almacenamiento y envío? Marca todas las que correspondan."
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "lot_number",
+                    "label": {
+                      "en": "A lot number",
+                      "es": "Un número de lote"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "shipping_identification",
+                    "label": {
+                      "en": "Shipping identification",
+                      "es": "Una identificación de envío"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other_identifier",
+                    "label": {
+                      "en": "Another unique identifier",
+                      "es": "Otro identificador único"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "container_markings_tie_to_lot",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.307(a)(2)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "container_lot_linkage_description",
+                "kind": "textarea",
+                "label": {
+                  "en": "How does that identifier lead back to where the product came from in your records?",
+                  "es": "¿Cómo lleva ese identificador al origen del producto en tus registros?"
+                },
+                "coaching": {
+                  "en": "For example: the lot number on the bin tag is the harvest lot, which names the block and the pick date, and the same number is on the invoice.",
+                  "es": "Por ejemplo: el número de lote en la etiqueta del bin es el lote de cosecha, que indica el bloque y la fecha de cosecha, y el mismo número va en la factura."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "container_markings_tie_to_lot",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.307(a)(2)",
                 "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
@@ -12896,6 +13440,239 @@
         "runoff_risk_present",
         "prohibited_materials_on_site"
       ]
+    },
+    {
+      "module": "g6_2_storage",
+      "label": "unanswered",
+      "answers": {},
+      "visible_questions": [
+        "storage_locations",
+        "stored_in_sealed_packaging",
+        "storage_shared_with_nonorganic",
+        "storage_cleaned_before_organic",
+        "storage_pest_control_materials_used",
+        "lot_identity_maintained"
+      ],
+      "missing_required": [
+        "storage_locations",
+        "storage_shared_with_nonorganic",
+        "storage_cleaned_before_organic",
+        "storage_pest_control_materials_used",
+        "lot_identity_maintained"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g6_2_storage",
+      "label": "all_sealed",
+      "answers": {
+        "stored_in_sealed_packaging": true
+      },
+      "visible_questions": [
+        "storage_locations",
+        "stored_in_sealed_packaging",
+        "storage_shared_with_nonorganic",
+        "storage_cleaned_before_organic",
+        "storage_pest_control_materials_used",
+        "lot_identity_maintained"
+      ],
+      "missing_required": [
+        "storage_locations",
+        "storage_shared_with_nonorganic",
+        "storage_cleaned_before_organic",
+        "storage_pest_control_materials_used",
+        "lot_identity_maintained"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g6_2_storage",
+      "label": "not_sealed_other",
+      "answers": {
+        "stored_in_sealed_packaging": false,
+        "unsealed_storage_controls": [
+          "areas_with_organic_signage",
+          "other"
+        ],
+        "storage_location_records": [
+          "other"
+        ]
+      },
+      "visible_questions": [
+        "storage_locations",
+        "stored_in_sealed_packaging",
+        "unsealed_storage_controls",
+        "unsealed_storage_controls_other",
+        "storage_location_records",
+        "storage_location_records_other",
+        "storage_shared_with_nonorganic",
+        "storage_cleaned_before_organic",
+        "storage_pest_control_materials_used",
+        "lot_identity_maintained"
+      ],
+      "missing_required": [
+        "storage_locations",
+        "unsealed_storage_controls_other",
+        "storage_location_records_other",
+        "storage_shared_with_nonorganic",
+        "storage_cleaned_before_organic",
+        "storage_pest_control_materials_used",
+        "lot_identity_maintained"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g6_2_storage",
+      "label": "shared_storage",
+      "answers": {
+        "storage_shared_with_nonorganic": true
+      },
+      "visible_questions": [
+        "storage_locations",
+        "stored_in_sealed_packaging",
+        "storage_shared_with_nonorganic",
+        "storage_shared_separation",
+        "organic_storage_area_identification",
+        "storage_cleaned_before_organic",
+        "storage_pest_control_materials_used",
+        "lot_identity_maintained"
+      ],
+      "missing_required": [
+        "storage_locations",
+        "storage_shared_separation",
+        "storage_cleaned_before_organic",
+        "storage_pest_control_materials_used",
+        "lot_identity_maintained"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g7_0_labeling",
+      "label": "unanswered",
+      "answers": {},
+      "visible_questions": [
+        "product_leaves_as",
+        "organic_label_categories",
+        "nonretail_container_types",
+        "nonretail_organic_identification",
+        "invoices_identify_lot",
+        "container_markings_tie_to_lot",
+        "label_claim_review_process"
+      ],
+      "missing_required": [
+        "product_leaves_as",
+        "organic_label_categories",
+        "invoices_identify_lot",
+        "container_markings_tie_to_lot",
+        "label_claim_review_process"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g7_0_labeling",
+      "label": "unlabeled_bulk",
+      "answers": {
+        "product_leaves_as": [
+          "unlabeled_bulk_documents"
+        ]
+      },
+      "visible_questions": [
+        "product_leaves_as",
+        "unlabeled_bulk_notice",
+        "organic_label_categories",
+        "nonretail_container_types",
+        "nonretail_organic_identification",
+        "invoices_identify_lot",
+        "container_markings_tie_to_lot",
+        "label_claim_review_process"
+      ],
+      "missing_required": [
+        "organic_label_categories",
+        "invoices_identify_lot",
+        "container_markings_tie_to_lot",
+        "label_claim_review_process"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g7_0_labeling",
+      "label": "stamped_bins_with_lots",
+      "answers": {
+        "product_leaves_as": [
+          "bulk_bins_marked"
+        ],
+        "nonretail_organic_identification": [
+          "permanent_stamp"
+        ],
+        "container_markings_tie_to_lot": true
+      },
+      "visible_questions": [
+        "product_leaves_as",
+        "organic_label_categories",
+        "nonretail_container_types",
+        "nonretail_organic_identification",
+        "nonretail_label_upload",
+        "invoices_identify_lot",
+        "container_markings_tie_to_lot",
+        "container_lot_identifier_types",
+        "container_lot_linkage_description",
+        "label_claim_review_process"
+      ],
+      "missing_required": [
+        "organic_label_categories",
+        "invoices_identify_lot",
+        "label_claim_review_process"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g7_0_labeling",
+      "label": "visible_through_only",
+      "answers": {
+        "nonretail_organic_identification": [
+          "visible_through_container"
+        ]
+      },
+      "visible_questions": [
+        "product_leaves_as",
+        "organic_label_categories",
+        "nonretail_container_types",
+        "nonretail_organic_identification",
+        "invoices_identify_lot",
+        "container_markings_tie_to_lot",
+        "label_claim_review_process"
+      ],
+      "missing_required": [
+        "product_leaves_as",
+        "organic_label_categories",
+        "invoices_identify_lot",
+        "container_markings_tie_to_lot",
+        "label_claim_review_process"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g7_0_labeling",
+      "label": "markings_not_tied",
+      "answers": {
+        "container_markings_tie_to_lot": false
+      },
+      "visible_questions": [
+        "product_leaves_as",
+        "organic_label_categories",
+        "nonretail_container_types",
+        "nonretail_organic_identification",
+        "invoices_identify_lot",
+        "container_markings_tie_to_lot",
+        "label_claim_review_process"
+      ],
+      "missing_required": [
+        "product_leaves_as",
+        "organic_label_categories",
+        "invoices_identify_lot",
+        "label_claim_review_process"
+      ],
+      "missing_required_na": []
     },
     {
       "module": "g8_0_record_keeping",
