@@ -1524,7 +1524,8 @@ describe('voice activity coverage is explicit, not accidental', () => {
     'PO',
     'FP',
     'MO',
-    'PH'
+    'PH',
+    'BR'
   ];
   const NOT_ROUTED = ['CM', 'BU', 'SS'];
 

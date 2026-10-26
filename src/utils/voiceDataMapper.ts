@@ -288,6 +288,17 @@ export const VOICE_TYPE_MAP: Record<string, VoiceTemplateMapping> = {
     backendSubtype: 'ST',
     verbKey: 'soil'
   },
+  // 2026-10-25: a pest Beneficial Release had no slug, so the activity the farmer picked never
+  // reached the parser as context, and "Released ladybugs on both blocks, 2000 per acre" came back
+  // POLLINATION (insects on a block): the banner offered "It sounded like Pollination, switch?"
+  // on the right form. ROUTE only, like transport and pollination: the release's species and
+  // count are input details the farmer types (a crew message may not fill them on an application).
+  beneficial_release: {
+    templateId: 'beneficial_release',
+    backendEventType: 6,
+    backendSubtype: 'BR',
+    verbKey: 'pest'
+  },
   general: {
     templateId: 'general_documentation',
     backendEventType: 3,
@@ -886,6 +897,250 @@ export function productTotalFromAmounts(
   return candidates.find((a) => canonical(a.unit) === rateCode) ?? null;
 }
 
+/** Words that make a volume FUEL, in the three spoken languages. */
+const FUEL_WORDS = new Set([
+  'diesel',
+  'diésel',
+  'gas',
+  'gasoline',
+  'petrol',
+  'propane',
+  'fuel',
+  'gasoil',
+  'gasóleo',
+  'gasoleo',
+  'gasolina',
+  'combustible',
+  'combustível',
+  'propano',
+  'nafta'
+]);
+
+/** The volume units fuel is spoken in, as the `fuel_unit` / `application_fuel_unit` code. */
+const FUEL_VOLUME_UNIT: Record<string, string> = {
+  gal: 'gal',
+  gals: 'gal',
+  gallon: 'gal',
+  gallons: 'gal',
+  galon: 'gal',
+  galón: 'gal',
+  galones: 'gal',
+  galão: 'gal',
+  galões: 'gal',
+  l: 'L',
+  liter: 'L',
+  liters: 'L',
+  litre: 'L',
+  litres: 'L',
+  litro: 'L',
+  litros: 'L'
+};
+
+/** "6 gallons OF diesel", "5 galones DE gasoil". */
+const FUEL_CONNECTORS = new Set(['of', 'de', 'do', 'da']);
+
+/** A liquid that is NOT fuel. Ends the search for a fuel word after the unit. */
+const NOT_FUEL_LIQUID = new Set([
+  'water',
+  'agua',
+  'água',
+  'mix',
+  'tank',
+  'tanque',
+  'solution',
+  'solución',
+  'spray',
+  'caldo',
+  'calda'
+]);
+
+/** Hedges a farmer puts between the fuel word and its number: "diesel, about 5 gallons". */
+const FUEL_HEDGES = new Set([
+  'about',
+  'around',
+  'roughly',
+  'like',
+  'unos',
+  'unas',
+  'como',
+  'cerca'
+]);
+
+/**
+ * The FUEL the farmer said, as `{ value, unit }` with the unit a fuel-unit code, or null.
+ *
+ * 🔴 MEASURED 2026-10-25, pasting notes into the wizard against the live parser:
+ *
+ *   "Mowed the cover crop between rows on both blocks, flail mower, 3 hours each, 5 gallons of
+ *    diesel."  -> fuel_amount: null, and {5, gallons, category: "fuel"} in detected_amounts
+ *   "...about 2 hours of tractor time, used 6 gallons of diesel." (a fungicide)
+ *              -> fuel_amount: null, and {6, gallons, category: "volume"}
+ *
+ * Neither filled the fuel field and no banner mentioned it. The old code read `fuel_amount`, or
+ * else guessed that ANY gallons were fuel on cultivation and equipment maintenance only; and the
+ * model's "fuel" label never survives, because `categoryForUnit` re-derives the category from the
+ * unit (a gallon is a volume whatever it holds). On the spray it was worse than empty: with no
+ * rate in the sentence, `productTotalFromAmounts` would offer the diesel as the amount of
+ * fungicide applied.
+ *
+ * The words decide, the same rule as the rate: a volume is fuel when a fuel word is TIED to it.
+ *   - after the unit: "5 gallons diesel", or after "of"/"de" within three words
+ *     ("6 gallons of off-road diesel", "5 galones de gasoil");
+ *   - before the number: "diesel 5 gallons", "diesel, about 5 gallons".
+ * A liquid word after the unit ends the search, so "100 gallons of water" and "a 100 gallon tank
+ * mix" stay volumes, and so does "sprayed 100 gallons, used diesel": with no connector only the
+ * word directly after the unit counts.
+ *
+ * The value is ALWAYS read off the transcript: digits ("6", "2,5", "1,200"), or a number said in
+ * words in English or Spanish ("five", "twenty five", "treinta y cinco", "a hundred"). Anything
+ * else fills nothing. It used to fall back to the parser's amounts when exactly one shared the
+ * unit, and review of app #205 showed why that is unsafe: in "300 gallons of water ... five
+ * gallons of diesel" with only the 300 detected, the one gallon candidate is the WATER.
+ *
+ * ⛔ A liquid word VETOES the amount outright. Breaking the forward search was not enough: in
+ * "airblast, diesel, 200 gallons of water" the backward check then found "diesel" two tokens
+ * back and filed the water as fuel (review of app #205).
+ */
+export function spokenFuelAmount(transcript: string): { value: number; unit: string } | null {
+  const tokens: string[] =
+    (transcript || '').toLowerCase().match(/\d+(?:[.,]\d+)*|[\p{L}]+/gu) ?? [];
+
+  for (let i = 1; i < tokens.length; i++) {
+    const unit = FUEL_VOLUME_UNIT[tokens[i]];
+    if (!unit) continue;
+
+    let tied = FUEL_WORDS.has(tokens[i + 1] ?? '');
+    let vetoed = NOT_FUEL_LIQUID.has(tokens[i + 1] ?? '');
+    if (!tied && !vetoed && FUEL_CONNECTORS.has(tokens[i + 1] ?? '')) {
+      for (let j = i + 2; j < Math.min(i + 5, tokens.length); j++) {
+        if (NOT_FUEL_LIQUID.has(tokens[j])) {
+          vetoed = true;
+          break;
+        }
+        if (isNumberToken(tokens[j])) break;
+        if (FUEL_WORDS.has(tokens[j])) {
+          tied = true;
+          break;
+        }
+      }
+    }
+    if (vetoed) continue;
+    if (!tied) {
+      tied =
+        FUEL_WORDS.has(tokens[i - 2] ?? '') ||
+        (FUEL_HEDGES.has(tokens[i - 2] ?? '') && FUEL_WORDS.has(tokens[i - 3] ?? ''));
+    }
+    if (!tied) continue;
+
+    const value = spokenNumberBefore(tokens, i);
+    if (value !== null && value > 0) return { value, unit };
+  }
+  return null;
+}
+
+/** Number words, English and Spanish, the two families the parser serves. */
+const NUMBER_UNITS: Record<string, number> = {
+  one: 1,
+  two: 2,
+  three: 3,
+  four: 4,
+  five: 5,
+  six: 6,
+  seven: 7,
+  eight: 8,
+  nine: 9,
+  ten: 10,
+  eleven: 11,
+  twelve: 12,
+  thirteen: 13,
+  fourteen: 14,
+  fifteen: 15,
+  sixteen: 16,
+  seventeen: 17,
+  eighteen: 18,
+  nineteen: 19,
+  un: 1,
+  uno: 1,
+  una: 1,
+  dos: 2,
+  tres: 3,
+  cuatro: 4,
+  cinco: 5,
+  seis: 6,
+  siete: 7,
+  ocho: 8,
+  nueve: 9,
+  diez: 10,
+  once: 11,
+  doce: 12,
+  trece: 13,
+  catorce: 14,
+  quince: 15,
+  dieciséis: 16,
+  dieciseis: 16,
+  diecisiete: 17,
+  dieciocho: 18,
+  diecinueve: 19,
+  veinte: 20
+};
+const NUMBER_TENS: Record<string, number> = {
+  twenty: 20,
+  thirty: 30,
+  forty: 40,
+  fifty: 50,
+  sixty: 60,
+  seventy: 70,
+  eighty: 80,
+  ninety: 90,
+  treinta: 30,
+  cuarenta: 40,
+  cincuenta: 50,
+  sesenta: 60,
+  setenta: 70,
+  ochenta: 80,
+  noventa: 90
+};
+const NUMBER_HUNDRED = new Set(['hundred', 'cien']);
+
+function isNumberToken(token: string | undefined): boolean {
+  const t = token ?? '';
+  return /^\d/.test(t) || t in NUMBER_UNITS || t in NUMBER_TENS || NUMBER_HUNDRED.has(t);
+}
+
+/**
+ * The number spoken directly before `tokens[unitIndex]`, or null.
+ *
+ * A comma followed by exactly three digits groups thousands ("1,200" is 1200, not 1.2, review of
+ * app #205); any other comma is a decimal ("2,5 litros"). Words compose one level: "twenty five",
+ * "treinta y cinco", "a hundred". A bare "five" right after a tens word is never read alone.
+ */
+function spokenNumberBefore(tokens: readonly string[], unitIndex: number): number | null {
+  const last = tokens[unitIndex - 1] ?? '';
+  if (/^\d/.test(last)) {
+    const normalized = /^\d{1,3}(,\d{3})+$/.test(last)
+      ? last.replace(/,/g, '')
+      : last.replace(',', '.');
+    const value = Number(normalized);
+    return Number.isFinite(value) ? value : null;
+  }
+  if (NUMBER_HUNDRED.has(last)) {
+    const before = tokens[unitIndex - 2] ?? '';
+    return before in NUMBER_UNITS ? NUMBER_UNITS[before] * 100 : 100;
+  }
+  if (last in NUMBER_TENS) return NUMBER_TENS[last];
+  if (last in NUMBER_UNITS) {
+    const before = tokens[unitIndex - 2] ?? '';
+    const tens =
+      before in NUMBER_TENS
+        ? NUMBER_TENS[before]
+        : before === 'y' && (tokens[unitIndex - 3] ?? '') in NUMBER_TENS
+        ? NUMBER_TENS[tokens[unitIndex - 3]]
+        : 0;
+    return tens + NUMBER_UNITS[last];
+  }
+  return null;
+}
+
 /**
  * The containers a harvest is counted in: bins, boxes, cajas, totes, lugs.
  *
@@ -1356,6 +1611,21 @@ export function mapVoiceDataToFieldValues(
     .filter((entry) => entry.denominator !== null);
   const rateValues = new Set(spokenRates.map((entry) => entry.amount.value));
 
+  // Fuel, decided by the words: see spokenFuelAmount. With no transcript there is nothing to
+  // test, so the parser's own `fuel_amount` is the only answer, as it always was.
+  const modelFuel =
+    parsedData.fuel_amount && typeof parsedData.fuel_amount === 'object'
+      ? parsedData.fuel_amount
+      : null;
+  const spokenFuel = spokenNotes
+    ? spokenFuelAmount(spokenNotes)
+    : modelFuel
+    ? { value: modelFuel.value, unit: UNIT_NORMALIZE[modelFuel.unit] || modelFuel.unit }
+    : null;
+  // The same gallons must not ALSO be read as another fact (the product total on a spray).
+  const isSpokenFuel = (a: StructuredAmount) =>
+    Boolean(spokenFuel) && a.value === spokenFuel?.value && a.unit === spokenFuel?.unit;
+
   // ── Chemical events (fertilization, pest_control, herbicide, fungicide) ──
   if (['fertilization', 'pest_control', 'herbicide', 'fungicide'].includes(templateId)) {
     // Commercial name
@@ -1436,10 +1706,19 @@ export function mapVoiceDataToFieldValues(
     // `spokenRates[0]`, not `rate`: a rate the catalogue cannot express ("twenty gallons a
     // tree") is still a rate that was spoken, and it still disqualifies a leftover in another
     // unit from being read as the total.
-    const productTotal = productTotalFromAmounts(amounts, spokenRates[0]?.amount.unit);
+    const productTotal = productTotalFromAmounts(
+      amounts.filter((a) => !isSpokenFuel(a)),
+      spokenRates[0]?.amount.unit
+    );
     if (productTotal) {
       overrides.volume_applied = productTotal.value;
       overrides.volume_unit = productTotal.unit;
+    }
+
+    // Fuel the sprayer burned. Every chemical subtype renders it (`application_fuel_consumed`).
+    if (spokenFuel) {
+      overrides.application_fuel_consumed = spokenFuel.value;
+      overrides.application_fuel_unit = spokenFuel.unit;
     }
 
     // Area treated
@@ -1492,22 +1771,12 @@ export function mapVoiceDataToFieldValues(
       overrides.equipment_hours = parsedData.duration.value;
     }
 
-    // Fuel — prefer explicit fuel_amount from AI (semantically correct)
-    // Only fall back to guessing from generic volume for equipment-heavy events
-    // where gallons/liters most likely means diesel/gasoline, not water or chemicals
-    const fuelGuessAllowed = ['cultivation', 'equipment_maintenance'].includes(templateId);
-    if (parsedData.fuel_amount && typeof parsedData.fuel_amount === 'object') {
-      overrides.fuel_consumed = parsedData.fuel_amount.value;
-      overrides.fuel_unit =
-        UNIT_NORMALIZE[parsedData.fuel_amount.unit] || parsedData.fuel_amount.unit;
-    } else if (fuelGuessAllowed) {
-      const fuelAmount = amounts.find(
-        (a) => a.category === 'volume' && ['gal', 'L'].includes(a.unit)
-      );
-      if (fuelAmount) {
-        overrides.fuel_consumed = fuelAmount.value;
-        overrides.fuel_unit = fuelAmount.unit;
-      }
+    // Fuel: only a volume a fuel word is tied to (spokenFuelAmount). This replaced a guess that
+    // read ANY gallons as diesel on cultivation and equipment maintenance, and read nothing at
+    // all on mowing.
+    if (spokenFuel) {
+      overrides.fuel_consumed = spokenFuel.value;
+      overrides.fuel_unit = spokenFuel.unit;
     }
 
     // Irrigation-specific
@@ -1655,6 +1924,7 @@ export const VOICE_UNIT_COMPANIONS: Readonly<Record<string, readonly string[]>> 
   application_rate_unit: ['application_rate'],
   area_unit: ['area_treated', 'area_covered'],
   fuel_unit: ['fuel_consumed'],
+  application_fuel_unit: ['application_fuel_consumed'],
   yield_unit: ['yield_quantity'],
   irrigation_depth_unit: ['irrigation_depth']
 };

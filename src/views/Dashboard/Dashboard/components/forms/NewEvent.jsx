@@ -44,6 +44,7 @@ import { object, string } from 'zod';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { traceReturnPath } from 'utils/traceReturnPath';
+import { CrewNoteChips, CrewNoteHeldBackRow, CrewNoteRow } from './CrewNoteRows';
 
 import {
   StandardCard,
@@ -366,58 +367,6 @@ const COMPLETENESS_GAP_LABELS = {
     defaultMessage: 'Seed supplier'
   }
 };
-
-/**
- * One labelled line of the crew-note banner: "Would fill", "Held back", "Block", "Records on".
- *
- * The banner used to be six stacked sentences, each a full line of prose, and a farmer reading it
- * on a phone could not tell at a glance what the message would write, what it refused to write,
- * or which day it would file under (Oscar, 2026-10-20: "I dont like the way we show that, like
- * just in text"). The facts did not change; they are a label and its values now, so the eye can
- * land on the one it wants.
- */
-const CrewNoteRow = ({ label, children }) => (
-  <Stack
-    direction={{ base: 'column', smd: 'row' }}
-    spacing={{ base: 0.5, smd: 3 }}
-    align={{ base: 'start', smd: 'baseline' }}
-    w="full">
-    <Text fontSize="xs" color="gray.600" minW={{ smd: '104px' }} flexShrink={0}>
-      {label}
-    </Text>
-    <Box flex="1" minW={0}>
-      {children}
-    </Box>
-  </Stack>
-);
-
-/**
- * The values on a row, one chip each.
- *
- * ⛔ NEUTRAL, never green. A chip here is a value WAITING for a person to accept it, and green is
- * this app's done colour: tinting an offer with it would say the record already carries the
- * number. The row's own label is what separates "Would fill" from "Held back", so the colour
- * carries no meaning and does not have to.
- */
-const CrewNoteChips = ({ values, testId }) => (
-  // ⛔ `aria-hidden`, because a sentence saying the same thing sits beside it. Without this a
-  // screen reader reads every value twice, once as a run of disconnected chips and once as the
-  // sentence, and the chips are the half that does not say what the values ARE (review of app
-  // #160). The sentence is the accessible version; this is its picture.
-  <HStack flexWrap="wrap" spacing={2} rowGap={1} aria-hidden="true" data-testid={testId}>
-    {values.map((value) => (
-      <Badge
-        key={value}
-        variant="neutral"
-        textTransform="none"
-        fontWeight="medium"
-        whiteSpace="normal"
-        fontSize="11px">
-        {value}
-      </Badge>
-    ))}
-  </HStack>
-);
 
 function NewEvent({ isEdit = false, eventId = null }) {
   const intl = useIntl();
@@ -4654,66 +4603,17 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                   })}
                                 </Text>
                               )}
-                              {/* WHAT THE MESSAGE WAS NOT ALLOWED TO WRITE. On an application the
-                                  product, rate, quantity, area and their units are typed by the
-                                  confirmer from their own records (OSP audit T29, Oscar's
-                                  boundary 2026-10-01), and the server refuses the save if they
-                                  arrive from a message.
-
-                                  The REASON used to be two lines of prose in the middle of the
-                                  banner, which is most of what made it a wall of text, while the
-                                  fields it was talking about were never named at all. Named now,
-                                  as chips; the reason sits behind a toggle for the reader who
-                                  wants it. ⛔ The text itself is not cut: a farmer who is told
-                                  four values were held back is owed the reason on the same
-                                  screen, not in a help centre. */}
+                              {/* WHAT THE MESSAGE WAS NOT ALLOWED TO WRITE, named as chips with
+                                  the reason one tap away. Rendered only when something was held
+                                  back; see CrewNoteHeldBackRow for both rules. */}
                               {voiceBanner.seeded &&
                                 isApplicationRecord(activeEventType, eventFormData) && (
-                                  <CrewNoteRow
-                                    label={intl.formatMessage({
-                                      id: 'events.voice.row.heldBack'
-                                    })}>
-                                    <VStack align="start" spacing={1} w="full">
-                                      {voiceWithheldLabels.length > 0 && (
-                                        <CrewNoteChips
-                                          testId="crew-note-withheld"
-                                          values={voiceWithheldLabels}
-                                        />
-                                      )}
-                                      <StandardButton
-                                        size="xs"
-                                        variant="ghost"
-                                        px={2}
-                                        ml={-2}
-                                        aria-expanded={showCrewNoteWhy}
-                                        onClick={() => setShowCrewNoteWhy((open) => !open)}>
-                                        {intl.formatMessage({ id: 'events.voice.row.why' })}
-                                      </StandardButton>
-                                      {showCrewNoteWhy && (
-                                        <Text
-                                          fontSize="xs"
-                                          color="gray.800"
-                                          data-testid="crew-note-application-mode">
-                                          {intl.formatMessage({
-                                            id: 'events.voice.crewNoteApplicationMode'
-                                          })}
-                                          {voiceBanner.withheldFields?.length
-                                            ? ` ${intl.formatMessage(
-                                                { id: 'events.voice.crewNoteWithheld' },
-                                                // THE SAME BASIS AS THE CHIPS. The raw list
-                                                // carries unit companions (`volume_unit` beside
-                                                // `volume_applied`), so counting it said "4
-                                                // values" over three chips. A unit is part of a
-                                                // value, not a value of its own: the filled
-                                                // count has excluded them since 2026-09-01 for
-                                                // the same reason.
-                                                { count: voiceWithheldCount }
-                                              )}`
-                                            : ''}
-                                        </Text>
-                                      )}
-                                    </VStack>
-                                  </CrewNoteRow>
+                                  <CrewNoteHeldBackRow
+                                    labels={voiceWithheldLabels}
+                                    count={voiceWithheldCount}
+                                    open={showCrewNoteWhy}
+                                    onToggle={() => setShowCrewNoteWhy((open) => !open)}
+                                  />
                                 )}
                               {/* Answered. Say which day it will file under, because the farmer
                                   chose it on another step and a date they cannot see is a date

@@ -11,6 +11,11 @@ const src = readFileSync(
   join(__dirname, '../../views/Dashboard/Dashboard/components/forms/NewEvent.jsx'),
   'utf8'
 );
+// The banner's row components live beside the wizard (CrewNoteRows.jsx).
+const rowsSrc = readFileSync(
+  join(__dirname, '../../views/Dashboard/Dashboard/components/forms/CrewNoteRows.jsx'),
+  'utf8'
+);
 
 describe('crew-note offer in the wizard', () => {
   it('builds every seeded offer through the application filter', () => {
@@ -22,7 +27,7 @@ describe('crew-note offer in the wizard', () => {
 
   it('names the values it held back', () => {
     expect(src).toMatch(/withheldFields: offer\.withheld/);
-    expect(src).toMatch(/events\.voice\.crewNoteWithheld/);
+    expect(rowsSrc).toMatch(/events\.voice\.crewNoteWithheld/);
   });
 
   it('separates what a tap already wrote from what is still on offer', () => {
@@ -81,7 +86,7 @@ describe('crew-note offer in the wizard', () => {
       'events.voice.row.activity',
       'events.voice.row.date'
     ]) {
-      expect(src, `${key} is not rendered`).toContain(`'${key}'`);
+      expect(src + rowsSrc, `${key} is not rendered`).toContain(`'${key}'`);
     }
   });
 
@@ -89,21 +94,20 @@ describe('crew-note offer in the wizard', () => {
     // The reason was two lines of prose in the middle of the banner while the fields it was about
     // were never named. The chips name them; the count beside the reason is taken from the same
     // filtered list, because the raw list carries unit companions and said "4 values" over three
-    // chips.
-    expect(src).toMatch(/testId="crew-note-withheld"/);
-    expect(src).toMatch(/values=\{voiceWithheldLabels\}/);
-    expect(src).toMatch(/\{ count: voiceWithheldCount \}/);
-    expect(src).not.toMatch(/\{ count: voiceBanner\.withheldFields\.length \}/);
+    // chips. The row itself is rendered and tested in `crewNoteHeldBackRow.test.tsx`; this pins
+    // what the wizard hands it.
+    expect(src).toMatch(/<CrewNoteHeldBackRow/);
+    expect(src).toMatch(/labels=\{voiceWithheldLabels\}/);
+    expect(src).toMatch(/count=\{voiceWithheldCount\}/);
+    expect(src).not.toMatch(/count=\{voiceBanner\.withheldFields\.length\}/);
   });
 
   it('keeps the reason on the same screen, one tap away', () => {
     // ⛔ NOT deleted and NOT moved to a help centre. A farmer told that four values were held back
-    // is owed the reason where they are standing. Collapsed by default, expanded by a control that
-    // says what it does.
-    expect(src).toMatch(/aria-expanded=\{showCrewNoteWhy\}/);
-    expect(src).toMatch(/events\.voice\.row\.why/);
-    expect(src).toMatch(/showCrewNoteWhy && \(/);
-    expect(src).toMatch(/events\.voice\.crewNoteApplicationMode/);
+    // is owed the reason where they are standing. Collapsed by default; the toggle and the
+    // reason are rendered in `crewNoteHeldBackRow.test.tsx`.
+    expect(src).toMatch(/open=\{showCrewNoteWhy\}/);
+    expect(src).toMatch(/onToggle=\{\(\) => setShowCrewNoteWhy\(\(open\) => !open\)\}/);
   });
 
   it('gives manual review no success colour', () => {
