@@ -78,6 +78,32 @@ const CASES: Case[] = [
     claim: /what the farm added to this ground, and how much/i,
     filled: { amendment_amount_numeric: 2 }
   },
+  {
+    id: 'AC-03 pH adjustment with material only denies the material',
+    event: { event_type: 5, soil_management_type: 'PA', amendment_type: 'Agricultural lime' },
+    claim: /nothing was entered about the material/i
+  },
+  {
+    id: 'AC-03 pH adjustment with amount only denies the amount',
+    event: { event_type: 5, soil_management_type: 'PA', amendment_amount_numeric: 2 },
+    claim: /no amount was entered|nothing was entered/i
+  },
+  {
+    id: 'AC-02 certification description carries no self-entered status',
+    event: {
+      event_type: 7,
+      type: 'CE',
+      business_type: 'certification',
+      verification_status: 'verified'
+    },
+    claim: /verified|third-party auditor/i
+  },
+  {
+    id: 'Fields lifted into extra_data behind a blank flat column still count',
+    event: { event_type: 1, production_type: 'MO', type: 'MO', floor_management_type: '' },
+    claim: /mowed/i,
+    filled: { extra_data: { floor_management_type: 'mow' } }
+  },
   // AC-04 orchard floor, weather, emergency
   {
     id: 'AC-04 orchard floor read as mowing',

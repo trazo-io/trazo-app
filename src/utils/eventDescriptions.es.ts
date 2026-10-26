@@ -43,6 +43,10 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
   'The fungicide application is on record with its date.':
     'La aplicación de fungicida consta en el registro con su fecha.',
   'A pH adjustment was recorded for this block': 'Se registró un ajuste de pH para este lote',
+  'The material is on record; no amount was entered.':
+    'El material consta en el registro; no se ingresó la cantidad.',
+  'An amount is on record; the material was not named.':
+    'Hay una cantidad registrada; no se indicó el material.',
   'Nothing was entered about the material or the amount used.':
     'No se ingresó el material ni la cantidad usada.',
   'This soil correction is part of the season record for this block.':

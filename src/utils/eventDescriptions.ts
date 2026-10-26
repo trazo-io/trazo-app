@@ -639,21 +639,27 @@ export function getConsumerEventDescription(
   // record with the damage field blank said "the damage was assessed", and a certification
   // logged as in progress read as a completed third-party certification. Fields ride flat on the
   // payload or inside extra_data depending on the family, so look in both.
+  // A blank flat column must not hide a value the serializer lifted into extra_data, so fall
+  // through on empty, not only on null (same rule as productionEvent.ts floor_management_type).
+  const fieldValue = (name: string): unknown => {
+    const flat = event?.[name];
+    return flat === undefined || flat === null || flat === '' ? event?.extra_data?.[name] : flat;
+  };
   const recorded = (...names: string[]): boolean =>
     names.some((name) => {
-      const value = event?.[name] ?? event?.extra_data?.[name];
+      const value = fieldValue(name);
       if (value === undefined || value === null || value === false) return false;
       if (Array.isArray(value)) return value.length > 0;
       return String(value).trim() !== '';
     });
   const recordedAmount = (...names: string[]): boolean =>
     names.some((name) => {
-      const value = event?.[name] ?? event?.extra_data?.[name];
+      const value = fieldValue(name);
       const num = typeof value === 'number' ? value : parseFloat(String(value ?? ''));
       return Number.isFinite(num) && num > 0;
     });
   const recordedValue = (name: string): string =>
-    String(event?.[name] ?? event?.extra_data?.[name] ?? '')
+    String(fieldValue(name) ?? '')
       .trim()
       .toLowerCase();
 
@@ -1902,8 +1908,13 @@ export function getConsumerEventDescription(
         sustainabilityBenefit =
           'The amendment, the amount and the area are on record, so the correction can be checked against the soil test that prompted it.';
       } else {
-        // "What and how much" on a record holding neither (AC-03).
-        consumerImpact = 'Nothing was entered about the material or the amount used.';
+        // "What and how much" on a record holding neither (AC-03). Each fallback denies only the
+        // field that is actually missing.
+        consumerImpact = amendmentNamed
+          ? 'The material is on record; no amount was entered.'
+          : amountApplied
+          ? 'An amount is on record; the material was not named.'
+          : 'Nothing was entered about the material or the amount used.';
         sustainabilityBenefit = 'This soil correction is part of the season record for this block.';
       }
     } else if (soilType === 'OM' || soilType.includes('Organic')) {
@@ -2773,20 +2784,11 @@ export function getConsumerEventDescription(
       fullDescription = certDesc;
     }
 
-    // Add verification status with consumer-friendly messaging
-    if (event.verification_status && event.verification_status !== 'pending') {
-      const statusMessages: Record<string, string> = {
-        // The farm entered this status; the lines attribute it rather than assert an audit.
-        verified: 'The farm marked this as complete',
-        in_progress: 'The farm recorded this as in progress',
-        failed: 'The farm recorded this as not passed',
-        not_applicable: 'Verification not required for this activity'
-      };
-      const statusMsg =
-        statusMessages[event.verification_status] ||
-        `Verification status: ${event.verification_status}`;
-      fullDescription += `. ${statusMsg}`;
-    }
+    // No verification-status suffix (AC-02, 2026-10-26). `verification_status` is farmer-entered
+    // and stripped from every non-owner payload (`_CERTIFIER_ONLY_EVENT_FIELDS`), so a suffix here
+    // only ever reached the owner and made the owner's preview differ from what a shopper reads.
+    // It also read "Successfully verified by independent third-party auditor" off a self-entered
+    // value.
 
     // Add sustainability practice details with consumer-friendly explanations
     if (event.sustainability_practice) {
