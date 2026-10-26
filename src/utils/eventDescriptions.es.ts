@@ -17,6 +17,72 @@
 // own claims; no "carbono neutral". Keep faithful to the English meaning.
 
 export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
+  // Astra AC-02..05 (2026-10-26): sentences gated on the field that backs them.
+  'Frost was recorded on the block': 'Se registró helada en el lote',
+  'A hailstorm was recorded on this block': 'Se registró granizo en este lote',
+  'A heat wave crossed the block': 'Una ola de calor pasó por el lote',
+  'Storm conditions were recorded': 'Se registraron condiciones de tormenta',
+  'High winds crossed the block': 'Vientos fuertes pasaron por el lote',
+  'The irrigation date is on record for this lot.': 'La fecha del riego consta para este lote.',
+  'Water use on this block is part of the season record.':
+    'El uso de agua en este lote forma parte del registro de la temporada.',
+  'The pollination record carries its date.': 'El registro de polinización lleva su fecha.',
+  'The date of this pass is on file for anyone tracing the lot.':
+    'La fecha de esta pasada consta para quien rastree el lote.',
+  'Vegetation on this block was managed': 'Se manejó la vegetación de este lote',
+  'You can see when the ground cover here was worked.':
+    'Puedes ver cuándo se trabajó la cobertura del suelo aquí.',
+  'Mulch was laid on this block': 'Se colocó acolchado en este lote',
+  'The method the farm picked and the date are on record.':
+    'El método que eligió la finca y la fecha constan en el registro.',
+  'This pass is dated and on file.': 'Esta pasada tiene fecha y consta en el registro.',
+  'The cover crop on this block was managed': 'Se manejó el cultivo de cobertura de este lote',
+  'Unwanted growth on this block was burned off':
+    'Se quemó con llama la vegetación no deseada de este lote',
+  'The material and the date are on file here.': 'El material y la fecha constan aquí.',
+  'The fungicide application is on record with its date.':
+    'La aplicación de fungicida consta en el registro con su fecha.',
+  'A pH adjustment was recorded for this block': 'Se registró un ajuste de pH para este lote',
+  'Nothing was entered about the material or the amount used.':
+    'No se ingresó el material ni la cantidad usada.',
+  'This soil correction is part of the season record for this block.':
+    'Esta corrección del suelo forma parte del registro de la temporada de este lote.',
+  'The ground on this block was tilled': 'Se labró el suelo de este lote',
+  'You can line this pass up against the other work in the season.':
+    'Puedes comparar esta pasada con el resto del trabajo de la temporada.',
+  'Compost making was recorded for this farm':
+    'Se registró la elaboración de compost en esta finca',
+  "Organic rules set how hot and how long a pile must run; this entry is the grower's own log.":
+    'Las normas orgánicas fijan cuánto calor y cuánto tiempo debe mantener una pila; esta entrada es el registro propio del productor.',
+  'Making compost is logged separately from spreading it.':
+    'La elaboración del compost se registra aparte de su aplicación.',
+  'Livestock were grazed on this block': 'Se pastoreó ganado en este lote',
+  'Animals grazed this ground to take down the cover crop.':
+    'Los animales pastorearon este suelo para bajar el cultivo de cobertura.',
+  'Habitat for wildlife was established on this farm':
+    'Se estableció hábitat para la fauna en esta finca',
+  "This is the farm's own record of what grows here besides the crop.":
+    'Este es el registro propio de la finca de lo que crece aquí además del cultivo.',
+  'Nesting or shelter structures were installed on this farm':
+    'Se instalaron estructuras de anidación o refugio en esta finca',
+  'You can see what was put up here, as the farm described it.':
+    'Puedes ver qué se instaló aquí, tal como lo describió la finca.',
+  'A pest on this block was identified': 'Se identificó una plaga en este lote',
+  'The farm logged a certification record for this crop':
+    'La finca registró una certificación para este cultivo',
+  'No certificate number was entered on this record.':
+    'No se ingresó un número de certificado en este registro.',
+  'The farm logged a review against a written standard':
+    'La finca registró una revisión frente a una norma escrita',
+  'The farm logged an audit record for this operation':
+    'La finca registró una auditoría de esta operación',
+  'An internal inspection was recorded': 'Se registró una inspección interna',
+  'An emergency response was recorded': 'Se registró una respuesta de emergencia',
+  'The inspection is on record with its date.': 'La inspección consta en el registro con su fecha.',
+  'The internal inspection is on record.': 'La inspección interna consta en el registro.',
+  'The emergency is on record with its date.': 'La emergencia consta en el registro con su fecha.',
+  'The emergency response is on record.': 'La respuesta de emergencia consta en el registro.',
+  'Internal Inspection': 'Inspección interna',
   // Run 8 (P1b, 2026-10-06): what the record holds, never what the work achieved.
   'A treatment was applied against a pest': 'Se aplicó un tratamiento contra una plaga',
   'A crop treatment was applied': 'Se aplicó un tratamiento al cultivo',
