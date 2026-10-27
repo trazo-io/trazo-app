@@ -6607,6 +6607,8 @@
   "osp.wizard.no": "No",
   "osp.wizard.required": "Required",
   "osp.wizard.retiredOption": "Earlier answer. This question now asks more: choose one of the options above to confirm your answer.",
+  "osp.wizard.agentAsks": "{agent} asks this in {forms}.",
+  "osp.wizard.agentAsksForm": "{form}, {count, plural, one {item} other {items}} {items}",
   "osp.wizard.reviewStep": "Review your answers",
   "osp.wizard.reviewTitle": "Review before completing",
   "osp.wizard.saveFailed": "Could not save your answers",
