@@ -10022,6 +10022,14 @@
                       "es": "Otros"
                     },
                     "exclusive": false
+                  },
+                  {
+                    "value": "none",
+                    "label": {
+                      "en": "None: no organic product is stored or shipped in nonretail containers",
+                      "es": "Ninguno: ningún producto orgánico se almacena ni se envía en envases no destinados a la venta al por menor"
+                    },
+                    "exclusive": true
                   }
                 ],
                 "required": false,
@@ -10106,10 +10114,24 @@
                       "es": "Otra (describe abajo)"
                     },
                     "exclusive": false
+                  },
+                  {
+                    "value": "no_marking",
+                    "label": {
+                      "en": "They carry no organic marking",
+                      "es": "No llevan ninguna marca orgánica"
+                    },
+                    "exclusive": true
                   }
                 ],
                 "required": false,
-                "visible_when": [],
+                "visible_when": [
+                  {
+                    "question": "nonretail_container_types",
+                    "op": "not_includes",
+                    "value": "none"
+                  }
+                ],
                 "nop_cite": "§ 205.307(a)(1)",
                 "prefill": null,
                 "parcel_field": null,
@@ -10129,6 +10151,11 @@
                 "options": [],
                 "required": true,
                 "visible_when": [
+                  {
+                    "question": "nonretail_container_types",
+                    "op": "not_includes",
+                    "value": "none"
+                  },
                   {
                     "question": "nonretail_organic_identification",
                     "op": "includes",
@@ -10157,6 +10184,11 @@
                 "options": [],
                 "required": false,
                 "visible_when": [
+                  {
+                    "question": "nonretail_container_types",
+                    "op": "not_includes",
+                    "value": "none"
+                  },
                   {
                     "question": "nonretail_organic_identification",
                     "op": "includes_any",
@@ -10254,14 +10286,22 @@
                       "es": "Otro identificador único"
                     },
                     "exclusive": false
+                  },
+                  {
+                    "value": "no_identifier",
+                    "label": {
+                      "en": "They carry no identifier",
+                      "es": "No llevan ningún identificador"
+                    },
+                    "exclusive": true
                   }
                 ],
                 "required": false,
                 "visible_when": [
                   {
-                    "question": "container_markings_tie_to_lot",
-                    "op": "truthy",
-                    "value": null
+                    "question": "nonretail_container_types",
+                    "op": "not_includes",
+                    "value": "none"
                   }
                 ],
                 "nop_cite": "§ 205.307(a)(2)",
@@ -10287,9 +10327,18 @@
                 "required": false,
                 "visible_when": [
                   {
-                    "question": "container_markings_tie_to_lot",
-                    "op": "truthy",
-                    "value": null
+                    "question": "nonretail_container_types",
+                    "op": "not_includes",
+                    "value": "none"
+                  },
+                  {
+                    "question": "container_lot_identifier_types",
+                    "op": "includes_any",
+                    "value": [
+                      "lot_number",
+                      "shipping_identification",
+                      "other_identifier"
+                    ]
                   }
                 ],
                 "nop_cite": "§ 205.307(a)(2)",
@@ -13557,6 +13606,7 @@
         "nonretail_organic_identification",
         "invoices_identify_lot",
         "container_markings_tie_to_lot",
+        "container_lot_identifier_types",
         "label_claim_review_process"
       ],
       "missing_required": [
@@ -13584,6 +13634,7 @@
         "nonretail_organic_identification",
         "invoices_identify_lot",
         "container_markings_tie_to_lot",
+        "container_lot_identifier_types",
         "label_claim_review_process"
       ],
       "missing_required": [
@@ -13615,7 +13666,6 @@
         "invoices_identify_lot",
         "container_markings_tie_to_lot",
         "container_lot_identifier_types",
-        "container_lot_linkage_description",
         "label_claim_review_process"
       ],
       "missing_required": [
@@ -13640,6 +13690,7 @@
         "nonretail_organic_identification",
         "invoices_identify_lot",
         "container_markings_tie_to_lot",
+        "container_lot_identifier_types",
         "label_claim_review_process"
       ],
       "missing_required": [
@@ -13664,12 +13715,65 @@
         "nonretail_organic_identification",
         "invoices_identify_lot",
         "container_markings_tie_to_lot",
+        "container_lot_identifier_types",
         "label_claim_review_process"
       ],
       "missing_required": [
         "product_leaves_as",
         "organic_label_categories",
         "invoices_identify_lot",
+        "label_claim_review_process"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g7_0_labeling",
+      "label": "no_nonretail_containers",
+      "answers": {
+        "nonretail_container_types": [
+          "none"
+        ]
+      },
+      "visible_questions": [
+        "product_leaves_as",
+        "organic_label_categories",
+        "nonretail_container_types",
+        "invoices_identify_lot",
+        "container_markings_tie_to_lot",
+        "label_claim_review_process"
+      ],
+      "missing_required": [
+        "product_leaves_as",
+        "organic_label_categories",
+        "invoices_identify_lot",
+        "container_markings_tie_to_lot",
+        "label_claim_review_process"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g7_0_labeling",
+      "label": "no_identifier",
+      "answers": {
+        "container_lot_identifier_types": [
+          "no_identifier"
+        ]
+      },
+      "visible_questions": [
+        "product_leaves_as",
+        "organic_label_categories",
+        "nonretail_container_types",
+        "nonretail_organic_identification",
+        "invoices_identify_lot",
+        "container_markings_tie_to_lot",
+        "container_lot_identifier_types",
+        "label_claim_review_process"
+      ],
+      "missing_required": [
+        "product_leaves_as",
+        "organic_label_categories",
+        "invoices_identify_lot",
+        "container_markings_tie_to_lot",
         "label_claim_review_process"
       ],
       "missing_required_na": []
