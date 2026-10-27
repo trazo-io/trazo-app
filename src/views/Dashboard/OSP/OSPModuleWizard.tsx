@@ -439,7 +439,11 @@ const QuestionField = ({
         ) : null}
       </HStack>
       {agentAsks ? (
-        <Text fontSize="xs" color="gray.600" mb={coaching ? 1 : 2} data-testid={`osp-q-agent-${question.key}`}>
+        <Text
+          fontSize="xs"
+          color="gray.600"
+          mb={coaching ? 1 : 2}
+          data-testid={`osp-q-agent-${question.key}`}>
           {agentAsks}
         </Text>
       ) : null}
