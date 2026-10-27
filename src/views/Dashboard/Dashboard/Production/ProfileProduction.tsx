@@ -1588,9 +1588,8 @@ function ProfileProduction() {
       </VStack>
 
       {/* Off-farm handler — CCOF G6.1 / 7 CFR 205.272. Deliberately NOT gated on
-          finish_date like the sales block below: a lot goes to the huller during
-          harvest, weeks before the season closes, and that is exactly when the
-          grower has the handler's certificate in hand. */}
+          finish_date: a lot goes to the huller during harvest, weeks before the season
+          closes, and that is exactly when the grower has the handler's certificate in hand. */}
       <VStack spacing={{ base: 4, md: 6 }} align="stretch" w="100%" mt={{ base: 4, md: 6 }}>
         <PostHarvestHandlerSection
           productionId={historyData?.public_id || productionId || ''}
@@ -1600,11 +1599,19 @@ function ProfileProduction() {
         />
       </VStack>
 
-      {/* Sales & Buyer Handoff (post-finish only). The itemized Sales Records
-          ledger is THE sales editor (SalesRecord rows win in audit exports).
-          SalesDeliverySection renders only as a read-only summary of legacy
-          single-sale data on pre-merge productions (export fallback). */}
-      {historyData?.finish_date && (
+      {/* Sales & Buyer Handoff. The itemized Sales Records ledger is THE sales editor
+          (SalesRecord rows win in audit exports). SalesDeliverySection renders only as a
+          read-only summary of legacy single-sale data on pre-merge productions (export
+          fallback), and gates itself on finish_date.
+
+          NOT gated on finish_date. It was from 2026-06-15 to 2026-10-26, a pattern copied
+          from the legacy single-sale editor (2026-04-20, one buyer written onto the season
+          header); neither commit gave a reason, and the API never refused an open-season sale.
+          Berries, cherries and stone fruit are picked and sold all summer, so a grower could
+          log July's picks and not one of July's sales until the season closed. Open or
+          closed, a sale links to the picks already logged; closing only changes the
+          correction from Delete to Void (isFinished below). */}
+      {historyData && (
         <VStack spacing={{ base: 4, md: 6 }} align="stretch" w="100%" mt={{ base: 4, md: 6 }}>
           <Heading as="h2" size={{ base: 'sm', md: 'md' }} color="gray.700" px={1}>
             {intl.formatMessage({

@@ -335,6 +335,21 @@ describe('TracebackPage', () => {
     expect(screen.getByText(/counted apart: 400 lb in 1 sale\./)).toBeTruthy();
   });
 
+  it('says the balance is so far, not a season total, while the season is open', () => {
+    // `season_open` comes from trazo-back history/services/traceback.py (balance_row).
+    state.trace = { ...TRACE, balance: { ...TRACE.balance, season_open: true } };
+    renderAt('/admin/dashboard/farm/1/traceback?sale=7');
+    expect(screen.getByText(/This season is still open/)).toBeTruthy();
+  });
+
+  it('a finished season shows no open-season line', () => {
+    state.trace = { ...TRACE, balance: { ...TRACE.balance, season_open: false } };
+    renderAt('/admin/dashboard/farm/1/traceback?sale=7');
+    // Read something first: the balance card rendered.
+    expect(screen.getByText(/Harvested minus sold/)).toBeTruthy();
+    expect(screen.queryByText(/This season is still open/)).toBeNull();
+  });
+
   it('opens each file through the company-scoped documents route, labelled by kind', () => {
     state.trace = {
       ...TRACE,
