@@ -79,6 +79,7 @@ import OSPHandlerFacilitiesPanel from './OSPHandlerFacilitiesPanel';
 import OSPRecordTypesPanel from './OSPRecordTypesPanel';
 import { selectWorkingOsp } from './selectWorkingOsp';
 import { holdsRetiredOption, offeredOptions, toggleCheckbox } from 'config/osp/optionChoices';
+import { agentCaption } from 'config/osp/agentCaption';
 
 /**
  * `isReadOnly` is the plan-is-locked state, and it should now never be true: a locked plan
@@ -236,7 +237,8 @@ const QuestionField = ({
   farmId,
   moduleKey,
   osp,
-  onNavigateAway
+  onNavigateAway,
+  agentAsks
 }: {
   question: ModuleQuestion;
   value: AnswerValue;
@@ -254,6 +256,8 @@ const QuestionField = ({
    * everything typed beside it.
    */
   onNavigateAway?: () => Promise<boolean> | boolean;
+  /** "WSDA asks this in K Storage (AGR 2121), item 3a." Absent for an agent with no register. */
+  agentAsks?: string | null;
 }) => {
   const intl = useIntl();
   const label = pickText(question.label, locale);
@@ -434,6 +438,15 @@ const QuestionField = ({
           </Badge>
         ) : null}
       </HStack>
+      {agentAsks ? (
+        <Text
+          fontSize="xs"
+          color="gray.600"
+          mb={coaching ? 1 : 2}
+          data-testid={`osp-q-agent-${question.key}`}>
+          {agentAsks}
+        </Text>
+      ) : null}
       {coaching ? (
         <Text fontSize="xs" color="gray.600" mb={2}>
           {coaching}
@@ -817,6 +830,7 @@ const OSPModuleWizard = () => {
   };
 
   const suggestions = data?.suggestions ?? {};
+  const agentRefs = data?.agent_refs ?? null;
   // `rgba(74, 222, 128, .08)` was TAILWIND green-400 — a foreign palette literal, the exact
   // class `.claude/rules/frontend.md` bans. Same tint derived from OUR green.700 (#2E7D32).
   const suggestionBg = useColorModeValue('green.50', 'rgba(46, 125, 50, 0.18)');
@@ -1103,6 +1117,7 @@ const OSPModuleWizard = () => {
                                 moduleKey={moduleKey || ''}
                                 osp={fullOsp}
                                 onNavigateAway={flushDirty}
+                                agentAsks={agentCaption(intl, agentRefs, question.key)}
                               />
                               {showSuggestion && (
                                 <Box

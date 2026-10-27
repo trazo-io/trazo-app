@@ -6607,6 +6607,8 @@
   "osp.wizard.no": "No",
   "osp.wizard.required": "Requerido",
   "osp.wizard.retiredOption": "Respuesta anterior. Esta pregunta ahora pide más: elige una de las opciones de arriba para confirmar tu respuesta.",
+  "osp.wizard.agentAsks": "{agent} pregunta esto en {forms}.",
+  "osp.wizard.agentAsksForm": "{form}, {count, plural, one {punto} other {puntos}} {items}",
   "osp.wizard.reviewStep": "Revisa tus respuestas",
   "osp.wizard.reviewTitle": "Revisar antes de completar",
   "osp.wizard.saveFailed": "No se pudieron guardar tus respuestas",

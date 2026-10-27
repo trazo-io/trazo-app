@@ -119,6 +119,21 @@ export interface ModuleDetailResponse {
   response: ModuleProgressRow;
   answers: ModuleAnswers;
   suggestions: Record<string, { value: AnswerValue; basis: string; count: number }>;
+  /** Where this plan's own certifying agent asks each question; null when Trazo holds no register for it. */
+  agent_refs?: AgentRefs | null;
+}
+
+/** One form of the agent that asks a question, with the form's items that ask it. */
+export interface AgentFormRef {
+  form: string;
+  items: string[];
+}
+
+export interface AgentRefs {
+  /** The agent as growers name it ("WSDA", "CCOF", "OTCO"). */
+  agent: string;
+  /** Keyed by question key within the module. */
+  refs: Record<string, AgentFormRef[]>;
 }
 
 export interface SaveModulePayload {
