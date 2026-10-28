@@ -524,6 +524,37 @@ describe('ParcelBoundaryEditor', () => {
         ).toBeInTheDocument();
       });
 
+      it('Escape dismisses the suggestions: Enter then searches the typed text instead', async () => {
+        withGeocoder('OK');
+        placesAnswering([{ main: 'Calapooia River', secondary: 'Oregon, USA' }]);
+        renderFinding({});
+        act(() => lastMap().onLoad(fakeMap()));
+        const box = screen.getByLabelText(m['map.search.label']);
+        fireEvent.change(box, { target: { value: 'Calapooia' } });
+        await screen.findByRole('option', { name: /Calapooia River/ });
+        fireEvent.keyDown(box, { key: 'Escape' });
+        expect(screen.queryByRole('listbox')).toBeNull();
+        fireEvent.keyDown(box, { key: 'Enter' });
+        // Not the dismissed river: the typed text, through the geocoder (review on #222).
+        await waitFor(() => expect(geocoded).toEqual(['Calapooia']));
+        expect(screen.queryByText(/Showing Calapooia River/)).toBeNull();
+      });
+
+      it('pasted coordinates are one "Go to" row, not filed under your farms', () => {
+        withGeocoder('OK');
+        renderFinding({
+          farms: [{ id: 1, name: 'Calapooia Bend Farm', lat: 44.54, lng: -123.11 }]
+        });
+        act(() => lastMap().onLoad(fakeMap()));
+        fireEvent.change(screen.getByLabelText(m['map.search.label']), {
+          target: { value: '44.54, -123.11' }
+        });
+        expect(
+          screen.getByRole('option', { name: /Go to 44\.54000, -123\.11000/ })
+        ).toBeInTheDocument();
+        expect(screen.queryByText(m['map.search.groupOwn'])).toBeNull();
+      });
+
       it('with Places refused, Enter still searches through the geocoder', async () => {
         withGeocoder('OK');
         placesAnswering('refused');

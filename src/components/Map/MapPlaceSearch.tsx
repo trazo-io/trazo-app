@@ -191,7 +191,9 @@ export const MapPlaceSearch = ({
   // or the geocoder, so a key without Places still finds towns once Geocoding is enabled.
   const submit = async () => {
     if (!text || busy) return;
-    if (rows[active]) {
+    // Only a row the grower can SEE highlighted: after Escape (or a blur) the list is closed and
+    // Enter searches the typed text, never the suggestion they just dismissed (review on #222).
+    if (showList && active >= 0 && rows[active]) {
       pick(rows[active]);
       return;
     }
@@ -341,6 +343,7 @@ export const MapPlaceSearch = ({
                 submit();
               } else if (e.key === 'ArrowDown' && rows.length) {
                 e.preventDefault();
+                if (!open) setActive(-1);
                 setOpen(true);
                 setActive((i) => Math.min(i + 1, rows.length - 1));
               } else if (e.key === 'ArrowUp' && rows.length) {
@@ -348,6 +351,7 @@ export const MapPlaceSearch = ({
                 setActive((i) => Math.max(i - 1, 0));
               } else if (e.key === 'Escape') {
                 setOpen(false);
+                setActive(-1);
               }
             }}
             placeholder={intl.formatMessage({ id: 'map.search.placeholder' })}
@@ -356,7 +360,9 @@ export const MapPlaceSearch = ({
             aria-autocomplete="list"
             aria-expanded={showList}
             aria-controls={listId}
-            aria-activedescendant={showList && rows[active] ? `${listId}-${active}` : undefined}
+            aria-activedescendant={
+              showList && active >= 0 && rows[active] ? `${listId}-${active}` : undefined
+            }
             autoComplete="off"
             enterKeyHint="search"
           />
@@ -380,7 +386,8 @@ export const MapPlaceSearch = ({
               overflowY="auto">
               {ownCount > 0 && (
                 <>
-                  {groupHeader('map.search.groupOwn')}
+                  {/* Pasted coordinates are one "Go to" row, not one of the grower's farms. */}
+                  {!point && groupHeader('map.search.groupOwn')}
                   {rows.slice(0, ownCount).map((row, i) => rowView(row, i))}
                 </>
               )}
@@ -414,6 +421,8 @@ export const MapPlaceSearch = ({
           type="button"
           variant="outline"
           onClick={submit}
+          // Keep focus (and the open list) in the box: Find then does exactly what Enter does.
+          onMouseDown={(e: React.MouseEvent) => e.preventDefault()}
           isLoading={busy}
           flexShrink={0}>
           {intl.formatMessage({ id: 'map.search.button' })}
