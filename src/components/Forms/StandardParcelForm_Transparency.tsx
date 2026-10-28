@@ -28,6 +28,7 @@ import { useIntl } from 'react-intl';
 import type { IntlShape } from 'react-intl';
 import { googleMapsLoaderOptions } from 'components/Map/mapsLoaderOptions';
 import { outlinesOverlap, polygonAreaHectares, toLatLngPath } from 'utils/parcelPolygon';
+import { isPlaceholderCenter } from 'utils/mapPlaceSearch';
 import type { LatLng } from 'utils/parcelPolygon';
 import { ParcelBoundaryEditor } from 'components/Map/ParcelBoundaryEditor';
 import { useLoadScript } from '@react-google-maps/api';
@@ -268,14 +269,20 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
   const getPolygonLength = () => (polygon && Array.isArray(polygon) ? polygon.length : 0);
   const isValidPolygon = () => getPolygonLength() >= 3;
 
+  // A saved camera is evidence of where the grower was, unless it is one of the placeholders
+  // the app used to write when it knew nothing (Fresno, New York).
+  const savedCenter = isPlaceholderCenter(initialData?.map_metadata?.center)
+    ? undefined
+    : initialData?.map_metadata?.center;
+
   const [mapCenter, setMapCenter] = useState(() => {
     // Priority 1: Use establishment coordinates (centers map near the farm)
     if (establishmentCoordinates) {
       return establishmentCoordinates;
     }
     // Priority 2: Use existing parcel map center (edit mode fallback)
-    if (initialData?.map_metadata?.center) {
-      return initialData.map_metadata.center;
+    if (savedCenter) {
+      return savedCenter;
     }
     // Priority 3: Calculate from existing polygon (edit mode fallback)
     if (polygon.length > 0) {
@@ -286,7 +293,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
   });
 
   const [mapZoom, setMapZoom] = useState(() => {
-    if (initialData?.map_metadata?.zoom) {
+    if (savedCenter && initialData?.map_metadata?.zoom) {
       return initialData.map_metadata.zoom;
     }
     if (polygon.length > 0) {
@@ -301,11 +308,14 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
   // record is the live `mapCenter`/`mapZoom`, which follow the farm's coordinates and the saved
   // metadata as they arrive. Seeding the ref at mount saved the placeholder instead.
   const mapViewRef = useRef<{ center: LatLng; zoom: number } | null>(null);
-  const currentMapView = () => mapViewRef.current ?? { center: mapCenter, zoom: mapZoom };
-  // Nothing on file says where this farm is: no coordinates, no saved map, no outline. The map
-  // centre is then a placeholder, and the editor says so instead of opening on it.
-  const farmLocationUnknown =
-    !establishmentCoordinates && !initialData?.map_metadata?.center && polygon.length === 0;
+  // Nothing on file says where this farm is: no coordinates, no real saved map, no outline. The
+  // map centre is then a placeholder, and the editor says so instead of opening on it.
+  const farmLocationUnknown = !establishmentCoordinates && !savedCenter && polygon.length === 0;
+  // Null while the location is unknown and the map has reported no real camera: then nothing is
+  // recorded, rather than a placeholder that would read as a location next time (review on
+  // app #217: a saved placeholder switched this whole fallback off for that parcel).
+  const currentMapView = () =>
+    mapViewRef.current ?? (farmLocationUnknown ? null : { center: mapCenter, zoom: mapZoom });
 
   // 🗺️ Update map center when establishment coordinates become available (async load fix)
   useEffect(() => {
@@ -452,7 +462,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
     setBoundarySkipped(true);
     setPolygon([]);
     setValue('polygon', []);
-    setValue('map_metadata', currentMapView());
+    setValue('map_metadata', currentMapView() ?? undefined);
   };
 
   const editPolygon = (next: LatLng[]) => {
@@ -617,12 +627,9 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
         setValue('polygon', path);
       }
 
-      if (initialData.map_metadata?.center) {
-        setMapCenter(initialData.map_metadata.center);
-      }
-
-      if (initialData.map_metadata?.zoom) {
-        setMapZoom(initialData.map_metadata.zoom);
+      if (!isPlaceholderCenter(initialData.map_metadata?.center)) {
+        setMapCenter(initialData.map_metadata!.center);
+        if (initialData.map_metadata?.zoom) setMapZoom(initialData.map_metadata.zoom);
       }
 
       if (initialData.images && initialData.images.length > 0) {
@@ -679,7 +686,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
       const finalData = {
         ...data,
         polygon: safePolygon,
-        map_metadata: currentMapView(),
+        map_metadata: currentMapView() ?? undefined,
         images: imageUrls,
         // Legacy fields for backend compatibility
         description: data.transparency_description, // Map transparency to legacy description
@@ -906,10 +913,10 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                       onChange={editPolygon}
                       neighbours={otherParcels}
                       // Re-mounted after full screen: open where the grower left that map.
-                      center={inlineMapKey ? currentMapView().center : mapCenter}
-                      zoom={inlineMapKey ? currentMapView().zoom : mapZoom}
+                      center={(inlineMapKey && currentMapView()?.center) || mapCenter}
+                      zoom={(inlineMapKey && currentMapView()?.zoom) || mapZoom}
                       fitOnOpen={inlineMapKey === 0}
-                      locationUnknown={farmLocationUnknown}
+                      locationUnknown={farmLocationUnknown && !mapViewRef.current}
                       farmAddress={establishmentAddress}
                       onViewChange={onMapViewChange}
                     />
@@ -944,9 +951,10 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                         path={polygon}
                         onChange={editPolygon}
                         neighbours={otherParcels}
-                        center={currentMapView().center}
-                        zoom={currentMapView().zoom}
+                        center={currentMapView()?.center ?? mapCenter}
+                        zoom={currentMapView()?.zoom ?? mapZoom}
                         fitOnOpen={false}
+                        locationUnknown={farmLocationUnknown && !mapViewRef.current}
                         onViewChange={onMapViewChange}
                         footer={renderBoundaryStatus(
                           <StandardButton

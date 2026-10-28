@@ -87,6 +87,8 @@ const FIELD_ZOOM = 16;
 // It opened on a field in Fresno at field zoom instead, so a Washington grower landed 1,000 km
 // away on a field that looked like it could be theirs.
 const NO_LOCATION_CAMERA = { center: { lat: 39.8283, lng: -98.5795 }, zoom: 4 };
+// Zoomed in this far from the no-location view, the grower has chosen a place.
+const GROWER_CAMERA_ZOOM = 10;
 // A searched point with no area of its own (pasted coordinates): close enough to see fences.
 const POINT_ZOOM = 17;
 
@@ -167,12 +169,13 @@ export const ParcelBoundaryEditor = ({
   const editedRef = useRef(false);
   // Read once: passed again, `@react-google-maps` would re-apply them on every change.
   const [initialCamera] = useState(() =>
-    locationUnknown && fitOnOpen ? NO_LOCATION_CAMERA : { center, zoom: zoom ?? FIELD_ZOOM }
+    locationUnknown ? NO_LOCATION_CAMERA : { center, zoom: zoom ?? FIELD_ZOOM }
   );
   // The farm's address was looked up and found nothing usable.
   const [addressMissed, setAddressMissed] = useState(false);
   const addressTriedRef = useRef(false);
   const [located, setLocated] = useState(false);
+  const locatedRef = useRef(false);
 
   const [selected, setSelected] = useState<number | null>(null);
   // The outline while a corner is being dragged, so the edges follow the finger.
@@ -255,6 +258,7 @@ export const ParcelBoundaryEditor = ({
       map.setZoom(POINT_ZOOM);
     }
     fittedRef.current = true;
+    locatedRef.current = true;
     setLocated(true);
   }, []);
 
@@ -292,7 +296,16 @@ export const ParcelBoundaryEditor = ({
     const map = mapRef.current;
     const mapCenter = map?.getCenter();
     if (!map || !mapCenter || !onViewChange) return;
-    onViewChange({ center: mapCenter.toJSON(), zoom: map.getZoom() ?? initialCamera.zoom });
+    const zoomNow = map.getZoom() ?? initialCamera.zoom;
+    if (locationUnknown && !locatedRef.current && !fittedRef.current && !editedRef.current) {
+      // Still on the whole-country view: that is no camera to record. Reported, it was saved as
+      // the parcel's map and read back as "the farm is here".
+      if (zoomNow < GROWER_CAMERA_ZOOM) return;
+      // The grower zoomed in to a place themselves: from here the camera is theirs, and the
+      // farm's coordinates arriving late must not pull the map away.
+      fittedRef.current = true;
+    }
+    onViewChange({ center: mapCenter.toJSON(), zoom: zoomNow });
   };
 
   const snap = (point: LatLng) => {

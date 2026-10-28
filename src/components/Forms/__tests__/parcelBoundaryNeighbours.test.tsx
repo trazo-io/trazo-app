@@ -7,6 +7,8 @@
  * outline being drawn, or drawing next to a neighbour would be impossible.
  */
 import React from 'react';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
@@ -254,6 +256,66 @@ describe('parcel boundary step: the farm around the outline', () => {
       const inline = drawn.maps[drawn.maps.length - 1];
       expect(inline.center).toEqual({ lat: 44.7, lng: -123.3 });
       expect(inline.zoom).toBe(17);
+    });
+  });
+
+  describe('a farm with no location on file', () => {
+    const US_VIEW = { lat: 39.8283, lng: -98.5795 };
+
+    it('treats an old placeholder camera (Fresno, New York) as no location, not as the farm', () => {
+      drawn.maps = [];
+      renderForm({
+        initialStep: 1,
+        initialData: {
+          name: 'North',
+          area: 1,
+          map_metadata: { center: { lat: 36.7378, lng: -119.7871 }, zoom: 16 }
+        }
+      });
+      expect(drawn.maps[drawn.maps.length - 1].center).toEqual(US_VIEW);
+    });
+
+    it('saves no camera while the map is still on the whole country', () => {
+      const onSubmit = vi.fn();
+      drawn.maps = [];
+      renderForm({
+        initialStep: 1,
+        saveFromBoundary: true,
+        onSubmit,
+        initialData: { name: 'North', area: 4, transparency_description: '' }
+      });
+      reportCamera(US_VIEW, 4);
+      fireEvent.click(screen.getByRole('button', { name: m['parcel.boundary.saveOutline'] }));
+      // Saved, the placeholder would read as "the farm is here" next time and switch the
+      // address lookup off for this parcel (review on app #217).
+      expect(onSubmit.mock.calls[0][0].map_metadata).toBeUndefined();
+    });
+
+    it('saves the camera once the grower has zoomed in to a place themselves', () => {
+      const onSubmit = vi.fn();
+      drawn.maps = [];
+      renderForm({
+        initialStep: 1,
+        saveFromBoundary: true,
+        onSubmit,
+        initialData: { name: 'North', area: 4, transparency_description: '' }
+      });
+      reportCamera({ lat: 44.54, lng: -123.11 }, 15);
+      fireEvent.click(screen.getByRole('button', { name: m['parcel.boundary.saveOutline'] }));
+      expect(onSubmit.mock.calls[0][0].map_metadata).toEqual({
+        center: { lat: 44.54, lng: -123.11 },
+        zoom: 15
+      });
+    });
+
+    it('the parcel page invents no camera of its own', () => {
+      // AddParcel filled a missing map_metadata with New York on load and on save, so every
+      // parcel without one opened on Manhattan and the fallback above never ran.
+      const source = readFileSync(
+        join(__dirname, '../../../views/Dashboard/Dashboard/Parcel/AddParcel.tsx'),
+        'utf8'
+      );
+      expect(source).not.toMatch(/40\.7128|-74\.006/);
     });
   });
 });

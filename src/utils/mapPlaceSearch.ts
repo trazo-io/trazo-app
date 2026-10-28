@@ -50,6 +50,22 @@ export const parseCoordinates = (text: string): LatLng | null => {
   return null;
 };
 
+/**
+ * Map centres the app once wrote when it knew nothing: the parcel form's Fresno fallback and the
+ * New York default AddParcel injected on load and save. Parcels saved with them carry them in
+ * `map_metadata`, where they read as "the grower was here". They are not a location.
+ */
+const PLACEHOLDER_CENTERS: LatLng[] = [
+  { lat: 36.7378, lng: -119.7871 },
+  { lat: 40.7128, lng: -74.006 }
+];
+
+export const isPlaceholderCenter = (center?: LatLng | null): boolean =>
+  !center ||
+  PLACEHOLDER_CENTERS.some(
+    (p) => Math.abs(p.lat - center.lat) < 1e-4 && Math.abs(p.lng - center.lng) < 1e-4
+  );
+
 export interface FoundPlace {
   label: string;
   center: LatLng;
