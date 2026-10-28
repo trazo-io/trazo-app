@@ -8,7 +8,7 @@
  */
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { IntlProvider } from 'react-intl';
 
@@ -16,7 +16,10 @@ import theme from '../../../theme/theme';
 import enMessages from '../../../i18n/lang/en-US.json';
 import { StandardParcelFormTransparency } from '../StandardParcelForm_Transparency';
 
-const drawn = vi.hoisted(() => ({ polygons: [] as Array<Record<string, unknown>> }));
+const drawn = vi.hoisted(() => ({
+  polygons: [] as Array<Record<string, unknown>>,
+  markers: [] as Array<Record<string, any>>
+}));
 
 vi.mock('@react-google-maps/api', () => {
   const OverlayView = ({ children }: { children?: React.ReactNode }) => <div>{children}</div>;
@@ -30,13 +33,16 @@ vi.mock('@react-google-maps/api', () => {
       drawn.polygons.push(props.options ?? {});
       return null;
     },
-    Marker: () => null,
+    Marker: (props: Record<string, any>) => {
+      drawn.markers.push(props);
+      return null;
+    },
     OverlayView
   };
 });
 vi.mock('../../Upload', () => ({ TrazoImageUpload: () => null }));
-// The corner markers read `google.maps.SymbolPath` once a polygon exists.
-(window as any).google = { maps: { SymbolPath: { CIRCLE: 0 } } };
+// The corner handles build their icon from `google.maps.Size` / `Point` once a corner exists.
+(window as any).google = { maps: { Size: class {}, Point: class {} } };
 
 const m = enMessages as Record<string, string>;
 const square = (lat: number) => [
@@ -114,5 +120,27 @@ describe('parcel boundary step: the farm around the outline', () => {
       transparency_description: '',
       polygon: square(5)
     });
+  });
+
+  it('Undo takes back a dragged corner, not just the last corner added', () => {
+    // "Undo last point" removed the newest corner whatever the last change was, so a corner
+    // dragged to the wrong fence had no way back but dragging it again.
+    const onSubmit = vi.fn();
+    drawn.markers = [];
+    renderForm({
+      initialStep: 1,
+      saveFromBoundary: true,
+      onSubmit,
+      initialData: { name: 'North', area: 4, transparency_description: '', polygon: square(5) }
+    });
+    const undo = screen.getByRole('button', { name: m['parcel.boundary.undo'] });
+    expect(undo).toBeDisabled();
+    const moved = { lat: 5.5, lng: 0.5 };
+    act(() => drawn.markers.slice(-3)[0].onDragEnd({ latLng: { toJSON: () => moved } }));
+    expect(drawn.markers.slice(-3)[0].position).toEqual(moved);
+    fireEvent.click(undo);
+    expect(drawn.markers.slice(-3).map((h) => h.position)).toEqual(square(5));
+    fireEvent.click(screen.getByRole('button', { name: m['parcel.boundary.saveOutline'] }));
+    expect(onSubmit.mock.calls[0][0].polygon).toEqual(square(5));
   });
 });

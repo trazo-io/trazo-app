@@ -99,7 +99,7 @@ describe('parcel wizard — map step', () => {
     await advanceToMapStep(user);
 
     expect(screen.getByText(/todavía no dibujas el límite/i)).toBeInTheDocument();
-    expect(screen.getByText(/toca el mapa para marcar las esquinas/i)).toBeInTheDocument();
+    expect(screen.getByText(/toca el mapa en cada esquina/i)).toBeInTheDocument();
     expect(screen.queryByText(/Polygon Points|Valid Polygon|Clear Points|Loading map/i)).toBeNull();
   });
 });
