@@ -8,7 +8,7 @@
  */
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { IntlProvider } from 'react-intl';
 
@@ -142,5 +142,63 @@ describe('parcel boundary step: the farm around the outline', () => {
     expect(drawn.markers.slice(-3).map((h) => h.position)).toEqual(square(5));
     fireEvent.click(screen.getByRole('button', { name: m['parcel.boundary.saveOutline'] }));
     expect(onSubmit.mock.calls[0][0].polygon).toEqual(square(5));
+  });
+
+  // A 100 m square at 44.5°N: one hectare, 2.5 acres.
+  const M_LAT = 1 / 111319.49;
+  const M_LNG = M_LAT / Math.cos((44.5 * Math.PI) / 180);
+  const hectare = (lat0: number, lng0: number) => [
+    { lat: lat0, lng: lng0 },
+    { lat: lat0, lng: lng0 + 100 * M_LNG },
+    { lat: lat0 - 100 * M_LAT, lng: lng0 + 100 * M_LNG },
+    { lat: lat0 - 100 * M_LAT, lng: lng0 }
+  ];
+
+  it('says what the outline measures, and points out a big gap with the typed area', () => {
+    renderForm({
+      initialStep: 1,
+      // `area` is stored in hectares: 4.0469 ha = 10 acres typed on the first step.
+      initialData: { name: 'North', area: 4.0469, polygon: hectare(44.5, -123.1) }
+    });
+    expect(screen.getByText('The outline measures 2.5 acres (1 ha).')).toBeInTheDocument();
+    expect(screen.getByText(/That is 75% less than the 10 acres entered/)).toBeInTheDocument();
+  });
+
+  it('says nothing about a gap when the outline and the typed area agree', () => {
+    renderForm({
+      initialStep: 1,
+      initialData: { name: 'North', area: 1.05, polygon: hectare(44.5, -123.1) }
+    });
+    expect(screen.queryByText(/than the .* acres entered/)).toBeNull();
+  });
+
+  it('names a neighbouring parcel the outline shares ground with, not one it shares a fence with', () => {
+    renderForm({
+      initialStep: 1,
+      initialData: { name: 'North', area: 1, polygon: hectare(44.5, -123.1) },
+      otherParcels: [
+        { id: 2, name: 'River', path: hectare(44.5 - 50 * M_LAT, -123.1 + 50 * M_LNG) },
+        { id: 3, name: 'Fence', path: hectare(44.5, -123.1 + 100 * M_LNG) }
+      ]
+    });
+    expect(screen.getByText(/This outline overlaps River\./)).toBeInTheDocument();
+    expect(screen.queryByText(/overlaps .*Fence/)).toBeNull();
+  });
+
+  it('opens the editor on full screen and comes back with Done', async () => {
+    renderForm({ initialStep: 1, initialData: { name: 'North', area: 1, polygon: square(5) } });
+    expect(screen.getAllByTestId('google-map')).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', { name: m['parcel.boundary.openFullscreen'] }));
+    expect(await screen.findAllByTestId('google-map')).toHaveLength(2);
+    // Focus starts on Done, never on Clear boundary, where one Enter would wipe the outline.
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', { name: m['parcel.boundary.closeFullscreen'] })
+      ).toHaveFocus()
+    );
+    // The full-screen footer carries Undo with the status, not just the map.
+    expect(screen.getAllByRole('button', { name: m['parcel.boundary.undo'] })).toHaveLength(2);
+    fireEvent.click(screen.getByRole('button', { name: m['parcel.boundary.closeFullscreen'] }));
+    await waitFor(() => expect(screen.getAllByTestId('google-map')).toHaveLength(1));
   });
 });

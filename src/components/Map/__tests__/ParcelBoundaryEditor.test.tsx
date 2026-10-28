@@ -177,4 +177,57 @@ describe('ParcelBoundaryEditor', () => {
     act(() => lastMap().onClick(at(north)));
     expect(onChange).toHaveBeenLastCalledWith([field[0], north, field[1], field[2], field[3]]);
   });
+
+  it('snaps a corner tapped beside a neighbouring parcel onto its corner', () => {
+    const onChange = vi.fn();
+    const neighbour = [
+      { lat: 44.541, lng: -123.109 },
+      { lat: 44.541, lng: -123.107 },
+      { lat: 44.539, lng: -123.107 },
+      { lat: 44.539, lng: -123.109 }
+    ];
+    render(
+      <ChakraProvider theme={theme}>
+        <IntlProvider locale="en" messages={m} onError={() => undefined}>
+          <ParcelBoundaryEditor
+            path={[]}
+            onChange={onChange}
+            neighbours={[{ id: 9, name: 'East', path: neighbour }]}
+            center={{ lat: 44.54, lng: -123.11 }}
+            zoom={17}
+          />
+        </IntlProvider>
+      </ChakraProvider>
+    );
+    // About 3 m from the neighbour's NW corner: well inside 14 px at zoom 17 (~0.85 m/px).
+    act(() => lastMap().onClick(at({ lat: 44.54102, lng: -123.10903 })));
+    const [placed] = onChange.mock.calls[0][0];
+    expect(placed.lat).toBeCloseTo(44.541, 9);
+    expect(placed.lng).toBeCloseTo(-123.109, 9);
+  });
+
+  it('has no Google fullscreen (it hid Undo); one finger moves the map only in full screen', () => {
+    renderEditor(field);
+    expect(lastMap().options).toMatchObject({
+      fullscreenControl: false,
+      gestureHandling: 'cooperative'
+    });
+    seen.maps = [];
+    render(
+      <ChakraProvider theme={theme}>
+        <IntlProvider locale="en" messages={m} onError={() => undefined}>
+          <ParcelBoundaryEditor
+            fullscreen
+            path={field}
+            onChange={() => undefined}
+            center={{ lat: 44.54, lng: -123.11 }}
+          />
+        </IntlProvider>
+      </ChakraProvider>
+    );
+    expect(lastMap().options).toMatchObject({
+      fullscreenControl: false,
+      gestureHandling: 'greedy'
+    });
+  });
 });

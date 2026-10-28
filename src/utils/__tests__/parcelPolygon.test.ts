@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { insertAtNearestEdge, isSelfIntersecting, toLatLngPath } from '../parcelPolygon';
+import {
+  insertAtNearestEdge,
+  isSelfIntersecting,
+  outlinesOverlap,
+  polygonAreaHectares,
+  snapToNeighbours,
+  toLatLngPath
+} from '../parcelPolygon';
 
 describe('toLatLngPath', () => {
   it('passes the form shape through', () => {
@@ -88,5 +95,77 @@ describe('isSelfIntersecting', () => {
   it('catches a corner dropped onto another edge', () => {
     const onEast = { lat: 44.54, lng: -123.109 };
     expect(isSelfIntersecting([field[0], field[1], field[2], onEast])).toBe(true);
+  });
+});
+
+// About 100 m on a side at 44.5°N: 1° lat = 111,195 m on the sphere Google measures with.
+const M_LAT = 1 / 111319.49;
+const M_LNG = M_LAT / Math.cos((44.5 * Math.PI) / 180);
+const square = (lat0: number, lng0: number, side: number) => [
+  { lat: lat0, lng: lng0 },
+  { lat: lat0, lng: lng0 + side * M_LNG },
+  { lat: lat0 - side * M_LAT, lng: lng0 + side * M_LNG },
+  { lat: lat0 - side * M_LAT, lng: lng0 }
+];
+
+describe('polygonAreaHectares', () => {
+  it('measures a 100 m square as one hectare', () => {
+    expect(polygonAreaHectares(square(44.5, -123.1, 100))).toBeCloseTo(1, 2);
+  });
+
+  it('is zero until the outline closes', () => {
+    expect(polygonAreaHectares(square(44.5, -123.1, 100).slice(0, 2))).toBe(0);
+  });
+});
+
+describe('snapToNeighbours', () => {
+  const neighbour = square(44.5, -123.1, 100);
+
+  it("lands on a neighbour's corner within the tolerance", () => {
+    const near = { lat: neighbour[1].lat + 3 * M_LAT, lng: neighbour[1].lng + 2 * M_LNG };
+    const snapped = snapToNeighbours(near, [neighbour], 5);
+    expect(snapped.lat).toBeCloseTo(neighbour[1].lat, 9);
+    expect(snapped.lng).toBeCloseTo(neighbour[1].lng, 9);
+  });
+
+  it('else lands on its nearest edge', () => {
+    // 3 m east of the middle of the east edge.
+    const near = { lat: 44.5 - 50 * M_LAT, lng: neighbour[1].lng + 3 * M_LNG };
+    const snapped = snapToNeighbours(near, [neighbour], 5);
+    expect(snapped.lng).toBeCloseTo(neighbour[1].lng, 9);
+    expect(snapped.lat).toBeCloseTo(near.lat, 9);
+  });
+
+  it('leaves a corner alone when nothing is close', () => {
+    const far = { lat: 44.5 - 50 * M_LAT, lng: neighbour[1].lng + 30 * M_LNG };
+    expect(snapToNeighbours(far, [neighbour], 5)).toEqual(far);
+  });
+});
+
+describe('outlinesOverlap', () => {
+  const a = square(44.5, -123.1, 100);
+
+  it('does not count a shared fence as an overlap', () => {
+    const east = square(44.5, a[1].lng, 100);
+    expect(outlinesOverlap(east, a)).toBe(false);
+  });
+
+  it('does not count a corner snapped onto the middle of an edge', () => {
+    // A smaller parcel whose west edge runs along part of a's east edge.
+    const b = [
+      { lat: 44.5 - 20 * M_LAT, lng: a[1].lng },
+      { lat: 44.5 - 20 * M_LAT, lng: a[1].lng + 50 * M_LNG },
+      { lat: 44.5 - 70 * M_LAT, lng: a[1].lng + 50 * M_LNG },
+      { lat: 44.5 - 70 * M_LAT, lng: a[1].lng }
+    ];
+    expect(outlinesOverlap(b, a)).toBe(false);
+  });
+
+  it('catches outlines that share ground', () => {
+    expect(outlinesOverlap(square(44.5 - 50 * M_LAT, -123.1 + 50 * M_LNG, 100), a)).toBe(true);
+  });
+
+  it('catches one outline drawn inside another', () => {
+    expect(outlinesOverlap(square(44.5 - 20 * M_LAT, -123.1 + 20 * M_LNG, 30), a)).toBe(true);
   });
 });

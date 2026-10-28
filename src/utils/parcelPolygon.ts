@@ -126,3 +126,125 @@ export const isSelfIntersecting = (path: LatLng[]): boolean => {
   }
   return false;
 };
+
+const EARTH_RADIUS_M = 6378137;
+const rad = (deg: number) => (deg * Math.PI) / 180;
+
+/**
+ * The outline's area on the ground, in hectares: the spherical-polygon formula Google's
+ * `geometry.spherical.computeArea` uses, done here so the editor needs no extra Maps library
+ * (the production CSP allows the base bundle only).
+ */
+export const polygonAreaHectares = (path: LatLng[]): number => {
+  if (path.length < 3) return 0;
+  let sum = 0;
+  path.forEach((a, i) => {
+    const b = path[(i + 1) % path.length];
+    sum += rad(b.lng - a.lng) * (2 + Math.sin(rad(a.lat)) + Math.sin(rad(b.lat)));
+  });
+  return Math.abs((sum * EARTH_RADIUS_M * EARTH_RADIUS_M) / 2) / 10000;
+};
+
+/** Ground metres per screen pixel at a zoom level (Web Mercator). */
+export const metresPerPixel = (lat: number, zoom: number) =>
+  (156543.03392 * Math.cos(rad(lat))) / 2 ** zoom;
+
+// Local metres around a reference latitude: exact enough within one farm.
+const toMetres = (refLat: number) => {
+  const k = Math.cos(rad(refLat));
+  const m = (Math.PI / 180) * EARTH_RADIUS_M;
+  return (p: LatLng) => ({ x: p.lng * k * m, y: p.lat * m });
+};
+const fromMetres = (refLat: number) => {
+  const k = Math.cos(rad(refLat));
+  const m = (Math.PI / 180) * EARTH_RADIUS_M;
+  return (q: { x: number; y: number }): LatLng => ({ lat: q.y / m, lng: q.x / (k * m) });
+};
+
+type XY = { x: number; y: number };
+const closestOnSegment = (p: XY, a: XY, b: XY): XY => {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const len2 = dx * dx + dy * dy;
+  const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2));
+  return { x: a.x + t * dx, y: a.y + t * dy };
+};
+const distance = (a: XY, b: XY) => Math.hypot(a.x - b.x, a.y - b.y);
+
+/**
+ * A corner placed near a neighbouring parcel lands ON it: on its corner when one is within
+ * `toleranceM`, else on its nearest edge. Two parcels sharing a fence then share the line,
+ * instead of leaving a sliver of no-one's land or an overlap a tap's width wide.
+ */
+export const snapToNeighbours = (
+  point: LatLng,
+  neighbours: LatLng[][],
+  toleranceM: number
+): LatLng => {
+  const toM = toMetres(point.lat);
+  const p = toM(point);
+  let best: { at: XY; d: number } | null = null;
+  for (const ring of neighbours) {
+    for (const corner of ring) {
+      const c = toM(corner);
+      const d = distance(p, c);
+      if (d <= toleranceM && (!best || d < best.d)) best = { at: c, d };
+    }
+  }
+  if (best) return fromMetres(point.lat)(best.at);
+  for (const ring of neighbours) {
+    ring.forEach((corner, i) => {
+      const at = closestOnSegment(p, toM(corner), toM(ring[(i + 1) % ring.length]));
+      const d = distance(p, at);
+      if (d <= toleranceM && (!best || d < best.d)) best = { at, d };
+    });
+  }
+  return best ? fromMetres(point.lat)((best as { at: XY }).at) : point;
+};
+
+const insideRing = (p: XY, ring: XY[]) => {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const a = ring[i];
+    const b = ring[j];
+    if (a.y > p.y !== b.y > p.y && p.x < ((b.x - a.x) * (p.y - a.y)) / (b.y - a.y) + a.x) {
+      inside = !inside;
+    }
+  }
+  return inside;
+};
+const distanceToRing = (p: XY, ring: XY[]) =>
+  Math.min(...ring.map((a, i) => distance(p, closestOnSegment(p, a, ring[(i + 1) % ring.length]))));
+
+/**
+ * True when two outlines share ground, not just a fence. Edges that run along each other
+ * (a shared, snapped boundary) or touch at a corner do not count: everything within
+ * `toleranceM` of the other outline is treated as ON it.
+ */
+export const outlinesOverlap = (a: LatLng[], b: LatLng[], toleranceM = 0.5): boolean => {
+  if (a.length < 3 || b.length < 3) return false;
+  const toM = toMetres(a[0].lat);
+  const ra = a.map(toM);
+  const rb = b.map(toM);
+  const deeplyInside = (p: XY, ring: XY[]) =>
+    insideRing(p, ring) && distanceToRing(p, ring) > toleranceM;
+  if (ra.some((p) => deeplyInside(p, rb)) || rb.some((p) => deeplyInside(p, ra))) return true;
+  // Signed distance of c from the line through a-b, with the fence width counted as zero.
+  const side = (p: XY, q: XY, c: XY) => {
+    const len = distance(p, q) || 1;
+    const d = ((q.x - p.x) * (c.y - p.y) - (q.y - p.y) * (c.x - p.x)) / len;
+    return Math.abs(d) <= toleranceM ? 0 : Math.sign(d);
+  };
+  for (let i = 0; i < ra.length; i++) {
+    const p1 = ra[i];
+    const q1 = ra[(i + 1) % ra.length];
+    for (let j = 0; j < rb.length; j++) {
+      const p2 = rb[j];
+      const q2 = rb[(j + 1) % rb.length];
+      if (side(p1, q1, p2) * side(p1, q1, q2) < 0 && side(p2, q2, p1) * side(p2, q2, q1) < 0) {
+        return true;
+      }
+    }
+  }
+  return false;
+};
