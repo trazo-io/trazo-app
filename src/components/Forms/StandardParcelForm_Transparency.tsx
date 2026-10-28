@@ -883,8 +883,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                       onChange={editPolygon}
                       neighbours={otherParcels}
                       // Re-mounted after full screen: open where the grower left that map.
-                      center={inlineMapKey ? mapViewRef.current.center : mapCenter}
-                      zoom={inlineMapKey ? mapViewRef.current.zoom : mapZoom}
+                      center={inlineMapKey ? currentMapView().center : mapCenter}
+                      zoom={inlineMapKey ? currentMapView().zoom : mapZoom}
                       fitOnOpen={inlineMapKey === 0}
                       onViewChange={onMapViewChange}
                     />
@@ -919,8 +919,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                         path={polygon}
                         onChange={editPolygon}
                         neighbours={otherParcels}
-                        center={mapViewRef.current.center}
-                        zoom={mapViewRef.current.zoom}
+                        center={currentMapView().center}
+                        zoom={currentMapView().zoom}
                         fitOnOpen={false}
                         onViewChange={onMapViewChange}
                         footer={renderBoundaryStatus(
