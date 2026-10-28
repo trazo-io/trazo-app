@@ -406,6 +406,28 @@ describe('ParcelBoundaryEditor', () => {
       expect(screen.getByText('Showing your location (within 8 m).')).toBeInTheDocument();
     });
 
+    it('an unanswered permission prompt never locks the search', () => {
+      vi.useFakeTimers();
+      try {
+        // The browser neither grants nor refuses: neither callback ever fires.
+        Object.defineProperty(navigator, 'geolocation', {
+          configurable: true,
+          value: { getCurrentPosition: () => undefined }
+        });
+        renderEditor([]);
+        act(() => lastMap().onLoad(fakeMap()));
+        fireEvent.click(screen.getByRole('button', { name: m['map.search.useMyLocation'] }));
+        // Find stays usable while the prompt waits (review on #218).
+        expect(screen.getByRole('button', { name: m['map.search.button'] })).toBeEnabled();
+        act(() => {
+          vi.advanceTimersByTime(30000);
+        });
+        expect(screen.getByRole('button', { name: m['map.search.useMyLocation'] })).toBeEnabled();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
     it('says how to unblock it when the browser refuses', async () => {
       withPosition({ code: 1 });
       renderEditor([]);

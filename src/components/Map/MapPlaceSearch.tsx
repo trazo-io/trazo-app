@@ -34,6 +34,9 @@ export interface MapPlaceSearchProps {
   allowMyLocation?: boolean;
 }
 
+// Longer than the API's own 15 s timeout, which only counts once the prompt is answered.
+const LOCATE_GIVE_UP_MS = 30000;
+
 type Outcome =
   | { kind: 'idle' }
   | { kind: 'shown'; place: FoundPlace; others: FoundPlace[] }
@@ -80,12 +83,24 @@ export const MapPlaceSearch = ({
   };
 
   const canLocate = allowMyLocation && typeof navigator !== 'undefined' && !!navigator.geolocation;
+  // Its own flag, not the search's `busy`: a permission prompt can sit unanswered, or be
+  // dismissed without either callback firing (the API's timeout only starts after the prompt),
+  // and while it did, Find was disabled too (review on #218). The fallback timer frees the
+  // button; an answer that arrives later still moves the map.
+  const [locating, setLocating] = useState(false);
+  const locateTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  useEffect(() => () => clearTimeout(locateTimerRef.current), []);
+  const doneLocating = () => {
+    clearTimeout(locateTimerRef.current);
+    setLocating(false);
+  };
   const useMyLocation = () => {
-    if (!canLocate || busy) return;
-    setBusy(true);
+    if (!canLocate || locating) return;
+    setLocating(true);
+    locateTimerRef.current = setTimeout(() => setLocating(false), LOCATE_GIVE_UP_MS);
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setBusy(false);
+        doneLocating();
         const metres = Math.round(position.coords.accuracy);
         go(
           {
@@ -97,7 +112,7 @@ export const MapPlaceSearch = ({
         );
       },
       (error) => {
-        setBusy(false);
+        doneLocating();
         setOutcome({ kind: error.code === 1 ? 'locationDenied' : 'locationFailed' });
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
@@ -150,7 +165,7 @@ export const MapPlaceSearch = ({
           variant="ghost"
           leftIcon={<MdMyLocation />}
           onClick={useMyLocation}
-          isDisabled={busy}
+          isLoading={locating}
           mt={1}
           px={1}>
           {intl.formatMessage({ id: 'map.search.useMyLocation' })}
