@@ -114,6 +114,18 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
       : currentEstablishment?.latitude && currentEstablishment?.longitude
       ? { lat: currentEstablishment.latitude, lng: currentEstablishment.longitude }
       : undefined;
+  // Looked up on the boundary map when the farm has no coordinates. Undefined until the farm
+  // has loaded, so the map does not report "no address" while it is still on its way.
+  const establishmentAddress = establishmentData
+    ? [
+        establishmentData.address,
+        establishmentData.city,
+        establishmentData.state,
+        establishmentData.zip_code
+      ]
+        .filter(Boolean)
+        .join(', ')
+    : undefined;
 
   // Pre-flight subscription limit check (informational only — backend enforces).
   // Parcel count comes from the Redux company state (same source UnifiedSubscription
@@ -159,10 +171,9 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
       // System fields (maintain compatibility). §205.202 facts deliberately
       // absent — the Parcel Application wizard owns them (see handleSubmit).
       polygon: parcelData.polygon || [],
-      map_metadata: parcelData.map_metadata || {
-        center: { lat: 40.7128, lng: -74.006 },
-        zoom: 13
-      },
+      // No invented camera: a New York default stood in here, and the boundary map then read it
+      // as where the grower had been.
+      map_metadata: parcelData.map_metadata || undefined,
       establishment: parseInt(parcelData.establishment) || undefined,
 
       // Legacy fields for backend compatibility (hidden from UI).
@@ -242,10 +253,8 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
         // a description does not enable a carbon calculation, and no control here offers the
         // farmer that choice.
         polygon: data.polygon || [],
-        map_metadata: data.map_metadata || {
-          center: { lat: 40.7128, lng: -74.006 },
-          zoom: 13
-        },
+        // Nothing rather than a New York default: an invented camera is read back as a place.
+        map_metadata: data.map_metadata,
         establishment: parseInt(farmId!),
 
         // ✅ Store transparency context for carbon calculations
@@ -400,6 +409,7 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
         isEdit={isEdit}
         establishmentName={establishmentData?.name || currentEstablishment?.name || ''}
         establishmentCoordinates={establishmentCoordinates}
+        establishmentAddress={establishmentAddress}
         initialStep={fromOutlineShortcut ? 1 : 0}
         saveFromBoundary={fromOutlineShortcut}
         otherParcels={otherParcels}
