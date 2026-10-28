@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest';
-import { findPlace, matchParcels, parseCoordinates } from '../mapPlaceSearch';
+import { findPlace, matchFarms, matchParcels, parseCoordinates } from '../mapPlaceSearch';
 
 describe('parseCoordinates', () => {
   it.each([
@@ -137,9 +137,31 @@ describe('matchParcels', () => {
 
   it("frames the parcel's outline with a margin", () => {
     const [found] = matchParcels('Upper', parcels);
-    expect(found.parcel).toBe(true);
+    expect(found.kind).toBe('parcel');
     expect(found.center.lat).toBeCloseTo(44.555, 6);
     expect(found.viewport!.north).toBeCloseTo(44.562, 6);
     expect(found.viewport!.south).toBeCloseTo(44.548, 6);
+  });
+});
+
+describe('matchFarms', () => {
+  const farms = [
+    { id: 1, name: 'Calapooia Bend Farm', lat: 44.54, lng: -123.11 },
+    { id: 2, name: 'No Location Farm', lat: null, lng: null },
+    { id: 3, name: 'Willamette Orchards', lat: 44.9, lng: -123.0 }
+  ];
+
+  it('finds a farm by part of its name and frames it wider than a pin', () => {
+    const [found] = matchFarms('calapooia', farms);
+    expect(found).toMatchObject({
+      label: 'Calapooia Bend Farm',
+      center: { lat: 44.54, lng: -123.11 },
+      kind: 'farm',
+      zoom: 15
+    });
+  });
+
+  it('leaves out a farm with no coordinates: there is nowhere to take the map', () => {
+    expect(matchFarms('farm', farms).map((f) => f.label)).toEqual(['Calapooia Bend Farm']);
   });
 });

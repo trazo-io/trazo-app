@@ -418,6 +418,127 @@ describe('ParcelBoundaryEditor', () => {
       await waitFor(() => expect(geocoded).toEqual(['Calapooia']));
     });
 
+    it('suggests your farms as you type, and picking one takes the map there', () => {
+      withGeocoder('REQUEST_DENIED');
+      renderFinding({
+        farms: [
+          { id: 1, name: 'Calapooia Bend Farm', lat: 44.54, lng: -123.11 },
+          { id: 2, name: 'Willamette Orchards', lat: 44.9, lng: -123.0 }
+        ]
+      });
+      const map = fakeMap();
+      act(() => lastMap().onLoad(map));
+      const box = screen.getByLabelText(m['map.search.label']);
+      fireEvent.change(box, { target: { value: 'calap' } });
+      expect(screen.getByRole('listbox')).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('option', { name: /Calapooia Bend Farm/ }));
+      expect(map.setCenter).toHaveBeenCalledWith({ lat: 44.54, lng: -123.11 });
+      expect(map.setZoom).toHaveBeenCalledWith(15);
+      expect(
+        screen.getByText('Showing Calapooia Bend Farm, one of your farms.')
+      ).toBeInTheDocument();
+      expect(screen.queryByRole('listbox')).toBeNull();
+    });
+
+    describe('Google Places', () => {
+      const placesAnswering = (
+        suggestions: Array<{ main: string; secondary: string }> | 'refused'
+      ) => {
+        const fetched: string[] = [];
+        (window as any).google.maps.importLibrary = async () => ({
+          AutocompleteSessionToken: class {},
+          AutocompleteSuggestion: {
+            fetchAutocompleteSuggestions: async (req: { input: string }) => {
+              fetched.push(req.input);
+              if (suggestions === 'refused') throw new Error('Places API (New) has not been used');
+              return {
+                suggestions: suggestions.map((s, i) => ({
+                  placePrediction: {
+                    placeId: `p${i}`,
+                    text: { toString: () => `${s.main}, ${s.secondary}` },
+                    mainText: { toString: () => s.main },
+                    secondaryText: { toString: () => s.secondary },
+                    toPlace: () => ({
+                      fetchFields: async () => undefined,
+                      location: { toJSON: () => ({ lat: 44.5, lng: -123.0 }) },
+                      viewport: {
+                        toJSON: () => ({ north: 44.6, south: 44.4, east: -122.9, west: -123.1 })
+                      },
+                      formattedAddress: `${s.main}, ${s.secondary}`,
+                      types: ['natural_feature']
+                    })
+                  }
+                }))
+              };
+            }
+          }
+        });
+        return fetched;
+      };
+
+      it('suggests places as you type, attributed to Google, and frames the one picked', async () => {
+        withGeocoder('REQUEST_DENIED');
+        const fetched = placesAnswering([
+          { main: 'Calapooia River', secondary: 'Oregon, USA' },
+          { main: 'Calapooia Rd', secondary: 'Albany, OR, USA' }
+        ]);
+        renderFinding({});
+        const map = fakeMap();
+        act(() => lastMap().onLoad(map));
+        fireEvent.change(screen.getByLabelText(m['map.search.label']), {
+          target: { value: 'Calapooia' }
+        });
+        const river = await screen.findByRole('option', { name: /Calapooia River/ });
+        expect(screen.getByText(m['map.search.poweredByGoogle'])).toBeInTheDocument();
+        expect(fetched).toEqual(['Calapooia']);
+        fireEvent.click(river);
+        await waitFor(() =>
+          expect(map.fitBounds).toHaveBeenCalledWith(
+            { north: 44.6, south: 44.4, east: -122.9, west: -123.1 },
+            0
+          )
+        );
+        expect(geocoded).toEqual([]);
+      });
+
+      it('arrow keys and Enter pick a suggestion without touching the mouse', async () => {
+        withGeocoder('REQUEST_DENIED');
+        placesAnswering([
+          { main: 'Calapooia River', secondary: 'Oregon, USA' },
+          { main: 'Calapooia Rd', secondary: 'Albany, OR, USA' }
+        ]);
+        renderFinding({});
+        act(() => lastMap().onLoad(fakeMap()));
+        const box = screen.getByLabelText(m['map.search.label']);
+        fireEvent.change(box, { target: { value: 'Calapooia' } });
+        await screen.findByRole('option', { name: /Calapooia Rd/ });
+        fireEvent.keyDown(box, { key: 'ArrowDown' });
+        expect(screen.getByRole('option', { name: /Calapooia Rd/ })).toHaveAttribute(
+          'aria-selected',
+          'true'
+        );
+        fireEvent.keyDown(box, { key: 'Enter' });
+        expect(
+          await screen.findByText('Showing Calapooia Rd, Albany, OR, USA.')
+        ).toBeInTheDocument();
+      });
+
+      it('with Places refused, Enter still searches through the geocoder', async () => {
+        withGeocoder('OK');
+        placesAnswering('refused');
+        renderFinding({});
+        const map = fakeMap();
+        act(() => lastMap().onLoad(map));
+        const box = screen.getByLabelText(m['map.search.label']);
+        fireEvent.change(box, { target: { value: 'Tangent' } });
+        // Let the debounced Places call fail first.
+        await new Promise((r) => setTimeout(r, 400));
+        fireEvent.keyDown(box, { key: 'Enter' });
+        await waitFor(() => expect(geocoded).toEqual(['Tangent']));
+        await waitFor(() => expect(map.fitBounds).toHaveBeenCalled());
+      });
+    });
+
     it('waits for the farm to load before deciding it has no address', () => {
       withGeocoder('OK');
       renderFinding({ locationUnknown: true, farmAddress: undefined });

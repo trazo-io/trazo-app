@@ -30,6 +30,9 @@ interface RootState {
       name: string;
       establishments?: Array<{
         id: string | number;
+        name?: string;
+        latitude?: number | null;
+        longitude?: number | null;
         parcels?: Array<{ id: string | number }>;
       }>;
       subscription?: {
@@ -114,6 +117,17 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
       : currentEstablishment?.latitude && currentEstablishment?.longitude
       ? { lat: currentEstablishment.latitude, lng: currentEstablishment.longitude }
       : undefined;
+  // The company's farms, offered by name in the boundary map's search.
+  const companyFarms = React.useMemo(
+    () =>
+      (currentCompany?.establishments || []).map((farm) => ({
+        id: farm.id,
+        name: farm.name || '',
+        lat: farm.latitude,
+        lng: farm.longitude
+      })),
+    [currentCompany?.establishments]
+  );
   // Looked up on the boundary map when the farm has no coordinates. Undefined until the farm
   // has loaded, so the map does not report "no address" while it is still on its way.
   const establishmentAddress = establishmentData
@@ -410,6 +424,7 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
         establishmentName={establishmentData?.name || currentEstablishment?.name || ''}
         establishmentCoordinates={establishmentCoordinates}
         establishmentAddress={establishmentAddress}
+        companyFarms={companyFarms}
         initialStep={fromOutlineShortcut ? 1 : 0}
         saveFromBoundary={fromOutlineShortcut}
         otherParcels={otherParcels}
