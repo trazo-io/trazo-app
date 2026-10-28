@@ -16,9 +16,9 @@ import { useIntl } from 'react-intl';
 import type { IntlShape } from 'react-intl';
 import { googleMapsLoaderOptions } from 'components/Map/mapsLoaderOptions';
 import { toLatLngPath } from 'utils/parcelPolygon';
-import { NEIGHBOUR_OUTLINE } from 'components/Map/neighbourOutline';
-import { ParcelNameLabel } from 'components/Map/ParcelNameLabel';
-import { GoogleMap, Polygon, Marker, useLoadScript } from '@react-google-maps/api';
+import type { LatLng } from 'utils/parcelPolygon';
+import { ParcelBoundaryEditor } from 'components/Map/ParcelBoundaryEditor';
+import { useLoadScript } from '@react-google-maps/api';
 import { TrazoImageUpload } from '../Upload';
 import {
   FaMapMarkedAlt,
@@ -227,6 +227,10 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
   const [polygon, setPolygon] = useState<Array<{ lat: number; lng: number }>>(
     toLatLngPath(initialData?.polygon)
   );
+  // Every outline before the current one, newest last: Undo walks back through adds, moves,
+  // deletes and Clear alike. "Undo last point" only ever removed the last corner ADDED, so a
+  // dragged corner or a cleared outline had no way back.
+  const [polygonHistory, setPolygonHistory] = useState<LatLng[][]>([]);
   // Escape hatch: farmer chose to save without drawing a boundary (can draw it later)
   const [boundarySkipped, setBoundarySkipped] = useState(false);
 
@@ -257,8 +261,12 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
     if (polygon.length > 0) {
       return calculatePolygonZoom(polygon);
     }
-    return 13;
+    // Field scale: 13 showed a whole valley, and every grower's first job was to zoom in.
+    return 16;
   });
+  // The camera as the grower last left it, recorded as `map_metadata`. A ref, not state: the
+  // editor owns the camera, and feeding it back as a prop is what made the map jump.
+  const mapViewRef = useRef({ center: mapCenter, zoom: mapZoom });
 
   // 🗺️ Update map center when establishment coordinates become available (async load fix)
   useEffect(() => {
@@ -271,8 +279,6 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
   const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
   const currentImages = watch('images') || [];
   const toast = useToast();
-  const polygonRef = useRef<google.maps.Polygon>();
-  const listenersRef = useRef<google.maps.MapsEventListener[]>([]);
 
   // Language follows the APP's locale, not the browser's — see mapsLoaderOptions.
   const loaderOptions = useMemo(() => googleMapsLoaderOptions(intl.locale), [intl.locale]);
@@ -407,22 +413,24 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
     setBoundarySkipped(true);
     setPolygon([]);
     setValue('polygon', []);
-    setValue('map_metadata', {
-      center: mapCenter,
-      zoom: mapZoom
-    });
+    setValue('map_metadata', mapViewRef.current);
   };
 
-  const undoLastPoint = () => {
-    const next = polygon.slice(0, -1);
+  const editPolygon = (next: LatLng[]) => {
+    setPolygonHistory((history) => [...history, polygon]);
     setPolygon(next);
     setValue('polygon', next);
   };
 
-  const clearBoundary = () => {
-    setPolygon([]);
-    setValue('polygon', []);
+  const undo = () => {
+    const previous = polygonHistory[polygonHistory.length - 1];
+    if (!previous) return;
+    setPolygonHistory((history) => history.slice(0, -1));
+    setPolygon(previous);
+    setValue('polygon', previous);
   };
+
+  const clearBoundary = () => editPolygon([]);
 
   const goToStep = (stepNumber: number) => {
     setCurrentStep(stepNumber);
@@ -455,15 +463,6 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
     }
   }, [initialData, reset]);
 
-  useEffect(() => {
-    if (getPolygonLength() >= 3) {
-      const newCenter = calculatePolygonCenter(polygon);
-      const newZoom = calculatePolygonZoom(polygon);
-      setMapCenter(newCenter);
-      setMapZoom(newZoom);
-    }
-  }, [polygon]);
-
   const handleImagesChange = useCallback(
     (newImageUrls: string[]) => {
       setUploadedImageUrls(newImageUrls);
@@ -471,38 +470,6 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
     },
     [setValue]
   );
-
-  // Google Maps polygon editing
-  const onEdit = useCallback(() => {
-    if (polygonRef.current) {
-      const nextPath = polygonRef.current
-        .getPath()
-        .getArray()
-        .map((latLng: google.maps.LatLng) => ({
-          lat: latLng.lat(),
-          lng: latLng.lng()
-        }));
-      setPolygon(nextPath);
-    }
-  }, []);
-
-  const onLoadPolygon = useCallback(
-    (polygonInstance: google.maps.Polygon) => {
-      polygonRef.current = polygonInstance;
-      const path = polygonInstance.getPath();
-      listenersRef.current.push(
-        path.addListener('set_at', onEdit),
-        path.addListener('insert_at', onEdit),
-        path.addListener('remove_at', onEdit)
-      );
-    },
-    [onEdit]
-  );
-
-  const onUnmount = useCallback(() => {
-    listenersRef.current.forEach((listener) => listener.remove());
-    polygonRef.current = undefined;
-  }, []);
 
   // Resolver rejected the submit. Jump to the step owning the first bad field and
   // name it — otherwise "Create Parcel" reads as a button that does nothing.
@@ -544,10 +511,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
       const finalData = {
         ...data,
         polygon: safePolygon,
-        map_metadata: {
-          center: mapCenter,
-          zoom: mapZoom
-        },
+        map_metadata: mapViewRef.current,
         images: imageUrls,
         // Legacy fields for backend compatibility
         description: data.transparency_description, // Map transparency to legacy description
@@ -756,88 +720,17 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                       <Text>{intl.formatMessage({ id: 'parcel.boundary.mapLoading' })}</Text>
                     </Flex>
                   ) : (
-                    <GoogleMap
-                      mapContainerStyle={{ width: '100%', height: '400px' }}
-                      zoom={mapZoom}
+                    <ParcelBoundaryEditor
+                      path={polygon}
+                      onChange={editPolygon}
+                      neighbours={otherParcels}
                       center={mapCenter}
-                      onClick={(e) => {
-                        if (e.latLng) {
-                          const newPoint = {
-                            lat: e.latLng.lat(),
-                            lng: e.latLng.lng()
-                          };
-                          const updatedPolygon = [...polygon, newPoint];
-                          setPolygon(updatedPolygon);
-                          setValue('polygon', updatedPolygon);
-                          setValue('map_metadata', {
-                            center: mapCenter,
-                            zoom: mapZoom
-                          });
-                        }
+                      zoom={mapZoom}
+                      onViewChange={(view) => {
+                        mapViewRef.current = view;
+                        setValue('map_metadata', view);
                       }}
-                      options={{
-                        disableDefaultUI: false,
-                        zoomControl: true,
-                        mapTypeControl: true,
-                        scaleControl: true,
-                        streetViewControl: false,
-                        rotateControl: false,
-                        fullscreenControl: true,
-                        gestureHandling: 'cooperative',
-                        clickableIcons: false,
-                        mapTypeId: 'satellite'
-                      }}>
-                      {otherParcels.map((other) => (
-                        <React.Fragment key={other.id}>
-                          <Polygon path={other.path} options={NEIGHBOUR_OUTLINE} />
-                          <ParcelNameLabel name={other.name} path={other.path} />
-                        </React.Fragment>
-                      ))}
-                      {getPolygonLength() > 2 && (
-                        <Polygon
-                          path={polygon}
-                          onLoad={onLoadPolygon}
-                          onUnmount={onUnmount}
-                          options={{
-                            fillColor: isValidPolygon() ? '#4CAF50' : '#FF9800',
-                            fillOpacity: 0.25,
-                            strokeColor: isValidPolygon() ? '#4CAF50' : '#FB8C00',
-                            strokeOpacity: 1,
-                            strokeWeight: 2,
-                            editable: true,
-                            draggable: true,
-                            // Above the neighbours' outlines, so its handles stay on top.
-                            zIndex: 1
-                          }}
-                        />
-                      )}
-
-                      {polygon &&
-                        Array.isArray(polygon) &&
-                        polygon.map((point, index) => (
-                          <Marker
-                            key={index}
-                            position={point}
-                            title={`Point ${index + 1}`}
-                            icon={{
-                              path: google.maps.SymbolPath.CIRCLE,
-                              scale: 8,
-                              fillColor: isValidPolygon() ? '#4CAF50' : '#FB8C00',
-                              fillOpacity: 1,
-                              strokeColor: '#FFFFFF',
-                              strokeWeight: 2
-                            }}
-                            onClick={() => {
-                              const newPolygon =
-                                polygon && Array.isArray(polygon)
-                                  ? polygon.filter((_, i) => i !== index)
-                                  : [];
-                              setPolygon(newPolygon);
-                              setValue('polygon', newPolygon);
-                            }}
-                          />
-                        ))}
-                    </GoogleMap>
+                    />
                   )}
                 </Box>
 
@@ -902,18 +795,24 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                       </Text>
                     )}
 
-                    {getPolygonLength() > 0 && (
+                    {(getPolygonLength() > 0 || polygonHistory.length > 0) && (
                       <HStack spacing={2} pt={1}>
-                        <StandardButton size="sm" variant="outline" onClick={undoLastPoint}>
-                          {intl.formatMessage({ id: 'parcel.boundary.undo' })}
-                        </StandardButton>
                         <StandardButton
                           size="sm"
                           variant="outline"
-                          leftIcon={<FaTrash />}
-                          onClick={clearBoundary}>
-                          {intl.formatMessage({ id: 'parcel.boundary.clear' })}
+                          onClick={undo}
+                          isDisabled={polygonHistory.length === 0}>
+                          {intl.formatMessage({ id: 'parcel.boundary.undo' })}
                         </StandardButton>
+                        {getPolygonLength() > 0 && (
+                          <StandardButton
+                            size="sm"
+                            variant="outline"
+                            leftIcon={<FaTrash />}
+                            onClick={clearBoundary}>
+                            {intl.formatMessage({ id: 'parcel.boundary.clear' })}
+                          </StandardButton>
+                        )}
                       </HStack>
                     )}
                   </VStack>
