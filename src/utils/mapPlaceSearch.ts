@@ -278,8 +278,16 @@ export const suggestPlaces = async (
         });
         session.token = undefined;
         if (!place.location) return null;
+        // A business or a river reads by its name; its address alone ("140 Hill St SE") does
+        // not say which place the map went to.
+        const name = place.displayName ?? '';
+        const address = place.formattedAddress ?? '';
+        const label =
+          name && address && !address.startsWith(name)
+            ? `${name}, ${address}`
+            : address || name || prediction.text.toString();
         return {
-          label: place.formattedAddress || place.displayName || prediction.text.toString(),
+          label,
           center: place.location.toJSON(),
           viewport: place.viewport?.toJSON(),
           approximate: (place.types ?? []).some((t) => AREA_TYPES.has(t))

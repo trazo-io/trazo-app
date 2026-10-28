@@ -464,7 +464,8 @@ describe('ParcelBoundaryEditor', () => {
                       viewport: {
                         toJSON: () => ({ north: 44.6, south: 44.4, east: -122.9, west: -123.1 })
                       },
-                      formattedAddress: `${s.main}, ${s.secondary}`,
+                      displayName: s.main,
+                      formattedAddress: `140 Hill St SE, ${s.secondary}`,
                       types: ['natural_feature']
                     })
                   }
@@ -519,7 +520,7 @@ describe('ParcelBoundaryEditor', () => {
         );
         fireEvent.keyDown(box, { key: 'Enter' });
         expect(
-          await screen.findByText('Showing Calapooia Rd, Albany, OR, USA.')
+          await screen.findByText('Showing Calapooia Rd, 140 Hill St SE, Albany, OR, USA.')
         ).toBeInTheDocument();
       });
 
