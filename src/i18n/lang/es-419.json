@@ -348,7 +348,7 @@
   "app.carbonExplainer.perKgPhoneCharges": "O cargar tu teléfono {count, plural, one {# vez} other {# veces}}",
   "app.carbonExplainer.realLifeTitle": "Qué significa en la vida real",
   "app.carbonExplainer.scopeBoundary": "Emisiones estimadas de las actividades registradas incluidas en este cálculo. Los datos de actividad faltantes y las fuentes excluidas no están representados. No es una huella de ciclo de vida completo: se excluyen el transporte hasta el campo, el empaque, la fabricación de equipos y el comercio minorista. Los factores de combustible y electricidad provienen de la EPA; los de fósforo y potasio son estimaciones de Trazo donde los valores publicados son escasos. Cada factor muestra su propia fuente.",
-  "app.carbonExplainer.scopeBoundaryLime": "Incluye CO₂ estimado de las aplicaciones registradas de cal carbonatada, con factores IPCC de Nivel 1, y asigna esas emisiones al año de la aplicación; no es una liberación medida en la fecha de aplicación.",
+  "app.carbonExplainer.scopeBoundaryLime": "Cuando hay aplicaciones de cal carbonatada registradas con la cantidad aplicada, se incluye el CO₂ estimado de esas aplicaciones, con factores IPCC de Nivel 1 y asignado al año de la aplicación; no es una liberación medida en la fecha de aplicación.",
   "app.carbonExplainer.shortFlights": "{count, plural, one {# vuelo corto} other {# vuelos cortos}}",
   "app.carbonExplainer.showLess": "Ver menos",
   "app.carbonExplainer.showMore": "Más sobre nuestra metodología",

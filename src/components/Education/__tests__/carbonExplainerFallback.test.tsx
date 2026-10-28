@@ -54,7 +54,9 @@ describe('CarbonImpactExplainer — no empty card', () => {
     });
 
     // The card is there, and it carries a number rather than a heading over nothing.
-    expect(screen.getByText('Estimated emissions from recorded work and inputs')).toBeInTheDocument();
+    expect(
+      screen.getByText('Estimated emissions from recorded work and inputs')
+    ).toBeInTheDocument();
     expect(screen.getByText("This season's total")).toBeInTheDocument();
     expect(screen.getByText('412.4')).toBeInTheDocument();
 
@@ -63,7 +65,11 @@ describe('CarbonImpactExplainer — no empty card', () => {
     expect(screen.queryByText('Your Impact')).not.toBeInTheDocument();
     // Run 8 (R8-14): the unit says CO2 equivalent, and no driving or phone comparison is drawn from an
     // estimate whose boundary does not travel with it.
-    expect(screen.getByText('kg of greenhouse gases (as CO2 equivalent) from recorded farm work and purchased inputs')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'kg of greenhouse gases (as CO2 equivalent) from recorded farm work and purchased inputs'
+      )
+    ).toBeInTheDocument();
     expect(screen.queryByText(/Like driving/)).not.toBeInTheDocument();
 
     // FTC 16 CFR 260.4(c): the boundary travels with the number, in the same block, never
@@ -121,7 +127,9 @@ describe('CarbonImpactExplainer — no empty card', () => {
     // Chakra always injects a hidden <span id="__chakra_env">, so assert on the text the
     // component would have contributed rather than on an empty node.
     expect(container.textContent).toBe('');
-    expect(screen.queryByText('Estimated emissions from recorded work and inputs')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Estimated emissions from recorded work and inputs')
+    ).not.toBeInTheDocument();
   });
 
   it('still prefers the per-kg framing when the harvest amount is recorded', () => {
@@ -173,7 +181,7 @@ describe('CarbonImpactExplainer: the boundary says what the number is not', () =
 
     expect(
       screen.getByText(
-        'Includes estimated CO₂ from recorded carbonate-lime applications, using IPCC Tier 1 factors and assigning those emissions to the application year; this is not a measured release on the application date.'
+        'Where carbonate-lime applications are recorded with their amount, their estimated CO₂ is included, using IPCC Tier 1 factors and assigned to the application year; this is not a measured release on the application date.'
       )
     ).toBeInTheDocument();
     expect(container.textContent).not.toContain('app.carbonExplainer');

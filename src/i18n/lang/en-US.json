@@ -348,7 +348,7 @@
   "app.carbonExplainer.perKgPhoneCharges": "Or charging your phone {count, plural, one {# time} other {# times}}",
   "app.carbonExplainer.realLifeTitle": "What This Means in Real Life",
   "app.carbonExplainer.scopeBoundary": "Estimated emissions from the recorded activities included in this calculation. Missing activity data and excluded sources are not represented. Not a full life-cycle footprint: transport to the farm, packaging, equipment manufacturing and retail are excluded. Fuel and electricity factors are EPA-published; phosphorus and potassium are Trazo estimates where published values are sparse. Each factor shows its own source.",
-  "app.carbonExplainer.scopeBoundaryLime": "Includes estimated CO₂ from recorded carbonate-lime applications, using IPCC Tier 1 factors and assigning those emissions to the application year; this is not a measured release on the application date.",
+  "app.carbonExplainer.scopeBoundaryLime": "Where carbonate-lime applications are recorded with their amount, their estimated CO₂ is included, using IPCC Tier 1 factors and assigned to the application year; this is not a measured release on the application date.",
   "app.carbonExplainer.shortFlights": "{count, plural, one {# short flight} other {# short flights}}",
   "app.carbonExplainer.showLess": "Show Less",
   "app.carbonExplainer.showMore": "Learn More About Our Methodology",
