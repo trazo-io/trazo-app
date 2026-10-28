@@ -1,6 +1,18 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useFurthestStep } from 'hooks/useFurthestStep';
-import { VStack, HStack, SimpleGrid, useToast, Text, Box, Flex } from '@chakra-ui/react';
+import {
+  VStack,
+  HStack,
+  SimpleGrid,
+  useToast,
+  Text,
+  Box,
+  Flex,
+  Icon,
+  Modal,
+  ModalContent,
+  ModalOverlay
+} from '@chakra-ui/react';
 import {
   StandardPage,
   StandardCard,
@@ -15,7 +27,7 @@ import { object, string, number, array } from 'zod';
 import { useIntl } from 'react-intl';
 import type { IntlShape } from 'react-intl';
 import { googleMapsLoaderOptions } from 'components/Map/mapsLoaderOptions';
-import { toLatLngPath } from 'utils/parcelPolygon';
+import { outlinesOverlap, polygonAreaHectares, toLatLngPath } from 'utils/parcelPolygon';
 import type { LatLng } from 'utils/parcelPolygon';
 import { ParcelBoundaryEditor } from 'components/Map/ParcelBoundaryEditor';
 import { useLoadScript } from '@react-google-maps/api';
@@ -27,7 +39,9 @@ import {
   FaChevronRight,
   FaChevronLeft,
   FaTrash,
-  FaCamera
+  FaCamera,
+  FaExpand,
+  FaExclamationTriangle
 } from 'react-icons/fa';
 import { MdInfo } from 'react-icons/md';
 import {
@@ -60,6 +74,10 @@ const buildParcelSchema = (intl: IntlShape) =>
     // Step 4: Visual Documentation (Optional)
     images: array(string()).max(5).optional()
   });
+
+const HECTARES_PER_ACRE = 0.404686;
+// Below this the outline and the typed area agree as well as a tap on a phone can.
+const AREA_GAP_TO_MENTION = 0.15;
 
 // Utility functions for polygon calculations (same as original)
 const calculatePolygonCenter = (points: Array<{ lat: number; lng: number }>) => {
@@ -231,6 +249,13 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
   // deletes and Clear alike. "Undo last point" only ever removed the last corner ADDED, so a
   // dragged corner or a cleared outline had no way back.
   const [polygonHistory, setPolygonHistory] = useState<LatLng[][]>([]);
+  // The full-screen editor (a phone's whole screen for the map, Undo within thumb's reach).
+  // Closing it remounts the inline map where the grower left the full-screen one.
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [inlineMapKey, setInlineMapKey] = useState(0);
+  // The dialog focuses Done on open. Left to Chakra it focused the first enabled button, which
+  // with nothing to undo is Clear boundary: one Enter away from wiping the outline.
+  const fullscreenDoneRef = useRef<HTMLButtonElement>(null);
   // Escape hatch: farmer chose to save without drawing a boundary (can draw it later)
   const [boundarySkipped, setBoundarySkipped] = useState(false);
 
@@ -265,8 +290,12 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
     return 16;
   });
   // The camera as the grower last left it, recorded as `map_metadata`. A ref, not state: the
-  // editor owns the camera, and feeding it back as a prop is what made the map jump.
-  const mapViewRef = useRef({ center: mapCenter, zoom: mapZoom });
+  // editor owns the camera, and feeding it back as a prop is what made the map jump. Null
+  // until the editor reports one: until then (the map has not loaded, or failed to) the
+  // record is the live `mapCenter`/`mapZoom`, which follow the farm's coordinates and the saved
+  // metadata as they arrive. Seeding the ref at mount saved the placeholder instead.
+  const mapViewRef = useRef<{ center: LatLng; zoom: number } | null>(null);
+  const currentMapView = () => mapViewRef.current ?? { center: mapCenter, zoom: mapZoom };
 
   // 🗺️ Update map center when establishment coordinates become available (async load fix)
   useEffect(() => {
@@ -413,7 +442,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
     setBoundarySkipped(true);
     setPolygon([]);
     setValue('polygon', []);
-    setValue('map_metadata', mapViewRef.current);
+    setValue('map_metadata', currentMapView());
   };
 
   const editPolygon = (next: LatLng[]) => {
@@ -431,6 +460,135 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
   };
 
   const clearBoundary = () => editPolygon([]);
+
+  const closeFullscreen = () => {
+    setIsFullscreen(false);
+    setInlineMapKey((key) => key + 1);
+  };
+
+  const onMapViewChange = (view: { center: LatLng; zoom: number }) => {
+    mapViewRef.current = view;
+    setValue('map_metadata', view);
+  };
+
+  // What the outline measures, next to what was typed on the first step. Not a gate: the
+  // planted area a certifier asks for can honestly differ from the fence line (headlands,
+  // roads, a ditch), so a big gap is pointed out, never blocked or "fixed" for the grower.
+  const enteredHectares = Number(watch('area')) || 0;
+  const drawnHectares = polygonAreaHectares(polygon);
+  const areaGap =
+    isValidPolygon() && enteredHectares > 0
+      ? (drawnHectares - enteredHectares) / enteredHectares
+      : 0;
+  // Parcels on one farm that share ground (not just a fence) are counted twice in every
+  // acreage total a certifier adds up.
+  const overlapped = isValidPolygon()
+    ? otherParcels.filter((other) => outlinesOverlap(polygon, other.path)).map((o) => o.name)
+    : [];
+
+  // One STATUS strip, no second CTA. What used to sit here was a green "Polygon Points /
+  // Valid Polygon" box (jargon, and a `Badge colorScheme` that the theme ignores) plus a ghost
+  // "Continue without boundary" button that competed with the footer's own Continue for the
+  // same destination. State is reported here; advancing is the footer's single job. The
+  // full-screen editor shows the same strip under its map, with its own Done.
+  const renderBoundaryStatus = (done?: React.ReactNode) => (
+    <Box
+      p={4}
+      borderRadius="lg"
+      bg={isValidPolygon() ? 'green.50' : getPolygonLength() > 0 ? 'amber.50' : 'gray.50'}>
+      <VStack align="stretch" spacing={2}>
+        <Text
+          fontSize="sm"
+          fontWeight="semibold"
+          // amber.800/900 over amber.50 measures 2.90:1 / 3.57:1 — both under the
+          // 4.5 floor for 14px, so the amber tint carries the status and the
+          // glyphs stay on a dark neutral. The sentence states the state outright,
+          // so nothing here is signalled by colour alone.
+          color={isValidPolygon() ? 'green.700' : 'gray.800'}>
+          {isValidPolygon()
+            ? intl.formatMessage(
+                { id: 'parcel.boundary.statusDone' },
+                { count: getPolygonLength() }
+              )
+            : getPolygonLength() > 0
+            ? intl.formatMessage(
+                { id: 'parcel.boundary.statusPartial' },
+                { count: getPolygonLength() }
+              )
+            : intl.formatMessage({ id: 'parcel.boundary.statusNone' })}
+        </Text>
+        {isValidPolygon() && (
+          <Text fontSize="sm" color="gray.800">
+            {intl.formatMessage(
+              { id: 'parcel.boundary.measured' },
+              {
+                acres: intl.formatNumber(drawnHectares / HECTARES_PER_ACRE, {
+                  maximumFractionDigits: 1
+                }),
+                ha: intl.formatNumber(drawnHectares, { maximumFractionDigits: 1 })
+              }
+            )}
+          </Text>
+        )}
+        {Math.abs(areaGap) > AREA_GAP_TO_MENTION && (
+          <HStack align="start" spacing={2}>
+            <Icon as={FaExclamationTriangle} color="amber.600" mt="3px" aria-hidden />
+            <Text fontSize="sm" color="gray.800">
+              {intl.formatMessage(
+                { id: 'parcel.boundary.areaGap' },
+                {
+                  pct: Math.round(Math.abs(areaGap) * 100),
+                  direction: areaGap > 0 ? 'more' : 'less',
+                  entered: intl.formatNumber(enteredHectares / HECTARES_PER_ACRE, {
+                    maximumFractionDigits: 1
+                  })
+                }
+              )}
+            </Text>
+          </HStack>
+        )}
+        {overlapped.length > 0 && (
+          <HStack align="start" spacing={2}>
+            <Icon as={FaExclamationTriangle} color="amber.600" mt="3px" aria-hidden />
+            <Text fontSize="sm" color="gray.800">
+              {intl.formatMessage(
+                { id: 'parcel.boundary.overlap' },
+                { names: intl.formatList(overlapped, { type: 'conjunction' }) }
+              )}
+            </Text>
+          </HStack>
+        )}
+
+        {!isValidPolygon() && (
+          <Text fontSize="xs" color="gray.600">
+            {intl.formatMessage({ id: 'parcel.skipBoundary.caption' })}
+          </Text>
+        )}
+
+        {(getPolygonLength() > 0 || polygonHistory.length > 0) && (
+          <HStack spacing={2} pt={1}>
+            <StandardButton
+              size="sm"
+              variant="outline"
+              onClick={undo}
+              isDisabled={polygonHistory.length === 0}>
+              {intl.formatMessage({ id: 'parcel.boundary.undo' })}
+            </StandardButton>
+            {getPolygonLength() > 0 && (
+              <StandardButton
+                size="sm"
+                variant="outline"
+                leftIcon={<FaTrash />}
+                onClick={clearBoundary}>
+                {intl.formatMessage({ id: 'parcel.boundary.clear' })}
+              </StandardButton>
+            )}
+          </HStack>
+        )}
+        {done}
+      </VStack>
+    </Box>
+  );
 
   const goToStep = (stepNumber: number) => {
     setCurrentStep(stepNumber);
@@ -511,7 +669,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
       const finalData = {
         ...data,
         polygon: safePolygon,
-        map_metadata: mapViewRef.current,
+        map_metadata: currentMapView(),
         images: imageUrls,
         // Legacy fields for backend compatibility
         description: data.transparency_description, // Map transparency to legacy description
@@ -613,7 +771,6 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                       name="area"
                       control={methods.control}
                       render={({ field }) => {
-                        const HECTARES_PER_ACRE = 0.404686;
                         const acres = field.value ? field.value / HECTARES_PER_ACRE : 0;
                         return (
                           <>
@@ -719,20 +876,70 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                     <Flex h="400px" align="center" justify="center" bg="gray.100">
                       <Text>{intl.formatMessage({ id: 'parcel.boundary.mapLoading' })}</Text>
                     </Flex>
+                  ) : isFullscreen ? (
+                    // Unmounted while the full-screen editor is open, not just hidden behind
+                    // it: a hidden map still fitted itself to the outline drawn in full screen
+                    // and reported that camera, overwriting where the grower actually was.
+                    <Box h="400px" bg="gray.100" />
                   ) : (
                     <ParcelBoundaryEditor
+                      key={inlineMapKey}
                       path={polygon}
                       onChange={editPolygon}
                       neighbours={otherParcels}
-                      center={mapCenter}
-                      zoom={mapZoom}
-                      onViewChange={(view) => {
-                        mapViewRef.current = view;
-                        setValue('map_metadata', view);
-                      }}
+                      // Re-mounted after full screen: open where the grower left that map.
+                      center={inlineMapKey ? currentMapView().center : mapCenter}
+                      zoom={inlineMapKey ? currentMapView().zoom : mapZoom}
+                      fitOnOpen={inlineMapKey === 0}
+                      onViewChange={onMapViewChange}
                     />
                   )}
                 </Box>
+                {isLoaded && !loadError && (
+                  <StandardButton
+                    variant="outline"
+                    leftIcon={<FaExpand />}
+                    alignSelf="flex-start"
+                    onClick={() => setIsFullscreen(true)}>
+                    {intl.formatMessage({ id: 'parcel.boundary.openFullscreen' })}
+                  </StandardButton>
+                )}
+                {/* Chakra's Modal, not ResponsiveModal: on a phone that is a swipe-to-dismiss
+                    bottom sheet, and here every swipe is meant for the map. */}
+                <Modal
+                  isOpen={isFullscreen}
+                  onClose={closeFullscreen}
+                  size="full"
+                  initialFocusRef={fullscreenDoneRef}>
+                  <ModalOverlay />
+                  <ModalContent
+                    m={0}
+                    h="100dvh"
+                    maxH="100dvh"
+                    borderRadius={0}
+                    aria-label={intl.formatMessage({ id: 'parcel.boundary.stepTitle' })}>
+                    {isFullscreen && (
+                      <ParcelBoundaryEditor
+                        fullscreen
+                        path={polygon}
+                        onChange={editPolygon}
+                        neighbours={otherParcels}
+                        center={currentMapView().center}
+                        zoom={currentMapView().zoom}
+                        fitOnOpen={false}
+                        onViewChange={onMapViewChange}
+                        footer={renderBoundaryStatus(
+                          <StandardButton
+                            ref={fullscreenDoneRef}
+                            onClick={closeFullscreen}
+                            w="full">
+                            {intl.formatMessage({ id: 'parcel.boundary.closeFullscreen' })}
+                          </StandardButton>
+                        )}
+                      />
+                    )}
+                  </ModalContent>
+                </Modal>
 
                 {/* 🔴 2026-08-31 — was "Location Transparency / Geographic boundaries help
                     consumers see exactly where their food comes from, building trust through
@@ -756,67 +963,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                   description={intl.formatMessage({ id: 'parcel.boundary.whyBody' })}
                 />
 
-                {/* One STATUS strip, no second CTA. What used to sit here was a green
-                    "Polygon Points / Valid Polygon" box (jargon, and a `Badge colorScheme`
-                    that the theme ignores) plus a ghost "Continue without boundary" button
-                    that competed with the footer's own Continue for the same destination.
-                    State is reported here; advancing is the footer's single job. */}
-                <Box
-                  p={4}
-                  borderRadius="lg"
-                  bg={
-                    isValidPolygon() ? 'green.50' : getPolygonLength() > 0 ? 'amber.50' : 'gray.50'
-                  }>
-                  <VStack align="start" spacing={2}>
-                    <Text
-                      fontSize="sm"
-                      fontWeight="semibold"
-                      // amber.800/900 over amber.50 measures 2.90:1 / 3.57:1 — both under the
-                      // 4.5 floor for 14px, so the amber tint carries the status and the
-                      // glyphs stay on a dark neutral. The sentence states the state outright,
-                      // so nothing here is signalled by colour alone.
-                      color={isValidPolygon() ? 'green.700' : 'gray.800'}>
-                      {isValidPolygon()
-                        ? intl.formatMessage(
-                            { id: 'parcel.boundary.statusDone' },
-                            { count: getPolygonLength() }
-                          )
-                        : getPolygonLength() > 0
-                        ? intl.formatMessage(
-                            { id: 'parcel.boundary.statusPartial' },
-                            { count: getPolygonLength() }
-                          )
-                        : intl.formatMessage({ id: 'parcel.boundary.statusNone' })}
-                    </Text>
-
-                    {!isValidPolygon() && (
-                      <Text fontSize="xs" color="gray.600">
-                        {intl.formatMessage({ id: 'parcel.skipBoundary.caption' })}
-                      </Text>
-                    )}
-
-                    {(getPolygonLength() > 0 || polygonHistory.length > 0) && (
-                      <HStack spacing={2} pt={1}>
-                        <StandardButton
-                          size="sm"
-                          variant="outline"
-                          onClick={undo}
-                          isDisabled={polygonHistory.length === 0}>
-                          {intl.formatMessage({ id: 'parcel.boundary.undo' })}
-                        </StandardButton>
-                        {getPolygonLength() > 0 && (
-                          <StandardButton
-                            size="sm"
-                            variant="outline"
-                            leftIcon={<FaTrash />}
-                            onClick={clearBoundary}>
-                            {intl.formatMessage({ id: 'parcel.boundary.clear' })}
-                          </StandardButton>
-                        )}
-                      </HStack>
-                    )}
-                  </VStack>
-                </Box>
+                {renderBoundaryStatus()}
 
                 <HStack spacing={3} justify="space-between" pt={4}>
                   <StandardButton

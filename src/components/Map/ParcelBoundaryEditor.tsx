@@ -22,17 +22,27 @@
  *     there, or delete it. That is also the way to move a corner without dragging, which
  *     WCAG 2.2 SC 2.5.7 (Dragging Movements) asks for.
  *   - The whole outline was `draggable`, so one stray drag slid the field off its fences.
+ *
+ * A corner placed within a few pixels of a neighbouring parcel's corner or edge snaps onto it,
+ * so two parcels on one fence share the line. `fullscreen` fills a dialog (the form's
+ * full-screen editor) and lets one finger move the map, which inline would steal the page's
+ * scroll.
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { GoogleMap, Marker, Polygon } from '@react-google-maps/api';
-import { Box, HStack, Text } from '@chakra-ui/react';
+import { Box, Flex, HStack, Text } from '@chakra-ui/react';
 import { FaTrash } from 'react-icons/fa';
 
 import { StandardButton } from 'components/Design';
 import { NEIGHBOUR_OUTLINE } from 'components/Map/neighbourOutline';
 import { ParcelNameLabel } from 'components/Map/ParcelNameLabel';
-import { insertAtNearestEdge, isSelfIntersecting } from 'utils/parcelPolygon';
+import {
+  insertAtNearestEdge,
+  isSelfIntersecting,
+  metresPerPixel,
+  snapToNeighbours
+} from 'utils/parcelPolygon';
 import type { LatLng } from 'utils/parcelPolygon';
 
 // green.500 for a closed outline, orange for one still short of three corners (the same
@@ -71,21 +81,31 @@ const MAX_FIT_ZOOM = 18;
 // The old 13 showed a whole valley, and every grower's first job was to zoom in.
 const FIELD_ZOOM = 16;
 
-const MAP_OPTIONS: google.maps.MapOptions = {
+// How close (in screen pixels, so it feels the same at any zoom) a corner must land to a
+// neighbouring parcel's corner or edge to snap onto it.
+const SNAP_PX = 14;
+
+const mapOptions = (fullscreen: boolean): google.maps.MapOptions => ({
   disableDefaultUI: false,
   zoomControl: true,
   mapTypeControl: true,
   scaleControl: true,
   streetViewControl: false,
   rotateControl: false,
-  fullscreenControl: true,
-  // One finger scrolls the page, two move the map: the editor sits inside a long form.
-  gestureHandling: 'cooperative',
+  // Off: Google's fullscreen shows the bare map, without Undo, Delete corner or the status,
+  // so a grower who used it was left drawing with no way back. The form opens its own full
+  // screen editor, which carries them.
+  fullscreenControl: false,
+  // Inline, one finger scrolls the page and two move the map: the editor sits inside a long
+  // form. Full screen there is no page to scroll, so one finger moves the map.
+  gestureHandling: fullscreen ? 'greedy' : 'cooperative',
   clickableIcons: false,
   mapTypeId: 'satellite',
   // Double-tap would zoom AND add a corner where the grower tapped twice.
   disableDoubleClickZoom: true
-};
+});
+const INLINE_OPTIONS = mapOptions(false);
+const FULLSCREEN_OPTIONS = mapOptions(true);
 
 export interface ParcelBoundaryEditorProps {
   path: LatLng[];
@@ -100,6 +120,15 @@ export interface ParcelBoundaryEditorProps {
   /** The camera after the grower moves it: what `map_metadata` records. */
   onViewChange?: (view: { center: LatLng; zoom: number }) => void;
   height?: string;
+  /**
+   * Fill the parent (a full-screen dialog): the map takes every pixel left after `footer`,
+   * and one finger moves it.
+   */
+  fullscreen?: boolean;
+  /** False to open exactly on `center`/`zoom` (re-opening where the grower just was). */
+  fitOnOpen?: boolean;
+  /** Rendered under the editor's own bars: the full-screen dialog's status and controls. */
+  footer?: React.ReactNode;
 }
 
 export const ParcelBoundaryEditor = ({
@@ -109,11 +138,14 @@ export const ParcelBoundaryEditor = ({
   center,
   zoom,
   onViewChange,
-  height = '400px'
+  height = '400px',
+  fullscreen = false,
+  fitOnOpen = true,
+  footer
 }: ParcelBoundaryEditorProps) => {
   const intl = useIntl();
   const mapRef = useRef<google.maps.Map | null>(null);
-  const fittedRef = useRef(false);
+  const fittedRef = useRef(!fitOnOpen);
   const editedRef = useRef(false);
   // Read once: passed again, `@react-google-maps` would re-apply them on every change.
   const [initialCamera] = useState(() => ({ center, zoom: zoom ?? FIELD_ZOOM }));
@@ -196,9 +228,19 @@ export const ParcelBoundaryEditor = ({
     onViewChange({ center: mapCenter.toJSON(), zoom: map.getZoom() ?? initialCamera.zoom });
   };
 
+  const snap = (point: LatLng) => {
+    if (neighbours.length === 0) return point;
+    const zoomNow = mapRef.current?.getZoom() ?? initialCamera.zoom;
+    return snapToNeighbours(
+      point,
+      neighbours.map((n) => n.path),
+      SNAP_PX * metresPerPixel(point.lat, zoomNow)
+    );
+  };
+
   const onMapClick = (e: google.maps.MapMouseEvent) => {
     if (!e.latLng) return;
-    const point = e.latLng.toJSON();
+    const point = snap(e.latLng.toJSON());
     if (selected !== null) {
       const next = path.map((p, i) => (i === selected ? point : p));
       if (commit(next)) setSelected(null);
@@ -214,69 +256,71 @@ export const ParcelBoundaryEditor = ({
   const colour = path.length >= 3 ? CLOSED : OPEN;
 
   return (
-    <Box>
-      <GoogleMap
-        mapContainerStyle={{ width: '100%', height }}
-        center={initialCamera.center}
-        zoom={initialCamera.zoom}
-        onLoad={onLoad}
-        onIdle={onIdle}
-        onClick={onMapClick}
-        options={MAP_OPTIONS}>
-        {neighbours.map((other) => (
-          <React.Fragment key={other.id}>
-            <Polygon path={other.path} options={NEIGHBOUR_OUTLINE} />
-            <ParcelNameLabel name={other.name} path={other.path} />
-          </React.Fragment>
-        ))}
+    <Flex direction="column" h={fullscreen ? '100%' : undefined}>
+      <Box flex={fullscreen ? '1' : undefined} minH={0}>
+        <GoogleMap
+          mapContainerStyle={{ width: '100%', height: fullscreen ? '100%' : height }}
+          center={initialCamera.center}
+          zoom={initialCamera.zoom}
+          onLoad={onLoad}
+          onIdle={onIdle}
+          onClick={onMapClick}
+          options={fullscreen ? FULLSCREEN_OPTIONS : INLINE_OPTIONS}>
+          {neighbours.map((other) => (
+            <React.Fragment key={other.id}>
+              <Polygon path={other.path} options={NEIGHBOUR_OUTLINE} />
+              <ParcelNameLabel name={other.name} path={other.path} />
+            </React.Fragment>
+          ))}
 
-        {/* Draws only: no handles of its own, not draggable, and a tap inside it reaches the
+          {/* Draws only: no handles of its own, not draggable, and a tap inside it reaches the
             map, so a corner can be added or a selected corner moved there. From two corners,
             so the first edge shows as soon as it exists. */}
-        {drawn.length >= 2 && (
-          <Polygon
-            path={drawn}
-            options={{
-              fillColor: colour,
-              fillOpacity: drawn.length >= 3 ? 0.25 : 0,
-              strokeColor: colour,
-              strokeOpacity: 1,
-              strokeWeight: 3,
-              clickable: false,
-              editable: false,
-              draggable: false,
-              // Above the neighbours' outlines.
-              zIndex: 1
-            }}
-          />
-        )}
+          {drawn.length >= 2 && (
+            <Polygon
+              path={drawn}
+              options={{
+                fillColor: colour,
+                fillOpacity: drawn.length >= 3 ? 0.25 : 0,
+                strokeColor: colour,
+                strokeOpacity: 1,
+                strokeWeight: 3,
+                clickable: false,
+                editable: false,
+                draggable: false,
+                // Above the neighbours' outlines.
+                zIndex: 1
+              }}
+            />
+          )}
 
-        {path.map((point, index) => (
-          <Marker
-            key={`${index}-${revision}`}
-            position={point}
-            title={intl.formatMessage({ id: 'parcel.boundary.cornerTitle' }, { n: index + 1 })}
-            icon={handleIcon(colour, index === selected)}
-            draggable
-            zIndex={index === selected ? 3 : 2}
-            onClick={() => {
-              setRefused(false);
-              setSelected(index === selected ? null : index);
-            }}
-            onDragStart={() => {
-              setSelected(null);
-              setRefused(false);
-            }}
-            onDrag={(e) => e.latLng && setDragPath(withCorner(index, e.latLng.toJSON()))}
-            onDragEnd={(e) => {
-              setDragPath(null);
-              if (!e.latLng || !commit(withCorner(index, e.latLng.toJSON()))) {
-                setRevision((r) => r + 1);
-              }
-            }}
-          />
-        ))}
-      </GoogleMap>
+          {path.map((point, index) => (
+            <Marker
+              key={`${index}-${revision}`}
+              position={point}
+              title={intl.formatMessage({ id: 'parcel.boundary.cornerTitle' }, { n: index + 1 })}
+              icon={handleIcon(colour, index === selected)}
+              draggable
+              zIndex={index === selected ? 3 : 2}
+              onClick={() => {
+                setRefused(false);
+                setSelected(index === selected ? null : index);
+              }}
+              onDragStart={() => {
+                setSelected(null);
+                setRefused(false);
+              }}
+              onDrag={(e) => e.latLng && setDragPath(withCorner(index, snap(e.latLng.toJSON())))}
+              onDragEnd={(e) => {
+                setDragPath(null);
+                if (!e.latLng || !commit(withCorner(index, snap(e.latLng.toJSON())))) {
+                  setRevision((r) => r + 1);
+                }
+              }}
+            />
+          ))}
+        </GoogleMap>
+      </Box>
 
       {selected !== null && (
         <HStack
@@ -314,7 +358,9 @@ export const ParcelBoundaryEditor = ({
           {intl.formatMessage({ id: 'parcel.boundary.crossRefused' })}
         </Text>
       )}
-    </Box>
+
+      {footer}
+    </Flex>
   );
 };
 
