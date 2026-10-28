@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.10.26.1",
+  "content_version": "2026.10.28",
   "registry": {
-    "content_version": "2026.10.26.1",
+    "content_version": "2026.10.28",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -18,11 +18,11 @@
         "education": [
           {
             "en": "Organic fraud is nonorganic product being sold, labeled, or represented as organic. It can happen anywhere in a supply chain, including upstream of your operation. This section identifies where the risk sits in your business and what you do about it.",
-            "es": "El fraude orgánico ocurre cuando un producto no orgánico se vende, etiqueta o representa como orgánico. Puede suceder en cualquier punto de una cadena de suministro, incluso antes de su operación. Esta sección identifica dónde está el riesgo en su negocio y qué hace al respecto."
+            "es": "El fraude orgánico ocurre cuando un producto no orgánico se vende, etiqueta o representa como orgánico. Puede suceder en cualquier punto de una cadena de suministro, incluso antes de tu operación. Esta sección identifica dónde está el riesgo en tu negocio y qué haces al respecto."
           },
           {
             "en": "Your measures must be appropriate to your operation's activities, scope, and complexity — not to someone else's. A grower who sells one crop to one handler has a short, honest answer here, and that is the correct answer. Claiming controls you do not actually run is the failure mode to avoid.",
-            "es": "Sus medidas deben ser apropiadas a las actividades, el alcance y la complejidad de su operación — no a las de otra. Un productor que vende un cultivo a un solo manejador tiene una respuesta breve y honesta aquí, y esa es la respuesta correcta. Declarar controles que en realidad no ejecuta es el error que se debe evitar."
+            "es": "Tus medidas deben ser apropiadas a las actividades, el alcance y la complejidad de tu operación — no a las de otra. Un productor que vende un cultivo a un solo manejador tiene una respuesta breve y honesta aquí, y esa es la respuesta correcta. Declarar controles que en realidad no ejecutas es el error que se debe evitar."
           }
         ],
         "allows_not_applicable": false,
@@ -44,11 +44,11 @@
                 "kind": "checkbox_group",
                 "label": {
                   "en": "Which of these describe your operation?",
-                  "es": "¿Cuáles de estas describen su operación?"
+                  "es": "¿Cuáles de estas describen tu operación?"
                 },
                 "coaching": {
                   "en": "These are the situations where organic fraud most often enters an operation. Selecting several does not count against you — it tells the certifier which mitigations to expect on the next page.",
-                  "es": "Estas son las situaciones por las que el fraude orgánico entra con más frecuencia a una operación. Seleccionar varias no cuenta en su contra — le indica al certificador qué mitigaciones esperar en la página siguiente."
+                  "es": "Estas son las situaciones por las que el fraude orgánico entra con más frecuencia a una operación. Seleccionar varias no cuenta en tu contra — le indica al certificador qué mitigaciones esperar en la página siguiente."
                 },
                 "options": [
                   {
@@ -111,7 +111,7 @@
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
-                      "es": "Otro (describa abajo)"
+                      "es": "Otro (describe abajo)"
                     },
                     "exclusive": false
                   },
@@ -139,7 +139,7 @@
                 "kind": "text",
                 "label": {
                   "en": "Describe the other risk area",
-                  "es": "Describa la otra área de riesgo"
+                  "es": "Describe la otra área de riesgo"
                 },
                 "coaching": null,
                 "options": [],
@@ -175,7 +175,7 @@
                 "kind": "checkbox_group",
                 "label": {
                   "en": "Which practices do you use to prevent organic fraud?",
-                  "es": "¿Qué prácticas usa para prevenir el fraude orgánico?"
+                  "es": "¿Qué prácticas usas para prevenir el fraude orgánico?"
                 },
                 "coaching": null,
                 "options": [
@@ -271,7 +271,7 @@
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
-                      "es": "Otra (describa abajo)"
+                      "es": "Otra (describe abajo)"
                     },
                     "exclusive": false
                   }
@@ -316,7 +316,7 @@
                 "kind": "text",
                 "label": {
                   "en": "Describe the other practice",
-                  "es": "Describa la otra práctica"
+                  "es": "Describe la otra práctica"
                 },
                 "coaching": null,
                 "options": [],
@@ -341,11 +341,11 @@
                 "kind": "textarea",
                 "label": {
                   "en": "How do you review your risks and check that these measures are working?",
-                  "es": "¿Cómo revisa sus riesgos y comprueba que estas medidas funcionan?"
+                  "es": "¿Cómo revisas tus riesgos y compruebas que estas medidas funcionan?"
                 },
                 "coaching": {
                   "en": "Say who does the review, when it happens, and what would make you change something — for example a new buyer, a new custom operator, or a supplier whose certificate lapsed.",
-                  "es": "Indique quién hace la revisión, cuándo ocurre y qué le haría cambiar algo — por ejemplo un comprador nuevo, un nuevo operador por contrato, o un proveedor cuyo certificado venció."
+                  "es": "Indica quién hace la revisión, cuándo ocurre y qué te haría cambiar algo — por ejemplo un comprador nuevo, un nuevo operador por contrato, o un proveedor cuyo certificado venció."
                 },
                 "options": [],
                 "required": true,
@@ -363,11 +363,11 @@
                 "kind": "upload",
                 "label": {
                   "en": "Attach a written fraud prevention plan, if you keep one separately",
-                  "es": "Adjunte un plan escrito de prevención del fraude, si mantiene uno por separado"
+                  "es": "Adjunta un plan escrito de prevención del fraude, si mantienes uno por separado"
                 },
                 "coaching": {
                   "en": "Optional — your answers above already form the plan. Attach a document only if you maintain one, for instance because a buyer requires their own template.",
-                  "es": "Opcional — sus respuestas anteriores ya constituyen el plan. Adjunte un documento solo si mantiene uno, por ejemplo porque un comprador exige su propia plantilla."
+                  "es": "Opcional — tus respuestas anteriores ya constituyen el plan. Adjunta un documento solo si mantienes uno, por ejemplo porque un comprador exige su propia plantilla."
                 },
                 "options": [],
                 "required": false,
@@ -391,7 +391,7 @@
             "education": [
               {
                 "en": "An OSP describes what your operation actually does. When a practice changes, the plan has to change with it — a plan that no longer matches the operation is itself a compliance problem, and it is one inspectors find quickly.",
-                "es": "Un OSP describe lo que su operación realmente hace. Cuando una práctica cambia, el plan debe cambiar con ella — un plan que ya no coincide con la operación es en sí mismo un problema de cumplimiento, y es uno que los inspectores detectan rápido."
+                "es": "Un OSP describe lo que tu operación realmente hace. Cuando una práctica cambia, el plan debe cambiar con ella — un plan que ya no coincide con la operación es en sí mismo un problema de cumplimiento, y es uno que los inspectores detectan rápido."
               }
             ],
             "visible_when": [],
@@ -401,7 +401,7 @@
                 "kind": "checkbox_group",
                 "label": {
                   "en": "When do you review and update this plan?",
-                  "es": "¿Cuándo revisa y actualiza este plan?"
+                  "es": "¿Cuándo revisas y actualizas este plan?"
                 },
                 "coaching": null,
                 "options": [
@@ -433,7 +433,7 @@
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
-                      "es": "Otro (describa abajo)"
+                      "es": "Otro (describe abajo)"
                     },
                     "exclusive": false
                   }
@@ -453,7 +453,7 @@
                 "kind": "text",
                 "label": {
                   "en": "Describe the other schedule",
-                  "es": "Describa el otro calendario"
+                  "es": "Describe el otro calendario"
                 },
                 "coaching": null,
                 "options": [],
@@ -482,7 +482,7 @@
                 },
                 "coaching": {
                   "en": "Name the person responsible and how a change on the ground reaches the plan — for instance, the crew logs a new input in Trazo and the owner reviews the inputs list before renewal.",
-                  "es": "Nombre a la persona responsable y cómo un cambio en el campo llega al plan — por ejemplo, la cuadrilla registra un insumo nuevo en Trazo y el propietario revisa la lista de insumos antes de la renovación."
+                  "es": "Nombra a la persona responsable y cómo un cambio en el campo llega al plan — por ejemplo, la cuadrilla registra un insumo nuevo en Trazo y el propietario revisa la lista de insumos antes de la renovación."
                 },
                 "options": [],
                 "required": true,
@@ -500,7 +500,7 @@
                 "kind": "checkbox_group",
                 "label": {
                   "en": "How do you verify that the practices described in this plan are actually being followed?",
-                  "es": "¿Cómo verifica que las prácticas descritas en este plan realmente se cumplen?"
+                  "es": "¿Cómo verificas que las prácticas descritas en este plan realmente se cumplen?"
                 },
                 "coaching": null,
                 "options": [
@@ -540,7 +540,7 @@
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
-                      "es": "Otro (describa abajo)"
+                      "es": "Otro (describe abajo)"
                     },
                     "exclusive": false
                   }
@@ -560,7 +560,7 @@
                 "kind": "text",
                 "label": {
                   "en": "Describe the other method",
-                  "es": "Describa el otro método"
+                  "es": "Describe el otro método"
                 },
                 "coaching": null,
                 "options": [],
@@ -614,7 +614,7 @@
             "key": "a_usage",
             "title": {
               "en": "A. What you plant",
-              "es": "A. Qué siembra"
+              "es": "A. Qué siembras"
             },
             "education": [],
             "visible_when": [],
@@ -628,7 +628,7 @@
                 },
                 "coaching": {
                   "en": "Count seed as \"with treatment\" if it is fungicide- or insecticide-treated, or carries any material that remains on the seed when planted (inoculants, pelleting, coating, priming or encrusting materials).",
-                  "es": "Considere la semilla \"con tratamiento\" si está tratada con fungicida o insecticida, o lleva cualquier material que permanece en la semilla al sembrar (inoculantes, peletizado, recubrimiento, priming o incrustación)."
+                  "es": "Considera la semilla \"con tratamiento\" si está tratada con fungicida o insecticida, o lleva cualquier material que permanece en la semilla al sembrar (inoculantes, peletizado, recubrimiento, priming o incrustación)."
                 },
                 "options": [
                   {
@@ -789,7 +789,7 @@
             "education": [
               {
                 "en": "Commercial availability means the ability to obtain seed or planting stock in the appropriate form, quality, or quantity for your operation (§ 205.2). Price is not a permitted consideration. An equivalent organic variety is one of the same type or with the agronomic and marketing characteristics your site requires — days to harvest, disease resistance, regional adaptation, flavor, yield.",
-                "es": "Disponibilidad comercial significa poder obtener semilla o material de plantación en la forma, calidad o cantidad apropiada para su operación (§ 205.2). El precio no es un criterio permitido. Una variedad orgánica equivalente es una del mismo tipo o con las características agronómicas y de mercado que su sitio requiere — días a cosecha, resistencia a enfermedades, adaptación regional, sabor, rendimiento."
+                "es": "Disponibilidad comercial significa poder obtener semilla o material de plantación en la forma, calidad o cantidad apropiada para tu operación (§ 205.2). El precio no es un criterio permitido. Una variedad orgánica equivalente es una del mismo tipo o con las características agronómicas y de mercado que tu sitio requiere — días a cosecha, resistencia a enfermedades, adaptación regional, sabor, rendimiento."
               }
             ],
             "visible_when": [
@@ -808,11 +808,11 @@
                 "kind": "radio",
                 "label": {
                   "en": "Before using non-organic seed or planting stock, do you document a search for an equivalent organic variety?",
-                  "es": "Antes de usar semilla o material no orgánico, ¿documenta una búsqueda de una variedad orgánica equivalente?"
+                  "es": "Antes de usar semilla o material no orgánico, ¿documentas una búsqueda de una variedad orgánica equivalente?"
                 },
                 "coaching": {
                   "en": "Document at least three sources known to offer organic seed for each crop, with the site-specific form/quality/quantity reasons an organic equivalent did not meet. Trazo's Seed Search activity records each attempt for you.",
-                  "es": "Documente al menos tres fuentes conocidas de semilla orgánica por cultivo, con las razones específicas de forma/calidad/cantidad por las que un equivalente orgánico no cumplió. La actividad Búsqueda de Semilla de Trazo registra cada intento."
+                  "es": "Documenta al menos tres fuentes conocidas de semilla orgánica por cultivo, con las razones específicas de forma/calidad/cantidad por las que un equivalente orgánico no cumplió. La actividad Búsqueda de Semilla de Trazo registra cada intento."
                 },
                 "options": [
                   {
@@ -874,7 +874,7 @@
                 "kind": "checkbox_group",
                 "label": {
                   "en": "How do you document that non-organic seed and planting stock are not genetically modified?",
-                  "es": "¿Cómo documenta que la semilla y el material no orgánicos no son genéticamente modificados?"
+                  "es": "¿Cómo documentas que la semilla y el material no orgánicos no son genéticamente modificados?"
                 },
                 "coaching": null,
                 "options": [
@@ -932,7 +932,7 @@
             "education": [
               {
                 "en": "Any material on or applied to seed — pelleting, coating, priming, inoculants, fungicides — must be allowed under the National List and approved for your operation before use (§ 205.105, § 205.601).",
-                "es": "Todo material sobre la semilla o aplicado a ella — peletizado, recubrimiento, priming, inoculantes, fungicidas — debe estar permitido por la Lista Nacional y aprobado para su operación antes de usarse (§ 205.105, § 205.601)."
+                "es": "Todo material sobre la semilla o aplicado a ella — peletizado, recubrimiento, priming, inoculantes, fungicidas — debe estar permitido por la Lista Nacional y aprobado para tu operación antes de usarse (§ 205.105, § 205.601)."
               }
             ],
             "visible_when": [
@@ -951,7 +951,7 @@
                 "kind": "checkbox_group",
                 "label": {
                   "en": "How do you verify that seed treatments use only allowed, non-GMO materials?",
-                  "es": "¿Cómo verifica que los tratamientos de semilla usan solo materiales permitidos y no transgénicos?"
+                  "es": "¿Cómo verificas que los tratamientos de semilla usan solo materiales permitidos y no transgénicos?"
                 },
                 "coaching": null,
                 "options": [
@@ -987,7 +987,7 @@
                 "kind": "boolean",
                 "label": {
                   "en": "Are all seed treatment materials included on your OSP inputs list?",
-                  "es": "¿Todos los materiales de tratamiento de semilla están en su lista de insumos del OSP?"
+                  "es": "¿Todos los materiales de tratamiento de semilla están en tu lista de insumos del OSP?"
                 },
                 "coaching": null,
                 "options": [],
@@ -1026,11 +1026,11 @@
                 "kind": "radio",
                 "label": {
                   "en": "Does your operation graft planting stock?",
-                  "es": "¿Su operación injerta material de plantación?"
+                  "es": "¿Tu operación injerta material de plantación?"
                 },
                 "coaching": {
                   "en": "If yes, grafting materials (wax, sealants, tape) must appear on your OSP inputs list.",
-                  "es": "Si es así, los materiales de injerto (cera, selladores, cinta) deben aparecer en su lista de insumos del OSP."
+                  "es": "Si es así, los materiales de injerto (cera, selladores, cinta) deben aparecer en tu lista de insumos del OSP."
                 },
                 "options": [
                   {
@@ -1102,7 +1102,7 @@
                 "kind": "textarea",
                 "label": {
                   "en": "Describe where annual seedlings come from (own greenhouse, certified supplier) and how their organic status is documented.",
-                  "es": "Describa de dónde provienen las plántulas anuales (invernadero propio, proveedor certificado) y cómo se documenta su estado orgánico."
+                  "es": "Describe de dónde provienen las plántulas anuales (invernadero propio, proveedor certificado) y cómo se documenta su estado orgánico."
                 },
                 "coaching": null,
                 "options": [],
@@ -1121,7 +1121,7 @@
                 "kind": "upload",
                 "label": {
                   "en": "Attach supplier organic certificates for purchased seedlings.",
-                  "es": "Adjunte certificados orgánicos del proveedor para plántulas compradas."
+                  "es": "Adjunta certificados orgánicos del proveedor para plántulas compradas."
                 },
                 "coaching": null,
                 "options": [],
@@ -1155,7 +1155,7 @@
         "education": [
           {
             "en": "Organic planting stock must be used when it is commercially available. Nonorganic perennial planting stock may be used when an organic equivalent cannot be sourced in the variety, rootstock, quantity, or quality you need — but you must be able to show the search you did before buying it (§ 205.204(a)(1)).",
-            "es": "Debe usarse material de plantación orgánico cuando esté comercialmente disponible. Puede usarse material de plantación perenne no orgánico cuando no se consiga un equivalente orgánico en la variedad, portainjerto, cantidad o calidad que necesita — pero debe poder demostrar la búsqueda que hizo antes de comprarlo (§ 205.204(a)(1))."
+            "es": "Debe usarse material de plantación orgánico cuando esté comercialmente disponible. Puede usarse material de plantación perenne no orgánico cuando no se consiga un equivalente orgánico en la variedad, portainjerto, cantidad o calidad que necesitas — pero debes poder demostrar la búsqueda que hiciste antes de comprarlo (§ 205.204(a)(1))."
           },
           {
             "en": "Two different clocks apply, and they are often confused. Selling the PLANTING STOCK itself as organic requires at least one year of organic management first (§ 205.204(a)(4)). Selling the CROP those plants produce as organic depends on the land requirement instead — 36 months free of prohibited substances (§ 205.202). Trees bought nonorganic and planted on compliant land can bear an organic crop; the trees themselves are not organic stock until the year has passed.",
@@ -1179,7 +1179,7 @@
             "education": [
               {
                 "en": "Include new blocks, interplants, and replacement trees or vines. Replants into an existing organic block still count as planting stock entering your operation.",
-                "es": "Incluya bloques nuevos, plantas intercaladas y árboles o vides de reemplazo. Los replantes en un bloque orgánico existente también cuentan como material de plantación que entra a su operación."
+                "es": "Incluye bloques nuevos, plantas intercaladas y árboles o vides de reemplazo. Los replantes en un bloque orgánico existente también cuentan como material de plantación que entra a tu operación."
               }
             ],
             "visible_when": [],
@@ -1189,7 +1189,7 @@
                 "kind": "checkbox_group",
                 "label": {
                   "en": "What forms of perennial planting stock has your operation established?",
-                  "es": "¿Qué formas de material de plantación perenne ha establecido su operación?"
+                  "es": "¿Qué formas de material de plantación perenne ha establecido tu operación?"
                 },
                 "coaching": null,
                 "options": [
@@ -1297,7 +1297,7 @@
                 },
                 "coaching": {
                   "en": "Name the nursery or supplier for each lot, the species, variety and rootstock, the parcel or block it went into, and the planting date. An inspector traces a tree in the field back to an invoice through exactly these details.",
-                  "es": "Nombre el vivero o proveedor de cada lote, la especie, variedad y portainjerto, la parcela o bloque donde se plantó, y la fecha de plantación. Un inspector rastrea un árbol en el campo hasta una factura precisamente con estos datos."
+                  "es": "Nombra el vivero o proveedor de cada lote, la especie, variedad y portainjerto, la parcela o bloque donde se plantó, y la fecha de plantación. Un inspector rastrea un árbol en el campo hasta una factura precisamente con estos datos."
                 },
                 "options": [],
                 "required": true,
@@ -1315,7 +1315,7 @@
                 "kind": "boolean",
                 "label": {
                   "en": "Are all planting stock suppliers entered on your Supplier List?",
-                  "es": "¿Todos los proveedores de material de plantación están en su Lista de Proveedores?"
+                  "es": "¿Todos los proveedores de material de plantación están en tu Lista de Proveedores?"
                 },
                 "coaching": {
                   "en": "The Common OSP requires every supplier of seeds, seedlings, and planting stock on the Supplier List attachment, with the certifier named for certified suppliers.",
@@ -1343,7 +1343,7 @@
             "education": [
               {
                 "en": "Nonorganic planting stock is allowed only when an organic equivalent is not commercially available. Commercial availability covers form, quality and quantity — an organic rootstock that exists but cannot be supplied in the quantity or timeframe your planting requires is not commercially available to you, provided you can show the search.",
-                "es": "El material de plantación no orgánico se permite solo cuando no hay un equivalente orgánico comercialmente disponible. La disponibilidad comercial cubre forma, calidad y cantidad — un portainjerto orgánico que existe pero no puede suministrarse en la cantidad o el plazo que su plantación requiere no está comercialmente disponible para usted, siempre que pueda demostrar la búsqueda."
+                "es": "El material de plantación no orgánico se permite solo cuando no hay un equivalente orgánico comercialmente disponible. La disponibilidad comercial cubre forma, calidad y cantidad — un portainjerto orgánico que existe pero no puede suministrarse en la cantidad o el plazo que tu plantación requiere no está comercialmente disponible para ti, siempre que puedas demostrar la búsqueda."
               }
             ],
             "visible_when": [
@@ -1418,7 +1418,7 @@
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
-                      "es": "Otra (describa abajo)"
+                      "es": "Otra (describe abajo)"
                     },
                     "exclusive": false
                   }
@@ -1438,7 +1438,7 @@
                 "kind": "text",
                 "label": {
                   "en": "Describe the other reason",
-                  "es": "Describa la otra razón"
+                  "es": "Describe la otra razón"
                 },
                 "coaching": null,
                 "options": [],
@@ -1463,11 +1463,11 @@
                 "kind": "checkbox_group",
                 "label": {
                   "en": "What records show the search you did before buying nonorganic stock?",
-                  "es": "¿Qué registros demuestran la búsqueda que hizo antes de comprar material no orgánico?"
+                  "es": "¿Qué registros demuestran la búsqueda que hiciste antes de comprar material no orgánico?"
                 },
                 "coaching": {
                   "en": "Certifiers generally expect contact with at least three sources. Keep the supplier name, the date, and what they said — a quote showing the organic option was unavailable is stronger than a note saying you looked.",
-                  "es": "Los certificadores generalmente esperan contacto con al menos tres fuentes. Conserve el nombre del proveedor, la fecha y lo que respondieron — una cotización que muestre que la opción orgánica no estaba disponible es más sólida que una nota diciendo que buscó."
+                  "es": "Los certificadores generalmente esperan contacto con al menos tres fuentes. Conserva el nombre del proveedor, la fecha y lo que respondieron — una cotización que muestre que la opción orgánica no estaba disponible es más sólida que una nota diciendo que buscaste."
                 },
                 "options": [
                   {
@@ -1538,7 +1538,7 @@
                 },
                 "coaching": {
                   "en": "Nursery stock is frequently shipped with a fungicide dip, wax, root gel, or growth regulator. Ask the nursery in writing — \"none that I know of\" is not a record.",
-                  "es": "El material de vivero se envía con frecuencia con un baño fungicida, cera, gel radicular o regulador de crecimiento. Pregunte al vivero por escrito — \"ninguno que yo sepa\" no es un registro."
+                  "es": "El material de vivero se envía con frecuencia con un baño fungicida, cera, gel radicular o regulador de crecimiento. Pregunta al vivero por escrito — \"ninguno que yo sepa\" no es un registro."
                 },
                 "options": [
                   {
@@ -1587,7 +1587,7 @@
             "education": [
               {
                 "en": "This page is only about selling the plants themselves. If you sell only the crop — nuts, fruit, or grapes — and never sell trees, vines, rootstock, or cuttings, answer that you do not sell planting stock and the one-year rule does not apply to you.",
-                "es": "Esta página trata únicamente de vender las plantas mismas. Si vende solo el cultivo — nueces, fruta o uvas — y nunca vende árboles, vides, portainjertos o estacas, responda que no vende material de plantación y la regla de un año no le aplica."
+                "es": "Esta página trata únicamente de vender las plantas mismas. Si vendes solo el cultivo — nueces, fruta o uvas — y nunca vendes árboles, vides, portainjertos o estacas, responde que no vendes material de plantación y la regla de un año no te aplica."
               }
             ],
             "visible_when": [],
@@ -1597,7 +1597,7 @@
                 "kind": "radio",
                 "label": {
                   "en": "Does your operation sell, or plan to sell, perennial planting stock as organic?",
-                  "es": "¿Su operación vende, o planea vender, material de plantación perenne como orgánico?"
+                  "es": "¿Tu operación vende, o planea vender, material de plantación perenne como orgánico?"
                 },
                 "coaching": null,
                 "options": [
@@ -1661,7 +1661,7 @@
                 "kind": "boolean",
                 "label": {
                   "en": "Do you confirm that no planting stock is sold or labeled as organic until it has been under organic management for at least 12 months?",
-                  "es": "¿Confirma que ningún material de plantación se vende ni se etiqueta como orgánico hasta haber estado bajo manejo orgánico por al menos 12 meses?"
+                  "es": "¿Confirmas que ningún material de plantación se vende ni se etiqueta como orgánico hasta haber estado bajo manejo orgánico por al menos 12 meses?"
                 },
                 "coaching": null,
                 "options": [],
@@ -1697,7 +1697,7 @@
                 "kind": "checkbox_group",
                 "label": {
                   "en": "Which planting stock records do you keep on file?",
-                  "es": "¿Qué registros de material de plantación conserva en archivo?"
+                  "es": "¿Qué registros de material de plantación conservas en archivo?"
                 },
                 "coaching": null,
                 "options": [
@@ -1765,7 +1765,7 @@
                 "kind": "upload",
                 "label": {
                   "en": "Attach invoices, supplier certificates, or commercial availability search records",
-                  "es": "Adjunte facturas, certificados de proveedor o registros de búsqueda de disponibilidad comercial"
+                  "es": "Adjunta facturas, certificados de proveedor o registros de búsqueda de disponibilidad comercial"
                 },
                 "coaching": null,
                 "options": [],
@@ -1815,7 +1815,7 @@
             "education": [
               {
                 "en": "Annual systems: describe the planned sequence of plant families, cover crops, and fallow periods, and the length of the full rotation. Perennial and container systems: § 205.205 is met through practices that introduce biological diversity in lieu of rotation — ground covers, alley cropping, intercropping, hedgerows.",
-                "es": "Sistemas anuales: describa la secuencia planificada de familias vegetales, cultivos de cobertura y períodos de barbecho, y la duración de la rotación completa. Sistemas perennes y en contenedor: § 205.205 se cumple con prácticas que introducen diversidad biológica en lugar de rotación — coberturas, cultivos en callejones, intercultivos, cercos vivos."
+                "es": "Sistemas anuales: describe la secuencia planificada de familias vegetales, cultivos de cobertura y períodos de barbecho, y la duración de la rotación completa. Sistemas perennes y en contenedor: § 205.205 se cumple con prácticas que introducen diversidad biológica en lugar de rotación — coberturas, cultivos en callejones, intercultivos, cercos vivos."
               }
             ],
             "visible_when": [],
@@ -1869,11 +1869,11 @@
                 "kind": "textarea",
                 "label": {
                   "en": "Describe your crop rotation plan for annual crops",
-                  "es": "Describa su plan de rotación para cultivos anuales"
+                  "es": "Describe tu plan de rotación para cultivos anuales"
                 },
                 "coaching": {
                   "en": "Include the sequence of plant families, cover crops and fallow periods, the length of each stage, and the total time to complete the rotation.",
-                  "es": "Incluya la secuencia de familias vegetales, cultivos de cobertura y barbechos, la duración de cada etapa y el tiempo total de la rotación."
+                  "es": "Incluye la secuencia de familias vegetales, cultivos de cobertura y barbechos, la duración de cada etapa y el tiempo total de la rotación."
                 },
                 "options": [],
                 "required": true,
@@ -1945,7 +1945,7 @@
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
-                      "es": "Otra (describa abajo)"
+                      "es": "Otra (describe abajo)"
                     },
                     "exclusive": false
                   }
@@ -1973,7 +1973,7 @@
                 "kind": "text",
                 "label": {
                   "en": "Describe the other practice",
-                  "es": "Describa la otra práctica"
+                  "es": "Describe la otra práctica"
                 },
                 "coaching": null,
                 "options": [],
@@ -2009,7 +2009,7 @@
                 "kind": "checkbox_group",
                 "label": {
                   "en": "Major components of your soil fertility and crop nutrient plan",
-                  "es": "Componentes principales de su plan de fertilidad y nutrición"
+                  "es": "Componentes principales de tu plan de fertilidad y nutrición"
                 },
                 "coaching": null,
                 "options": [
@@ -2119,7 +2119,7 @@
                 "kind": "boolean",
                 "label": {
                   "en": "Are all fertility materials you apply included on your OSP inputs list?",
-                  "es": "¿Todos los materiales de fertilidad que aplica están en su lista de insumos del OSP?"
+                  "es": "¿Todos los materiales de fertilidad que aplicas están en tu lista de insumos del OSP?"
                 },
                 "coaching": null,
                 "options": [],
@@ -2138,11 +2138,11 @@
                 "kind": "textarea",
                 "label": {
                   "en": "Describe your tillage and cultivation practices in season order",
-                  "es": "Describa sus prácticas de labranza y cultivo en orden de temporada"
+                  "es": "Describe tus prácticas de labranza y cultivo en orden de temporada"
                 },
                 "coaching": {
                   "en": "Explain how each practice maintains or improves soil condition and minimizes erosion (§ 205.203(a)).",
-                  "es": "Explique cómo cada práctica mantiene o mejora la condición del suelo y minimiza la erosión (§ 205.203(a))."
+                  "es": "Explica cómo cada práctica mantiene o mejora la condición del suelo y minimiza la erosión (§ 205.203(a))."
                 },
                 "options": [],
                 "required": true,
@@ -2173,7 +2173,7 @@
                 "kind": "checkbox_group",
                 "label": {
                   "en": "How do you monitor the effectiveness of your fertility plan?",
-                  "es": "¿Cómo monitorea la eficacia de su plan de fertilidad?"
+                  "es": "¿Cómo monitoreas la eficacia de tu plan de fertilidad?"
                 },
                 "coaching": null,
                 "options": [
@@ -2233,7 +2233,7 @@
                 "kind": "radio",
                 "label": {
                   "en": "How often is monitoring performed?",
-                  "es": "¿Con qué frecuencia monitorea?"
+                  "es": "¿Con qué frecuencia monitoreas?"
                 },
                 "coaching": null,
                 "options": [
@@ -2427,7 +2427,7 @@
             "key": "a_materials",
             "title": {
               "en": "A. What you apply",
-              "es": "A. Qué aplica"
+              "es": "A. Qué aplicas"
             },
             "education": [],
             "visible_when": [],
@@ -2437,7 +2437,7 @@
                 "kind": "checkbox_group",
                 "label": {
                   "en": "Which compost, manure, or animal-based soil inputs do you apply?",
-                  "es": "¿Qué insumos de compost, estiércol o de origen animal aplica?"
+                  "es": "¿Qué insumos de compost, estiércol o de origen animal aplicas?"
                 },
                 "coaching": {
                   "en": "Processed manure products means manure that has been pelleted, heat-treated, or otherwise processed by a manufacturer — for example, commercial pelleted poultry manure — rather than applied raw or composted on this operation.",
@@ -2544,7 +2544,7 @@
                 },
                 "coaching": {
                   "en": "Choose the rule that matches how the manure is actually used — it sets the minimum number of days between application and harvest.",
-                  "es": "Elija la regla que corresponde al uso real del estiércol — determina el número mínimo de días entre la aplicación y la cosecha."
+                  "es": "Elige la regla que corresponde al uso real del estiércol — determina el número mínimo de días entre la aplicación y la cosecha."
                 },
                 "options": [
                   {
@@ -2587,11 +2587,11 @@
                 "kind": "text",
                 "label": {
                   "en": "Describe your typical raw manure application timing",
-                  "es": "Describa el momento típico de aplicación de estiércol crudo"
+                  "es": "Describe el momento típico de aplicación de estiércol crudo"
                 },
                 "coaching": {
                   "en": "Note the crop, the season you apply, and how many days before harvest — Trazo's soil and input events carry the application and harvest dates that prove this interval.",
-                  "es": "Indique el cultivo, la temporada de aplicación y cuántos días antes de la cosecha — los eventos de suelo e insumos de Trazo registran las fechas de aplicación y cosecha que demuestran este intervalo."
+                  "es": "Indica el cultivo, la temporada de aplicación y cuántos días antes de la cosecha — los eventos de suelo e insumos de Trazo registran las fechas de aplicación y cosecha que demuestran este intervalo."
                 },
                 "options": [],
                 "required": true,
@@ -2613,7 +2613,7 @@
                 },
                 "coaching": {
                   "en": "Manure bought in or hauled from another operation may have been treated with a prohibited substance before it reached you. Say where it comes from; a purchased source is asked for a label or supplier statement below.",
-                  "es": "El estiércol comprado o traído de otra operación puede haber sido tratado con una sustancia prohibida antes de llegar a usted. Indique su origen; para una fuente comprada se pide abajo una etiqueta o declaración del proveedor."
+                  "es": "El estiércol comprado o traído de otra operación puede haber sido tratado con una sustancia prohibida antes de llegar a ti. Indica su origen; para una fuente comprada se pide abajo una etiqueta o declaración del proveedor."
                 },
                 "options": [
                   {
@@ -2662,7 +2662,7 @@
                 "kind": "boolean",
                 "label": {
                   "en": "For manure brought in from off the operation, is a product label or supplier statement on file confirming it has not been treated with prohibited substances?",
-                  "es": "Para el estiércol traído de fuera de la operación, ¿tiene archivada una etiqueta del producto o una declaración del proveedor que confirme que no fue tratado con sustancias prohibidas?"
+                  "es": "Para el estiércol traído de fuera de la operación, ¿tienes archivada una etiqueta del producto o una declaración del proveedor que confirme que no fue tratado con sustancias prohibidas?"
                 },
                 "coaching": null,
                 "options": [],
@@ -2695,7 +2695,7 @@
                 "kind": "textarea",
                 "label": {
                   "en": "How do you prevent raw manure from contaminating water sources (runoff, wells, waterways)?",
-                  "es": "¿Cómo evita que el estiércol crudo contamine fuentes de agua (escorrentía, pozos, cauces)?"
+                  "es": "¿Cómo evitas que el estiércol crudo contamine fuentes de agua (escorrentía, pozos, cauces)?"
                 },
                 "coaching": null,
                 "options": [],
@@ -2730,7 +2730,7 @@
               },
               {
                 "en": "Vermicompost and purchased compost are held to the same standard. If a vermicomposting process does not reach these time/temperature thresholds and the feedstock includes animal manure, it is treated as raw manure and the interval rule on the previous page applies instead. For purchased compost, the supplier's documentation stands in for your own production records.",
-                "es": "El vermicompost y el compost comprado se rigen por el mismo estándar. Si un proceso de vermicompostaje no alcanza estos umbrales de tiempo/temperatura y la materia prima incluye estiércol animal, se trata como estiércol crudo y aplica la regla de intervalo de la página anterior. Para el compost comprado, la documentación del proveedor sustituye sus propios registros de producción."
+                "es": "El vermicompost y el compost comprado se rigen por el mismo estándar. Si un proceso de vermicompostaje no alcanza estos umbrales de tiempo/temperatura y la materia prima incluye estiércol animal, se trata como estiércol crudo y aplica la regla de intervalo de la página anterior. Para el compost comprado, la documentación del proveedor sustituye tus propios registros de producción."
               }
             ],
             "visible_when": [
@@ -2750,7 +2750,7 @@
                 "kind": "radio",
                 "label": {
                   "en": "Which compost production method do you use?",
-                  "es": "¿Qué método de producción de compost utiliza?"
+                  "es": "¿Qué método de producción de compost utilizas?"
                 },
                 "coaching": null,
                 "options": [
@@ -2811,7 +2811,7 @@
                 "kind": "text",
                 "label": {
                   "en": "What was the initial carbon:nitrogen (C:N) ratio of your feedstock?",
-                  "es": "¿Cuál fue la relación carbono:nitrógeno (C:N) inicial de su materia prima?"
+                  "es": "¿Cuál fue la relación carbono:nitrógeno (C:N) inicial de tu materia prima?"
                 },
                 "coaching": {
                   "en": "Compost must start with a C:N ratio between 25:1 and 40:1 (§ 205.203(c)(2)).",
@@ -2937,11 +2937,11 @@
                 "kind": "boolean",
                 "label": {
                   "en": "Do you keep temperature logs for each compost batch?",
-                  "es": "¿Conserva registros de temperatura de cada lote de compost?"
+                  "es": "¿Conservas registros de temperatura de cada lote de compost?"
                 },
                 "coaching": {
                   "en": "Temperature logs are the certifier's evidence that a batch met the time/temperature standard — keep one dated log per batch with readings through the full holding period.",
-                  "es": "Los registros de temperatura son la evidencia del certificador de que un lote cumplió el estándar de tiempo/temperatura — conserve un registro fechado por lote con lecturas durante todo el período de retención."
+                  "es": "Los registros de temperatura son la evidencia del certificador de que un lote cumplió el estándar de tiempo/temperatura — conserva un registro fechado por lote con lecturas durante todo el período de retención."
                 },
                 "options": [],
                 "required": true,
@@ -2968,11 +2968,11 @@
                 "kind": "boolean",
                 "label": {
                   "en": "Do you keep supplier documentation (process description and/or analysis) for purchased compost on file?",
-                  "es": "¿Conserva la documentación del proveedor (descripción del proceso y/o análisis) del compost comprado?"
+                  "es": "¿Conservas la documentación del proveedor (descripción del proceso y/o análisis) del compost comprado?"
                 },
                 "coaching": {
                   "en": "Ask the supplier for a written description of their composting process (feedstocks, C:N ratio, time/temperature record) or a lab analysis, so the certifier can confirm the product meets § 205.2 without inspecting the supplier's site.",
-                  "es": "Solicite al proveedor una descripción escrita de su proceso de compostaje (materia prima, relación C:N, registro de tiempo/temperatura) o un análisis de laboratorio, para que el certificador pueda confirmar que el producto cumple con § 205.2 sin inspeccionar el sitio del proveedor."
+                  "es": "Solicita al proveedor una descripción escrita de su proceso de compostaje (materia prima, relación C:N, registro de tiempo/temperatura) o un análisis de laboratorio, para que el certificador pueda confirmar que el producto cumple con § 205.2 sin inspeccionar el sitio del proveedor."
                 },
                 "options": [],
                 "required": true,
@@ -3000,7 +3000,7 @@
                 },
                 "coaching": {
                   "en": "Attach the process description or lab analysis from your compost supplier.",
-                  "es": "Adjunte la descripción del proceso o el análisis de laboratorio de su proveedor de compost."
+                  "es": "Adjunta la descripción del proceso o el análisis de laboratorio de tu proveedor de compost."
                 },
                 "options": [],
                 "required": false,
@@ -3059,7 +3059,7 @@
             "education": [
               {
                 "en": "Document the conservation and biodiversity practices actually implemented on this operation, not practices that are only planned. These practices are the evidence that production activities maintain or improve the natural resources of the operation (§ 205.200).",
-                "es": "Documente las prácticas de conservación y biodiversidad que realmente están implementadas en esta operación, no las que solo están planificadas. Estas prácticas son la evidencia de que las actividades de producción mantienen o mejoran los recursos naturales de la operación (§ 205.200)."
+                "es": "Documenta las prácticas de conservación y biodiversidad que realmente están implementadas en esta operación, no las que solo están planificadas. Estas prácticas son la evidencia de que las actividades de producción mantienen o mejoran los recursos naturales de la operación (§ 205.200)."
               }
             ],
             "visible_when": [],
@@ -3149,7 +3149,7 @@
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
-                      "es": "Otra (describa abajo)"
+                      "es": "Otra (describe abajo)"
                     },
                     "exclusive": false
                   }
@@ -3169,7 +3169,7 @@
                 "kind": "text",
                 "label": {
                   "en": "Describe the other soil or water conservation practice",
-                  "es": "Describa la otra práctica de conservación de suelo o agua"
+                  "es": "Describe la otra práctica de conservación de suelo o agua"
                 },
                 "coaching": null,
                 "options": [],
@@ -3261,7 +3261,7 @@
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
-                      "es": "Otra (describa abajo)"
+                      "es": "Otra (describe abajo)"
                     },
                     "exclusive": false
                   }
@@ -3281,7 +3281,7 @@
                 "kind": "text",
                 "label": {
                   "en": "Describe the other habitat or biodiversity practice",
-                  "es": "Describa la otra práctica de hábitat o biodiversidad"
+                  "es": "Describe la otra práctica de hábitat o biodiversidad"
                 },
                 "coaching": null,
                 "options": [],
@@ -3321,7 +3321,7 @@
                 },
                 "coaching": {
                   "en": "An existing plan is evidence you are already managing the natural resources of the operation, and the certifier can read it alongside this section. Keep a copy available for the inspection.",
-                  "es": "Un plan existente es evidencia de que ya maneja los recursos naturales de la operación, y el certificador puede leerlo junto con esta sección. Tenga una copia disponible para la inspección."
+                  "es": "Un plan existente es evidencia de que ya manejas los recursos naturales de la operación, y el certificador puede leerlo junto con esta sección. Ten una copia disponible para la inspección."
                 },
                 "options": [
                   {
@@ -3380,7 +3380,7 @@
                 "kind": "text",
                 "label": {
                   "en": "Name the agency or program and what the plan covers",
-                  "es": "Nombre la agencia o el programa y qué cubre el plan"
+                  "es": "Nombra la agencia o el programa y qué cubre el plan"
                 },
                 "coaching": null,
                 "options": [],
@@ -3481,7 +3481,7 @@
                 "kind": "checkbox_group",
                 "label": {
                   "en": "Is wildlife kept out of your production areas, or has native habitat been brought into crop production since certification?",
-                  "es": "¿Mantiene la fauna fuera de sus áreas de producción, o ha incorporado hábitat nativo a la producción desde la certificación?"
+                  "es": "¿Mantienes la fauna fuera de tus áreas de producción, o has incorporado hábitat nativo a la producción desde la certificación?"
                 },
                 "coaching": {
                   "en": "Buyers and food-safety schemes often push growers toward bare ground, fencing and wildlife exclusion, while § 205.200 requires the operation to maintain or improve its natural resources. The two pull against each other, and the certifier will ask how you resolve it — an honest answer with mitigation is stronger than claiming the tension does not exist.",
@@ -3568,7 +3568,7 @@
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
-                      "es": "Otra (describa abajo)"
+                      "es": "Otra (describe abajo)"
                     },
                     "exclusive": false
                   }
@@ -3597,7 +3597,7 @@
                 "kind": "text",
                 "label": {
                   "en": "Describe the other mitigation",
-                  "es": "Describa la otra mitigación"
+                  "es": "Describe la otra mitigación"
                 },
                 "coaching": null,
                 "options": [],
@@ -3638,11 +3638,11 @@
                 "kind": "text",
                 "label": {
                   "en": "What are your water sources for irrigation?",
-                  "es": "¿Cuáles son sus fuentes de agua para riego?"
+                  "es": "¿Cuáles son tus fuentes de agua para riego?"
                 },
                 "coaching": {
                   "en": "Identify each source — well, surface water (river, canal, reservoir), or a municipal or irrigation-district supply.",
-                  "es": "Identifique cada fuente — pozo, agua superficial (río, canal, embalse) o suministro municipal o de un distrito de riego."
+                  "es": "Identifica cada fuente — pozo, agua superficial (río, canal, embalse) o suministro municipal o de un distrito de riego."
                 },
                 "options": [],
                 "required": true,
@@ -3708,7 +3708,7 @@
                 },
                 "coaching": {
                   "en": "Districts and canal companies routinely treat their own canals — copper-based algaecides and aquatic herbicides are common. The water reaching your field is the district's decision, not yours, so the certifier wants to see that you asked.",
-                  "es": "Los distritos y las compañías de canales tratan rutinariamente sus propios canales — los alguicidas a base de cobre y los herbicidas acuáticos son comunes. El agua que llega a su campo depende de la decisión del distrito, no de la suya, por lo que el certificador quiere ver que usted preguntó."
+                  "es": "Los distritos y las compañías de canales tratan rutinariamente sus propios canales — los alguicidas a base de cobre y los herbicidas acuáticos son comunes. El agua que llega a tu campo depende de la decisión del distrito, no de la tuya, por lo que el certificador quiere ver que preguntaste."
                 },
                 "options": [],
                 "required": true,
@@ -3776,7 +3776,7 @@
                 "kind": "textarea",
                 "label": {
                   "en": "How do you monitor for those substances and keep them off your fields and crops?",
-                  "es": "¿Cómo monitorea esas sustancias y evita que lleguen a sus campos y cultivos?"
+                  "es": "¿Cómo monitoreas esas sustancias y evitas que lleguen a tus campos y cultivos?"
                 },
                 "coaching": {
                   "en": "Typical answers include the district's treatment calendar and advance notices, shutting the head gate during and after a treatment for a stated interval, an alternate source such as a well during that window, or water testing.",
@@ -3804,7 +3804,7 @@
                 "kind": "upload",
                 "label": {
                   "en": "Attach the district's written statement or treatment schedule",
-                  "es": "Adjunte la declaración escrita o el calendario de tratamientos del distrito"
+                  "es": "Adjunta la declaración escrita o el calendario de tratamientos del distrito"
                 },
                 "coaching": null,
                 "options": [],
@@ -3872,7 +3872,7 @@
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
-                      "es": "Otra (describa abajo)"
+                      "es": "Otra (describe abajo)"
                     },
                     "exclusive": false
                   }
@@ -3892,7 +3892,7 @@
                 "kind": "text",
                 "label": {
                   "en": "Describe the other monitoring method",
-                  "es": "Describa el otro método de monitoreo"
+                  "es": "Describe el otro método de monitoreo"
                 },
                 "coaching": null,
                 "options": [],
@@ -3951,7 +3951,7 @@
             "education": [
               {
                 "en": "Prevention practices are the foundation of organic pest, weed, and disease management — the rule requires them before any material is ever considered (§ 205.206(a)). Select every practice this operation actually uses; the more of these that are in place, the stronger your OSP's prevention story.",
-                "es": "Las prácticas de prevención son la base del manejo orgánico de plagas, malezas y enfermedades — la normativa las exige antes de considerar cualquier material (§ 205.206(a)). Seleccione todas las prácticas que esta operación realmente utiliza; cuantas más estén implementadas, más sólido será el relato de prevención de su OSP."
+                "es": "Las prácticas de prevención son la base del manejo orgánico de plagas, malezas y enfermedades — la normativa las exige antes de considerar cualquier material (§ 205.206(a)). Selecciona todas las prácticas que esta operación realmente utiliza; cuantas más estén implementadas, más sólido será el relato de prevención de tu OSP."
               }
             ],
             "visible_when": [],
@@ -3961,7 +3961,7 @@
                 "kind": "checkbox_group",
                 "label": {
                   "en": "Which prevention and cultural practices does your operation use to manage pest, weed, and disease pressure?",
-                  "es": "¿Qué prácticas de prevención y culturales utiliza su operación para manejar la presión de plagas, malezas y enfermedades?"
+                  "es": "¿Qué prácticas de prevención y culturales utiliza tu operación para manejar la presión de plagas, malezas y enfermedades?"
                 },
                 "coaching": {
                   "en": "These practices keep pressure from building up in the first place, without applying any material — the organic rule's first line of defense.",
@@ -4092,7 +4092,7 @@
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
-                      "es": "Otra (describa abajo)"
+                      "es": "Otra (describe abajo)"
                     },
                     "exclusive": false
                   }
@@ -4112,7 +4112,7 @@
                 "kind": "text",
                 "label": {
                   "en": "Describe the other practice",
-                  "es": "Describa la otra práctica"
+                  "es": "Describe la otra práctica"
                 },
                 "coaching": null,
                 "options": [],
@@ -4137,7 +4137,7 @@
                 "kind": "boolean",
                 "label": {
                   "en": "Do you burn crop residue on this operation?",
-                  "es": "¿Quema residuos de cultivo en esta operación?"
+                  "es": "¿Quemas residuos de cultivo en esta operación?"
                 },
                 "coaching": {
                   "en": "Includes prunings, brush, and orchard removals burned in place or in a pile. Burning as a way to dispose of crop residue is prohibited; burning is allowed only to suppress the spread of disease or to stimulate seed germination.",
@@ -4188,7 +4188,7 @@
                 },
                 "coaching": {
                   "en": "The rule names exactly two allowed reasons. If neither applies, say so here — an accurate record your certifier can act on is worth more than a tidy one.",
-                  "es": "La normativa nombra exactamente dos razones permitidas. Si ninguna aplica, indíquelo aquí — un registro exacto sobre el que su certificadora pueda actuar vale más que uno prolijo."
+                  "es": "La normativa nombra exactamente dos razones permitidas. Si ninguna aplica, indícalo aquí — un registro exacto sobre el que tu certificadora pueda actuar vale más que uno prolijo."
                 },
                 "options": [
                   {
@@ -4211,7 +4211,7 @@
                     "value": "other",
                     "label": {
                       "en": "Another reason (describe below)",
-                      "es": "Otra razón (describa abajo)"
+                      "es": "Otra razón (describe abajo)"
                     },
                     "exclusive": false
                   }
@@ -4237,11 +4237,11 @@
                 "kind": "textarea",
                 "label": {
                   "en": "Describe the other reason for burning",
-                  "es": "Describa la otra razón para quemar"
+                  "es": "Describe la otra razón para quemar"
                 },
                 "coaching": {
                   "en": "§ 205.203(e)(3) allows burning only for disease suppression or seed germination, so a reason outside those two needs to be raised with your certifying agent rather than left in the plan unexplained.",
-                  "es": "El § 205.203(e)(3) solo permite la quema para suprimir enfermedades o estimular la germinación, por lo que una razón fuera de esas dos debe plantearse a su agencia certificadora en lugar de quedar sin explicar en el plan."
+                  "es": "El § 205.203(e)(3) solo permite la quema para suprimir enfermedades o estimular la germinación, por lo que una razón fuera de esas dos debe plantearse a tu agencia certificadora en lugar de quedar sin explicar en el plan."
                 },
                 "options": [],
                 "required": true,
@@ -4281,7 +4281,7 @@
                 "kind": "checkbox_group",
                 "label": {
                   "en": "Which methods does your operation use to manage weeds?",
-                  "es": "¿Qué métodos utiliza su operación para manejar las malezas?"
+                  "es": "¿Qué métodos utiliza tu operación para manejar las malezas?"
                 },
                 "coaching": null,
                 "options": [
@@ -4361,7 +4361,7 @@
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
-                      "es": "Otra (describa abajo)"
+                      "es": "Otra (describe abajo)"
                     },
                     "exclusive": false
                   }
@@ -4381,7 +4381,7 @@
                 "kind": "text",
                 "label": {
                   "en": "Describe the other method",
-                  "es": "Describa el otro método"
+                  "es": "Describe el otro método"
                 },
                 "coaching": null,
                 "options": [],
@@ -4406,7 +4406,7 @@
                 "kind": "boolean",
                 "label": {
                   "en": "Do you use plastic or other synthetic mulch for weed control?",
-                  "es": "¿Utiliza plástico u otro acolchado sintético para el control de malezas?"
+                  "es": "¿Utilizas plástico u otro acolchado sintético para el control de malezas?"
                 },
                 "coaching": null,
                 "options": [],
@@ -4425,11 +4425,11 @@
                 "kind": "textarea",
                 "label": {
                   "en": "Describe how the plastic or synthetic mulch is removed at season end",
-                  "es": "Describa cómo se retira el acolchado plástico o sintético al final de la temporada"
+                  "es": "Describe cómo se retira el acolchado plástico o sintético al final de la temporada"
                 },
                 "coaching": {
                   "en": "Plastic and other synthetic mulches are allowed for weed suppression only if removed from the field at the end of the growing or harvest season — describe when and how removal happens.",
-                  "es": "El acolchado plástico y otros sintéticos están permitidos para suprimir malezas solo si se retiran del campo al final de la temporada de cultivo o cosecha — describa cuándo y cómo se realiza el retiro."
+                  "es": "El acolchado plástico y otros sintéticos están permitidos para suprimir malezas solo si se retiran del campo al final de la temporada de cultivo o cosecha — describe cuándo y cómo se realiza el retiro."
                 },
                 "options": [],
                 "required": true,
@@ -4469,7 +4469,7 @@
                 "kind": "boolean",
                 "label": {
                   "en": "Do you ever apply allowed input materials for pest, weed, or disease control?",
-                  "es": "¿Alguna vez aplica materiales de insumo permitidos para el control de plagas, malezas o enfermedades?"
+                  "es": "¿Alguna vez aplicas materiales de insumo permitidos para el control de plagas, malezas o enfermedades?"
                 },
                 "coaching": null,
                 "options": [],
@@ -4490,11 +4490,11 @@
                 "kind": "textarea",
                 "label": {
                   "en": "Describe the conditions under which you apply these materials",
-                  "es": "Describa las condiciones bajo las cuales aplica estos materiales"
+                  "es": "Describe las condiciones bajo las cuales aplicas estos materiales"
                 },
                 "coaching": {
                   "en": "The rule requires you to document that your prevention, mechanical, and biological practices were insufficient before a material is applied — not just that the material itself is allowed. Describe the pest, weed, or disease pressure that triggers use and which practices you rely on first. The materials themselves belong on your OSP inputs list in the Materials Application, not here.",
-                  "es": "La normativa exige documentar que sus prácticas de prevención, mecánicas y biológicas fueron insuficientes antes de aplicar un material — no basta con que el material en sí esté permitido. Describa la presión de plaga, maleza o enfermedad que motiva el uso y en qué prácticas se apoya primero. Los materiales en sí van en la lista de insumos de su OSP, en la Aplicación de Materiales, no aquí."
+                  "es": "La normativa exige documentar que tus prácticas de prevención, mecánicas y biológicas fueron insuficientes antes de aplicar un material — no basta con que el material en sí esté permitido. Describe la presión de plaga, maleza o enfermedad que motiva el uso y en quéprácticas te apoyas primero. Los materiales en sí van en la lista de insumos de tu OSP, en la Aplicación de Materiales, no aquí."
                 },
                 "options": [],
                 "required": true,
@@ -4534,7 +4534,7 @@
                 "kind": "checkbox_group",
                 "label": {
                   "en": "What do you monitor?",
-                  "es": "¿Qué monitorea?"
+                  "es": "¿Qué monitoreas?"
                 },
                 "coaching": null,
                 "options": [
@@ -4642,11 +4642,11 @@
                 "kind": "textarea",
                 "label": {
                   "en": "How do you record monitoring results?",
-                  "es": "¿Cómo registra los resultados del monitoreo?"
+                  "es": "¿Cómo registras los resultados del monitoreo?"
                 },
                 "coaching": {
                   "en": "Include what you record — pest or disease counts, trap catches, weed maps, scouting notes — and where it is kept. Pest, weed, and disease events logged in Trazo can serve as this record.",
-                  "es": "Incluya qué registra — conteos de plagas o enfermedades, capturas en trampas, mapas de malezas, notas de recorrido — y dónde se conserva. Los eventos de plagas, malezas y enfermedades registrados en Trazo pueden servir como este registro."
+                  "es": "Incluye qué registras — conteos de plagas o enfermedades, capturas en trampas, mapas de malezas, notas de recorrido — y dónde se conserva. Los eventos de plagas, malezas y enfermedades registrados en Trazo pueden servir como este registro."
                 },
                 "options": [],
                 "required": true,
@@ -4709,7 +4709,7 @@
                 },
                 "coaching": {
                   "en": "A \"split operation\" is one where organic and non-organic production or handling take place at the same operation, whether on the same parcels or different ones (§ 205.2). Answer yes even if the conventional share is small.",
-                  "es": "Una \"operación dividida\" (split operation) es aquella donde la producción o el manejo orgánico y no orgánico ocurren en la misma operación, sea en las mismas parcelas o en otras distintas (§ 205.2). Responda que sí aunque la parte convencional sea pequeña."
+                  "es": "Una \"operación dividida\" (split operation) es aquella donde la producción o el manejo orgánico y no orgánico ocurren en la misma operación, sea en las mismas parcelas o en otras distintas (§ 205.2). Responde que sí aunque la parte convencional sea pequeña."
                 },
                 "options": [],
                 "required": true,
@@ -4731,7 +4731,7 @@
                 },
                 "coaching": {
                   "en": "Describe the equipment, storage, and recordkeeping separation — dedicated or cleaned-between-uses equipment, separate or clearly labeled storage areas, and records that identify every lot as organic or conventional (§ 205.201(a)(5)).",
-                  "es": "Describa la separación de equipo, almacenamiento y registros — equipo dedicado o limpiado entre usos, áreas de almacenamiento separadas o claramente rotuladas, y registros que identifiquen cada lote como orgánico o convencional (§ 205.201(a)(5))."
+                  "es": "Describe la separación de equipo, almacenamiento y registros — equipo dedicado o limpiado entre usos, áreas de almacenamiento separadas o claramente rotuladas, y registros que identifiquen cada lote como orgánico o convencional (§ 205.201(a)(5))."
                 },
                 "options": [],
                 "required": true,
@@ -4829,7 +4829,7 @@
                 "kind": "boolean",
                 "label": {
                   "en": "Do you grow the SAME crop or variety under both organic and conventional management (parallel production)?",
-                  "es": "¿Cultiva el MISMO cultivo o variedad bajo manejo orgánico y convencional a la vez (producción paralela)?"
+                  "es": "¿Cultivas el MISMO cultivo o variedad bajo manejo orgánico y convencional a la vez (producción paralela)?"
                 },
                 "coaching": {
                   "en": "Parallel production raises the risk of commingling because organic and conventional harvests of the same crop can look identical. Certifiers scrutinize how each lot stays distinguishable from field to sale.",
@@ -4855,7 +4855,7 @@
                 },
                 "coaching": {
                   "en": "Identify field or block markers, separate harvest containers or lot tags, harvest sequencing (organic first), and how sales records carry the organic identification through to the buyer.",
-                  "es": "Identifique marcadores de campo o bloque, contenedores de cosecha o etiquetas de lote separados, el orden de cosecha (orgánico primero) y cómo los registros de venta llevan la identificación orgánica hasta el comprador."
+                  "es": "Identifica marcadores de campo o bloque, contenedores de cosecha o etiquetas de lote separados, el orden de cosecha (orgánico primero) y cómo los registros de venta llevan la identificación orgánica hasta el comprador."
                 },
                 "options": [],
                 "required": true,
@@ -4879,7 +4879,7 @@
                 "kind": "textarea",
                 "label": {
                   "en": "List the materials used in your non-organic production — general product types are enough (treated seed, fertilizers, pesticides, post-harvest sanitizers).",
-                  "es": "Enumere los materiales usados en su producción no orgánica — basta con tipos generales de producto (semilla tratada, fertilizantes, plaguicidas, sanitizantes de poscosecha)."
+                  "es": "Enumera los materiales usados en tu producción no orgánica — basta con tipos generales de producto (semilla tratada, fertilizantes, plaguicidas, sanitizantes de poscosecha)."
                 },
                 "coaching": {
                   "en": "This is the conventional side's list, kept apart from the organic materials list on purpose: a prohibited product belongs here, never there. Brand names are not required.",
@@ -4927,7 +4927,7 @@
                 },
                 "coaching": {
                   "en": "Select every strategy this operation uses across its parcels. Buffer-zone crop — whether harvested or left standing — can never be sold, labeled, or represented as organic (§ 205.202(c)).",
-                  "es": "Seleccione cada estrategia que la operación usa en sus parcelas. El cultivo de la zona de amortiguamiento — cosechado o dejado en pie — nunca puede venderse, etiquetarse ni representarse como orgánico (§ 205.202(c))."
+                  "es": "Selecciona cada estrategia que la operación usa en sus parcelas. El cultivo de la zona de amortiguamiento — cosechado o dejado en pie — nunca puede venderse, etiquetarse ni representarse como orgánico (§ 205.202(c))."
                 },
                 "options": [
                   {
@@ -5046,7 +5046,7 @@
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
-                      "es": "Otra (describa abajo)"
+                      "es": "Otra (describe abajo)"
                     },
                     "exclusive": false
                   }
@@ -5066,7 +5066,7 @@
                 "kind": "text",
                 "label": {
                   "en": "Describe the other buffer or separation strategy",
-                  "es": "Describa la otra estrategia de amortiguamiento o separación"
+                  "es": "Describe la otra estrategia de amortiguamiento o separación"
                 },
                 "coaching": null,
                 "options": [],
@@ -5097,7 +5097,7 @@
             "education": [
               {
                 "en": "Drift of a prohibited substance from adjoining land does not automatically decertify the affected crop, but the operation must show it took reasonable precautions and responded appropriately if contact occurred. Select the safeguards this operation practices to prevent and detect drift.",
-                "es": "La deriva de una sustancia prohibida desde tierras colindantes no descertifica automáticamente el cultivo afectado, pero la operación debe demostrar que tomó precauciones razonables y respondió apropiadamente si ocurrió contacto. Seleccione las salvaguardas que esta operación practica para prevenir y detectar la deriva."
+                "es": "La deriva de una sustancia prohibida desde tierras colindantes no descertifica automáticamente el cultivo afectado, pero la operación debe demostrar que tomó precauciones razonables y respondió apropiadamente si ocurrió contacto. Selecciona las salvaguardas que esta operación practica para prevenir y detectar la deriva."
               }
             ],
             "visible_when": [],
@@ -5111,7 +5111,7 @@
                 },
                 "coaching": {
                   "en": "These are standard certifier-recognized drift-prevention practices, in addition to the physical buffers recorded on your Parcel Applications. Select every safeguard this operation practices.",
-                  "es": "Estas son prácticas de prevención de deriva reconocidas habitualmente por los certificadores, además de los amortiguamientos físicos registrados en sus Solicitudes de Parcela. Seleccione cada salvaguarda que practica esta operación."
+                  "es": "Estas son prácticas de prevención de deriva reconocidas habitualmente por los certificadores, además de los amortiguamientos físicos registrados en tus Solicitudes de Parcela. Selecciona cada salvaguarda que practica esta operación."
                 },
                 "options": [
                   {
@@ -5206,7 +5206,7 @@
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
-                      "es": "Otra (describa abajo)"
+                      "es": "Otra (describe abajo)"
                     },
                     "exclusive": false
                   }
@@ -5226,7 +5226,7 @@
                 "kind": "text",
                 "label": {
                   "en": "Describe the other drift safeguard",
-                  "es": "Describa la otra salvaguarda contra la deriva"
+                  "es": "Describe la otra salvaguarda contra la deriva"
                 },
                 "coaching": null,
                 "options": [],
@@ -5251,11 +5251,11 @@
                 "kind": "textarea",
                 "label": {
                   "en": "If you suspect drift or contact with a prohibited substance has occurred, what do you do?",
-                  "es": "Si sospecha que ocurrió deriva o contacto con una sustancia prohibida, ¿qué hace?"
+                  "es": "Si sospechas que ocurrió deriva o contacto con una sustancia prohibida, ¿qué haces?"
                 },
                 "coaching": {
                   "en": "§ 205.400(f)(1) requires immediately notifying your certifying agent of a known or suspected prohibited-substance application or drift event. Describe your notification timeline, who you contact, and how you document the incident and any resulting testing or corrective action — Trazo's Change Notification log (\"Prohibited-substance application/drift\" category) can record the notification itself.",
-                  "es": "El § 205.400(f)(1) exige notificar de inmediato a su agencia certificadora ante un evento conocido o sospechado de aplicación o deriva de una sustancia prohibida. Describa su plazo de notificación, a quién contacta y cómo documenta el incidente y cualquier análisis o acción correctiva resultante — el registro de Notificación de Cambios de Trazo (categoría \"Prohibited-substance application/drift\") puede registrar la notificación misma."
+                  "es": "El § 205.400(f)(1) exige notificar de inmediato a tu agencia certificadora ante un evento conocido o sospechado de aplicación o deriva de una sustancia prohibida. Describe tu plazo de notificación, a quién contactas y cómo documentas el incidente y cualquier análisis o acción correctiva resultante — el registro de Notificación de Cambios de Trazo (categoría \"Prohibited-substance application/drift\") puede registrar la notificación misma."
                 },
                 "options": [],
                 "required": true,
@@ -5273,7 +5273,7 @@
                 "kind": "boolean",
                 "label": {
                   "en": "Is there a risk of runoff carrying prohibited materials onto your organic land from neighboring ground?",
-                  "es": "¿Existe riesgo de que la escorrentía arrastre materiales prohibidos hacia su tierra orgánica desde terrenos vecinos?"
+                  "es": "¿Existe riesgo de que la escorrentía arrastre materiales prohibidos hacia tu tierra orgánica desde terrenos vecinos?"
                 },
                 "coaching": {
                   "en": "Drift is airborne; runoff is water-borne. A parcel downhill from a conventional field or an irrigation return can receive a prohibited substance without a drop of spray crossing the line.",
@@ -5295,7 +5295,7 @@
                 "kind": "textarea",
                 "label": {
                   "en": "Describe your plan to keep runoff from reaching organic crops or soil.",
-                  "es": "Describa su plan para evitar que la escorrentía llegue a los cultivos o al suelo orgánicos."
+                  "es": "Describe tu plan para evitar que la escorrentía llegue a los cultivos o al suelo orgánicos."
                 },
                 "coaching": {
                   "en": "Diversion ditches, berms, vegetated filter strips, timing of irrigation relative to a neighbor's applications, and monitoring after storms are the usual measures.",
@@ -5329,7 +5329,7 @@
             "education": [
               {
                 "en": "§ 205.201(a)(5) requires your plan to describe the physical barriers that keep organic production and product away from prohibited substances, and § 205.272(a) restates the same duty as a practice standard. Materials count even when they are never applied to organic ground — conventional fertilizer held for a leased block, shop solvents, treated lumber, and fuel additives are all in scope. Describe where they live and what separates them.",
-                "es": "El § 205.201(a)(5) exige que su plan describa las barreras físicas que mantienen la producción y el producto orgánico alejados de las sustancias prohibidas, y el § 205.272(a) reitera el mismo deber como norma de práctica. Los materiales cuentan aunque nunca se apliquen en terreno orgánico — fertilizante convencional guardado para un lote arrendado, solventes de taller, madera tratada y aditivos de combustible están todos incluidos. Describa dónde se guardan y qué los separa."
+                "es": "El § 205.201(a)(5) exige que tu plan describa las barreras físicas que mantienen la producción y el producto orgánico alejados de las sustancias prohibidas, y el § 205.272(a) reitera el mismo deber como norma de práctica. Los materiales cuentan aunque nunca se apliquen en terreno orgánico — fertilizante convencional guardado para un lote arrendado, solventes de taller, madera tratada y aditivos de combustible están todos incluidos. Describe dónde se guardan y qué los separa."
               }
             ],
             "visible_when": [],
@@ -5425,7 +5425,7 @@
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
-                      "es": "Otra (describa abajo)"
+                      "es": "Otra (describe abajo)"
                     },
                     "exclusive": false
                   }
@@ -5451,7 +5451,7 @@
                 "kind": "text",
                 "label": {
                   "en": "Describe the other storage or separation measure",
-                  "es": "Describa la otra medida de almacenamiento o separación"
+                  "es": "Describe la otra medida de almacenamiento o separación"
                 },
                 "coaching": null,
                 "options": [],
@@ -5634,11 +5634,11 @@
                 "kind": "boolean",
                 "label": {
                   "en": "Has equipment cleanout been verified before the custom harvester's equipment enters your organic fields?",
-                  "es": "¿Se ha verificado la limpieza del equipo antes de que el equipo del cosechador contratado ingrese a sus campos orgánicos?"
+                  "es": "¿Se ha verificado la limpieza del equipo antes de que el equipo del cosechador contratado ingrese a tus campos orgánicos?"
                 },
                 "coaching": {
                   "en": "Trazo's Equipment Cleanout activities are the per-pass evidence — link each harvest operation to the cleaning that preceded it.",
-                  "es": "Las actividades de Limpieza de Equipo de Trazo son la evidencia de cada pase — vincule cada operación de cosecha con la limpieza que la precedió."
+                  "es": "Las actividades de Limpieza de Equipo de Trazo son la evidencia de cada pase — vincula cada operación de cosecha con la limpieza que la precedió."
                 },
                 "options": [],
                 "required": true,
@@ -5662,7 +5662,7 @@
                 "kind": "textarea",
                 "label": {
                   "en": "Describe how the custom-hired harvester is instructed to maintain organic integrity",
-                  "es": "Describa cómo se instruye al cosechador contratado para mantener la integridad orgánica"
+                  "es": "Describe cómo se instruye al cosechador contratado para mantener la integridad orgánica"
                 },
                 "coaching": null,
                 "options": [],
@@ -6269,7 +6269,7 @@
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
-                      "es": "Otro (describa abajo)"
+                      "es": "Otro (describe abajo)"
                     },
                     "exclusive": false
                   }
@@ -6289,7 +6289,7 @@
                 "kind": "text",
                 "label": {
                   "en": "Describe the other container type",
-                  "es": "Describa el otro tipo de contenedor"
+                  "es": "Describe el otro tipo de contenedor"
                 },
                 "coaching": null,
                 "options": [],
@@ -6314,11 +6314,11 @@
                 "kind": "checkbox_group",
                 "label": {
                   "en": "How do you keep harvest containers from contaminating organic crops?",
-                  "es": "¿Cómo evita que los contenedores de cosecha contaminen los cultivos orgánicos?"
+                  "es": "¿Cómo evitas que los contenedores de cosecha contaminen los cultivos orgánicos?"
                 },
                 "coaching": {
                   "en": "Tick every safeguard you rely on. If different container types are handled differently — new cartons but reused lugs — say so in the description below, because your certifier reads this as a statement about every container named above.",
-                  "es": "Marque cada salvaguarda en la que se apoya. Si distintos tipos de contenedor se manejan de forma diferente — cartones nuevos pero cajas reutilizadas — indíquelo en la descripción de abajo, porque su certificador lo lee como una afirmación sobre todos los contenedores nombrados arriba."
+                  "es": "Marca cada salvaguarda en la que te apoyas. Si distintos tipos de contenedor se manejan de forma diferente — cartones nuevos pero cajas reutilizadas — indícalo en la descripción de abajo, porque tu certificador lo lee como una afirmación sobre todos los contenedores nombrados arriba."
                 },
                 "options": [
                   {
@@ -6369,7 +6369,7 @@
                 "kind": "textarea",
                 "label": {
                   "en": "Describe the cleaning or lining method, and which container types it applies to",
-                  "es": "Describa el método de limpieza o forrado, y a qué tipos de contenedor se aplica"
+                  "es": "Describe el método de limpieza o forrado, y a qué tipos de contenedor se aplica"
                 },
                 "coaching": null,
                 "options": [],
@@ -6419,7 +6419,7 @@
                 "kind": "textarea",
                 "label": {
                   "en": "How is the container thoroughly cleaned before reuse, and how do you confirm it poses no risk of contact?",
-                  "es": "¿Cómo se limpia a fondo el contenedor antes de reutilizarlo, y cómo confirma que no presenta riesgo de contacto?"
+                  "es": "¿Cómo se limpia a fondo el contenedor antes de reutilizarlo, y cómo confirmas que no presenta riesgo de contacto?"
                 },
                 "coaching": null,
                 "options": [],
@@ -6444,11 +6444,11 @@
                 "kind": "radio",
                 "label": {
                   "en": "Are your packaging materials, storage containers, and bins free of synthetic fungicides, preservatives, and fumigants?",
-                  "es": "¿Sus materiales de empaque, contenedores de almacenamiento y cajones están libres de fungicidas, conservantes y fumigantes sintéticos?"
+                  "es": "¿Tus materiales de empaque, contenedores de almacenamiento y cajones están libres de fungicidas, conservantes y fumigantes sintéticos?"
                 },
                 "coaching": {
                   "en": "§ 205.272(b)(1) prohibits outright the use of packaging materials, storage containers, or bins that CONTAIN a synthetic fungicide, preservative, or fumigant — treated wooden bins and fungicide-impregnated liners are the usual cases. This is a supplier question: if you have not confirmed it in writing, say so rather than guessing. An unconfirmed answer is a task for your certifier review; a wrong 'yes' is a misstatement in your organic system plan.",
-                  "es": "El § 205.272(b)(1) prohíbe de plano el uso de materiales de empaque, contenedores de almacenamiento o cajones que CONTENGAN un fungicida, conservante o fumigante sintético — los cajones de madera tratada y los forros impregnados con fungicida son los casos habituales. Esta es una pregunta para su proveedor: si no lo ha confirmado por escrito, indíquelo en lugar de suponer. Una respuesta sin confirmar es una tarea para la revisión de su certificadora; un 'sí' erróneo es una declaración falsa en su plan orgánico."
+                  "es": "El § 205.272(b)(1) prohíbe de plano el uso de materiales de empaque, contenedores de almacenamiento o cajones que CONTENGAN un fungicida, conservante o fumigante sintético — los cajones de madera tratada y los forros impregnados con fungicida son los casos habituales. Esta es una pregunta para tu proveedor: si no lo has confirmado por escrito, indícalo en lugar de suponer. Una respuesta sin confirmar es una tarea para la revisión de tu certificadora; un 'sí' erróneo es una declaración falsa en tu plan orgánico."
                 },
                 "options": [
                   {
@@ -6491,7 +6491,7 @@
                 "kind": "textarea",
                 "label": {
                   "en": "Which packaging or containers, and what is your plan to replace or confirm them?",
-                  "es": "¿Qué empaques o contenedores, y cuál es su plan para reemplazarlos o confirmarlos?"
+                  "es": "¿Qué empaques o contenedores, y cuál es tu plan para reemplazarlos o confirmarlos?"
                 },
                 "coaching": null,
                 "options": [],
@@ -7365,7 +7365,7 @@
             "education": [
               {
                 "en": "If anyone off your operation hulls, dries, packs, conditions or otherwise handles your crop, the certifier needs to know who they are and whether they are certified — because from that point the audit trail runs through their records, not yours. Answering “no” here is a complete answer; leaving it blank is not, because a reviewer cannot tell the difference between “nobody handles our crop” and “not filled in yet”.",
-                "es": "Si alguien fuera de su operación descascara, seca, empaca, acondiciona o de otro modo manipula su cultivo, el certificador necesita saber quién es y si está certificado, porque desde ese punto el rastro de auditoría pasa por sus registros y no por los suyos. Responder “no” aquí es una respuesta completa; dejarlo en blanco no lo es, porque quien revisa no puede distinguir entre “nadie manipula nuestro cultivo” y “aún no se ha completado”."
+                "es": "Si alguien fuera de tu operación descascara, seca, empaca, acondiciona o de otro modo manipula tu cultivo, el certificador necesita saber quién es y si está certificado, porque desde ese punto el rastro de auditoría pasa por sus registros y no por los tuyos. Responder “no” aquí es una respuesta completa; dejarlo en blanco no lo es, porque quien revisa no puede distinguir entre “nadie manipula nuestro cultivo” y “aún no se ha completado”."
               }
             ],
             "visible_when": [],
@@ -7375,7 +7375,7 @@
                 "kind": "radio",
                 "label": {
                   "en": "Is your organic crop handled off the farm by another operation?",
-                  "es": "¿Su cultivo orgánico es manipulado fuera de la finca por otra operación?"
+                  "es": "¿Tu cultivo orgánico es manipulado fuera de la finca por otra operación?"
                 },
                 "coaching": null,
                 "options": [
@@ -7431,7 +7431,7 @@
                 },
                 "coaching": {
                   "en": "These are the facilities recorded on your farm profile. Each one prints here with its address and its organic certificate, so the reviewer sees the same handler in the plan and in the records.",
-                  "es": "Estas son las instalaciones registradas en el perfil de su finca. Cada una aparece aquí con su dirección y su certificado orgánico, para que quien revisa vea el mismo manejador en el plan y en los registros."
+                  "es": "Estas son las instalaciones registradas en el perfil de tu finca. Cada una aparece aquí con su dirección y su certificado orgánico, para que quien revisa vea el mismo manejador en el plan y en los registros."
                 },
                 "options": [],
                 "required": false,
@@ -7458,11 +7458,11 @@
                 "kind": "textarea",
                 "label": {
                   "en": "What records does that operation provide to preserve your product's organic identity?",
-                  "es": "¿Qué registros proporciona esa operación para preservar la identidad orgánica de su producto?"
+                  "es": "¿Qué registros proporciona esa operación para preservar la identidad orgánica de tu producto?"
                 },
                 "coaching": {
                   "en": "An uncertified operation handling your crop needs records proving identity preservation — lot tags, logs showing physical or timing separation from nonorganic product, and cleaning records for the equipment and space used.",
-                  "es": "Una operación no certificada que manipula su cultivo necesita registros que demuestren la preservación de la identidad — etiquetas de lote, bitácoras que muestren separación física o temporal del producto no orgánico, y registros de limpieza del equipo y el espacio utilizados."
+                  "es": "Una operación no certificada que manipula tu cultivo necesita registros que demuestren la preservación de la identidad — etiquetas de lote, bitácoras que muestren separación física o temporal del producto no orgánico, y registros de limpieza del equipo y el espacio utilizados."
                 },
                 "options": [],
                 "required": true,
@@ -7501,7 +7501,7 @@
         "education": [
           {
             "en": "Organic product must be protected from commingling with nonorganic product and from contact with prohibited substances at every point where it is held after harvest — field bins, on-farm coolers, dry storage, or a facility off the farm. The storage practices and physical barriers your operation uses must be described here for the certifying agent's review (§ 205.272).",
-            "es": "El producto orgánico debe protegerse de la mezcla con producto no orgánico y del contacto con sustancias prohibidas en todo punto donde se guarda después de la cosecha — contenedores de campo, cámaras frías en la finca, almacenamiento seco o una instalación fuera de la finca. Las prácticas de almacenamiento y las barreras físicas que usa su operación deben describirse aquí para la revisión del agente certificador (§ 205.272)."
+            "es": "El producto orgánico debe protegerse de la mezcla con producto no orgánico y del contacto con sustancias prohibidas en todo punto donde se guarda después de la cosecha — contenedores de campo, cámaras frías en la finca, almacenamiento seco o una instalación fuera de la finca. Las prácticas de almacenamiento y las barreras físicas que usa tu operación deben describirse aquí para la revisión del agente certificador (§ 205.272)."
           }
         ],
         "allows_not_applicable": true,
@@ -7521,7 +7521,7 @@
             "education": [
               {
                 "en": "List every place organic product is held after harvest, including short-term staging in field bins. Selecting a shared or third-party location opens additional questions below.",
-                "es": "Enumere todos los lugares donde se guarda el producto orgánico después de la cosecha, incluido el almacenamiento temporal en contenedores de campo. Seleccionar una ubicación compartida o de un tercero abre preguntas adicionales abajo."
+                "es": "Enumera todos los lugares donde se guarda el producto orgánico después de la cosecha, incluido el almacenamiento temporal en contenedores de campo. Seleccionar una ubicación compartida o de un tercero abre preguntas adicionales abajo."
               }
             ],
             "visible_when": [],
@@ -7531,7 +7531,7 @@
                 "kind": "checkbox_group",
                 "label": {
                   "en": "Where is your organic product stored after harvest?",
-                  "es": "¿Dónde se almacena su producto orgánico después de la cosecha?"
+                  "es": "¿Dónde se almacena tu producto orgánico después de la cosecha?"
                 },
                 "coaching": null,
                 "options": [
@@ -7587,7 +7587,7 @@
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
-                      "es": "Otra (describa abajo)"
+                      "es": "Otra (describe abajo)"
                     },
                     "exclusive": false
                   }
@@ -7609,7 +7609,7 @@
                 "kind": "text",
                 "label": {
                   "en": "Describe the other storage location",
-                  "es": "Describa la otra ubicación de almacenamiento"
+                  "es": "Describe la otra ubicación de almacenamiento"
                 },
                 "coaching": null,
                 "options": [],
@@ -7840,11 +7840,11 @@
                 "kind": "textarea",
                 "label": {
                   "en": "Describe the physical separation and labeling that prevents commingling",
-                  "es": "Describa la separación física y el etiquetado que evitan la mezcla"
+                  "es": "Describe la separación física y el etiquetado que evitan la mezcla"
                 },
                 "coaching": {
                   "en": "Include physical barriers (dedicated bins, partition walls, separate rooms) and how each container or space is labeled so organic product is never mistaken for nonorganic product in the same location.",
-                  "es": "Incluya las barreras físicas (contenedores dedicados, paredes divisorias, salas separadas) y cómo se etiqueta cada contenedor o espacio para que el producto orgánico nunca se confunda con producto no orgánico en la misma ubicación."
+                  "es": "Incluye las barreras físicas (contenedores dedicados, paredes divisorias, salas separadas) y cómo se etiqueta cada contenedor o espacio para que el producto orgánico nunca se confunda con producto no orgánico en la misma ubicación."
                 },
                 "options": [],
                 "required": true,
@@ -7896,11 +7896,11 @@
                 "kind": "textarea",
                 "label": {
                   "en": "What records does that facility provide to preserve your product's organic identity?",
-                  "es": "¿Qué registros proporciona esa instalación para preservar la identidad orgánica de su producto?"
+                  "es": "¿Qué registros proporciona esa instalación para preservar la identidad orgánica de tu producto?"
                 },
                 "coaching": {
                   "en": "An uncertified storage operation handling your product needs records proving identity preservation — for example lot tags, logs showing physical or timing separation from nonorganic product, and cleaning records for the space or container used.",
-                  "es": "Una instalación de almacenamiento no certificada que maneja su producto necesita registros que demuestren la preservación de la identidad — por ejemplo etiquetas de lote, bitácoras que muestren separación física o temporal del producto no orgánico, y registros de limpieza del espacio o contenedor utilizado."
+                  "es": "Una instalación de almacenamiento no certificada que maneja tu producto necesita registros que demuestren la preservación de la identidad — por ejemplo etiquetas de lote, bitácoras que muestren separación física o temporal del producto no orgánico, y registros de limpieza del espacio o contenedor utilizado."
                 },
                 "options": [],
                 "required": true,
@@ -7924,7 +7924,7 @@
                 "kind": "boolean",
                 "label": {
                   "en": "Do you contract another operation to store your organic product?",
-                  "es": "¿Contrata a otra operación para almacenar su producto orgánico?"
+                  "es": "¿Contratas a otra operación para almacenar tu producto orgánico?"
                 },
                 "coaching": null,
                 "options": [],
@@ -7957,7 +7957,7 @@
                 },
                 "coaching": {
                   "en": "These are the facilities recorded on your farm profile, with their address and organic certificate. A facility that both stores and handles your crop appears here and on G6.1 §D — it is one record.",
-                  "es": "Estas son las instalaciones registradas en el perfil de su finca, con su dirección y su certificado orgánico. Una instalación que almacena y además manipula su cultivo aparece aquí y en G6.1 §D — es un solo registro."
+                  "es": "Estas son las instalaciones registradas en el perfil de tu finca, con su dirección y su certificado orgánico. Una instalación que almacena y además manipula tu cultivo aparece aquí y en G6.1 §D — es un solo registro."
                 },
                 "options": [],
                 "required": false,
@@ -8015,11 +8015,11 @@
                 "kind": "textarea",
                 "label": {
                   "en": "Describe the cleaning and inspection method",
-                  "es": "Describa el método de limpieza e inspección"
+                  "es": "Describe el método de limpieza e inspección"
                 },
                 "coaching": {
                   "en": "Note what is checked for (pest activity, residue from a prior nonorganic lot, prohibited-substance residue) and who is responsible for the check.",
-                  "es": "Indique qué se revisa (actividad de plagas, residuos de un lote no orgánico anterior, residuos de sustancias prohibidas) y quién es responsable de la revisión."
+                  "es": "Indica qué se revisa (actividad de plagas, residuos de un lote no orgánico anterior, residuos de sustancias prohibidas) y quién es responsable de la revisión."
                 },
                 "options": [],
                 "required": true,
@@ -8047,7 +8047,7 @@
                 },
                 "coaching": {
                   "en": "Materials belong on your Materials Application, not here — the § 205.271 hierarchy (mechanical and cultural controls first) applies to facility pests the same way it applies to field pests.",
-                  "es": "Los materiales corresponden a su Solicitud de Materiales, no aquí — la jerarquía del § 205.271 (controles mecánicos y culturales primero) aplica a las plagas de instalaciones igual que a las plagas de campo."
+                  "es": "Los materiales corresponden a tu Solicitud de Materiales, no aquí — la jerarquía del § 205.271 (controles mecánicos y culturales primero) aplica a las plagas de instalaciones igual que a las plagas de campo."
                 },
                 "options": [],
                 "required": true,
@@ -8094,7 +8094,7 @@
                 },
                 "coaching": {
                   "en": "Trazo lot tags and the storage location recorded on your harvest records are the evidence for this — a printed lot tag that stays with the product through storage keeps its identity intact.",
-                  "es": "Las etiquetas de lote de Trazo y la ubicación de almacenamiento registrada en sus registros de cosecha son la evidencia de esto — una etiqueta de lote impresa que acompaña al producto durante el almacenamiento mantiene su identidad intacta."
+                  "es": "Las etiquetas de lote de Trazo y la ubicación de almacenamiento registrada en tus registros de cosecha son la evidencia de esto — una etiqueta de lote impresa que acompaña al producto durante el almacenamiento mantiene su identidad intacta."
                 },
                 "options": [],
                 "required": true,
@@ -8126,7 +8126,7 @@
         "education": [
           {
             "en": "Washing, hulling, shelling, drying, sorting, grading, cooling, and packing your own crop are all handling activities under the organic regulations — not just a separate handler's job. Certification covers each operation OR PORTION of an operation that produces or handles (§ 205.100(a)), so handling your own crop is normally scoped inside your existing certification rather than certified as a separate handler operation — but that is your certifying agent's determination, not an exemption you can claim. Either way it does not remove the requirement to describe those on-farm handling steps in this system plan. Confirm your operation's certification scope with your certifying agent.",
-            "es": "Lavar, descascarar, pelar, secar, seleccionar, clasificar, enfriar y empacar su propio cultivo son actividades de manejo bajo la normativa orgánica — no solo tarea de un manejador aparte. La certificación cubre cada operación O PARTE de una operación que produce o maneja (§ 205.100(a)), así que manejar su propio cultivo normalmente queda dentro del alcance de su certificación actual en lugar de certificarse como una operación de manejador aparte — pero eso lo determina su agente certificador, no es una exención que usted pueda invocar. En cualquier caso, no elimina el requisito de describir esos pasos de manejo en la finca dentro de este plan de sistema. Confirme el alcance de la certificación de su operación con su agente certificador."
+            "es": "Lavar, descascarar, pelar, secar, seleccionar, clasificar, enfriar y empacar tu propio cultivo son actividades de manejo bajo la normativa orgánica — no solo tarea de un manejador aparte. La certificación cubre cada operación O PARTE de una operación que produce o maneja (§ 205.100(a)), así que manejar tu propio cultivo normalmente queda dentro del alcance de tu certificación actual en lugar de certificarse como una operación de manejador aparte — pero eso lo determina tu agente certificador, no es una exención que puedas invocar. En cualquier caso, no elimina el requisito de describir esos pasos de manejo en la finca dentro de este plan de sistema. Confirma el alcance de la certificación de tu operación con tu agente certificador."
           }
         ],
         "allows_not_applicable": true,
@@ -8141,7 +8141,7 @@
             "key": "a_activities",
             "title": {
               "en": "A. Does your operation handle?",
-              "es": "A. ¿Su operación realiza manejo?"
+              "es": "A. ¿Tu operación realiza manejo?"
             },
             "education": [],
             "visible_when": [],
@@ -8151,11 +8151,11 @@
                 "kind": "checkbox_group",
                 "label": {
                   "en": "Which on-farm handling steps does your operation perform on this crop?",
-                  "es": "¿Qué pasos de manejo realiza su operación en la finca para este cultivo?"
+                  "es": "¿Qué pasos de manejo realiza tu operación en la finca para este cultivo?"
                 },
                 "coaching": {
                   "en": "Include every step performed on your own property, even a quick rinse, hand-sort, or size grading — these all count as handling. If a packer or processor off your property does this work instead, describe that relationship in Sales & Supplier Verification (G6.5), not here.",
-                  "es": "Incluya cada paso realizado en su propia finca, incluso un enjuague rápido, una selección manual o una clasificación por tamaño — todos cuentan como manejo. Si un empacador o procesador fuera de su finca hace este trabajo en su lugar, describa esa relación en Ventas y Verificación de Proveedores (G6.5), no aquí."
+                  "es": "Incluye cada paso realizado en tu propia finca, incluso un enjuague rápido, una selección manual o una clasificación por tamaño — todos cuentan como manejo. Si un empacador o procesador fuera de tu finca hace este trabajo en tu lugar, describe esa relación en Ventas y Verificación de Proveedores (G6.5), no aquí."
                 },
                 "options": [
                   {
@@ -8218,7 +8218,7 @@
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
-                      "es": "Otro (describa abajo)"
+                      "es": "Otro (describe abajo)"
                     },
                     "exclusive": false
                   },
@@ -8246,7 +8246,7 @@
                 "kind": "text",
                 "label": {
                   "en": "Describe the other handling step",
-                  "es": "Describa el otro paso de manejo"
+                  "es": "Describe el otro paso de manejo"
                 },
                 "coaching": null,
                 "options": [],
@@ -8315,11 +8315,11 @@
                 "kind": "radio",
                 "label": {
                   "en": "Do you handle only your own crop, or also product from other growers?",
-                  "es": "¿Maneja únicamente su propio cultivo, o también producto de otros productores?"
+                  "es": "¿Manejas únicamente tu propio cultivo, o también producto de otros productores?"
                 },
                 "coaching": {
                   "en": "Custom-handling means running someone else's certified organic crop through your equipment for a fee — common where a walnut huller or almond huller serves several neighboring orchards. It does not include buying their crop outright once it is already harvested and sold to you.",
-                  "es": "Manejo por encargo significa procesar en su equipo el cultivo orgánico certificado de otra persona a cambio de un pago — común cuando un descascarador de nueces o almendras atiende a varias huertas vecinas. No incluye comprarles el cultivo una vez que ya se lo vendieron cosechado."
+                  "es": "Manejo por encargo significa procesar en tu equipo el cultivo orgánico certificado de otra persona a cambio de un pago — común cuando un descascarador de nueces o almendras atiende a varias huertas vecinas. No incluye comprarles el cultivo una vez que ya se lo vendieron cosechado."
                 },
                 "options": [
                   {
@@ -8334,7 +8334,7 @@
                     "value": "also_neighbors_custom",
                     "label": {
                       "en": "Also custom-handles product for other growers",
-                      "es": "También maneja por encargo producto de otros productores"
+                      "es": "También manejas por encargo producto de otros productores"
                     },
                     "exclusive": false
                   }
@@ -8354,11 +8354,11 @@
                 "kind": "textarea",
                 "label": {
                   "en": "Describe how another grower's product is kept separate from yours, and what records you keep for their lots",
-                  "es": "Describa cómo se mantiene separado el producto de otro productor del suyo, y qué registros conserva para sus lotes"
+                  "es": "Describe cómo se mantiene separado el producto de otro productor del tuyo, y qué registros conservas para esos lotes"
                 },
                 "coaching": {
                   "en": "Custom-handling another operation's crop makes you a handler for their product too — Strengthening Organic Enforcement expects the same lot separation, labeling, and traceable records you keep for your own crop.",
-                  "es": "Manejar el cultivo de otra operación por encargo lo convierte también en manejador de ese producto — la normativa de Fortalecimiento de la Aplicación Orgánica espera la misma separación de lotes, etiquetado y registros trazables que mantiene para su propio cultivo."
+                  "es": "Manejar el cultivo de otra operación por encargo te convierte también en manejador de ese producto — la normativa de Fortalecimiento de la Aplicación Orgánica espera la misma separación de lotes, etiquetado y registros trazables que mantienes para tu propio cultivo."
                 },
                 "options": [],
                 "required": true,
@@ -8382,11 +8382,11 @@
                 "kind": "textarea",
                 "label": {
                   "en": "Describe the buildings, pads, or equipment used for handling",
-                  "es": "Describa los edificios, plataformas o equipo usados para el manejo"
+                  "es": "Describe los edificios, plataformas o equipo usados para el manejo"
                 },
                 "coaching": {
                   "en": "Include every space product passes through — a wash pad, a hulling shed, a drying yard, a cooler — and note whether the space or equipment is shared with a nonorganic operation.",
-                  "es": "Incluya cada espacio por el que pasa el producto — una plataforma de lavado, un galpón de descascarado, un patio de secado, una cámara fría — e indique si el espacio o equipo se comparte con una operación no orgánica."
+                  "es": "Incluye cada espacio por el que pasa el producto — una plataforma de lavado, un galpón de descascarado, un patio de secado, una cámara fría — e indica si el espacio o equipo se comparte con una operación no orgánica."
                 },
                 "options": [],
                 "required": true,
@@ -8431,11 +8431,11 @@
                 "kind": "textarea",
                 "label": {
                   "en": "Write out your handling process in order, from harvest to shipment",
-                  "es": "Escriba su proceso de manejo en orden, desde la cosecha hasta el envío"
+                  "es": "Escribe tu proceso de manejo en orden, desde la cosecha hasta el envío"
                 },
                 "coaching": {
                   "en": "List each step as it happens — for example: harvest → haul to hulling shed → hull → dry → bulk storage → hand-sort → pack → cold storage → ship. This step list is the flow chart your certifier expects to see for the handling operation.",
-                  "es": "Enumere cada paso en el orden en que ocurre — por ejemplo: cosecha → traslado al galpón de descascarado → descascarado → secado → almacenamiento a granel → selección manual → empacado → cámara fría → envío. Esta lista de pasos es el diagrama de flujo que su certificador espera ver para la operación de manejo."
+                  "es": "Enumera cada paso en el orden en que ocurre — por ejemplo: cosecha → traslado al galpón de descascarado → descascarado → secado → almacenamiento a granel → selección manual → empacado → cámara fría → envío. Esta lista de pasos es el diagrama de flujo que tu certificador espera ver para la operación de manejo."
                 },
                 "options": [],
                 "required": true,
@@ -8457,7 +8457,7 @@
                 },
                 "coaching": {
                   "en": "Tick every method in use — dry methods count. A purge (running product through to clear the line) needs the quantity and procedure written into your process flow so a reviewer can judge it adequate.",
-                  "es": "Marque cada método en uso — los métodos en seco también cuentan. Una purga (pasar producto para despejar la línea) necesita la cantidad y el procedimiento escritos en su flujo de proceso para que un revisor pueda juzgarla adecuada."
+                  "es": "Marca cada método en uso — los métodos en seco también cuentan. Una purga (pasar producto para despejar la línea) necesita la cantidad y el procedimiento escritos en tu flujo de proceso para que un revisor pueda juzgarla adecuada."
                 },
                 "options": [
                   {
@@ -8536,7 +8536,7 @@
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
-                      "es": "Otro (describa abajo)"
+                      "es": "Otro (describe abajo)"
                     },
                     "exclusive": false
                   },
@@ -8564,7 +8564,7 @@
                 "kind": "text",
                 "label": {
                   "en": "Describe the other cleaning method",
-                  "es": "Describa el otro método de limpieza"
+                  "es": "Describe el otro método de limpieza"
                 },
                 "coaching": null,
                 "options": [],
@@ -8589,11 +8589,11 @@
                 "kind": "boolean",
                 "label": {
                   "en": "Do you use any sanitizer, cleaner or detergent on surfaces or equipment that contact organic product?",
-                  "es": "¿Usa algún sanitizante, limpiador o detergente en superficies o equipo que entran en contacto con producto orgánico?"
+                  "es": "¿Usas algún sanitizante, limpiador o detergente en superficies o equipo que entran en contacto con producto orgánico?"
                 },
                 "coaching": {
                   "en": "Includes a dry wipe-down of a sorting table or bin, not only wash-line sanitizers. Every product you name here must also be on your Materials Application — a sanitizer used on a food-contact surface is a handling input under § 205.605.",
-                  "es": "Incluye pasar un paño a una mesa de selección o a un bin, no solo los sanitizantes de la línea de lavado. Cada producto que nombre aquí debe estar también en su Solicitud de Materiales — un sanitizante usado en una superficie en contacto con alimentos es un insumo de manejo bajo § 205.605."
+                  "es": "Incluye pasar un paño a una mesa de selección o a un bin, no solo los sanitizantes de la línea de lavado. Cada producto que nombres aquí debe estar también en tu Solicitud de Materiales — un sanitizante usado en una superficie en contacto con alimentos es un insumo de manejo bajo § 205.605."
                 },
                 "options": [],
                 "required": true,
@@ -8694,7 +8694,7 @@
                     "value": "other_unknown",
                     "label": {
                       "en": "Other or unknown (describe below)",
-                      "es": "Otro o desconocido (describa abajo)"
+                      "es": "Otro o desconocido (describe abajo)"
                     },
                     "exclusive": false
                   }
@@ -8834,7 +8834,7 @@
                 "kind": "textarea",
                 "label": {
                   "en": "Name each product and where it is used",
-                  "es": "Nombre cada producto y dónde se usa"
+                  "es": "Nombra cada producto y dónde se usa"
                 },
                 "coaching": {
                   "en": "One line per product: brand, type, and the surface or equipment — for example \"SaniDate 5.0 (peracetic acid) — wash tank and brush bed\", \"Quat 128 — sorting table, rinsed and strip-tested\". This is the table CCOF §E and OTCO C7 7.6 ask for.",
@@ -8862,7 +8862,7 @@
                 "kind": "checkbox_group",
                 "label": {
                   "en": "How do you make sure organic food-contact surfaces are free of sanitizer or cleaner residue?",
-                  "es": "¿Cómo se asegura de que las superficies orgánicas en contacto con alimentos queden libres de residuo de sanitizante o limpiador?"
+                  "es": "¿Cómo te aseguras de que las superficies orgánicas en contacto con alimentos queden libres de residuo de sanitizante o limpiador?"
                 },
                 "coaching": null,
                 "options": [
@@ -8894,7 +8894,7 @@
                     "value": "residue_testing",
                     "label": {
                       "en": "Residue testing — pH strips, quaternary-ammonium strips, swabs or other (describe below)",
-                      "es": "Prueba de residuo — tiras de pH, tiras de amonio cuaternario, hisopos u otro (describa abajo)"
+                      "es": "Prueba de residuo — tiras de pH, tiras de amonio cuaternario, hisopos u otro (describe abajo)"
                     },
                     "exclusive": false
                   },
@@ -8902,7 +8902,7 @@
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
-                      "es": "Otro (describa abajo)"
+                      "es": "Otro (describe abajo)"
                     },
                     "exclusive": false
                   }
@@ -8928,7 +8928,7 @@
                 "kind": "text",
                 "label": {
                   "en": "Describe the other residue safeguard",
-                  "es": "Describa la otra salvaguarda contra residuos"
+                  "es": "Describe la otra salvaguarda contra residuos"
                 },
                 "coaching": null,
                 "options": [],
@@ -8953,7 +8953,7 @@
                 "kind": "textarea",
                 "label": {
                   "en": "Describe the residue test: test type and range, when it is run, and how the results are kept",
-                  "es": "Describa la prueba de residuo: tipo y rango de la prueba, cuándo se realiza y cómo se guardan los resultados"
+                  "es": "Describe la prueba de residuo: tipo y rango de la prueba, cuándo se realiza y cómo se guardan los resultados"
                 },
                 "coaching": {
                   "en": "WSDA and OTCO ask for the strip type and its range (for example quaternary-ammonium strips, 0–500 ppm, target 0) and where the readings go.",
@@ -9042,7 +9042,7 @@
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
-                      "es": "Otro (describa abajo)"
+                      "es": "Otro (describe abajo)"
                     },
                     "exclusive": false
                   }
@@ -9092,7 +9092,7 @@
                     "value": "other",
                     "label": {
                       "en": "Other — surface water, hauled, etc. (describe below)",
-                      "es": "Otro — agua superficial, acarreada, etc. (describa abajo)"
+                      "es": "Otro — agua superficial, acarreada, etc. (describe abajo)"
                     },
                     "exclusive": false
                   }
@@ -9118,11 +9118,11 @@
                 "kind": "textarea",
                 "label": {
                   "en": "Describe the water: its source, any treatment, and any sanitizer added to it",
-                  "es": "Describa el agua: su fuente, cualquier tratamiento y cualquier sanitizante que se le agregue"
+                  "es": "Describe el agua: su fuente, cualquier tratamiento y cualquier sanitizante que se le agregue"
                 },
                 "coaching": {
                   "en": "Name the source (well, municipal, pond) and, if a sanitizer is added, the product name, concentration, and how residual levels are checked. Only substances allowed for food-contact sanitizing on the National List may be used, within their labeled limits (§ 205.605).",
-                  "es": "Indique la fuente (pozo, red municipal, estanque) y, si se agrega un sanitizante, el nombre del producto, la concentración y cómo se verifican los niveles residuales. Solo pueden usarse sustancias permitidas para sanitización en contacto con alimentos de la Lista Nacional, dentro de sus límites indicados en la etiqueta (§ 205.605)."
+                  "es": "Indica la fuente (pozo, red municipal, estanque) y, si se agrega un sanitizante, el nombre del producto, la concentración y cómo se verifican los niveles residuales. Solo pueden usarse sustancias permitidas para sanitización en contacto con alimentos de la Lista Nacional, dentro de sus límites indicados en la etiqueta (§ 205.605)."
                 },
                 "options": [],
                 "required": true,
@@ -9150,7 +9150,7 @@
                 },
                 "coaching": {
                   "en": "Each additive must be on your Materials Application under post-harvest contact materials.",
-                  "es": "Cada aditivo debe estar en su Solicitud de Materiales bajo materiales de contacto poscosecha."
+                  "es": "Cada aditivo debe estar en tu Solicitud de Materiales bajo materiales de contacto poscosecha."
                 },
                 "options": [],
                 "required": true,
@@ -9230,7 +9230,7 @@
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
-                      "es": "Otro (describa abajo)"
+                      "es": "Otro (describe abajo)"
                     },
                     "exclusive": false
                   }
@@ -9256,7 +9256,7 @@
                 "kind": "text",
                 "label": {
                   "en": "Describe the other practice",
-                  "es": "Describa la otra práctica"
+                  "es": "Describe la otra práctica"
                 },
                 "coaching": null,
                 "options": [],
@@ -9285,7 +9285,7 @@
                 },
                 "coaching": {
                   "en": "Vague assurances are not a barrier a certifier can verify — list what is actually in place: dedicated equipment, a cleanout log, or a facility that never touches nonorganic product.",
-                  "es": "Las garantías vagas no son una barrera que un certificador pueda verificar — enumere lo que realmente existe: equipo dedicado, una bitácora de limpieza o una instalación que nunca toca producto no orgánico."
+                  "es": "Las garantías vagas no son una barrera que un certificador pueda verificar — enumera lo que realmente existe: equipo dedicado, una bitácora de limpieza o una instalación que nunca toca producto no orgánico."
                 },
                 "options": [
                   {
@@ -9332,7 +9332,7 @@
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
-                      "es": "Otro (describa abajo)"
+                      "es": "Otro (describe abajo)"
                     },
                     "exclusive": false
                   }
@@ -9352,7 +9352,7 @@
                 "kind": "text",
                 "label": {
                   "en": "Describe the other control",
-                  "es": "Describa el otro control"
+                  "es": "Describe el otro control"
                 },
                 "coaching": null,
                 "options": [],
@@ -9399,7 +9399,7 @@
                 "kind": "checkbox_group",
                 "label": {
                   "en": "Which handling records does your operation keep?",
-                  "es": "¿Qué registros de manejo mantiene su operación?"
+                  "es": "¿Qué registros de manejo mantiene tu operación?"
                 },
                 "coaching": {
                   "en": "A run log is date, lot, and quantity for each batch through the process — a simple notebook page per run is enough. Certifiers care that records exist and are consistent, not that they are fancy.",
@@ -9470,7 +9470,7 @@
                 "kind": "upload",
                 "label": {
                   "en": "Attach a site map, process flow chart, or handling SOPs, if you have them",
-                  "es": "Adjunte un mapa del sitio, diagrama de flujo del proceso, o procedimientos (SOP) de manejo, si los tiene"
+                  "es": "Adjunta un mapa del sitio, diagrama de flujo del proceso, o procedimientos (SOP) de manejo, si los tienes"
                 },
                 "coaching": {
                   "en": "Not required to complete this module, but a site map or flow chart is exactly what a certifier asks for first at an on-site handling review.",
@@ -9505,7 +9505,7 @@
         "education": [
           {
             "en": "Strengthening Organic Enforcement expects every operation to know its supply chain: verify certificates of anyone whose organic product you buy or resell, and keep sales records that link every lot sold to your own harvest records.",
-            "es": "La normativa de Fortalecimiento de la Aplicación Orgánica espera que cada operación conozca su cadena de suministro: verifique certificados de cualquiera a quien compre o revenda producto orgánico, y mantenga registros de venta que vinculen cada lote vendido con sus registros de cosecha."
+            "es": "La normativa de Fortalecimiento de la Aplicación Orgánica espera que cada operación conozca su cadena de suministro: verifica certificados de cualquiera a quien compres o revendas producto orgánico, y mantén registros de venta que vinculen cada lote vendido con tus registros de cosecha."
           }
         ],
         "allows_not_applicable": false,
@@ -9527,7 +9527,7 @@
                 "kind": "textarea",
                 "label": {
                   "en": "Describe your sales channels (wholesale, direct, packer).",
-                  "es": "Describa sus canales de venta (mayorista, directo, empacadora)."
+                  "es": "Describe tus canales de venta (mayorista, directo, empacadora)."
                 },
                 "coaching": null,
                 "options": [],
@@ -9546,11 +9546,11 @@
                 "kind": "radio",
                 "label": {
                   "en": "Do you buy or resell organic product from anyone else?",
-                  "es": "¿Compra o revende producto orgánico de terceros?"
+                  "es": "¿Compras o revendes producto orgánico de terceros?"
                 },
                 "coaching": {
                   "en": "If yes, § 205.201(a)(3) expects you to describe how you verify their organic certificate and guard against organic fraud.",
-                  "es": "Si es así, § 205.201(a)(3) espera que describa cómo verifica su certificado orgánico y previene el fraude orgánico."
+                  "es": "Si es así, § 205.201(a)(3) espera que describas cómo verificas su certificado orgánico y previenes el fraude orgánico."
                 },
                 "options": [
                   {
@@ -9585,11 +9585,11 @@
                 "kind": "textarea",
                 "label": {
                   "en": "How do you verify those suppliers' organic certificates, and how often?",
-                  "es": "¿Cómo verifica los certificados orgánicos de esos proveedores, y con qué frecuencia?"
+                  "es": "¿Cómo verificas los certificados orgánicos de esos proveedores, y con qué frecuencia?"
                 },
                 "coaching": {
                   "en": "Name the check and its frequency — e.g. 'certificate requested at first purchase and re-checked each season against the USDA Organic Integrity Database'.",
-                  "es": "Nombre la verificación y su frecuencia — ej. 'certificado solicitado en la primera compra y revisado cada temporada contra la base USDA Organic Integrity'."
+                  "es": "Nombra la verificación y su frecuencia — ej. 'certificado solicitado en la primera compra y revisado cada temporada contra la base USDA Organic Integrity'."
                 },
                 "options": [],
                 "required": true,
@@ -9635,7 +9635,7 @@
                 "kind": "upload",
                 "label": {
                   "en": "Attach a sample sales record showing lot identification.",
-                  "es": "Adjunte un registro de venta de muestra que muestre la identificación de lote."
+                  "es": "Adjunta un registro de venta de muestra que muestre la identificación de lote."
                 },
                 "coaching": null,
                 "options": [],
@@ -9690,7 +9690,7 @@
             "education": [
               {
                 "en": "List every way organic product leaves this operation — many operations use more than one depending on the buyer. Selecting consumer-ready packaging opens the certifying-agent and seal questions below; bulk and wholesale shipments are instead covered by the documents questions in section B.",
-                "es": "Indique cada forma en que el producto orgánico sale de esta operación — muchas operaciones usan más de una según el comprador. Marcar el empaque listo para el consumidor activa las preguntas sobre el agente certificador y el sello, más abajo; los envíos a granel y mayoristas se cubren en cambio con las preguntas sobre documentos de la sección B."
+                "es": "Indica cada forma en que el producto orgánico sale de esta operación — muchas operaciones usan más de una según el comprador. Marcar el empaque listo para el consumidor activa las preguntas sobre el agente certificador y el sello, más abajo; los envíos a granel y mayoristas se cubren en cambio con las preguntas sobre documentos de la sección B."
               }
             ],
             "visible_when": [],
@@ -9740,7 +9740,7 @@
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
-                      "es": "Otra (describa abajo)"
+                      "es": "Otra (describe abajo)"
                     },
                     "exclusive": false
                   }
@@ -9760,7 +9760,7 @@
                 "kind": "text",
                 "label": {
                   "en": "Describe the other way product leaves the operation",
-                  "es": "Describa la otra forma en que el producto sale de la operación"
+                  "es": "Describe la otra forma en que el producto sale de la operación"
                 },
                 "coaching": null,
                 "options": [],
@@ -9817,7 +9817,7 @@
                 },
                 "coaching": {
                   "en": "A raw agricultural crop sold whole is normally \"100 percent organic\". \"Organic\" allows up to 5% nonorganic ingredients, and \"made with organic\" is a multi-ingredient category — both are handler-side, so a grower who only sells whole crop picks the first. Pick every category that appears on a label, an invoice, or a bill of lading.",
-                  "es": "Un cultivo agrícola crudo vendido entero normalmente es \"100 por ciento orgánico\". \"Orgánico\" admite hasta 5% de ingredientes no orgánicos, y \"elaborado con orgánicos\" es una categoría multi-ingrediente — ambas corresponden al procesador, por lo que un productor que solo vende cultivo entero elige la primera. Marque cada categoría que aparezca en una etiqueta, una factura o una carta de porte."
+                  "es": "Un cultivo agrícola crudo vendido entero normalmente es \"100 por ciento orgánico\". \"Orgánico\" admite hasta 5% de ingredientes no orgánicos, y \"elaborado con orgánicos\" es una categoría multi-ingrediente — ambas corresponden al procesador, por lo que un productor que solo vende cultivo entero elige la primera. Marca cada categoría que aparezca en una etiqueta, una factura o una carta de porte."
                 },
                 "options": [
                   {
@@ -9916,11 +9916,11 @@
                 "kind": "upload",
                 "label": {
                   "en": "Upload your current label files",
-                  "es": "Suba los archivos de sus etiquetas actuales"
+                  "es": "Sube los archivos de tus etiquetas actuales"
                 },
                 "coaching": {
                   "en": "Your certifying agent reviews labels before they are used in commerce. Attach the current file for each label or package presentation.",
-                  "es": "Su agente certificador revisa las etiquetas antes de que se usen en el comercio. Adjunte el archivo vigente de cada etiqueta o presentación de empaque."
+                  "es": "Tu agente certificador revisa las etiquetas antes de que se usen en el comercio. Adjunta el archivo vigente de cada etiqueta o presentación de empaque."
                 },
                 "options": [],
                 "required": false,
@@ -10215,11 +10215,11 @@
                 "kind": "boolean",
                 "label": {
                   "en": "Do your invoices or bills of lading identify each organic shipment as organic and show its lot number?",
-                  "es": "¿Sus facturas o cartas de porte identifican cada envío orgánico como orgánico e indican su número de lote?"
+                  "es": "¿Tus facturas o cartas de porte identifican cada envío orgánico como orgánico e indican su número de lote?"
                 },
                 "coaching": {
                   "en": "State the word \"organic\" and the lot number, or other unique identification, on the sales document for every organic shipment, whether or not the container itself is marked.",
-                  "es": "Indique la palabra \"orgánico\" y el número de lote, u otra identificación única, en el documento de venta de cada envío orgánico, esté o no marcado el propio contenedor."
+                  "es": "Indica la palabra \"orgánico\" y el número de lote, u otra identificación única, en el documento de venta de cada envío orgánico, esté o no marcado el propio contenedor."
                 },
                 "options": [],
                 "required": true,
@@ -10237,11 +10237,11 @@
                 "kind": "boolean",
                 "label": {
                   "en": "Do any container markings — bin tags, pallet labels, stencils — tie back to the same lot identification used in your records?",
-                  "es": "¿Las marcas del contenedor — etiquetas de bins, etiquetas de pallets, plantillas — coinciden con la misma identificación de lote usada en sus registros?"
+                  "es": "¿Las marcas del contenedor — etiquetas de bins, etiquetas de pallets, plantillas — coinciden con la misma identificación de lote usada en tus registros?"
                 },
                 "coaching": {
                   "en": "A lot number on a bin tag or pallet label is only useful if it matches the number in your harvest, storage, and sales records.",
-                  "es": "El número de lote en la etiqueta del bin o pallet solo es útil si coincide con el número en sus registros de cosecha, almacenamiento y venta."
+                  "es": "El número de lote en la etiqueta del bin o pallet solo es útil si coincide con el número en tus registros de cosecha, almacenamiento y venta."
                 },
                 "options": [],
                 "required": true,
@@ -10358,7 +10358,7 @@
                 },
                 "coaching": {
                   "en": "Describe who checks new labeling or marketing language against your certificate before it reaches a buyer or a package. Never state or imply certification for a product, parcel, or activity outside the scope of your certificate.",
-                  "es": "Describa quién revisa el nuevo etiquetado o el lenguaje de mercadeo frente a su certificado antes de que llegue a un comprador o a un empaque. Nunca declare ni dé a entender que un producto, parcela o actividad está certificado si está fuera del alcance de su certificado."
+                  "es": "Describe quién revisa el nuevo etiquetado o el lenguaje de mercadeo frente a tu certificado antes de que llegue a un comprador o a un empaque. Nunca declares ni des a entender que un producto, parcela o actividad está certificado si está fuera del alcance de tu certificado."
                 },
                 "options": [],
                 "required": true,
@@ -10408,7 +10408,7 @@
             "education": [
               {
                 "en": "Confirm each record type your operation maintains. Where Trazo already holds records of a type, the row shows the evidence — confirming it is still your statement, not Trazo's.",
-                "es": "Confirme cada tipo de registro que mantiene su operación. Cuando Trazo ya contiene registros de un tipo, la fila muestra la evidencia — confirmarla sigue siendo su declaración, no la de Trazo."
+                "es": "Confirma cada tipo de registro que mantiene tu operación. Cuando Trazo ya contiene registros de un tipo, la fila muestra la evidencia — confirmarla sigue siendo tu declaración, no la de Trazo."
               }
             ],
             "visible_when": [],
@@ -10437,7 +10437,7 @@
                 "kind": "boolean",
                 "label": {
                   "en": "Do you maintain all the records your plan's activities require (confirmed above), keep them for at least 5 years, and make them available at inspection?",
-                  "es": "¿Mantiene todos los registros que requieren las actividades de su plan (confirmados arriba), los conserva al menos 5 años y los tiene disponibles en la inspección?"
+                  "es": "¿Mantienes todos los registros que requieren las actividades de tu plan (confirmados arriba), los conservas al menos 5 años y los tienes disponibles en la inspección?"
                 },
                 "coaching": null,
                 "options": [],
@@ -10456,7 +10456,7 @@
                 "kind": "radio",
                 "label": {
                   "en": "Are all of your organic records kept at your primary business location?",
-                  "es": "¿Todos sus registros orgánicos se conservan en la ubicación principal de su negocio?"
+                  "es": "¿Todos tus registros orgánicos se conservan en la ubicación principal de tu negocio?"
                 },
                 "coaching": null,
                 "options": [
@@ -10496,7 +10496,7 @@
                 },
                 "coaching": {
                   "en": "Name the record types and the location for each. Your certifier may also ask for their own additional-facilities form; this answer is what tells them whether it is needed.",
-                  "es": "Indique los tipos de registro y la ubicación de cada uno. Su agencia certificadora puede además pedir su propio formulario de instalaciones adicionales; esta respuesta es la que les indica si hace falta."
+                  "es": "Indica los tipos de registro y la ubicación de cada uno. Tu agencia certificadora puede además pedir su propio formulario de instalaciones adicionales; esta respuesta es la que les indica si hace falta."
                 },
                 "options": [],
                 "required": true,
@@ -10520,7 +10520,7 @@
                 "kind": "radio",
                 "label": {
                   "en": "Can your primary contact readily access every record relating to certification?",
-                  "es": "¿Su contacto principal puede acceder fácilmente a todos los registros relacionados con la certificación?"
+                  "es": "¿Tu contacto principal puede acceder fácilmente a todos los registros relacionados con la certificación?"
                 },
                 "coaching": null,
                 "options": [
@@ -10584,11 +10584,11 @@
                 "kind": "checkbox_group",
                 "label": {
                   "en": "How are your records kept?",
-                  "es": "¿Cómo se conservan sus registros?"
+                  "es": "¿Cómo se conservan tus registros?"
                 },
                 "coaching": {
                   "en": "Tick both if paper source documents — delivery tickets, scale tickets, handwritten spray logs — are filed as well as entered here.",
-                  "es": "Marque ambas si además conserva documentos en papel — boletas de entrega, tiquetes de báscula, registros de aplicación escritos a mano — aparte de lo que registra aquí."
+                  "es": "Marca ambas si además conservas documentos en papel — boletas de entrega, tiquetes de báscula, registros de aplicación escritos a mano — aparte de lo que registras aquí."
                 },
                 "options": [
                   {
@@ -10639,7 +10639,7 @@
                 "kind": "radio",
                 "label": {
                   "en": "Does your operation assign lot numbers (or another unique ID) to track crops once they leave the operation?",
-                  "es": "¿Su operación asigna números de lote (u otra identificación única) para rastrear los cultivos una vez que salen de la operación?"
+                  "es": "¿Tu operación asigna números de lote (u otra identificación única) para rastrear los cultivos una vez que salen de la operación?"
                 },
                 "coaching": null,
                 "options": [
@@ -10683,7 +10683,7 @@
                 "kind": "textarea",
                 "label": {
                   "en": "Describe your lot numbering system",
-                  "es": "Describa su sistema de numeración de lotes"
+                  "es": "Describe tu sistema de numeración de lotes"
                 },
                 "coaching": {
                   "en": "What the number encodes (year, parcel, sequence), where it is printed, and which records carry it.",
@@ -10715,7 +10715,7 @@
                 },
                 "coaching": {
                   "en": "Your renewal packet already carries a generated exhibit — document 05, Audit trail exhibit: the record types you confirmed in §A with their linking elements, and one finished lot traced from harvest through storage to sale. Attach your own sample here only if you want to add to it.",
-                  "es": "Su paquete de renovación ya incluye un ejemplo generado — documento 05, Rastro de auditoría: los tipos de registro que confirmó en §A con sus elementos de enlace, y un lote terminado rastreado desde la cosecha, por el almacenamiento, hasta la venta. Adjunte aquí su propio ejemplo solo si desea complementarlo."
+                  "es": "Tu paquete de renovación ya incluye un ejemplo generado — documento 05, Rastro de auditoría: los tipos de registro que confirmaste en §A con sus elementos de enlace, y un lote terminado rastreado desde la cosecha, por el almacenamiento, hasta la venta. Adjunta aquí tu propio ejemplo solo si deseas complementarlo."
                 },
                 "options": [],
                 "required": false,
@@ -10739,7 +10739,7 @@
             "education": [
               {
                 "en": "Most operations selling only within the United States answer the first question and are done with this page. It matters for tree nuts, dried fruit, and other crops that commonly ship abroad: several trade partners require an export certificate issued by your certifier BEFORE the shipment leaves, and a shipment that departs without one cannot be corrected afterwards.",
-                "es": "La mayoría de las operaciones que venden solo dentro de Estados Unidos responden la primera pregunta y terminan con esta página. Importa para frutos secos, fruta deshidratada y otros cultivos que suelen enviarse al exterior: varios socios comerciales exigen un certificado de exportación emitido por su certificador ANTES de que salga el envío, y un envío que parte sin él no puede corregirse después."
+                "es": "La mayoría de las operaciones que venden solo dentro de Estados Unidos responden la primera pregunta y terminan con esta página. Importa para frutos secos, fruta deshidratada y otros cultivos que suelen enviarse al exterior: varios socios comerciales exigen un certificado de exportación emitido por tu certificador ANTES de que salga el envío, y un envío que parte sin él no puede corregirse después."
               }
             ],
             "visible_when": [],
@@ -10749,11 +10749,11 @@
                 "kind": "checkbox_group",
                 "label": {
                   "en": "Does your operation import or export organic products, directly or indirectly, now or in plans?",
-                  "es": "¿Su operación importa o exporta productos orgánicos, directa o indirectamente, ahora o en sus planes?"
+                  "es": "¿Tu operación importa o exporta productos orgánicos, directa o indirectamente, ahora o en tus planes?"
                 },
                 "coaching": {
                   "en": "Indirect export counts: product a buyer, broker or trader ships abroad, or that leaves the country as an ingredient. Certifiers ask about it because the destination country's rules can reach your crop.",
-                  "es": "La exportación indirecta cuenta: el producto que un comprador, corredor o comerciante envía al exterior, o que sale del país como ingrediente. Los certificadores preguntan por ella porque las reglas del país de destino pueden alcanzar su cultivo."
+                  "es": "La exportación indirecta cuenta: el producto que un comprador, corredor o comerciante envía al exterior, o que sale del país como ingrediente. Los certificadores preguntan por ella porque las reglas del país de destino pueden alcanzar tu cultivo."
                 },
                 "options": [
                   {
@@ -10813,11 +10813,11 @@
                 "kind": "text",
                 "label": {
                   "en": "Which countries do you export to or plan to export to, directly or indirectly?",
-                  "es": "¿A qué países exporta o planea exportar, directa o indirectamente?"
+                  "es": "¿A qué países exportas o planeas exportar, directa o indirectamente?"
                 },
                 "coaching": {
                   "en": "For indirect export, name the countries your buyer, broker or trader ships to, as far as you know them.",
-                  "es": "Para la exportación indirecta, indique los países a los que envía su comprador, corredor o comerciante, en la medida en que los conozca."
+                  "es": "Para la exportación indirecta, indica los países a los que envía tu comprador, corredor o comerciante, en la medida en que los conozcas."
                 },
                 "options": [],
                 "required": true,
@@ -10844,11 +10844,11 @@
                 "kind": "checkbox_group",
                 "label": {
                   "en": "Which export certificates do your destination countries require?",
-                  "es": "¿Qué certificados de exportación exigen sus países de destino?"
+                  "es": "¿Qué certificados de exportación exigen tus países de destino?"
                 },
                 "coaching": {
                   "en": "Each of these is issued by your certifier, not by you, and must be requested before the shipment departs. Check the USDA NOP International Trade Partners page if you are not sure which applies.",
-                  "es": "Cada uno de estos lo emite su certificador, no usted, y debe solicitarse antes de que salga el envío. Consulte la página de Socios Comerciales Internacionales del NOP del USDA si no está seguro de cuál aplica."
+                  "es": "Cada uno de estos lo emite tu certificador, no tú, y debe solicitarse antes de que salga el envío. Consulta la página de Socios Comerciales Internacionales del NOP del USDA si no estás seguro de cuál aplica."
                 },
                 "options": [
                   {
@@ -10895,7 +10895,7 @@
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
-                      "es": "Otro (describa abajo)"
+                      "es": "Otro (describe abajo)"
                     },
                     "exclusive": false
                   }
@@ -10921,7 +10921,7 @@
                 "kind": "text",
                 "label": {
                   "en": "Describe the other export certificate",
-                  "es": "Describa el otro certificado de exportación"
+                  "es": "Describe el otro certificado de exportación"
                 },
                 "coaching": null,
                 "options": [],
@@ -10946,11 +10946,11 @@
                 "kind": "textarea",
                 "label": {
                   "en": "How do you request, verify, and keep these export certificates?",
-                  "es": "¿Cómo solicita, verifica y conserva estos certificados de exportación?"
+                  "es": "¿Cómo solicitas, verificas y conservas estos certificados de exportación?"
                 },
                 "coaching": {
                   "en": "Say who requests the certificate, how far ahead of shipment, and where the issued certificates are filed.",
-                  "es": "Indique quién solicita el certificado, con cuánta anticipación al envío, y dónde se archivan los certificados emitidos."
+                  "es": "Indica quién solicita el certificado, con cuánta anticipación al envío, y dónde se archivan los certificados emitidos."
                 },
                 "options": [],
                 "required": true,
@@ -10974,7 +10974,7 @@
                 "kind": "textarea",
                 "label": {
                   "en": "How do you ensure exported product meets the destination country's requirements (labeling, permitted production practices)?",
-                  "es": "¿Cómo asegura que el producto exportado cumple los requisitos del país de destino (etiquetado, prácticas de producción permitidas)?"
+                  "es": "¿Cómo aseguras que el producto exportado cumple los requisitos del país de destino (etiquetado, prácticas de producción permitidas)?"
                 },
                 "coaching": null,
                 "options": [],
@@ -10999,7 +10999,7 @@
                 "kind": "checkbox_group",
                 "label": {
                   "en": "How do you ensure each imported shipment carries the required documentation?",
-                  "es": "¿Cómo asegura que cada envío importado lleve la documentación requerida?"
+                  "es": "¿Cómo aseguras que cada envío importado lleve la documentación requerida?"
                 },
                 "coaching": {
                   "en": "A NOP Import Certificate must be issued by a certifier before the shipment leaves the country of origin — it cannot be obtained after arrival.",
@@ -11034,7 +11034,7 @@
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
-                      "es": "Otro (describa abajo)"
+                      "es": "Otro (describe abajo)"
                     },
                     "exclusive": false
                   }
@@ -11060,7 +11060,7 @@
                 "kind": "text",
                 "label": {
                   "en": "Describe the other import documentation control",
-                  "es": "Describa el otro control de documentación de importación"
+                  "es": "Describe el otro control de documentación de importación"
                 },
                 "coaching": null,
                 "options": [],
@@ -11085,7 +11085,7 @@
                 "kind": "textarea",
                 "label": {
                   "en": "How do you verify and document that each imported shipment had no contact with prohibited substances or ionizing radiation since export?",
-                  "es": "¿Cómo verifica y documenta que cada envío importado no tuvo contacto con sustancias prohibidas ni radiación ionizante desde su exportación?"
+                  "es": "¿Cómo verificas y documentas que cada envío importado no tuvo contacto con sustancias prohibidas ni radiación ionizante desde su exportación?"
                 },
                 "coaching": null,
                 "options": [],
@@ -11114,7 +11114,7 @@
                 },
                 "coaching": {
                   "en": "Include container sealing, who breaks and re-applies seals, and any fumigation or phytosanitary treatment the port may require — a treatment with a prohibited material at the port ends the organic status of that load.",
-                  "es": "Incluya el sellado de contenedores, quién rompe y vuelve a colocar los sellos, y cualquier fumigación o tratamiento fitosanitario que el puerto pueda exigir — un tratamiento con material prohibido en el puerto termina con el estatus orgánico de esa carga."
+                  "es": "Incluye el sellado de contenedores, quién rompe y vuelve a colocar los sellos, y cualquier fumigación o tratamiento fitosanitario que el puerto pueda exigir — un tratamiento con material prohibido en el puerto termina con el estatus orgánico de esa carga."
                 },
                 "options": [],
                 "required": true,
@@ -11141,7 +11141,7 @@
                 "kind": "checkbox_group",
                 "label": {
                   "en": "Which import and export records do you keep?",
-                  "es": "¿Qué registros de importación y exportación conserva?"
+                  "es": "¿Qué registros de importación y exportación conservas?"
                 },
                 "coaching": null,
                 "options": [
@@ -11240,11 +11240,11 @@
         "education": [
           {
             "en": "This section is about pests in buildings and structures — storage, packing sheds, hullers, coolers, greenhouses, and propagation areas. Pests in the field belong in your Crop Pest, Weed & Disease module instead.",
-            "es": "Esta sección trata sobre plagas en edificios y estructuras — almacenamiento, empacadoras, descascaradoras, cámaras frías, invernaderos y áreas de propagación. Las plagas del campo corresponden a su módulo de Manejo de Plagas, Malezas y Enfermedades del Cultivo."
+            "es": "Esta sección trata sobre plagas en edificios y estructuras — almacenamiento, empacadoras, descascaradoras, cámaras frías, invernaderos y áreas de propagación. Las plagas del campo corresponden a tu módulo de Manejo de Plagas, Malezas y Enfermedades del Cultivo."
           },
           {
             "en": "The regulation sets an order you must follow: remove habitat, food sources, and breeding areas first; then use mechanical and physical controls such as traps and barriers; only then a substance on the National List; and a synthetic substance that is not on the National List only with your certifier's advance approval. Whenever you reach for a material, you need a record showing the earlier steps were tried and were not enough (§ 205.271).",
-            "es": "El reglamento establece un orden que debe seguir: primero eliminar el hábitat, las fuentes de alimento y las áreas de reproducción; luego usar controles mecánicos y físicos como trampas y barreras; solo después una sustancia de la Lista Nacional; y una sustancia sintética que no esté en la Lista Nacional solo con aprobación previa de su certificador. Siempre que recurra a un material, necesita un registro que muestre que los pasos anteriores se intentaron y no fueron suficientes (§ 205.271)."
+            "es": "El reglamento establece un orden que debes seguir: primero eliminar el hábitat, las fuentes de alimento y las áreas de reproducción; luego usar controles mecánicos y físicos como trampas y barreras; solo después una sustancia de la Lista Nacional; y una sustancia sintética que no esté en la Lista Nacional solo con aprobación previa de tu certificador. Siempre que recurras a un material, necesitas un registro que muestre que los pasos anteriores se intentaron y no fueron suficientes (§ 205.271)."
           }
         ],
         "allows_not_applicable": true,
@@ -11264,7 +11264,7 @@
             "education": [
               {
                 "en": "If a pest control company services your buildings, the certifier will want evidence that the company knows the site handles organic product. Their standard program is usually built around synthetic materials, so an unnotified company is a common route to an unapproved application.",
-                "es": "Si una empresa de control de plagas atiende sus edificios, el certificador querrá evidencia de que la empresa sabe que el sitio maneja producto orgánico. Su programa estándar generalmente se basa en materiales sintéticos, por lo que una empresa no notificada es una vía común hacia una aplicación no aprobada."
+                "es": "Si una empresa de control de plagas atiende tus edificios, el certificador querrá evidencia de que la empresa sabe que el sitio maneja producto orgánico. Su programa estándar generalmente se basa en materiales sintéticos, por lo que una empresa no notificada es una vía común hacia una aplicación no aprobada."
               }
             ],
             "visible_when": [],
@@ -11274,7 +11274,7 @@
                 "kind": "boolean",
                 "label": {
                   "en": "Does your operation use a contracted pest control company?",
-                  "es": "¿Su operación usa una empresa de control de plagas contratada?"
+                  "es": "¿Tu operación usa una empresa de control de plagas contratada?"
                 },
                 "coaching": null,
                 "options": [],
@@ -11371,7 +11371,7 @@
                 "kind": "checkbox_group",
                 "label": {
                   "en": "Which facility pest control records do you keep?",
-                  "es": "¿Qué registros de control de plagas en instalaciones conserva?"
+                  "es": "¿Qué registros de control de plagas en instalaciones conservas?"
                 },
                 "coaching": null,
                 "options": [
@@ -11461,7 +11461,7 @@
             "education": [
               {
                 "en": "These are the first two tiers of § 205.271. Answer them honestly even if you have no pest pressure — an inspector reads an empty prevention answer as an operation that has not thought about it.",
-                "es": "Estos son los dos primeros niveles del § 205.271. Respóndalos con honestidad aunque no tenga presión de plagas — un inspector interpreta una respuesta de prevención vacía como una operación que no lo ha considerado."
+                "es": "Estos son los dos primeros niveles del § 205.271. Respóndelos con honestidad aunque no tengas presión de plagas — un inspector interpreta una respuesta de prevención vacía como una operación que no lo ha considerado."
               }
             ],
             "visible_when": [],
@@ -11471,7 +11471,7 @@
                 "kind": "checkbox_group",
                 "label": {
                   "en": "Which preventive practices are in place in your structures?",
-                  "es": "¿Qué prácticas preventivas tiene en sus estructuras?"
+                  "es": "¿Qué prácticas preventivas tienes en tus estructuras?"
                 },
                 "coaching": null,
                 "options": [
@@ -11527,7 +11527,7 @@
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
-                      "es": "Otra (describa abajo)"
+                      "es": "Otra (describe abajo)"
                     },
                     "exclusive": false
                   }
@@ -11547,7 +11547,7 @@
                 "kind": "text",
                 "label": {
                   "en": "Describe the other preventive practice",
-                  "es": "Describa la otra práctica preventiva"
+                  "es": "Describe la otra práctica preventiva"
                 },
                 "coaching": null,
                 "options": [],
@@ -11572,7 +11572,7 @@
                 "kind": "checkbox_group",
                 "label": {
                   "en": "Which mechanical or physical pest controls are in place?",
-                  "es": "¿Qué controles mecánicos o físicos de plagas tiene?"
+                  "es": "¿Qué controles mecánicos o físicos de plagas tienes?"
                 },
                 "coaching": null,
                 "options": [
@@ -11659,11 +11659,11 @@
                 "kind": "radio",
                 "label": {
                   "en": "What kinds of pest control materials are used in your structures?",
-                  "es": "¿Qué tipos de materiales de control de plagas se usan en sus estructuras?"
+                  "es": "¿Qué tipos de materiales de control de plagas se usan en tus estructuras?"
                 },
                 "coaching": {
                   "en": "A synthetic substance that is not on the National List needs your certifier's approval BEFORE it is applied, and the substance and its method of application must be described in this plan.",
-                  "es": "Una sustancia sintética que no está en la Lista Nacional necesita la aprobación de su certificador ANTES de aplicarse, y la sustancia y su método de aplicación deben describirse en este plan."
+                  "es": "Una sustancia sintética que no está en la Lista Nacional necesita la aprobación de tu certificador ANTES de aplicarse, y la sustancia y su método de aplicación deben describirse en este plan."
                 },
                 "options": [
                   {
@@ -11714,7 +11714,7 @@
                 "kind": "checkbox_group",
                 "label": {
                   "en": "How do you document that prevention and physical controls were not enough, before a material is applied?",
-                  "es": "¿Cómo documenta que la prevención y los controles físicos no fueron suficientes, antes de aplicar un material?"
+                  "es": "¿Cómo documentas que la prevención y los controles físicos no fueron suficientes, antes de aplicar un material?"
                 },
                 "coaching": {
                   "en": "This is what makes a material application defensible. Without it, the record shows a material used first rather than last.",
@@ -11757,7 +11757,7 @@
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
-                      "es": "Otra (describa abajo)"
+                      "es": "Otra (describe abajo)"
                     },
                     "exclusive": false
                   }
@@ -11786,7 +11786,7 @@
                 "kind": "text",
                 "label": {
                   "en": "Describe the other documentation",
-                  "es": "Describa la otra documentación"
+                  "es": "Describe la otra documentación"
                 },
                 "coaching": null,
                 "options": [],
@@ -11811,7 +11811,7 @@
                 "kind": "checkbox_group",
                 "label": {
                   "en": "How do you prevent pest control materials from contacting organic product, packaging, and food contact surfaces?",
-                  "es": "¿Cómo evita que los materiales de control de plagas entren en contacto con el producto orgánico, el empaque y las superficies de contacto con alimentos?"
+                  "es": "¿Cómo evitas que los materiales de control de plagas entren en contacto con el producto orgánico, el empaque y las superficies de contacto con alimentos?"
                 },
                 "coaching": null,
                 "options": [
@@ -11933,7 +11933,7 @@
                 "kind": "textarea",
                 "label": {
                   "en": "Describe the designated wild-harvest area, its 36-month history, and how harvest sustainability is protected.",
-                  "es": "Describa el área designada de recolección silvestre, su historial de 36 meses y cómo se protege la sostenibilidad de la cosecha."
+                  "es": "Describe el área designada de recolección silvestre, su historial de 36 meses y cómo se protege la sostenibilidad de la cosecha."
                 },
                 "coaching": null,
                 "options": [],
@@ -11952,7 +11952,7 @@
                 "kind": "upload",
                 "label": {
                   "en": "Attach a map of the designated area and any landowner statements.",
-                  "es": "Adjunte un mapa del área designada y declaraciones del propietario si las hay."
+                  "es": "Adjunta un mapa del área designada y declaraciones del propietario si las hay."
                 },
                 "coaching": null,
                 "options": [],
@@ -11997,7 +11997,7 @@
             "key": "a_materials_list",
             "title": {
               "en": "A. Your materials list",
-              "es": "A. Su lista de materiales"
+              "es": "A. Tu lista de materiales"
             },
             "education": [
               {
@@ -12038,7 +12038,7 @@
                 },
                 "coaching": {
                   "en": "Only for an operation that applies nothing at all — no fertilizer, compost, spray, adjuvant or post-harvest sanitizer. If you use anything, leave this unchecked and complete the list above.",
-                  "es": "Solo para una operación que no aplica nada — ni fertilizante, compost, aspersión, adyuvante ni sanitizante poscosecha. Si usa algo, déjelo sin marcar y complete la lista de arriba."
+                  "es": "Solo para una operación que no aplica nada — ni fertilizante, compost, aspersión, adyuvante ni sanitizante poscosecha. Si usas algo, déjalo sin marcar y completa la lista de arriba."
                 },
                 "options": [],
                 "required": false,
@@ -12060,7 +12060,7 @@
                 },
                 "coaching": {
                   "en": "Confirm this only after reviewing the panel above — add any missing material there first.",
-                  "es": "Confirme esto solo después de revisar el panel de arriba — agregue ahí primero cualquier material faltante."
+                  "es": "Confirma esto solo después de revisar el panel de arriba — agrega ahí primero cualquier material faltante."
                 },
                 "options": [],
                 "required": true,
@@ -12090,7 +12090,7 @@
             "education": [
               {
                 "en": "For each category, either state that you use no such materials or confirm that every one you use is on the list above. A stated 'none used' is what CCOF and OTCO ask for; a 'Yes' over an empty category reads like a complete list.",
-                "es": "Para cada categoría, declare que no usa ese tipo de materiales o confirme que todos los que usa están en la lista de arriba. Un 'ninguno en uso' declarado es lo que CCOF y OTCO piden; un 'Sí' sobre una categoría vacía se lee como una lista completa."
+                "es": "Para cada categoría, declara que no usas ese tipo de materiales o confirma que todos los que usas están en la lista de arriba. Un 'ninguno en uso' declarado es lo que CCOF y OTCO piden; un 'Sí' sobre una categoría vacía se lee como una lista completa."
               }
             ],
             "visible_when": [
@@ -12129,7 +12129,7 @@
                 },
                 "coaching": {
                   "en": "Include compost, manure, mined minerals, and any synthetic fertilizer product — even ones already OMRI-listed — in the materials list above.",
-                  "es": "Incluya compost, estiércol, minerales de mina y cualquier producto fertilizante sintético — incluso los ya listados por OMRI — en la lista de materiales de arriba."
+                  "es": "Incluye compost, estiércol, minerales de mina y cualquier producto fertilizante sintético — incluso los ya listados por OMRI — en la lista de materiales de arriba."
                 },
                 "options": [],
                 "required": true,
@@ -12178,7 +12178,7 @@
                 },
                 "coaching": {
                   "en": "Include biological, botanical, and synthetic pest, disease, or weed-control materials, even if applied only occasionally.",
-                  "es": "Incluya materiales biológicos, botánicos y sintéticos para el control de plagas, enfermedades o malezas, aunque se apliquen solo ocasionalmente."
+                  "es": "Incluye materiales biológicos, botánicos y sintéticos para el control de plagas, enfermedades o malezas, aunque se apliquen solo ocasionalmente."
                 },
                 "options": [],
                 "required": true,
@@ -12227,7 +12227,7 @@
                 },
                 "coaching": {
                   "en": "Include adjuvants, wetting agents, spreader-stickers, and other materials that help other products work, even when they touch the crop only indirectly.",
-                  "es": "Incluya adyuvantes, agentes humectantes, adherentes-dispersantes y otros materiales que ayudan a que otros productos funcionen, aunque toquen el cultivo solo de forma indirecta."
+                  "es": "Incluye adyuvantes, agentes humectantes, adherentes-dispersantes y otros materiales que ayudan a que otros productos funcionen, aunque toquen el cultivo solo de forma indirecta."
                 },
                 "options": [],
                 "required": true,
@@ -12274,7 +12274,7 @@
                 },
                 "coaching": {
                   "en": "Include wash water additives, sanitizers, and any material that contacts the harvested crop after it leaves the field.",
-                  "es": "Incluya aditivos del agua de lavado, sanitizantes y cualquier material que entre en contacto con el cultivo cosechado después de salir del campo."
+                  "es": "Incluye aditivos del agua de lavado, sanitizantes y cualquier material que entre en contacto con el cultivo cosechado después de salir del campo."
                 },
                 "options": [],
                 "required": true,
@@ -12322,11 +12322,11 @@
                 "kind": "textarea",
                 "label": {
                   "en": "Describe the substance and the date it was applied",
-                  "es": "Describa la sustancia y la fecha en que se aplicó"
+                  "es": "Describe la sustancia y la fecha en que se aplicó"
                 },
                 "coaching": {
                   "en": "Name the substance and the application date; list each application separately if there was more than one.",
-                  "es": "Indique el nombre de la sustancia y la fecha de aplicación; enumere cada aplicación por separado si hubo más de una."
+                  "es": "Indica el nombre de la sustancia y la fecha de aplicación; enumera cada aplicación por separado si hubo más de una."
                 },
                 "options": [],
                 "required": true,
@@ -12362,7 +12362,7 @@
         "education": [
           {
             "en": "Your certifier's application asks for the legal identity behind the operation — legal name, business structure, addresses, and contacts. Trazo keeps a copy of the signed contract with your records so renewal starts from paper you already have.",
-            "es": "La solicitud de su certificador pide la identidad legal de la operación — razón social, estructura, direcciones y contactos. Trazo guarda una copia del contrato firmado con sus registros para que la renovación parta de papeles que ya tiene."
+            "es": "La solicitud de tu certificador pide la identidad legal de la operación — razón social, estructura, direcciones y contactos. Trazo guarda una copia del contrato firmado con tus registros para que la renovación parta de papeles que ya tienes."
           }
         ],
         "allows_not_applicable": false,
@@ -12384,11 +12384,11 @@
                 "kind": "textarea",
                 "label": {
                   "en": "Legal name, business structure, and any name differences between the certificate and your sales documents.",
-                  "es": "Razón social, estructura del negocio y cualquier diferencia de nombre entre el certificado y sus documentos de venta."
+                  "es": "Razón social, estructura del negocio y cualquier diferencia de nombre entre el certificado y tus documentos de venta."
                 },
                 "coaching": {
                   "en": "Name mismatches between the certificate and an invoice are one of the commonest audit findings — state them here rather than leaving the inspector to discover them.",
-                  "es": "Las diferencias de nombre entre el certificado y una factura son uno de los hallazgos de auditoría más comunes — indíquelas aquí en lugar de dejar que el inspector las descubra."
+                  "es": "Las diferencias de nombre entre el certificado y una factura son uno de los hallazgos de auditoría más comunes — indícalas aquí en lugar de dejar que el inspector las descubra."
                 },
                 "options": [],
                 "required": true,
@@ -12458,7 +12458,7 @@
                 "kind": "upload",
                 "label": {
                   "en": "Attach the signed certification contract / client agreement.",
-                  "es": "Adjunte el contrato de certificación firmado / acuerdo de cliente."
+                  "es": "Adjunta el contrato de certificación firmado / acuerdo de cliente."
                 },
                 "coaching": null,
                 "options": [],
