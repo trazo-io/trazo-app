@@ -12,7 +12,7 @@ import { MdMyLocation } from 'react-icons/md';
 
 import { StandardButton } from 'components/Design';
 import { StandardSearchInput } from 'components/Design/StandardComponents';
-import { findPlace } from 'utils/mapPlaceSearch';
+import { findPlace, matchParcels } from 'utils/mapPlaceSearch';
 import type { FoundPlace } from 'utils/mapPlaceSearch';
 
 export interface MapPlaceSearchProps {
@@ -32,6 +32,12 @@ export interface MapPlaceSearchProps {
    * geolocationOnlyOnTheMap.test.ts), since Permissions-Policy allows it for every page.
    */
   allowMyLocation?: boolean;
+  /**
+   * The farm's own parcels, searched by name before anything goes to Google: the place a grower
+   * with several blocks most often looks for is one of their own, and Google has never heard of
+   * "Home Field East".
+   */
+  parcels?: Array<{ name: string; path: Array<{ lat: number; lng: number }> }>;
 }
 
 // Longer than the API's own 15 s timeout, which only counts once the prompt is answered.
@@ -50,7 +56,8 @@ export const MapPlaceSearch = ({
   defaultQuery = '',
   foundMessageId = 'map.search.showing',
   warnApproximate = false,
-  allowMyLocation = false
+  allowMyLocation = false,
+  parcels = []
 }: MapPlaceSearchProps) => {
   const intl = useIntl();
   const [query, setQuery] = useState(defaultQuery);
@@ -69,6 +76,12 @@ export const MapPlaceSearch = ({
   const search = async () => {
     const text = query.trim();
     if (!text || busy) return;
+    const own = matchParcels(text, parcels);
+    if (own.length > 0) {
+      const [first, ...others] = own;
+      go(first, others);
+      return;
+    }
     setBusy(true);
     const result = await findPlace(text);
     setBusy(false);
@@ -175,7 +188,12 @@ export const MapPlaceSearch = ({
       <Box role="status" aria-live="polite">
         {outcome.kind === 'shown' && (
           <VStack align="stretch" spacing={1}>
-            {helpText(intl.formatMessage({ id: foundMessageId }, { place: outcome.place.label }))}
+            {helpText(
+              intl.formatMessage(
+                { id: outcome.place.parcel ? 'map.search.showingParcel' : foundMessageId },
+                { place: outcome.place.label }
+              )
+            )}
             {warnApproximate &&
               outcome.place.approximate &&
               helpText(intl.formatMessage({ id: 'map.search.approximate' }))}

@@ -76,6 +76,8 @@ export interface FoundPlace {
    * on a building or a parcel. A farm's coordinates taken from it would be the town's.
    */
   approximate: boolean;
+  /** One of the farm's own parcels, matched by name: found in Trazo, not by Google. */
+  parcel?: boolean;
 }
 
 export type PlaceSearchResult =
@@ -85,6 +87,62 @@ export type PlaceSearchResult =
   | { status: 'unavailable' };
 
 /** Coordinates first, else Google's geocoder. Up to `limit` places, best first. */
+// Case and accents do not matter: "calapooia" finds "Calapooia", "sur" finds "Sur Bajo".
+const fold = (text: string) =>
+  text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+
+/**
+ * The farm's own parcels whose name contains the query, best first: an exact name, then a name
+ * that starts with it, then one that contains it. Each frames its outline, with a margin so the
+ * fences are not at the map's edge.
+ */
+export const matchParcels = (
+  query: string,
+  parcels: Array<{ name: string; path: LatLng[] }>,
+  limit = 4
+): FoundPlace[] => {
+  const q = fold(query);
+  if (!q) return [];
+  const rank = (name: string) => {
+    const n = fold(name);
+    if (n === q) return 0;
+    if (n.startsWith(q)) return 1;
+    return n.includes(q) ? 2 : -1;
+  };
+  return parcels
+    .filter((p) => p.path.length >= 3)
+    .map((p) => ({ p, r: rank(p.name) }))
+    .filter(({ r }) => r >= 0)
+    .sort((a, b) => a.r - b.r || a.p.name.localeCompare(b.p.name))
+    .slice(0, limit)
+    .map(({ p }) => {
+      const lats = p.path.map((pt) => pt.lat);
+      const lngs = p.path.map((pt) => pt.lng);
+      const north = Math.max(...lats);
+      const south = Math.min(...lats);
+      const east = Math.max(...lngs);
+      const west = Math.min(...lngs);
+      const padLat = (north - south) * 0.2;
+      const padLng = (east - west) * 0.2;
+      return {
+        label: p.name,
+        center: { lat: (north + south) / 2, lng: (east + west) / 2 },
+        viewport: {
+          north: north + padLat,
+          south: south - padLat,
+          east: east + padLng,
+          west: west - padLng
+        },
+        approximate: false,
+        parcel: true
+      };
+    });
+};
+
 export const findPlace = (query: string, limit = 4): Promise<PlaceSearchResult> => {
   const point = parseCoordinates(query);
   if (point) {

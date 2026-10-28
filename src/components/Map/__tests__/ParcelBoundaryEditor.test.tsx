@@ -249,6 +249,9 @@ describe('ParcelBoundaryEditor', () => {
           Size: class {},
           Point: class {},
           event: { addListenerOnce: vi.fn() },
+          LatLngBounds: class {
+            extend() {}
+          },
           Geocoder: class {
             geocode(req: { address: string }, cb: (r: unknown[], s: string) => void) {
               geocoded.push(req.address);
@@ -374,6 +377,45 @@ describe('ParcelBoundaryEditor', () => {
       act(() => lastMap().onLoad(map));
       await waitFor(() => expect(map.fitBounds).toHaveBeenCalled());
       expect(geocoded).toEqual(['Tangent, OR']);
+    });
+
+    it("finds one of the farm's own parcels by name, without asking Google", async () => {
+      withGeocoder('OK');
+      renderFinding({
+        neighbours: [
+          { id: 2, name: 'River Block', path: field },
+          { id: 3, name: 'Home Field East', path: field }
+        ]
+      });
+      const map = fakeMap();
+      act(() => lastMap().onLoad(map));
+      fireEvent.change(screen.getByLabelText(m['map.search.label']), {
+        target: { value: 'river' }
+      });
+      // The load-time fit to the neighbours also calls fitBounds; the search's own call is the
+      // one framing the parcel's outline (field's box, 20% margin) with no extra padding.
+      map.fitBounds.mockClear();
+      fireEvent.click(screen.getByRole('button', { name: m['map.search.button'] }));
+      await waitFor(() => expect(map.fitBounds).toHaveBeenCalledTimes(1));
+      const [frame, padding] = map.fitBounds.mock.calls[0];
+      expect(padding).toBe(0);
+      expect(frame.north).toBeCloseTo(44.5414, 6);
+      expect(frame.south).toBeCloseTo(44.5386, 6);
+      expect(frame.east).toBeCloseTo(-123.1086, 6);
+      expect(frame.west).toBeCloseTo(-123.1114, 6);
+      expect(geocoded).toEqual([]);
+      expect(screen.getByText('Showing River Block, a parcel on this farm.')).toBeInTheDocument();
+    });
+
+    it('a name that matches no parcel still goes to Google', async () => {
+      withGeocoder('OK');
+      renderFinding({ neighbours: [{ id: 2, name: 'River Block', path: field }] });
+      act(() => lastMap().onLoad(fakeMap()));
+      fireEvent.change(screen.getByLabelText(m['map.search.label']), {
+        target: { value: 'Calapooia' }
+      });
+      fireEvent.click(screen.getByRole('button', { name: m['map.search.button'] }));
+      await waitFor(() => expect(geocoded).toEqual(['Calapooia']));
     });
 
     it('waits for the farm to load before deciding it has no address', () => {
