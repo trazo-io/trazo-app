@@ -249,6 +249,9 @@ describe('ParcelBoundaryEditor', () => {
           Size: class {},
           Point: class {},
           event: { addListenerOnce: vi.fn() },
+          LatLngBounds: class {
+            extend() {}
+          },
           Geocoder: class {
             geocode(req: { address: string }, cb: (r: unknown[], s: string) => void) {
               geocoded.push(req.address);
@@ -374,6 +377,198 @@ describe('ParcelBoundaryEditor', () => {
       act(() => lastMap().onLoad(map));
       await waitFor(() => expect(map.fitBounds).toHaveBeenCalled());
       expect(geocoded).toEqual(['Tangent, OR']);
+    });
+
+    it("finds one of the farm's own parcels by name, without asking Google", async () => {
+      withGeocoder('OK');
+      renderFinding({
+        neighbours: [
+          { id: 2, name: 'River Block', path: field },
+          { id: 3, name: 'Home Field East', path: field }
+        ]
+      });
+      const map = fakeMap();
+      act(() => lastMap().onLoad(map));
+      fireEvent.change(screen.getByLabelText(m['map.search.label']), {
+        target: { value: 'river' }
+      });
+      // The load-time fit to the neighbours also calls fitBounds; the search's own call is the
+      // one framing the parcel's outline (field's box, 20% margin) with no extra padding.
+      map.fitBounds.mockClear();
+      fireEvent.click(screen.getByRole('button', { name: m['map.search.button'] }));
+      await waitFor(() => expect(map.fitBounds).toHaveBeenCalledTimes(1));
+      const [frame, padding] = map.fitBounds.mock.calls[0];
+      expect(padding).toBe(0);
+      expect(frame.north).toBeCloseTo(44.5414, 6);
+      expect(frame.south).toBeCloseTo(44.5386, 6);
+      expect(frame.east).toBeCloseTo(-123.1086, 6);
+      expect(frame.west).toBeCloseTo(-123.1114, 6);
+      expect(geocoded).toEqual([]);
+      expect(screen.getByText('Showing River Block, a parcel on this farm.')).toBeInTheDocument();
+    });
+
+    it('a name that matches no parcel still goes to Google', async () => {
+      withGeocoder('OK');
+      renderFinding({ neighbours: [{ id: 2, name: 'River Block', path: field }] });
+      act(() => lastMap().onLoad(fakeMap()));
+      fireEvent.change(screen.getByLabelText(m['map.search.label']), {
+        target: { value: 'Calapooia' }
+      });
+      fireEvent.click(screen.getByRole('button', { name: m['map.search.button'] }));
+      await waitFor(() => expect(geocoded).toEqual(['Calapooia']));
+    });
+
+    it('suggests your farms as you type, and picking one takes the map there', () => {
+      withGeocoder('REQUEST_DENIED');
+      renderFinding({
+        farms: [
+          { id: 1, name: 'Calapooia Bend Farm', lat: 44.54, lng: -123.11 },
+          { id: 2, name: 'Willamette Orchards', lat: 44.9, lng: -123.0 }
+        ]
+      });
+      const map = fakeMap();
+      act(() => lastMap().onLoad(map));
+      const box = screen.getByLabelText(m['map.search.label']);
+      fireEvent.change(box, { target: { value: 'calap' } });
+      expect(screen.getByRole('listbox')).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('option', { name: /Calapooia Bend Farm/ }));
+      expect(map.setCenter).toHaveBeenCalledWith({ lat: 44.54, lng: -123.11 });
+      expect(map.setZoom).toHaveBeenCalledWith(15);
+      expect(
+        screen.getByText('Showing Calapooia Bend Farm, one of your farms.')
+      ).toBeInTheDocument();
+      expect(screen.queryByRole('listbox')).toBeNull();
+    });
+
+    describe('Google Places', () => {
+      const placesAnswering = (
+        suggestions: Array<{ main: string; secondary: string }> | 'refused'
+      ) => {
+        const fetched: string[] = [];
+        (window as any).google.maps.importLibrary = async () => ({
+          AutocompleteSessionToken: class {},
+          AutocompleteSuggestion: {
+            fetchAutocompleteSuggestions: async (req: { input: string }) => {
+              fetched.push(req.input);
+              if (suggestions === 'refused') throw new Error('Places API (New) has not been used');
+              return {
+                suggestions: suggestions.map((s, i) => ({
+                  placePrediction: {
+                    placeId: `p${i}`,
+                    text: { toString: () => `${s.main}, ${s.secondary}` },
+                    mainText: { toString: () => s.main },
+                    secondaryText: { toString: () => s.secondary },
+                    toPlace: () => ({
+                      fetchFields: async () => undefined,
+                      location: { toJSON: () => ({ lat: 44.5, lng: -123.0 }) },
+                      viewport: {
+                        toJSON: () => ({ north: 44.6, south: 44.4, east: -122.9, west: -123.1 })
+                      },
+                      displayName: s.main,
+                      formattedAddress: `140 Hill St SE, ${s.secondary}`,
+                      types: ['natural_feature']
+                    })
+                  }
+                }))
+              };
+            }
+          }
+        });
+        return fetched;
+      };
+
+      it('suggests places as you type, attributed to Google, and frames the one picked', async () => {
+        withGeocoder('REQUEST_DENIED');
+        const fetched = placesAnswering([
+          { main: 'Calapooia River', secondary: 'Oregon, USA' },
+          { main: 'Calapooia Rd', secondary: 'Albany, OR, USA' }
+        ]);
+        renderFinding({});
+        const map = fakeMap();
+        act(() => lastMap().onLoad(map));
+        fireEvent.change(screen.getByLabelText(m['map.search.label']), {
+          target: { value: 'Calapooia' }
+        });
+        const river = await screen.findByRole('option', { name: /Calapooia River/ });
+        expect(screen.getByText(m['map.search.poweredByGoogle'])).toBeInTheDocument();
+        expect(fetched).toEqual(['Calapooia']);
+        fireEvent.click(river);
+        await waitFor(() =>
+          expect(map.fitBounds).toHaveBeenCalledWith(
+            { north: 44.6, south: 44.4, east: -122.9, west: -123.1 },
+            0
+          )
+        );
+        expect(geocoded).toEqual([]);
+      });
+
+      it('arrow keys and Enter pick a suggestion without touching the mouse', async () => {
+        withGeocoder('REQUEST_DENIED');
+        placesAnswering([
+          { main: 'Calapooia River', secondary: 'Oregon, USA' },
+          { main: 'Calapooia Rd', secondary: 'Albany, OR, USA' }
+        ]);
+        renderFinding({});
+        act(() => lastMap().onLoad(fakeMap()));
+        const box = screen.getByLabelText(m['map.search.label']);
+        fireEvent.change(box, { target: { value: 'Calapooia' } });
+        await screen.findByRole('option', { name: /Calapooia Rd/ });
+        fireEvent.keyDown(box, { key: 'ArrowDown' });
+        expect(screen.getByRole('option', { name: /Calapooia Rd/ })).toHaveAttribute(
+          'aria-selected',
+          'true'
+        );
+        fireEvent.keyDown(box, { key: 'Enter' });
+        expect(
+          await screen.findByText('Showing Calapooia Rd, 140 Hill St SE, Albany, OR, USA.')
+        ).toBeInTheDocument();
+      });
+
+      it('Escape dismisses the suggestions: Enter then searches the typed text instead', async () => {
+        withGeocoder('OK');
+        placesAnswering([{ main: 'Calapooia River', secondary: 'Oregon, USA' }]);
+        renderFinding({});
+        act(() => lastMap().onLoad(fakeMap()));
+        const box = screen.getByLabelText(m['map.search.label']);
+        fireEvent.change(box, { target: { value: 'Calapooia' } });
+        await screen.findByRole('option', { name: /Calapooia River/ });
+        fireEvent.keyDown(box, { key: 'Escape' });
+        expect(screen.queryByRole('listbox')).toBeNull();
+        fireEvent.keyDown(box, { key: 'Enter' });
+        // Not the dismissed river: the typed text, through the geocoder (review on #222).
+        await waitFor(() => expect(geocoded).toEqual(['Calapooia']));
+        expect(screen.queryByText(/Showing Calapooia River/)).toBeNull();
+      });
+
+      it('pasted coordinates are one "Go to" row, not filed under your farms', () => {
+        withGeocoder('OK');
+        renderFinding({
+          farms: [{ id: 1, name: 'Calapooia Bend Farm', lat: 44.54, lng: -123.11 }]
+        });
+        act(() => lastMap().onLoad(fakeMap()));
+        fireEvent.change(screen.getByLabelText(m['map.search.label']), {
+          target: { value: '44.54, -123.11' }
+        });
+        expect(
+          screen.getByRole('option', { name: /Go to 44\.54000, -123\.11000/ })
+        ).toBeInTheDocument();
+        expect(screen.queryByText(m['map.search.groupOwn'])).toBeNull();
+      });
+
+      it('with Places refused, Enter still searches through the geocoder', async () => {
+        withGeocoder('OK');
+        placesAnswering('refused');
+        renderFinding({});
+        const map = fakeMap();
+        act(() => lastMap().onLoad(map));
+        const box = screen.getByLabelText(m['map.search.label']);
+        fireEvent.change(box, { target: { value: 'Tangent' } });
+        // Let the debounced Places call fail first.
+        await new Promise((r) => setTimeout(r, 400));
+        fireEvent.keyDown(box, { key: 'Enter' });
+        await waitFor(() => expect(geocoded).toEqual(['Tangent']));
+        await waitFor(() => expect(map.fitBounds).toHaveBeenCalled());
+      });
     });
 
     it('waits for the farm to load before deciding it has no address', () => {

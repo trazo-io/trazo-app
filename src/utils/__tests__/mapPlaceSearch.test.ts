@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest';
-import { findPlace, parseCoordinates } from '../mapPlaceSearch';
+import { findPlace, matchFarms, matchParcels, parseCoordinates } from '../mapPlaceSearch';
 
 describe('parseCoordinates', () => {
   it.each([
@@ -96,5 +96,72 @@ describe('findPlace', () => {
     // What a key without the Geocoding API gets back.
     geocoderAnswering('REQUEST_DENIED');
     expect(await findPlace('Tangent')).toEqual({ status: 'unavailable' });
+  });
+});
+
+describe('matchParcels', () => {
+  const square = (lat: number) => [
+    { lat, lng: -123.11 },
+    { lat, lng: -123.1 },
+    { lat: lat - 0.01, lng: -123.1 }
+  ];
+  const parcels = [
+    { name: 'Upper Terrace', path: square(44.56) },
+    { name: 'Home Field West', path: square(44.55) },
+    { name: 'Home Field East', path: square(44.54) },
+    { name: 'Río Sur', path: square(44.53) },
+    { name: 'Home', path: square(44.52) },
+    { name: 'No Outline Home', path: [] }
+  ];
+
+  it('ranks an exact name, then names starting with the query, then names containing it', () => {
+    expect(matchParcels('home', parcels).map((p) => p.label)).toEqual([
+      'Home',
+      'Home Field East',
+      'Home Field West'
+    ]);
+    expect(matchParcels('field', parcels).map((p) => p.label)).toEqual([
+      'Home Field East',
+      'Home Field West'
+    ]);
+  });
+
+  it('ignores case and accents', () => {
+    expect(matchParcels('RIO', parcels).map((p) => p.label)).toEqual(['Río Sur']);
+  });
+
+  it('skips parcels with no outline to frame, and matches nothing on an unrelated word', () => {
+    expect(matchParcels('outline', parcels)).toEqual([]);
+    expect(matchParcels('Calapooia', parcels)).toEqual([]);
+  });
+
+  it("frames the parcel's outline with a margin", () => {
+    const [found] = matchParcels('Upper', parcels);
+    expect(found.kind).toBe('parcel');
+    expect(found.center.lat).toBeCloseTo(44.555, 6);
+    expect(found.viewport!.north).toBeCloseTo(44.562, 6);
+    expect(found.viewport!.south).toBeCloseTo(44.548, 6);
+  });
+});
+
+describe('matchFarms', () => {
+  const farms = [
+    { id: 1, name: 'Calapooia Bend Farm', lat: 44.54, lng: -123.11 },
+    { id: 2, name: 'No Location Farm', lat: null, lng: null },
+    { id: 3, name: 'Willamette Orchards', lat: 44.9, lng: -123.0 }
+  ];
+
+  it('finds a farm by part of its name and frames it wider than a pin', () => {
+    const [found] = matchFarms('calapooia', farms);
+    expect(found).toMatchObject({
+      label: 'Calapooia Bend Farm',
+      center: { lat: 44.54, lng: -123.11 },
+      kind: 'farm',
+      zoom: 15
+    });
+  });
+
+  it('leaves out a farm with no coordinates: there is nowhere to take the map', () => {
+    expect(matchFarms('farm', farms).map((f) => f.label)).toEqual(['Calapooia Bend Farm']);
   });
 });

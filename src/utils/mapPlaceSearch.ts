@@ -76,6 +76,10 @@ export interface FoundPlace {
    * on a building or a parcel. A farm's coordinates taken from it would be the town's.
    */
   approximate: boolean;
+  /** Found in Trazo, not by Google: one of this farm's parcels, or one of the company's farms. */
+  kind?: 'parcel' | 'farm';
+  /** Zoom for a point with no area of its own (a farm's coordinates frame wider than a pin). */
+  zoom?: number;
 }
 
 export type PlaceSearchResult =
@@ -85,6 +89,95 @@ export type PlaceSearchResult =
   | { status: 'unavailable' };
 
 /** Coordinates first, else Google's geocoder. Up to `limit` places, best first. */
+// Case and accents do not matter: "calapooia" finds "Calapooia", "sur" finds "Sur Bajo".
+const fold = (text: string) =>
+  text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+
+/**
+ * The farm's own parcels whose name contains the query, best first: an exact name, then a name
+ * that starts with it, then one that contains it. Each frames its outline, with a margin so the
+ * fences are not at the map's edge.
+ */
+export const matchParcels = (
+  query: string,
+  parcels: Array<{ name: string; path: LatLng[] }>,
+  limit = 4
+): FoundPlace[] => {
+  const q = fold(query);
+  if (!q) return [];
+  const rank = (name: string) => {
+    const n = fold(name);
+    if (n === q) return 0;
+    if (n.startsWith(q)) return 1;
+    return n.includes(q) ? 2 : -1;
+  };
+  return parcels
+    .filter((p) => p.path.length >= 3)
+    .map((p) => ({ p, r: rank(p.name) }))
+    .filter(({ r }) => r >= 0)
+    .sort((a, b) => a.r - b.r || a.p.name.localeCompare(b.p.name))
+    .slice(0, limit)
+    .map(({ p }) => {
+      const lats = p.path.map((pt) => pt.lat);
+      const lngs = p.path.map((pt) => pt.lng);
+      const north = Math.max(...lats);
+      const south = Math.min(...lats);
+      const east = Math.max(...lngs);
+      const west = Math.min(...lngs);
+      const padLat = (north - south) * 0.2;
+      const padLng = (east - west) * 0.2;
+      return {
+        label: p.name,
+        center: { lat: (north + south) / 2, lng: (east + west) / 2 },
+        viewport: {
+          north: north + padLat,
+          south: south - padLat,
+          east: east + padLng,
+          west: west - padLng
+        },
+        approximate: false,
+        kind: 'parcel' as const
+      };
+    });
+};
+
+// A farm on file is a point (its coordinates): close enough to see its blocks, not one field.
+const FARM_ZOOM = 15;
+
+/** The company's farms whose name contains the query, ranked like parcels. Farms with no
+ *  coordinates on file have nowhere to go and are left out. */
+export const matchFarms = (
+  query: string,
+  farms: Array<{ id: number | string; name: string; lat?: number | null; lng?: number | null }>,
+  limit = 4
+): FoundPlace[] => {
+  const q = fold(query);
+  if (!q) return [];
+  const rank = (name: string) => {
+    const n = fold(name);
+    if (n === q) return 0;
+    if (n.startsWith(q)) return 1;
+    return n.includes(q) ? 2 : -1;
+  };
+  return farms
+    .filter((f) => Number.isFinite(f.lat) && Number.isFinite(f.lng))
+    .map((f) => ({ f, r: rank(f.name) }))
+    .filter(({ r }) => r >= 0)
+    .sort((a, b) => a.r - b.r || a.f.name.localeCompare(b.f.name))
+    .slice(0, limit)
+    .map(({ f }) => ({
+      label: f.name,
+      center: { lat: f.lat as number, lng: f.lng as number },
+      approximate: false,
+      kind: 'farm' as const,
+      zoom: FARM_ZOOM
+    }));
+};
+
 export const findPlace = (query: string, limit = 4): Promise<PlaceSearchResult> => {
   const point = parseCoordinates(query);
   if (point) {
@@ -123,4 +216,82 @@ export const findPlace = (query: string, limit = 4): Promise<PlaceSearchResult> 
       }
     });
   });
+};
+
+/**
+ * Google Places suggestions as the grower types (Places API (New), through the Maps script's own
+ * `importLibrary('places')`, so the loader options shared by every map stay untouched).
+ *
+ * It calls `places.googleapis.com`, which the production CSP must allow in `connect-src` (guard:
+ * cspAllowsPlaces.test.ts); dev sends no CSP, so a missing entry only shows in production. The
+ * API must also be enabled for the Maps key's project. Either missing, the call fails and the box
+ * falls back to the geocoder on Enter: never a dead search.
+ */
+export interface PlaceSuggestion {
+  id: string;
+  main: string;
+  secondary: string;
+  /** Resolves the suggestion to a place to frame, ending the billing session. */
+  resolve: () => Promise<FoundPlace | null>;
+}
+
+// Results that are the middle of an area rather than a point on the ground.
+const AREA_TYPES = new Set([
+  'locality',
+  'postal_code',
+  'route',
+  'administrative_area_level_1',
+  'administrative_area_level_2',
+  'administrative_area_level_3',
+  'country',
+  'sublocality',
+  'neighborhood'
+]);
+
+export const suggestPlaces = async (
+  input: string,
+  session: { token?: unknown },
+  options: { bias?: LatLng; language?: string } = {}
+): Promise<PlaceSuggestion[]> => {
+  const places = (await google.maps.importLibrary('places')) as google.maps.PlacesLibrary;
+  if (!session.token) session.token = new places.AutocompleteSessionToken();
+  const request: google.maps.places.AutocompleteRequest = {
+    input,
+    sessionToken: session.token as google.maps.places.AutocompleteSessionToken,
+    language: options.language,
+    // A bias, not a filter: a grower can still find a place outside the farm's area.
+    ...(options.bias ? { locationBias: { center: options.bias, radius: 50000 } } : {})
+  };
+  const { suggestions } = await places.AutocompleteSuggestion.fetchAutocompleteSuggestions(request);
+  return suggestions
+    .map((s) => s.placePrediction)
+    .filter((p): p is google.maps.places.PlacePrediction => !!p)
+    .slice(0, 5)
+    .map((prediction) => ({
+      id: prediction.placeId,
+      main: prediction.mainText?.toString() ?? prediction.text.toString(),
+      secondary: prediction.secondaryText?.toString() ?? '',
+      resolve: async () => {
+        const place = prediction.toPlace();
+        await place.fetchFields({
+          fields: ['location', 'viewport', 'displayName', 'formattedAddress', 'types']
+        });
+        session.token = undefined;
+        if (!place.location) return null;
+        // A business or a river reads by its name; its address alone ("140 Hill St SE") does
+        // not say which place the map went to.
+        const name = place.displayName ?? '';
+        const address = place.formattedAddress ?? '';
+        const label =
+          name && address && !address.startsWith(name)
+            ? `${name}, ${address}`
+            : address || name || prediction.text.toString();
+        return {
+          label,
+          center: place.location.toJSON(),
+          viewport: place.viewport?.toJSON(),
+          approximate: (place.types ?? []).some((t) => AREA_TYPES.has(t))
+        };
+      }
+    }));
 };

@@ -183,6 +183,13 @@ interface StandardParcelFormTransparencyProps {
    * `undefined` while the farm loads; an empty string when it has no address on file.
    */
   establishmentAddress?: string;
+  /** The company's farms, offered by name in the boundary map's search. */
+  companyFarms?: Array<{
+    id: number | string;
+    name: string;
+    lat?: number | null;
+    lng?: number | null;
+  }>;
   // Optional informational content (e.g., plan-limit warning) rendered above the stepper
   preFormAlert?: React.ReactNode;
   /** Open on this step (the parcel page's "Edit outline" opens the boundary step). */
@@ -212,6 +219,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
   establishmentName = '',
   establishmentCoordinates,
   establishmentAddress,
+  companyFarms = [],
   preFormAlert,
   initialStep = 0,
   otherParcels = [],
@@ -929,6 +937,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                       fitOnOpen={inlineMapKey === 0}
                       locationUnknown={farmLocationUnknown && !mapViewRef.current}
                       farmAddress={establishmentAddress}
+                      farms={companyFarms}
                       onViewChange={onMapViewChange}
                     />
                   )}
@@ -959,6 +968,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                     {isFullscreen && (
                       <ParcelBoundaryEditor
                         fullscreen
+                        farms={companyFarms}
                         path={polygon}
                         onChange={editPolygon}
                         neighbours={otherParcels}

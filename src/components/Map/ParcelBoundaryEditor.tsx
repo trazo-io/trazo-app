@@ -147,6 +147,8 @@ export interface ParcelBoundaryEditorProps {
    * farm is still loading; an empty string when it has no address either.
    */
   farmAddress?: string;
+  /** The company's farms, offered by name in the map search. */
+  farms?: Array<{ id: number | string; name: string; lat?: number | null; lng?: number | null }>;
 }
 
 export const ParcelBoundaryEditor = ({
@@ -161,7 +163,8 @@ export const ParcelBoundaryEditor = ({
   fitOnOpen = true,
   footer,
   locationUnknown = false,
-  farmAddress
+  farmAddress,
+  farms = []
 }: ParcelBoundaryEditorProps) => {
   const intl = useIntl();
   const mapRef = useRef<google.maps.Map | null>(null);
@@ -258,7 +261,7 @@ export const ParcelBoundaryEditor = ({
       });
     } else {
       map.setCenter(place.center);
-      map.setZoom(POINT_ZOOM);
+      map.setZoom(place.zoom ?? POINT_ZOOM);
     }
     fittedRef.current = true;
     locatedRef.current = true;
@@ -343,7 +346,14 @@ export const ParcelBoundaryEditor = ({
       {/* The search is a form row above the map, not wedged inside its frame. Full screen,
           it is a padded bar across the top of the dialog. */}
       <Box px={fullscreen ? 4 : 0} pt={fullscreen ? 3 : 0} pb={3}>
-        <MapPlaceSearch onLocate={moveTo} allowMyLocation />
+        <MapPlaceSearch
+          onLocate={moveTo}
+          allowMyLocation
+          parcels={neighbours}
+          farms={farms}
+          // Places suggestions lean towards the farm, not the placeholder's middle of the country.
+          bias={locationUnknown ? undefined : center}
+        />
       </Box>
       {locationUnknown && addressMissed && !located && (
         <Box px={fullscreen ? 4 : 0}>
@@ -358,6 +368,10 @@ export const ParcelBoundaryEditor = ({
         flex={fullscreen ? '1' : undefined}
         minH={0}
         borderRadius={fullscreen ? 0 : 'lg'}
+        // Its own stacking context: Google's controls carry huge z-indexes, which otherwise
+        // paint over the search's suggestion list where it hangs over the map.
+        position="relative"
+        zIndex={0}
         overflow="hidden"
         border={fullscreen ? undefined : '1px solid'}
         borderColor="gray.200">
