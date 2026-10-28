@@ -189,10 +189,18 @@ describe('Pest Management: subtype gating on consumer_card', () => {
     }
   });
 
-  it('formats identified_by with NOP display labels (Bug Pattern #16)', () => {
-    const result = getFieldsForSurface('pest_management', 'PI', 'consumer_card', SAMPLE_EVENTS.PI);
+  it('formats identified_by from the shared enum catalogue, as a farm-reported role', () => {
+    // Producer modal only: the field is certifier-only on the buyer card (see
+    // identifiedByIsAFarmReport.test.tsx). The label is the enum catalogue's, not a map here.
+    const result = getFieldsForSurface(
+      'pest_management',
+      'PI',
+      'modal',
+      SAMPLE_EVENTS.PI,
+      (id: string) => enUS[id] ?? null
+    );
     const identifiedBy = allFields(result).find((f) => f.name === 'identified_by');
     expect(identifiedBy).toBeDefined();
-    expect(identifiedBy?.formattedValue).toBe('Laboratory Analysis');
+    expect(identifiedBy?.formattedValue).toBe('Laboratory report');
   });
 });

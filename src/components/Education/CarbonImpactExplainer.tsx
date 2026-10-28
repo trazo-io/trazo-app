@@ -109,7 +109,16 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
       // comes from Audsley et al. 2009 / Hillier et al. 2009, i.e. academic LCA. Attributing
       // our own estimates to a government agency is the exact claim shape compliance.md
       // forbids, and the landing methodology table listed the manufacturing rows all along.
-      'Counts the fuel and electricity this operation burns, plus the manufacturing of the fertilizer and crop-protection products it buys. Not a full life-cycle footprint: transport to the farm, packaging, equipment manufacturing and retail are excluded. Fuel and electricity factors are EPA-published; phosphorus and potassium are Trazo estimates where published values are sparse. Each factor shows its own source.'
+      'Estimated emissions from the recorded activities included in this calculation. Missing activity data and excluded sources are not represented. Not a full life-cycle footprint: transport to the farm, packaging, equipment manufacturing and retail are excluded. Fuel and electricity factors are EPA-published; phosphorus and potassium are Trazo estimates where published values are sparse. Each factor shows its own source.'
+  });
+
+  // The lime inclusion (Astra follow-up, 2026-10-28): carbonate-lime CO2 is estimated with IPCC
+  // Tier 1 factors and booked to the application year, so the boundary says so next to the number
+  // instead of leaving a shopper to assume a measured release on the application date.
+  const limeLine = intl.formatMessage({
+    id: 'app.carbonExplainer.scopeBoundaryLime',
+    defaultMessage:
+      'Includes estimated CO₂ from recorded carbonate-lime applications, using IPCC Tier 1 factors and assigning those emissions to the application year; this is not a measured release on the application date.'
   });
 
   // Emission categories for methodology section
@@ -216,6 +225,9 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
               <Text fontSize="xs" color={mutedColor} mt={3}>
                 {boundaryLine}
               </Text>
+              <Text fontSize="xs" color={mutedColor} mt={2}>
+                {limeLine}
+              </Text>
             </Box>
           ) : (
             /* Season-total fallback. The per-kg figure needs a recorded harvest weight to
@@ -247,6 +259,9 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
 
               <Text fontSize="xs" color={mutedColor} mt={3}>
                 {boundaryLine}
+              </Text>
+              <Text fontSize="xs" color={mutedColor} mt={2}>
+                {limeLine}
               </Text>
             </Box>
           )}

@@ -265,7 +265,7 @@ describe('grower-facing logging strings never present the farm\'s entry as a ver
     'events.business.options.verificationInProgress',
     'events.business.options.verified'
   ]);
-  const SAYS_WHOSE = /reported by the farm|informada por la finca|según lo informa la finca|not verified|could not verify|sin verificar|no se pudo verificar|verificable|verifiable|weigh ticket|ticket de pesaje|verified by|verificados por/i;
+  const SAYS_WHOSE = /reported by the farm|informada por la finca|según lo informa la finca|not verified|could not verify|sin verificar|no se pudo verificar|verificable|verifiable|weigh ticket|ticket de pesaje|verified by|verificados por|does not verify|no verifica/i;
 
   for (const locale of ['en-US', 'es-419']) {
     it(`${locale}: every events.* string that mentions verification says whose it is`, () => {

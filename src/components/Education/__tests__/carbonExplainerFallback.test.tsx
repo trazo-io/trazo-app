@@ -20,6 +20,7 @@ import { IntlProvider } from 'react-intl';
 import { MemoryRouter } from 'react-router-dom';
 import { CarbonImpactExplainer } from '../CarbonImpactExplainer';
 import enUS from '../../../i18n/lang/en-US.json';
+import esJson from '../../../i18n/lang/es-419.json';
 
 // Real catalogue, not a stub: a missing key then surfaces as a raw id in an assertion
 // instead of silently passing.
@@ -135,9 +136,62 @@ describe('CarbonImpactExplainer — no empty card', () => {
       }
     });
 
-    expect(screen.getByText('Growing 1 kg of Chandler Walnuts produced')).toBeInTheDocument();
+    expect(
+      screen.getByText('Growing 1 kg of Chandler Walnuts has estimated emissions of')
+    ).toBeInTheDocument();
     expect(screen.getByText('0.42')).toBeInTheDocument();
     // The season-total fallback must not appear alongside it.
     expect(screen.queryByText('Total Production Emissions')).not.toBeInTheDocument();
+  });
+});
+
+describe('CarbonImpactExplainer: the boundary says what the number is not', () => {
+  const es = esJson as unknown as Record<string, string>;
+
+  it('the boundary names estimates of recorded activities, not a categorical count', () => {
+    renderCard({
+      totalCO2e: 412.37,
+      productName: 'Chandler Walnuts',
+      consumerContext: NO_PER_KG
+    });
+
+    expect(
+      screen.getByText(
+        /Estimated emissions from the recorded activities included in this calculation\. Missing activity data and excluded sources are not represented\./
+      )
+    ).toBeInTheDocument();
+    // The old sentence listed what is counted as though the list were complete.
+    expect(screen.queryByText(/Counts the fuel and electricity this operation burns/)).toBeNull();
+  });
+
+  it('the lime inclusion and its method sit next to the boundary', () => {
+    const { container } = renderCard({
+      totalCO2e: 412.37,
+      productName: 'Chandler Walnuts',
+      consumerContext: NO_PER_KG
+    });
+
+    expect(
+      screen.getByText(
+        'Includes estimated CO₂ from recorded carbonate-lime applications, using IPCC Tier 1 factors and assigning those emissions to the application year; this is not a measured release on the application date.'
+      )
+    ).toBeInTheDocument();
+    expect(container.textContent).not.toContain('app.carbonExplainer');
+  });
+
+  it('neither narrative says the season "produced" or "generated" the figure', () => {
+    expect(messages['app.carbonExplainer.perKgNarrative']).not.toMatch(/produced|generated/i);
+    expect(messages['app.carbonExplainer.totalNarrative']).not.toMatch(/produced|generated/i);
+    expect(es['app.carbonExplainer.perKgNarrative']).not.toMatch(/gener[oó]|produjo/i);
+    expect(es['app.carbonExplainer.totalNarrative']).not.toMatch(/gener[oó]|produjo/i);
+  });
+
+  it('es-419 carries the same two statements', () => {
+    expect(es['app.carbonExplainer.scopeBoundary']).toContain(
+      'Emisiones estimadas de las actividades registradas incluidas en este cálculo. Los datos de actividad faltantes y las fuentes excluidas no están representados.'
+    );
+    expect(es['app.carbonExplainer.scopeBoundaryLime']).toMatch(/cal carbonatada/);
+    expect(es['app.carbonExplainer.scopeBoundaryLime']).toMatch(/Nivel 1/);
+    expect(es['app.carbonExplainer.scopeBoundaryLime']).toMatch(/no es una liberaci/);
   });
 });

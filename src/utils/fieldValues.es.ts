@@ -214,7 +214,6 @@ export const FIELD_VALUE_ES: Record<string, string> = {
   'Leaf Pulling': 'Deshoje',
   'Leaf Removal': 'Remoción de hojas',
   'Leafcutter Bee': 'Abeja cortadora de hojas',
-  'Licensed Agronomist': 'Agrónomo matriculado',
   'Light Wind': 'Viento leve',
   Limestone: 'Piedra caliza',
   'Liquid application': 'Aplicación líquida',
