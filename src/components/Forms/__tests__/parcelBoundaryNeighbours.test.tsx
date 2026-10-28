@@ -18,7 +18,8 @@ import { StandardParcelFormTransparency } from '../StandardParcelForm_Transparen
 
 const drawn = vi.hoisted(() => ({
   polygons: [] as Array<Record<string, unknown>>,
-  markers: [] as Array<Record<string, any>>
+  markers: [] as Array<Record<string, any>>,
+  maps: [] as Array<Record<string, any>>
 }));
 
 vi.mock('@react-google-maps/api', () => {
@@ -26,9 +27,10 @@ vi.mock('@react-google-maps/api', () => {
   (OverlayView as any).OVERLAY_LAYER = 'overlayLayer';
   return {
     useLoadScript: () => ({ isLoaded: true, loadError: undefined }),
-    GoogleMap: ({ children }: { children?: React.ReactNode }) => (
-      <div data-testid="google-map">{children}</div>
-    ),
+    GoogleMap: (props: Record<string, any>) => {
+      drawn.maps.push(props);
+      return <div data-testid="google-map">{props.children}</div>;
+    },
     Polygon: (props: { options?: Record<string, unknown> }) => {
       drawn.polygons.push(props.options ?? {});
       return null;
@@ -189,7 +191,11 @@ describe('parcel boundary step: the farm around the outline', () => {
     renderForm({ initialStep: 1, initialData: { name: 'North', area: 1, polygon: square(5) } });
     expect(screen.getAllByTestId('google-map')).toHaveLength(1);
     fireEvent.click(screen.getByRole('button', { name: m['parcel.boundary.openFullscreen'] }));
-    expect(await screen.findAllByTestId('google-map')).toHaveLength(2);
+    // The full-screen editor replaces the inline one; it is not stacked on top of it.
+    expect(
+      await screen.findByRole('button', { name: m['parcel.boundary.closeFullscreen'] })
+    ).toBeInTheDocument();
+    expect(screen.getAllByTestId('google-map')).toHaveLength(1);
     // Focus starts on Done, never on Clear boundary, where one Enter would wipe the outline.
     await waitFor(() =>
       expect(
@@ -200,5 +206,54 @@ describe('parcel boundary step: the farm around the outline', () => {
     expect(screen.getAllByRole('button', { name: m['parcel.boundary.undo'] })).toHaveLength(2);
     fireEvent.click(screen.getByRole('button', { name: m['parcel.boundary.closeFullscreen'] }));
     await waitFor(() => expect(screen.getAllByTestId('google-map')).toHaveLength(1));
+  });
+
+  // A map the grower has moved: what `onLoad` + `onIdle` hand the editor.
+  const reportCamera = (center: { lat: number; lng: number }, zoom: number) => {
+    const map = drawn.maps[drawn.maps.length - 1];
+    const fake = { getCenter: () => ({ toJSON: () => center }), getZoom: () => zoom };
+    act(() => {
+      map.onLoad(fake);
+      map.onIdle();
+    });
+  };
+
+  it("records the camera the grower left the map on, over the farm's coordinates", () => {
+    const onSubmit = vi.fn();
+    drawn.maps = [];
+    renderForm({
+      initialStep: 1,
+      saveFromBoundary: true,
+      onSubmit,
+      establishmentCoordinates: { lat: 44.54, lng: -123.11 },
+      initialData: { name: 'North', area: 4, transparency_description: '' }
+    });
+    reportCamera({ lat: 44.6, lng: -123.2 }, 18);
+    fireEvent.click(screen.getByRole('button', { name: m['parcel.boundary.saveOutline'] }));
+    expect(onSubmit.mock.calls[0][0].map_metadata).toEqual({
+      center: { lat: 44.6, lng: -123.2 },
+      zoom: 18
+    });
+  });
+
+  it('full screen opens where the inline map was, with no second map hidden behind it', async () => {
+    drawn.maps = [];
+    renderForm({ initialStep: 1, initialData: { name: 'North', area: 1 } });
+    reportCamera({ lat: 44.6, lng: -123.2 }, 18);
+    fireEvent.click(screen.getByRole('button', { name: m['parcel.boundary.openFullscreen'] }));
+    // One map: the inline one is unmounted, so it cannot fit itself to the outline drawn in
+    // full screen and report its own camera over the grower's.
+    await waitFor(() => expect(screen.getAllByTestId('google-map')).toHaveLength(1));
+    const fullscreen = drawn.maps[drawn.maps.length - 1];
+    expect(fullscreen.center).toEqual({ lat: 44.6, lng: -123.2 });
+    expect(fullscreen.zoom).toBe(18);
+    // The grower moves the full-screen map; Done brings the inline map back THERE.
+    reportCamera({ lat: 44.7, lng: -123.3 }, 17);
+    fireEvent.click(screen.getByRole('button', { name: m['parcel.boundary.closeFullscreen'] }));
+    await waitFor(() => {
+      const inline = drawn.maps[drawn.maps.length - 1];
+      expect(inline.center).toEqual({ lat: 44.7, lng: -123.3 });
+      expect(inline.zoom).toBe(17);
+    });
   });
 });

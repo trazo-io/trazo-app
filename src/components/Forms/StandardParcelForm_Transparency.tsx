@@ -876,6 +876,11 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                     <Flex h="400px" align="center" justify="center" bg="gray.100">
                       <Text>{intl.formatMessage({ id: 'parcel.boundary.mapLoading' })}</Text>
                     </Flex>
+                  ) : isFullscreen ? (
+                    // Unmounted while the full-screen editor is open, not just hidden behind
+                    // it: a hidden map still fitted itself to the outline drawn in full screen
+                    // and reported that camera, overwriting where the grower actually was.
+                    <Box h="400px" bg="gray.100" />
                   ) : (
                     <ParcelBoundaryEditor
                       key={inlineMapKey}
