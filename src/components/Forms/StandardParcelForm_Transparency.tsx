@@ -265,8 +265,12 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
     return 16;
   });
   // The camera as the grower last left it, recorded as `map_metadata`. A ref, not state: the
-  // editor owns the camera, and feeding it back as a prop is what made the map jump.
-  const mapViewRef = useRef({ center: mapCenter, zoom: mapZoom });
+  // editor owns the camera, and feeding it back as a prop is what made the map jump. Null
+  // until the editor reports one: until then (the map has not loaded, or failed to) the
+  // record is the live `mapCenter`/`mapZoom`, which follow the farm's coordinates and the saved
+  // metadata as they arrive. Seeding the ref at mount saved the placeholder instead.
+  const mapViewRef = useRef<{ center: LatLng; zoom: number } | null>(null);
+  const currentMapView = () => mapViewRef.current ?? { center: mapCenter, zoom: mapZoom };
 
   // 🗺️ Update map center when establishment coordinates become available (async load fix)
   useEffect(() => {
@@ -413,7 +417,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
     setBoundarySkipped(true);
     setPolygon([]);
     setValue('polygon', []);
-    setValue('map_metadata', mapViewRef.current);
+    setValue('map_metadata', currentMapView());
   };
 
   const editPolygon = (next: LatLng[]) => {
@@ -511,7 +515,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
       const finalData = {
         ...data,
         polygon: safePolygon,
-        map_metadata: mapViewRef.current,
+        map_metadata: currentMapView(),
         images: imageUrls,
         // Legacy fields for backend compatibility
         description: data.transparency_description, // Map transparency to legacy description
