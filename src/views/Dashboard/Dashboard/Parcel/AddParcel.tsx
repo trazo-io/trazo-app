@@ -114,6 +114,18 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
       : currentEstablishment?.latitude && currentEstablishment?.longitude
       ? { lat: currentEstablishment.latitude, lng: currentEstablishment.longitude }
       : undefined;
+  // Looked up on the boundary map when the farm has no coordinates. Undefined until the farm
+  // has loaded, so the map does not report "no address" while it is still on its way.
+  const establishmentAddress = establishmentData
+    ? [
+        establishmentData.address,
+        establishmentData.city,
+        establishmentData.state,
+        establishmentData.zip_code
+      ]
+        .filter(Boolean)
+        .join(', ')
+    : undefined;
 
   // Pre-flight subscription limit check (informational only — backend enforces).
   // Parcel count comes from the Redux company state (same source UnifiedSubscription
@@ -400,6 +412,7 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
         isEdit={isEdit}
         establishmentName={establishmentData?.name || currentEstablishment?.name || ''}
         establishmentCoordinates={establishmentCoordinates}
+        establishmentAddress={establishmentAddress}
         initialStep={fromOutlineShortcut ? 1 : 0}
         saveFromBoundary={fromOutlineShortcut}
         otherParcels={otherParcels}

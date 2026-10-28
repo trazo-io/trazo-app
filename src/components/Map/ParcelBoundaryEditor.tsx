@@ -34,7 +34,7 @@ import { GoogleMap, Marker, Polygon } from '@react-google-maps/api';
 import { Box, Flex, HStack, Text } from '@chakra-ui/react';
 import { FaTrash } from 'react-icons/fa';
 
-import { StandardButton } from 'components/Design';
+import { StandardAlert, StandardButton } from 'components/Design';
 import { NEIGHBOUR_OUTLINE } from 'components/Map/neighbourOutline';
 import { ParcelNameLabel } from 'components/Map/ParcelNameLabel';
 import {
@@ -44,6 +44,9 @@ import {
   snapToNeighbours
 } from 'utils/parcelPolygon';
 import type { LatLng } from 'utils/parcelPolygon';
+import { findPlace } from 'utils/mapPlaceSearch';
+import type { FoundPlace } from 'utils/mapPlaceSearch';
+import { MapPlaceSearch } from 'components/Map/MapPlaceSearch';
 
 // green.500 for a closed outline, orange for one still short of three corners (the same
 // colours the editor always used; neighbours are blue, see neighbourOutline).
@@ -80,6 +83,12 @@ const MAX_FIT_ZOOM = 18;
 // A farm's coordinates with nothing drawn yet: close enough to tell one field from the next.
 // The old 13 showed a whole valley, and every grower's first job was to zoom in.
 const FIELD_ZOOM = 16;
+// A farm with no location on file: the whole contiguous US, which reads as "not there yet".
+// It opened on a field in Fresno at field zoom instead, so a Washington grower landed 1,000 km
+// away on a field that looked like it could be theirs.
+const NO_LOCATION_CAMERA = { center: { lat: 39.8283, lng: -98.5795 }, zoom: 4 };
+// A searched point with no area of its own (pasted coordinates): close enough to see fences.
+const POINT_ZOOM = 17;
 
 // How close (in screen pixels, so it feels the same at any zoom) a corner must land to a
 // neighbouring parcel's corner or edge to snap onto it.
@@ -129,6 +138,13 @@ export interface ParcelBoundaryEditorProps {
   fitOnOpen?: boolean;
   /** Rendered under the editor's own bars: the full-screen dialog's status and controls. */
   footer?: React.ReactNode;
+  /** The farm has no coordinates on file: `center` is a placeholder, not the farm. */
+  locationUnknown?: boolean;
+  /**
+   * The farm's postal address, looked up when its location is unknown. `undefined` while the
+   * farm is still loading; an empty string when it has no address either.
+   */
+  farmAddress?: string;
 }
 
 export const ParcelBoundaryEditor = ({
@@ -141,14 +157,22 @@ export const ParcelBoundaryEditor = ({
   height = '400px',
   fullscreen = false,
   fitOnOpen = true,
-  footer
+  footer,
+  locationUnknown = false,
+  farmAddress
 }: ParcelBoundaryEditorProps) => {
   const intl = useIntl();
   const mapRef = useRef<google.maps.Map | null>(null);
   const fittedRef = useRef(!fitOnOpen);
   const editedRef = useRef(false);
   // Read once: passed again, `@react-google-maps` would re-apply them on every change.
-  const [initialCamera] = useState(() => ({ center, zoom: zoom ?? FIELD_ZOOM }));
+  const [initialCamera] = useState(() =>
+    locationUnknown && fitOnOpen ? NO_LOCATION_CAMERA : { center, zoom: zoom ?? FIELD_ZOOM }
+  );
+  // The farm's address was looked up and found nothing usable.
+  const [addressMissed, setAddressMissed] = useState(false);
+  const addressTriedRef = useRef(false);
+  const [located, setLocated] = useState(false);
 
   const [selected, setSelected] = useState<number | null>(null);
   // The outline while a corner is being dragged, so the edges follow the finger.
@@ -207,18 +231,61 @@ export const ParcelBoundaryEditor = ({
 
   useEffect(fitOnce, [fitOnce]);
 
-  // The farm's coordinates can load after the map (new parcel, nothing to fit to yet).
+  // The farm's coordinates can load after the map (new parcel, nothing to fit to yet). From the
+  // no-location view, that also means coming down to field zoom.
   useEffect(() => {
     const map = mapRef.current;
-    if (map && !fittedRef.current && !editedRef.current) map.setCenter(center);
-  }, [center]);
+    if (!map || fittedRef.current || editedRef.current || locationUnknown) return;
+    map.setCenter(center);
+    if ((map.getZoom() ?? FIELD_ZOOM) < FIELD_ZOOM - 3) map.setZoom(FIELD_ZOOM);
+  }, [center, locationUnknown]);
+
+  // A place the grower searched for, or the farm's address: frame its area, or a point at a
+  // zoom where fences show. The camera is the grower's from here on.
+  const moveTo = useCallback((place: FoundPlace) => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (place.viewport) {
+      map.fitBounds(place.viewport, 0);
+      google.maps.event.addListenerOnce(map, 'idle', () => {
+        if ((map.getZoom() ?? 0) > MAX_FIT_ZOOM) map.setZoom(MAX_FIT_ZOOM);
+      });
+    } else {
+      map.setCenter(place.center);
+      map.setZoom(POINT_ZOOM);
+    }
+    fittedRef.current = true;
+    setLocated(true);
+  }, []);
+
+  // No coordinates on file and nothing drawn to fit to: look the farm's address up once.
+  const tryFarmAddress = useCallback(() => {
+    const map = mapRef.current;
+    if (!map || !locationUnknown || farmAddress === undefined || addressTriedRef.current) return;
+    if (fittedRef.current || editedRef.current) return;
+    addressTriedRef.current = true;
+    if (!farmAddress.trim()) {
+      setAddressMissed(true);
+      return;
+    }
+    findPlace(farmAddress, 1).then((result) => {
+      if (result.status === 'found' && !fittedRef.current && !editedRef.current) {
+        moveTo(result.places[0]);
+      } else if (result.status !== 'found') {
+        setAddressMissed(true);
+      }
+    });
+  }, [farmAddress, locationUnknown, moveTo]);
+
+  useEffect(tryFarmAddress, [tryFarmAddress]);
 
   const onLoad = useCallback(
     (map: google.maps.Map) => {
       mapRef.current = map;
       fitOnce();
+      tryFarmAddress();
     },
-    [fitOnce]
+    [fitOnce, tryFarmAddress]
   );
 
   const onIdle = () => {
@@ -257,7 +324,27 @@ export const ParcelBoundaryEditor = ({
 
   return (
     <Flex direction="column" h={fullscreen ? '100%' : undefined}>
-      <Box flex={fullscreen ? '1' : undefined} minH={0}>
+      {/* The search is a form row above the map, not wedged inside its frame. Full screen,
+          it is a padded bar across the top of the dialog. */}
+      <Box px={fullscreen ? 4 : 0} pt={fullscreen ? 3 : 0} pb={3}>
+        <MapPlaceSearch onLocate={moveTo} />
+      </Box>
+      {locationUnknown && addressMissed && !located && (
+        <Box px={fullscreen ? 4 : 0}>
+          <StandardAlert
+            status="info"
+            mb={3}
+            description={intl.formatMessage({ id: 'parcel.boundary.noFarmLocation' })}
+          />
+        </Box>
+      )}
+      <Box
+        flex={fullscreen ? '1' : undefined}
+        minH={0}
+        borderRadius={fullscreen ? 0 : 'lg'}
+        overflow="hidden"
+        border={fullscreen ? undefined : '1px solid'}
+        borderColor="gray.200">
         <GoogleMap
           mapContainerStyle={{ width: '100%', height: fullscreen ? '100%' : height }}
           center={initialCamera.center}
@@ -329,7 +416,11 @@ export const ParcelBoundaryEditor = ({
           px={4}
           py={3}
           bg="green.50"
-          borderTop="1px solid"
+          // Inline, a rounded strip under the map like the status strip below it; full screen,
+          // a bar across the dialog.
+          mt={fullscreen ? 0 : 2}
+          borderRadius={fullscreen ? 0 : 'lg'}
+          borderTop={fullscreen ? '1px solid' : undefined}
           borderColor="green.100"
           justify="space-between"
           flexWrap="wrap">
@@ -354,7 +445,15 @@ export const ParcelBoundaryEditor = ({
       )}
 
       {refused && (
-        <Text role="alert" px={4} py={3} fontSize="sm" color="gray.800" bg="amber.50">
+        <Text
+          role="alert"
+          px={4}
+          py={3}
+          mt={fullscreen ? 0 : 2}
+          borderRadius={fullscreen ? 0 : 'lg'}
+          fontSize="sm"
+          color="gray.800"
+          bg="amber.50">
           {intl.formatMessage({ id: 'parcel.boundary.crossRefused' })}
         </Text>
       )}

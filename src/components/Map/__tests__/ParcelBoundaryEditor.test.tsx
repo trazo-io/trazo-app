@@ -10,7 +10,7 @@
  */
 import React from 'react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { IntlProvider } from 'react-intl';
 
@@ -87,6 +87,7 @@ const handles = (count: number) => seen.markers.slice(-count);
 const ownOutline = () => seen.polygons.filter((p) => p.options?.zIndex === 1).pop() as Props;
 
 beforeEach(() => {
+  (window as any).google = { maps: { Size: class {}, Point: class {} } };
   seen.maps = [];
   seen.polygons = [];
   seen.markers = [];
@@ -228,6 +229,145 @@ describe('ParcelBoundaryEditor', () => {
     expect(lastMap().options).toMatchObject({
       fullscreenControl: false,
       gestureHandling: 'greedy'
+    });
+  });
+
+  describe('finding the farm', () => {
+    // The parts of a google.maps.Map the editor moves.
+    const fakeMap = () => ({
+      fitBounds: vi.fn(),
+      setCenter: vi.fn(),
+      setZoom: vi.fn(),
+      getZoom: () => 4,
+      getCenter: () => ({ toJSON: () => ({ lat: 0, lng: 0 }) })
+    });
+    const geocoded: string[] = [];
+    const withGeocoder = (status: string) => {
+      geocoded.length = 0;
+      (window as any).google = {
+        maps: {
+          Size: class {},
+          Point: class {},
+          event: { addListenerOnce: vi.fn() },
+          Geocoder: class {
+            geocode(req: { address: string }, cb: (r: unknown[], s: string) => void) {
+              geocoded.push(req.address);
+              cb(
+                status === 'OK'
+                  ? [
+                      {
+                        formatted_address: 'Tangent, OR, USA',
+                        geometry: {
+                          location: { toJSON: () => ({ lat: 44.54, lng: -123.1 }) },
+                          viewport: {
+                            toJSON: () => ({ north: 44.6, south: 44.5, east: -123, west: -123.2 })
+                          },
+                          location_type: 'APPROXIMATE'
+                        }
+                      }
+                    ]
+                  : [],
+                status
+              );
+            }
+          }
+        }
+      };
+    };
+    const renderFinding = (props: Partial<React.ComponentProps<typeof ParcelBoundaryEditor>>) =>
+      render(
+        <ChakraProvider theme={theme}>
+          <IntlProvider locale="en" messages={m} onError={() => undefined}>
+            <ParcelBoundaryEditor
+              path={[]}
+              onChange={() => undefined}
+              center={{ lat: 36.7378, lng: -119.7871 }}
+              {...props}
+            />
+          </IntlProvider>
+        </ChakraProvider>
+      );
+
+    it('a pasted Google Maps link moves the map to the pin, no geocoder involved', async () => {
+      withGeocoder('REQUEST_DENIED');
+      renderFinding({});
+      const map = fakeMap();
+      act(() => lastMap().onLoad(map));
+      fireEvent.change(screen.getByLabelText(m['map.search.label']), {
+        target: { value: 'https://www.google.com/maps/@44.5402,-123.1089,17z' }
+      });
+      fireEvent.click(screen.getByRole('button', { name: m['map.search.button'] }));
+      await waitFor(() =>
+        expect(map.setCenter).toHaveBeenCalledWith({ lat: 44.5402, lng: -123.1089 })
+      );
+      expect(map.setZoom).toHaveBeenCalledWith(17);
+      expect(geocoded).toEqual([]);
+    });
+
+    it('Enter in the box searches; it never submits the form around the map', async () => {
+      withGeocoder('OK');
+      const onSubmit = vi.fn((e: React.FormEvent) => e.preventDefault());
+      render(
+        <ChakraProvider theme={theme}>
+          <IntlProvider locale="en" messages={m} onError={() => undefined}>
+            <form onSubmit={onSubmit}>
+              <ParcelBoundaryEditor
+                path={[]}
+                onChange={() => undefined}
+                center={{ lat: 0, lng: 0 }}
+              />
+            </form>
+          </IntlProvider>
+        </ChakraProvider>
+      );
+      const map = fakeMap();
+      act(() => lastMap().onLoad(map));
+      const box = screen.getByLabelText(m['map.search.label']);
+      fireEvent.change(box, { target: { value: 'Tangent, OR' } });
+      fireEvent.keyDown(box, { key: 'Enter' });
+      await waitFor(() => expect(map.fitBounds).toHaveBeenCalled());
+      expect(onSubmit).not.toHaveBeenCalled();
+      expect(screen.getByText('Showing Tangent, OR, USA.')).toBeInTheDocument();
+    });
+
+    it("with no location on file, opens on the whole country and looks up the farm's address", async () => {
+      withGeocoder('OK');
+      renderFinding({ locationUnknown: true, farmAddress: '123 Main St, Tangent, OR, 97389' });
+      // Not the placeholder field in Fresno.
+      expect(lastMap().center).toEqual({ lat: 39.8283, lng: -98.5795 });
+      expect(lastMap().zoom).toBe(4);
+      const map = fakeMap();
+      act(() => lastMap().onLoad(map));
+      await waitFor(() =>
+        expect(map.fitBounds).toHaveBeenCalledWith(
+          { north: 44.6, south: 44.5, east: -123, west: -123.2 },
+          0
+        )
+      );
+      expect(geocoded).toEqual(['123 Main St, Tangent, OR, 97389']);
+      expect(screen.queryByText(m['parcel.boundary.noFarmLocation'])).toBeNull();
+    });
+
+    it('says the farm has no location when there is no address, or it cannot be looked up', async () => {
+      withGeocoder('OK');
+      const { unmount } = renderFinding({ locationUnknown: true, farmAddress: '' });
+      act(() => lastMap().onLoad(fakeMap()));
+      expect(await screen.findByText(m['parcel.boundary.noFarmLocation'])).toBeInTheDocument();
+      expect(geocoded).toEqual([]);
+      unmount();
+
+      withGeocoder('REQUEST_DENIED');
+      renderFinding({ locationUnknown: true, farmAddress: 'Tangent, OR' });
+      act(() => lastMap().onLoad(fakeMap()));
+      expect(await screen.findByText(m['parcel.boundary.noFarmLocation'])).toBeInTheDocument();
+    });
+
+    it('waits for the farm to load before deciding it has no address', () => {
+      withGeocoder('OK');
+      renderFinding({ locationUnknown: true, farmAddress: undefined });
+      act(() => lastMap().onLoad(fakeMap()));
+      expect(screen.queryByText(m['parcel.boundary.noFarmLocation'])).toBeNull();
+      expect(geocoded).toEqual([]);
     });
   });
 });

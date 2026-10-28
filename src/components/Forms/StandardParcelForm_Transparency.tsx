@@ -177,6 +177,11 @@ interface StandardParcelFormTransparencyProps {
   establishmentName?: string;
   // GPS coordinates from parent establishment to center map when creating new parcel
   establishmentCoordinates?: { lat: number; lng: number };
+  /**
+   * The farm's postal address, looked up on the boundary map when the farm has no coordinates.
+   * `undefined` while the farm loads; an empty string when it has no address on file.
+   */
+  establishmentAddress?: string;
   // Optional informational content (e.g., plan-limit warning) rendered above the stepper
   preFormAlert?: React.ReactNode;
   /** Open on this step (the parcel page's "Edit outline" opens the boundary step). */
@@ -205,6 +210,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
   isEdit = false,
   establishmentName = '',
   establishmentCoordinates,
+  establishmentAddress,
   preFormAlert,
   initialStep = 0,
   otherParcels = [],
@@ -296,6 +302,10 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
   // metadata as they arrive. Seeding the ref at mount saved the placeholder instead.
   const mapViewRef = useRef<{ center: LatLng; zoom: number } | null>(null);
   const currentMapView = () => mapViewRef.current ?? { center: mapCenter, zoom: mapZoom };
+  // Nothing on file says where this farm is: no coordinates, no saved map, no outline. The map
+  // centre is then a placeholder, and the editor says so instead of opening on it.
+  const farmLocationUnknown =
+    !establishmentCoordinates && !initialData?.map_metadata?.center && polygon.length === 0;
 
   // 🗺️ Update map center when establishment coordinates become available (async load fix)
   useEffect(() => {
@@ -862,9 +872,17 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                   </Text>
                 )}
 
-                <Box borderRadius="lg" overflow="hidden" border="1px solid" borderColor="gray.200">
+                {/* The editor frames its own map (and puts its search above the frame), so
+                    only the loading and error states carry a border here. */}
+                <Box>
                   {loadError ? (
-                    <Flex h="400px" align="center" justify="center" bg="red.50" direction="column">
+                    <Flex
+                      h="400px"
+                      align="center"
+                      justify="center"
+                      bg="red.50"
+                      direction="column"
+                      borderRadius="lg">
                       <Text color="red.700" mb={2}>
                         {intl.formatMessage({ id: 'parcel.boundary.mapError' })}
                       </Text>
@@ -873,14 +891,14 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                       </Text>
                     </Flex>
                   ) : !isLoaded ? (
-                    <Flex h="400px" align="center" justify="center" bg="gray.100">
+                    <Flex h="400px" align="center" justify="center" bg="gray.100" borderRadius="lg">
                       <Text>{intl.formatMessage({ id: 'parcel.boundary.mapLoading' })}</Text>
                     </Flex>
                   ) : isFullscreen ? (
                     // Unmounted while the full-screen editor is open, not just hidden behind
                     // it: a hidden map still fitted itself to the outline drawn in full screen
                     // and reported that camera, overwriting where the grower actually was.
-                    <Box h="400px" bg="gray.100" />
+                    <Box h="400px" bg="gray.100" borderRadius="lg" />
                   ) : (
                     <ParcelBoundaryEditor
                       key={inlineMapKey}
@@ -891,6 +909,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                       center={inlineMapKey ? currentMapView().center : mapCenter}
                       zoom={inlineMapKey ? currentMapView().zoom : mapZoom}
                       fitOnOpen={inlineMapKey === 0}
+                      locationUnknown={farmLocationUnknown}
+                      farmAddress={establishmentAddress}
                       onViewChange={onMapViewChange}
                     />
                   )}

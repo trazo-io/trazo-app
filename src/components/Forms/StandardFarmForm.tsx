@@ -66,6 +66,9 @@ import {
 } from 'react-icons/fa';
 import { MdCheck, MdLocationOn, MdDescription, MdSettings, MdImage } from 'react-icons/md';
 import { TrazoImageUpload } from '../Upload';
+import { useLoadScript } from '@react-google-maps/api';
+import { googleMapsLoaderOptions } from 'components/Map/mapsLoaderOptions';
+import { MapPlaceSearch } from 'components/Map/MapPlaceSearch';
 import { StandardNumberInput, StandardDecimalInput } from 'components/Design/StandardComponents';
 
 // US States - 2-letter codes used for regional agricultural context
@@ -267,6 +270,11 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
   // Shorthand for the many plain-string labels on this form. Anything taking a value goes
   // through `intl.formatMessage` directly so the placeholder stays visible at the call site.
   const t = (id: string) => intl.formatMessage({ id });
+  // Only for the coordinates lookup (Google's geocoder rides on the Maps script). Shared
+  // options, so a map elsewhere on the page never loads the script a second time.
+  const loaderOptions = React.useMemo(() => googleMapsLoaderOptions(intl.locale), [intl.locale]);
+  const { isLoaded: mapsScriptLoaded } = useLoadScript(loaderOptions);
+  const mapsReady = mapsScriptLoaded && !!loaderOptions.googleMapsApiKey;
   const toast = useToast();
 
   // Simplified image management for TrazoImageUpload
@@ -828,12 +836,40 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                 {/* Precise Coordinates Section */}
                 <Box mt={8}>
                   <Text fontSize="lg" fontWeight="semibold" color="gray.700" mb={2}>
-                    Precise Coordinates (Optional)
+                    {t('farm.form.coordinates.title')}
                   </Text>
-                  <Text fontSize="sm" color="gray.600" mb={4}>
-                    Add exact GPS coordinates for precise location mapping. You can get these from
-                    Google Maps or GPS devices.
+                  {/* Typed decimal degrees were the only way in ("get these from Google
+                      Maps"), and a farm left without them opened its parcel map on a
+                      placeholder. The lookup reads the address above, or a pasted pin. */}
+                  <Text fontSize="sm" color="gray.600" mb={2}>
+                    {t('farm.form.coordinates.description')}
                   </Text>
+                  {mapsReady && (
+                    <Box mb={4}>
+                      <MapPlaceSearch
+                        defaultQuery={[
+                          watch('address'),
+                          watch('city'),
+                          watch('state'),
+                          watch('zipCode')
+                        ]
+                          .filter(Boolean)
+                          .join(', ')}
+                        foundMessageId="farm.form.coordinates.found"
+                        warnApproximate
+                        onLocate={(place) => {
+                          setValue('latitude', Number(place.center.lat.toFixed(6)), {
+                            shouldValidate: true,
+                            shouldDirty: true
+                          });
+                          setValue('longitude', Number(place.center.lng.toFixed(6)), {
+                            shouldValidate: true,
+                            shouldDirty: true
+                          });
+                        }}
+                      />
+                    </Box>
+                  )}
 
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
                     <StandardField
