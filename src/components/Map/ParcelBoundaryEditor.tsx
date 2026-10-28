@@ -340,7 +340,7 @@ export const ParcelBoundaryEditor = ({
       {/* The search is a form row above the map, not wedged inside its frame. Full screen,
           it is a padded bar across the top of the dialog. */}
       <Box px={fullscreen ? 4 : 0} pt={fullscreen ? 3 : 0} pb={3}>
-        <MapPlaceSearch onLocate={moveTo} />
+        <MapPlaceSearch onLocate={moveTo} allowMyLocation />
       </Box>
       {locationUnknown && addressMissed && !located && (
         <Box px={fullscreen ? 4 : 0}>

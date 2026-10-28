@@ -8,6 +8,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { Box, HStack, Text, VStack } from '@chakra-ui/react';
+import { MdMyLocation } from 'react-icons/md';
 
 import { StandardButton } from 'components/Design';
 import { StandardSearchInput } from 'components/Design/StandardComponents';
@@ -25,19 +26,28 @@ export interface MapPlaceSearchProps {
    * where the result becomes the FARM's coordinates, that difference matters.
    */
   warnApproximate?: boolean;
+  /**
+   * Offer "Use my location": a grower standing in the field can put the map on it without
+   * knowing a single place name. The ONLY caller of `navigator.geolocation` in the app (guard:
+   * geolocationOnlyOnTheMap.test.ts), since Permissions-Policy allows it for every page.
+   */
+  allowMyLocation?: boolean;
 }
 
 type Outcome =
   | { kind: 'idle' }
   | { kind: 'shown'; place: FoundPlace; others: FoundPlace[] }
   | { kind: 'none'; query: string }
-  | { kind: 'unavailable' };
+  | { kind: 'unavailable' }
+  | { kind: 'locationDenied' }
+  | { kind: 'locationFailed' };
 
 export const MapPlaceSearch = ({
   onLocate,
   defaultQuery = '',
   foundMessageId = 'map.search.showing',
-  warnApproximate = false
+  warnApproximate = false,
+  allowMyLocation = false
 }: MapPlaceSearchProps) => {
   const intl = useIntl();
   const [query, setQuery] = useState(defaultQuery);
@@ -67,6 +77,31 @@ export const MapPlaceSearch = ({
     } else {
       setOutcome({ kind: 'unavailable' });
     }
+  };
+
+  const canLocate = allowMyLocation && typeof navigator !== 'undefined' && !!navigator.geolocation;
+  const useMyLocation = () => {
+    if (!canLocate || busy) return;
+    setBusy(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setBusy(false);
+        const metres = Math.round(position.coords.accuracy);
+        go(
+          {
+            label: intl.formatMessage({ id: 'map.search.myLocation' }, { metres }),
+            center: { lat: position.coords.latitude, lng: position.coords.longitude },
+            approximate: metres > 100
+          },
+          []
+        );
+      },
+      (error) => {
+        setBusy(false);
+        setOutcome({ kind: error.code === 1 ? 'locationDenied' : 'locationFailed' });
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+    );
   };
 
   // Messages sit under the field in the help-text style StandardField uses (xs, gray.600), so
@@ -108,6 +143,20 @@ export const MapPlaceSearch = ({
         </StandardButton>
       </HStack>
 
+      {canLocate && (
+        <StandardButton
+          type="button"
+          size="sm"
+          variant="ghost"
+          leftIcon={<MdMyLocation />}
+          onClick={useMyLocation}
+          isDisabled={busy}
+          mt={1}
+          px={1}>
+          {intl.formatMessage({ id: 'map.search.useMyLocation' })}
+        </StandardButton>
+      )}
+
       <Box role="status" aria-live="polite">
         {outcome.kind === 'shown' && (
           <VStack align="stretch" spacing={1}>
@@ -143,6 +192,10 @@ export const MapPlaceSearch = ({
           helpText(intl.formatMessage({ id: 'map.search.none' }, { query: outcome.query }))}
         {outcome.kind === 'unavailable' &&
           helpText(intl.formatMessage({ id: 'map.search.unavailable' }))}
+        {outcome.kind === 'locationDenied' &&
+          helpText(intl.formatMessage({ id: 'map.search.locationDenied' }))}
+        {outcome.kind === 'locationFailed' &&
+          helpText(intl.formatMessage({ id: 'map.search.locationFailed' }))}
       </Box>
     </Box>
   );

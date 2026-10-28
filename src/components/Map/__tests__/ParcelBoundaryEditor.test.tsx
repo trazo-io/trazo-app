@@ -370,4 +370,48 @@ describe('ParcelBoundaryEditor', () => {
       expect(geocoded).toEqual([]);
     });
   });
+
+  describe('use my location', () => {
+    const fakeMap = () => ({
+      fitBounds: vi.fn(),
+      setCenter: vi.fn(),
+      setZoom: vi.fn(),
+      getZoom: () => 16,
+      getCenter: () => ({ toJSON: () => ({ lat: 0, lng: 0 }) })
+    });
+    const withPosition = (
+      answer:
+        | { coords: { latitude: number; longitude: number; accuracy: number } }
+        | { code: number }
+    ) => {
+      Object.defineProperty(navigator, 'geolocation', {
+        configurable: true,
+        value: {
+          getCurrentPosition: (ok: (p: unknown) => void, fail: (e: unknown) => void) =>
+            'coords' in answer ? ok(answer) : fail(answer)
+        }
+      });
+    };
+
+    it('puts the map where the grower is standing', async () => {
+      withPosition({ coords: { latitude: 44.5402, longitude: -123.1089, accuracy: 8.4 } });
+      renderEditor([]);
+      const map = fakeMap();
+      act(() => lastMap().onLoad(map));
+      fireEvent.click(screen.getByRole('button', { name: m['map.search.useMyLocation'] }));
+      await waitFor(() =>
+        expect(map.setCenter).toHaveBeenCalledWith({ lat: 44.5402, lng: -123.1089 })
+      );
+      expect(map.setZoom).toHaveBeenCalledWith(17);
+      expect(screen.getByText('Showing your location (within 8 m).')).toBeInTheDocument();
+    });
+
+    it('says how to unblock it when the browser refuses', async () => {
+      withPosition({ code: 1 });
+      renderEditor([]);
+      act(() => lastMap().onLoad(fakeMap()));
+      fireEvent.click(screen.getByRole('button', { name: m['map.search.useMyLocation'] }));
+      expect(await screen.findByText(m['map.search.locationDenied'])).toBeInTheDocument();
+    });
+  });
 });
