@@ -116,6 +116,32 @@ describe('OSPCertifyingAgentCard', () => {
     });
   });
 
+  it('says an unsaved pick takes effect on save, never that the packet already uses it', () => {
+    // The e2e run read the preview line as saved state: it said "The renewal packet is numbered
+    // to OTCO's own forms" while the plan still named WSDA.
+    renderCard(osp());
+    fireEvent.change(screen.getByLabelText('Certifying agent'), {
+      target: { value: 'Oregon Tilth Certified Organic' }
+    });
+    expect(
+      screen.queryByText("Once you save, the renewal packet is numbered to OTCO's own forms."),
+      'the pending pick must say it takes effect on save'
+    ).not.toBeNull();
+    expect(screen.queryByText(/^The renewal packet is numbered to/)).toBeNull();
+  });
+
+  it('words the unsaved fallback line by the same rules as the saved one', async () => {
+    const es = (await import('../../../../i18n/lang/es-419.json')).default as Record<
+      string,
+      string
+    >;
+    for (const cat of [enUS as Record<string, string>, es]) {
+      const v = cat['certifyingAgent.fallbackNumberingOnSave'];
+      expect(v).toMatch(/\{agent\}/);
+      expect(v).not.toMatch(/same|mismo|CCOF/i);
+    }
+  });
+
   it('offers no picker on a plan that is already with the certifier', () => {
     renderCard(
       osp({

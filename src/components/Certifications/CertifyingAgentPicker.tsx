@@ -35,6 +35,11 @@ interface CertifyingAgentPickerProps {
   isDisabled?: boolean;
   /** Say under the control whether the packet is numbered to the picked agent's own forms. */
   showNumbering?: boolean;
+  /**
+   * The numbering line is a preview of an edit not yet saved: it says what happens on save, so a
+   * picked agent never reads as the packet's current one.
+   */
+  numberingOnSave?: boolean;
   /** Accessible name when the picker is not inside a `StandardField`, whose label names it. */
   ariaLabel?: string;
   /** The farm's state (code or name). Groups the agencies common there at the top of the list. */
@@ -46,6 +51,7 @@ const CertifyingAgentPicker = ({
   onChange,
   isDisabled = false,
   showNumbering = false,
+  numberingOnSave = false,
   ariaLabel,
   state
 }: CertifyingAgentPickerProps) => {
@@ -156,7 +162,11 @@ const CertifyingAgentPicker = ({
           {intl.formatMessage(
             {
               id: picked.own_numbering
-                ? 'certifyingAgent.ownNumbering'
+                ? numberingOnSave
+                  ? 'certifyingAgent.ownNumberingOnSave'
+                  : 'certifyingAgent.ownNumbering'
+                : numberingOnSave
+                ? 'certifyingAgent.fallbackNumberingOnSave'
                 : 'certifyingAgent.fallbackNumbering'
             },
             { agent: picked.short_name || picked.name }

@@ -69,7 +69,8 @@ const OSPCertifyingAgentCard = ({
   };
 
   // What the packet does with the SAVED answer. While an edit is pending the picker's own line
-  // speaks for the new choice instead, so the card never states two answers at once.
+  // speaks for the new choice instead, so the card never states two answers at once, and says
+  // "once you save": the e2e run read the preview as already saved.
   const savedLines: string[] = [];
   if (!agent?.name) {
     savedLines.push(intl.formatMessage({ id: 'osp.agent.none' }));
@@ -120,6 +121,7 @@ const OSPCertifyingAgentCard = ({
                 value={draft}
                 onChange={setDraft}
                 showNumbering={dirty}
+                numberingOnSave
                 isDisabled={saving}
                 ariaLabel={title}
                 state={farmState}
