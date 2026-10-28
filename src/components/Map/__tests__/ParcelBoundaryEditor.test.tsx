@@ -362,6 +362,20 @@ describe('ParcelBoundaryEditor', () => {
       expect(await screen.findByText(m['parcel.boundary.noFarmLocation'])).toBeInTheDocument();
     });
 
+    it('full screen opened with no location still looks up the address', async () => {
+      withGeocoder('OK');
+      renderFinding({
+        fullscreen: true,
+        fitOnOpen: false,
+        locationUnknown: true,
+        farmAddress: 'Tangent, OR'
+      });
+      const map = fakeMap();
+      act(() => lastMap().onLoad(map));
+      await waitFor(() => expect(map.fitBounds).toHaveBeenCalled());
+      expect(geocoded).toEqual(['Tangent, OR']);
+    });
+
     it('waits for the farm to load before deciding it has no address', () => {
       withGeocoder('OK');
       renderFinding({ locationUnknown: true, farmAddress: undefined });

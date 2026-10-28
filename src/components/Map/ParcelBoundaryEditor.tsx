@@ -165,7 +165,10 @@ export const ParcelBoundaryEditor = ({
 }: ParcelBoundaryEditorProps) => {
   const intl = useIntl();
   const mapRef = useRef<google.maps.Map | null>(null);
-  const fittedRef = useRef(!fitOnOpen);
+  // Opening on a given camera (full screen) skips the fit, unless there is no camera to open on:
+  // with the location unknown, full screen can still fit the neighbours or look the address up,
+  // or a grower who opened it before the inline lookup answered was left on the whole country.
+  const fittedRef = useRef(!fitOnOpen && !locationUnknown);
   const editedRef = useRef(false);
   // Read once: passed again, `@react-google-maps` would re-apply them on every change.
   const [initialCamera] = useState(() =>

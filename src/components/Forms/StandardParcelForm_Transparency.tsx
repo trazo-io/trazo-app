@@ -314,8 +314,19 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
   // Null while the location is unknown and the map has reported no real camera: then nothing is
   // recorded, rather than a placeholder that would read as a location next time (review on
   // app #217: a saved placeholder switched this whole fallback off for that parcel).
-  const currentMapView = () =>
-    mapViewRef.current ?? (farmLocationUnknown ? null : { center: mapCenter, zoom: mapZoom });
+  //
+  // With an outline drawn but no camera reported (drawn zoomed out, never panned after), the
+  // OUTLINE is the location: `mapCenter` can still be the Fresno fallback there, and saved, it
+  // was published as the parcel's approximate area (review of #217; the backend now ignores the
+  // placeholder too, trazo-back #245).
+  const currentMapView = () => {
+    if (mapViewRef.current) return mapViewRef.current;
+    if (establishmentCoordinates || savedCenter) return { center: mapCenter, zoom: mapZoom };
+    if (polygon.length >= 3) {
+      return { center: calculatePolygonCenter(polygon), zoom: calculatePolygonZoom(polygon) };
+    }
+    return null;
+  };
 
   // 🗺️ Update map center when establishment coordinates become available (async load fix)
   useEffect(() => {
@@ -955,6 +966,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                         zoom={currentMapView()?.zoom ?? mapZoom}
                         fitOnOpen={false}
                         locationUnknown={farmLocationUnknown && !mapViewRef.current}
+                        farmAddress={establishmentAddress}
                         onViewChange={onMapViewChange}
                         footer={renderBoundaryStatus(
                           <StandardButton

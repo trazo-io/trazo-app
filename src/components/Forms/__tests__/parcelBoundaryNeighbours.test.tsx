@@ -308,6 +308,29 @@ describe('parcel boundary step: the farm around the outline', () => {
       });
     });
 
+    it("with an outline drawn but no camera reported, saves the outline's centre, never Fresno", () => {
+      const onSubmit = vi.fn();
+      drawn.maps = [];
+      renderForm({
+        initialStep: 1,
+        saveFromBoundary: true,
+        onSubmit,
+        initialData: { name: 'North', area: 4, transparency_description: '' }
+      });
+      // Three taps, no idle: drawn zoomed out and never panned afterwards (review of #217).
+      const tap = (lat: number, lng: number) =>
+        act(() =>
+          drawn.maps[drawn.maps.length - 1].onClick({ latLng: { toJSON: () => ({ lat, lng }) } })
+        );
+      tap(44.541, -123.111);
+      tap(44.541, -123.109);
+      tap(44.539, -123.109);
+      fireEvent.click(screen.getByRole('button', { name: m['parcel.boundary.saveOutline'] }));
+      const saved = onSubmit.mock.calls[0][0].map_metadata;
+      expect(saved.center.lat).toBeCloseTo(44.54, 6);
+      expect(saved.center.lng).toBeCloseTo(-123.11, 6);
+    });
+
     it('the parcel page invents no camera of its own', () => {
       // AddParcel filled a missing map_metadata with New York on load and on save, so every
       // parcel without one opened on Manhattan and the fallback above never ran.
