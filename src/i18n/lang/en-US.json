@@ -8746,6 +8746,8 @@
   "certifyingAgent.otherHint": "Not listed? Type the name as it appears on your certificate.",
   "certifyingAgent.ownNumbering": "The renewal packet is numbered to {agent}'s own forms.",
   "certifyingAgent.fallbackNumbering": "Trazo holds no form register for {agent}, so the packet borrows no agent's form numbers. Its documents are supporting material for {agent}'s own forms; ask {agent} which of its forms apply to this operation.",
+  "certifyingAgent.ownNumberingOnSave": "Once you save, the renewal packet is numbered to {agent}'s own forms.",
+  "certifyingAgent.fallbackNumberingOnSave": "Once you save, the packet borrows no agent's form numbers: Trazo holds no form register for {agent}. Its documents are supporting material for {agent}'s own forms; ask {agent} which of its forms apply to this operation.",
   "osp.agent.title": "Certifying agent",
   "osp.agent.subtitle": "Who reviews this plan. The renewal packet is laid out for them.",
   "osp.agent.save": "Save agent",

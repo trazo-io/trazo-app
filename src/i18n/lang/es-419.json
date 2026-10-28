@@ -8746,6 +8746,8 @@
   "certifyingAgent.otherHint": "¿No está en la lista? Escribe el nombre tal como aparece en tu certificado.",
   "certifyingAgent.ownNumbering": "El paquete de renovación usa la numeración de formularios de {agent}.",
   "certifyingAgent.fallbackNumbering": "Trazo no tiene un registro de formularios de {agent}, así que el paquete no usa la numeración de ningún certificador. Sus documentos son material de apoyo para los formularios propios de {agent}; pregunta a {agent} cuáles de sus formularios aplican a esta operación.",
+  "certifyingAgent.ownNumberingOnSave": "Cuando guardes, el paquete de renovación usará la numeración de formularios de {agent}.",
+  "certifyingAgent.fallbackNumberingOnSave": "Cuando guardes, el paquete no usará la numeración de ningún certificador: Trazo no tiene un registro de formularios de {agent}. Sus documentos son material de apoyo para los formularios propios de {agent}; pregunta a {agent} cuáles de sus formularios aplican a esta operación.",
   "osp.agent.title": "Certificadora",
   "osp.agent.subtitle": "Quién revisa este plan. El paquete de renovación se arma para esa certificadora.",
   "osp.agent.save": "Guardar certificadora",
