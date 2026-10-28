@@ -1015,7 +1015,9 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
 
                 {renderBoundaryStatus()}
 
-                <HStack spacing={3} justify="space-between" pt={4}>
+                {/* Wraps on a phone: three buttons do not fit one row at 393px, and the
+                    squeezed "Previous step" pushed its chevron outside its own border. */}
+                <Flex gap={3} justify="space-between" flexWrap="wrap" pt={4}>
                   <StandardButton
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
@@ -1023,7 +1025,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                     {intl.formatMessage({ id: 'common.previousStep' })}
                   </StandardButton>
 
-                  <HStack spacing={3}>
+                  <HStack spacing={3} ml="auto">
                     <StandardButton variant="outline" onClick={onCancel}>
                       {intl.formatMessage({ id: 'app.cancel' })}
                     </StandardButton>
@@ -1039,7 +1041,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                       </StandardButton>
                     )}
                   </HStack>
-                </HStack>
+                </Flex>
               </VStack>
             </StandardCard>
           )}
@@ -1104,7 +1106,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                   description={intl.formatMessage({ id: 'parcel.step.description.whereBody' })}
                 />
 
-                <HStack spacing={3} justify="space-between" pt={4}>
+                <Flex gap={3} justify="space-between" flexWrap="wrap" pt={4}>
                   <StandardButton
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
@@ -1112,7 +1114,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                     {intl.formatMessage({ id: 'common.previousStep' })}
                   </StandardButton>
 
-                  <HStack spacing={3}>
+                  <HStack spacing={3} ml="auto">
                     <StandardButton variant="outline" onClick={onCancel}>
                       {intl.formatMessage({ id: 'app.cancel' })}
                     </StandardButton>
@@ -1120,7 +1122,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                       {intl.formatMessage({ id: 'app.continue' })}
                     </StandardButton>
                   </HStack>
-                </HStack>
+                </Flex>
               </VStack>
             </StandardCard>
           )}
@@ -1157,7 +1159,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                   description={intl.formatMessage({ id: 'parcel.step.photos.whereBody' })}
                 />
 
-                <HStack spacing={3} justify="space-between" pt={4}>
+                <Flex gap={3} justify="space-between" flexWrap="wrap" pt={4}>
                   <StandardButton
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
@@ -1165,7 +1167,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                     {intl.formatMessage({ id: 'common.previousStep' })}
                   </StandardButton>
 
-                  <HStack spacing={3}>
+                  <HStack spacing={3} ml="auto">
                     <StandardButton variant="outline" onClick={onCancel}>
                       {intl.formatMessage({ id: 'app.cancel' })}
                     </StandardButton>
@@ -1181,7 +1183,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                       })}
                     </StandardButton>
                   </HStack>
-                </HStack>
+                </Flex>
               </VStack>
             </StandardCard>
           )}
