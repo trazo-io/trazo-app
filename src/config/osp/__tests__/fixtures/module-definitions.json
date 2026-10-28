@@ -341,7 +341,7 @@
                 "kind": "textarea",
                 "label": {
                   "en": "How do you review your risks and check that these measures are working?",
-                  "es": "¿Cómo revisas tus riesgos y comprueba que estas medidas funcionan?"
+                  "es": "¿Cómo revisas tus riesgos y compruebas que estas medidas funcionan?"
                 },
                 "coaching": {
                   "en": "Say who does the review, when it happens, and what would make you change something — for example a new buyer, a new custom operator, or a supplier whose certificate lapsed.",
@@ -1463,7 +1463,7 @@
                 "kind": "checkbox_group",
                 "label": {
                   "en": "What records show the search you did before buying nonorganic stock?",
-                  "es": "¿Qué registros demuestran la búsqueda que hizo antes de comprar material no orgánico?"
+                  "es": "¿Qué registros demuestran la búsqueda que hiciste antes de comprar material no orgánico?"
                 },
                 "coaching": {
                   "en": "Certifiers generally expect contact with at least three sources. Keep the supplier name, the date, and what they said — a quote showing the organic option was unavailable is stronger than a note saying you looked.",
@@ -4494,7 +4494,7 @@
                 },
                 "coaching": {
                   "en": "The rule requires you to document that your prevention, mechanical, and biological practices were insufficient before a material is applied — not just that the material itself is allowed. Describe the pest, weed, or disease pressure that triggers use and which practices you rely on first. The materials themselves belong on your OSP inputs list in the Materials Application, not here.",
-                  "es": "La normativa exige documentar que tus prácticas de prevención, mecánicas y biológicas fueron insuficientes antes de aplicar un material — no basta con que el material en sí esté permitido. Describe la presión de plaga, maleza o enfermedad que motiva el uso y en qué prácticas se apoya primero. Los materiales en sí van en la lista de insumos de tu OSP, en la Aplicación de Materiales, no aquí."
+                  "es": "La normativa exige documentar que tus prácticas de prevención, mecánicas y biológicas fueron insuficientes antes de aplicar un material — no basta con que el material en sí esté permitido. Describe la presión de plaga, maleza o enfermedad que motiva el uso y en quéprácticas te apoyas primero. Los materiales en sí van en la lista de insumos de tu OSP, en la Aplicación de Materiales, no aquí."
                 },
                 "options": [],
                 "required": true,
@@ -6448,7 +6448,7 @@
                 },
                 "coaching": {
                   "en": "§ 205.272(b)(1) prohibits outright the use of packaging materials, storage containers, or bins that CONTAIN a synthetic fungicide, preservative, or fumigant — treated wooden bins and fungicide-impregnated liners are the usual cases. This is a supplier question: if you have not confirmed it in writing, say so rather than guessing. An unconfirmed answer is a task for your certifier review; a wrong 'yes' is a misstatement in your organic system plan.",
-                  "es": "El § 205.272(b)(1) prohíbe de plano el uso de materiales de empaque, contenedores de almacenamiento o cajones que CONTENGAN un fungicida, conservante o fumigante sintético — los cajones de madera tratada y los forros impregnados con fungicida son los casos habituales. Esta es una pregunta para tu proveedor: si no lo ha confirmado por escrito, indícalo en lugar de suponer. Una respuesta sin confirmar es una tarea para la revisión de tu certificadora; un 'sí' erróneo es una declaración falsa en tu plan orgánico."
+                  "es": "El § 205.272(b)(1) prohíbe de plano el uso de materiales de empaque, contenedores de almacenamiento o cajones que CONTENGAN un fungicida, conservante o fumigante sintético — los cajones de madera tratada y los forros impregnados con fungicida son los casos habituales. Esta es una pregunta para tu proveedor: si no lo has confirmado por escrito, indícalo en lugar de suponer. Una respuesta sin confirmar es una tarea para la revisión de tu certificadora; un 'sí' erróneo es una declaración falsa en tu plan orgánico."
                 },
                 "options": [
                   {
@@ -8334,7 +8334,7 @@
                     "value": "also_neighbors_custom",
                     "label": {
                       "en": "Also custom-handles product for other growers",
-                      "es": "También se maneja por encargo producto de otros productores"
+                      "es": "También manejas por encargo producto de otros productores"
                     },
                     "exclusive": false
                   }
@@ -8862,7 +8862,7 @@
                 "kind": "checkbox_group",
                 "label": {
                   "en": "How do you make sure organic food-contact surfaces are free of sanitizer or cleaner residue?",
-                  "es": "¿Cómo se asegura de que las superficies orgánicas en contacto con alimentos queden libres de residuo de sanitizante o limpiador?"
+                  "es": "¿Cómo te aseguras de que las superficies orgánicas en contacto con alimentos queden libres de residuo de sanitizante o limpiador?"
                 },
                 "coaching": null,
                 "options": [
