@@ -20,6 +20,7 @@ import { IntlProvider } from 'react-intl';
 import { MemoryRouter } from 'react-router-dom';
 import { CarbonImpactExplainer } from '../CarbonImpactExplainer';
 import enUS from '../../../i18n/lang/en-US.json';
+import esJson from '../../../i18n/lang/es-419.json';
 
 // Real catalogue, not a stub: a missing key then surfaces as a raw id in an assertion
 // instead of silently passing.
@@ -53,7 +54,9 @@ describe('CarbonImpactExplainer — no empty card', () => {
     });
 
     // The card is there, and it carries a number rather than a heading over nothing.
-    expect(screen.getByText('Estimated emissions from recorded work and inputs')).toBeInTheDocument();
+    expect(
+      screen.getByText('Estimated emissions from recorded work and inputs')
+    ).toBeInTheDocument();
     expect(screen.getByText("This season's total")).toBeInTheDocument();
     expect(screen.getByText('412.4')).toBeInTheDocument();
 
@@ -62,7 +65,11 @@ describe('CarbonImpactExplainer — no empty card', () => {
     expect(screen.queryByText('Your Impact')).not.toBeInTheDocument();
     // Run 8 (R8-14): the unit says CO2 equivalent, and no driving or phone comparison is drawn from an
     // estimate whose boundary does not travel with it.
-    expect(screen.getByText('kg of greenhouse gases (as CO2 equivalent) from recorded farm work and purchased inputs')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'kg of greenhouse gases (as CO2 equivalent) from recorded farm work and purchased inputs'
+      )
+    ).toBeInTheDocument();
     expect(screen.queryByText(/Like driving/)).not.toBeInTheDocument();
 
     // FTC 16 CFR 260.4(c): the boundary travels with the number, in the same block, never
@@ -120,7 +127,9 @@ describe('CarbonImpactExplainer — no empty card', () => {
     // Chakra always injects a hidden <span id="__chakra_env">, so assert on the text the
     // component would have contributed rather than on an empty node.
     expect(container.textContent).toBe('');
-    expect(screen.queryByText('Estimated emissions from recorded work and inputs')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Estimated emissions from recorded work and inputs')
+    ).not.toBeInTheDocument();
   });
 
   it('still prefers the per-kg framing when the harvest amount is recorded', () => {
@@ -135,9 +144,62 @@ describe('CarbonImpactExplainer — no empty card', () => {
       }
     });
 
-    expect(screen.getByText('Growing 1 kg of Chandler Walnuts produced')).toBeInTheDocument();
+    expect(
+      screen.getByText('Growing 1 kg of Chandler Walnuts has estimated emissions of')
+    ).toBeInTheDocument();
     expect(screen.getByText('0.42')).toBeInTheDocument();
     // The season-total fallback must not appear alongside it.
     expect(screen.queryByText('Total Production Emissions')).not.toBeInTheDocument();
+  });
+});
+
+describe('CarbonImpactExplainer: the boundary says what the number is not', () => {
+  const es = esJson as unknown as Record<string, string>;
+
+  it('the boundary names estimates of recorded activities, not a categorical count', () => {
+    renderCard({
+      totalCO2e: 412.37,
+      productName: 'Chandler Walnuts',
+      consumerContext: NO_PER_KG
+    });
+
+    expect(
+      screen.getByText(
+        /Estimated emissions from the recorded activities included in this calculation\. Missing activity data and excluded sources are not represented\./
+      )
+    ).toBeInTheDocument();
+    // The old sentence listed what is counted as though the list were complete.
+    expect(screen.queryByText(/Counts the fuel and electricity this operation burns/)).toBeNull();
+  });
+
+  it('the lime inclusion and its method sit next to the boundary', () => {
+    const { container } = renderCard({
+      totalCO2e: 412.37,
+      productName: 'Chandler Walnuts',
+      consumerContext: NO_PER_KG
+    });
+
+    expect(
+      screen.getByText(
+        'Where carbonate-lime applications are recorded with their amount, their estimated CO₂ is included, using IPCC Tier 1 factors and assigned to the application year; this is not a measured release on the application date.'
+      )
+    ).toBeInTheDocument();
+    expect(container.textContent).not.toContain('app.carbonExplainer');
+  });
+
+  it('neither narrative says the season "produced" or "generated" the figure', () => {
+    expect(messages['app.carbonExplainer.perKgNarrative']).not.toMatch(/produced|generated/i);
+    expect(messages['app.carbonExplainer.totalNarrative']).not.toMatch(/produced|generated/i);
+    expect(es['app.carbonExplainer.perKgNarrative']).not.toMatch(/gener[oó]|produjo/i);
+    expect(es['app.carbonExplainer.totalNarrative']).not.toMatch(/gener[oó]|produjo/i);
+  });
+
+  it('es-419 carries the same two statements', () => {
+    expect(es['app.carbonExplainer.scopeBoundary']).toContain(
+      'Emisiones estimadas de las actividades registradas incluidas en este cálculo. Los datos de actividad faltantes y las fuentes excluidas no están representados.'
+    );
+    expect(es['app.carbonExplainer.scopeBoundaryLime']).toMatch(/cal carbonatada/);
+    expect(es['app.carbonExplainer.scopeBoundaryLime']).toMatch(/Nivel 1/);
+    expect(es['app.carbonExplainer.scopeBoundaryLime']).toMatch(/no es una liberaci/);
   });
 });

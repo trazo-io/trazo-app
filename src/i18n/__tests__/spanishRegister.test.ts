@@ -493,6 +493,7 @@ describe('the crew journey addresses the grower as tú, not usted (Run 8b)', () 
     'events.chemical.form.appliedByPcbHelp': "the contractor's own report",
     'events.common.help.observationAudience': "suppliers' own fields",
     'events.fieldNote.theirWordsYourRecord': "the crew member's words",
+    'events.pest.fields.identifiedByHelp': "the identifier's credentials (Trazo does not verify them)",
     'events.locked.description': "the season's records",
     'events.locked.detail': "the production's activities",
     'events.postHarvest.bannerBody': "the season's trail",

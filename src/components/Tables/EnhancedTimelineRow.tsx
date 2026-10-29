@@ -87,6 +87,7 @@ import {
   hasNoCarbonCalculation,
   isNotEstimated,
   NO_CARBON_CALCULATION_STATUS,
+  showsAreaEstimateLabel,
   showsInputsBadge
 } from 'utils/carbonStatus';
 import { localizeFieldValue } from 'utils/fieldDisplayUtils';
@@ -1496,6 +1497,25 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                           </Badge>
                         </Tooltip>
                       )}
+
+                      {/* Area-estimate chip: the figure rests on the recorded area, not on a
+                          recorded fuel or input amount. Neutral gray on purpose (a colour on a
+                          carbon figure can be a self-created label), and never rendered together
+                          with the inputs badge above (the two helpers are mutually exclusive).
+                          The caption sits under the figure in the metrics row. */}
+                      {showsAreaEstimateLabel(carbonData) && (
+                        <Badge
+                          variant="neutral"
+                          fontSize="xs"
+                          px={1.5}
+                          py={0.5}
+                          fontWeight="600"
+                          borderRadius="4px"
+                          textTransform="uppercase"
+                          letterSpacing="0.05em">
+                          {intl.formatMessage({ id: 'carbon.badge.areaEstimate' })}
+                        </Badge>
+                      )}
                     </HStack>
                   </VStack>
                 </HStack>
@@ -1572,10 +1592,14 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
 
               <Flex wrap="wrap" justify="space-between" align="center" gap={2}>
                 {/* Carbon Impact */}
-                {carbonData &&
-                !carbonData.error &&
-                (isNotEstimated(carbonData) || typeof carbonData.co2e !== 'number') ? (
+                {!carbonData ||
+                carbonData.error ||
+                isNotEstimated(carbonData) ||
+                typeof carbonData.co2e !== 'number' ? (
                   // Run 8 (R8-04): nothing recorded to count from. Said, never shown as 0.
+                  // Also the answer when the record carries no carbon payload at all: that case
+                  // used to print hardcoded English that no locale could translate, and it
+                  // disagreed with the detail modal, which says "not estimated".
                   // A sentence, not a figure: it must shrink and wrap inside the card. With
                   // flexShrink={0} it ran 120px past a 375px screen (manual pass, 2026-10-06).
                   <HStack spacing={2} flex="1 1 auto" minW={0}>
@@ -1590,7 +1614,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                       })}
                     </Text>
                   </HStack>
-                ) : carbonData && !carbonData.error && typeof carbonData.co2e === 'number' ? (
+                ) : (
                   <Tooltip
                     // One wording for every computed figure, zero included: "(no emissions
                     // estimated)" beside "0 kg CO2e" said both at once (AC-14).
@@ -1641,20 +1665,18 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                       <Circle size="24px" bg="gray.100">
                         <Icon as={MdEco} color="gray.600" boxSize={3} />
                       </Circle>
-                      <Text fontSize="sm" fontWeight="600" color="gray.700" whiteSpace="nowrap">
-                        {formatCO2e(carbonData.co2e)} kg CO₂e
-                      </Text>
+                      <VStack align="start" spacing={0}>
+                        <Text fontSize="sm" fontWeight="600" color="gray.700" whiteSpace="nowrap">
+                          {formatCO2e(carbonData.co2e)} kg CO₂e
+                        </Text>
+                        {showsAreaEstimateLabel(carbonData) && (
+                          <Text fontSize="xs" color="gray.600" maxW="260px">
+                            {intl.formatMessage({ id: 'carbon.badge.areaEstimateCaption' })}
+                          </Text>
+                        )}
+                      </VStack>
                     </HStack>
                   </Tooltip>
-                ) : (
-                  <HStack spacing={2} flexShrink={0}>
-                    <Circle size="24px" bg="gray.100">
-                      <Icon as={MdEco} color="gray.400" boxSize={3} />
-                    </Circle>
-                    <Text fontSize="sm" color="gray.500" whiteSpace="nowrap">
-                      No CO₂ data
-                    </Text>
-                  </HStack>
                 )}
 
                 {/* Operator & Photo Status.

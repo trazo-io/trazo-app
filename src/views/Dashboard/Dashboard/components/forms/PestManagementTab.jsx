@@ -40,6 +40,7 @@ import {
   FaLeaf
 } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
+import { IDENTIFIED_BY } from 'config/events/enums';
 // Event Field Registry (Phase 5G — form integration)
 import { useFormFields } from 'src/hooks/useFormFields';
 import { useDefaultUnits } from 'src/hooks/useMeasurementSystem';
@@ -1727,39 +1728,24 @@ const PestManagementTab = forwardRef(
                     pestType === 'TA' ||
                     pestType === 'TM') && (
                     <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={4}>
+                      {/* One label set: the options render the same `enums.identified_by.*` keys
+                          the detail view reads back, and the label says whose statement it is.
+                          Trazo does not check who identified a pest, so nothing here may read as
+                          a licence or a verification. */}
                       <StandardField
-                        label="Pest Identified By"
-                        helpText="Who identified the pest species (NOP 7 CFR 205.206)">
+                        label={intl.formatMessage({ id: 'events.pest.fields.identifiedBy' })}
+                        helpText={intl.formatMessage({
+                          id: 'events.pest.fields.identifiedByHelp'
+                        })}>
                         <StandardSelect {...methods.register('identified_by')}>
                           <option value="">
                             {intl.formatMessage({ id: 'events.pest.options.selectIdentifier' })}
                           </option>
-                          <option value="farmer">
-                            {intl.formatMessage({ id: 'events.pest.options.identifiedBy.farmer' })}
-                          </option>
-                          <option value="agronomist">
-                            {intl.formatMessage({
-                              id: 'events.pest.options.identifiedBy.agronomist'
-                            })}
-                          </option>
-                          <option value="entomologist">
-                            {intl.formatMessage({
-                              id: 'events.pest.options.identifiedBy.entomologist'
-                            })}
-                          </option>
-                          <option value="extension_service">
-                            {intl.formatMessage({
-                              id: 'events.pest.options.identifiedBy.extensionService'
-                            })}
-                          </option>
-                          <option value="crop_consultant">
-                            {intl.formatMessage({
-                              id: 'events.pest.options.identifiedBy.cropConsultant'
-                            })}
-                          </option>
-                          <option value="lab">
-                            {intl.formatMessage({ id: 'events.pest.options.identifiedBy.lab' })}
-                          </option>
+                          {IDENTIFIED_BY.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {intl.formatMessage({ id: option.labelKey })}
+                            </option>
+                          ))}
                         </StandardSelect>
                       </StandardField>
 

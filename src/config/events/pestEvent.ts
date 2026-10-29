@@ -73,25 +73,6 @@ const formatPestPressure = (v: unknown): string | null => {
   return PEST_PRESSURE_LABELS[v.toLowerCase()] ?? v;
 };
 
-// NOP Compliance — Pest Identification (7 CFR 205.206). Labels mirror Django
-// IDENTIFIED_BY_CHOICES so consumer card matches the certifier-facing PDF
-// (which uses get_identified_by_display()). Bug Pattern #16 — without this map
-// the resolver default split-capitalize would render "Extension Service" instead
-// of "Extension Service Agent" and "Lab" instead of "Laboratory Analysis".
-const IDENTIFIED_BY_LABELS: Record<string, string> = {
-  farmer: 'Farmer / Farm Staff',
-  agronomist: 'Licensed Agronomist',
-  entomologist: 'Entomologist',
-  extension_service: 'Extension Service Agent',
-  crop_consultant: 'Crop Consultant',
-  lab: 'Laboratory Analysis'
-};
-
-const formatIdentifiedBy = (v: unknown): string | null => {
-  if (typeof v !== 'string' || v === '') return null;
-  return IDENTIFIED_BY_LABELS[v] ?? v;
-};
-
 // Beneficial insects usage labels — match PestManagementTab.jsx dropdown
 const BENEFICIAL_INSECTS_LABELS: Record<string, string> = {
   yes: 'Using Beneficial Insects',
@@ -251,11 +232,16 @@ const PEST_FIELDS: readonly FieldConfig<unknown, PestData>[] = [
     valueType: 'enum',
     enumSource: 'identified_by',
     visibleForSubtypes: ['PI', 'SC', 'TA'],
-    formatter: formatIdentifiedBy,
+    // No `formatter`, no `consumer_card`. The readback label comes from the enum catalogue
+    // (`enums.identified_by.*`), the same keys the form's <option>s render, so the form and the
+    // detail cannot disagree and a locale cannot be missed. The values are the farm's own
+    // report of a role ("Agronomist"), never a licence: a "Licensed Agronomist" readback of a
+    // plain "Agronomist" pick asserted a credential the form never asked for (Astra follow-up,
+    // 2026-10-28). It is a producer and certifier field and stays off the buyer card
+    // (`identified_by` is in CERTIFIER_ONLY_EVENT_FIELDS).
     surfaces: {
       modal: 'secondary',
-      form: 'immediate',
-      consumer_card: 'secondary'
+      form: 'immediate'
     }
   },
   {

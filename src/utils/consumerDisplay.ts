@@ -96,6 +96,12 @@ export const CERTIFIER_ONLY_EVENT_FIELDS: readonly string[] = [
   'block_id',
   'identification_method',
   'shared_with_conventional',
+  // Who the farm says identified a pest (2026-10-28, Oscar's decision after the Astra follow-up).
+  // It is the grower's own statement of a role, and the buyer page has no way to show that it is
+  // one: next to a pest event, "Agronomist" reads as a credential a shopper can lean on, and the
+  // plain statement that a pest was identified is enough for them. The certifier still gets the
+  // field in the record and the export, where a person can ask for the evidence behind it.
+  'identified_by',
   // The private half of the note pair. `observation` publishes in the grower's own words and is
   // labelled as public; `private_note` is where everything else goes. It matters here because
   // EventPreviewModal builds its "how consumers will see this event" card from RAW WIZARD DATA,

@@ -72,6 +72,7 @@ import {
   hasNoCarbonCalculation,
   isNotEstimated,
   NO_CARBON_CALCULATION_STATUS,
+  showsAreaEstimateLabel,
   showsInputsBadge
 } from 'utils/carbonStatus';
 import { apiErrorMessage, apiErrorStatus } from 'utils/apiErrorMessage';
@@ -1346,6 +1347,13 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                     </Badge>
                   </Tooltip>
                 )}
+                {showsAreaEstimateLabel(carbonData) && (
+                  // Neutral gray, never green: a colour on a carbon figure can be a
+                  // self-created label. The caption below says what the figure rests on.
+                  <Badge variant="neutral" fontSize="xs">
+                    {intl.formatMessage({ id: 'carbon.badge.areaEstimate' })}
+                  </Badge>
+                )}
               </HStack>
 
               {/* Weather/zero-emission events. The "why this record matters" note that
@@ -1415,6 +1423,11 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                             : 'eventDetails.carbonEstimate'
                       })}
                     </Text>
+                    {showsAreaEstimateLabel(carbonData) && (
+                      <Text fontSize="xs" color="gray.600">
+                        {intl.formatMessage({ id: 'carbon.badge.areaEstimateCaption' })}
+                      </Text>
+                    )}
                   </VStack>
                 </HStack>
               )}

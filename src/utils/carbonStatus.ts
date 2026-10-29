@@ -32,6 +32,21 @@ export function showsInputsBadge(c?: CarbonStatusLike | null): boolean {
 }
 
 /**
+ * A positive figure that came from the recorded AREA, not from a recorded fuel, energy or input
+ * amount (`verification_status: 'area_estimate'`). It is a per-area default, so the surface says
+ * so beside the figure (Astra follow-up, 2026-10-28: pH and tillage lost the "from recorded
+ * inputs" badge on resave but gained no explanation of where the number came from).
+ *
+ * Mutually exclusive with `showsInputsBadge`: that one returns false for `area_estimate`, and this
+ * one returns true only for it, so a record never carries both labels.
+ */
+export function showsAreaEstimateLabel(c?: CarbonStatusLike | null): boolean {
+  if (!c || isNotEstimated(c)) return false;
+  if (c.verification_status !== 'area_estimate') return false;
+  return typeof c.co2e === 'number' && c.co2e > 0;
+}
+
+/**
  * Event types Trazo does not estimate carbon for: weather (0), general activity (3) and
  * business (7). A weather record documents conditions, and general and business records are
  * admin or observation; any fuel burned in response is logged on its own activity. The backend

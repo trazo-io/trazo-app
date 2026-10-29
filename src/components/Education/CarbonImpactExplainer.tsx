@@ -12,12 +12,7 @@ import {
   Link
 } from '@chakra-ui/react';
 import { Link as RouterLink } from 'react-router-dom';
-import {
-  FaLeaf,
-  FaChevronDown,
-  FaChevronUp,
-  FaGlobeAmericas
-} from 'react-icons/fa';
+import { FaLeaf, FaChevronDown, FaChevronUp, FaGlobeAmericas } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import USDACredibilityBadge from '../Carbon/USDACredibilityBadge';
 
@@ -109,7 +104,18 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
       // comes from Audsley et al. 2009 / Hillier et al. 2009, i.e. academic LCA. Attributing
       // our own estimates to a government agency is the exact claim shape compliance.md
       // forbids, and the landing methodology table listed the manufacturing rows all along.
-      'Counts the fuel and electricity this operation burns, plus the manufacturing of the fertilizer and crop-protection products it buys. Not a full life-cycle footprint: transport to the farm, packaging, equipment manufacturing and retail are excluded. Fuel and electricity factors are EPA-published; phosphorus and potassium are Trazo estimates where published values are sparse. Each factor shows its own source.'
+      'Estimated emissions from the recorded activities included in this calculation. Missing activity data and excluded sources are not represented. Not a full life-cycle footprint: transport to the farm, packaging, equipment manufacturing and retail are excluded. Fuel and electricity factors are EPA-published; phosphorus and potassium are Trazo estimates where published values are sparse. Each factor shows its own source.'
+  });
+
+  // The lime inclusion (Astra follow-up, 2026-10-28): carbonate-lime CO2 is estimated with IPCC
+  // Tier 1 factors and booked to the application year, so the boundary says so next to the number
+  // instead of leaving a shopper to assume a measured release on the application date. Worded as a
+  // condition: the payload carries no lime-present flag, so the line must stay true on a season with
+  // no lime at all.
+  const limeLine = intl.formatMessage({
+    id: 'app.carbonExplainer.scopeBoundaryLime',
+    defaultMessage:
+      'Where carbonate-lime applications are recorded with their amount, their estimated CO₂ is included, using IPCC Tier 1 factors and assigned to the application year; this is not a measured release on the application date.'
   });
 
   // Emission categories for methodology section
@@ -169,10 +175,10 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
       </Box>
 
       <Collapse in={isOpen} animateOpacity>
-      {/* PRIMARY: Consumer-friendly impact summary */}
-      <Box p={4}>
-        <VStack spacing={3} align="stretch">
-          {/* ⛔ REMOVED 2026-09-23 — the "Very Low Emissions" + green "Carbon Stored" card.
+        {/* PRIMARY: Consumer-friendly impact summary */}
+        <Box p={4}>
+          <VStack spacing={3} align="stretch">
+            {/* ⛔ REMOVED 2026-09-23 — the "Very Low Emissions" + green "Carbon Stored" card.
               It rendered whenever `totalCO2e < 0`, and totalCO2e was `net_impact`
               (emissions minus offsets). Offsets are purchased, self-entered and
               self-marked verified (`create_secure_carbon_offset`), so any farm that
@@ -186,145 +192,153 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
               `__tests__/noSelfCreatedCarbonBadge.test.tsx`.
               ⛔ Do not reintroduce a "carbon negative"/"carbon stored"/"climate
               positive" state on a consumer surface without third-party verification. */}
-          {hasPerKgData ? (
-            /* Per-kg impact card — the only relatable metric for consumers */
-            <Box
-              bg={factCardBg}
-              p={4}
-              borderRadius="lg"
-              border="1px solid"
-              borderColor={factCardBorder}>
-              <Text fontSize="sm" fontWeight="semibold" color={textColor} mb={2}>
-                {intl.formatMessage({ id: 'app.carbonExplainer.yourImpact' })}
-              </Text>
-              <Text fontSize="sm" color={mutedColor} mb={1}>
-                {intl.formatMessage({ id: 'app.carbonExplainer.perKgNarrative' }, { productName })}
-              </Text>
-              <HStack spacing={2} align="baseline" mb={3}>
-                <Text fontSize="2xl" fontWeight="bold" color={textColor}>
-                  {intl.formatNumber(consumerContext!.kg_per_kg)}
+            {hasPerKgData ? (
+              /* Per-kg impact card — the only relatable metric for consumers */
+              <Box
+                bg={factCardBg}
+                p={4}
+                borderRadius="lg"
+                border="1px solid"
+                borderColor={factCardBorder}>
+                <Text fontSize="sm" fontWeight="semibold" color={textColor} mb={2}>
+                  {intl.formatMessage({ id: 'app.carbonExplainer.yourImpact' })}
                 </Text>
-                <Text fontSize="sm" color={mutedColor}>
-                  {intl.formatMessage({ id: 'app.carbonExplainer.directEmissionsUnit' })}
+                <Text fontSize="sm" color={mutedColor} mb={1}>
+                  {intl.formatMessage(
+                    { id: 'app.carbonExplainer.perKgNarrative' },
+                    { productName }
+                  )}
                 </Text>
-              </HStack>
+                <HStack spacing={2} align="baseline" mb={3}>
+                  <Text fontSize="2xl" fontWeight="bold" color={textColor}>
+                    {intl.formatNumber(consumerContext!.kg_per_kg)}
+                  </Text>
+                  <Text fontSize="sm" color={mutedColor}>
+                    {intl.formatMessage({ id: 'app.carbonExplainer.directEmissionsUnit' })}
+                  </Text>
+                </HStack>
 
-              {/* Run 8 (R8-14): driving and phone-charge equivalents removed. They turned an
+                {/* Run 8 (R8-14): driving and phone-charge equivalents removed. They turned an
                   estimate with a stated boundary into a vivid comparison the boundary does
                   not travel with. */}
 
-              <Text fontSize="xs" color={mutedColor} mt={3}>
-                {boundaryLine}
-              </Text>
-            </Box>
-          ) : (
-            /* Season-total fallback. The per-kg figure needs a recorded harvest weight to
+                <Text fontSize="xs" color={mutedColor} mt={3}>
+                  {boundaryLine}
+                </Text>
+                <Text fontSize="xs" color={mutedColor} mt={2}>
+                  {limeLine}
+                </Text>
+              </Box>
+            ) : (
+              /* Season-total fallback. The per-kg figure needs a recorded harvest weight to
                divide by, so any season the payload reports no kg_per_kg for lands here —
                legacy or imported seasons, mostly. Same shape, same boundary line, one honest
                number: the season's total instead of the amount behind one kilogram. The early
                return above guarantees this branch has a total worth showing. */
-            <Box
-              bg={factCardBg}
-              p={4}
-              borderRadius="lg"
-              border="1px solid"
-              borderColor={factCardBorder}>
-              <Text fontSize="sm" fontWeight="semibold" color={textColor} mb={2}>
-                {intl.formatMessage({ id: 'app.carbonExplainer.totalSeasonTitle' })}
-              </Text>
-              <Text fontSize="sm" color={mutedColor} mb={1}>
-                {intl.formatMessage({ id: 'app.carbonExplainer.totalNarrative' })}
-              </Text>
-              <HStack spacing={2} align="baseline" mb={3}>
-                <Text fontSize="2xl" fontWeight="bold" color={textColor}>
-                  {intl.formatNumber(seasonTotal)}
+              <Box
+                bg={factCardBg}
+                p={4}
+                borderRadius="lg"
+                border="1px solid"
+                borderColor={factCardBorder}>
+                <Text fontSize="sm" fontWeight="semibold" color={textColor} mb={2}>
+                  {intl.formatMessage({ id: 'app.carbonExplainer.totalSeasonTitle' })}
                 </Text>
-                <Text fontSize="sm" color={mutedColor}>
-                  {intl.formatMessage({ id: 'app.carbonExplainer.directEmissionsUnit' })}
+                <Text fontSize="sm" color={mutedColor} mb={1}>
+                  {intl.formatMessage({ id: 'app.carbonExplainer.totalNarrative' })}
                 </Text>
-              </HStack>
+                <HStack spacing={2} align="baseline" mb={3}>
+                  <Text fontSize="2xl" fontWeight="bold" color={textColor}>
+                    {intl.formatNumber(seasonTotal)}
+                  </Text>
+                  <Text fontSize="sm" color={mutedColor}>
+                    {intl.formatMessage({ id: 'app.carbonExplainer.directEmissionsUnit' })}
+                  </Text>
+                </HStack>
 
+                <Text fontSize="xs" color={mutedColor} mt={3}>
+                  {boundaryLine}
+                </Text>
+                <Text fontSize="xs" color={mutedColor} mt={2}>
+                  {limeLine}
+                </Text>
+              </Box>
+            )}
 
-              <Text fontSize="xs" color={mutedColor} mt={3}>
-                {boundaryLine}
-              </Text>
-            </Box>
-          )}
-
-          {/* Expand Button */}
-          <Button
-            size="sm"
-            variant="ghost"
-            colorScheme="green"
-            onClick={() => setIsExpanded(!isExpanded)}
-            rightIcon={isExpanded ? <FaChevronUp /> : <FaChevronDown />}>
-            {isExpanded
-              ? intl.formatMessage({ id: 'app.carbonExplainer.showLess' })
-              : intl.formatMessage({ id: 'app.carbonExplainer.showMore' })}
-          </Button>
-        </VStack>
-      </Box>
-
-      {/* Expanded: Methodology + Trust */}
-      <Collapse in={isExpanded}>
-        <Divider />
-        <Box p={4} bg={expandedBg}>
-          <VStack spacing={6} align="stretch">
-            {/* How We Calculate */}
-            <Box>
-              <Text fontSize="md" fontWeight="semibold" mb={1} color={textColor}>
-                {intl.formatMessage({ id: 'app.carbonExplainer.howWeCalculateTitle' })}
-              </Text>
-              <Text fontSize="xs" color={mutedColor} mb={3}>
-                {intl.formatMessage({ id: 'app.carbonExplainer.howWeCalculateDesc' })}
-              </Text>
-              <VStack spacing={3} align="stretch">
-                {emissionCategories.map((item, idx) => (
-                  <HStack key={idx} spacing={3}>
-                    <Icon as={FaLeaf} color="green.400" boxSize={3} />
-                    <Box>
-                      <Text fontSize="sm" fontWeight="medium">
-                        {item.label}
-                      </Text>
-                      <Text fontSize="xs" color={mutedColor}>
-                        {item.desc}
-                      </Text>
-                    </Box>
-                  </HStack>
-                ))}
-              </VStack>
-              <Text fontSize="xs" color={mutedColor} mt={3} fontStyle="italic">
-                {intl.formatMessage({ id: 'app.carbonExplainer.epaUsdaNote' })}
-              </Text>
-            </Box>
-
-            {/* EPA/USDA Credibility Badge (clickable for detailed modal) */}
-            <USDACredibilityBadge />
-
-            {/* Methodology Scope Disclaimer (FTC compliance) */}
-            <Box p={3} bg={disclaimerBg} borderRadius="md">
-              <Text fontSize="xs" color={mutedColor}>
-                {intl.formatMessage({ id: 'app.carbonExplainer.disclaimer' })}
-              </Text>
-            </Box>
-
-            {/* Full methodology disclosure page (ECGT/FTC substantiation) */}
-            <Link
-              as={RouterLink}
-              to="/methodology#carbon"
-              fontSize="sm"
-              fontWeight="medium"
-              color="green.700"
-              _hover={{ color: 'green.500' }}
-              display="inline-flex"
-              alignItems="center"
-              minH="44px"
-              alignSelf="flex-start">
-              Read the full methodology →
-            </Link>
+            {/* Expand Button */}
+            <Button
+              size="sm"
+              variant="ghost"
+              colorScheme="green"
+              onClick={() => setIsExpanded(!isExpanded)}
+              rightIcon={isExpanded ? <FaChevronUp /> : <FaChevronDown />}>
+              {isExpanded
+                ? intl.formatMessage({ id: 'app.carbonExplainer.showLess' })
+                : intl.formatMessage({ id: 'app.carbonExplainer.showMore' })}
+            </Button>
           </VStack>
         </Box>
-      </Collapse>
+
+        {/* Expanded: Methodology + Trust */}
+        <Collapse in={isExpanded}>
+          <Divider />
+          <Box p={4} bg={expandedBg}>
+            <VStack spacing={6} align="stretch">
+              {/* How We Calculate */}
+              <Box>
+                <Text fontSize="md" fontWeight="semibold" mb={1} color={textColor}>
+                  {intl.formatMessage({ id: 'app.carbonExplainer.howWeCalculateTitle' })}
+                </Text>
+                <Text fontSize="xs" color={mutedColor} mb={3}>
+                  {intl.formatMessage({ id: 'app.carbonExplainer.howWeCalculateDesc' })}
+                </Text>
+                <VStack spacing={3} align="stretch">
+                  {emissionCategories.map((item, idx) => (
+                    <HStack key={idx} spacing={3}>
+                      <Icon as={FaLeaf} color="green.400" boxSize={3} />
+                      <Box>
+                        <Text fontSize="sm" fontWeight="medium">
+                          {item.label}
+                        </Text>
+                        <Text fontSize="xs" color={mutedColor}>
+                          {item.desc}
+                        </Text>
+                      </Box>
+                    </HStack>
+                  ))}
+                </VStack>
+                <Text fontSize="xs" color={mutedColor} mt={3} fontStyle="italic">
+                  {intl.formatMessage({ id: 'app.carbonExplainer.epaUsdaNote' })}
+                </Text>
+              </Box>
+
+              {/* EPA/USDA Credibility Badge (clickable for detailed modal) */}
+              <USDACredibilityBadge />
+
+              {/* Methodology Scope Disclaimer (FTC compliance) */}
+              <Box p={3} bg={disclaimerBg} borderRadius="md">
+                <Text fontSize="xs" color={mutedColor}>
+                  {intl.formatMessage({ id: 'app.carbonExplainer.disclaimer' })}
+                </Text>
+              </Box>
+
+              {/* Full methodology disclosure page (ECGT/FTC substantiation) */}
+              <Link
+                as={RouterLink}
+                to="/methodology#carbon"
+                fontSize="sm"
+                fontWeight="medium"
+                color="green.700"
+                _hover={{ color: 'green.500' }}
+                display="inline-flex"
+                alignItems="center"
+                minH="44px"
+                alignSelf="flex-start">
+                Read the full methodology →
+              </Link>
+            </VStack>
+          </Box>
+        </Collapse>
       </Collapse>
     </Box>
   );
