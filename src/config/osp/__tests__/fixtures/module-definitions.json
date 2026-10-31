@@ -1357,9 +1357,7 @@
                 "required": false,
                 "visible_when": [],
                 "nop_cite": "§ 205.103",
-                "prefill": {
-                  "source": "seed_search_evidence"
-                },
+                "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
                 "embed": null,
