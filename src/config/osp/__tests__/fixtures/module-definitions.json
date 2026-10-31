@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.10.29",
+  "content_version": "2026.10.31",
   "registry": {
-    "content_version": "2026.10.29",
+    "content_version": "2026.10.31",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -6397,7 +6397,7 @@
                 "kind": "boolean",
                 "label": {
                   "en": "Have you ever reused a container, bin, or bulk trailer that previously held a prohibited substance (pesticide, fertilizer, fuel, or another nonorganic-only material) for organic product?",
-                  "es": "¿Alguna vez ha reutilizado para producto orgánico un contenedor, cajón o remolque a granel que antes contuvo una sustancia prohibida (pesticida, fertilizante, combustible u otro material exclusivamente no orgánico)?"
+                  "es": "¿Alguna vez has reutilizado para producto orgánico un contenedor, cajón o remolque a granel que antes contuvo una sustancia prohibida (pesticida, fertilizante, combustible u otro material exclusivamente no orgánico)?"
                 },
                 "coaching": {
                   "en": "§ 205.272(b)(2) forbids reusing a container for organic product when the reuse would compromise its organic integrity. The clause allows exactly one route back: the container must have been THOROUGHLY CLEANED and pose no risk of contact. A liner or other barrier over an uncleaned container is not an alternative to that.",
@@ -6661,8 +6661,8 @@
                 "key": "harvest_containers_stamped_organic",
                 "kind": "radio",
                 "label": {
-                  "en": "Are your harvest containers permanently and clearly stamped organic?",
-                  "es": "¿Tus contenedores de cosecha están marcados como orgánicos de forma permanente y clara?"
+                  "en": "How many of your harvest containers are permanently and clearly stamped organic?",
+                  "es": "¿Cuántos de tus contenedores de cosecha están marcados como orgánicos de forma permanente y clara?"
                 },
                 "coaching": null,
                 "options": [
@@ -7338,8 +7338,8 @@
                   {
                     "value": "none",
                     "label": {
-                      "en": "No, it goes straight to the buyer",
-                      "es": "No, va directo al comprador"
+                      "en": "Nowhere: it goes straight to the buyer",
+                      "es": "A ningún lugar: va directo al comprador"
                     },
                     "exclusive": true
                   }
@@ -10783,7 +10783,7 @@
                   {
                     "value": "none_no_known_export",
                     "label": {
-                      "en": "Neither: all product is sold within the United States, and no buyer we know of exports it or plans to",
+                      "en": "Neither: all product is sold within the United States, and no buyer we know of exports it or plans to export it",
                       "es": "Ninguna: todo el producto se vende dentro de Estados Unidos, y ningún comprador que conozcamos lo exporta ni planea hacerlo"
                     },
                     "exclusive": true
