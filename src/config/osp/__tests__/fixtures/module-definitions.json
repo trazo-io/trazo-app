@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.10.31",
+  "content_version": "2026.11.01",
   "registry": {
-    "content_version": "2026.10.31",
+    "content_version": "2026.11.01",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -766,11 +766,301 @@
                       "es": "No orgánico"
                     },
                     "exclusive": false
+                  },
+                  {
+                    "value": "established_in_place",
+                    "label": {
+                      "en": "Established perennials only — none planted or replaced this plan period",
+                      "es": "Solo perennes ya establecidas — no se plantó ni reemplazó ninguna en este período del plan"
+                    },
+                    "exclusive": true
                   }
                 ],
                 "required": true,
                 "visible_when": [],
                 "nop_cite": "§ 205.2",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "seed_source",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Where does your seed come from?",
+                  "es": "¿De dónde proviene tu semilla?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "save_own",
+                    "label": {
+                      "en": "Seed saved on this farm",
+                      "es": "Semilla guardada en esta finca"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "seed_companies",
+                    "label": {
+                      "en": "Seed companies",
+                      "es": "Empresas de semillas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "contract_provided",
+                    "label": {
+                      "en": "Supplied by a buyer or contractor under a growing contract",
+                      "es": "Suministrada por un comprador o contratista bajo un contrato de cultivo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otra"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "seeds_used",
+                    "op": "includes_any",
+                    "value": [
+                      "organic_untreated",
+                      "organic_treated",
+                      "non_organic_untreated",
+                      "non_organic_treated"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.204",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "seed_verification_method",
+                "kind": "textarea",
+                "label": {
+                  "en": "How do you verify that the seed you buy as organic is certified organic, and what records show it?",
+                  "es": "¿Cómo verificas que la semilla que compras como orgánica está certificada, y qué registros lo demuestran?"
+                },
+                "coaching": {
+                  "en": "For example: the supplier's organic certificate checked in the USDA Organic Integrity Database each season, and the seed tag or invoice naming the lot as certified organic.",
+                  "es": "Por ejemplo: el certificado orgánico del proveedor revisado en la base de datos USDA Organic Integrity cada temporada, y la etiqueta o factura que nombra el lote como orgánico certificado."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "seeds_used",
+                    "op": "includes_any",
+                    "value": [
+                      "organic_untreated",
+                      "organic_treated"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.204(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "untreated_seed_documentation",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "What documents show that seed you use untreated was not treated?",
+                  "es": "¿Qué documentos muestran que la semilla que usas sin tratar no fue tratada?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "seed_tag",
+                    "label": {
+                      "en": "Seed tag or packet",
+                      "es": "Etiqueta o sobre de semilla"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "supplier_statement",
+                    "label": {
+                      "en": "Supplier or manufacturer statement",
+                      "es": "Declaración del proveedor o fabricante"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "invoice",
+                    "label": {
+                      "en": "Invoice or receipt naming it untreated",
+                      "es": "Factura o recibo que la nombra sin tratar"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otro"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "seeds_used",
+                    "op": "includes_any",
+                    "value": [
+                      "organic_untreated",
+                      "non_organic_untreated"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.204",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "buyer_search_documents",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "When a buyer or contractor supplies the seed, which documents do you keep showing they searched for organic seed first?",
+                  "es": "Cuando un comprador o contratista suministra la semilla, ¿qué documentos conservas que muestran que buscó primero semilla orgánica?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "seed_search_log",
+                    "label": {
+                      "en": "Their seed search log",
+                      "es": "Su registro de búsqueda de semilla"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "invoices",
+                    "label": {
+                      "en": "Invoices",
+                      "es": "Facturas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "supplier_letters",
+                    "label": {
+                      "en": "Letters from seed suppliers",
+                      "es": "Cartas de proveedores de semilla"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "organic_certificates",
+                    "label": {
+                      "en": "Organic certificates",
+                      "es": "Certificados orgánicos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otro"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "seed_source",
+                    "op": "includes",
+                    "value": "contract_provided"
+                  }
+                ],
+                "nop_cite": "§ 205.204(a)(1)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "farm_grown_processing_contracted",
+                "kind": "radio",
+                "label": {
+                  "en": "Is any processing of your farm-saved seed or farm-grown transplants contracted to someone else (for example, seed cleaning)?",
+                  "es": "¿Contratas a alguien para procesar tu semilla guardada o tus trasplantes producidos en la finca (por ejemplo, limpieza de semilla)?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "no",
+                    "label": {
+                      "en": "No",
+                      "es": "No"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "yes",
+                    "label": {
+                      "en": "Yes",
+                      "es": "Sí"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.201(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "farm_grown_processing_description",
+                "kind": "textarea",
+                "label": {
+                  "en": "Who does it, and what do they do?",
+                  "es": "¿Quién lo hace y qué hace?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "farm_grown_processing_contracted",
+                    "op": "eq",
+                    "value": "yes"
+                  }
+                ],
+                "nop_cite": "§ 205.201(a)",
                 "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
@@ -835,6 +1125,238 @@
                 "required": true,
                 "visible_when": [],
                 "nop_cite": "§ 205.204(a)(1)",
+                "prefill": {
+                  "source": "seed_search_evidence"
+                },
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "seed_required_characteristics",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Which characteristics must a seed have for your operation before an organic variety counts as equivalent?",
+                  "es": "¿Qué características debe tener una semilla para tu operación antes de que una variedad orgánica cuente como equivalente?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "untreated_form",
+                    "label": {
+                      "en": "Available untreated",
+                      "es": "Disponible sin tratar"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "allowed_treatment_form",
+                    "label": {
+                      "en": "Available with an allowed treatment (pelleted, inoculated)",
+                      "es": "Disponible con un tratamiento permitido (peletizada, inoculada)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "germination",
+                    "label": {
+                      "en": "Germination rate",
+                      "es": "Tasa de germinación"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "pest_disease_resistance",
+                    "label": {
+                      "en": "Pest or disease resistance",
+                      "es": "Resistencia a plagas o enfermedades"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "regional_adaptation",
+                    "label": {
+                      "en": "Regional or seasonal adaptation (days to maturity, drought, cold)",
+                      "es": "Adaptación regional o de temporada (días a madurez, sequía, frío)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "market_traits",
+                    "label": {
+                      "en": "Traits the buyer or market requires (size, color, flavor, yield)",
+                      "es": "Rasgos que exige el comprador o el mercado (tamaño, color, sabor, rendimiento)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "quantity",
+                    "label": {
+                      "en": "Quantity needed (bulk or small)",
+                      "es": "Cantidad necesaria (a granel o pequeña)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otra (describe abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.204(a)(1)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "seed_required_characteristics_other",
+                "kind": "text",
+                "label": {
+                  "en": "Other characteristic",
+                  "es": "Otra característica"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "seed_required_characteristics",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "ca_search_method",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How do you determine that an equivalent organic seed is not available?",
+                  "es": "¿Cómo determinas que no hay una semilla orgánica equivalente disponible?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "three_suppliers",
+                    "label": {
+                      "en": "We check with at least three suppliers known to offer organic seed",
+                      "es": "Consultamos al menos a tres proveedores conocidos de semilla orgánica"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "third_party_searches",
+                    "label": {
+                      "en": "Another party searches for us (a buyer under contract, a seed broker or distributor) and checks at least three suppliers",
+                      "es": "Otra parte busca por nosotros (un comprador bajo contrato, un corredor o distribuidor de semillas) y consulta al menos a tres proveedores"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otro (describe abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.204(a)(1)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "ca_search_method_other",
+                "kind": "textarea",
+                "label": {
+                  "en": "Describe the other search method",
+                  "es": "Describe el otro método de búsqueda"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "ca_search_method",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "seed_search_records",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Which records of the search do you keep? They should show the crop, the suppliers, your site's requirements and the outcome.",
+                  "es": "¿Qué registros de la búsqueda conservas? Deben mostrar el cultivo, los proveedores, los requisitos de tu sitio y el resultado."
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "own_search_log",
+                    "label": {
+                      "en": "Our own search log (Trazo's seed search records)",
+                      "es": "Nuestro propio registro de búsqueda (los registros de búsqueda de semilla de Trazo)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "supplier_replies",
+                    "label": {
+                      "en": "Supplier replies, quotes or catalog pages",
+                      "es": "Respuestas, cotizaciones o páginas de catálogo de proveedores"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "third_party_documentation",
+                    "label": {
+                      "en": "Documentation from the party that searches for us",
+                      "es": "Documentación de la parte que busca por nosotros"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otro"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.103",
                 "prefill": {
                   "source": "seed_search_evidence"
                 },
@@ -909,6 +1431,22 @@
                       "es": "Etiqueta de semilla archivada"
                     },
                     "exclusive": false
+                  },
+                  {
+                    "value": "not_available_as_gmo",
+                    "label": {
+                      "en": "The variety is not available in a genetically modified form",
+                      "es": "La variedad no existe en forma genéticamente modificada"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "safe_seed_pledge",
+                    "label": {
+                      "en": "Supplier's Safe Seed Pledge",
+                      "es": "Safe Seed Pledge del proveedor"
+                    },
+                    "exclusive": false
                   }
                 ],
                 "required": true,
@@ -946,6 +1484,126 @@
               }
             ],
             "questions": [
+              {
+                "key": "seed_treatment_types",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Which seed treatments are in use or planned?",
+                  "es": "¿Qué tratamientos de semilla usas o planeas usar?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "pelletization",
+                    "label": {
+                      "en": "Pelleting",
+                      "es": "Peletizado"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "coating",
+                    "label": {
+                      "en": "Coating or priming",
+                      "es": "Recubrimiento o priming"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "inoculant",
+                    "label": {
+                      "en": "Inoculant",
+                      "es": "Inoculante"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "fungicide",
+                    "label": {
+                      "en": "Fungicide",
+                      "es": "Fungicida"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "insecticide",
+                    "label": {
+                      "en": "Insecticide",
+                      "es": "Insecticida"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "disinfectant",
+                    "label": {
+                      "en": "Disinfectant",
+                      "es": "Desinfectante"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otro"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.204",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "seed_treatment_applied_by",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Who applies the treatments?",
+                  "es": "¿Quién aplica los tratamientos?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "farm",
+                    "label": {
+                      "en": "This farm",
+                      "es": "Esta finca"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "supplier",
+                    "label": {
+                      "en": "The seed supplier",
+                      "es": "El proveedor de semilla"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "third_party",
+                    "label": {
+                      "en": "A third party",
+                      "es": "Un tercero"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.204",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
               {
                 "key": "treatment_verification",
                 "kind": "checkbox_group",
@@ -1016,7 +1674,8 @@
                 "op": "includes_any",
                 "value": [
                   "organic",
-                  "non_organic"
+                  "non_organic",
+                  "established_in_place"
                 ]
               }
             ],
@@ -1053,6 +1712,61 @@
                 "required": true,
                 "visible_when": [],
                 "nop_cite": "§ 205.204",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "grafting_practices",
+                "kind": "textarea",
+                "label": {
+                  "en": "Describe your grafting practices: what is grafted, where the scion wood and rootstock come from, and the materials used.",
+                  "es": "Describe tus prácticas de injerto: qué se injerta, de dónde vienen las púas y los portainjertos, y los materiales que usas."
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "grafts_stock",
+                    "op": "eq",
+                    "value": "yes"
+                  }
+                ],
+                "nop_cite": "§ 205.204",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              }
+            ]
+          },
+          {
+            "key": "f_notes",
+            "title": {
+              "en": "F. Additional information",
+              "es": "F. Información adicional"
+            },
+            "education": [],
+            "visible_when": [],
+            "questions": [
+              {
+                "key": "seeds_additional_notes",
+                "kind": "textarea",
+                "label": {
+                  "en": "Anything else about your seed or planting stock the certifier should know",
+                  "es": "Cualquier otra cosa sobre tu semilla o material de plantación que el certificador deba saber"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
@@ -1128,6 +1842,150 @@
                 "required": false,
                 "visible_when": [],
                 "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "seedlings_grown_on_site",
+                "kind": "radio",
+                "label": {
+                  "en": "If you produce your own seedlings, where are they grown?",
+                  "es": "Si produces tus propias plántulas, ¿dónde se cultivan?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "on_site",
+                    "label": {
+                      "en": "Within the boundary of our certified site",
+                      "es": "Dentro del límite de nuestro sitio certificado"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "off_site",
+                    "label": {
+                      "en": "At another location (named below)",
+                      "es": "En otra ubicación (indicada abajo)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "not_produced",
+                    "label": {
+                      "en": "We do not produce seedlings",
+                      "es": "No producimos plántulas"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.204(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "seedling_growing_location",
+                "kind": "textarea",
+                "label": {
+                  "en": "Where is each growing facility (greenhouse, nursery bed, propagation house)?",
+                  "es": "¿Dónde está cada instalación de cultivo (invernadero, cama de vivero, casa de propagación)?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "seedlings_grown_on_site",
+                    "op": "one_of",
+                    "value": [
+                      "on_site",
+                      "off_site"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.204(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "seedling_facility_certified",
+                "kind": "boolean",
+                "label": {
+                  "en": "Is every facility where your seedlings are grown covered by an organic certificate?",
+                  "es": "¿Toda instalación donde se cultivan tus plántulas está cubierta por un certificado orgánico?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "seedlings_grown_on_site",
+                    "op": "one_of",
+                    "value": [
+                      "on_site",
+                      "off_site"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.204(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "seedlings_sold_as_organic",
+                "kind": "boolean",
+                "label": {
+                  "en": "Do you sell annual seedlings as organic?",
+                  "es": "¿Vendes plántulas anuales como orgánicas?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.204(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "seedlings_labeling_description",
+                "kind": "textarea",
+                "label": {
+                  "en": "How are the seedlings you sell labeled or represented as organic?",
+                  "es": "¿Cómo se etiquetan o se presentan como orgánicas las plántulas que vendes?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "seedlings_sold_as_organic",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.300",
                 "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
@@ -1331,6 +2189,167 @@
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
+              },
+              {
+                "key": "stock_source",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Where does your planting stock come from?",
+                  "es": "¿De dónde proviene tu material de plantación?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "nursery",
+                    "label": {
+                      "en": "A nursery",
+                      "es": "Un vivero"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "produce_own",
+                    "label": {
+                      "en": "We propagate our own (cuttings, scion wood, divisions)",
+                      "es": "La propagamos nosotros (estacas, púas, divisiones)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "contract_provided",
+                    "label": {
+                      "en": "Another operation produces it for us under contract",
+                      "es": "Otra operación la produce para nosotros bajo contrato"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otra"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.204",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "contract_stock_input_documentation",
+                "kind": "boolean",
+                "label": {
+                  "en": "Do you collect documentation that the contracted planting stock was produced with inputs allowed in organic production?",
+                  "es": "¿Reúnes documentación de que el material de plantación contratado se produjo con insumos permitidos en la producción orgánica?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "stock_source",
+                    "op": "includes",
+                    "value": "contract_provided"
+                  }
+                ],
+                "nop_cite": "§ 205.204(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "organic_stock_verification_method",
+                "kind": "textarea",
+                "label": {
+                  "en": "How do you verify that the organic planting stock you buy is certified organic?",
+                  "es": "¿Cómo verificas que el material de plantación orgánico que compras está certificado?"
+                },
+                "coaching": {
+                  "en": "For example: the nursery's organic certificate checked in the USDA Organic Integrity Database before the order ships, and the invoice naming the stock as certified organic.",
+                  "es": "Por ejemplo: el certificado orgánico del vivero revisado en la base de datos USDA Organic Integrity antes del envío, y la factura que nombra el material como orgánico certificado."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "stock_organic_status",
+                    "op": "one_of",
+                    "value": [
+                      "all_organic",
+                      "mixed"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.204(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "organic_stock_treatments",
+                "kind": "radio",
+                "label": {
+                  "en": "Was the organic planting stock treated with any substance before planting, by your farm, the supplier or a third party?",
+                  "es": "¿El material de plantación orgánico recibió algún tratamiento antes de plantarse, por tu finca, el proveedor o un tercero?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "none",
+                    "label": {
+                      "en": "No",
+                      "es": "No"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "treated_listed",
+                    "label": {
+                      "en": "Yes — the treatment materials are on our OSP inputs list",
+                      "es": "Sí — los materiales del tratamiento están en nuestra lista de insumos del OSP"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "unknown",
+                    "label": {
+                      "en": "Not yet confirmed with the supplier",
+                      "es": "Todavía no confirmado con el proveedor"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "stock_organic_status",
+                    "op": "one_of",
+                    "value": [
+                      "all_organic",
+                      "mixed"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.204(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
               }
             ]
           },
@@ -1341,6 +2360,10 @@
               "es": "B. Uso de material no orgánico"
             },
             "education": [
+              {
+                "en": "Some certifying agents ask how growth that was already on nonorganic stock when it arrived is kept out of the first organic harvest. Stock delivered with flower buds or fruit is the common case.",
+                "es": "Algunos certificadores preguntan cómo se mantiene fuera de la primera cosecha orgánica el crecimiento que el material no orgánico ya traía al llegar. El caso común es el material entregado con botones florales o fruta."
+              },
               {
                 "en": "Nonorganic planting stock is allowed only when an organic equivalent is not commercially available. Commercial availability covers form, quality and quantity — an organic rootstock that exists but cannot be supplied in the quantity or timeframe your planting requires is not commercially available to you, provided you can show the search.",
                 "es": "El material de plantación no orgánico se permite solo cuando no hay un equivalente orgánico comercialmente disponible. La disponibilidad comercial cubre forma, calidad y cantidad — un portainjerto orgánico que existe pero no puede suministrarse en la cantidad o el plazo que tu plantación requiere no está comercialmente disponible para ti, siempre que puedas demostrar la búsqueda."
@@ -1530,6 +2553,240 @@
                 "max_length": null
               },
               {
+                "key": "nonorganic_stock_for_organic_crop",
+                "kind": "radio",
+                "label": {
+                  "en": "Do you plant nonorganic stock to grow a crop you harvest and sell as organic?",
+                  "es": "¿Plantas material no orgánico para producir un cultivo que cosechas y vendes como orgánico?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "no",
+                    "label": {
+                      "en": "No",
+                      "es": "No"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "yes",
+                    "label": {
+                      "en": "Yes",
+                      "es": "Sí"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.204(a)(1)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "first_organic_harvest_handling",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How do you make sure the growth you harvest as organic grew under organic management?",
+                  "es": "¿Cómo te aseguras de que lo que cosechas como orgánico creció bajo manejo orgánico?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "no_first_season_harvest",
+                    "label": {
+                      "en": "No crop is harvested for organic sale in the first season",
+                      "es": "No se cosecha para venta orgánica en la primera temporada"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "remove_nonorganic_growth",
+                    "label": {
+                      "en": "Flowers, fruit or other growth present at planting are removed",
+                      "es": "Se retiran las flores, frutos u otro crecimiento presente al plantar"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "sell_first_harvest_nonorganic",
+                    "label": {
+                      "en": "The first harvest is sold as nonorganic",
+                      "es": "La primera cosecha se vende como no orgánica"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otra (describe abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "nonorganic_stock_for_organic_crop",
+                    "op": "eq",
+                    "value": "yes"
+                  }
+                ],
+                "nop_cite": "§ 205.204(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "first_organic_harvest_handling_other",
+                "kind": "textarea",
+                "label": {
+                  "en": "Describe it",
+                  "es": "Descríbelo"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "first_organic_harvest_handling",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "stock_search_method",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How do you determine that equivalent organic planting stock is not available?",
+                  "es": "¿Cómo determinas que no hay material de plantación orgánico equivalente disponible?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "three_suppliers",
+                    "label": {
+                      "en": "We check with at least three suppliers of certified organic planting or grafting stock",
+                      "es": "Consultamos al menos a tres proveedores de material de plantación o de injerto orgánico certificado"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "third_party_searches",
+                    "label": {
+                      "en": "Another party searches for us (a nursery under contract, a broker) and checks at least three suppliers",
+                      "es": "Otra parte busca por nosotros (un vivero bajo contrato, un corredor) y consulta al menos a tres proveedores"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otro"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.204(a)(1)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "stock_search_process",
+                "kind": "textarea",
+                "label": {
+                  "en": "Describe the search: which suppliers, when, and what they could not supply",
+                  "es": "Describe la búsqueda: qué proveedores, cuándo y qué no pudieron suministrar"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.204(a)(1)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "stock_gmo_documentation",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How do you document that nonorganic planting stock is not genetically modified?",
+                  "es": "¿Cómo documentas que el material de plantación no orgánico no es genéticamente modificado?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "not_available_as_gmo",
+                    "label": {
+                      "en": "The variety or rootstock is not available in a genetically modified form",
+                      "es": "La variedad o el portainjerto no existe en forma genéticamente modificada"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "supplier_statement",
+                    "label": {
+                      "en": "Non-GMO statement from the supplier",
+                      "es": "Declaración no-OGM del proveedor"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "catalog",
+                    "label": {
+                      "en": "Catalog or label statement",
+                      "es": "Declaración en catálogo o etiqueta"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otro"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.105(e)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
                 "key": "stock_treatments",
                 "kind": "radio",
                 "label": {
@@ -1568,6 +2825,56 @@
                 ],
                 "required": true,
                 "visible_when": [],
+                "nop_cite": "§ 205.204(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "stock_treatment_applied_by",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Who applied the treatment?",
+                  "es": "¿Quién aplicó el tratamiento?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "farm",
+                    "label": {
+                      "en": "This farm",
+                      "es": "Esta finca"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "supplier",
+                    "label": {
+                      "en": "The nursery or supplier",
+                      "es": "El vivero o proveedor"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "third_party",
+                    "label": {
+                      "en": "A third party",
+                      "es": "Un tercero"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "stock_treatments",
+                    "op": "eq",
+                    "value": "treated_listed"
+                  }
+                ],
                 "nop_cite": "§ 205.204(a)",
                 "prefill": null,
                 "parcel_field": null,
@@ -1680,6 +2987,56 @@
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
+              },
+              {
+                "key": "twelve_month_records_description",
+                "kind": "textarea",
+                "label": {
+                  "en": "Which records show the 12 months of organic management?",
+                  "es": "¿Qué registros muestran los 12 meses de manejo orgánico?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "stock_sold_as_organic",
+                    "op": "eq",
+                    "value": "sold_organic_stock"
+                  }
+                ],
+                "nop_cite": "§ 205.103",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "resold_stock_labeling_description",
+                "kind": "textarea",
+                "label": {
+                  "en": "How is the planting stock you sell labeled or represented as organic?",
+                  "es": "¿Cómo se etiqueta o se presenta como orgánico el material de plantación que vendes?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "stock_sold_as_organic",
+                    "op": "eq",
+                    "value": "sold_organic_stock"
+                  }
+                ],
+                "nop_cite": "§ 205.204(a)(4)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
               }
             ]
           },
@@ -1766,6 +3123,25 @@
                 "label": {
                   "en": "Attach invoices, supplier certificates, or commercial availability search records",
                   "es": "Adjunta facturas, certificados de proveedor o registros de búsqueda de disponibilidad comercial"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "planting_stock_additional_notes",
+                "kind": "textarea",
+                "label": {
+                  "en": "Anything else about your planting stock the certifier should know",
+                  "es": "Cualquier otra cosa sobre tu material de plantación que el certificador deba saber"
                 },
                 "coaching": null,
                 "options": [],
@@ -12486,7 +13862,9 @@
       "visible_questions": [
         "seeds_used",
         "seedlings_used",
-        "planting_stock_used"
+        "planting_stock_used",
+        "farm_grown_processing_contracted",
+        "seeds_additional_notes"
       ],
       "missing_required": [
         "seeds_used",
@@ -12512,7 +13890,9 @@
       "visible_questions": [
         "seeds_used",
         "seedlings_used",
-        "planting_stock_used"
+        "planting_stock_used",
+        "farm_grown_processing_contracted",
+        "seeds_additional_notes"
       ],
       "missing_required": [],
       "missing_required_na": []
@@ -12529,8 +13909,15 @@
         "seeds_used",
         "seedlings_used",
         "planting_stock_used",
+        "seed_source",
+        "untreated_seed_documentation",
+        "farm_grown_processing_contracted",
         "ca_search_before_use",
-        "gmo_documentation"
+        "seed_required_characteristics",
+        "ca_search_method",
+        "seed_search_records",
+        "gmo_documentation",
+        "seeds_additional_notes"
       ],
       "missing_required": [
         "seedlings_used",
@@ -12552,8 +13939,14 @@
         "seeds_used",
         "seedlings_used",
         "planting_stock_used",
+        "seed_source",
+        "seed_verification_method",
+        "farm_grown_processing_contracted",
+        "seed_treatment_types",
+        "seed_treatment_applied_by",
         "treatment_verification",
-        "treatments_on_inputs_list"
+        "treatments_on_inputs_list",
+        "seeds_additional_notes"
       ],
       "missing_required": [
         "seedlings_used",
@@ -12578,11 +13971,19 @@
         "seeds_used",
         "seedlings_used",
         "planting_stock_used",
+        "seed_source",
+        "farm_grown_processing_contracted",
         "ca_search_before_use",
+        "seed_required_characteristics",
+        "ca_search_method",
+        "seed_search_records",
         "gmo_documentation",
+        "seed_treatment_types",
+        "seed_treatment_applied_by",
         "treatment_verification",
         "treatments_on_inputs_list",
-        "grafts_stock"
+        "grafts_stock",
+        "seeds_additional_notes"
       ],
       "missing_required": [
         "seedlings_used",
@@ -12606,7 +14007,9 @@
       "visible_questions": [
         "seeds_used",
         "seedlings_used",
-        "planting_stock_used"
+        "planting_stock_used",
+        "farm_grown_processing_contracted",
+        "seeds_additional_notes"
       ],
       "missing_required": [
         "seedlings_used",
