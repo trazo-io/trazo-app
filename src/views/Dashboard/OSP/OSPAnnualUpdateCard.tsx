@@ -46,6 +46,8 @@ import {
 } from 'store/api/ospAnnualUpdateApi';
 import type { OSPSummary } from 'types/osp';
 
+import OSPCompanyDetailsStep from './OSPCompanyDetailsStep';
+
 interface Props {
   companyId?: string;
   farmId?: string;
@@ -1400,27 +1402,50 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
                         </Checkbox>
                       ))}
                     </SimpleGrid>
-                    <Checkbox
-                      mt={3}
-                      size="sm"
-                      colorScheme="green"
-                      isChecked={Boolean(form.sections_unchanged[APPLICATION_INFO_KEY])}
-                      onChange={(e) => setSection(APPLICATION_INFO_KEY, e.target.checked)}>
-                      <Text fontSize="sm">
-                        {intl.formatMessage({
-                          id: 'osp.annual.applicationInfoUnchanged',
-                          defaultMessage:
-                            'Business name, address, telephone and the person responsible for the operation are unchanged (7 CFR 205.406(a)(3))'
-                        })}
-                      </Text>
-                    </Checkbox>
-                    <Text fontSize="xs" color="gray.500" mt={1}>
-                      {intl.formatMessage({
-                        id: 'osp.annual.applicationInfoUnchangedHelp',
-                        defaultMessage:
-                          'Leave it unticked if any of them changed, and tell your certifying agent what changed. The filing prints your answer either way.'
-                      })}
-                    </Text>
+                    {/*
+                      § 205.406(a)(3) is answered detail by detail against the record
+                      (OSPCompanyDetailsStep): the "unchanged" statement is set by the server
+                      only when every detail is confirmed, never by a tick here. The step needs a
+                      saved draft, because it writes to one.
+                    */}
+                    <Box mt={3}>
+                      {editingId != null && companyId && farmId ? (
+                        <OSPCompanyDetailsStep
+                          companyId={companyId}
+                          farmId={farmId}
+                          updateId={editingId}
+                          blockedReason={
+                            form.application_info_changes !==
+                            (updates.find((u) => u.id === editingId)?.application_info_changes ||
+                              '')
+                              ? intl.formatMessage({
+                                  id: 'osp.annual.companyDetails.saveTextFirst',
+                                  defaultMessage:
+                                    'Save the update first: the text below has changes that are not saved yet.'
+                                })
+                              : null
+                          }
+                          onApplied={(review) =>
+                            setForm((prev) => ({
+                              ...prev,
+                              application_info_changes: review.application_info_changes,
+                              sections_unchanged: {
+                                ...prev.sections_unchanged,
+                                [APPLICATION_INFO_KEY]: review.attested_unchanged
+                              }
+                            }))
+                          }
+                        />
+                      ) : (
+                        <Text fontSize="xs" color="gray.600">
+                          {intl.formatMessage({
+                            id: 'osp.annual.companyDetails.saveDraftFirst',
+                            defaultMessage:
+                              'Save this update as a draft, then open it with Edit to confirm or update the company details (§ 205.406(a)(3)).'
+                          })}
+                        </Text>
+                      )}
+                    </Box>
                     <Box
                       mt={3}
                       ref={(el: HTMLDivElement | null) => {
@@ -1431,6 +1456,11 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
                           id: 'osp.annual.applicationInfoChanges',
                           defaultMessage:
                             'What changed in the application information (§ 205.406(a)(3))'
+                        })}
+                        helpText={intl.formatMessage({
+                          id: 'osp.annual.applicationInfoChangesHelp',
+                          defaultMessage:
+                            'Updates made in Company details above add a dated line here. Add anything else that changed, such as the person authorized to act for a corporation.'
                         })}
                         error={fieldErrors.application_info_changes}>
                         <StandardTextarea
