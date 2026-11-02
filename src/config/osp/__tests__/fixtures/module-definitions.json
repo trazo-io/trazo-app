@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.11.03",
+  "content_version": "2026.11.04",
   "registry": {
-    "content_version": "2026.11.03",
+    "content_version": "2026.11.04",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -328,6 +328,236 @@
                     "value": "other"
                   }
                 ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "supplier_certificate_review_frequency",
+                "kind": "radio",
+                "label": {
+                  "en": "How often do you review a supplier's organic certificate?",
+                  "es": "¿Con qué frecuencia revisas el certificado orgánico de un proveedor?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "each_transaction",
+                    "label": {
+                      "en": "With each shipment or purchase",
+                      "es": "Con cada envío o compra"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "monthly",
+                    "label": {
+                      "en": "Monthly",
+                      "es": "Mensualmente"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "quarterly",
+                    "label": {
+                      "en": "Quarterly",
+                      "es": "Trimestralmente"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "annually",
+                    "label": {
+                      "en": "Annually",
+                      "es": "Anualmente"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otra (describe abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "fraud_mitigation_practices",
+                    "op": "includes_any",
+                    "value": [
+                      "verify_certificates",
+                      "organic_integrity_database"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.201(a)(3)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "supplier_certificate_review_frequency_other",
+                "kind": "text",
+                "label": {
+                  "en": "Other frequency",
+                  "es": "Otra frecuencia"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "supplier_certificate_review_frequency",
+                    "op": "eq",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "supplier_approval_controls",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How do you approve organic suppliers and keep track of them?",
+                  "es": "¿Cómo apruebas a los proveedores orgánicos y les das seguimiento?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "supplier_list",
+                    "label": {
+                      "en": "We keep a list of our organic suppliers",
+                      "es": "Mantenemos una lista de nuestros proveedores orgánicos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "approval_program",
+                    "label": {
+                      "en": "A new supplier is reviewed and approved before we buy from it",
+                      "es": "Un proveedor nuevo se revisa y aprueba antes de comprarle"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "annual_certificate_refresh",
+                    "label": {
+                      "en": "Suppliers send us an updated organic certificate at least once a year, or when asked",
+                      "es": "Los proveedores nos envían un certificado orgánico actualizado al menos una vez al año, o cuando lo pedimos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "product_specifications",
+                    "label": {
+                      "en": "Suppliers agree to meet our product specifications for every shipment",
+                      "es": "Los proveedores se comprometen a cumplir nuestras especificaciones en cada envío"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "food_safety_audit",
+                    "label": {
+                      "en": "Suppliers pass a third-party food safety audit (such as GFSI) every year",
+                      "es": "Los proveedores aprueban cada año una auditoría de inocuidad de terceros (como GFSI)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "capacity_check",
+                    "label": {
+                      "en": "We confirm a supplier can meet our quality and quantity needs",
+                      "es": "Confirmamos que el proveedor puede cumplir con la calidad y la cantidad que necesitamos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "supplier_residue_results",
+                    "label": {
+                      "en": "Suppliers send us residue test results on a schedule",
+                      "es": "Los proveedores nos envían resultados de análisis de residuos con una frecuencia fija"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "residue_notice",
+                    "label": {
+                      "en": "Suppliers tell us in writing if residue is found on product we receive",
+                      "es": "Los proveedores nos avisan por escrito si se encuentran residuos en el producto que recibimos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otro (describe abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.201(a)(3)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "supplier_approval_controls_other",
+                "kind": "text",
+                "label": {
+                  "en": "Other way you approve or follow suppliers",
+                  "es": "Otra forma de aprobar o seguir proveedores"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "supplier_approval_controls",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "supplier_approval_procedure_upload",
+                "kind": "upload",
+                "label": {
+                  "en": "Attach your written supplier approval procedure, if you keep one",
+                  "es": "Adjunta tu procedimiento escrito de aprobación de proveedores, si tienes uno"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
@@ -10256,6 +10486,164 @@
                 "max_length": null
               },
               {
+                "key": "handler_cert_verification_method",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How do you make sure the operations handling your crop stay certified?",
+                  "es": "¿Cómo te aseguras de que las operaciones que manipulan tu cultivo sigan certificadas?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "certificates_on_file",
+                    "label": {
+                      "en": "We keep each handler's current organic certificate, listing the products it handles for us, and get an updated copy every year",
+                      "es": "Guardamos el certificado orgánico vigente de cada manejador, con los productos que maneja para nosotros, y pedimos una copia actualizada cada año"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "oid_check",
+                    "label": {
+                      "en": "We look the handler up in the USDA Organic Integrity Database",
+                      "es": "Buscamos al manejador en la Organic Integrity Database del USDA"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otro (describe abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "handled_by_another_operation",
+                    "op": "eq",
+                    "value": "yes_certified"
+                  }
+                ],
+                "nop_cite": "§ 205.201(a)(3)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "handler_cert_verification_method_other",
+                "kind": "text",
+                "label": {
+                  "en": "Other way you check",
+                  "es": "Otra forma de comprobarlo"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "handler_cert_verification_method",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "handler_cert_verification_frequency",
+                "kind": "radio",
+                "label": {
+                  "en": "How often do you check a handler's organic status?",
+                  "es": "¿Con qué frecuencia compruebas el estado orgánico de un manejador?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "every_order",
+                    "label": {
+                      "en": "With every order or delivery",
+                      "es": "Con cada pedido o entrega"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "monthly",
+                    "label": {
+                      "en": "Monthly",
+                      "es": "Mensualmente"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "annually",
+                    "label": {
+                      "en": "Annually",
+                      "es": "Anualmente"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otra (describe abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "handled_by_another_operation",
+                    "op": "eq",
+                    "value": "yes_certified"
+                  }
+                ],
+                "nop_cite": "§ 205.201(a)(3)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "handler_cert_verification_frequency_other",
+                "kind": "text",
+                "label": {
+                  "en": "Other frequency",
+                  "es": "Otra frecuencia"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "handler_cert_verification_frequency",
+                    "op": "eq",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
                 "key": "uncertified_handler_records",
                 "kind": "textarea",
                 "label": {
@@ -10706,6 +11094,34 @@
                 },
                 "options": [],
                 "required": true,
+                "visible_when": [
+                  {
+                    "question": "storage_locations",
+                    "op": "includes",
+                    "value": "uncertified_facility"
+                  }
+                ],
+                "nop_cite": "§ 205.103",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "uncertified_facility_statement_upload",
+                "kind": "upload",
+                "label": {
+                  "en": "Attach the statement the facility's manager signed",
+                  "es": "Adjunta la declaración firmada por el encargado de la instalación"
+                },
+                "coaching": {
+                  "en": "Your certifier's form for an uncertified storage facility, signed by the person who runs it: for example an exempt handler affidavit or an independent storage sheet.",
+                  "es": "El formulario de tu certificadora para una instalación de almacenamiento no certificada, firmado por quien la dirige: por ejemplo una declaración de manejador exento o una hoja de almacenamiento independiente."
+                },
+                "options": [],
+                "required": false,
                 "visible_when": [
                   {
                     "question": "storage_locations",
@@ -12403,6 +12819,56 @@
                   }
                 ],
                 "nop_cite": "§ 205.201(a)(3)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "sourced_products_identified_organic",
+                "kind": "boolean",
+                "label": {
+                  "en": "Does every document that comes with a product you buy in (invoice, bill of lading, label) identify it as organic?",
+                  "es": "¿Cada documento que acompaña a un producto que compras (factura, conocimiento de embarque, etiqueta) lo identifica como orgánico?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "sales_soe_supplier_verification",
+                    "op": "eq",
+                    "value": "yes"
+                  }
+                ],
+                "nop_cite": "§ 205.103(b)(2)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "sourced_products_identification_detail",
+                "kind": "textarea",
+                "label": {
+                  "en": "Which documents do not, and how do you keep the product's organic identity?",
+                  "es": "¿Cuáles no lo hacen, y cómo mantienes la identidad orgánica del producto?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "sourced_products_identified_organic",
+                    "op": "eq",
+                    "value": false
+                  }
+                ],
+                "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
