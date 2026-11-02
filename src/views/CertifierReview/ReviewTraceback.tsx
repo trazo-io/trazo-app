@@ -7,6 +7,10 @@
  * A file opens through the token route only when the grower included source files; otherwise it
  * is named as on file but not shared through this link.
  *
+ * It can also start from a harvest lot (product in storage): the pick is traced back to its season
+ * and inputs and forward to the sales that name it, on the same link scope. A sale that names it
+ * opens its own trace here.
+ *
  * Anonymous by design, like the rest of this page: no credentials on any request.
  */
 import React, { useRef, useState } from 'react';
@@ -18,6 +22,7 @@ import {
   StandardAlert,
   StandardButton,
   StandardSearchInput,
+  StandardSegmentedControl,
   StandardSpinner
 } from 'components/Design/StandardComponents';
 import TraceChain, { type TraceDoc } from 'components/Traceback/TraceChain';
@@ -34,12 +39,27 @@ type Match = {
   matched_on: string;
 };
 
+type LotMatch = {
+  pick_id: number;
+  date: string;
+  lot_code: string;
+  quantity: string;
+  storage: string;
+  crop: string;
+  parcel: string;
+  season: string;
+  matched_on: string;
+};
+
+type Mode = 'sale' | 'lot';
+
 type State =
   | { kind: 'idle' }
   | { kind: 'loading' }
   | { kind: 'matches'; matches: Match[]; truncated: boolean; random: boolean }
+  | { kind: 'lotMatches'; matches: LotMatch[]; truncated: boolean }
   | { kind: 'trace'; trace: any }
-  | { kind: 'error'; status: number };
+  | { kind: 'error'; status: number; lot?: boolean };
 
 interface Props {
   token: string;
@@ -51,6 +71,7 @@ export const ReviewTraceback = ({ token, apiRoot }: Props) => {
   const t = (id: string, values?: Record<string, string | number>) =>
     intl.formatMessage({ id }, values);
   const [text, setText] = useState('');
+  const [mode, setMode] = useState<Mode>('sale');
   const [state, setState] = useState<State>({ kind: 'idle' });
   const base = `${apiRoot}/certifier-review/${token}/traceback/`;
 
@@ -82,6 +103,27 @@ export const ReviewTraceback = ({ token, apiRoot }: Props) => {
     setState({ kind: 'trace', trace: body });
   };
 
+  const openPick = async (pickId: number) => {
+    const n = ++latest.current;
+    setState({ kind: 'loading' });
+    const body = await getJson(`${base}lots/${pickId}/`, n);
+    if (body === null) return;
+    if (body?.anchor !== 'pick')
+      return setState({ kind: 'error', status: body?.status ?? 0, lot: true });
+    setState({ kind: 'trace', trace: body });
+  };
+
+  const searchLots = async (q: string) => {
+    const n = ++latest.current;
+    setState({ kind: 'loading' });
+    const body = await getJson(`${base}lots/?${new URLSearchParams({ q })}`, n);
+    if (body === null) return;
+    if (!Array.isArray(body?.results))
+      return setState({ kind: 'error', status: body?.status ?? 0, lot: true });
+    if (body.results.length === 1) return openPick(body.results[0].pick_id);
+    setState({ kind: 'lotMatches', matches: body.results, truncated: Boolean(body.truncated) });
+  };
+
   const search = async (params: URLSearchParams, random: boolean) => {
     const n = ++latest.current;
     setState({ kind: 'loading' });
@@ -109,32 +151,49 @@ export const ReviewTraceback = ({ token, apiRoot }: Props) => {
       <Heading size="sm" color="gray.700" mb={1}>
         {t('certifierReview.traceback.title')}
       </Heading>
+      <Box mb={3} mt={2}>
+        <StandardSegmentedControl<Mode>
+          ariaLabel={t('traceback.mode.label')}
+          value={mode}
+          onChange={setMode}
+          options={[
+            { key: 'sale', label: t('traceback.mode.sale') },
+            { key: 'lot', label: t('traceback.mode.lot') }
+          ]}
+        />
+      </Box>
       <Text fontSize="sm" color="gray.600" mb={3}>
-        {t('certifierReview.traceback.help')}
+        {t(mode === 'lot' ? 'certifierReview.traceback.lotHelp' : 'certifierReview.traceback.help')}
       </Text>
       <Box
         as="form"
         onSubmit={(e: React.FormEvent) => {
           e.preventDefault();
-          if (text.trim()) search(new URLSearchParams({ q: text.trim() }), false);
+          if (!text.trim()) return;
+          if (mode === 'lot') searchLots(text.trim());
+          else search(new URLSearchParams({ q: text.trim() }), false);
         }}>
         <Stack direction={{ base: 'column', md: 'row' }} spacing={3}>
           <StandardSearchInput
             flex={1}
             value={text}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setText(e.target.value)}
-            placeholder={t('traceback.search.placeholder')}
+            placeholder={t(
+              mode === 'lot' ? 'traceback.lot.search.placeholder' : 'traceback.search.placeholder'
+            )}
           />
           <StandardButton type="submit" leftIcon={<FaSearch />} isDisabled={!text.trim() || busy}>
             {t('traceback.search.submit')}
           </StandardButton>
-          <StandardButton
-            variant="outline"
-            leftIcon={<FaRandom />}
-            isDisabled={busy}
-            onClick={() => search(new URLSearchParams({ random: '1' }), true)}>
-            {t('traceback.search.random')}
-          </StandardButton>
+          {mode === 'sale' && (
+            <StandardButton
+              variant="outline"
+              leftIcon={<FaRandom />}
+              isDisabled={busy}
+              onClick={() => search(new URLSearchParams({ random: '1' }), true)}>
+              {t('traceback.search.random')}
+            </StandardButton>
+          )}
         </Stack>
       </Box>
 
@@ -147,9 +206,11 @@ export const ReviewTraceback = ({ token, apiRoot }: Props) => {
             status={state.status === 404 ? 'info' : 'warning'}
             mb={0}
             description={t(
-              state.status === 404
-                ? 'certifierReview.traceback.notFound'
-                : 'certifierReview.traceback.unavailable'
+              state.status !== 404
+                ? 'certifierReview.traceback.unavailable'
+                : state.lot
+                ? 'certifierReview.traceback.lotNotFound'
+                : 'certifierReview.traceback.notFound'
             )}
           />
         )}
@@ -214,9 +275,56 @@ export const ReviewTraceback = ({ token, apiRoot }: Props) => {
             ))}
           </VStack>
         )}
+        {state.kind === 'lotMatches' && state.matches.length === 0 && (
+          <StandardAlert
+            status="info"
+            mb={0}
+            description={t('certifierReview.traceback.lotNoMatch')}
+          />
+        )}
+        {state.kind === 'lotMatches' && state.matches.length > 1 && (
+          <VStack align="stretch" spacing={2}>
+            <Text fontWeight="semibold">
+              {t('traceback.lot.matches.title', { count: state.matches.length })}
+            </Text>
+            <Text fontSize="sm" color="gray.600">
+              {t('traceback.lot.matches.subtitle')}
+            </Text>
+            {state.truncated && (
+              <StandardAlert status="info" mb={0} description={t('traceback.matches.truncated')} />
+            )}
+            {state.matches.map((m) => (
+              <HStack
+                key={m.pick_id}
+                justify="space-between"
+                borderWidth="1px"
+                borderRadius="md"
+                p={3}
+                spacing={3}>
+                <Box flex={1} minW={0}>
+                  <Text fontWeight="semibold">
+                    {[m.date, m.lot_code, m.quantity, m.storage].filter(Boolean).join(' · ')}
+                  </Text>
+                  <Text fontSize="sm" color="gray.600">
+                    {[m.crop, m.parcel, m.season].filter(Boolean).join(' · ')} ·{' '}
+                    {t(`traceback.matchedOn.${m.matched_on}`)}
+                  </Text>
+                </Box>
+                <StandardButton size="sm" flexShrink={0} onClick={() => openPick(m.pick_id)}>
+                  {t('traceback.lot.matches.trace')}
+                </StandardButton>
+              </HStack>
+            ))}
+          </VStack>
+        )}
         {state.kind === 'trace' && (
           <TraceChain
             trace={state.trace}
+            // From a lot, a sale that names it opens its own trace, on the same link scope.
+            onOpenSale={(id: number) => {
+              setMode('sale');
+              openSale(id);
+            }}
             fileHref={(d: TraceDoc) =>
               d.file_id ? `${apiRoot}/certifier-review/${token}/documents/${d.file_id}/` : null
             }

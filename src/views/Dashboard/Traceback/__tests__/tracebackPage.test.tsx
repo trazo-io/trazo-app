@@ -39,6 +39,19 @@ vi.mock('store/api/historyApi', () => ({
     isFetching: false,
     isError: Boolean(state.traceError),
     refetch: () => undefined
+  }),
+  // The lot entry point (lotTraceback.test.tsx covers it); idle on every sale-anchored test here.
+  useSearchTracebackLotsQuery: () => ({
+    currentData: undefined,
+    isFetching: false,
+    isError: false,
+    refetch: () => undefined
+  }),
+  useGetLotTracebackQuery: () => ({
+    currentData: undefined,
+    isFetching: false,
+    isError: false,
+    refetch: () => undefined
   })
 }));
 
