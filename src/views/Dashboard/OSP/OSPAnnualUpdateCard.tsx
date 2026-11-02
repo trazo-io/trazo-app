@@ -46,6 +46,10 @@ import {
 } from 'store/api/ospAnnualUpdateApi';
 import type { OSPSummary } from 'types/osp';
 
+import AnnualUpdateSupportingDocuments, {
+  SupportingDocRef
+} from './AnnualUpdateSupportingDocuments';
+
 interface Props {
   companyId?: string;
   farmId?: string;
@@ -137,6 +141,7 @@ const FIELD_KEYS = [
   // Render order: on a correction the note sits above the change summary (review of app #66).
   'correction_note',
   'changes_summary',
+  'supporting_document_ids',
   'additions',
   'deletions',
   'application_info_changes',
@@ -368,7 +373,8 @@ const DONE_LABELS: Record<
   sign: { id: 'osp.annual.toast.signDone', defaultMessage: 'Update signed' },
   file: {
     id: 'osp.annual.toast.fileDone',
-    defaultMessage: 'Filing recorded. The packet now carries it exactly as filed.'
+    defaultMessage:
+      'Filing recorded and saved to Documents. The packet now carries it exactly as filed.'
   },
   withdraw: {
     id: 'osp.annual.toast.withdrawDone',
@@ -393,6 +399,7 @@ const emptyForm = (year: number) => ({
   sales_period_start: '',
   sales_period_end: '',
   correction_note: '',
+  supporting_documents: [] as SupportingDocRef[],
   sections_unchanged: emptyAttestation()
 });
 
@@ -617,6 +624,10 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
       sales_period_start: u.sales_period_start || '',
       sales_period_end: u.sales_period_end || '',
       correction_note: u.correction_note || '',
+      supporting_documents: (u.supporting_documents || []).map((d) => ({
+        public_id: d.public_id,
+        title: d.title
+      })),
       sections_unchanged: { ...emptyAttestation(), ...(u.sections_unchanged_attestation || {}) }
     });
   };
@@ -703,6 +714,8 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
       // Both or neither; an empty box is "not stated", sent as null, never an empty string.
       sales_period_start: form.sales_period_start || null,
       sales_period_end: form.sales_period_end || null,
+      // The whole list, every save: an empty list detaches all on a draft.
+      supporting_document_ids: form.supporting_documents.map((d) => d.public_id),
       // Only a correction says what it corrects (run 3, 2026-10-02).
       ...(editingIsCorrection ? { correction_note: form.correction_note.trim() } : {})
     };
@@ -894,6 +907,24 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
                             defaultMessage: 'No summary of changes on this filing'
                           }))}
                   </Text>
+                  {/* The evidence this revision names, read from the revision itself: on a signed
+                      or filed one it is the signed list. */}
+                  {(u.supporting_documents?.length ?? 0) > 0 && (
+                    <Text
+                      fontSize="xs"
+                      color="gray.600"
+                      mt={1}
+                      noOfLines={2}
+                      data-testid="annual-row-supporting">
+                      {intl.formatMessage(
+                        {
+                          id: 'osp.annual.supporting.rowList',
+                          defaultMessage: 'Supporting documents: {titles}'
+                        },
+                        { titles: (u.supporting_documents || []).map((d) => d.title).join(', ') }
+                      )}
+                    </Text>
+                  )}
                   {/*
                   `formatDateFromTimestamp`, NOT `formatDateOnly`. Both live in the same file and
                   the neighbouring change-notifications panel uses the latter — correctly, because
@@ -1291,6 +1322,26 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
                         })}
                       />
                     </StandardField>
+                  </Box>
+                  <Box
+                    ref={(el: HTMLDivElement | null) => {
+                      fieldRefs.current.supporting_document_ids = el;
+                    }}>
+                    <AnnualUpdateSupportingDocuments
+                      companyId={companyId || ''}
+                      farmId={farmId || ''}
+                      value={form.supporting_documents}
+                      onChange={(next) => {
+                        set('supporting_documents', next);
+                        setFieldErrors((prev) => {
+                          if (!prev.supporting_document_ids) return prev;
+                          const rest = { ...prev };
+                          delete rest.supporting_document_ids;
+                          return rest;
+                        });
+                      }}
+                      error={fieldErrors.supporting_document_ids}
+                    />
                   </Box>
                   <Box
                     ref={(el: HTMLDivElement | null) => {
