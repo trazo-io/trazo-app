@@ -500,6 +500,9 @@ const DocumentsPage = () => {
         description:
           (err as { data?: { code?: unknown } })?.data?.code === 'supplier_certificate_in_use'
             ? intl.formatMessage({ id: 'documents.deleteBlocked.supplierCertificate' })
+            : (err as { data?: { code?: unknown } })?.data?.code ===
+              'annual_update_attachment_in_use'
+            ? intl.formatMessage({ id: 'documents.deleteBlocked.annualUpdate' })
             : apiErrorMessage(err) ?? undefined,
         status: 'error',
         duration: 5000
