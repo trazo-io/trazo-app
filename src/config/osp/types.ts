@@ -107,10 +107,17 @@ export interface ModuleProgressRow {
   completed_by: number | null;
   definition_version: string | null;
   progress: { answered: number; required: number; missing: string[] };
+  /**
+   * Blank questions that are showing, not required by Trazo, and asked by the plan's own agent.
+   * A soft flag; completion never waits on it. Empty for an agent with no register here.
+   */
+  agent_asks_blank?: string[];
 }
 
 export interface ModuleListResponse {
   modules: ModuleProgressRow[];
+  /** The agent `agent_asks_blank` speaks for ("WSDA"); null when Trazo holds no register for it. */
+  agent?: string | null;
 }
 
 export interface ModuleDetailResponse {
@@ -134,6 +141,11 @@ export interface AgentRefs {
   agent: string;
   /** Keyed by question key within the module. */
   refs: Record<string, AgentFormRef[]>;
+  /**
+   * Questions a row of this agent asks and applies to this plan (rows the form prints optional
+   * left out). The wizard flags the blank ones that are showing; see `blankAskedKeys`.
+   */
+  asked?: string[];
 }
 
 export interface SaveModulePayload {

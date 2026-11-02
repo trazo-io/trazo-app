@@ -23,7 +23,8 @@ import {
   StandardField,
   StandardPage,
   StandardPageLoading,
-  StandardQueryError
+  StandardQueryError,
+  STATUS_URGENCY_TOKENS
 } from 'components/Design/StandardComponents';
 import CertifyingAgentPicker from 'components/Certifications/CertifyingAgentPicker';
 import {
@@ -96,10 +97,13 @@ const ModuleCard = ({
   onOpen,
   downloadHref,
   isNext,
-  isLocked
+  isLocked,
+  agent
 }: {
   definition: ModuleDefinition;
   row: ModuleProgressRow | undefined;
+  /** The plan's own agent ("WSDA") when Trazo holds its register; names the blank-question line. */
+  agent?: string | null;
   locale: string;
   onOpen: () => void;
   downloadHref?: string;
@@ -111,6 +115,7 @@ const ModuleCard = ({
   const intl = useIntl();
   const status: ModuleStatus = row?.status ?? 'not_started';
   const progress = row?.progress ?? { answered: 0, required: 0, missing: [] };
+  const blankAsked = row?.agent_asks_blank?.length ?? 0;
 
   return (
     <StandardCard data-testid={`osp-module-${definition.key}`}>
@@ -163,6 +168,17 @@ const ModuleCard = ({
               )}
             </Text>
           </Box>
+        ) : null}
+
+        {/* Not counted into the line above: Trazo does not require these, the agent's form asks
+            them. Shown on a completed module too, since completing never waited on them. */}
+        {agent && status !== 'not_applicable' && blankAsked > 0 ? (
+          <Text
+            fontSize="xs"
+            color={STATUS_URGENCY_TOKENS.warn.text}
+            data-testid={`osp-module-agent-blank-${definition.key}`}>
+            {intl.formatMessage({ id: 'osp.modules.agentAsksBlank' }, { agent, count: blankAsked })}
+          </Text>
         ) : null}
 
         <Box mt="auto">
@@ -490,6 +506,7 @@ const OSPModuleListPage = () => {
                     key={definition.key}
                     definition={definition}
                     row={rowsByKey.get(definition.key)}
+                    agent={moduleRows?.agent}
                     locale={intl.locale}
                     onOpen={() =>
                       navigate(`/admin/dashboard/farm/${farmId}/osp/module/${definition.key}`)

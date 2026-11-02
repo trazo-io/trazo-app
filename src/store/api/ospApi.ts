@@ -190,7 +190,10 @@ const ospApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: (_res, _err, { ospId }) => [
         { type: 'OSP', id: Number(ospId) },
-        { type: 'OSP', id: 'LIST' }
+        { type: 'OSP', id: 'LIST' },
+        // The certifying agent is set through this PATCH, and the module list's blank-question
+        // flags and every module's captions are read from that agent's register.
+        'OSPModules'
       ]
     }),
 
