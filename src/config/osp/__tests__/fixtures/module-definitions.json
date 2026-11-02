@@ -3678,7 +3678,7 @@
                       "en": "No laboratory testing performed",
                       "es": "No se realizan análisis de laboratorio"
                     },
-                    "exclusive": false
+                    "exclusive": true
                   },
                   {
                     "value": "soil_observation",
@@ -3791,8 +3791,8 @@
                   {
                     "value": "other",
                     "label": {
-                      "en": "Other",
-                      "es": "Otra"
+                      "en": "Other (describe below)",
+                      "es": "Otra (describe abajo)"
                     },
                     "exclusive": false
                   }
@@ -3803,6 +3803,36 @@
                     "question": "fertility_monitoring",
                     "op": "truthy",
                     "value": null
+                  },
+                  {
+                    "question": "fertility_monitoring",
+                    "op": "not_includes",
+                    "value": "no_testing"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "monitoring_frequency_other",
+                "kind": "text",
+                "label": {
+                  "en": "Other monitoring frequency",
+                  "es": "Otra frecuencia de monitoreo"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "monitoring_frequency",
+                    "op": "eq",
+                    "value": "other"
                   }
                 ],
                 "nop_cite": null,
@@ -3886,6 +3916,38 @@
                       "es": "Según necesidad"
                     },
                     "exclusive": false
+                  },
+                  {
+                    "value": "daily",
+                    "label": {
+                      "en": "Daily",
+                      "es": "Diariamente"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "weekly",
+                    "label": {
+                      "en": "Weekly",
+                      "es": "Semanalmente"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "monthly",
+                    "label": {
+                      "en": "Monthly",
+                      "es": "Mensualmente"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otra (describe abajo)"
+                    },
+                    "exclusive": false
                   }
                 ],
                 "required": false,
@@ -3902,6 +3964,31 @@
                   }
                 ],
                 "nop_cite": "§ 205.201(a)(3)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "fertility_testing_frequency_other",
+                "kind": "text",
+                "label": {
+                  "en": "Other testing frequency",
+                  "es": "Otra frecuencia de análisis"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "fertility_testing_frequency",
+                    "op": "eq",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
@@ -5359,8 +5446,8 @@
                   {
                     "value": "other",
                     "label": {
-                      "en": "Other",
-                      "es": "Otro"
+                      "en": "Other (describe below)",
+                      "es": "Otro (describe abajo)"
                     },
                     "exclusive": false
                   }
@@ -5368,6 +5455,31 @@
                 "required": false,
                 "visible_when": [],
                 "nop_cite": "§ 205.200",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "irrigation_efficiency_monitoring_other",
+                "kind": "text",
+                "label": {
+                  "en": "Other way you check irrigation efficiency",
+                  "es": "Otra forma de verificar la eficiencia del riego"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "irrigation_efficiency_monitoring",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
@@ -15526,7 +15638,6 @@
         "fertility_inputs_listed",
         "tillage_practices",
         "fertility_monitoring",
-        "monitoring_frequency",
         "erosion_practices"
       ],
       "missing_required": [
@@ -15534,7 +15645,6 @@
         "fertility_components",
         "fertility_inputs_listed",
         "tillage_practices",
-        "monitoring_frequency",
         "erosion_practices"
       ],
       "missing_required_na": [
@@ -15542,7 +15652,6 @@
         "fertility_components",
         "fertility_inputs_listed",
         "tillage_practices",
-        "monitoring_frequency",
         "erosion_practices"
       ]
     },
