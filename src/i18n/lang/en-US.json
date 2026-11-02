@@ -6495,7 +6495,7 @@
   "osp.newVersion.createdTitle": "Version {version} started",
   "osp.newVersion.failedGeneric": "Please try again in a moment.",
   "osp.none": "No Organic System Plan on file yet.",
-  "osp.packet.changedOnly.detail": "Only the {included, plural, one {# module} other {# modules}} whose answers changed since v{prior}. The {omitted} unchanged modules are named on its cover; every parcel application stays in.",
+  "osp.packet.changedOnly.detail": "The {included, plural, one {# module} other {# modules}} whose answers changed since v{prior}, plus {live, plural, =0 {none} one {# module} other {# modules}} showing the farm's current records, which are not compared. The {omitted} unchanged modules are named on its cover; every parcel application stays in.",
   "osp.packet.changedOnly.hint": "Changed sections only is for a renewal form that asks you to list your updated plan sections and attach them, as Oregon Tilth's OSP Update Form Step 4 does. Whether a certifier accepts a packet without the unchanged sections is the certifier's decision.",
   "osp.packet.changedOnly.title": "v{version}: changed sections only",
   "osp.packet.complianceOnly": "The renewal packet and the module PDFs are part of the Compliance plan.",

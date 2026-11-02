@@ -123,6 +123,7 @@ const PacketDownloadControl: React.FC<Props> = ({ companyId, farmId, osps }) => 
               { id: 'osp.packet.changedOnly.detail' },
               {
                 included: scope.included?.length ?? 0,
+                live: scope.live?.length ?? 0,
                 omitted: scope.omitted?.length ?? 0,
                 prior: scope.prior_version
               }

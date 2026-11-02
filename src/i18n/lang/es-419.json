@@ -6495,7 +6495,7 @@
   "osp.newVersion.createdTitle": "Versión {version} iniciada",
   "osp.newVersion.failedGeneric": "Vuelve a intentarlo en un momento.",
   "osp.none": "Aún no hay Plan del Sistema Orgánico registrado.",
-  "osp.packet.changedOnly.detail": "Solo {included, plural, one {el # módulo} other {los # módulos}} cuyas respuestas cambiaron desde la v{prior}. Los {omitted} módulos sin cambios se nombran en la portada; todas las solicitudes de parcela se incluyen.",
+  "osp.packet.changedOnly.detail": "{included, plural, one {El # módulo} other {Los # módulos}} cuyas respuestas cambiaron desde la v{prior}, más {live, plural, =0 {ninguno} one {# módulo} other {# módulos}} con los registros actuales de la finca, que no se comparan. Los {omitted} módulos sin cambios se nombran en la portada; todas las solicitudes de parcela se incluyen.",
   "osp.packet.changedOnly.hint": "Solo secciones con cambios sirve para un formulario de renovación que te pide listar las secciones actualizadas del plan y adjuntarlas, como el Paso 4 del formulario de actualización del OSP de Oregon Tilth. Cada certificador decide si acepta un paquete sin las secciones que no cambiaron.",
   "osp.packet.changedOnly.title": "v{version}: solo secciones con cambios",
   "osp.packet.complianceOnly": "El paquete de renovación y los PDF de los módulos son parte del plan Compliance.",

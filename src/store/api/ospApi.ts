@@ -121,6 +121,8 @@ export interface PacketScopePreview {
   prior_version?: number;
   new_version?: number;
   included?: PacketScopeModule[];
+  /** Carried because the PDF shows current records the comparison cannot see. */
+  live?: PacketScopeModule[];
   omitted?: PacketScopeModule[];
   narratives?: string[];
 }

@@ -103,6 +103,7 @@ describe('packet download control', () => {
         prior_version: 3,
         new_version: 4,
         included: [{ key: 'g5_0_pest', label: 'G5.0 Pest', file: 'modules/G5_0.pdf' }],
+        live: Array.from({ length: 4 }, (_, i) => ({ key: `l${i}`, label: '', file: '' })),
         omitted: Array.from({ length: 18 }, (_, i) => ({ key: `m${i}`, label: '', file: '' }))
       }
     };
@@ -114,7 +115,7 @@ describe('packet download control', () => {
     );
     expect(
       screen.getByText(
-        'Only the 1 module whose answers changed since v3. The 18 unchanged modules are named on its cover; every parcel application stays in.'
+        "The 1 module whose answers changed since v3, plus 4 modules showing the farm's current records, which are not compared. The 18 unchanged modules are named on its cover; every parcel application stays in."
       )
     ).toBeInTheDocument();
     // Neutral: what the option is for, and that acceptance is the certifier's decision.
