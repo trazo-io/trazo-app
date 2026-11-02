@@ -27,11 +27,24 @@ vi.mock('store/api/ospAnnualUpdateApi', () => ({
   useGetOSPAnnualUpdatesQuery: () => ({ data: updates })
 }));
 vi.mock('config/environment', () => ({ env: { getApiUrl: (u: string) => u } }));
+// Per plan id: what the server's `packet-scope/` says. Absent = not comparable. `stale` is RTK's
+// in-flight state: `data` still holds the last success for other args, `currentData` is empty.
+let scopes: Record<number, any> = {};
+let stale: any = null;
+vi.mock('store/api/ospApi', () => ({
+  useGetPacketScopeQuery: ({ ospId }: { ospId: number }, { skip }: { skip: boolean }) => {
+    if (stale) return { data: stale, currentData: undefined };
+    const result = skip
+      ? undefined
+      : scopes[ospId] ?? { available: false, code: 'no_filing', reason: '' };
+    return { data: result, currentData: result };
+  }
+}));
 
 import PacketDownloadControl from '../PacketDownloadControl';
 
 const plan = (id: number, version_number: number, status: string) =>
-  ({ id, version_number, status }) as any;
+  ({ id, version_number, status } as any);
 
 const renderControl = (osps: any[]) =>
   render(
@@ -78,6 +91,89 @@ describe('packet download control', () => {
     const { getByRole } = renderControl([plan(10, 3, 'active'), plan(11, 4, 'draft')]);
     getByRole('button').click();
     expect(await screen.findAllByText('2026 annual update included')).toHaveLength(2);
+  });
+
+  it('offers changed sections only when the server can compare the version', async () => {
+    updates = [{ id: 1, prior_osp: 10, new_osp: 11, reporting_year: 2027 }];
+    scopes = {
+      11: {
+        available: true,
+        code: '',
+        reason: '',
+        prior_version: 3,
+        new_version: 4,
+        included: [{ key: 'g5_0_pest', label: 'G5.0 Pest', file: 'modules/G5_0.pdf' }],
+        live: Array.from({ length: 4 }, (_, i) => ({ key: `l${i}`, label: '', file: '' })),
+        omitted: Array.from({ length: 18 }, (_, i) => ({ key: `m${i}`, label: '', file: '' }))
+      }
+    };
+    const { getByRole } = renderControl([plan(10, 3, 'active'), plan(11, 4, 'draft')]);
+    getByRole('button').click();
+    const item = await screen.findByText('v4: changed sections only');
+    expect(item.closest('a')?.getAttribute('href')).toBe(
+      'companies/1/establishments/2/osps/11/packet/?scope=changed'
+    );
+    expect(
+      screen.getByText(
+        "The 1 module whose answers changed since v3, plus 4 modules showing the farm's current records, which are not compared. The 18 unchanged modules are named on its cover; every parcel application stays in."
+      )
+    ).toBeInTheDocument();
+    // Neutral: what the option is for, and that acceptance is the certifier's decision.
+    expect(screen.getByText(/the certifier's decision/)).toBeInTheDocument();
+    // The full packet stays, and is the plain link without a scope.
+    expect(screen.getByText('Full packet, every module').closest('a')?.getAttribute('href')).toBe(
+      'companies/1/establishments/2/osps/11/packet/'
+    );
+    // v3 is the earlier side of the update: no changed-sections choice for it.
+    expect(screen.queryByText('v3: changed sections only')).toBeNull();
+    scopes = {};
+  });
+
+  it('turns the lone button into a menu when the one version can be compared', async () => {
+    updates = [{ id: 1, prior_osp: 9, new_osp: 10, reporting_year: 2027 }];
+    scopes = {
+      10: {
+        available: true,
+        code: '',
+        reason: '',
+        prior_version: 1,
+        new_version: 2,
+        included: [],
+        omitted: []
+      }
+    };
+    const { getByRole } = renderControl([plan(10, 2, 'active')]);
+    expect(screen.queryByText('Download packet (v2)')).toBeNull();
+    getByRole('button').click();
+    expect(await screen.findByText('v2: changed sections only')).toBeInTheDocument();
+    scopes = {};
+  });
+
+  it("never borrows the previous version's answer while the new one is loading", () => {
+    // "Start new version": the working plan is now the v4 draft, its packet-scope request is in
+    // flight, and RTK's `data` still holds v3's "comparable" answer.
+    updates = [];
+    stale = {
+      available: true,
+      code: '',
+      reason: '',
+      prior_version: 2,
+      new_version: 3,
+      included: [],
+      omitted: []
+    };
+    renderControl([plan(11, 4, 'draft')]);
+    expect(screen.getByText('Download packet (v4)')).toBeInTheDocument();
+    expect(screen.queryByText(/changed sections only/)).toBeNull();
+    stale = null;
+  });
+
+  it('offers no changed-sections choice when the server cannot compare', async () => {
+    updates = [];
+    scopes = {};
+    renderControl([plan(10, 1, 'active')]);
+    expect(screen.getByText('Download packet (v1)')).toBeInTheDocument();
+    expect(screen.queryByText(/changed sections only/)).toBeNull();
   });
 
   it('renders nothing when the farm has no plan', () => {

@@ -13,6 +13,12 @@
  * with it, and offers the plan on file as the other choice when the two differ. The filing
  * test mirrors the server's (`_renewal_context`): the update whose `new_osp` is this plan,
  * else the one whose `prior_osp` is.
+ *
+ * Changed sections only: a version the server can compare with the prior one (`packet-scope`)
+ * also offers the packet with only the module PDFs whose answers changed. It is offered for every
+ * certifier and worded as what it is, the shape of a renewal form that asks for the updated
+ * sections (Oregon Tilth's OSP Update Step 4), never as something a certifier accepts. It is not
+ * offered when the server cannot compare, so the anchor download never lands on a refusal.
  */
 import React from 'react';
 import { Box, Menu, MenuButton, MenuDivider, MenuItem, MenuList, Text } from '@chakra-ui/react';
@@ -23,6 +29,7 @@ import { StandardButton } from 'components/Design/StandardComponents';
 import { OSP_PACKET_URL } from 'config';
 import { env } from 'config/environment';
 import { useGetOSPAnnualUpdatesQuery } from 'store/api/ospAnnualUpdateApi';
+import { PacketScopePreview, useGetPacketScopeQuery } from 'store/api/ospApi';
 import type { OSPSummary } from 'types/osp';
 
 import { selectPlanOnFile } from './selectPlanOnFile';
@@ -49,9 +56,32 @@ const PacketDownloadControl: React.FC<Props> = ({ companyId, farmId, osps }) => 
     { skip: !companyId || !farmId }
   );
 
+  // One fixed call per possible choice (hooks cannot run in the loop below). An error, a 403 or
+  // a version the server cannot compare all read as "not offered". `currentData`, never `data`:
+  // RTK keeps `data` from the LAST success for any args, so right after "start new version" the
+  // new draft would borrow the previous version's "comparable" answer and offer a link the
+  // server refuses (review of app #234; same trap as Traceback/index.tsx).
+  const second = choices[1];
+  const { currentData: workingScope } = useGetPacketScopeQuery(
+    { companyId, farmId, ospId: working?.id ?? 0 },
+    { skip: !companyId || !farmId || !working }
+  );
+  const { currentData: secondScope } = useGetPacketScopeQuery(
+    { companyId, farmId, ospId: second?.id ?? 0 },
+    { skip: !companyId || !farmId || !second }
+  );
+
   if (!working) return null;
 
   const href = (osp: OSPSummary) => env.getApiUrl(OSP_PACKET_URL(companyId, farmId, osp.id));
+  const changedHref = (osp: OSPSummary) =>
+    env.getApiUrl(OSP_PACKET_URL(companyId, farmId, osp.id, 'changed'));
+  const scopeFor = (osp: OSPSummary): PacketScopePreview | undefined => {
+    const scope =
+      osp.id === working.id ? workingScope : osp.id === second?.id ? secondScope : undefined;
+    return scope?.available ? scope : undefined;
+  };
+  const anyChangedOnly = choices.some((osp) => scopeFor(osp));
 
   const filingFor = (osp: OSPSummary) =>
     updates.find((u) => u.new_osp === osp.id) ?? updates.find((u) => u.prior_osp === osp.id);
@@ -75,9 +105,38 @@ const PacketDownloadControl: React.FC<Props> = ({ companyId, farmId, osps }) => 
       : intl.formatMessage({ id: 'osp.packet.filing.missing' });
   };
 
+  // The changed-sections packet of one version, when the server can compare it with the prior.
+  const changedItem = (osp: OSPSummary) => {
+    const scope = scopeFor(osp);
+    if (!scope) return null;
+    return (
+      <MenuItem as="a" href={changedHref(osp)} py={3}>
+        <Box>
+          <Text fontSize="sm" fontWeight="semibold">
+            {intl.formatMessage(
+              { id: 'osp.packet.changedOnly.title' },
+              { version: osp.version_number }
+            )}
+          </Text>
+          <Text fontSize="xs" color="gray.600">
+            {intl.formatMessage(
+              { id: 'osp.packet.changedOnly.detail' },
+              {
+                included: scope.included?.length ?? 0,
+                live: scope.live?.length ?? 0,
+                omitted: scope.omitted?.length ?? 0,
+                prior: scope.prior_version
+              }
+            )}
+          </Text>
+        </Box>
+      </MenuItem>
+    );
+  };
+
   // One version to export, and nothing to choose between: a menu would be ceremony. It still
   // names the version, which the bare button never did.
-  if (choices.length < 2) {
+  if (choices.length < 2 && !anyChangedOnly) {
     return (
       <Box data-tour="osp-packet">
         <StandardButton
@@ -124,11 +183,22 @@ const PacketDownloadControl: React.FC<Props> = ({ companyId, farmId, osps }) => 
                   <Text fontSize="xs" color={filingFor(osp) ? 'gray.600' : 'orange.800'}>
                     {filingLabel(osp)}
                   </Text>
+                  {scopeFor(osp) ? (
+                    <Text fontSize="xs" color="gray.600">
+                      {intl.formatMessage({ id: 'osp.packet.full.detail' })}
+                    </Text>
+                  ) : null}
                 </Box>
               </MenuItem>
+              {changedItem(osp)}
             </React.Fragment>
           ))}
           <MenuDivider />
+          {anyChangedOnly ? (
+            <Text px={3} pt={2} fontSize="xs" color="gray.600">
+              {intl.formatMessage({ id: 'osp.packet.changedOnly.hint' })}
+            </Text>
+          ) : null}
           <Text px={3} py={2} fontSize="xs" color="gray.600">
             {intl.formatMessage({ id: 'osp.packet.draftHint' })}
           </Text>
