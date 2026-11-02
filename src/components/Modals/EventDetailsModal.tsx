@@ -40,7 +40,8 @@ import {
   FaLayerGroup,
   FaExchangeAlt,
   FaLock,
-  FaMapMarkerAlt
+  FaMapMarkerAlt,
+  FaRoute
 } from 'react-icons/fa';
 import { MdVerified } from 'react-icons/md';
 import { useDeleteEventMutation } from 'store/api/historyApi';
@@ -893,7 +894,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
       justify="space-between"
       align={{ base: 'stretch', md: 'center' }}
       gap={3}>
-      <HStack spacing={2} justify={{ base: 'space-between', md: 'flex-start' }}>
+      <HStack spacing={2} flexWrap="wrap" justify={{ base: 'space-between', md: 'flex-start' }}>
         <Button
           variant="ghost"
           colorScheme="gray"
@@ -922,6 +923,24 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
             {intl.formatMessage({ id: 'eventDetails.logAgain' })}
           </Button>
         )}
+
+        {/* A harvest record is a lot: open the traceback from it, back to its season and inputs
+            and forward to the sales that name it. Same CA/FM gate as the trace endpoint. */}
+        {canWrite &&
+          farmId &&
+          event?.id != null &&
+          event.event_type === 1 &&
+          subtypeOf(event) === 'HA' && (
+            <StandardButton
+              variant="ghost"
+              leftIcon={<FaRoute />}
+              onClick={() => {
+                onClose();
+                navigate(`/admin/dashboard/farm/${farmId}/traceback?pick=${event.id}`);
+              }}>
+              {intl.formatMessage({ id: 'eventDetails.traceLot' })}
+            </StandardButton>
+          )}
 
         {!isProductionFinished && canWrite && (
           <Button

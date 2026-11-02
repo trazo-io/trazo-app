@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.11.04",
+  "content_version": "2026.11.05",
   "registry": {
-    "content_version": "2026.11.04",
+    "content_version": "2026.11.05",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -2071,6 +2071,28 @@
             "education": [],
             "visible_when": [],
             "questions": [
+              {
+                "key": "seedling_suppliers_panel",
+                "kind": "info",
+                "label": {
+                  "en": "Suppliers named on your transplant purchases",
+                  "es": "Proveedores indicados en tus compras de trasplantes"
+                },
+                "coaching": {
+                  "en": "Listed from your transplant records. Add each supplier and a copy of its organic certificate in the supplier register on your farm profile; the plan shows whether the copy on file covers your latest purchase.",
+                  "es": "Se listan a partir de tus registros de trasplante. Agrega cada proveedor y una copia de su certificado orgánico en el registro de proveedores del perfil de tu finca; el plan muestra si la copia guardada cubre tu última compra."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": "seedling_suppliers",
+                "placeholder": null,
+                "max_length": null
+              },
               {
                 "key": "seedlings_description",
                 "kind": "textarea",

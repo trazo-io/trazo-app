@@ -46,6 +46,11 @@ import {
 } from 'store/api/ospAnnualUpdateApi';
 import type { OSPSummary } from 'types/osp';
 
+import OSPCompanyDetailsStep from './OSPCompanyDetailsStep';
+import AnnualUpdateSupportingDocuments, {
+  SupportingDocRef
+} from './AnnualUpdateSupportingDocuments';
+
 interface Props {
   companyId?: string;
   farmId?: string;
@@ -137,6 +142,7 @@ const FIELD_KEYS = [
   // Render order: on a correction the note sits above the change summary (review of app #66).
   'correction_note',
   'changes_summary',
+  'supporting_document_ids',
   'additions',
   'deletions',
   'application_info_changes',
@@ -368,7 +374,8 @@ const DONE_LABELS: Record<
   sign: { id: 'osp.annual.toast.signDone', defaultMessage: 'Update signed' },
   file: {
     id: 'osp.annual.toast.fileDone',
-    defaultMessage: 'Filing recorded. The packet now carries it exactly as filed.'
+    defaultMessage:
+      'Filing recorded and saved to Documents. The packet now carries it exactly as filed.'
   },
   withdraw: {
     id: 'osp.annual.toast.withdrawDone',
@@ -393,6 +400,7 @@ const emptyForm = (year: number) => ({
   sales_period_start: '',
   sales_period_end: '',
   correction_note: '',
+  supporting_documents: [] as SupportingDocRef[],
   sections_unchanged: emptyAttestation()
 });
 
@@ -470,6 +478,31 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
       delete next[key as FieldKey];
       return next;
     });
+  };
+
+  // Applied to the CURRENT form, never to the list a render saw: an upload that resolves late must
+  // not drop a file picked while it was in flight (review of app #235).
+  const clearSupportingError = () =>
+    setFieldErrors((prev) => {
+      if (!prev.supporting_document_ids) return prev;
+      const rest = { ...prev };
+      delete rest.supporting_document_ids;
+      return rest;
+    });
+  const addSupporting = (ref: SupportingDocRef) => {
+    setForm((prev) =>
+      prev.supporting_documents.some((d) => d.public_id === ref.public_id)
+        ? prev
+        : { ...prev, supporting_documents: [...prev.supporting_documents, ref] }
+    );
+    clearSupportingError();
+  };
+  const removeSupporting = (publicId: string) => {
+    setForm((prev) => ({
+      ...prev,
+      supporting_documents: prev.supporting_documents.filter((d) => d.public_id !== publicId)
+    }));
+    clearSupportingError();
   };
 
   /**
@@ -617,6 +650,10 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
       sales_period_start: u.sales_period_start || '',
       sales_period_end: u.sales_period_end || '',
       correction_note: u.correction_note || '',
+      supporting_documents: (u.supporting_documents || []).map((d) => ({
+        public_id: d.public_id,
+        title: d.title
+      })),
       sections_unchanged: { ...emptyAttestation(), ...(u.sections_unchanged_attestation || {}) }
     });
   };
@@ -703,6 +740,8 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
       // Both or neither; an empty box is "not stated", sent as null, never an empty string.
       sales_period_start: form.sales_period_start || null,
       sales_period_end: form.sales_period_end || null,
+      // The whole list, every save: an empty list detaches all on a draft.
+      supporting_document_ids: form.supporting_documents.map((d) => d.public_id),
       // Only a correction says what it corrects (run 3, 2026-10-02).
       ...(editingIsCorrection ? { correction_note: form.correction_note.trim() } : {})
     };
@@ -894,6 +933,24 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
                             defaultMessage: 'No summary of changes on this filing'
                           }))}
                   </Text>
+                  {/* The evidence this revision names, read from the revision itself: on a signed
+                      or filed one it is the signed list. */}
+                  {(u.supporting_documents?.length ?? 0) > 0 && (
+                    <Text
+                      fontSize="xs"
+                      color="gray.600"
+                      mt={1}
+                      noOfLines={2}
+                      data-testid="annual-row-supporting">
+                      {intl.formatMessage(
+                        {
+                          id: 'osp.annual.supporting.rowList',
+                          defaultMessage: 'Supporting documents: {titles}'
+                        },
+                        { titles: (u.supporting_documents || []).map((d) => d.title).join(', ') }
+                      )}
+                    </Text>
+                  )}
                   {/*
                   `formatDateFromTimestamp`, NOT `formatDateOnly`. Both live in the same file and
                   the neighbouring change-notifications panel uses the latter — correctly, because
@@ -1294,6 +1351,19 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
                   </Box>
                   <Box
                     ref={(el: HTMLDivElement | null) => {
+                      fieldRefs.current.supporting_document_ids = el;
+                    }}>
+                    <AnnualUpdateSupportingDocuments
+                      companyId={companyId || ''}
+                      farmId={farmId || ''}
+                      value={form.supporting_documents}
+                      onAdd={addSupporting}
+                      onRemove={removeSupporting}
+                      error={fieldErrors.supporting_document_ids}
+                    />
+                  </Box>
+                  <Box
+                    ref={(el: HTMLDivElement | null) => {
                       fieldRefs.current.additions = el;
                     }}>
                     <StandardField
@@ -1400,27 +1470,50 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
                         </Checkbox>
                       ))}
                     </SimpleGrid>
-                    <Checkbox
-                      mt={3}
-                      size="sm"
-                      colorScheme="green"
-                      isChecked={Boolean(form.sections_unchanged[APPLICATION_INFO_KEY])}
-                      onChange={(e) => setSection(APPLICATION_INFO_KEY, e.target.checked)}>
-                      <Text fontSize="sm">
-                        {intl.formatMessage({
-                          id: 'osp.annual.applicationInfoUnchanged',
-                          defaultMessage:
-                            'Business name, address, telephone and the person responsible for the operation are unchanged (7 CFR 205.406(a)(3))'
-                        })}
-                      </Text>
-                    </Checkbox>
-                    <Text fontSize="xs" color="gray.500" mt={1}>
-                      {intl.formatMessage({
-                        id: 'osp.annual.applicationInfoUnchangedHelp',
-                        defaultMessage:
-                          'Leave it unticked if any of them changed, and tell your certifying agent what changed. The filing prints your answer either way.'
-                      })}
-                    </Text>
+                    {/*
+                      § 205.406(a)(3) is answered detail by detail against the record
+                      (OSPCompanyDetailsStep): the "unchanged" statement is set by the server
+                      only when every detail is confirmed, never by a tick here. The step needs a
+                      saved draft, because it writes to one.
+                    */}
+                    <Box mt={3}>
+                      {editingId != null && companyId && farmId ? (
+                        <OSPCompanyDetailsStep
+                          companyId={companyId}
+                          farmId={farmId}
+                          updateId={editingId}
+                          blockedReason={
+                            form.application_info_changes !==
+                            (updates.find((u) => u.id === editingId)?.application_info_changes ||
+                              '')
+                              ? intl.formatMessage({
+                                  id: 'osp.annual.companyDetails.saveTextFirst',
+                                  defaultMessage:
+                                    'Save the update first: the text below has changes that are not saved yet.'
+                                })
+                              : null
+                          }
+                          onApplied={(review) =>
+                            setForm((prev) => ({
+                              ...prev,
+                              application_info_changes: review.application_info_changes,
+                              sections_unchanged: {
+                                ...prev.sections_unchanged,
+                                [APPLICATION_INFO_KEY]: review.attested_unchanged
+                              }
+                            }))
+                          }
+                        />
+                      ) : (
+                        <Text fontSize="xs" color="gray.600">
+                          {intl.formatMessage({
+                            id: 'osp.annual.companyDetails.saveDraftFirst',
+                            defaultMessage:
+                              'Save this update as a draft, then open it with Edit to confirm or update the company details (§ 205.406(a)(3)).'
+                          })}
+                        </Text>
+                      )}
+                    </Box>
                     <Box
                       mt={3}
                       ref={(el: HTMLDivElement | null) => {
@@ -1431,6 +1524,11 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
                           id: 'osp.annual.applicationInfoChanges',
                           defaultMessage:
                             'What changed in the application information (§ 205.406(a)(3))'
+                        })}
+                        helpText={intl.formatMessage({
+                          id: 'osp.annual.applicationInfoChangesHelp',
+                          defaultMessage:
+                            'Updates made in Company details above add a dated line here. Add anything else that changed, such as the person authorized to act for a corporation.'
                         })}
                         error={fieldErrors.application_info_changes}>
                         <StandardTextarea

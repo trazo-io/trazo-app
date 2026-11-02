@@ -1,5 +1,8 @@
 /**
- * One sale's traceback chain: sale -> harvest picks -> season -> inputs -> harvest and sales.
+ * One traceback chain: sale -> harvest picks -> season -> inputs -> harvest and sales, or, anchored
+ * on a harvest lot (`trace.anchor === 'pick'`, product in storage), the pick -> where it went (the
+ * sales that name it) -> season -> inputs -> harvest and sales -> recorded harvested minus recorded
+ * sold per storage location.
  *
  * Shared by the operation's own Traceback page and the certifier review link, so both read the
  * same chain the same way (backend: history/services/traceback.py builds it once).
@@ -16,6 +19,7 @@ import { FaArrowDown, FaPaperclip } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
 import { StandardAlert, StandardButton, StandardCard } from 'components/Design/StandardComponents';
+import OnHandByLocation from './OnHandByLocation';
 
 export type TraceGap = {
   hop: string;
@@ -130,20 +134,60 @@ interface TraceChainProps {
   onNavigate?: (path: string) => void;
   /** Rendered in the season card's header (the operation's "Open the season"). */
   seasonAction?: ReactNode;
+  /** A lot trace only: open the trace of a sale that names the pick. */
+  onOpenSale?: (saleId: number) => void;
 }
+
+/** One forward sale on a lot trace: a sale that names the pick, or one that names no pick. */
+const SaleLine = ({
+  sale,
+  t,
+  onOpenSale
+}: {
+  sale: any;
+  t: (id: string, values?: Record<string, string | number>) => string;
+  onOpenSale?: (saleId: number) => void;
+}) => (
+  <HStack justify="space-between" borderWidth="1px" borderRadius="md" p={3} spacing={3}>
+    <Box flex={1} minW={0}>
+      <Text fontWeight="semibold" fontSize="sm">
+        {[sale.date, sale.buyer, sale.quantity, sale.invoice].filter(Boolean).join(' · ')}
+      </Text>
+      <Text fontSize="sm" color="gray.600">
+        {[
+          t(
+            sale.organic_on_invoice
+              ? 'traceback.sale.organicOnInvoice'
+              : 'traceback.sale.notOrganicOnInvoice'
+          ),
+          sale.picks_named > 1 && t('traceback.lotSales.alsoNames', { count: sale.picks_named - 1 })
+        ]
+          .filter(Boolean)
+          .join(' · ')}
+      </Text>
+    </Box>
+    {onOpenSale && (
+      <StandardButton size="sm" flexShrink={0} onClick={() => onOpenSale(sale.sale_id)}>
+        {t('traceback.matches.trace')}
+      </StandardButton>
+    )}
+  </HStack>
+);
 
 export const TraceChain = ({
   trace: tb,
   fileHref,
   fixPath,
   onNavigate,
-  seasonAction
+  seasonAction,
+  onOpenSale
 }: TraceChainProps) => {
   const intl = useIntl();
   const t = (id: string, values?: Record<string, string | number>) =>
     intl.formatMessage({ id }, values);
   const forOperation = Boolean(fixPath);
   const season = tb.season;
+  const isLot = tb.anchor === 'pick';
 
   // A gap names its record: "an input has no supplier" sent the reader hunting through every
   // row (MEASURED on the walnut showcase: 8 inputs, the gap was the 1st), and two picks without a
@@ -275,6 +319,36 @@ export const TraceChain = ({
         );
       });
 
+  // One pick's facts, the same card on a sale trace (every pick it names) and on a lot trace
+  // (the anchored pick).
+  const pickCard = (p: any, i: number) => (
+    <WrapItem
+      key={p.id ?? `${p.lot_code}-${i}`}
+      borderWidth="1px"
+      borderRadius="md"
+      p={3}
+      minW="220px">
+      <VStack align="start" spacing={0}>
+        <Fact label={t('traceback.field.lotCode')} value={p.lot_code} />
+        <Fact label={t('traceback.field.date')} value={p.date} />
+        <Fact label={t('traceback.field.block')} value={p.block} />
+        <Fact label={t('traceback.field.quantity')} value={p.quantity} />
+        <Fact label={t('traceback.field.storage')} value={p.storage} />
+        <Fact
+          label={t('traceback.field.destination')}
+          value={DESTINATION_KEYS[p.destination] ? t(DESTINATION_KEYS[p.destination]) : ''}
+        />
+        <Fact label={t('traceback.field.sentToHandler')} value={p.quantity_sent_to_handler} />
+        <Fact
+          label={t('traceback.field.returnedFromHandler')}
+          value={p.quantity_returned_from_handler}
+        />
+        <Fact label={t('traceback.field.handlerDocument')} value={p.handler_document} />
+        <Files docs={p.documents} />
+      </VStack>
+    </WrapItem>
+  );
+
   return (
     <Box>
       {/* A count of missing links, never a grade. The count rides a warning PILL, not orange text:
@@ -299,75 +373,87 @@ export const TraceChain = ({
           </Text>
         )}
       </Box>
-      <StandardCard title={t('traceback.hop.sale')}>
-        <Fact label={t('traceback.field.date')} value={tb.sale.date} />
-        <Fact label={t('traceback.field.buyer')} value={tb.sale.buyer} />
-        <Fact label={t('traceback.field.quantity')} value={tb.sale.quantity} />
-        <Fact label={t('traceback.field.invoice')} value={tb.sale.invoice} />
-        <Fact label={t('traceback.field.bol')} value={tb.sale.bol} />
-        <Files docs={tb.sale.documents} />
-        <Text fontSize="sm">
-          {t(
-            tb.sale.organic_on_invoice
-              ? 'traceback.sale.organicOnInvoice'
-              : 'traceback.sale.notOrganicOnInvoice'
-          )}
-          {tb.sale.label_category && LABEL_CATEGORY_KEYS[tb.sale.label_category]
-            ? ` · ${t(LABEL_CATEGORY_KEYS[tb.sale.label_category])}`
-            : ''}
-        </Text>
-        <Box mt={3}>{gapsFor('sale')}</Box>
-      </StandardCard>
-
-      <Connector
-        label={t(
-          tb.picks_linked ? 'traceback.link.saleToPick' : 'traceback.link.saleToPickMissing'
-        )}
-      />
-
-      <StandardCard
-        title={t('traceback.hop.picks')}
-        subtitle={tb.picks_linked ? undefined : t('traceback.picks.unlinkedSubtitle')}>
-        <Box mb={3}>{gapsFor('picks')}</Box>
-        {tb.picks.length === 0 ? (
-          <Text fontSize="sm">{t('traceback.picks.none')}</Text>
-        ) : (
-          <Wrap spacing={3}>
-            {tb.picks.map((p: any, i: number) => (
-              <WrapItem
-                key={p.id ?? `${p.lot_code}-${i}`}
-                borderWidth="1px"
-                borderRadius="md"
-                p={3}
-                minW="220px">
-                <VStack align="start" spacing={0}>
-                  <Fact label={t('traceback.field.lotCode')} value={p.lot_code} />
-                  <Fact label={t('traceback.field.date')} value={p.date} />
-                  <Fact label={t('traceback.field.block')} value={p.block} />
-                  <Fact label={t('traceback.field.quantity')} value={p.quantity} />
-                  <Fact label={t('traceback.field.storage')} value={p.storage} />
-                  <Fact
-                    label={t('traceback.field.destination')}
-                    value={
-                      DESTINATION_KEYS[p.destination] ? t(DESTINATION_KEYS[p.destination]) : ''
-                    }
-                  />
-                  <Fact
-                    label={t('traceback.field.sentToHandler')}
-                    value={p.quantity_sent_to_handler}
-                  />
-                  <Fact
-                    label={t('traceback.field.returnedFromHandler')}
-                    value={p.quantity_returned_from_handler}
-                  />
-                  <Fact label={t('traceback.field.handlerDocument')} value={p.handler_document} />
-                  <Files docs={p.documents} />
+      {isLot ? (
+        <>
+          {/* The anchored pick, and where it went: forward to the sales that name it. Inside one
+              card, so the chain below still reads lot -> season -> inputs. */}
+          <StandardCard title={t('traceback.hop.lot')}>
+            <Box mb={3}>{gapsFor('picks')}</Box>
+            <Wrap spacing={3}>{(tb.picks || []).map(pickCard)}</Wrap>
+            <Box mt={4}>
+              <Text fontWeight="semibold">{t('traceback.hop.lotSales')}</Text>
+              <Text fontSize="sm" color="gray.600" mb={2}>
+                {t('traceback.lotSales.subtitle')}
+              </Text>
+              {(tb.sales || []).length === 0 ? (
+                <Text fontSize="sm">{t('traceback.lotSales.none')}</Text>
+              ) : (
+                <VStack align="stretch" spacing={2}>
+                  {tb.sales.map((sale: any) => (
+                    <SaleLine key={sale.sale_id} sale={sale} t={t} onOpenSale={onOpenSale} />
+                  ))}
                 </VStack>
-              </WrapItem>
-            ))}
-          </Wrap>
-        )}
-      </StandardCard>
+              )}
+            </Box>
+            {/* Sales that name no pick may hold this one; the records cannot say, so they are
+                listed beside it, never counted as where it went. */}
+            {(tb.sales_naming_no_pick || []).length > 0 && (
+              <Box mt={4}>
+                <Text fontWeight="semibold" fontSize="sm">
+                  {t('traceback.lotSales.unlinkedTitle')}
+                </Text>
+                <Text fontSize="sm" color="gray.600" mb={2}>
+                  {t('traceback.lotSales.unlinkedHelp')}
+                </Text>
+                <VStack align="stretch" spacing={2}>
+                  {tb.sales_naming_no_pick.map((sale: any) => (
+                    <SaleLine key={sale.sale_id} sale={sale} t={t} onOpenSale={onOpenSale} />
+                  ))}
+                </VStack>
+              </Box>
+            )}
+          </StandardCard>
+        </>
+      ) : (
+        <>
+          <StandardCard title={t('traceback.hop.sale')}>
+            <Fact label={t('traceback.field.date')} value={tb.sale.date} />
+            <Fact label={t('traceback.field.buyer')} value={tb.sale.buyer} />
+            <Fact label={t('traceback.field.quantity')} value={tb.sale.quantity} />
+            <Fact label={t('traceback.field.invoice')} value={tb.sale.invoice} />
+            <Fact label={t('traceback.field.bol')} value={tb.sale.bol} />
+            <Files docs={tb.sale.documents} />
+            <Text fontSize="sm">
+              {t(
+                tb.sale.organic_on_invoice
+                  ? 'traceback.sale.organicOnInvoice'
+                  : 'traceback.sale.notOrganicOnInvoice'
+              )}
+              {tb.sale.label_category && LABEL_CATEGORY_KEYS[tb.sale.label_category]
+                ? ` · ${t(LABEL_CATEGORY_KEYS[tb.sale.label_category])}`
+                : ''}
+            </Text>
+            <Box mt={3}>{gapsFor('sale')}</Box>
+          </StandardCard>
+
+          <Connector
+            label={t(
+              tb.picks_linked ? 'traceback.link.saleToPick' : 'traceback.link.saleToPickMissing'
+            )}
+          />
+
+          <StandardCard
+            title={t('traceback.hop.picks')}
+            subtitle={tb.picks_linked ? undefined : t('traceback.picks.unlinkedSubtitle')}>
+            <Box mb={3}>{gapsFor('picks')}</Box>
+            {tb.picks.length === 0 ? (
+              <Text fontSize="sm">{t('traceback.picks.none')}</Text>
+            ) : (
+              <Wrap spacing={3}>{tb.picks.map(pickCard)}</Wrap>
+            )}
+          </StandardCard>
+        </>
+      )}
 
       <Connector label={t('traceback.link.pickToSeason')} />
 
@@ -479,6 +565,8 @@ export const TraceChain = ({
           </Text>
         )}
       </StandardCard>
+
+      {tb.on_hand && <OnHandByLocation onHand={tb.on_hand} />}
     </Box>
   );
 };

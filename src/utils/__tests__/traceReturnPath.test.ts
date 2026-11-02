@@ -9,6 +9,9 @@ describe('traceReturnPath', () => {
     expect(traceReturnPath('/admin/dashboard/farm/4/traceback?sale=12', '4', FALLBACK)).toBe(
       '/admin/dashboard/farm/4/traceback?sale=12'
     );
+    expect(traceReturnPath('/admin/dashboard/farm/4/traceback?pick=31', '4', FALLBACK)).toBe(
+      '/admin/dashboard/farm/4/traceback?pick=31'
+    );
     expect(traceReturnPath('/admin/dashboard/farm/4/traceback', '4', FALLBACK)).toBe(
       '/admin/dashboard/farm/4/traceback'
     );
@@ -19,6 +22,8 @@ describe('traceReturnPath', () => {
     ['an absolute URL', 'https://evil.example/admin/dashboard/farm/4/traceback'],
     ['a protocol-relative URL', '//evil.example'],
     ['extra parameters', '/admin/dashboard/farm/4/traceback?sale=1&x=2'],
+    ['two anchors', '/admin/dashboard/farm/4/traceback?pick=1&sale=2'],
+    ['another parameter name', '/admin/dashboard/farm/4/traceback?season=1'],
     ['another page', '/admin/dashboard/farm/4/documents'],
     ['nothing', null]
   ])('ignores %s', (_label, next) => {

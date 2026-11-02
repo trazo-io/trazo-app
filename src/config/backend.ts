@@ -268,6 +268,12 @@ export const OSP_MODULE_DEFINITIONS_URL = (
 export const OSP_MODULES_URL = (companyId: string, farmId: string, ospId: string | number) =>
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/modules/`;
 
+export const OSP_SEEDLING_SUPPLIERS_URL = (
+  companyId: string,
+  farmId: string,
+  ospId: string | number
+) => `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/seedling-suppliers/`;
+
 export const OSP_MODULE_URL = (
   companyId: string,
   farmId: string,

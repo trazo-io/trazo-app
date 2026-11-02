@@ -73,6 +73,8 @@ vi.mock('store/api/ospAnnualUpdateApi', () => ({
   useFileOSPAnnualUpdateMutation: () => [vi.fn(), { isLoading: false }],
   useCorrectOSPAnnualUpdateMutation: () => [correctUpdate, { isLoading: false }],
   useWithdrawOSPAnnualUpdateMutation: () => [vi.fn(), { isLoading: false }],
+  useGetCompanyDetailsReviewQuery: () => ({ data: undefined, isLoading: false }),
+  useConfirmCompanyDetailsMutation: () => [vi.fn(), { isLoading: false }],
   FILING_METHODS: ['agent_web_form', 'agent_portal', 'email', 'mail', 'in_person']
 }));
 

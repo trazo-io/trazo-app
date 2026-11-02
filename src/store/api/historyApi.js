@@ -389,6 +389,29 @@ export const historyApi = baseApi.injectEndpoints({
       }),
       keepUnusedDataFor: 0
     }),
+    // The same drill from a harvest lot: product in storage, not yet sold. Search returns EVERY
+    // pick a lot code, packer's receipt or season lot ID matches; the trace is the chain behind
+    // one pick, forward to the sales that name it.
+    searchTracebackLots: build.query({
+      query: ({ q, establishmentId }) => {
+        const params = new URLSearchParams({ q });
+        if (establishmentId) params.set('establishment_id', establishmentId);
+        return {
+          url: `sales_records/lot_traceback_search/?${params}`,
+          method: 'GET',
+          credentials: 'include'
+        };
+      },
+      keepUnusedDataFor: 0
+    }),
+    getLotTraceback: build.query({
+      query: ({ pickId, establishmentId }) => ({
+        url: `sales_records/lot_traceback/${pickId}/?establishment_id=${establishmentId}`,
+        method: 'GET',
+        credentials: 'include'
+      }),
+      keepUnusedDataFor: 0
+    }),
     createSalesRecord: build.mutation({
       query: (salesRecord) => ({
         url: 'sales_records/',
@@ -456,6 +479,8 @@ export const {
   useGetHarvestLotsQuery,
   useSearchTracebackSalesQuery,
   useGetSaleTracebackQuery,
+  useSearchTracebackLotsQuery,
+  useGetLotTracebackQuery,
   useCreateSalesRecordMutation,
   useDeleteSalesRecordMutation,
   useVoidSalesRecordMutation
