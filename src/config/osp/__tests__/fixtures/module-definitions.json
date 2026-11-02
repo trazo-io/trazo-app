@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.11.01",
+  "content_version": "2026.11.02",
   "registry": {
-    "content_version": "2026.11.01",
+    "content_version": "2026.11.02",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -3474,6 +3474,38 @@
                       "es": "Rotación de cultivos"
                     },
                     "exclusive": false
+                  },
+                  {
+                    "value": "compost_tea",
+                    "label": {
+                      "en": "Compost tea",
+                      "es": "Té de compost"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "fallow",
+                    "label": {
+                      "en": "Fallow rotations",
+                      "es": "Rotaciones con barbecho"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "conservation_cover",
+                    "label": {
+                      "en": "Perennial conservation cover",
+                      "es": "Cobertura de conservación perenne"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otro (describe abajo)"
+                    },
+                    "exclusive": false
                   }
                 ],
                 "required": true,
@@ -3482,6 +3514,31 @@
                 "prefill": {
                   "source": "soil_amendment_evidence"
                 },
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "fertility_components_other",
+                "kind": "text",
+                "label": {
+                  "en": "Other fertility practice",
+                  "es": "Otra práctica de fertilidad"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "fertility_components",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
                 "embed": null,
@@ -3867,6 +3924,14 @@
                     "exclusive": false
                   },
                   {
+                    "value": "planned_grazing",
+                    "label": {
+                      "en": "Planned grazing of animals in organic crop areas",
+                      "es": "Pastoreo planificado de animales en áreas de cultivo orgánico"
+                    },
+                    "exclusive": false
+                  },
+                  {
                     "value": "none",
                     "label": {
                       "en": "None of these are used",
@@ -3892,8 +3957,8 @@
           {
             "key": "b_raw_manure",
             "title": {
-              "en": "B. Raw manure",
-              "es": "B. Estiércol crudo"
+              "en": "B. Raw manure and planned grazing",
+              "es": "B. Estiércol crudo y pastoreo planificado"
             },
             "education": [
               {
@@ -3904,28 +3969,31 @@
             "visible_when": [
               {
                 "question": "materials_applied",
-                "op": "includes",
-                "value": "raw_manure"
+                "op": "includes_any",
+                "value": [
+                  "raw_manure",
+                  "planned_grazing"
+                ]
               }
             ],
             "questions": [
               {
                 "key": "raw_manure_interval_rule",
-                "kind": "radio",
+                "kind": "checkbox_group",
                 "label": {
-                  "en": "Which application rule applies to your raw manure use?",
-                  "es": "¿Qué regla de aplicación corresponde al uso de estiércol crudo?"
+                  "en": "Which application rules apply to your raw manure use and planned grazing? Check all that apply.",
+                  "es": "¿Qué reglas de aplicación corresponden a tu uso de estiércol crudo y al pastoreo planificado? Marca todas las que correspondan."
                 },
                 "coaching": {
-                  "en": "Choose the rule that matches how the manure is actually used — it sets the minimum number of days between application and harvest.",
-                  "es": "Elige la regla que corresponde al uso real del estiércol — determina el número mínimo de días entre la aplicación y la cosecha."
+                  "en": "Check each rule that matches how manure is applied or animals graze on your land. Each one sets the minimum number of days between application and harvest for those crops.",
+                  "es": "Marca cada regla que corresponde a cómo se aplica el estiércol o pastorean los animales en tu tierra. Cada una fija el número mínimo de días entre la aplicación y la cosecha de esos cultivos."
                 },
                 "options": [
                   {
                     "value": "non_food_crop",
                     "label": {
-                      "en": "Applied only to land growing crops not intended for human consumption (no waiting interval required)",
-                      "es": "Aplicado solo en tierra que produce cultivos no destinados al consumo humano (no requiere intervalo de espera)"
+                      "en": "Applied to land growing crops not intended for human consumption (no waiting interval required)",
+                      "es": "Aplicado en tierra que produce cultivos no destinados al consumo humano (no requiere intervalo de espera)"
                     },
                     "exclusive": false
                   },
@@ -3942,6 +4010,14 @@
                     "label": {
                       "en": "Incorporated into the soil at least 90 days before harvest of a crop whose edible portion does not contact the soil",
                       "es": "Incorporado al suelo al menos 90 días antes de la cosecha de un cultivo cuya porción comestible no tiene contacto con el suelo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "processed_meets_5006",
+                    "label": {
+                      "en": "Manure is processed or pelleted to the NOP 5006 time, temperature and moisture standard",
+                      "es": "El estiércol se procesa o pelletiza según el estándar de tiempo, temperatura y humedad de NOP 5006"
                     },
                     "exclusive": false
                   }
@@ -3969,7 +4045,13 @@
                 },
                 "options": [],
                 "required": true,
-                "visible_when": [],
+                "visible_when": [
+                  {
+                    "question": "materials_applied",
+                    "op": "includes",
+                    "value": "raw_manure"
+                  }
+                ],
                 "nop_cite": "§ 205.203(c)(1)",
                 "prefill": null,
                 "parcel_field": null,
@@ -4068,8 +4150,36 @@
                 "key": "raw_manure_water_risk",
                 "kind": "textarea",
                 "label": {
-                  "en": "How do you prevent raw manure from contaminating water sources (runoff, wells, waterways)?",
-                  "es": "¿Cómo evitas que el estiércol crudo contamine fuentes de agua (escorrentía, pozos, cauces)?"
+                  "en": "How do you prevent raw manure, applied or from grazing animals, from contaminating water sources (runoff, wells, waterways)?",
+                  "es": "¿Cómo evitas que el estiércol crudo, aplicado o de animales en pastoreo, contamine fuentes de agua (escorrentía, pozos, cauces)?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "materials_applied",
+                    "op": "includes_any",
+                    "value": [
+                      "raw_manure",
+                      "planned_grazing"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.203(c)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "raw_manure_supplier_statement_upload",
+                "kind": "upload",
+                "label": {
+                  "en": "Attach the product label or supplier statement",
+                  "es": "Adjunta la etiqueta del producto o la declaración del proveedor"
                 },
                 "coaching": null,
                 "options": [],
@@ -4079,9 +4189,14 @@
                     "question": "materials_applied",
                     "op": "includes",
                     "value": "raw_manure"
+                  },
+                  {
+                    "question": "raw_manure_supplier_statement",
+                    "op": "truthy",
+                    "value": null
                   }
                 ],
-                "nop_cite": null,
+                "nop_cite": "§ 205.203(c)(1)",
                 "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
@@ -4114,7 +4229,8 @@
                 "value": [
                   "on_farm_compost",
                   "vermicompost",
-                  "purchased_compost"
+                  "purchased_compost",
+                  "compost_tea"
                 ]
               }
             ],
@@ -4126,7 +4242,10 @@
                   "en": "Which compost production method do you use?",
                   "es": "¿Qué método de producción de compost utilizas?"
                 },
-                "coaching": null,
+                "coaching": {
+                  "en": "If the compost meets none of these standards, choose the last option and also mark raw manure on page A, so the raw-manure questions open.",
+                  "es": "Si el compost no cumple ninguno de estos estándares, elige la última opción y marca también estiércol crudo en la página A, para que se abran las preguntas de estiércol crudo."
+                },
                 "options": [
                   {
                     "value": "windrow",
@@ -4157,6 +4276,14 @@
                     "label": {
                       "en": "Vermicomposting (worm-based)",
                       "es": "Vermicompostaje (a base de lombrices)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "does_not_meet",
+                    "label": {
+                      "en": "a process that meets none of these standards, so the compost is treated as raw manure",
+                      "es": "un proceso que no cumple ninguno de estos estándares, así que el compost se trata como estiércol crudo"
                     },
                     "exclusive": false
                   }
@@ -4391,6 +4518,405 @@
                   }
                 ],
                 "nop_cite": "§ 205.203(c)(2)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "compost_contains_manure",
+                "kind": "radio",
+                "label": {
+                  "en": "Does the compost you make contain manure or other animal materials?",
+                  "es": "¿El compost que produces contiene estiércol u otros materiales animales?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "contains_manure",
+                    "label": {
+                      "en": "Yes, it contains manure or animal materials",
+                      "es": "Sí, contiene estiércol o materiales animales"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "plant_materials_only",
+                    "label": {
+                      "en": "No, plant materials only",
+                      "es": "No, solo materiales vegetales"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "materials_applied",
+                    "op": "includes",
+                    "value": "on_farm_compost"
+                  }
+                ],
+                "nop_cite": "§ 205.203(c)(2)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "compost_tea_made_on_farm",
+                "kind": "boolean",
+                "label": {
+                  "en": "Do you make the compost tea or liquid extract yourself?",
+                  "es": "¿Produces tú mismo el té de compost o extracto líquido?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "materials_applied",
+                    "op": "includes",
+                    "value": "compost_tea"
+                  }
+                ],
+                "nop_cite": "§ 205.203(c)(2)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "vermicompost_made_on_farm",
+                "kind": "boolean",
+                "label": {
+                  "en": "Do you make the vermicompost yourself?",
+                  "es": "¿Produces tú mismo el vermicompost?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "materials_applied",
+                    "op": "includes",
+                    "value": "vermicompost"
+                  }
+                ],
+                "nop_cite": "§ 205.203(c)(2)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "compost_feedstocks",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Which feedstocks go into the compost, compost tea or vermicompost you make?",
+                  "es": "¿Qué materias primas usas en el compost, té de compost o vermicompost que produces?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "manure_animal",
+                    "label": {
+                      "en": "Manure or other animal materials",
+                      "es": "Estiércol u otros materiales animales"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "plant_materials",
+                    "label": {
+                      "en": "Plant materials",
+                      "es": "Materiales vegetales"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "recycled_paper",
+                    "label": {
+                      "en": "Newspaper or other recycled paper without glossy or colored ink",
+                      "es": "Periódico u otro papel reciclado sin tinta brillante o de color"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otra"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "materials_applied",
+                    "op": "includes_any",
+                    "value": [
+                      "on_farm_compost",
+                      "vermicompost",
+                      "compost_tea"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.203(c)(2)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "compost_feedstocks_detail",
+                "kind": "textarea",
+                "label": {
+                  "en": "List the ingredients of each product you make (one list per compost, tea or vermicompost)",
+                  "es": "Lista los ingredientes de cada producto que elaboras (una lista por compost, té o vermicompost)"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "materials_applied",
+                    "op": "includes_any",
+                    "value": [
+                      "on_farm_compost",
+                      "vermicompost",
+                      "compost_tea"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.203(c)(2)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "compost_logs_kept",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Besides the temperature log, which composting logs do you keep?",
+                  "es": "Además del registro de temperatura, ¿qué registros de compostaje conservas?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "turning",
+                    "label": {
+                      "en": "Turning log",
+                      "es": "Registro de volteos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "moisture",
+                    "label": {
+                      "en": "Moisture log",
+                      "es": "Registro de humedad"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otro"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "materials_applied",
+                    "op": "includes_any",
+                    "value": [
+                      "on_farm_compost",
+                      "vermicompost",
+                      "compost_tea"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.203(c)(2)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "compost_logs_location",
+                "kind": "text",
+                "label": {
+                  "en": "Where are the logs kept?",
+                  "es": "¿Dónde se guardan los registros?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "materials_applied",
+                    "op": "includes_any",
+                    "value": [
+                      "on_farm_compost",
+                      "vermicompost",
+                      "compost_tea"
+                    ]
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "compost_applied_inside_interval",
+                "kind": "boolean",
+                "label": {
+                  "en": "Do you apply compost you make that contains manure to crops for human consumption less than 90 or 120 days before harvest?",
+                  "es": "¿Aplicas compost que produces y que contiene estiércol a cultivos para consumo humano menos de 90 o 120 días antes de la cosecha?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "materials_applied",
+                    "op": "includes",
+                    "value": "on_farm_compost"
+                  }
+                ],
+                "nop_cite": "§ 205.203(c)(2)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "vermicompost_conditions_met",
+                "kind": "radio",
+                "label": {
+                  "en": "For vermicompost containing manure: are aerobic conditions and 70 to 90% moisture kept, and does it run long enough that the finished product does not contaminate crops, soil or water?",
+                  "es": "Para vermicompost con estiércol: ¿se mantienen condiciones aeróbicas y 70 a 90% de humedad, y dura lo suficiente para que el producto final no contamine cultivos, suelo o agua?"
+                },
+                "coaching": {
+                  "en": "If you answer No, also mark raw manure on page A, so the raw-manure questions open.",
+                  "es": "Si respondes No, marca también estiércol crudo en la página A, para que se abran las preguntas de estiércol crudo."
+                },
+                "options": [
+                  {
+                    "value": "no_manure",
+                    "label": {
+                      "en": "Not applicable: our vermicompost contains no manure",
+                      "es": "No aplica: nuestro vermicompost no contiene estiércol"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "conditions_met",
+                    "label": {
+                      "en": "Yes, and production records and any test results are kept",
+                      "es": "Sí, y se conservan registros de producción y resultados de análisis"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "does_not_meet",
+                    "label": {
+                      "en": "No, so the vermicompost is treated as raw manure",
+                      "es": "No, así que el vermicompost se trata como estiércol crudo"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "materials_applied",
+                    "op": "includes",
+                    "value": "vermicompost"
+                  }
+                ],
+                "nop_cite": "§ 205.203(c)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "vermicompost_applied_inside_interval",
+                "kind": "boolean",
+                "label": {
+                  "en": "Do you apply vermicompost you make that contains manure to crops for human consumption less than 90 or 120 days before harvest?",
+                  "es": "¿Aplicas vermicompost que produces y que contiene estiércol a cultivos para consumo humano menos de 90 o 120 días antes de la cosecha?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "materials_applied",
+                    "op": "includes",
+                    "value": "vermicompost"
+                  }
+                ],
+                "nop_cite": "§ 205.203(c)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              }
+            ]
+          },
+          {
+            "key": "d_notes",
+            "title": {
+              "en": "D. Additional information",
+              "es": "D. Información adicional"
+            },
+            "education": [],
+            "visible_when": [],
+            "questions": [
+              {
+                "key": "soil_fertility_additional_notes",
+                "kind": "textarea",
+                "label": {
+                  "en": "Anything else about your soil fertility, compost or manure the certifier should know",
+                  "es": "Cualquier otra cosa sobre la fertilidad del suelo, el compost o el estiércol que el certificador deba saber"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
