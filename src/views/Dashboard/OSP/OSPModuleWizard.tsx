@@ -42,8 +42,10 @@ import {
   StandardInput,
   StandardPage,
   StandardPageLoading,
+  StandardAlert,
   StandardSelect,
-  StandardTextarea
+  StandardTextarea,
+  STATUS_URGENCY_TOKENS
 } from 'components/Design/StandardComponents';
 import {
   answerValue,
@@ -79,7 +81,7 @@ import OSPHandlerFacilitiesPanel from './OSPHandlerFacilitiesPanel';
 import OSPRecordTypesPanel from './OSPRecordTypesPanel';
 import { selectWorkingOsp } from './selectWorkingOsp';
 import { holdsRetiredOption, offeredOptions, toggleCheckbox } from 'config/osp/optionChoices';
-import { agentCaption } from 'config/osp/agentCaption';
+import { agentCaption, blankAskedKeys } from 'config/osp/agentCaption';
 
 /**
  * `isReadOnly` is the plan-is-locked state, and it should now never be true: a locked plan
@@ -238,7 +240,8 @@ const QuestionField = ({
   moduleKey,
   osp,
   onNavigateAway,
-  agentAsks
+  agentAsks,
+  agentBlank
 }: {
   question: ModuleQuestion;
   value: AnswerValue;
@@ -258,6 +261,11 @@ const QuestionField = ({
   onNavigateAway?: () => Promise<boolean> | boolean;
   /** "WSDA asks this in K Storage (AGR 2121), item 3a." Absent for an agent with no register. */
   agentAsks?: string | null;
+  /**
+   * Set once the grower has tried to leave the page with this question blank while their agent
+   * asks it. A soft flag in words, never a block: Trazo does not require it, the agent might.
+   */
+  agentBlank?: string | null;
 }) => {
   const intl = useIntl();
   const label = pickText(question.label, locale);
@@ -461,6 +469,15 @@ const QuestionField = ({
       {missing ? (
         <Text fontSize="xs" color="red.700" mt={1}>
           {intl.formatMessage({ id: 'osp.wizard.required' })}
+        </Text>
+      ) : null}
+      {agentBlank ? (
+        <Text
+          fontSize="xs"
+          color={STATUS_URGENCY_TOKENS.warn.text}
+          mt={1}
+          data-testid={`osp-q-agent-blank-${question.key}`}>
+          {agentBlank}
         </Text>
       ) : null}
     </Box>
@@ -719,6 +736,11 @@ const OSPModuleWizard = () => {
   const [notApplicable, setNotApplicable] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
   const [showMissing, setShowMissing] = useState(false);
+  /**
+   * Pages the grower has tried to leave with a blank question their agent asks. Next stops once
+   * on such a page and names them; pressed again it goes on. Asked once, never nagged.
+   */
+  const [flaggedPages, setFlaggedPages] = useState<string[]>([]);
   const dirtyKeys = useRef<Set<string>>(new Set());
   /**
    * Hydrate once per (plan, module) — not once per mount.
@@ -741,6 +763,7 @@ const OSPModuleWizard = () => {
       setNotApplicable(Boolean(data.response?.not_applicable));
       setStepIndex(0);
       setShowMissing(false);
+      setFlaggedPages([]);
       dirtyKeys.current.clear();
     }
   }, [data, ospId, moduleKey]);
@@ -757,6 +780,15 @@ const OSPModuleWizard = () => {
     () => (definition ? missingRequired(definition, answers, notApplicable) : []),
     [definition, answers, notApplicable]
   );
+  // Blank questions the plan's own agent asks that Trazo does not require. Never blocks.
+  const blankAsked = useMemo(
+    () => (definition ? blankAskedKeys(definition, answers, data?.agent_refs, notApplicable) : []),
+    [definition, answers, data?.agent_refs, notApplicable]
+  );
+  const blankHere = currentPage
+    ? currentPage.questions.filter((q) => blankAsked.includes(q.key)).map((q) => q.key)
+    : [];
+  const pageFlagged = Boolean(currentPage && flaggedPages.includes(currentPage.key));
 
   /**
    * What actually went wrong, in the farmer's words.
@@ -888,6 +920,11 @@ const OSPModuleWizard = () => {
     // progress through a form nobody could fill in) is gone with it.
     if (!(await flushDirty())) return;
     setShowMissing(false);
+    if (currentPage && blankHere.length && !pageFlagged) {
+      // Saved, then held once: the grower sees which ones their agent asks before moving on.
+      setFlaggedPages((pages) => [...pages, currentPage.key]);
+      return;
+    }
     setStepIndex((i) => i + 1);
   };
 
@@ -1118,6 +1155,14 @@ const OSPModuleWizard = () => {
                                 osp={fullOsp}
                                 onNavigateAway={flushDirty}
                                 agentAsks={agentCaption(intl, agentRefs, question.key)}
+                                agentBlank={
+                                  pageFlagged && blankHere.includes(question.key) && agentRefs
+                                    ? intl.formatMessage(
+                                        { id: 'osp.wizard.agentAskedBlank' },
+                                        { agent: agentRefs.agent }
+                                      )
+                                    : null
+                                }
                               />
                               {showSuggestion && (
                                 <Box
@@ -1162,6 +1207,46 @@ const OSPModuleWizard = () => {
                     titleIcon={<Box as={FaCheckCircle} color="green.700" />}
                     title={intl.formatMessage({ id: 'osp.wizard.reviewTitle' })}>
                     <VStack align="stretch" spacing={4}>
+                      {blankAsked.length && agentRefs ? (
+                        // Named here, not enforced: Trazo does not require these, the agent's form
+                        // asks them. Each opens the page it is on.
+                        <StandardAlert
+                          status="warning"
+                          mb={0}
+                          title={intl.formatMessage(
+                            { id: 'osp.wizard.agentAskedBlankReviewTitle' },
+                            { agent: agentRefs.agent, count: blankAsked.length }
+                          )}
+                          description={intl.formatMessage(
+                            { id: 'osp.wizard.agentAskedBlankReviewBody' },
+                            { agent: agentRefs.agent }
+                          )}>
+                          <VStack align="start" spacing={1}>
+                            {visibleQuestions(definition, answers)
+                              .filter(({ question }) => blankAsked.includes(question.key))
+                              .map(({ page, question }) => (
+                                <StandardButton
+                                  key={question.key}
+                                  variant="ghost"
+                                  size="sm"
+                                  h="auto"
+                                  whiteSpace="normal"
+                                  textAlign="left"
+                                  data-testid={`osp-review-agent-blank-${question.key}`}
+                                  onClick={() =>
+                                    setStepIndex(
+                                      Math.max(
+                                        pages.findIndex((p) => p.key === page.key),
+                                        0
+                                      )
+                                    )
+                                  }>
+                                  {pickText(question.label, locale)}
+                                </StandardButton>
+                              ))}
+                          </VStack>
+                        </StandardAlert>
+                      ) : null}
                       {/* Same renderer the locked document uses. It was duplicated inline here,
                       which is how the two came to disagree about a stale option value. */}
                       {visibleQuestions(definition, answers)
@@ -1182,6 +1267,21 @@ const OSPModuleWizard = () => {
                   </StandardCard>
                 )}
 
+                {!onReview && pageFlagged && blankHere.length && agentRefs ? (
+                  <StandardAlert
+                    status="warning"
+                    mb={0}
+                    title={intl.formatMessage(
+                      { id: 'osp.wizard.agentAskedBlankTitle' },
+                      { agent: agentRefs.agent, count: blankHere.length }
+                    )}
+                    description={intl.formatMessage(
+                      { id: 'osp.wizard.agentAskedBlankBody' },
+                      { count: blankHere.length }
+                    )}
+                  />
+                ) : null}
+
                 <Flex justify="space-between" gap={3}>
                   <StandardButton
                     variant="outline"
@@ -1196,7 +1296,12 @@ const OSPModuleWizard = () => {
                     </StandardButton>
                   ) : (
                     <StandardButton minH="44px" onClick={handleNext} isLoading={saving}>
-                      {intl.formatMessage({ id: 'osp.wizard.next' })}
+                      {intl.formatMessage({
+                        id:
+                          pageFlagged && blankHere.length
+                            ? 'osp.wizard.continueAnyway'
+                            : 'osp.wizard.next'
+                      })}
                     </StandardButton>
                   )}
                 </Flex>
