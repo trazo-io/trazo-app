@@ -2,7 +2,9 @@
  * The traceback from a harvest lot (product in storage) and the per-location reading beside it.
  *
  * Backend contract: trazo-back history/tests/test_lot_traceback.py. Here: the page never picks one
- * of several picks for the operator, and a pick reads forward to the sales that name it.
+ * of several picks for the operator, a pick reads forward to the sales that name it, and the
+ * per-location figure is labelled as recorded harvested minus recorded sold, never a count of what
+ * is in storage, with no number where the units do not allow one.
  */
 import React from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
@@ -282,5 +284,50 @@ describe('Traceback from a harvest lot', () => {
     expect(new URLSearchParams(landed.split('?')[1]).get('next')).toBe(
       '/admin/dashboard/farm/1/traceback?pick=31'
     );
+  });
+
+  it('labels each location as recorded harvested minus recorded sold, with no number where units differ', () => {
+    state.lotTrace = LOT_TRACE;
+    renderAt('/admin/dashboard/farm/1/traceback?pick=31');
+    expect(screen.getByText(messages['traceback.onHand.title'])).toBeTruthy();
+    const rows = screen.getAllByTestId('on-hand-location');
+    expect(rows).toHaveLength(3);
+    const [room, cooler, blank] = rows;
+    expect(within(room).getByText('CA Room 4')).toBeTruthy();
+    expect(within(room).getByText(`${messages['traceback.onHand.difference']}:`)).toBeTruthy();
+    expect(within(room).getByText('62 bins')).toBeTruthy();
+    // Mixed units: the reason, with the units, and no figure.
+    expect(
+      within(cooler).getByText(
+        messages['traceback.onHand.notComputed.harvest_units_mixed'].replace('{units}', 'bins, lb')
+      )
+    ).toBeTruthy();
+    expect(within(cooler).queryByText(`${messages['traceback.onHand.difference']}:`)).toBeNull();
+    expect(within(blank).getByText(messages['traceback.onHand.notRecorded'])).toBeTruthy();
+    // A multi-location sale is named with its locations, never split.
+    const unallocated = screen.getByTestId('on-hand-unallocated');
+    expect(
+      within(unallocated).getByText(
+        new RegExp(
+          messages['traceback.onHand.unallocated.several_locations']
+            .replace('{locations}', `${messages['traceback.onHand.notRecorded']}, CA Room 4`)
+            .replace(/[()]/g, '\\$&')
+        )
+      )
+    ).toBeTruthy();
+    expect(
+      within(unallocated).getByText(
+        new RegExp(messages['traceback.onHand.unallocated.names_no_pick'])
+      )
+    ).toBeTruthy();
+  });
+
+  it('never reads as inventory, a total or a percentage', () => {
+    state.lotTrace = LOT_TRACE;
+    const { container } = renderAt('/admin/dashboard/farm/1/traceback?pick=31');
+    const text = container.textContent || '';
+    expect(text).toContain(messages['traceback.onHand.title']);
+    expect(text).not.toMatch(/%/);
+    expect(text.toLowerCase()).not.toMatch(/\binventory\b|\bon hand\b/);
   });
 });

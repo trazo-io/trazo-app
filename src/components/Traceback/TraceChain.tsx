@@ -1,7 +1,8 @@
 /**
  * One traceback chain: sale -> harvest picks -> season -> inputs -> harvest and sales, or, anchored
  * on a harvest lot (`trace.anchor === 'pick'`, product in storage), the pick -> where it went (the
- * sales that name it) -> season -> inputs -> harvest and sales.
+ * sales that name it) -> season -> inputs -> harvest and sales -> recorded harvested minus recorded
+ * sold per storage location.
  *
  * Shared by the operation's own Traceback page and the certifier review link, so both read the
  * same chain the same way (backend: history/services/traceback.py builds it once).
@@ -18,6 +19,7 @@ import { FaArrowDown, FaPaperclip } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
 import { StandardAlert, StandardButton, StandardCard } from 'components/Design/StandardComponents';
+import OnHandByLocation from './OnHandByLocation';
 
 export type TraceGap = {
   hop: string;
@@ -563,6 +565,8 @@ export const TraceChain = ({
           </Text>
         )}
       </StandardCard>
+
+      {tb.on_hand && <OnHandByLocation onHand={tb.on_hand} />}
     </Box>
   );
 };
