@@ -1229,7 +1229,6 @@ const OSPModuleWizard = () => {
                                   key={question.key}
                                   variant="ghost"
                                   size="sm"
-                                  minH="44px"
                                   h="auto"
                                   whiteSpace="normal"
                                   textAlign="left"
