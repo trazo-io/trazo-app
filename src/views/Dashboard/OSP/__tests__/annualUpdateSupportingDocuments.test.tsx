@@ -154,4 +154,34 @@ describe('supporting documents on the annual update', () => {
       file
     });
   });
+
+  it('a file picked while an upload is in flight is kept when the upload lands (review of #235)', async () => {
+    updateUpdate.mockClear();
+    let resolveUpload: (doc: Record<string, unknown>) => void = () => undefined;
+    uploadDoc.mockImplementationOnce(() => ({
+      unwrap: () =>
+        new Promise((resolve) => {
+          resolveUpload = resolve as (doc: Record<string, unknown>) => void;
+        })
+    }));
+    renderCard();
+    editDraft();
+    fireEvent.click(screen.getByTestId('annual-supporting-open'));
+    fireEvent.change(screen.getByTestId('annual-supporting-upload-input'), {
+      target: { files: [new File(['%PDF'], 'lab.pdf', { type: 'application/pdf' })] }
+    });
+    // The picker is disabled while the real mutation reports `isLoading`; the mocked hook never
+    // does, so the pick lands here and the race is exercised in full.
+    fireEvent.change(screen.getByTestId('annual-supporting-pick'), {
+      target: { value: 'pid-invoice' }
+    });
+    resolveUpload({ id: 34, public_id: 'pid-late', title: 'Late upload', source: 'upload' });
+    await waitFor(() => expect(screen.getByText('Late upload')).toBeInTheDocument());
+    await save();
+    expect(updateUpdate.mock.calls[0]?.[0].data.supporting_document_ids).toEqual([
+      'pid-map',
+      'pid-invoice',
+      'pid-late'
+    ]);
+  });
 });

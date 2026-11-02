@@ -25,11 +25,17 @@ export interface SupportingDocRef {
   title: string;
 }
 
+/**
+ * Add and remove, never "here is the new list": an upload resolves after the render that started
+ * it, and a list computed from that render's value would drop a file picked while the upload was
+ * in flight (review of app #235). The owner applies each change to its CURRENT state.
+ */
 interface Props {
   companyId: string;
   farmId: string;
   value: SupportingDocRef[];
-  onChange: (next: SupportingDocRef[]) => void;
+  onAdd: (ref: SupportingDocRef) => void;
+  onRemove: (publicId: string) => void;
   error?: string;
 }
 
@@ -114,7 +120,7 @@ const SupportingDocumentPicker: React.FC<PickerProps> = ({
             id: 'osp.annual.supporting.pick',
             defaultMessage: 'Attach a file from Documents'
           })}
-          isDisabled={choices.length === 0}
+          isDisabled={choices.length === 0 || uploading}
           onChange={(e: React.ChangeEvent<HTMLSelectElement>) => onPick(e.target.value)}>
           {choices.map((d) => (
             <option key={d.public_id} value={d.public_id}>
@@ -150,17 +156,13 @@ const AnnualUpdateSupportingDocuments: React.FC<Props> = ({
   companyId,
   farmId,
   value,
-  onChange,
+  onAdd,
+  onRemove,
   error
 }) => {
   const intl = useIntl();
   const [picking, setPicking] = useState(false);
   const attachedIds = new Set(value.map((d) => d.public_id));
-
-  const add = (ref: SupportingDocRef) => {
-    if (attachedIds.has(ref.public_id)) return;
-    onChange([...value, ref]);
-  };
 
   return (
     <StandardField
@@ -201,7 +203,7 @@ const AnnualUpdateSupportingDocuments: React.FC<Props> = ({
                   },
                   { title: doc.title }
                 )}
-                onClick={() => onChange(value.filter((d) => d.public_id !== doc.public_id))}>
+                onClick={() => onRemove(doc.public_id)}>
                 {intl.formatMessage({
                   id: 'osp.annual.supporting.remove',
                   defaultMessage: 'Remove'
@@ -215,7 +217,7 @@ const AnnualUpdateSupportingDocuments: React.FC<Props> = ({
             companyId={companyId}
             farmId={farmId}
             attachedIds={attachedIds}
-            onAdd={add}
+            onAdd={onAdd}
           />
         ) : (
           <StandardButton

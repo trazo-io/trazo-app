@@ -479,6 +479,31 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
     });
   };
 
+  // Applied to the CURRENT form, never to the list a render saw: an upload that resolves late must
+  // not drop a file picked while it was in flight (review of app #235).
+  const clearSupportingError = () =>
+    setFieldErrors((prev) => {
+      if (!prev.supporting_document_ids) return prev;
+      const rest = { ...prev };
+      delete rest.supporting_document_ids;
+      return rest;
+    });
+  const addSupporting = (ref: SupportingDocRef) => {
+    setForm((prev) =>
+      prev.supporting_documents.some((d) => d.public_id === ref.public_id)
+        ? prev
+        : { ...prev, supporting_documents: [...prev.supporting_documents, ref] }
+    );
+    clearSupportingError();
+  };
+  const removeSupporting = (publicId: string) => {
+    setForm((prev) => ({
+      ...prev,
+      supporting_documents: prev.supporting_documents.filter((d) => d.public_id !== publicId)
+    }));
+    clearSupportingError();
+  };
+
   /**
    * The card sits well below the fold, so a toast alone leaves the farmer looking at a
    * message that names a field they cannot see (and, before this, named it in snake_case).
@@ -1331,15 +1356,8 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
                       companyId={companyId || ''}
                       farmId={farmId || ''}
                       value={form.supporting_documents}
-                      onChange={(next) => {
-                        set('supporting_documents', next);
-                        setFieldErrors((prev) => {
-                          if (!prev.supporting_document_ids) return prev;
-                          const rest = { ...prev };
-                          delete rest.supporting_document_ids;
-                          return rest;
-                        });
-                      }}
+                      onAdd={addSupporting}
+                      onRemove={removeSupporting}
                       error={fieldErrors.supporting_document_ids}
                     />
                   </Box>
