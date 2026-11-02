@@ -6,6 +6,17 @@ import { OSP_ANNUAL_UPDATE_URL } from 'config';
 
 import baseApi from './baseApi';
 
+/** A file on the farm's Documents shelf that a filing names as support for its (a)(1) summary. */
+export interface AnnualUpdateSupportingDocument {
+  id: number;
+  public_id: string;
+  title: string;
+  source: string;
+  source_display: string;
+  content_type: string;
+  created_at: string;
+}
+
 export interface OSPAnnualUpdate {
   id: number;
   public_id?: string;
@@ -38,6 +49,14 @@ export interface OSPAnnualUpdate {
    *  on the revision's own filed document and signed with it. */
   correction_note?: string;
   corrects?: number | null;
+  /** § 205.406(a)(1) "supported by documentation": files from this farm's Documents, in the order
+   *  attached. Signed with the filing once any is attached, so a signed filing's list is fixed. */
+  supporting_documents?: AnnualUpdateSupportingDocument[];
+  /** Write-only: the public ids of the supporting documents. Replaces the whole list. */
+  supporting_document_ids?: string[];
+  /** The Documents copy of the filed document, set by the server when the filing is recorded.
+   *  Null for a draft, and for revisions filed before Trazo filed a copy (never backfilled). */
+  filed_document?: number | null;
   /** Set by the server at sign time from the signed-in user, never sent by the client. */
   signer_name?: string;
   signer_title?: string;
@@ -90,6 +109,7 @@ export type OSPAnnualUpdateContent = Pick<
   | 'sales_period_start'
   | 'sales_period_end'
   | 'correction_note'
+  | 'supporting_document_ids'
 >;
 
 interface UpdateArgs extends Scope {
@@ -191,7 +211,11 @@ const ospAnnualUpdateApi = baseApi.injectEndpoints({
     }),
     fileOSPAnnualUpdate: build.mutation<OSPAnnualUpdate, ActionArgs>({
       query: action('file'),
-      invalidatesTags: [{ type: 'OSPAnnualUpdate', id: 'LIST' }]
+      // Filing also files the frozen document to the farm's Documents.
+      invalidatesTags: (_r, _e, { farmId }) => [
+        { type: 'OSPAnnualUpdate', id: 'LIST' },
+        { type: 'FarmDocuments', id: farmId }
+      ]
     }),
     correctOSPAnnualUpdate: build.mutation<OSPAnnualUpdate, ActionArgs>({
       query: action('correct'),

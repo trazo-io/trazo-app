@@ -5,7 +5,8 @@
  * because the label was the server's choice label for `source="upload"`. The operator, a
  * consultant or a crew lead uploads as often as the grower does. An upload is labelled by the
  * account that uploaded it (`created_by_name`), or plainly "Upload" when that is unknown.
- * Generated documents keep the server's label (OSP snapshot, audit dossier, ...).
+ * Generated documents keep the server's label (OSP snapshot, audit dossier, ...), except the
+ * ones in GENERATED_SOURCE_IDS, which are said in the reader's language.
  */
 import type { IntlShape } from 'react-intl';
 
@@ -15,8 +16,16 @@ interface SourceFields {
   created_by_name: string | null;
 }
 
+/** Generated sources said in the reader's language. Any other keeps the server's label. */
+const GENERATED_SOURCE_IDS: Record<string, string> = {
+  annual_update: 'documents.source.annualUpdate'
+};
+
 export function documentSourceLabel(doc: SourceFields, intl: IntlShape): string {
-  if (doc.source !== 'upload') return doc.source_display;
+  if (doc.source !== 'upload') {
+    const id = GENERATED_SOURCE_IDS[doc.source];
+    return id ? intl.formatMessage({ id }) : doc.source_display;
+  }
   const name = (doc.created_by_name ?? '').trim();
   return name
     ? intl.formatMessage({ id: 'documents.source.uploadedBy' }, { name })
