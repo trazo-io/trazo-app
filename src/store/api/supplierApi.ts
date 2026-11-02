@@ -12,7 +12,7 @@
  * Certificate copies are a history: a new year's copy is added, never swapped in, so each purchase
  * keeps the copy that covered it. Everything here is the grower's record, not a database check.
  */
-import { SUPPLIER_URL } from 'config';
+import { OSP_SEEDLING_SUPPLIERS_URL, SUPPLIER_URL } from 'config';
 import baseApi from './baseApi';
 
 export type SupplierOrganicStatus = 'certified' | 'not_certified' | 'unknown';
@@ -65,6 +65,33 @@ export interface UnconfirmedSpelling {
 interface Scope {
   companyId: string;
   farmId: string;
+}
+
+/**
+ * One supplier G3.0a prints: named on the farm's transplant purchases, judged on its latest one.
+ * `status` is the server's (`history/services/supplier_certificates.py`); the panel words it.
+ */
+export type SeedlingSupplierStatus =
+  | 'covering'
+  | 'stale'
+  | 'postdates_purchase'
+  | 'none_on_file'
+  | 'not_certified'
+  | 'unresolved';
+
+export interface SeedlingSupplier {
+  name: string;
+  /** Null when the name is no spelling the register holds: the grower has not said who it is. */
+  supplier_id: number | null;
+  certifier: string;
+  nop_operation_id: string;
+  purchases: number;
+  latest: string | null;
+  status: SeedlingSupplierStatus;
+  certificate_issued_on: string | null;
+  /** Earlier purchases no copy on file covers. */
+  not_covered: number;
+  claims_certified: boolean;
 }
 
 const listOf = <T>(response: T[] | { results: T[] }) =>
@@ -163,6 +190,18 @@ const supplierApi = baseApi.injectEndpoints({
         credentials: 'include'
       }),
       invalidatesTags: ['Supplier']
+    }),
+    // Tagged 'Supplier' so adding a supplier, a spelling or a certificate refreshes the plan's panel.
+    getSeedlingSuppliers: build.query<
+      { suppliers: SeedlingSupplier[] },
+      Scope & { ospId: string | number }
+    >({
+      query: ({ companyId, farmId, ospId }) => ({
+        url: OSP_SEEDLING_SUPPLIERS_URL(companyId, farmId, ospId),
+        method: 'GET',
+        credentials: 'include'
+      }),
+      providesTags: ['Supplier']
     })
   })
 });
@@ -176,7 +215,8 @@ export const {
   useAddSupplierSpellingMutation,
   useRemoveSupplierSpellingMutation,
   useAddSupplierCertificateMutation,
-  useRemoveSupplierCertificateMutation
+  useRemoveSupplierCertificateMutation,
+  useGetSeedlingSuppliersQuery
 } = supplierApi;
 
 export default supplierApi;
