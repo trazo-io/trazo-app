@@ -33,6 +33,7 @@ const row = (over: Record<string, unknown>) => ({
   certificate_issued_on: '2025-01-15',
   not_covered: 0,
   claims_certified: true,
+  needs_certificate: true,
   ...over
 });
 
@@ -100,6 +101,26 @@ describe('OSPSeedlingSuppliersPanel', () => {
     expect(
       screen.getByText('2 earlier purchases are not covered by a certificate copy on file.')
     ).toBeTruthy();
+    expect(screen.getAllByText('Review')).toHaveLength(2);
+  });
+
+  it('flags nothing for a supplier that owes no copy', () => {
+    query = {
+      data: {
+        suppliers: [
+          row({
+            status: 'none_on_file',
+            certificate_issued_on: null,
+            claims_certified: false,
+            needs_certificate: false
+          })
+        ]
+      },
+      isLoading: false,
+      isError: false
+    };
+    renderPanel();
+    expect(screen.queryByText('Review')).toBeNull();
   });
 
   it('sends a name the register does not hold to add it, spelled as the record writes it', async () => {

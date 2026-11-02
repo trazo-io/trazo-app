@@ -11,7 +11,16 @@
  * the packet ships copies for). Every state is worded as what the records hold, never as verified.
  */
 import React from 'react';
-import { Box, HStack, Icon, Skeleton, Text, useColorModeValue, VStack } from '@chakra-ui/react';
+import {
+  Badge,
+  Box,
+  HStack,
+  Icon,
+  Skeleton,
+  Text,
+  useColorModeValue,
+  VStack
+} from '@chakra-ui/react';
 import { FaExclamationTriangle, FaSeedling } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import { useNavigate } from 'react-router-dom';
@@ -53,17 +62,17 @@ const statusLine = (
     case 'not_certified':
       return {
         text: intl.formatMessage({ id: 'osp.seedlingSuppliers.notCertified' }),
-        review: row.claims_certified
+        review: row.needs_certificate
       };
     case 'none_on_file':
       return {
         text: intl.formatMessage({ id: 'osp.seedlingSuppliers.noneOnFile' }),
-        review: row.claims_certified
+        review: row.needs_certificate
       };
     default:
       return {
         text: intl.formatMessage({ id: 'osp.seedlingSuppliers.unresolved' }),
-        review: row.claims_certified
+        review: row.needs_certificate
       };
   }
 };
@@ -101,7 +110,7 @@ const OSPSeedlingSuppliersPanel: React.FC<Props> = ({
     const forbidden = (error as { status?: number } | undefined)?.status === 403;
     return (
       <Box p={3} bg={cardBg} borderRadius="md">
-        <HStack spacing={2} align="flex-start" color={STATUS_URGENCY_TOKENS.warn.text}>
+        <HStack spacing={2} align="flex-start" color={STATUS_URGENCY_TOKENS.crit.text}>
           <Icon as={FaExclamationTriangle} boxSize={3} mt="3px" />
           <Text fontSize="sm">
             {intl.formatMessage({
@@ -151,19 +160,31 @@ const OSPSeedlingSuppliersPanel: React.FC<Props> = ({
                   )}
                   {who ? ` · ${who}` : ''}
                 </Text>
-                <Text
-                  fontSize="xs"
-                  color={line.review ? STATUS_URGENCY_TOKENS.warn.text : subtext}
-                  data-testid="osp-seedling-supplier-status">
-                  {line.text}
-                </Text>
-                {row.not_covered > 0 ? (
-                  <Text fontSize="xs" color={STATUS_URGENCY_TOKENS.warn.text}>
-                    {intl.formatMessage(
-                      { id: 'osp.seedlingSuppliers.earlierNotCovered' },
-                      { count: row.not_covered }
-                    )}
+                {/* Review is carried by a warning Badge beside body-colour text, never by orange
+                    text: orange.600 on this gray.50 card is ~4.4:1, under the 4.5 floor (review of
+                    app #237; TraceChain.tsx made the same move). */}
+                <HStack spacing={2} align="flex-start">
+                  {line.review ? (
+                    <Badge variant="warning" fontSize="10px" flexShrink={0}>
+                      {intl.formatMessage({ id: 'osp.seedlingSuppliers.review' })}
+                    </Badge>
+                  ) : null}
+                  <Text fontSize="xs" color={subtext} data-testid="osp-seedling-supplier-status">
+                    {line.text}
                   </Text>
+                </HStack>
+                {row.not_covered > 0 && row.needs_certificate ? (
+                  <HStack spacing={2} align="flex-start">
+                    <Badge variant="warning" fontSize="10px" flexShrink={0}>
+                      {intl.formatMessage({ id: 'osp.seedlingSuppliers.review' })}
+                    </Badge>
+                    <Text fontSize="xs" color={subtext}>
+                      {intl.formatMessage(
+                        { id: 'osp.seedlingSuppliers.earlierNotCovered' },
+                        { count: row.not_covered }
+                      )}
+                    </Text>
+                  </HStack>
                 ) : null}
                 <Box>
                   <StandardButton

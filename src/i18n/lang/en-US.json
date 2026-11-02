@@ -6631,6 +6631,7 @@
   "osp.seedlingSuppliers.ownRecords": "Certificate copies are your own records, filed in the supplier register on your farm profile. Trazo does not check them against the USDA Organic Integrity Database.",
   "osp.seedlingSuppliers.loadFailed": "The supplier list could not be loaded. Reload the page to try again.",
   "osp.seedlingSuppliers.forbidden": "Only company admins and farm managers can see the supplier list.",
+  "osp.seedlingSuppliers.review": "Review",
   "osp.wizard.reviewStep": "Review your answers",
   "osp.wizard.reviewTitle": "Review before completing",
   "osp.wizard.saveFailed": "Could not save your answers",

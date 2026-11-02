@@ -6631,6 +6631,7 @@
   "osp.seedlingSuppliers.ownRecords": "Las copias de certificados son tus propios registros, guardados en el registro de proveedores del perfil de tu finca. Trazo no las compara con la base de datos Organic Integrity del USDA.",
   "osp.seedlingSuppliers.loadFailed": "No se pudo cargar la lista de proveedores. Recarga la página para intentarlo de nuevo.",
   "osp.seedlingSuppliers.forbidden": "Solo los administradores de la empresa y los gerentes de finca pueden ver la lista de proveedores.",
+  "osp.seedlingSuppliers.review": "Revisar",
   "osp.wizard.reviewStep": "Revisa tus respuestas",
   "osp.wizard.reviewTitle": "Revisar antes de completar",
   "osp.wizard.saveFailed": "No se pudieron guardar tus respuestas",

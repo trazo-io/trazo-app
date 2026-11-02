@@ -92,6 +92,8 @@ export interface SeedlingSupplier {
   /** Earlier purchases no copy on file covers. */
   not_covered: number;
   claims_certified: boolean;
+  /** The server's rule for whether this supplier owes a copy: what the plan flags for review. */
+  needs_certificate: boolean;
 }
 
 const listOf = <T>(response: T[] | { results: T[] }) =>
