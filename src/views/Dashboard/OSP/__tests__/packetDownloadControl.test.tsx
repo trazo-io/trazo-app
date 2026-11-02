@@ -27,12 +27,18 @@ vi.mock('store/api/ospAnnualUpdateApi', () => ({
   useGetOSPAnnualUpdatesQuery: () => ({ data: updates })
 }));
 vi.mock('config/environment', () => ({ env: { getApiUrl: (u: string) => u } }));
-// Per plan id: what the server's `packet-scope/` says. Absent = not comparable.
+// Per plan id: what the server's `packet-scope/` says. Absent = not comparable. `stale` is RTK's
+// in-flight state: `data` still holds the last success for other args, `currentData` is empty.
 let scopes: Record<number, any> = {};
+let stale: any = null;
 vi.mock('store/api/ospApi', () => ({
-  useGetPacketScopeQuery: ({ ospId }: { ospId: number }, { skip }: { skip: boolean }) => ({
-    data: skip ? undefined : scopes[ospId] ?? { available: false, code: 'no_filing', reason: '' }
-  })
+  useGetPacketScopeQuery: ({ ospId }: { ospId: number }, { skip }: { skip: boolean }) => {
+    if (stale) return { data: stale, currentData: undefined };
+    const result = skip
+      ? undefined
+      : scopes[ospId] ?? { available: false, code: 'no_filing', reason: '' };
+    return { data: result, currentData: result };
+  }
 }));
 
 import PacketDownloadControl from '../PacketDownloadControl';
@@ -140,6 +146,25 @@ describe('packet download control', () => {
     getByRole('button').click();
     expect(await screen.findByText('v2: changed sections only')).toBeInTheDocument();
     scopes = {};
+  });
+
+  it("never borrows the previous version's answer while the new one is loading", () => {
+    // "Start new version": the working plan is now the v4 draft, its packet-scope request is in
+    // flight, and RTK's `data` still holds v3's "comparable" answer.
+    updates = [];
+    stale = {
+      available: true,
+      code: '',
+      reason: '',
+      prior_version: 2,
+      new_version: 3,
+      included: [],
+      omitted: []
+    };
+    renderControl([plan(11, 4, 'draft')]);
+    expect(screen.getByText('Download packet (v4)')).toBeInTheDocument();
+    expect(screen.queryByText(/changed sections only/)).toBeNull();
+    stale = null;
   });
 
   it('offers no changed-sections choice when the server cannot compare', async () => {

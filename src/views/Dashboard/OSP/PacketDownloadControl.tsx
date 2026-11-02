@@ -57,13 +57,16 @@ const PacketDownloadControl: React.FC<Props> = ({ companyId, farmId, osps }) => 
   );
 
   // One fixed call per possible choice (hooks cannot run in the loop below). An error, a 403 or
-  // a version the server cannot compare all read as "not offered".
+  // a version the server cannot compare all read as "not offered". `currentData`, never `data`:
+  // RTK keeps `data` from the LAST success for any args, so right after "start new version" the
+  // new draft would borrow the previous version's "comparable" answer and offer a link the
+  // server refuses (review of app #234; same trap as Traceback/index.tsx).
   const second = choices[1];
-  const { data: workingScope } = useGetPacketScopeQuery(
+  const { currentData: workingScope } = useGetPacketScopeQuery(
     { companyId, farmId, ospId: working?.id ?? 0 },
     { skip: !companyId || !farmId || !working }
   );
-  const { data: secondScope } = useGetPacketScopeQuery(
+  const { currentData: secondScope } = useGetPacketScopeQuery(
     { companyId, farmId, ospId: second?.id ?? 0 },
     { skip: !companyId || !farmId || !second }
   );
