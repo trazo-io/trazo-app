@@ -361,4 +361,82 @@ describe('ReviewTraceback', () => {
       expect(screen.getByText(messages['certifierReview.traceback.unavailable'])).toBeTruthy()
     );
   });
+  it('from a harvest lot: the token lot routes, both directions, and a named sale opens', async () => {
+    const LOT = {
+      anchor: 'pick',
+      picks: [{ id: 'p1', lot_code: 'HON-NB2-20260926', date: '2026-09-26', documents: [] }],
+      sales: [
+        {
+          sale_id: 7,
+          date: '2026-09-27',
+          buyer: 'CVFP',
+          quantity: '20 bins',
+          invoice: 'CVFP-2026-1240',
+          organic_on_invoice: true,
+          picks_named: 1
+        }
+      ],
+      sales_naming_no_pick: [],
+      season: TRACE.season,
+      inputs: [],
+      balance: TRACE.balance,
+      on_hand: { season_open: false, locations: [], unallocated_sales: [] },
+      gaps: []
+    };
+    const fetchMock = vi.fn((url: string) =>
+      url.includes('/lots/?')
+        ? reply(200, {
+            truncated: false,
+            results: [
+              {
+                pick_id: 31,
+                date: '2026-09-26',
+                lot_code: 'HON-NB2-20260926',
+                quantity: '41 bins',
+                storage: 'CA Room 4',
+                crop: '',
+                parcel: '',
+                season: '',
+                matched_on: 'pick_lot_code'
+              }
+            ]
+          })
+        : url.includes('/lots/31/')
+        ? reply(200, LOT)
+        : reply(200, TRACE)
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    renderIt();
+    fireEvent.click(screen.getByRole('button', { name: messages['traceback.mode.lot'] }));
+    fireEvent.change(screen.getByPlaceholderText(messages['traceback.lot.search.placeholder']), {
+      target: { value: 'HON-NB2-20260926' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: messages['traceback.search.submit'] }));
+    expect(await screen.findByText(messages['traceback.hop.lot'])).toBeTruthy();
+    expect(screen.getByText('2026-09-27 · CVFP · 20 bins · CVFP-2026-1240')).toBeTruthy();
+    expect(fetchMock.mock.calls.map((c) => String(c[0]))).toEqual([
+      `${API}/certifier-review/tok/traceback/lots/?q=HON-NB2-20260926`,
+      `${API}/certifier-review/tok/traceback/lots/31/`
+    ]);
+    fireEvent.click(screen.getByRole('button', { name: messages['traceback.matches.trace'] }));
+    expect(await screen.findByText(messages['traceback.hop.sale'])).toBeTruthy();
+    expect(String(fetchMock.mock.calls[2][0])).toBe(`${API}/certifier-review/tok/traceback/7/`);
+    for (const call of fetchMock.mock.calls) expect((call as unknown[])[1]).toBeUndefined();
+  });
+
+  it('a lot 404 says no harvest pick is on this link', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => reply(404))
+    );
+    renderIt();
+    fireEvent.click(screen.getByRole('button', { name: messages['traceback.mode.lot'] }));
+    fireEvent.change(screen.getByPlaceholderText(messages['traceback.lot.search.placeholder']), {
+      target: { value: 'X' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: messages['traceback.search.submit'] }));
+    await waitFor(() =>
+      expect(screen.getByText(messages['certifierReview.traceback.lotNotFound'])).toBeTruthy()
+    );
+  });
 });

@@ -20,8 +20,8 @@
  */
 import React from 'react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { fireEvent, render, screen, within } from '@testing-library/react';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { IntlProvider } from 'react-intl';
 import { ChakraProvider } from '@chakra-ui/react';
 
@@ -415,5 +415,47 @@ describe('field notes never show a generated placeholder', () => {
       })
     });
     expect(screen.getByText(/Scale ticket 4471/)).toBeTruthy();
+  });
+});
+
+describe('EventDetailsModal: a harvest record opens the traceback from its lot', () => {
+  beforeEach(() => setViewport('desktop'));
+
+  const Where = () => (
+    <span data-testid="where">{useLocation().pathname + useLocation().search}</span>
+  );
+
+  const renderWith = (event: object) =>
+    render(
+      <ChakraProvider theme={theme}>
+        <IntlProvider locale="en-US" messages={enMessages as Record<string, string>}>
+          <MemoryRouter initialEntries={['/admin/dashboard/farm/1/parcel/2']}>
+            <EventDetailsModal
+              isOpen
+              onClose={vi.fn()}
+              event={event as never}
+              members={[]}
+              farmId="1"
+              parcelId="2"
+            />
+            <Where />
+          </MemoryRouter>
+        </IntlProvider>
+      </ChakraProvider>
+    );
+
+  it('a harvest pick carries "Trace this lot" to the lot-anchored trace', () => {
+    renderWith({ ...EVENT, id: 31, event_type: 1, type: 'HA' });
+    fireEvent.click(screen.getByRole('button', { name: enMessages['eventDetails.traceLot'] }));
+    expect(screen.getByTestId('where').textContent).toBe(
+      '/admin/dashboard/farm/1/traceback?pick=31'
+    );
+  });
+
+  it('any other record has no lot to trace', () => {
+    renderWith({ ...EVENT, id: 32, event_type: 1, type: 'PL' });
+    // Read something first: the footer rendered.
+    expect(screen.getByRole('button', { name: enMessages['eventDetails.logAgain'] })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: enMessages['eventDetails.traceLot'] })).toBeNull();
   });
 });
