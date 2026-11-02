@@ -831,7 +831,11 @@ const DocumentsPage = () => {
           <StandardSearchInput
             value={search}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
+            /* The placeholder names what the server matches (title, tag, document type), so
+               a farmer who tagged a file "Invoices" knows typing that finds it. The full
+               sentence rides the accessible name: Spanish "Buscar por ..." clipped at 280px. */
             placeholder={intl.formatMessage({ id: 'documents.searchPlaceholder' })}
+            aria-label={intl.formatMessage({ id: 'documents.searchLabel' })}
             maxW={{ base: 'full', smd: '280px' }}
           />
         </Flex>
