@@ -10,7 +10,7 @@ import React from 'react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import enUS from 'i18n/lang/en-US.json';
 
@@ -51,8 +51,16 @@ const baseReview = () => ({
   ]
 });
 
+let queryState: Record<string, unknown> = {};
+const refetch = vi.fn();
 vi.mock('store/api/ospAnnualUpdateApi', () => ({
-  useGetCompanyDetailsReviewQuery: () => ({ data: review, isLoading: false }),
+  useGetCompanyDetailsReviewQuery: () => ({
+    data: review,
+    isLoading: false,
+    isFetching: false,
+    refetch,
+    ...queryState
+  }),
   useConfirmCompanyDetailsMutation: () => [confirm, { isLoading: false }]
 }));
 
@@ -71,6 +79,10 @@ const group = (name: string) => screen.getByRole('group', { name });
 const submit = () => screen.getByRole('button', { name: 'Save company details' });
 
 describe('company details step', () => {
+  beforeEach(() => {
+    queryState = {};
+  });
+
   it('preselects nothing and holds the save until every detail is answered', () => {
     review = baseReview();
     renderStep();
@@ -125,6 +137,39 @@ describe('company details step', () => {
     });
     await Promise.resolve();
     expect(onApplied).toHaveBeenCalledWith(review);
+  });
+
+  it('after a save shows what was saved instead of re-asking, and can review again', async () => {
+    review = baseReview();
+    queryState = {};
+    renderStep();
+    fireEvent.click(within(group('Business name')).getByRole('button', { name: 'Correct' }));
+    fireEvent.click(
+      within(group('Phone')).getByRole('button', { name: 'Already on file with my certifier' })
+    );
+    fireEvent.change(screen.getByLabelText(/Phone, as it is now/), {
+      target: { value: '(541) 555-0111' }
+    });
+    fireEvent.click(within(group('Email')).getByRole('button', { name: 'Correct' }));
+    fireEvent.click(submit());
+    expect(await screen.findByText('Saved to this update.')).toBeInTheDocument();
+    expect(screen.queryByText(/still to answer/)).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Save company details' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Review again' }));
+    expect(submit()).toBeDisabled();
+  });
+
+  it('says so when the details cannot be loaded, never an empty box', () => {
+    review = undefined as unknown as Record<string, unknown>;
+    queryState = { isError: true };
+    refetch.mockClear();
+    renderStep();
+    expect(
+      screen.getByText('The company details for this update could not be loaded')
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(refetch).toHaveBeenCalled();
+    queryState = {};
   });
 
   it('gives a viewer no controls', () => {

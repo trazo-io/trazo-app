@@ -18,6 +18,7 @@ import {
   StandardButton,
   StandardField,
   StandardInput,
+  StandardQueryError,
   StandardSegmentedControl
 } from 'components/Design/StandardComponents';
 import {
@@ -96,7 +97,13 @@ const OSPCompanyDetailsStep: React.FC<Props> = ({
 }) => {
   const intl = useIntl();
   const toast = useToast();
-  const { data: review, isLoading } = useGetCompanyDetailsReviewQuery({
+  const {
+    data: review,
+    isLoading,
+    isError,
+    isFetching,
+    refetch
+  } = useGetCompanyDetailsReviewQuery({
     companyId,
     farmId,
     updateId
@@ -104,6 +111,11 @@ const OSPCompanyDetailsStep: React.FC<Props> = ({
   const [confirm, { isLoading: saving }] = useConfirmCompanyDetailsMutation();
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
+  // The server keeps the outcome (the attestation and the change lines), not each detail's
+  // answer, so after a save the step shows that outcome instead of re-asking every detail. "Review
+  // again" reopens it, empty, as a fresh review (review of app #233).
+  const [justSaved, setJustSaved] = useState(false);
+  const [reopened, setReopened] = useState(false);
 
   const details = useMemo(() => review?.details ?? [], [review]);
   const draftFor = (key: string): Draft => drafts[key] ?? { choice: '', value: '' };
@@ -125,8 +137,23 @@ const OSPCompanyDetailsStep: React.FC<Props> = ({
     return !draft.choice || (needsValue(d, draft) && !draft.value.trim());
   });
   const canAnswer = Boolean(review?.can_answer);
+  const collapsed = (justSaved || Boolean(review?.attested_unchanged)) && !reopened;
+  const answering = canAnswer && !collapsed;
 
-  if (isLoading || !review) return null;
+  if (isLoading || (!review && !isError)) return null;
+  if (isError || !review) {
+    // Never an empty box: the (a)(3) answer this step owns would otherwise vanish unnoticed.
+    return (
+      <StandardQueryError
+        title={intl.formatMessage({
+          id: 'osp.annual.companyDetails.loadError',
+          defaultMessage: 'The company details for this update could not be loaded'
+        })}
+        onRetry={refetch}
+        isRetrying={isFetching}
+      />
+    );
+  }
 
   const submit = async () => {
     const answers: Record<string, CompanyDetailAnswer> = {};
@@ -141,6 +168,8 @@ const OSPCompanyDetailsStep: React.FC<Props> = ({
       const saved = await confirm({ companyId, farmId, updateId, answers }).unwrap();
       setDrafts({});
       setErrors({});
+      setJustSaved(true);
+      setReopened(false);
       onApplied?.(saved);
       toast({
         status: 'success',
@@ -263,7 +292,7 @@ const OSPCompanyDetailsStep: React.FC<Props> = ({
                       })}
                     </Text>
                   )}
-                  {canAnswer && !d.editable && (
+                  {answering && !d.editable && (
                     <Text fontSize="xs" color="gray.600">
                       {intl.formatMessage({
                         id: 'osp.annual.companyDetails.adminOnly',
@@ -272,7 +301,7 @@ const OSPCompanyDetailsStep: React.FC<Props> = ({
                     </Text>
                   )}
                 </Box>
-                {canAnswer && (
+                {answering && (
                   <StandardSegmentedControl<Choice>
                     ariaLabel={label(d)}
                     options={optionsFor(d)}
@@ -281,7 +310,7 @@ const OSPCompanyDetailsStep: React.FC<Props> = ({
                   />
                 )}
               </HStack>
-              {canAnswer && showsInput(d, draft) && (
+              {answering && showsInput(d, draft) && (
                 <Box mt={2}>
                   <StandardField
                     label={intl.formatMessage(
@@ -303,7 +332,7 @@ const OSPCompanyDetailsStep: React.FC<Props> = ({
                   </StandardField>
                 </Box>
               )}
-              {canAnswer && !showsInput(d, draft) && errors[d.key] && (
+              {answering && !showsInput(d, draft) && errors[d.key] && (
                 <Text fontSize="xs" color="red.700" mt={1}>
                   {errors[d.key]}
                 </Text>
@@ -312,7 +341,37 @@ const OSPCompanyDetailsStep: React.FC<Props> = ({
           );
         })}
       </VStack>
-      {canAnswer && (
+      {canAnswer && collapsed && (
+        <HStack justify="space-between" mt={4} flexWrap="wrap" spacing={2}>
+          <Text fontSize="xs" color="gray.600">
+            {intl.formatMessage(
+              review.application_info_changes.trim()
+                ? {
+                    id: 'osp.annual.companyDetails.savedWithChanges',
+                    defaultMessage:
+                      'Saved to this update. What changed is listed in the text below.'
+                  }
+                : {
+                    id: 'osp.annual.companyDetails.savedSummary',
+                    defaultMessage: 'Saved to this update.'
+                  }
+            )}
+          </Text>
+          <StandardButton
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setReopened(true);
+              setJustSaved(false);
+            }}>
+            {intl.formatMessage({
+              id: 'osp.annual.companyDetails.reviewAgain',
+              defaultMessage: 'Review again'
+            })}
+          </StandardButton>
+        </HStack>
+      )}
+      {answering && (
         <VStack align="stretch" spacing={2} mt={4}>
           {blockedReason && (
             <Text fontSize="xs" color="gray.600">
