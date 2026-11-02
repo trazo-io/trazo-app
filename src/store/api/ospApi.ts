@@ -11,6 +11,7 @@ import {
   OSP_ACTIVATE_URL,
   OSP_ADD_APPROVED_INPUT_URL,
   OSP_AGENT_FORM_SHEET_URL,
+  OSP_PACKET_SCOPE_URL,
   OSP_PLAN_MATERIAL_DETAIL_URL,
   OSP_PLAN_MATERIALS_URL,
   OSP_CHANGE_NOTIFICATIONS_URL,
@@ -100,6 +101,28 @@ export interface AgentFormSheet {
   establishment_id: number;
   company_id: number | null;
   rows: AgentFormSheetRow[];
+}
+
+/**
+ * What a changed-sections packet built from one plan version would carry, or why it cannot be
+ * built (`no_filing`, `no_new_version`, `newer_version`, `no_changes`). Read from the server's
+ * own comparison, the same one 02s prints, so the menu and the packet cannot disagree.
+ */
+export interface PacketScopeModule {
+  key: string;
+  label: string;
+  file: string;
+}
+
+export interface PacketScopePreview {
+  available: boolean;
+  code: '' | 'no_filing' | 'no_new_version' | 'newer_version' | 'no_changes';
+  reason: string;
+  prior_version?: number;
+  new_version?: number;
+  included?: PacketScopeModule[];
+  omitted?: PacketScopeModule[];
+  narratives?: string[];
 }
 
 interface OSPUpdate extends OSPOne {
@@ -352,6 +375,19 @@ const ospApi = baseApi.injectEndpoints({
         { type: 'OSPAnnualUpdate', id: 'LIST' },
         'Farm',
         'Company'
+      ]
+    }),
+
+    // Refetched with the plan and with the annual updates: either moves what changed.
+    getPacketScope: build.query<PacketScopePreview, OSPOne>({
+      query: ({ companyId, farmId, ospId }) => ({
+        url: OSP_PACKET_SCOPE_URL(companyId, farmId, ospId),
+        method: 'GET',
+        credentials: 'include'
+      }),
+      providesTags: (_r, _e, { ospId }) => [
+        { type: 'OSP', id: Number(ospId) },
+        { type: 'OSPAnnualUpdate', id: 'LIST' }
       ]
     }),
 
@@ -677,6 +713,7 @@ export const {
   useGetMaterialIdentitiesQuery,
   useGetMaterialRestrictionsQuery,
   useGetAgentFormSheetQuery,
+  useGetPacketScopeQuery,
   useRecordRestrictionStatementMutation,
   useWithdrawMaterialIdentityMutation,
   useWithdrawRestrictionStatementMutation,

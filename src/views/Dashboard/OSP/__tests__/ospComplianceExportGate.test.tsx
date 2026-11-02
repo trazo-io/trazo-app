@@ -81,6 +81,8 @@ vi.mock('store/api/certificationApi', () => ({
 }));
 
 vi.mock('store/api/ospApi', () => ({
+  // The packet control's changed-sections preview: not comparable, so the plain button renders.
+  useGetPacketScopeQuery: () => ({ data: undefined }),
   useGetOSPsQuery: () => ({
     data: [{ id: '11', version_number: 2, status: 'draft' }],
     isLoading: false

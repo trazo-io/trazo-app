@@ -238,8 +238,19 @@ export const OSP_MODULE_PDF_URL = (
 ) =>
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/module-pdf/?module=${moduleKey}` +
   (parcelId != null ? `&parcel=${parcelId}` : '');
-export const OSP_PACKET_URL = (companyId: string, farmId: string, ospId: string | number) =>
-  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/packet/`;
+// `scope: 'changed'` builds the packet with only the module PDFs whose answers changed since the
+// prior plan version; the server refuses it when the two versions cannot be compared, so the
+// control offers it only when OSP_PACKET_SCOPE_URL says it is available.
+export const OSP_PACKET_URL = (
+  companyId: string,
+  farmId: string,
+  ospId: string | number,
+  scope?: 'changed'
+) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/packet/` +
+  (scope ? `?scope=${scope}` : '');
+export const OSP_PACKET_SCOPE_URL = (companyId: string, farmId: string, ospId: string | number) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/packet-scope/`;
 // What to copy onto the certifying agent's own renewal form (404 for an agent without one).
 export const OSP_AGENT_FORM_SHEET_URL = (
   companyId: string,
