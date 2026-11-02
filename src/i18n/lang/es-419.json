@@ -6666,7 +6666,7 @@
   "osp.wizard.agentAskedBlankBody": "Trazo no {count, plural, one {la exige} other {las exige}}, así que puedes seguir y volver después. Sin respuesta, {count, plural, one {aparece} other {aparecen}} en tu plan como aún sin responder.",
   "osp.wizard.continueAnyway": "Continuar de todos modos",
   "osp.wizard.agentAskedBlankReviewTitle": "Aquí hay {count, plural, one {# pregunta} other {# preguntas}} sin responder que {agent} hace",
-  "osp.wizard.agentAskedBlankReviewBody": "Puedes completar esta sección sin ellas. Sin respuesta, aparecen en tu plan como aún sin responder, con el lugar donde {agent} las pregunta.",
+  "osp.wizard.agentAskedBlankReviewBody": "Puedes completar esta sección sin {count, plural, one {responderla} other {responderlas}}. Sin respuesta, {count, plural, one {aparece} other {aparecen}} en tu plan como aún sin responder, con el lugar donde {agent} {count, plural, one {la pregunta} other {las pregunta}}.",
   "osp.seedlingSuppliers.purchases": "{count, plural, one {# compra de trasplantes registrada} other {# compras de trasplantes registradas}}, la última el {latest}",
   "osp.seedlingSuppliers.covering": "El certificado orgánico emitido el {issued} cubre la última compra.",
   "osp.seedlingSuppliers.stale": "La copia de certificado más reciente antes de la última compra se emitió el {issued}, más de 15 meses antes. Tu certificadora la revisará.",
