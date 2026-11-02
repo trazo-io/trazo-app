@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.11.02",
+  "content_version": "2026.11.03",
   "registry": {
-    "content_version": "2026.11.02",
+    "content_version": "2026.11.03",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -430,6 +430,22 @@
                     "exclusive": false
                   },
                   {
+                    "value": "quarterly",
+                    "label": {
+                      "en": "Quarterly",
+                      "es": "Trimestralmente"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "monthly",
+                    "label": {
+                      "en": "Monthly",
+                      "es": "Mensualmente"
+                    },
+                    "exclusive": false
+                  },
+                  {
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
@@ -533,6 +549,22 @@
                     "label": {
                       "en": "Scheduled check-ins with the crew",
                       "es": "Reuniones programadas con la cuadrilla"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "dual_signoff",
+                    "label": {
+                      "en": "A second person signs off on each transaction or completed task",
+                      "es": "Una segunda persona aprueba cada transacción o tarea terminada"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "procedures_in_activity_records",
+                    "label": {
+                      "en": "Procedures are written into activity records, so staff confirm each step",
+                      "es": "Los procedimientos están escritos en los registros de actividad, y el personal confirma cada paso"
                     },
                     "exclusive": false
                   },
@@ -3647,6 +3679,46 @@
                       "es": "No se realizan análisis de laboratorio"
                     },
                     "exclusive": true
+                  },
+                  {
+                    "value": "soil_observation",
+                    "label": {
+                      "en": "Soil observation",
+                      "es": "Observación del suelo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "crop_yield_comparison",
+                    "label": {
+                      "en": "Crop yield comparison",
+                      "es": "Comparación de rendimientos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "crop_quality_analysis",
+                    "label": {
+                      "en": "Crop quality analysis",
+                      "es": "Análisis de calidad del cultivo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "microbiological_testing",
+                    "label": {
+                      "en": "Microbiological testing",
+                      "es": "Análisis microbiológico"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otro (describe abajo)"
+                    },
+                    "exclusive": false
                   }
                 ],
                 "required": true,
@@ -3699,6 +3771,30 @@
                       "es": "Según necesidad"
                     },
                     "exclusive": false
+                  },
+                  {
+                    "value": "daily",
+                    "label": {
+                      "en": "Daily",
+                      "es": "Diariamente"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "weekly",
+                    "label": {
+                      "en": "Weekly",
+                      "es": "Semanalmente"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otra (describe abajo)"
+                    },
+                    "exclusive": false
                   }
                 ],
                 "required": true,
@@ -3712,6 +3808,184 @@
                     "question": "fertility_monitoring",
                     "op": "not_includes",
                     "value": "no_testing"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "monitoring_frequency_other",
+                "kind": "text",
+                "label": {
+                  "en": "Other monitoring frequency",
+                  "es": "Otra frecuencia de monitoreo"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "monitoring_frequency",
+                    "op": "eq",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "fertility_monitoring_other",
+                "kind": "text",
+                "label": {
+                  "en": "Other monitoring method",
+                  "es": "Otro método de monitoreo"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "fertility_monitoring",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "fertility_testing_frequency",
+                "kind": "radio",
+                "label": {
+                  "en": "How often do you send soil or tissue samples for testing?",
+                  "es": "¿Con qué frecuencia envías muestras de suelo o tejido a análisis?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "per_crop",
+                    "label": {
+                      "en": "With each crop",
+                      "es": "Con cada cultivo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "seasonally",
+                    "label": {
+                      "en": "Each season",
+                      "es": "Cada temporada"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "annually",
+                    "label": {
+                      "en": "Annually",
+                      "es": "Anualmente"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "every_few_years",
+                    "label": {
+                      "en": "Every two to three years",
+                      "es": "Cada dos o tres años"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "as_needed",
+                    "label": {
+                      "en": "As needed",
+                      "es": "Según necesidad"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "daily",
+                    "label": {
+                      "en": "Daily",
+                      "es": "Diariamente"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "weekly",
+                    "label": {
+                      "en": "Weekly",
+                      "es": "Semanalmente"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "monthly",
+                    "label": {
+                      "en": "Monthly",
+                      "es": "Mensualmente"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otra (describe abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "fertility_monitoring",
+                    "op": "includes_any",
+                    "value": [
+                      "soil_tests",
+                      "tissue_tests",
+                      "microbiological_testing",
+                      "crop_quality_analysis"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.201(a)(3)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "fertility_testing_frequency_other",
+                "kind": "text",
+                "label": {
+                  "en": "Other testing frequency",
+                  "es": "Otra frecuencia de análisis"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "fertility_testing_frequency",
+                    "op": "eq",
+                    "value": "other"
                   }
                 ],
                 "nop_cite": null,
@@ -5046,6 +5320,70 @@
                     "exclusive": false
                   },
                   {
+                    "value": "irrigation_scheduling_recharge",
+                    "label": {
+                      "en": "Irrigation scheduling that avoids overdrafting groundwater and aids recharge",
+                      "es": "Programación del riego que evita sobreexplotar el agua subterránea y favorece la recarga"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "soil_moisture_monitoring",
+                    "label": {
+                      "en": "Soil moisture monitoring",
+                      "es": "Monitoreo de la humedad del suelo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "infiltration",
+                    "label": {
+                      "en": "Practices that encourage infiltration",
+                      "es": "Prácticas que favorecen la infiltración"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "regionally_appropriate_crops",
+                    "label": {
+                      "en": "Regionally appropriate crops",
+                      "es": "Cultivos adecuados a la región"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "drought_tolerant_natives",
+                    "label": {
+                      "en": "Drought-tolerant native plantings",
+                      "es": "Plantas nativas tolerantes a la sequía"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "irrigation_reservoir",
+                    "label": {
+                      "en": "Irrigation reservoir",
+                      "es": "Reservorio de riego"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "tailwater_recovery",
+                    "label": {
+                      "en": "Tailwater recovery",
+                      "es": "Recuperación de agua de escorrentía"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "micro_irrigation",
+                    "label": {
+                      "en": "Micro-irrigation (drip or micro-sprinklers)",
+                      "es": "Microirrigación (goteo o microaspersión)"
+                    },
+                    "exclusive": false
+                  },
+                  {
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
@@ -5057,6 +5395,91 @@
                 "required": true,
                 "visible_when": [],
                 "nop_cite": "§ 205.200",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "irrigation_efficiency_monitoring",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How do you check that irrigation water is used efficiently?",
+                  "es": "¿Cómo verificas que el agua de riego se usa de forma eficiente?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "soil_moisture_sensors",
+                    "label": {
+                      "en": "Soil moisture sensors",
+                      "es": "Sensores de humedad del suelo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "visual_observations",
+                    "label": {
+                      "en": "Visual observation",
+                      "es": "Observación visual"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "scheduling_software",
+                    "label": {
+                      "en": "Irrigation scheduling software",
+                      "es": "Software de programación del riego"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "not_irrigated",
+                    "label": {
+                      "en": "Not applicable: no irrigation",
+                      "es": "No aplica: sin riego"
+                    },
+                    "exclusive": true
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otro (describe abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.200",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "irrigation_efficiency_monitoring_other",
+                "kind": "text",
+                "label": {
+                  "en": "Other way you check irrigation efficiency",
+                  "es": "Otra forma de verificar la eficiencia del riego"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "irrigation_efficiency_monitoring",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
@@ -5364,11 +5787,68 @@
                       "es": "No hay presión de especies invasoras en esta operación"
                     },
                     "exclusive": true
+                  },
+                  {
+                    "value": "grazing",
+                    "label": {
+                      "en": "Grazing",
+                      "es": "Pastoreo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "biological_control",
+                    "label": {
+                      "en": "Biological control",
+                      "es": "Control biológico"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "prescribed_burning",
+                    "label": {
+                      "en": "Prescribed burning",
+                      "es": "Quema prescrita"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otra (describe abajo)"
+                    },
+                    "exclusive": false
                   }
                 ],
                 "required": true,
                 "visible_when": [],
                 "nop_cite": "§ 205.200",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "invasive_species_practices_other",
+                "kind": "text",
+                "label": {
+                  "en": "Other invasive species practice",
+                  "es": "Otra práctica contra especies invasoras"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "invasive_species_practices",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
@@ -5726,7 +6206,7 @@
               },
               {
                 "key": "monitoring_method",
-                "kind": "radio",
+                "kind": "checkbox_group",
                 "label": {
                   "en": "How are natural-resource outcomes on this operation monitored?",
                   "es": "¿Cómo se monitorean los resultados de los recursos naturales de esta operación?"
@@ -5769,6 +6249,30 @@
                     "exclusive": false
                   },
                   {
+                    "value": "surveys",
+                    "label": {
+                      "en": "Plant, animal or insect surveys",
+                      "es": "Censos de plantas, animales o insectos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "conservation_map",
+                    "label": {
+                      "en": "Conservation maps kept up to date",
+                      "es": "Mapas de conservación actualizados"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "farm_logs",
+                    "label": {
+                      "en": "Farm logs or journals",
+                      "es": "Bitácoras o diarios de la finca"
+                    },
+                    "exclusive": false
+                  },
+                  {
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
@@ -5800,7 +6304,7 @@
                 "visible_when": [
                   {
                     "question": "monitoring_method",
-                    "op": "eq",
+                    "op": "includes",
                     "value": "other"
                   }
                 ],
@@ -5989,6 +6493,54 @@
                     "exclusive": false
                   },
                   {
+                    "value": "cover_cropping",
+                    "label": {
+                      "en": "Cover cropping",
+                      "es": "Cultivos de cobertura"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "interplanting_mixed_species",
+                    "label": {
+                      "en": "Interplanting or mixed species",
+                      "es": "Cultivos intercalados o especies mixtas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "trap_crops",
+                    "label": {
+                      "en": "Trap crops",
+                      "es": "Cultivos trampa"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "companion_planting",
+                    "label": {
+                      "en": "Companion planting",
+                      "es": "Plantas acompañantes"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "mating_disruption",
+                    "label": {
+                      "en": "Mating disruption",
+                      "es": "Confusión sexual"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "insect_rodent_traps",
+                    "label": {
+                      "en": "Insect or rodent traps",
+                      "es": "Trampas para insectos o roedores"
+                    },
+                    "exclusive": false
+                  },
+                  {
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
@@ -6064,6 +6616,31 @@
                 "coaching": null,
                 "options": [],
                 "required": true,
+                "visible_when": [
+                  {
+                    "question": "burns_crop_residue",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.203(e)(3)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "burn_frequency",
+                "kind": "text",
+                "label": {
+                  "en": "How often do you burn crop residue?",
+                  "es": "¿Con qué frecuencia quemas residuos de cultivo?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
                 "visible_when": [
                   {
                     "question": "burns_crop_residue",
@@ -6386,6 +6963,56 @@
                 "max_length": null
               },
               {
+                "key": "input_use_triggers",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "When do you turn to these materials?",
+                  "es": "¿Cuándo recurres a estos materiales?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "preventive_insufficient",
+                    "label": {
+                      "en": "Preventive measures are not enough",
+                      "es": "Las medidas preventivas no son suficientes"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "economic_threshold",
+                    "label": {
+                      "en": "An economic threshold for damage is exceeded",
+                      "es": "Se supera un umbral económico de daño"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otro (describe abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "applies_pest_weed_disease_inputs",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.206(e)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
                 "key": "input_use_conditions",
                 "kind": "textarea",
                 "label": {
@@ -6531,6 +7158,281 @@
                 "prefill": {
                   "source": "pest_monitoring_frequency"
                 },
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "monitoring_methods",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How do you monitor? Check all that apply.",
+                  "es": "¿Cómo monitoreas? Marca todas las que correspondan."
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "scouting",
+                    "label": {
+                      "en": "Scouting program",
+                      "es": "Programa de recorridos de monitoreo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "traps_lures",
+                    "label": {
+                      "en": "Trap monitoring (traps or lures)",
+                      "es": "Monitoreo con trampas o atrayentes"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "crop_health_observation",
+                    "label": {
+                      "en": "Crop health observation",
+                      "es": "Observación de la sanidad del cultivo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "crop_yield_comparison",
+                    "label": {
+                      "en": "Crop yield comparison",
+                      "es": "Comparación de rendimientos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "target_observation",
+                    "label": {
+                      "en": "Observation of weeds",
+                      "es": "Observación de malezas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "modeling",
+                    "label": {
+                      "en": "Pest or disease modeling",
+                      "es": "Modelos de plagas o enfermedades"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otro (describe abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.201(a)(3)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "monitoring_methods_other",
+                "kind": "text",
+                "label": {
+                  "en": "Other monitoring method",
+                  "es": "Otro método de monitoreo"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "monitoring_methods",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "weed_monitoring_frequency",
+                "kind": "radio",
+                "label": {
+                  "en": "How often do you monitor weeds?",
+                  "es": "¿Con qué frecuencia monitoreas malezas?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "per_event",
+                    "label": {
+                      "en": "At each field visit or scouting event",
+                      "es": "En cada visita al campo o recorrido de monitoreo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "weekly",
+                    "label": {
+                      "en": "Weekly",
+                      "es": "Semanalmente"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "monthly",
+                    "label": {
+                      "en": "Monthly",
+                      "es": "Mensualmente"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "seasonally",
+                    "label": {
+                      "en": "Each season",
+                      "es": "Cada temporada"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "monitoring_scope",
+                    "op": "includes",
+                    "value": "weed_pressure"
+                  }
+                ],
+                "nop_cite": "§ 205.201(a)(3)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "pest_monitoring_frequency",
+                "kind": "radio",
+                "label": {
+                  "en": "How often do you monitor pests?",
+                  "es": "¿Con qué frecuencia monitoreas plagas?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "per_event",
+                    "label": {
+                      "en": "At each field visit or scouting event",
+                      "es": "En cada visita al campo o recorrido de monitoreo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "weekly",
+                    "label": {
+                      "en": "Weekly",
+                      "es": "Semanalmente"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "monthly",
+                    "label": {
+                      "en": "Monthly",
+                      "es": "Mensualmente"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "seasonally",
+                    "label": {
+                      "en": "Each season",
+                      "es": "Cada temporada"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "monitoring_scope",
+                    "op": "includes",
+                    "value": "pest_populations"
+                  }
+                ],
+                "nop_cite": "§ 205.201(a)(3)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "disease_monitoring_frequency",
+                "kind": "radio",
+                "label": {
+                  "en": "How often do you monitor diseases?",
+                  "es": "¿Con qué frecuencia monitoreas enfermedades?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "per_event",
+                    "label": {
+                      "en": "At each field visit or scouting event",
+                      "es": "En cada visita al campo o recorrido de monitoreo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "weekly",
+                    "label": {
+                      "en": "Weekly",
+                      "es": "Semanalmente"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "monthly",
+                    "label": {
+                      "en": "Monthly",
+                      "es": "Mensualmente"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "seasonally",
+                    "label": {
+                      "en": "Each season",
+                      "es": "Cada temporada"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "monitoring_scope",
+                    "op": "includes",
+                    "value": "disease_pressure"
+                  }
+                ],
+                "nop_cite": "§ 205.201(a)(3)",
+                "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
                 "embed": null,
@@ -13349,6 +14251,85 @@
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
+              },
+              {
+                "key": "pest_monitoring_practices",
+                "kind": "textarea",
+                "label": {
+                  "en": "How do you monitor pest pressure in storage and handling areas?",
+                  "es": "¿Cómo monitoreas la presión de plagas en áreas de almacenamiento y manejo?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.271",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "pest_monitoring_frequency",
+                "kind": "radio",
+                "label": {
+                  "en": "How often?",
+                  "es": "¿Con qué frecuencia?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "daily",
+                    "label": {
+                      "en": "Daily",
+                      "es": "Diariamente"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "weekly",
+                    "label": {
+                      "en": "Weekly",
+                      "es": "Semanalmente"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "monthly",
+                    "label": {
+                      "en": "Monthly",
+                      "es": "Mensualmente"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "seasonally",
+                    "label": {
+                      "en": "Each season",
+                      "es": "Cada temporada"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "as_needed",
+                    "label": {
+                      "en": "As needed",
+                      "es": "Según necesidad"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.271",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
               }
             ]
           },
@@ -14689,6 +15670,7 @@
         "tillage_practices",
         "fertility_monitoring",
         "monitoring_frequency",
+        "fertility_testing_frequency",
         "erosion_practices"
       ],
       "missing_required": [
