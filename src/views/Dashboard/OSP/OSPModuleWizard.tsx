@@ -1227,7 +1227,7 @@ const OSPModuleWizard = () => {
                           )}
                           description={intl.formatMessage(
                             { id: 'osp.wizard.agentAskedBlankReviewBody' },
-                            { agent: agentRefs.agent }
+                            { agent: agentRefs.agent, count: blankAsked.length }
                           )}>
                           <VStack align="start" spacing={1}>
                             {visibleQuestions(definition, answers)

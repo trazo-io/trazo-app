@@ -6666,7 +6666,7 @@
   "osp.wizard.agentAskedBlankBody": "Trazo does not require {count, plural, one {it} other {them}}, so you can go on and come back later. Left blank, {count, plural, one {it prints} other {they print}} in your plan as not yet answered.",
   "osp.wizard.continueAnyway": "Continue anyway",
   "osp.wizard.agentAskedBlankReviewTitle": "{agent} asks {count, plural, one {# question} other {# questions}} here that {count, plural, one {is} other {are}} still blank",
-  "osp.wizard.agentAskedBlankReviewBody": "You can complete this section without them. Left blank, they print in your plan as not yet answered, with where {agent} asks them.",
+  "osp.wizard.agentAskedBlankReviewBody": "You can complete this section without {count, plural, one {it} other {them}}. Left blank, {count, plural, one {it prints} other {they print}} in your plan as not yet answered, with where {agent} asks {count, plural, one {it} other {them}}.",
   "osp.seedlingSuppliers.purchases": "{count, plural, one {# transplant purchase} other {# transplant purchases}} recorded, latest {latest}",
   "osp.seedlingSuppliers.covering": "Organic certificate issued {issued} covers the latest purchase.",
   "osp.seedlingSuppliers.stale": "The newest certificate copy before the latest purchase was issued {issued}, more than 15 months earlier. Your certifier will review it.",
