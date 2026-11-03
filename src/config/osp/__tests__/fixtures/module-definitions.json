@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.11.08",
+  "content_version": "2026.11.10",
   "registry": {
-    "content_version": "2026.11.08",
+    "content_version": "2026.11.10",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -15267,6 +15267,39 @@
                 ],
                 "required": true,
                 "visible_when": [],
+                "nop_cite": "§ 205.103",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "facility_pest_records_upload",
+                "kind": "upload",
+                "label": {
+                  "en": "Upload your facility pest control records",
+                  "es": "Sube tus registros de control de plagas en instalaciones"
+                },
+                "coaching": {
+                  "en": "The records you ticked above: a pest control company's service reports, trap or monitoring device logs, sighting logs, the device map, and any record of a material applied in a structure. Your inspector reviews them at inspection.",
+                  "es": "Los registros que marcaste arriba: los informes de servicio de una empresa de control de plagas, las bitácoras de trampas o dispositivos de monitoreo, los registros de avistamientos, el mapa de dispositivos y cualquier registro de un material aplicado en una estructura. Tu inspector los revisa en la inspección."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "pest_control_records",
+                    "op": "truthy",
+                    "value": null
+                  },
+                  {
+                    "question": "pest_control_records",
+                    "op": "not_includes",
+                    "value": "none_yet"
+                  }
+                ],
                 "nop_cite": "§ 205.103",
                 "prefill": null,
                 "parcel_field": null,
