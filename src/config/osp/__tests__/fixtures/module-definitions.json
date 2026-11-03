@@ -6467,6 +6467,11 @@
                 "required": false,
                 "visible_when": [
                   {
+                    "question": "irrigation_source_types",
+                    "op": "not_includes",
+                    "value": "not_irrigated"
+                  },
+                  {
                     "question": "shared_irrigation_with_prohibited",
                     "op": "eq",
                     "value": true
@@ -6492,6 +6497,11 @@
                 "required": false,
                 "visible_when": [
                   {
+                    "question": "irrigation_source_types",
+                    "op": "not_includes",
+                    "value": "not_irrigated"
+                  },
+                  {
                     "question": "shared_irrigation_with_prohibited",
                     "op": "eq",
                     "value": true
@@ -6516,6 +6526,11 @@
                 "options": [],
                 "required": false,
                 "visible_when": [
+                  {
+                    "question": "irrigation_source_types",
+                    "op": "not_includes",
+                    "value": "not_irrigated"
+                  },
                   {
                     "question": "shared_irrigation_with_prohibited",
                     "op": "eq",
@@ -6566,6 +6581,11 @@
                 "options": [],
                 "required": true,
                 "visible_when": [
+                  {
+                    "question": "irrigation_source_types",
+                    "op": "not_includes",
+                    "value": "not_irrigated"
+                  },
                   {
                     "question": "water_quality_tested",
                     "op": "truthy",
@@ -6645,6 +6665,11 @@
                 "required": true,
                 "visible_when": [
                   {
+                    "question": "irrigation_source_types",
+                    "op": "not_includes",
+                    "value": "not_irrigated"
+                  },
+                  {
                     "question": "water_from_irrigation_district",
                     "op": "truthy",
                     "value": null
@@ -6673,6 +6698,16 @@
                 "required": true,
                 "visible_when": [
                   {
+                    "question": "irrigation_source_types",
+                    "op": "not_includes",
+                    "value": "not_irrigated"
+                  },
+                  {
+                    "question": "water_from_irrigation_district",
+                    "op": "truthy",
+                    "value": null
+                  },
+                  {
                     "question": "irrigation_district_additives",
                     "op": "eq",
                     "value": "yes"
@@ -6697,6 +6732,11 @@
                 "options": [],
                 "required": false,
                 "visible_when": [
+                  {
+                    "question": "irrigation_source_types",
+                    "op": "not_includes",
+                    "value": "not_irrigated"
+                  },
                   {
                     "question": "water_from_irrigation_district",
                     "op": "truthy",
@@ -8907,6 +8947,11 @@
                 "options": [],
                 "required": false,
                 "visible_when": [
+                  {
+                    "question": "treated_lumber_any",
+                    "op": "eq",
+                    "value": true
+                  },
                   {
                     "question": "treated_lumber_policy",
                     "op": "includes",
