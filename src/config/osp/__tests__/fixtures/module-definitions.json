@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.11.07",
+  "content_version": "2026.11.08",
   "registry": {
-    "content_version": "2026.11.07",
+    "content_version": "2026.11.08",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -12886,6 +12886,274 @@
                 "visible_when": [
                   {
                     "question": "sourced_products_identified_organic",
+                    "op": "eq",
+                    "value": false
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "sourced_products_panel",
+                "kind": "info",
+                "label": {
+                  "en": "Suppliers of the organic product you buy in",
+                  "es": "Proveedores del producto orgánico que compras"
+                },
+                "coaching": {
+                  "en": "In the supplier register on your farm profile, add each supplier with the products you buy from it and a copy of its organic certificate, issued within the last 15 months. For an uncertified broker or distributor, name the certified operation it buys from and attach the Exempt Handler Affidavit it completed.",
+                  "es": "En el registro de proveedores del perfil de tu finca, agrega cada proveedor con los productos que le compras y una copia de su certificado orgánico, emitido en los últimos 15 meses. Para un intermediario o distribuidor no certificado, indica la operación certificada a la que compra y adjunta la declaración jurada de manipulador exento que completó."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "sales_soe_supplier_verification",
+                    "op": "eq",
+                    "value": "yes"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": "sourced_products",
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "sourcing_transport_verification",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How do you make sure product you buy in does not contact prohibited substances on its way to you?",
+                  "es": "¿Cómo te aseguras de que el producto que compras no tenga contacto con sustancias prohibidas en el camino hacia ti?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "cleaning_purge_logs",
+                    "label": {
+                      "en": "Cleaning or purge logs for the transport",
+                      "es": "Registros de limpieza o purga del transporte"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "certified_supplier_documentation",
+                    "label": {
+                      "en": "The certified supplier provides documentation",
+                      "es": "El proveedor certificado entrega documentación"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otro (describe abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "sales_soe_supplier_verification",
+                    "op": "eq",
+                    "value": "yes"
+                  }
+                ],
+                "nop_cite": "§ 205.272",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "sourcing_transport_verification_other",
+                "kind": "text",
+                "label": {
+                  "en": "Describe how",
+                  "es": "Describe cómo"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "sourcing_transport_verification",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "sourcing_transport_commingling",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How do you keep product you buy in from being mixed with non-organic product on its way to you?",
+                  "es": "¿Cómo evitas que el producto que compras se mezcle con producto no orgánico en el camino hacia ti?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "only_certified",
+                    "label": {
+                      "en": "Not applicable: we source only certified organic product",
+                      "es": "No aplica: solo compramos producto orgánico certificado"
+                    },
+                    "exclusive": true
+                  },
+                  {
+                    "value": "distinctly_labeled",
+                    "label": {
+                      "en": "Distinctly labeled or marked containers",
+                      "es": "Contenedores etiquetados o marcados de forma distinta"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "closed_containers",
+                    "label": {
+                      "en": "Closed containers",
+                      "es": "Contenedores cerrados"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "different_times",
+                    "label": {
+                      "en": "Transported at different times",
+                      "es": "Transportado en momentos distintos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "visually_distinct",
+                    "label": {
+                      "en": "Visually distinct product",
+                      "es": "Producto visualmente distinto"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "separate_vehicles",
+                    "label": {
+                      "en": "Shipped on separate vehicles",
+                      "es": "Enviado en vehículos separados"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "separate_destinations",
+                    "label": {
+                      "en": "Shipped from separate locations",
+                      "es": "Enviado desde ubicaciones separadas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otro (describe abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "sales_soe_supplier_verification",
+                    "op": "eq",
+                    "value": "yes"
+                  }
+                ],
+                "nop_cite": "§ 205.272",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "sourcing_transport_commingling_other",
+                "kind": "text",
+                "label": {
+                  "en": "Describe how",
+                  "es": "Describe cómo"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "sourcing_transport_commingling",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "sourced_records_link_to_certified",
+                "kind": "boolean",
+                "label": {
+                  "en": "Do your records link the purchase and transport of every product you buy in back to the last certified operation that handled it?",
+                  "es": "¿Tus registros vinculan la compra y el transporte de cada producto que compras con la última operación certificada que lo manipuló?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "sales_soe_supplier_verification",
+                    "op": "eq",
+                    "value": "yes"
+                  }
+                ],
+                "nop_cite": "§ 205.103(b)(2)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "sourced_records_link_detail",
+                "kind": "textarea",
+                "label": {
+                  "en": "Explain which records are missing",
+                  "es": "Explica qué registros faltan"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "sourced_records_link_to_certified",
                     "op": "eq",
                     "value": false
                   }

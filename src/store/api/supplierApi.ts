@@ -47,12 +47,38 @@ export interface Supplier {
   certificates: SupplierCertificateCopy[];
   /** Planting and transplanting records whose supplier text resolves here. */
   records_count: number;
+  /** Organic crops or products bought from this supplier for the operation's own sales (G6.5). */
+  sourced_products: string;
+  /** For an uncertified broker or distributor: the certified operation it sources from. */
+  source_operation: string;
+  exempt_handler_affidavit: number | null;
+  exempt_handler_affidavit_title: string | null;
+  /** What G6.5 says of this supplier, from the server; null when it supplies no bought-in product. */
+  sourcing_state: SourcingState | null;
+  /** Issue date of the copy `sourcing_state` is about, from the server; never picked by array position. */
+  sourcing_certificate_issued_on: string | null;
 }
+
+export type SourcingState =
+  | 'on_file'
+  | 'certificate_missing'
+  | 'certificate_old'
+  | 'affidavit_missing'
+  | 'source_unnamed'
+  | 'status_unknown';
 
 export type SupplierInput = Partial<
   Pick<
     Supplier,
-    'name' | 'organic_status' | 'nop_operation_id' | 'certifier_name' | 'notes' | 'archived'
+    | 'name'
+    | 'organic_status'
+    | 'nop_operation_id'
+    | 'certifier_name'
+    | 'notes'
+    | 'archived'
+    | 'sourced_products'
+    | 'source_operation'
+    | 'exempt_handler_affidavit'
   >
 >;
 

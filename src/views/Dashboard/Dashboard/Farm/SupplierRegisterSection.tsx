@@ -27,7 +27,7 @@ import {
 } from '@chakra-ui/react';
 import { FaPlus, FaSeedling } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 
 import CertifyingAgentPicker from 'components/Certifications/CertifyingAgentPicker';
 import {
@@ -52,6 +52,7 @@ import {
   type SupplierOrganicStatus
 } from 'store/api/supplierApi';
 import { apiErrorMessage } from 'utils/apiErrorMessage';
+import SupplierSourcing from './SupplierSourcing';
 
 interface Props {
   companyId: string;
@@ -269,6 +270,8 @@ const SupplierRow = ({
         <CertificateUpload supplier={supplier} companyId={companyId} farmId={farmId} />
       </Box>
 
+      <SupplierSourcing supplier={supplier} companyId={companyId} farmId={farmId} />
+
       <Text fontSize="sm" fontWeight="semibold" mt={3}>
         {intl.formatMessage({ id: 'suppliers.spellings.title' })}
       </Text>
@@ -341,6 +344,16 @@ const SupplierRegisterSection = ({ companyId, farmId, state }: Props) => {
   const [searchParams] = useSearchParams();
   const focusSupplier = Number(searchParams.get('supplier')) || null;
   const focusSpelling = (searchParams.get('supplierSpelling') || '').trim();
+  const location = useLocation();
+  const sectionRef = useRef<HTMLDivElement>(null);
+  // The plan's "Add in the supplier register" lands here with #suppliers. The router does not scroll to
+  // a hash, and this section sits far down the profile (local e2e run, 2026-11-08). A named supplier
+  // scrolls its own row into view instead.
+  useEffect(() => {
+    if (location.hash === '#suppliers' && !focusSupplier && !focusSpelling) {
+      sectionRef.current?.scrollIntoView({ block: 'start' });
+    }
+  }, [location.hash, focusSupplier, focusSpelling]);
 
   const scope = { companyId, farmId };
   const { data: suppliers = [], isLoading } = useGetSuppliersQuery(scope, {
@@ -395,7 +408,7 @@ const SupplierRegisterSection = ({ companyId, farmId, state }: Props) => {
     a.trim().replace(/\s+/g, ' ').toLowerCase() === b.trim().replace(/\s+/g, ' ').toLowerCase();
 
   return (
-    <Box id="suppliers" w="full">
+    <Box id="suppliers" ref={sectionRef} w="full">
       <StandardCard
         title={intl.formatMessage({ id: 'suppliers.title' })}
         variant="outline"
