@@ -75,6 +75,7 @@ import { apiErrorMessage } from 'utils/apiErrorMessage';
 import { OSPLockedNotice, StartNewVersionButton } from './OSPLockedNotice';
 import OSPApprovedInputsPanel from './OSPApprovedInputsPanel';
 import OSPMaterialsListPanel from './OSPMaterialsListPanel';
+import OSPBrandOwnersPanel from './OSPBrandOwnersPanel';
 import OSPSeedlingSuppliersPanel from './OSPSeedlingSuppliersPanel';
 import OSPMaterialIdentityPanel from './OSPMaterialIdentityPanel';
 import OSPMaterialRestrictionsPanel from './OSPMaterialRestrictionsPanel';
@@ -310,6 +311,12 @@ const QuestionField = ({
               />
             ) : question.embed === 'post_harvest_facilities' ? (
               <OSPHandlerFacilitiesPanel companyId={companyId} farmId={farmId} />
+            ) : question.embed === 'brand_owners' ? (
+              <OSPBrandOwnersPanel
+                companyId={companyId}
+                farmId={farmId}
+                onNavigateAway={onNavigateAway}
+              />
             ) : question.embed === 'seedling_suppliers' ? (
               <OSPSeedlingSuppliersPanel
                 companyId={companyId}
