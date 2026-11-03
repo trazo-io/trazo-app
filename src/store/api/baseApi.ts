@@ -71,6 +71,7 @@ export const baseApi = createApi({
     'OSPRecordTypes',
     'PostHarvestFacility',
     'Supplier',
+    'BrandOwner',
     'SeasonPlan',
     'FieldNote',
     'CrewSender'

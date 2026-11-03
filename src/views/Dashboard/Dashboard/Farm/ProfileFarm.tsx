@@ -94,6 +94,7 @@ import { normalizeState } from 'utils/usStates';
 import { fileNameFromUrl } from 'utils/fileNameFromUrl';
 import CertifierLinkCard from 'components/Certifications/CertifierLinkCard';
 import SupplierRegisterSection from './SupplierRegisterSection';
+import BrandOwnerRegisterSection from './BrandOwnerRegisterSection';
 import { ComplianceExportsGuard } from 'components/Guards/ComplianceExportsGuard';
 import { useTour } from 'hooks/useTour';
 import { apiErrorMessage } from 'utils/apiErrorMessage';
@@ -511,6 +512,16 @@ function ProfileFarm() {
                 the server: a supplier list is commercial data a viewer does not read. */}
             {canWrite && currentCompany?.id && farmId && (
               <SupplierRegisterSection
+                companyId={String(currentCompany.id)}
+                farmId={String(farmId)}
+                state={establishmentData?.state ?? undefined}
+              />
+            )}
+
+            {/* Companies whose brands this farm packs into (CCOF G7.0 C, OTCO C8 8.3, WSDA N 6-7).
+                Writers only, like the supplier register: commercial data. */}
+            {canWrite && currentCompany?.id && farmId && (
+              <BrandOwnerRegisterSection
                 companyId={String(currentCompany.id)}
                 farmId={String(farmId)}
                 state={establishmentData?.state ?? undefined}

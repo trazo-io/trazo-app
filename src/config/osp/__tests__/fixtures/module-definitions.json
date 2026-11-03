@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.11.06",
+  "content_version": "2026.11.07",
   "registry": {
-    "content_version": "2026.11.06",
+    "content_version": "2026.11.07",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -13652,6 +13652,273 @@
                 },
                 "options": [],
                 "required": true,
+                "visible_when": [],
+                "nop_cite": "§ 205.300",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              }
+            ]
+          },
+          {
+            "key": "c_brand_owners",
+            "title": {
+              "en": "C. Brands you pack for",
+              "es": "C. Marcas para las que empacas"
+            },
+            "education": [
+              {
+                "en": "A crop packed under another company's organic brand is labeled with that company's claim, so your certifier asks who each brand owner is and whether it is certified. A certified brand owner's certificate is kept on file; an uncertified one needs your certifier's private-label or co-packer agreement before its labels are used.",
+                "es": "Un cultivo empacado bajo la marca orgánica de otra empresa se etiqueta con la declaración de esa empresa, así que tu certificadora pregunta quién es cada dueño de marca y si está certificado. El certificado de un dueño de marca certificado se guarda en archivo; uno no certificado necesita el acuerdo de marca privada o de coempacador de tu certificadora antes de usar sus etiquetas."
+              }
+            ],
+            "visible_when": [
+              {
+                "question": "product_leaves_as",
+                "op": "includes",
+                "value": "buyer_label"
+              }
+            ],
+            "questions": [
+              {
+                "key": "brand_owners_panel",
+                "kind": "info",
+                "label": {
+                  "en": "Brand owners you pack for",
+                  "es": "Dueños de marca para los que empacas"
+                },
+                "coaching": {
+                  "en": "Add each company, its brands, the products you pack for it with each label's organic claim, and a copy of its certificate (or of your certifier's agreement, if it is not certified) in the brand-owner register on your farm profile.",
+                  "es": "Agrega cada empresa, sus marcas, los productos que empacas para ella con la declaración orgánica de cada etiqueta, y una copia de su certificado (o del acuerdo de tu certificadora, si no está certificada) en el registro de dueños de marca del perfil de tu finca."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": "brand_owners",
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "brand_owner_certificate_check",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How do you make sure each brand owner you pack for holds a current organic certificate?",
+                  "es": "¿Cómo te aseguras de que cada dueño de marca para el que empacas tenga un certificado orgánico vigente?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "certificates_on_file",
+                    "label": {
+                      "en": "We keep each one's valid certificate, listing the branded products, and get an updated one every year",
+                      "es": "Guardamos el certificado vigente de cada uno, con los productos de marca, y pedimos uno actualizado cada año"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "oid_check",
+                    "label": {
+                      "en": "We check the USDA Organic Integrity Database to confirm the certificate is valid",
+                      "es": "Revisamos la base de datos Organic Integrity del USDA para confirmar que el certificado es válido"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otro (describe abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.103",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "brand_owner_certificate_check_other",
+                "kind": "text",
+                "label": {
+                  "en": "Describe how",
+                  "es": "Describe cómo"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "brand_owner_certificate_check",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "brand_owner_certificate_frequency",
+                "kind": "radio",
+                "label": {
+                  "en": "How often do you ask brand owners for an updated certificate?",
+                  "es": "¿Cada cuánto pides a los dueños de marca un certificado actualizado?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "annually",
+                    "label": {
+                      "en": "Annually",
+                      "es": "Cada año"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "prior_to_each_use",
+                    "label": {
+                      "en": "Before each use of the label",
+                      "es": "Antes de cada uso de la etiqueta"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otro (describe abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.103",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "brand_owner_certificate_frequency_other",
+                "kind": "text",
+                "label": {
+                  "en": "How often",
+                  "es": "Cada cuánto"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "brand_owner_certificate_frequency",
+                    "op": "eq",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "labels_name_other_agency",
+                "kind": "boolean",
+                "label": {
+                  "en": "Do any of these labels name a certifying agent other than yours, below the distributor's name?",
+                  "es": "¿Alguna de estas etiquetas indica una certificadora distinta de la tuya, debajo del nombre del distribuidor?"
+                },
+                "coaching": {
+                  "en": "The distributor shown on the label must be certified by the agent shown, for each branded product.",
+                  "es": "El distribuidor que aparece en la etiqueta debe estar certificado por la certificadora que aparece, para cada producto de marca."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.303(b)(2)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "labels_submitted_to_certifier",
+                "kind": "radio",
+                "label": {
+                  "en": "Has your certifying agent reviewed every current label making an organic claim that you pack into?",
+                  "es": "¿Tu certificadora revisó todas las etiquetas vigentes con declaración orgánica en las que empacas?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "all_approved",
+                    "label": {
+                      "en": "Yes, every current label has been approved",
+                      "es": "Sí, todas las etiquetas vigentes fueron aprobadas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "new_or_updated_attached",
+                    "label": {
+                      "en": "No, new or updated labels are attached for review",
+                      "es": "No, las etiquetas nuevas o actualizadas se adjuntan para revisión"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "not_submitted",
+                    "label": {
+                      "en": "Not yet submitted",
+                      "es": "Todavía no se enviaron"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.300",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "label_approval_before_use",
+                "kind": "textarea",
+                "label": {
+                  "en": "How do you make sure your certifying agent approves new and revised labels before they are used?",
+                  "es": "¿Cómo te aseguras de que tu certificadora apruebe las etiquetas nuevas y modificadas antes de usarlas?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
                 "visible_when": [],
                 "nop_cite": "§ 205.300",
                 "prefill": null,

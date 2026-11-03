@@ -500,6 +500,8 @@ const DocumentsPage = () => {
         description:
           (err as { data?: { code?: unknown } })?.data?.code === 'supplier_certificate_in_use'
             ? intl.formatMessage({ id: 'documents.deleteBlocked.supplierCertificate' })
+            : (err as { data?: { code?: unknown } })?.data?.code === 'brand_owner_document_in_use'
+            ? intl.formatMessage({ id: 'documents.deleteBlocked.brandOwner' })
             : (err as { data?: { code?: unknown } })?.data?.code ===
               'annual_update_attachment_in_use'
             ? intl.formatMessage({ id: 'documents.deleteBlocked.annualUpdate' })
