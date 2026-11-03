@@ -140,6 +140,12 @@ describe('SupplierRegisterSection', () => {
     expect(Element.prototype.scrollIntoView).toHaveBeenCalled();
   });
 
+  it("the plan's link with no supplier named scrolls to the register", () => {
+    // Local e2e run, 2026-11-08: the register sat 2,000px down and the link landed at the page top.
+    renderAt('/admin/dashboard/farm/1/profile#suppliers');
+    expect(Element.prototype.scrollIntoView).toHaveBeenCalled();
+  });
+
   it('a spelling no supplier holds can be added as a new supplier, prefilled', () => {
     state.unconfirmed = [{ name: 'Willow Drive Nursery', records: 1 }];
     renderAt('/admin/dashboard/farm/1/profile?supplierSpelling=Willow%20Drive%20Nursery');
