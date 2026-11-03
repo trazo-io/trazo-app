@@ -58,6 +58,7 @@ import {
 } from 'store/api/postHarvestFacilityApi';
 import { useUpdateProductionMutation } from 'store/api/historyApi';
 import { apiErrorMessage } from 'utils/apiErrorMessage';
+import FacilityProductsEditor from './FacilityProductsEditor';
 
 /** Mirrors PostHarvestFacility.FACILITY_TYPE_CHOICES in certifications/models.py. */
 const FACILITY_TYPES: { value: PostHarvestFacilityType; labelId: string }[] = [
@@ -322,6 +323,25 @@ export function PostHarvestHandlerSection({
                 </VStack>
               )}
             </StandardField>
+
+            {/* CCOF G6.1 C2 / G6.2 A2, OTCO C7 7.7-2 / 7.10-2: what each facility takes. The crops come
+                from the records linked to it; the operator adds detail and packaging form. */}
+            {facilities.length > 0 && (
+              <StandardField
+                label={intl.formatMessage({ id: 'handler.products.title' })}
+                helpText={intl.formatMessage({ id: 'handler.products.help' })}>
+                <VStack align="stretch" spacing={3}>
+                  {facilities.map((facility) => (
+                    <FacilityProductsEditor
+                      key={facility.id}
+                      facility={facility}
+                      companyId={scope.companyId}
+                      farmId={scope.farmId}
+                    />
+                  ))}
+                </VStack>
+              </StandardField>
+            )}
 
             {isAdding ? (
               <VStack spacing={3} align="stretch">

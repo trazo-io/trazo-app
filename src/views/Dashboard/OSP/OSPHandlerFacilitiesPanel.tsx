@@ -35,6 +35,7 @@ import { FaExclamationTriangle, FaIndustry } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
 import { useGetPostHarvestFacilitiesQuery } from 'store/api/postHarvestFacilityApi';
+import { cropsLine } from 'views/Dashboard/Dashboard/Production/FacilityProductsEditor';
 
 interface OSPHandlerFacilitiesPanelProps {
   companyId: string;
@@ -122,6 +123,33 @@ const OSPHandlerFacilitiesPanel: React.FC<OSPHandlerFacilitiesPanelProps> = ({
                     {where}
                   </Text>
                 )}
+                {/* CCOF G6.1 C2 / G6.2 A2, OTCO C7 7.7-2: crops from the linked records, products
+                    in the operation's words. Edited on the production page, the one editor. */}
+                <Text
+                  fontSize="xs"
+                  color={subtext}
+                  data-testid={`osp-facility-crops-${facility.id}`}>
+                  {cropsLine(facility)
+                    ? intl.formatMessage(
+                        { id: 'handler.products.crops' },
+                        { crops: cropsLine(facility) }
+                      )
+                    : intl.formatMessage({ id: 'handler.products.noCrops' })}
+                </Text>
+                {facility.products_detail?.trim() ? (
+                  <Text fontSize="xs" color={subtext}>
+                    {intl.formatMessage(
+                      { id: 'handler.products.described' },
+                      {
+                        products: facility.products_detail
+                          .split('\n')
+                          .map((p) => p.trim())
+                          .filter(Boolean)
+                          .join('; ')
+                      }
+                    )}
+                  </Text>
+                ) : null}
                 {certState === 'current' && (
                   <Text fontSize="xs" color="green.700">
                     {intl.formatMessage(
