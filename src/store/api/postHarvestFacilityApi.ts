@@ -54,6 +54,10 @@ export interface PostHarvestFacility {
   cert_is_current: boolean | null;
   last_verified_at?: string | null;
   notes?: string | null;
+  /** Products it handles or stores, with detail and packaging form, as the operation describes them. */
+  products_detail?: string;
+  /** The crops on the production records linked to this facility, by season year; read-only. */
+  crops_recorded?: { crop: string; years: number[] }[];
 }
 
 export type PostHarvestFacilityInput = Partial<
@@ -70,6 +74,7 @@ export type PostHarvestFacilityInput = Partial<
     | 'effective_date'
     | 'expiry_date'
     | 'notes'
+    | 'products_detail'
   >
 >;
 
