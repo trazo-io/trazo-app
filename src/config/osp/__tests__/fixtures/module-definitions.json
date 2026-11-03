@@ -6266,6 +6266,90 @@
             "visible_when": [],
             "questions": [
               {
+                "key": "irrigation_source_types",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Which kinds of irrigation water do you use? Check all that apply.",
+                  "es": "¿Qué tipos de agua de riego usas? Marca todos los que correspondan."
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "not_irrigated",
+                    "label": {
+                      "en": "We do not irrigate",
+                      "es": "No regamos"
+                    },
+                    "exclusive": true
+                  },
+                  {
+                    "value": "well",
+                    "label": {
+                      "en": "Well",
+                      "es": "Pozo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "municipal",
+                    "label": {
+                      "en": "Municipal supply",
+                      "es": "Suministro municipal"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "river_stream_lake",
+                    "label": {
+                      "en": "River, stream, spring or lake",
+                      "es": "Río, arroyo, manantial o lago"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "pond_reservoir",
+                    "label": {
+                      "en": "Pond or reservoir",
+                      "es": "Estanque o embalse"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "irrigation_district",
+                    "label": {
+                      "en": "Irrigation or water district",
+                      "es": "Distrito de riego o de agua"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "catchment_cistern",
+                    "label": {
+                      "en": "Rain catchment or cistern",
+                      "es": "Captación de lluvia o cisterna"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otra (describe abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.200",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
                 "key": "irrigation_water_sources",
                 "kind": "text",
                 "label": {
@@ -6278,8 +6362,182 @@
                 },
                 "options": [],
                 "required": true,
-                "visible_when": [],
+                "visible_when": [
+                  {
+                    "question": "irrigation_source_types",
+                    "op": "not_includes",
+                    "value": "not_irrigated"
+                  }
+                ],
                 "nop_cite": "§ 205.200",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "irrigation_source_names",
+                "kind": "text",
+                "label": {
+                  "en": "Name the district, river, stream or lake",
+                  "es": "Indica el nombre del distrito, río, arroyo o lago"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "irrigation_source_types",
+                    "op": "includes_any",
+                    "value": [
+                      "irrigation_district",
+                      "river_stream_lake"
+                    ]
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "irrigation_source_types_other",
+                "kind": "text",
+                "label": {
+                  "en": "Describe the other source",
+                  "es": "Describe la otra fuente"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "irrigation_source_types",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "shared_irrigation_with_prohibited",
+                "kind": "boolean",
+                "label": {
+                  "en": "Does your organic cropland share irrigation lines or water, including tailwater, with cropland where prohibited materials are applied into the water?",
+                  "es": "¿Tus tierras de cultivo orgánico comparten líneas o agua de riego, incluida el agua de escorrentía, con tierras donde se aplican materiales prohibidos en el agua?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "irrigation_source_types",
+                    "op": "not_includes",
+                    "value": "not_irrigated"
+                  }
+                ],
+                "nop_cite": "§ 205.202(c)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "shared_irrigation_responsible",
+                "kind": "boolean",
+                "label": {
+                  "en": "Is your operation responsible for those applications of prohibited materials?",
+                  "es": "¿Tu operación es responsable de esas aplicaciones de materiales prohibidos?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "irrigation_source_types",
+                    "op": "not_includes",
+                    "value": "not_irrigated"
+                  },
+                  {
+                    "question": "shared_irrigation_with_prohibited",
+                    "op": "eq",
+                    "value": true
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "shared_irrigation_mitigation",
+                "kind": "textarea",
+                "label": {
+                  "en": "What keeps organic crops and land from contact with those materials (valves, backflow prevention, separate laterals, timing)?",
+                  "es": "¿Qué evita el contacto de los cultivos y la tierra orgánica con esos materiales (válvulas, prevención de reflujo, laterales separados, horarios)?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "irrigation_source_types",
+                    "op": "not_includes",
+                    "value": "not_irrigated"
+                  },
+                  {
+                    "question": "shared_irrigation_with_prohibited",
+                    "op": "eq",
+                    "value": true
+                  }
+                ],
+                "nop_cite": "§ 205.202(c)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "irrigation_piping_map_upload",
+                "kind": "upload",
+                "label": {
+                  "en": "Attach a map or piping diagram showing valves or backflow prevention devices, if installed",
+                  "es": "Adjunta un mapa o diagrama de tuberías con las válvulas o dispositivos de prevención de reflujo, si los hay"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "irrigation_source_types",
+                    "op": "not_includes",
+                    "value": "not_irrigated"
+                  },
+                  {
+                    "question": "shared_irrigation_with_prohibited",
+                    "op": "eq",
+                    "value": true
+                  }
+                ],
+                "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
@@ -6297,7 +6555,13 @@
                 "coaching": null,
                 "options": [],
                 "required": true,
-                "visible_when": [],
+                "visible_when": [
+                  {
+                    "question": "irrigation_source_types",
+                    "op": "not_includes",
+                    "value": "not_irrigated"
+                  }
+                ],
                 "nop_cite": "§ 205.200",
                 "prefill": null,
                 "parcel_field": null,
@@ -6317,6 +6581,11 @@
                 "options": [],
                 "required": true,
                 "visible_when": [
+                  {
+                    "question": "irrigation_source_types",
+                    "op": "not_includes",
+                    "value": "not_irrigated"
+                  },
                   {
                     "question": "water_quality_tested",
                     "op": "truthy",
@@ -6344,7 +6613,13 @@
                 },
                 "options": [],
                 "required": true,
-                "visible_when": [],
+                "visible_when": [
+                  {
+                    "question": "irrigation_source_types",
+                    "op": "not_includes",
+                    "value": "not_irrigated"
+                  }
+                ],
                 "nop_cite": "§ 205.202(b)",
                 "prefill": null,
                 "parcel_field": null,
@@ -6390,6 +6665,11 @@
                 "required": true,
                 "visible_when": [
                   {
+                    "question": "irrigation_source_types",
+                    "op": "not_includes",
+                    "value": "not_irrigated"
+                  },
+                  {
                     "question": "water_from_irrigation_district",
                     "op": "truthy",
                     "value": null
@@ -6418,12 +6698,57 @@
                 "required": true,
                 "visible_when": [
                   {
+                    "question": "irrigation_source_types",
+                    "op": "not_includes",
+                    "value": "not_irrigated"
+                  },
+                  {
+                    "question": "water_from_irrigation_district",
+                    "op": "truthy",
+                    "value": null
+                  },
+                  {
                     "question": "irrigation_district_additives",
                     "op": "eq",
                     "value": "yes"
                   }
                 ],
                 "nop_cite": "§ 205.202(b)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "irrigation_district_piping_map_upload",
+                "kind": "upload",
+                "label": {
+                  "en": "Attach a map or piping diagram showing valves or backflow prevention devices, if installed",
+                  "es": "Adjunta un mapa o diagrama de tuberías con las válvulas o dispositivos de prevención de reflujo, si los hay"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "irrigation_source_types",
+                    "op": "not_includes",
+                    "value": "not_irrigated"
+                  },
+                  {
+                    "question": "water_from_irrigation_district",
+                    "op": "truthy",
+                    "value": null
+                  },
+                  {
+                    "question": "irrigation_district_additives",
+                    "op": "eq",
+                    "value": "yes"
+                  }
+                ],
+                "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
@@ -6442,6 +6767,11 @@
                 "options": [],
                 "required": false,
                 "visible_when": [
+                  {
+                    "question": "irrigation_source_types",
+                    "op": "not_includes",
+                    "value": "not_irrigated"
+                  },
                   {
                     "question": "water_from_irrigation_district",
                     "op": "truthy",
@@ -7929,6 +8259,31 @@
                 "max_length": null
               },
               {
+                "key": "nonorganic_crops_products",
+                "kind": "textarea",
+                "label": {
+                  "en": "Which non-organic crops or crop products do you produce?",
+                  "es": "¿Qué cultivos o productos de cultivo no orgánicos produces?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "split_operation",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.201(a)(5)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
                 "key": "nonorganic_system_materials",
                 "kind": "textarea",
                 "label": {
@@ -8518,6 +8873,152 @@
                   }
                 ],
                 "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              }
+            ]
+          },
+          {
+            "key": "e_treated_lumber",
+            "title": {
+              "en": "E. Treated lumber",
+              "es": "E. Madera tratada"
+            },
+            "education": [],
+            "visible_when": [],
+            "questions": [
+              {
+                "key": "treated_lumber_any",
+                "kind": "boolean",
+                "label": {
+                  "en": "Is there treated lumber on any parcel you are certifying (posts, trellises, stakes, railroad ties, utility poles), or do you plan to install any?",
+                  "es": "¿Hay madera tratada en alguna parcela que certificas (postes, espalderas, estacas, durmientes, postes de servicios), o planeas instalar alguna?"
+                },
+                "coaching": {
+                  "en": "Lumber treated with prohibited materials may not be used for new installations or replacements that contact soil or crops. Existing installations are listed per parcel on the parcel application.",
+                  "es": "La madera tratada con materiales prohibidos no puede usarse en instalaciones nuevas ni en reemplazos que tengan contacto con el suelo o los cultivos. Las instalaciones existentes se indican por parcela en la solicitud de parcela."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.206(f)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "treated_lumber_policy",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How do you make sure treated lumber is not used for new installations or replacements?",
+                  "es": "¿Cómo te aseguras de no usar madera tratada en instalaciones nuevas o reemplazos?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "metal_stakes",
+                    "label": {
+                      "en": "We use metal stakes and posts",
+                      "es": "Usamos estacas y postes metálicos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "untreated_wood",
+                    "label": {
+                      "en": "We use untreated wood",
+                      "es": "Usamos madera sin tratar"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "no_new_installations",
+                    "label": {
+                      "en": "No new installations are planned",
+                      "es": "No hay instalaciones nuevas planeadas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otro (describe abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "treated_lumber_any",
+                    "op": "eq",
+                    "value": true
+                  }
+                ],
+                "nop_cite": "§ 205.206(f)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "treated_lumber_policy_other",
+                "kind": "text",
+                "label": {
+                  "en": "Describe how",
+                  "es": "Describe cómo"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "treated_lumber_any",
+                    "op": "eq",
+                    "value": true
+                  },
+                  {
+                    "question": "treated_lumber_policy",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "treated_lumber_planned_installations",
+                "kind": "textarea",
+                "label": {
+                  "en": "List any planned installations of treated lumber and how contact with organic crops is prevented",
+                  "es": "Enumera las instalaciones planeadas de madera tratada y cómo se evita el contacto con los cultivos orgánicos"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "treated_lumber_any",
+                    "op": "eq",
+                    "value": true
+                  }
+                ],
+                "nop_cite": "§ 205.206(f)",
                 "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
@@ -12611,6 +13112,50 @@
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
+              },
+              {
+                "key": "noncertified_only_inputs_used",
+                "kind": "boolean",
+                "label": {
+                  "en": "Do you use any post-harvest inputs on non-certified crops that you do not use on certified crops?",
+                  "es": "¿Usas en cultivos no certificados algún insumo de poscosecha que no usas en cultivos certificados?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.272(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "noncertified_inputs_monitoring",
+                "kind": "textarea",
+                "label": {
+                  "en": "How do you check that those inputs never reach certified product? Include how often you check and any testing of product.",
+                  "es": "¿Cómo verificas que esos insumos nunca lleguen al producto certificado? Incluye con qué frecuencia verificas y cualquier análisis del producto."
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "noncertified_only_inputs_used",
+                    "op": "eq",
+                    "value": true
+                  }
+                ],
+                "nop_cite": "§ 205.272(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
               }
             ]
           },
@@ -16579,6 +17124,133 @@
       "missing_required_na": []
     },
     {
+      "module": "g4_2_natural_resources",
+      "label": "unanswered",
+      "answers": {},
+      "visible_questions": [
+        "soil_water_practices",
+        "irrigation_efficiency_monitoring",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_source_types",
+        "irrigation_water_sources",
+        "shared_irrigation_with_prohibited",
+        "water_quality_tested",
+        "water_from_irrigation_district",
+        "monitoring_method"
+      ],
+      "missing_required": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_water_sources",
+        "water_quality_tested",
+        "water_from_irrigation_district",
+        "monitoring_method"
+      ],
+      "missing_required_na": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_water_sources",
+        "water_quality_tested",
+        "water_from_irrigation_district",
+        "monitoring_method"
+      ]
+    },
+    {
+      "module": "g4_2_natural_resources",
+      "label": "not_irrigated",
+      "answers": {
+        "irrigation_source_types": [
+          "not_irrigated"
+        ]
+      },
+      "visible_questions": [
+        "soil_water_practices",
+        "irrigation_efficiency_monitoring",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_source_types",
+        "monitoring_method"
+      ],
+      "missing_required": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "monitoring_method"
+      ],
+      "missing_required_na": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "monitoring_method"
+      ]
+    },
+    {
+      "module": "g4_2_natural_resources",
+      "label": "district_shared",
+      "answers": {
+        "irrigation_source_types": [
+          "irrigation_district",
+          "well"
+        ],
+        "shared_irrigation_with_prohibited": true
+      },
+      "visible_questions": [
+        "soil_water_practices",
+        "irrigation_efficiency_monitoring",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_source_types",
+        "irrigation_water_sources",
+        "irrigation_source_names",
+        "shared_irrigation_with_prohibited",
+        "shared_irrigation_responsible",
+        "shared_irrigation_mitigation",
+        "irrigation_piping_map_upload",
+        "water_quality_tested",
+        "water_from_irrigation_district",
+        "monitoring_method"
+      ],
+      "missing_required": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_water_sources",
+        "water_quality_tested",
+        "water_from_irrigation_district",
+        "monitoring_method"
+      ],
+      "missing_required_na": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_water_sources",
+        "water_quality_tested",
+        "water_from_irrigation_district",
+        "monitoring_method"
+      ]
+    },
+    {
       "module": "g4_0_rotation_soil",
       "label": "unanswered",
       "answers": {},
@@ -17363,7 +18035,8 @@
         "drift_safeguards",
         "drift_response_procedure",
         "runoff_risk_present",
-        "prohibited_materials_on_site"
+        "prohibited_materials_on_site",
+        "treated_lumber_any"
       ],
       "missing_required": [
         "split_operation",
@@ -17395,12 +18068,14 @@
         "split_operation_separation",
         "harvest_transport_separation",
         "parallel_production",
+        "nonorganic_crops_products",
         "nonorganic_system_materials",
         "buffer_strategies",
         "drift_safeguards",
         "drift_response_procedure",
         "runoff_risk_present",
-        "prohibited_materials_on_site"
+        "prohibited_materials_on_site",
+        "treated_lumber_any"
       ],
       "missing_required": [
         "split_operation_separation",
@@ -17436,7 +18111,8 @@
         "drift_safeguards",
         "drift_response_procedure",
         "runoff_risk_present",
-        "prohibited_materials_on_site"
+        "prohibited_materials_on_site",
+        "treated_lumber_any"
       ],
       "missing_required": [
         "parallel_production",
@@ -17447,6 +18123,82 @@
         "prohibited_materials_on_site"
       ],
       "missing_required_na": [
+        "parallel_production",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ]
+    },
+    {
+      "module": "g6_0_production",
+      "label": "lumber_with_policy_other",
+      "answers": {
+        "treated_lumber_any": true,
+        "treated_lumber_policy": [
+          "other"
+        ]
+      },
+      "visible_questions": [
+        "split_operation",
+        "parallel_production",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site",
+        "treated_lumber_any",
+        "treated_lumber_policy",
+        "treated_lumber_policy_other",
+        "treated_lumber_planned_installations"
+      ],
+      "missing_required": [
+        "split_operation",
+        "parallel_production",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ],
+      "missing_required_na": [
+        "split_operation",
+        "parallel_production",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ]
+    },
+    {
+      "module": "g6_0_production",
+      "label": "no_lumber",
+      "answers": {
+        "treated_lumber_any": false
+      },
+      "visible_questions": [
+        "split_operation",
+        "parallel_production",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site",
+        "treated_lumber_any"
+      ],
+      "missing_required": [
+        "split_operation",
+        "parallel_production",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ],
+      "missing_required_na": [
+        "split_operation",
         "parallel_production",
         "buffer_strategies",
         "drift_safeguards",
