@@ -37,9 +37,11 @@ const CERTIFICATE = {
 };
 
 vi.mock('store/api/documentsApi', () => ({
-  // The server narrows by `search`; nothing on this shelf matches any search term.
+  // The server narrows by `search` (here: title contains the term, case-insensitive).
   useGetFarmDocumentsQuery: (args: { search?: string }) => ({
-    data: args?.search ? [] : shelf.docs,
+    data: args?.search
+      ? shelf.docs.filter((d: any) => d.title.toLowerCase().includes(args.search!.toLowerCase()))
+      : shelf.docs,
     isLoading: false,
     isUninitialized: false,
     isError: false,
@@ -111,6 +113,30 @@ describe('Documents empty states', () => {
       expect(screen.getByText(messages['documents.emptyFolderTitle'])).toBeInTheDocument()
     );
     expect(screen.queryByText(messages['documents.emptyTitle'])).not.toBeInTheDocument();
+  });
+
+  it('a search that matches only in other folders says so and shows all folders', async () => {
+    // Review of #240: the folder chip filters client-side on top of the server's search result,
+    // so with "Exports" selected a term that matches the Certifications file left the list empty
+    // and the page claimed "No documents match", which was false.
+    renderPage();
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: new RegExp(messages['documents.folder.exports']),
+        hidden: true
+      })
+    );
+    fireEvent.change(screen.getByRole('textbox', { name: messages['documents.searchLabel'] }), {
+      target: { value: 'certificate' }
+    });
+
+    expect(
+      await screen.findByText('No documents in this folder match “certificate”')
+    ).toBeInTheDocument();
+    expect(screen.queryByText('No documents match “certificate”')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: messages['documents.showAllFolders'] }));
+    expect((await screen.findAllByText(CERTIFICATE.title)).length).toBeGreaterThan(0);
   });
 
   it('a farm with no documents at all still gets the first-run empty state', () => {

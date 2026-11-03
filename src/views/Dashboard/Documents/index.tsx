@@ -867,14 +867,37 @@ const DocumentsPage = () => {
           ) : isError ? (
             <StandardQueryError onRetry={refetch} isRetrying={isFetching} />
           ) : !groups.length ? (
-            /* Three different empties, never one. "Nothing on the shelf yet" is a claim that
-               this farm holds no documents; printed under a search with no hits, or under a
-               folder chip that counts 0, it told the operator their records were gone. The
-               search is server-side, so an empty result says nothing about the shelf. */
+            /* Separate empties, never one. "Nothing on the shelf yet" is a claim that this farm
+               holds no documents; printed under a search with no hits, or under a folder chip
+               that counts 0, it told the operator their records were gone. The search is
+               server-side and the folder chip filters client-side ON TOP of its result, so the
+               folder case is checked first: with a chip selected, `allGroups` non-empty means
+               there ARE matches, in other folders, and "No documents match" would be false. */
             <StandardCard>
               <VStack py={8} spacing={3} data-testid="documents-empty">
                 <Box as={FaFolderOpen} boxSize={8} color="green.500" />
-                {debouncedSearch ? (
+                {folder && allGroups.length ? (
+                  <>
+                    <Text fontWeight="semibold">
+                      {debouncedSearch
+                        ? intl.formatMessage(
+                            { id: 'documents.noMatchInFolderTitle' },
+                            { term: debouncedSearch }
+                          )
+                        : intl.formatMessage({ id: 'documents.emptyFolderTitle' })}
+                    </Text>
+                    <Text fontSize="sm" color="gray.600" textAlign="center" maxW="lg">
+                      {intl.formatMessage({
+                        id: debouncedSearch
+                          ? 'documents.noMatchInFolderBody'
+                          : 'documents.emptyFolderBody'
+                      })}
+                    </Text>
+                    <StandardButton variant="outline" size="sm" onClick={() => setFolder('')}>
+                      {intl.formatMessage({ id: 'documents.showAllFolders' })}
+                    </StandardButton>
+                  </>
+                ) : debouncedSearch ? (
                   <>
                     <Text fontWeight="semibold">
                       {intl.formatMessage(
@@ -885,18 +908,17 @@ const DocumentsPage = () => {
                     <Text fontSize="sm" color="gray.600" textAlign="center" maxW="lg">
                       {intl.formatMessage({ id: 'documents.noMatchBody' })}
                     </Text>
-                    <StandardButton variant="outline" size="sm" onClick={() => setSearch('')}>
+                    {/* Clears the folder too: a chip left selected would turn the restored list
+                        straight back into an empty folder. */}
+                    <StandardButton
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSearch('');
+                        setFolder('');
+                      }}>
                       {intl.formatMessage({ id: 'documents.clearSearch' })}
                     </StandardButton>
-                  </>
-                ) : folder && allGroups.length ? (
-                  <>
-                    <Text fontWeight="semibold">
-                      {intl.formatMessage({ id: 'documents.emptyFolderTitle' })}
-                    </Text>
-                    <Text fontSize="sm" color="gray.600" textAlign="center" maxW="lg">
-                      {intl.formatMessage({ id: 'documents.emptyFolderBody' })}
-                    </Text>
                   </>
                 ) : (
                   <>
