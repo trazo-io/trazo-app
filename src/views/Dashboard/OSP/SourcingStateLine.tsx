@@ -11,7 +11,9 @@ import type { Supplier } from 'store/api/supplierApi';
 
 const SourcingStateLine = ({ supplier }: { supplier: Supplier }) => {
   const intl = useIntl();
-  const newest = supplier.certificates[0]?.issued_on ?? '';
+  // The server's date for the copy the state is about, never certificates[0]: the list's order is
+  // not a promise (review of app #241).
+  const newest = supplier.sourcing_certificate_issued_on ?? '';
   // Static ids, never an interpolated `sourcing.state.${state}`: the locale-parity test cannot see an
   // id built at runtime.
   let text: string;

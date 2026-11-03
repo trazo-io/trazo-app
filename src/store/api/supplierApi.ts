@@ -55,6 +55,8 @@ export interface Supplier {
   exempt_handler_affidavit_title: string | null;
   /** What G6.5 says of this supplier, from the server; null when it supplies no bought-in product. */
   sourcing_state: SourcingState | null;
+  /** Issue date of the copy `sourcing_state` is about, from the server; never picked by array position. */
+  sourcing_certificate_issued_on: string | null;
 }
 
 export type SourcingState =

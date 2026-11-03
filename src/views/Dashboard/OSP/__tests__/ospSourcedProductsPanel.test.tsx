@@ -25,7 +25,12 @@ const supplier = (over: Record<string, unknown>) => ({
   nop_operation_id: '',
   archived: false,
   names: [],
-  certificates: [{ id: 1, issued_on: '2026-03-01', document_title: 'Cert' }],
+  // Oldest first on purpose: the date shown must be the server's, not the first copy's.
+  certificates: [
+    { id: 1, issued_on: '2024-01-10', document_title: 'Old cert' },
+    { id: 2, issued_on: '2026-03-01', document_title: 'Cert' }
+  ],
+  sourcing_certificate_issued_on: '2026-03-01',
   records_count: 0,
   sourced_products: 'Blueberries, fresh',
   source_operation: '',

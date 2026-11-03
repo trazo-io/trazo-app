@@ -31,7 +31,8 @@ const base = {
   source_operation: '',
   exempt_handler_affidavit: null,
   exempt_handler_affidavit_title: null,
-  sourcing_state: null
+  sourcing_state: null,
+  sourcing_certificate_issued_on: null
 };
 
 const renderIt = (supplier: Record<string, unknown>) =>
