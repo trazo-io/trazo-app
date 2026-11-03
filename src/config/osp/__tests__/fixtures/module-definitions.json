@@ -6722,6 +6722,41 @@
                 "max_length": null
               },
               {
+                "key": "irrigation_district_piping_map_upload",
+                "kind": "upload",
+                "label": {
+                  "en": "Attach a map or piping diagram showing valves or backflow prevention devices, if installed",
+                  "es": "Adjunta un mapa o diagrama de tuberías con las válvulas o dispositivos de prevención de reflujo, si los hay"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "irrigation_source_types",
+                    "op": "not_includes",
+                    "value": "not_irrigated"
+                  },
+                  {
+                    "question": "water_from_irrigation_district",
+                    "op": "truthy",
+                    "value": null
+                  },
+                  {
+                    "question": "irrigation_district_additives",
+                    "op": "eq",
+                    "value": "yes"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
                 "key": "irrigation_district_documentation",
                 "kind": "upload",
                 "label": {
