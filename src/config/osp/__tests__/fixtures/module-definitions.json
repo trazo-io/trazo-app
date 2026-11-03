@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.11.10",
+  "content_version": "2026.11.11",
   "registry": {
-    "content_version": "2026.11.10",
+    "content_version": "2026.11.11",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -9027,6 +9027,307 @@
                 "max_length": null
               }
             ]
+          },
+          {
+            "key": "f_production_equipment",
+            "title": {
+              "en": "F. Production equipment",
+              "es": "F. Equipo de producción"
+            },
+            "education": [],
+            "visible_when": [],
+            "questions": [
+              {
+                "key": "uses_production_equipment",
+                "kind": "boolean",
+                "label": {
+                  "en": "Does any farm equipment come into contact with your organic crops, seeds, transplants or inputs (planting, input application, harvest, in-field washing or packing, transport)? Count owned, rented, borrowed and custom-hired equipment.",
+                  "es": "¿Algún equipo agrícola tiene contacto con tus cultivos, semillas, plántulas o insumos orgánicos (siembra, aplicación de insumos, cosecha, lavado o empaque en el campo, transporte)? Cuenta el equipo propio, rentado, prestado y contratado."
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.272(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "equipment_inventory_panel",
+                "kind": "info",
+                "label": {
+                  "en": "Equipment that contacts organic crops",
+                  "es": "Equipo que tiene contacto con cultivos orgánicos"
+                },
+                "coaching": {
+                  "en": "Add each item in the equipment register on your farm profile: what it is used for, whether it is dedicated to organic production, whether you own, rent, borrow or custom hire it, and, for anything shared or brought in, how it is cleaned before organic use and whether it is rinsed.",
+                  "es": "Agrega cada equipo en el registro de equipo del perfil de tu finca: para qué se usa, si es exclusivo para la producción orgánica, si es propio, rentado, prestado o contratado y, para lo que se comparte o viene de fuera, cómo se limpia antes del uso orgánico y si se enjuaga."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "uses_production_equipment",
+                    "op": "eq",
+                    "value": true
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": "equipment_inventory",
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "equipment_shared_with_nonorganic",
+                "kind": "boolean",
+                "label": {
+                  "en": "Is any of this equipment also used on non-organic crops or land?",
+                  "es": "¿Alguno de estos equipos se usa también en cultivos o terrenos no orgánicos?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "uses_production_equipment",
+                    "op": "eq",
+                    "value": true
+                  }
+                ],
+                "nop_cite": "§ 205.272(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "dedicated_equipment_contamination_prevention",
+                "kind": "textarea",
+                "label": {
+                  "en": "How do you keep equipment dedicated to organic production away from prohibited materials, and how is it marked as dedicated (names, signage, a list)?",
+                  "es": "¿Cómo mantienes el equipo exclusivo para la producción orgánica lejos de materiales prohibidos, y cómo se distingue como exclusivo (nombres, letreros, una lista)?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "uses_production_equipment",
+                    "op": "eq",
+                    "value": true
+                  }
+                ],
+                "nop_cite": "§ 205.272(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "equipment_cleaning_documentation",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How is equipment cleaning or purging documented? Check all that apply.",
+                  "es": "¿Cómo se documenta la limpieza o purga del equipo? Marca todo lo que corresponda."
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "cleaning_purge_logs",
+                    "label": {
+                      "en": "Cleaning or purge logs",
+                      "es": "Registros de limpieza o purga"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "clean_equipment_affidavits",
+                    "label": {
+                      "en": "Clean truck or equipment affidavits",
+                      "es": "Declaraciones juradas de camión o equipo limpio"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "sop_followed",
+                    "label": {
+                      "en": "A written procedure is followed (attached below)",
+                      "es": "Se sigue un procedimiento escrito (adjunto abajo)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otros"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "uses_production_equipment",
+                    "op": "eq",
+                    "value": true
+                  }
+                ],
+                "nop_cite": "§ 205.103",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "equipment_cleaning_documentation_other",
+                "kind": "text",
+                "label": {
+                  "en": "Describe the other documentation",
+                  "es": "Describe la otra documentación"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "uses_production_equipment",
+                    "op": "eq",
+                    "value": true
+                  },
+                  {
+                    "question": "equipment_cleaning_documentation",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "equipment_cleaning_sop_upload",
+                "kind": "upload",
+                "label": {
+                  "en": "Attach your equipment cleaning or purging procedure",
+                  "es": "Adjunta tu procedimiento de limpieza o purga del equipo"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "uses_production_equipment",
+                    "op": "eq",
+                    "value": true
+                  },
+                  {
+                    "question": "equipment_cleaning_documentation",
+                    "op": "includes",
+                    "value": "sop_followed"
+                  }
+                ],
+                "nop_cite": "§ 205.272(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "equipment_cleaning_materials_listed",
+                "kind": "radio",
+                "label": {
+                  "en": "Are the materials you clean equipment with on your materials list?",
+                  "es": "¿Los materiales con los que limpias el equipo están en tu lista de materiales?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "yes",
+                    "label": {
+                      "en": "Yes, every cleaning material is on the materials list",
+                      "es": "Sí, cada material de limpieza está en la lista de materiales"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "no",
+                    "label": {
+                      "en": "No, a cleaning material is not on the list yet",
+                      "es": "No, un material de limpieza todavía no está en la lista"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "no_materials",
+                    "label": {
+                      "en": "No cleaning materials are used (water, air or brushing only)",
+                      "es": "No se usan materiales de limpieza (solo agua, aire o cepillado)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "uses_production_equipment",
+                    "op": "eq",
+                    "value": true
+                  }
+                ],
+                "nop_cite": "§ 205.201(a)(2)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "equipment_notes",
+                "kind": "textarea",
+                "label": {
+                  "en": "Anything else about your equipment the certifier should know",
+                  "es": "Algo más sobre tu equipo que la certificadora deba saber"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "uses_production_equipment",
+                    "op": "eq",
+                    "value": true
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              }
+            ]
           }
         ]
       },
@@ -18036,7 +18337,8 @@
         "drift_response_procedure",
         "runoff_risk_present",
         "prohibited_materials_on_site",
-        "treated_lumber_any"
+        "treated_lumber_any",
+        "uses_production_equipment"
       ],
       "missing_required": [
         "split_operation",
@@ -18075,7 +18377,8 @@
         "drift_response_procedure",
         "runoff_risk_present",
         "prohibited_materials_on_site",
-        "treated_lumber_any"
+        "treated_lumber_any",
+        "uses_production_equipment"
       ],
       "missing_required": [
         "split_operation_separation",
@@ -18112,7 +18415,8 @@
         "drift_response_procedure",
         "runoff_risk_present",
         "prohibited_materials_on_site",
-        "treated_lumber_any"
+        "treated_lumber_any",
+        "uses_production_equipment"
       ],
       "missing_required": [
         "parallel_production",
@@ -18151,7 +18455,8 @@
         "treated_lumber_any",
         "treated_lumber_policy",
         "treated_lumber_policy_other",
-        "treated_lumber_planned_installations"
+        "treated_lumber_planned_installations",
+        "uses_production_equipment"
       ],
       "missing_required": [
         "split_operation",
@@ -18186,7 +18491,96 @@
         "drift_response_procedure",
         "runoff_risk_present",
         "prohibited_materials_on_site",
-        "treated_lumber_any"
+        "treated_lumber_any",
+        "uses_production_equipment"
+      ],
+      "missing_required": [
+        "split_operation",
+        "parallel_production",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ],
+      "missing_required_na": [
+        "split_operation",
+        "parallel_production",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ]
+    },
+    {
+      "module": "g6_0_production",
+      "label": "equipment_sop_and_other",
+      "answers": {
+        "uses_production_equipment": true,
+        "equipment_cleaning_documentation": [
+          "sop_followed",
+          "other"
+        ]
+      },
+      "visible_questions": [
+        "split_operation",
+        "parallel_production",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site",
+        "treated_lumber_any",
+        "uses_production_equipment",
+        "equipment_inventory_panel",
+        "equipment_shared_with_nonorganic",
+        "dedicated_equipment_contamination_prevention",
+        "equipment_cleaning_documentation",
+        "equipment_cleaning_documentation_other",
+        "equipment_cleaning_sop_upload",
+        "equipment_cleaning_materials_listed",
+        "equipment_notes"
+      ],
+      "missing_required": [
+        "split_operation",
+        "parallel_production",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ],
+      "missing_required_na": [
+        "split_operation",
+        "parallel_production",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ]
+    },
+    {
+      "module": "g6_0_production",
+      "label": "no_equipment_stale_children",
+      "answers": {
+        "uses_production_equipment": false,
+        "equipment_cleaning_documentation": [
+          "sop_followed",
+          "other"
+        ]
+      },
+      "visible_questions": [
+        "split_operation",
+        "parallel_production",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site",
+        "treated_lumber_any",
+        "uses_production_equipment"
       ],
       "missing_required": [
         "split_operation",

@@ -95,6 +95,7 @@ import { fileNameFromUrl } from 'utils/fileNameFromUrl';
 import CertifierLinkCard from 'components/Certifications/CertifierLinkCard';
 import SupplierRegisterSection from './SupplierRegisterSection';
 import BrandOwnerRegisterSection from './BrandOwnerRegisterSection';
+import EquipmentRegisterSection from './EquipmentRegisterSection';
 import { ComplianceExportsGuard } from 'components/Guards/ComplianceExportsGuard';
 import { useTour } from 'hooks/useTour';
 import { apiErrorMessage } from 'utils/apiErrorMessage';
@@ -525,6 +526,15 @@ function ProfileFarm() {
                 companyId={String(currentCompany.id)}
                 farmId={String(farmId)}
                 state={establishmentData?.state ?? undefined}
+              />
+            )}
+
+            {/* Equipment that contacts organic crops (CCOF G6.0 C, OTCO C9 9.1, WSDA 2121 I). Writers
+                only, like the server. */}
+            {canWrite && currentCompany?.id && farmId && (
+              <EquipmentRegisterSection
+                companyId={String(currentCompany.id)}
+                farmId={String(farmId)}
               />
             )}
 
