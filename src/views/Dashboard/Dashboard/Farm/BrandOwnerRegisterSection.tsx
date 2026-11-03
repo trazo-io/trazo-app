@@ -32,7 +32,8 @@ import {
   StandardField,
   StandardInput,
   StandardSelect,
-  StandardTextarea
+  StandardTextarea,
+  STATUS_URGENCY_TOKENS
 } from 'components/Design/StandardComponents';
 import {
   useAddBrandOwnerMutation,
@@ -309,7 +310,11 @@ const OwnerRow = ({
   useEffect(() => {
     if (highlighted) ref.current?.scrollIntoView({ block: 'center' });
   }, [highlighted]);
-  const who = [owner.certifier_name, owner.nop_operation_id && `NOP ID ${owner.nop_operation_id}`]
+  const who = [
+    owner.certifier_name,
+    owner.nop_operation_id &&
+      intl.formatMessage({ id: 'brandOwners.nopIdLine' }, { id: owner.nop_operation_id })
+  ]
     .filter(Boolean)
     .join(', ');
   return (
@@ -374,7 +379,7 @@ const BrandOwnerRegisterSection = ({ companyId, farmId, state }: Props) => {
       sectionRef.current?.scrollIntoView({ block: 'start' });
     }
   }, [location.hash, focusOwner]);
-  const { data: owners = [], isLoading } = useGetBrandOwnersQuery({ companyId, farmId });
+  const { data: owners = [], isLoading, isError } = useGetBrandOwnersQuery({ companyId, farmId });
   const [remove] = useDeleteBrandOwnerMutation();
   // null: no form open; 'new': adding; a number: editing that owner.
   const [editing, setEditing] = useState<number | 'new' | null>(null);
@@ -395,7 +400,6 @@ const BrandOwnerRegisterSection = ({ companyId, farmId, state }: Props) => {
     <Box id="brand-owners" ref={sectionRef} w="full">
       <StandardCard
         title={intl.formatMessage({ id: 'brandOwners.title' })}
-        variant="outline"
         padding={{ base: 0, md: 4 }}
         mb={0}
         headerAction={
@@ -419,7 +423,17 @@ const BrandOwnerRegisterSection = ({ companyId, farmId, state }: Props) => {
               onDone={() => setEditing(null)}
             />
           )}
-          {!isLoading && owners.length === 0 && editing !== 'new' && (
+          {/* A failed fetch is not an absence: "no brand owner recorded" would be a claim made by an
+              error (review of app #239). */}
+          {isError && (
+            <Text
+              fontSize="sm"
+              color={STATUS_URGENCY_TOKENS.crit.text}
+              data-testid="brand-owners-load-failed">
+              {intl.formatMessage({ id: 'osp.brandOwners.loadFailed' })}
+            </Text>
+          )}
+          {!isLoading && !isError && owners.length === 0 && editing !== 'new' && (
             <Text fontSize="sm" color="gray.600">
               {intl.formatMessage({ id: 'brandOwners.empty' })}
             </Text>

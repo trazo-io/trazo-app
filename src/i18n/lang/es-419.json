@@ -6699,6 +6699,7 @@
   "brandOwners.delete": "Eliminar",
   "brandOwners.error": "No se pudo guardar el dueño de marca",
   "brandOwners.brandsLine": "Marcas: {brands}",
+  "brandOwners.nopIdLine": "ID NOP {id}",
   "brandOwners.review": "Revisar",
   "brandOwners.state.certificateOnFile": "La copia del certificado orgánico emitido el {issued} está en archivo.",
   "brandOwners.state.agreementOnFile": "El acuerdo de tu certificadora para este dueño de marca está en archivo.",

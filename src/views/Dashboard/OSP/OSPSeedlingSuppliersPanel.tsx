@@ -137,7 +137,11 @@ const OSPSeedlingSuppliersPanel: React.FC<Props> = ({
     <VStack align="stretch" spacing={2}>
       {rows.map((row) => {
         const line = statusLine(intl, row);
-        const who = [row.certifier, row.nop_operation_id && `NOP ID ${row.nop_operation_id}`]
+        const who = [
+          row.certifier,
+          row.nop_operation_id &&
+            intl.formatMessage({ id: 'suppliers.nopId' }, { id: row.nop_operation_id })
+        ]
           .filter(Boolean)
           .join(', ');
         return (
@@ -165,7 +169,7 @@ const OSPSeedlingSuppliersPanel: React.FC<Props> = ({
                     app #237; TraceChain.tsx made the same move). */}
                 <HStack spacing={2} align="flex-start">
                   {line.review ? (
-                    <Badge variant="warning" fontSize="10px" flexShrink={0}>
+                    <Badge variant="warning" fontSize="11px" flexShrink={0}>
                       {intl.formatMessage({ id: 'osp.seedlingSuppliers.review' })}
                     </Badge>
                   ) : null}
@@ -175,7 +179,7 @@ const OSPSeedlingSuppliersPanel: React.FC<Props> = ({
                 </HStack>
                 {row.not_covered > 0 && row.needs_certificate ? (
                   <HStack spacing={2} align="flex-start">
-                    <Badge variant="warning" fontSize="10px" flexShrink={0}>
+                    <Badge variant="warning" fontSize="11px" flexShrink={0}>
                       {intl.formatMessage({ id: 'osp.seedlingSuppliers.review' })}
                     </Badge>
                     <Text fontSize="xs" color={subtext}>

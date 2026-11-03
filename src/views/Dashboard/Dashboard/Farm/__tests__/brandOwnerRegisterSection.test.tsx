@@ -18,8 +18,12 @@ import BrandOwnerRegisterSection from '../BrandOwnerRegisterSection';
 const add = vi.fn();
 let owners: unknown[] = [];
 
+let loadFailed = false;
 vi.mock('store/api/brandOwnerApi', () => ({
-  useGetBrandOwnersQuery: () => ({ data: owners, isLoading: false }),
+  useGetBrandOwnersQuery: () =>
+    loadFailed
+      ? { data: undefined, isLoading: false, isError: true }
+      : { data: owners, isLoading: false },
   useAddBrandOwnerMutation: () => [
     (...a: unknown[]) => ({ unwrap: () => add(...a) }),
     { isLoading: false }
@@ -50,6 +54,7 @@ describe('BrandOwnerRegisterSection', () => {
     // jsdom has no layout: the highlighted owner scrolls itself into view.
     Element.prototype.scrollIntoView = vi.fn();
     owners = [];
+    loadFailed = false;
     add.mockReset();
     add.mockResolvedValue({});
   });
@@ -86,6 +91,13 @@ describe('BrandOwnerRegisterSection', () => {
   it('scrolls to the register when the plan links to it with no owner named', () => {
     renderAt('/admin/dashboard/farm/1/profile#brand-owners');
     expect(Element.prototype.scrollIntoView).toHaveBeenCalled();
+  });
+
+  it('never shows a failed load as an empty register', () => {
+    loadFailed = true;
+    renderAt();
+    expect(screen.getByTestId('brand-owners-load-failed')).toBeTruthy();
+    expect(screen.queryByText(/No brand owner recorded/)).toBeNull();
   });
 
   it('shows each owner with the state the plan prints', () => {

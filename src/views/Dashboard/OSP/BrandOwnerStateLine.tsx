@@ -38,7 +38,7 @@ const BrandOwnerStateLine = ({ owner }: { owner: BrandOwner }) => {
   return (
     <HStack spacing={2} align="flex-start">
       {owner.state !== 'on_file' ? (
-        <Badge variant="warning" fontSize="10px" flexShrink={0}>
+        <Badge variant="warning" fontSize="11px" flexShrink={0}>
           {intl.formatMessage({ id: 'brandOwners.review' })}
         </Badge>
       ) : null}

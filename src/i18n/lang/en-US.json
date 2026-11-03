@@ -6699,6 +6699,7 @@
   "brandOwners.delete": "Delete",
   "brandOwners.error": "The brand owner could not be saved",
   "brandOwners.brandsLine": "Brands: {brands}",
+  "brandOwners.nopIdLine": "NOP ID {id}",
   "brandOwners.review": "Review",
   "brandOwners.state.certificateOnFile": "Organic certificate copy issued {issued} is on file.",
   "brandOwners.state.agreementOnFile": "Your certifier's agreement for this brand owner is on file.",
