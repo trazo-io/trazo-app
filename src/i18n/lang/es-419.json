@@ -6666,7 +6666,7 @@
   "osp.wizard.agentAskedBlankBody": "Trazo no {count, plural, one {la exige} other {las exige}}, así que puedes seguir y volver después. Sin respuesta, {count, plural, one {aparece} other {aparecen}} en tu plan como aún sin responder.",
   "osp.wizard.continueAnyway": "Continuar de todos modos",
   "osp.wizard.agentAskedBlankReviewTitle": "Aquí hay {count, plural, one {# pregunta} other {# preguntas}} sin responder que {agent} hace",
-  "osp.wizard.agentAskedBlankReviewBody": "Puedes completar esta sección sin ellas. Sin respuesta, aparecen en tu plan como aún sin responder, con el lugar donde {agent} las pregunta.",
+  "osp.wizard.agentAskedBlankReviewBody": "Puedes completar esta sección sin {count, plural, one {responderla} other {responderlas}}. Sin respuesta, {count, plural, one {aparece} other {aparecen}} en tu plan como aún sin responder, con el lugar donde {agent} {count, plural, one {la pregunta} other {las pregunta}}.",
   "documents.deleteBlocked.brandOwner": "Este archivo es la copia del certificado o del acuerdo de un dueño de marca. Quítalo primero del dueño de marca en el perfil de tu finca.",
   "brandOwners.title": "Marcas para las que empacas",
   "brandOwners.subtitle": "Empresas en cuya marca o etiqueta empacas tu cultivo orgánico. Tu certificadora pregunta quién es cada una, si está certificada, y pide su certificado o, si no está certificada, el acuerdo de marca privada o de coempacador de tu certificadora. Tu plan muestra esta lista.",

@@ -6666,7 +6666,7 @@
   "osp.wizard.agentAskedBlankBody": "Trazo does not require {count, plural, one {it} other {them}}, so you can go on and come back later. Left blank, {count, plural, one {it prints} other {they print}} in your plan as not yet answered.",
   "osp.wizard.continueAnyway": "Continue anyway",
   "osp.wizard.agentAskedBlankReviewTitle": "{agent} asks {count, plural, one {# question} other {# questions}} here that {count, plural, one {is} other {are}} still blank",
-  "osp.wizard.agentAskedBlankReviewBody": "You can complete this section without them. Left blank, they print in your plan as not yet answered, with where {agent} asks them.",
+  "osp.wizard.agentAskedBlankReviewBody": "You can complete this section without {count, plural, one {it} other {them}}. Left blank, {count, plural, one {it prints} other {they print}} in your plan as not yet answered, with where {agent} asks {count, plural, one {it} other {them}}.",
   "documents.deleteBlocked.brandOwner": "This file is a brand owner's certificate or agreement copy. Remove it from the brand owner on your farm profile first.",
   "brandOwners.title": "Brands you pack for",
   "brandOwners.subtitle": "Companies whose brand or label you pack your organic crop into. Your certifier asks who each one is, whether it is certified, and for its certificate or, if it is not certified, your certifier's private-label or co-packer agreement. Your plan shows this list.",

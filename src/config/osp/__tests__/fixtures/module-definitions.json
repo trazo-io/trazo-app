@@ -2116,8 +2116,8 @@
                 "key": "seedlings_upload",
                 "kind": "upload",
                 "label": {
-                  "en": "Attach supplier organic certificates for purchased seedlings.",
-                  "es": "Adjunta certificados orgánicos del proveedor para plántulas compradas."
+                  "en": "Other seedling documents, if you keep any (for example a purchase agreement). Each supplier's certificate copy goes in the supplier register, so the panel above shows it.",
+                  "es": "Otros documentos de las plántulas, si los tienes (por ejemplo, un acuerdo de compra). La copia del certificado de cada proveedor va en el registro de proveedores, para que el panel de arriba la muestre."
                 },
                 "coaching": null,
                 "options": [],

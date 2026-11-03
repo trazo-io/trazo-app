@@ -95,6 +95,20 @@ describe('the flag wording', () => {
     );
   });
 
+  it('the review step agrees in number with how many are blank', () => {
+    // Local e2e run, 2026-11-02: one blank question read "without them… they print".
+    const review = (intl: typeof intlEn, count: number) =>
+      intl.formatMessage({ id: 'osp.wizard.agentAskedBlankReviewBody' }, { agent: 'WSDA', count });
+    expect(review(intlEn, 1)).toBe(
+      'You can complete this section without it. Left blank, it prints in your plan as not yet answered, with where WSDA asks it.'
+    );
+    expect(review(intlEn, 2)).toContain('without them. Left blank, they print');
+    expect(review(intlEs, 1)).toBe(
+      'Puedes completar esta sección sin responderla. Sin respuesta, aparece en tu plan como aún sin responder, con el lugar donde WSDA la pregunta.'
+    );
+    expect(review(intlEs, 2)).toContain('sin responderlas. Sin respuesta, aparecen');
+  });
+
   it('reads in Spanish', () => {
     expect(
       intlEs.formatMessage({ id: 'osp.modules.agentAsksBlank' }, { agent: 'OTCO', count: 3 })
