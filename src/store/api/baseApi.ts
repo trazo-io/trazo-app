@@ -72,6 +72,7 @@ export const baseApi = createApi({
     'PostHarvestFacility',
     'Supplier',
     'BrandOwner',
+    'ProductionEquipment',
     'SeasonPlan',
     'FieldNote',
     'CrewSender'

@@ -122,6 +122,16 @@ export const BRAND_OWNER_URL = (companyId: string, farmId: string, ownerId?: str
   ownerId != null
     ? `${ROOT_URL}companies/${companyId}/establishments/${farmId}/brand-owners/${ownerId}/`
     : `${ROOT_URL}companies/${companyId}/establishments/${farmId}/brand-owners/`;
+// Farm equipment that contacts organic crops (CCOF G6.0 C, OTCO C9 9.1, WSDA 2121 I). Company admins
+// and farm managers only, like the other registers the plan reads.
+export const PRODUCTION_EQUIPMENT_URL = (
+  companyId: string,
+  farmId: string,
+  itemId?: string | number
+) =>
+  itemId != null
+    ? `${ROOT_URL}companies/${companyId}/establishments/${farmId}/production-equipment/${itemId}/`
+    : `${ROOT_URL}companies/${companyId}/establishments/${farmId}/production-equipment/`;
 export const SUPPLIER_URL = (companyId: string, farmId: string, supplierId?: string | number) =>
   supplierId != null
     ? `${ROOT_URL}companies/${companyId}/establishments/${farmId}/suppliers/${supplierId}/`
