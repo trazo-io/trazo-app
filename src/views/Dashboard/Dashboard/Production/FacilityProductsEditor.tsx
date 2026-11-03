@@ -4,8 +4,8 @@
  * from the production records linked to the facility and shown beside the field; this holds only what
  * records cannot say (detail, packaging form). One line per product.
  */
-import React, { useState } from 'react';
-import { HStack, Text, useToast, VStack } from '@chakra-ui/react';
+import React, { useEffect, useState } from 'react';
+import { Badge, HStack, Text, useToast, VStack } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
 
 import {
@@ -35,7 +35,20 @@ const FacilityProductsEditor = ({
 }) => {
   const intl = useIntl();
   const toast = useToast();
-  const [value, setValue] = useState(facility.products_detail ?? '');
+  const saved = facility.products_detail ?? '';
+  const [value, setValue] = useState(saved);
+  // What the server held when this edit began. Untouched, the field follows the server; edited, it
+  // keeps the edit and says the saved text changed underneath it, so Save never overwrites a newer
+  // value without warning (review of app #242).
+  const [base, setBase] = useState(saved);
+  useEffect(() => {
+    if (saved === base) return;
+    if (value === base) {
+      setValue(saved);
+      setBase(saved);
+    }
+  }, [saved]);
+  const conflict = saved !== base && value !== base;
   const [update, { isLoading }] = useUpdatePostHarvestFacilityMutation();
   const crops = cropsLine(facility);
 
@@ -47,6 +60,7 @@ const FacilityProductsEditor = ({
         facilityId: facility.id,
         data: { products_detail: value }
       }).unwrap();
+      setBase(value);
     } catch (err) {
       toast({
         status: 'error',
@@ -73,11 +87,24 @@ const FacilityProductsEditor = ({
           onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setValue(e.target.value)}
         />
       </StandardField>
+      {conflict ? (
+        <HStack
+          spacing={2}
+          align="flex-start"
+          data-testid={`facility-products-conflict-${facility.id}`}>
+          <Badge variant="warning" fontSize="11px" flexShrink={0}>
+            {intl.formatMessage({ id: 'handler.products.conflictBadge' })}
+          </Badge>
+          <Text fontSize="xs" color="gray.600">
+            {intl.formatMessage({ id: 'handler.products.conflict' }, { saved })}
+          </Text>
+        </HStack>
+      ) : null}
       <HStack>
         <StandardButton
           size="sm"
           variant="outline"
-          isDisabled={value === (facility.products_detail ?? '')}
+          isDisabled={value === saved}
           isLoading={isLoading}
           onClick={save}>
           {intl.formatMessage({ id: 'handler.products.save' })}

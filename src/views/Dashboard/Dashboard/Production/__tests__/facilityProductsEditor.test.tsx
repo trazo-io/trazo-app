@@ -41,6 +41,15 @@ const facility = (over: Record<string, unknown> = {}) => ({
   ...over
 });
 
+const tree = (f: Record<string, unknown>) => (
+  <ChakraProvider>
+    <IntlProvider locale="en-US" messages={enUS as Record<string, string>}>
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      <FacilityProductsEditor facility={f as any} companyId="3" farmId="1" />
+    </IntlProvider>
+  </ChakraProvider>
+);
+
 const renderIt = (f: Record<string, unknown>) =>
   render(
     <ChakraProvider>
@@ -69,6 +78,24 @@ describe('FacilityProductsEditor', () => {
   it('says when no record is linked', () => {
     renderIt(facility({ crops_recorded: [] }));
     expect(screen.getByText('No production record is linked to it yet.')).toBeTruthy();
+  });
+
+  it('follows a newer saved value while untouched', () => {
+    const { rerender } = render(tree(facility({ products_detail: 'Old' })));
+    rerender(tree(facility({ products_detail: 'Newer from another tab' })));
+    expect((screen.getByRole('textbox') as HTMLTextAreaElement).value).toBe(
+      'Newer from another tab'
+    );
+    expect(screen.queryByText('Changed elsewhere')).toBeNull();
+  });
+
+  it('keeps an edit in progress and warns before it replaces a newer save', () => {
+    const { rerender } = render(tree(facility({ products_detail: 'Old' })));
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'My edit' } });
+    rerender(tree(facility({ products_detail: 'Newer from another tab' })));
+    expect((screen.getByRole('textbox') as HTMLTextAreaElement).value).toBe('My edit');
+    expect(screen.getByText('Changed elsewhere')).toBeTruthy();
+    expect(screen.getByText(/Newer from another tab/)).toBeTruthy();
   });
 
   it('saves only the products the operator describes', async () => {

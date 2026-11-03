@@ -5986,6 +5986,8 @@
   "handler.products.crops": "Cultivos en los registros vinculados: {crops}",
   "handler.products.noCrops": "Todavía no hay registros de producción vinculados.",
   "handler.products.described": "Productos: {products}",
+  "handler.products.conflictBadge": "Cambiado en otro lugar",
+  "handler.products.conflict": "Alguien guardó otros productos para esta instalación mientras editabas: \"{saved}\". Al guardar, se reemplazan por tu texto.",
   "handler.action.cancel": "Cancelar",
   "handler.action.save": "Guardar y vincular",
   "handler.action.unlink": "Quitar este manejador",
