@@ -867,15 +867,47 @@ const DocumentsPage = () => {
           ) : isError ? (
             <StandardQueryError onRetry={refetch} isRetrying={isFetching} />
           ) : !groups.length ? (
+            /* Three different empties, never one. "Nothing on the shelf yet" is a claim that
+               this farm holds no documents; printed under a search with no hits, or under a
+               folder chip that counts 0, it told the operator their records were gone. The
+               search is server-side, so an empty result says nothing about the shelf. */
             <StandardCard>
-              <VStack py={8} spacing={3}>
+              <VStack py={8} spacing={3} data-testid="documents-empty">
                 <Box as={FaFolderOpen} boxSize={8} color="green.500" />
-                <Text fontWeight="semibold">
-                  {intl.formatMessage({ id: 'documents.emptyTitle' })}
-                </Text>
-                <Text fontSize="sm" color="gray.600" textAlign="center" maxW="lg">
-                  {intl.formatMessage({ id: 'documents.emptyBody' })}
-                </Text>
+                {debouncedSearch ? (
+                  <>
+                    <Text fontWeight="semibold">
+                      {intl.formatMessage(
+                        { id: 'documents.noMatchTitle' },
+                        { term: debouncedSearch }
+                      )}
+                    </Text>
+                    <Text fontSize="sm" color="gray.600" textAlign="center" maxW="lg">
+                      {intl.formatMessage({ id: 'documents.noMatchBody' })}
+                    </Text>
+                    <StandardButton variant="outline" size="sm" onClick={() => setSearch('')}>
+                      {intl.formatMessage({ id: 'documents.clearSearch' })}
+                    </StandardButton>
+                  </>
+                ) : folder && allGroups.length ? (
+                  <>
+                    <Text fontWeight="semibold">
+                      {intl.formatMessage({ id: 'documents.emptyFolderTitle' })}
+                    </Text>
+                    <Text fontSize="sm" color="gray.600" textAlign="center" maxW="lg">
+                      {intl.formatMessage({ id: 'documents.emptyFolderBody' })}
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    <Text fontWeight="semibold">
+                      {intl.formatMessage({ id: 'documents.emptyTitle' })}
+                    </Text>
+                    <Text fontSize="sm" color="gray.600" textAlign="center" maxW="lg">
+                      {intl.formatMessage({ id: 'documents.emptyBody' })}
+                    </Text>
+                  </>
+                )}
               </VStack>
             </StandardCard>
           ) : (

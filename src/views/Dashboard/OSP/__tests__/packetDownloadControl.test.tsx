@@ -129,6 +129,33 @@ describe('packet download control', () => {
     scopes = {};
   });
 
+  it('drops the live clause at zero and agrees in number for one unchanged module', async () => {
+    // The Calapooia Bend walk-through (2026-11-02): every live-record module had also changed,
+    // so the line read "plus none showing the farm's current records" and "The 1 unchanged
+    // modules are named on its cover".
+    updates = [{ id: 1, prior_osp: 10, new_osp: 11, reporting_year: 2027 }];
+    scopes = {
+      11: {
+        available: true,
+        code: '',
+        reason: '',
+        prior_version: 1,
+        new_version: 3,
+        included: Array.from({ length: 18 }, (_, i) => ({ key: `c${i}`, label: '', file: '' })),
+        live: [],
+        omitted: [{ key: 'w2_0_wild_crop', label: 'W2.0', file: 'modules/W2_0.pdf' }]
+      }
+    };
+    const { getByRole } = renderControl([plan(10, 3, 'active'), plan(11, 4, 'draft')]);
+    getByRole('button').click();
+    expect(
+      await screen.findByText(
+        'The 18 modules whose answers changed since v1. The 1 unchanged module is named on its cover; every parcel application stays in.'
+      )
+    ).toBeInTheDocument();
+    scopes = {};
+  });
+
   it('turns the lone button into a menu when the one version can be compared', async () => {
     updates = [{ id: 1, prior_osp: 9, new_osp: 10, reporting_year: 2027 }];
     scopes = {
