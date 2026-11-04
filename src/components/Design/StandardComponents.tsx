@@ -1820,7 +1820,24 @@ export const StandardAlert = ({
 };
 
 interface StandardNoticeProps {
-  status: 'warning' | 'info';
+  /**
+   * warning/info: a finding or a limit. success: a confirmation (green check). neutral: a QUESTION
+   * that is neither good nor bad news, e.g. the one-time boundary-disclosure consent ask, where
+   * a warning colour would push the farmer toward one answer (2026-11-04).
+   */
+  status: 'warning' | 'info' | 'success' | 'neutral';
+  /** Overrides the status glyph (the disclosure ask keeps its map). The circle keeps its tone. */
+  icon?: React.ElementType;
+  /**
+   * Shows a close button. `dismissLabel` is required with it: an icon-only button needs an
+   * accessible name (the dashboard welcome banner's bare "✕" had none).
+   */
+  onDismiss?: () => void;
+  dismissLabel?: string;
+  /** "status" (default) is a polite live region. A question the reader answers is a labelled
+   *  "region" instead, so a screen reader does not announce it as news. */
+  role?: 'status' | 'region';
+  'aria-label'?: string;
   title: ReactNode;
   /** The facts the reader acts on (which inputs, which records). Keep it to a few lines. */
   children?: ReactNode;
@@ -1862,11 +1879,22 @@ export const StandardNotice = ({
   showDetailsLabel,
   hideDetailsLabel,
   mb = 6,
+  icon,
+  onDismiss,
+  dismissLabel,
+  role = 'status',
+  'aria-label': ariaLabel,
   'data-testid': testId
 }: StandardNoticeProps) => {
   const { isOpen, onToggle } = useDisclosure();
-  const palette = ALERT_PALETTE[status];
-  const icons = { warning: MdWarning, info: MdInfo };
+  // neutral has no Alert palette: it is gray by definition (the StatusRow neutral tokens).
+  const circleBg =
+    status === 'neutral' ? STATUS_TONE_TOKENS.neutral.circle : `${ALERT_PALETTE[status]}.50`;
+  const glyphColor =
+    status === 'neutral'
+      ? STATUS_TONE_TOKENS.neutral.glyph
+      : `${ALERT_PALETTE[status]}.${ALERT_ACCENT_SHADE[status]}`;
+  const icons = { warning: MdWarning, info: MdInfo, success: MdCheck, neutral: MdInfo };
   const surface = useColorModeValue('white', 'gray.800');
   const rule = useColorModeValue('gray.100', 'gray.700');
 
@@ -1907,21 +1935,29 @@ export const StandardNotice = ({
       borderRadius={{ base: 'xl', md: '2xl' }}
       boxShadow="0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
       p={{ base: 4, md: 6 }}
+      pr={onDismiss ? { base: 12, md: 14 } : undefined}
+      position="relative"
       mb={mb}
-      role="status"
+      role={role}
+      aria-label={ariaLabel}
       data-testid={testId}>
+      {onDismiss && (
+        <CloseButton
+          position="absolute"
+          top={{ base: 3, md: 4 }}
+          right={{ base: 3, md: 4 }}
+          size="md"
+          aria-label={dismissLabel}
+          onClick={onDismiss}
+        />
+      )}
       <Flex
         direction={{ base: 'column', md: 'row' }}
         align={{ base: 'stretch', md: 'center' }}
         gap={{ base: 3, md: 6 }}>
         <HStack align="flex-start" spacing={3} flex={1} minW={0}>
-          <Circle size={8} bg={`${palette}.50`} flexShrink={0}>
-            <Icon
-              as={icons[status]}
-              boxSize={4}
-              color={`${palette}.${ALERT_ACCENT_SHADE[status]}`}
-              aria-hidden
-            />
+          <Circle size={8} bg={circleBg} flexShrink={0}>
+            <Icon as={icon ?? icons[status]} boxSize={4} color={glyphColor} aria-hidden />
           </Circle>
           <Box flex={1} minW={0} pt={1}>
             <Text fontWeight="semibold" fontSize={{ base: 'sm', md: 'md' }} color="gray.800">

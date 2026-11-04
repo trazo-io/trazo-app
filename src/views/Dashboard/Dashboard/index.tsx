@@ -17,6 +17,7 @@ import {
   Tooltip
 } from '@chakra-ui/react';
 import { S3Image } from 'components/Design';
+import { StandardNotice } from 'components/Design/StandardComponents';
 import { useBatchS3Images } from 'hooks/useBatchS3Images';
 import { useSelector } from 'react-redux';
 import { useMemo } from 'react';
@@ -537,39 +538,26 @@ export default function DashboardView() {
           trial until a trial is actually sold and its copy is written for it. A trialing
           subscription is still REPORTED, factually, on the Subscription page. */}
 
-      {/* 🚀 2025 Best Practice: Welcome Banner for New Company Joiners */}
+      {/* Welcome, shown once after an invited team member verifies their email and joins
+          (ModernVerifyEmail is the only route that sets ?welcome=true). A StandardNotice in
+          the success tone since 2026-11-04: it was a green.50 slab with a green edge, and its
+          close control was a bare "✕" with no accessible name. */}
       {welcomeBannerVisible && (
-        <Box
-          bg="green.50"
-          borderLeftWidth="4px"
-          borderLeftColor="green.700"
-          p={4}
+        <StandardNotice
+          status="success"
+          title={intl.formatMessage({ id: 'dashboard.welcomeToTeam' })}
+          onDismiss={() => setWelcomeBannerVisible(false)}
+          dismissLabel={intl.formatMessage({ id: 'app.close' })}
           mb={4}
-          borderRadius="md"
-          position="relative">
-          <Flex justify="space-between" align="center">
-            <Box>
-              <Text fontSize="lg" fontWeight="bold" color="green.800" mb={2}>
-                {intl.formatMessage({ id: 'dashboard.welcomeToTeam' })}
-              </Text>
-              <Text color="green.700" fontSize="sm">
-                {isCompanyJoin
-                  ? intl.formatMessage({ id: 'dashboard.welcomeVerifiedJoined' })
-                  : joinSource === 'company_join'
-                  ? intl.formatMessage({ id: 'dashboard.welcomeAccountReady' })
-                  : intl.formatMessage({ id: 'dashboard.welcomeExplore' })}
-              </Text>
-            </Box>
-            <Button
-              size="sm"
-              variant="ghost"
-              color="green.700"
-              onClick={() => setWelcomeBannerVisible(false)}
-              _hover={{ bg: 'green.100' }}>
-              ✕
-            </Button>
-          </Flex>
-        </Box>
+          data-testid="dashboard-welcome-notice">
+          <Text fontSize="sm" color="gray.700">
+            {isCompanyJoin
+              ? intl.formatMessage({ id: 'dashboard.welcomeVerifiedJoined' })
+              : joinSource === 'company_join'
+              ? intl.formatMessage({ id: 'dashboard.welcomeAccountReady' })
+              : intl.formatMessage({ id: 'dashboard.welcomeExplore' })}
+          </Text>
+        </StandardNotice>
       )}
 
       <Box>
