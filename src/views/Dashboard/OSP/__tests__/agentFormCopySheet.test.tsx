@@ -578,9 +578,37 @@ describe('the agent-form copy sheet', () => {
         value: null,
         source: '',
         extra: { year: 2026, subtotal: '640.00', n_sales: 1, n_unpriced: 0 }
+      },
+      {
+        step: '2521',
+        item: 'business_name',
+        kind: 'value',
+        value: 'Brandt Family Farms LLC',
+        source: 'company',
+        extra: {}
+      },
+      {
+        step: '2521',
+        item: 'contact_name',
+        kind: 'value',
+        value: 'Laurel Brandt',
+        source: 'establishment',
+        extra: {}
       }
     ]
   };
+
+  it("labels shared rows with WSDA's own words, and Oregon Tilth's with its own", () => {
+    result = { data: wsdaSheet };
+    renderSheet();
+    expect(screen.getByTestId('agent-sheet-business_name')).toHaveTextContent(/^Business name/);
+    expect(screen.getByTestId('agent-sheet-contact_name')).toHaveTextContent(/^Name/);
+    result = { data: sheet };
+    renderSheet();
+    expect(screen.getAllByTestId('agent-sheet-business_name').pop()).toHaveTextContent(
+      /^Registered business name/
+    );
+  });
 
   it("leaves WSDA's income line to the books and gives Trazo's subtotal only as a cross-check", () => {
     result = { data: wsdaSheet };

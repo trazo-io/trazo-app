@@ -9300,6 +9300,8 @@
   "osp.agentSheet.item.dba": "Nombre comercial (DBA)",
   "osp.agentSheet.item.client_id": "ID de cliente",
   "osp.agentSheet.item.contact_name": "Contacto principal",
+  "osp.agentSheet.item.business_name_plain": "Nombre de la empresa",
+  "osp.agentSheet.item.contact_name_plain": "Nombre",
   "osp.agentSheet.item.contact_email": "Correo electrónico",
   "osp.agentSheet.item.contact_phone": "Teléfono",
   "osp.agentSheet.item.continue_or_withdraw": "Continuar o retirarse",

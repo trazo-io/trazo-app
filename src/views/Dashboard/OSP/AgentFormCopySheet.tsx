@@ -189,6 +189,21 @@ const ITEM_LABELS: Record<string, Msg> = {
   }
 };
 
+/**
+ * Where an agent's form names a shared row differently, the row carries the form's own word. WSDA's
+ * AGR 2521 header reads "Business Name / Name / Email / Cert No / Phone"; Oregon Tilth's Step 1
+ * asks for a "Registered Business Name" and a "Primary Contact".
+ */
+const AGENT_ITEM_LABELS: Record<string, Record<string, Msg>> = {
+  wsda: {
+    business_name: {
+      id: 'osp.agentSheet.item.business_name_plain',
+      defaultMessage: 'Business name'
+    },
+    contact_name: { id: 'osp.agentSheet.item.contact_name_plain', defaultMessage: 'Name' }
+  }
+};
+
 const STEP_TITLES: Record<string, Msg> = {
   '0': { id: 'osp.agentSheet.step.before', defaultMessage: 'Before you file' },
   details: { id: 'osp.agentSheet.step.details', defaultMessage: 'Your details' },
@@ -1271,7 +1286,8 @@ const AgentFormCopySheet: React.FC<Props> = ({ companyId, farmId, ospId }) => {
                       <HStack justify="space-between" align="flex-start" spacing={3}>
                         <Text fontSize="sm" fontWeight="semibold">
                           {intl.formatMessage(
-                            ITEM_LABELS[row.item] || { id: row.item, defaultMessage: row.item }
+                            AGENT_ITEM_LABELS[sheet.agent]?.[row.item] ||
+                              ITEM_LABELS[row.item] || { id: row.item, defaultMessage: row.item }
                           )}
                         </Text>
                         <Badge colorScheme="gray" variant="subtle" flexShrink={0}>
