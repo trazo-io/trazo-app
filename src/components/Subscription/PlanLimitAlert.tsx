@@ -1,8 +1,8 @@
 import React from 'react';
-import { Alert, AlertDescription, AlertIcon, AlertTitle, Box, Stack } from '@chakra-ui/react';
+import { Text } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
 import { useNavigate } from 'react-router-dom';
-import { StandardButton } from 'components/Design/StandardComponents';
+import { StandardButton, StandardNotice } from 'components/Design/StandardComponents';
 
 interface PlanLimitAlertProps {
   /** Plan limit for the resource (already resolved from effective_limits/features) */
@@ -15,40 +15,38 @@ interface PlanLimitAlertProps {
  * Pre-flight warning shown at the top of add-forms when the current usage has
  * reached the subscription plan's limit. Purely informational — the form stays
  * usable and the backend remains the enforcer.
+ *
+ * Still reachable on parcels and productions although every current plan is unlimited there:
+ * the retired basic/standard/corporate ladder is live as CONTRACTS (CLAUDE.md), and those carry
+ * finite limits. Do not delete it as dead on the strength of the current price list.
+ *
+ * Rendered as a `StandardNotice` (2026-11-04): the page-level notice style, white surface, the
+ * status in the icon and the words, the way out on the right. It was a stock amber Alert, the
+ * tinted-slab look retired from the production page.
  */
 export const PlanLimitAlert: React.FC<PlanLimitAlertProps> = ({ limit, descriptionId }) => {
   const intl = useIntl();
   const navigate = useNavigate();
 
   return (
-    <Alert status="warning" mb={6}>
-      <AlertIcon />
-      <Stack
-        direction={{ base: 'column', smd: 'row' }}
-        spacing={3}
-        flex="1"
-        align={{ base: 'flex-start', smd: 'center' }}>
-        <Box flex="1">
-          <AlertTitle fontSize="sm">
-            {intl.formatMessage({ id: 'limits.planLimitReachedTitle' })}
-          </AlertTitle>
-          <AlertDescription fontSize="sm">
-            {intl.formatMessage({ id: descriptionId }, { limit })}
-          </AlertDescription>
-        </Box>
-        {/* The CTA stays inside this alert on purpose: it IS the alert's condition ("you hit
-            the limit -> here is the way out"), it sits inline beside the text rather than
-            acting as the page's action bar, and the form below keeps its own submit. That is
-            the difference from a notice that holds a page's only actions. */}
+    <StandardNotice
+      status="warning"
+      title={intl.formatMessage({ id: 'limits.planLimitReachedTitle' })}
+      data-testid="plan-limit-notice"
+      action={
+        // The way out IS the notice's condition ("you hit the limit -> here is the way out"),
+        // and the form below keeps its own submit, so the button belongs here.
         <StandardButton
           variant="primary"
           size="sm"
-          flexShrink={0}
           onClick={() => navigate('/admin/dashboard/pricing')}>
           {intl.formatMessage({ id: 'app.upgradePlan' })}
         </StandardButton>
-      </Stack>
-    </Alert>
+      }>
+      <Text fontSize="sm" color="gray.700">
+        {intl.formatMessage({ id: descriptionId }, { limit })}
+      </Text>
+    </StandardNotice>
   );
 };
 
