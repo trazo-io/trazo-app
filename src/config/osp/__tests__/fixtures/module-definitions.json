@@ -19088,6 +19088,998 @@
         "records_maintained_as",
         "lot_numbering"
       ]
+    },
+    {
+      "module": "g2_0_fraud_prevention",
+      "label": "stale_chain:supplier_certificate_review_frequency_other:fraud_mitigation_practices:includes_any",
+      "answers": {
+        "supplier_certificate_review_frequency": "other",
+        "fraud_mitigation_practices": [
+          "__not_an_option__"
+        ]
+      },
+      "visible_questions": [
+        "fraud_risk_areas",
+        "fraud_mitigation_practices",
+        "supplier_approval_controls",
+        "supplier_approval_procedure_upload",
+        "fraud_review_process",
+        "fraud_plan_upload",
+        "osp_review_frequency",
+        "osp_accuracy_process",
+        "osp_implementation_monitoring"
+      ],
+      "missing_required": [
+        "fraud_risk_areas",
+        "fraud_review_process",
+        "osp_review_frequency",
+        "osp_accuracy_process",
+        "osp_implementation_monitoring"
+      ],
+      "missing_required_na": [
+        "fraud_risk_areas",
+        "fraud_review_process",
+        "osp_review_frequency",
+        "osp_accuracy_process",
+        "osp_implementation_monitoring"
+      ]
+    },
+    {
+      "module": "g3_0_seeds",
+      "label": "stale_chain:buyer_search_documents:seeds_used:includes_any",
+      "answers": {
+        "seed_source": [
+          "contract_provided"
+        ],
+        "seeds_used": [
+          "__not_an_option__"
+        ]
+      },
+      "visible_questions": [
+        "seeds_used",
+        "seedlings_used",
+        "planting_stock_used",
+        "farm_grown_processing_contracted",
+        "seeds_additional_notes"
+      ],
+      "missing_required": [
+        "seedlings_used",
+        "planting_stock_used"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g3_2_planting_stock",
+      "label": "stale_chain:first_organic_harvest_handling_other:nonorganic_stock_for_organic_crop:eq",
+      "answers": {
+        "stock_organic_status": "mixed",
+        "first_organic_harvest_handling": [
+          "other"
+        ],
+        "nonorganic_stock_for_organic_crop": "__not_an_option__"
+      },
+      "visible_questions": [
+        "stock_types_established",
+        "stock_organic_status",
+        "planting_stock_description",
+        "suppliers_on_supplier_list",
+        "stock_source",
+        "organic_stock_verification_method",
+        "organic_stock_treatments",
+        "nonorganic_stock_justification",
+        "stock_search_records",
+        "nonorganic_stock_for_organic_crop",
+        "stock_search_method",
+        "stock_search_process",
+        "stock_gmo_documentation",
+        "stock_treatments",
+        "stock_sold_as_organic",
+        "stock_records_kept",
+        "planting_stock_upload",
+        "planting_stock_additional_notes"
+      ],
+      "missing_required": [
+        "stock_types_established",
+        "planting_stock_description",
+        "suppliers_on_supplier_list",
+        "nonorganic_stock_justification",
+        "stock_search_records",
+        "stock_treatments",
+        "stock_sold_as_organic",
+        "stock_records_kept"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g4_0_rotation_soil",
+      "label": "stale_chain:in_lieu_other:system_type:includes",
+      "answers": {
+        "in_lieu_practices": [
+          "other"
+        ],
+        "system_type": [
+          "__not_an_option__"
+        ]
+      },
+      "visible_questions": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ],
+      "missing_required": [
+        "fertility_components",
+        "fertility_inputs_listed",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ],
+      "missing_required_na": [
+        "fertility_components",
+        "fertility_inputs_listed",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ]
+    },
+    {
+      "module": "g4_0_rotation_soil",
+      "label": "stale_chain:monitoring_frequency_other:fertility_monitoring:truthy",
+      "answers": {
+        "monitoring_frequency": "other",
+        "fertility_monitoring": false
+      },
+      "visible_questions": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ],
+      "missing_required": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "tillage_practices",
+        "erosion_practices"
+      ],
+      "missing_required_na": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "tillage_practices",
+        "erosion_practices"
+      ]
+    },
+    {
+      "module": "g4_0_rotation_soil",
+      "label": "stale_chain:monitoring_frequency_other:fertility_monitoring:not_includes",
+      "answers": {
+        "monitoring_frequency": "other",
+        "fertility_monitoring": [
+          "no_testing"
+        ]
+      },
+      "visible_questions": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ],
+      "missing_required": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "tillage_practices",
+        "erosion_practices"
+      ],
+      "missing_required_na": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "tillage_practices",
+        "erosion_practices"
+      ]
+    },
+    {
+      "module": "g4_0_rotation_soil",
+      "label": "stale_chain:fertility_testing_frequency_other:fertility_monitoring:includes_any",
+      "answers": {
+        "fertility_testing_frequency": "other",
+        "fertility_monitoring": [
+          "__not_an_option__"
+        ]
+      },
+      "visible_questions": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "tillage_practices",
+        "fertility_monitoring",
+        "monitoring_frequency",
+        "erosion_practices"
+      ],
+      "missing_required": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "tillage_practices",
+        "monitoring_frequency",
+        "erosion_practices"
+      ],
+      "missing_required_na": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "tillage_practices",
+        "monitoring_frequency",
+        "erosion_practices"
+      ]
+    },
+    {
+      "module": "g4_1_compost_manure",
+      "label": "stale_chain:raw_manure_supplier_statement_upload:raw_manure_source:one_of",
+      "answers": {
+        "materials_applied": [
+          "raw_manure"
+        ],
+        "raw_manure_supplier_statement": true,
+        "raw_manure_source": "__not_an_option__"
+      },
+      "visible_questions": [
+        "materials_applied",
+        "raw_manure_interval_rule",
+        "raw_manure_timing_detail",
+        "raw_manure_source",
+        "raw_manure_water_risk",
+        "soil_fertility_additional_notes"
+      ],
+      "missing_required": [
+        "raw_manure_interval_rule",
+        "raw_manure_timing_detail",
+        "raw_manure_water_risk"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g4_2_natural_resources",
+      "label": "stale_chain:wildlife_habitat_mitigation_other:wildlife_habitat_pressure:includes_any",
+      "answers": {
+        "wildlife_habitat_mitigation": [
+          "other"
+        ],
+        "wildlife_habitat_pressure": [
+          "__not_an_option__"
+        ]
+      },
+      "visible_questions": [
+        "soil_water_practices",
+        "irrigation_efficiency_monitoring",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_source_types",
+        "irrigation_water_sources",
+        "shared_irrigation_with_prohibited",
+        "water_quality_tested",
+        "water_from_irrigation_district",
+        "monitoring_method"
+      ],
+      "missing_required": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "irrigation_water_sources",
+        "water_quality_tested",
+        "water_from_irrigation_district",
+        "monitoring_method"
+      ],
+      "missing_required_na": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "irrigation_water_sources",
+        "water_quality_tested",
+        "water_from_irrigation_district",
+        "monitoring_method"
+      ]
+    },
+    {
+      "module": "g5_0_pest",
+      "label": "stale_chain:burn_reason_other:burns_crop_residue:truthy",
+      "answers": {
+        "burn_reason": [
+          "other"
+        ],
+        "burns_crop_residue": false
+      },
+      "visible_questions": [
+        "prevention_practices",
+        "burns_crop_residue",
+        "weed_management_practices",
+        "plastic_mulch_used",
+        "applies_pest_weed_disease_inputs",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_methods",
+        "monitoring_records"
+      ],
+      "missing_required": [
+        "prevention_practices",
+        "weed_management_practices",
+        "plastic_mulch_used",
+        "applies_pest_weed_disease_inputs",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_records"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g6_0_production",
+      "label": "stale_chain:prohibited_materials_storage_other:prohibited_materials_on_site:truthy",
+      "answers": {
+        "prohibited_materials_storage": [
+          "other"
+        ],
+        "prohibited_materials_on_site": false
+      },
+      "visible_questions": [
+        "split_operation",
+        "parallel_production",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site",
+        "treated_lumber_any",
+        "uses_production_equipment"
+      ],
+      "missing_required": [
+        "split_operation",
+        "parallel_production",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present"
+      ],
+      "missing_required_na": [
+        "split_operation",
+        "parallel_production",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present"
+      ]
+    },
+    {
+      "module": "g6_1_harvest_transport",
+      "label": "stale_chain:container_cleaning_sop_upload:container_safeguards:includes",
+      "answers": {
+        "container_cleaning_records": [
+          "sop_attached"
+        ],
+        "container_safeguards": [
+          "__not_an_option__"
+        ]
+      },
+      "visible_questions": [
+        "who_harvests",
+        "harvest_method",
+        "harvest_records_kept",
+        "harvest_transport_records_source",
+        "third_party_activities",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "harvest_container_material",
+        "harvest_containers_stamped_organic",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "transport_container_types",
+        "transport_unit_cleaning_documentation",
+        "transport_shared_with_noncertified",
+        "first_stop_before_buyer",
+        "handled_by_another_operation"
+      ],
+      "missing_required": [
+        "who_harvests",
+        "container_types",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "handled_by_another_operation"
+      ],
+      "missing_required_na": [
+        "who_harvests",
+        "container_types",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "handled_by_another_operation"
+      ]
+    },
+    {
+      "module": "g6_1_harvest_transport",
+      "label": "stale_chain:handler_bin_practice:container_types:includes",
+      "answers": {
+        "receives_nondedicated_wood_bins": true,
+        "container_types": [
+          "__not_an_option__"
+        ]
+      },
+      "visible_questions": [
+        "who_harvests",
+        "harvest_method",
+        "harvest_records_kept",
+        "harvest_transport_records_source",
+        "third_party_activities",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "harvest_container_material",
+        "harvest_containers_stamped_organic",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "transport_container_types",
+        "transport_unit_cleaning_documentation",
+        "transport_shared_with_noncertified",
+        "first_stop_before_buyer",
+        "handled_by_another_operation"
+      ],
+      "missing_required": [
+        "who_harvests",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "handled_by_another_operation"
+      ],
+      "missing_required_na": [
+        "who_harvests",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "handled_by_another_operation"
+      ]
+    },
+    {
+      "module": "g6_1_harvest_transport",
+      "label": "stale_chain:handler_bin_documentation_upload:container_types:includes",
+      "answers": {
+        "receives_nondedicated_wood_bins": true,
+        "container_types": [
+          "__not_an_option__"
+        ]
+      },
+      "visible_questions": [
+        "who_harvests",
+        "harvest_method",
+        "harvest_records_kept",
+        "harvest_transport_records_source",
+        "third_party_activities",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "harvest_container_material",
+        "harvest_containers_stamped_organic",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "transport_container_types",
+        "transport_unit_cleaning_documentation",
+        "transport_shared_with_noncertified",
+        "first_stop_before_buyer",
+        "handled_by_another_operation"
+      ],
+      "missing_required": [
+        "who_harvests",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "handled_by_another_operation"
+      ],
+      "missing_required_na": [
+        "who_harvests",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "handled_by_another_operation"
+      ]
+    },
+    {
+      "module": "g6_1_harvest_transport",
+      "label": "stale_chain:handler_cert_verification_method_other:handled_by_another_operation:eq",
+      "answers": {
+        "handler_cert_verification_method": [
+          "other"
+        ],
+        "handled_by_another_operation": "__not_an_option__"
+      },
+      "visible_questions": [
+        "who_harvests",
+        "harvest_method",
+        "harvest_records_kept",
+        "harvest_transport_records_source",
+        "third_party_activities",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "harvest_container_material",
+        "harvest_containers_stamped_organic",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "transport_container_types",
+        "transport_unit_cleaning_documentation",
+        "transport_shared_with_noncertified",
+        "first_stop_before_buyer",
+        "handled_by_another_operation"
+      ],
+      "missing_required": [
+        "who_harvests",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load"
+      ],
+      "missing_required_na": [
+        "who_harvests",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load"
+      ]
+    },
+    {
+      "module": "g6_1_harvest_transport",
+      "label": "stale_chain:handler_cert_verification_frequency_other:handled_by_another_operation:eq",
+      "answers": {
+        "handler_cert_verification_frequency": "other",
+        "handled_by_another_operation": "__not_an_option__"
+      },
+      "visible_questions": [
+        "who_harvests",
+        "harvest_method",
+        "harvest_records_kept",
+        "harvest_transport_records_source",
+        "third_party_activities",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "harvest_container_material",
+        "harvest_containers_stamped_organic",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "transport_container_types",
+        "transport_unit_cleaning_documentation",
+        "transport_shared_with_noncertified",
+        "first_stop_before_buyer",
+        "handled_by_another_operation"
+      ],
+      "missing_required": [
+        "who_harvests",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load"
+      ],
+      "missing_required_na": [
+        "who_harvests",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load"
+      ]
+    },
+    {
+      "module": "g6_4_handling",
+      "label": "stale_chain:sanitizer_residual_free_assurance_other:uses_equipment_sanitizer_or_cleaner:truthy",
+      "answers": {
+        "handling_activities": true,
+        "sanitizer_residual_free_assurance": [
+          "other"
+        ],
+        "uses_equipment_sanitizer_or_cleaner": false
+      },
+      "visible_questions": [
+        "handling_activities",
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "uses_water",
+        "commingling_controls",
+        "noncertified_only_inputs_used",
+        "handling_records",
+        "facility_docs"
+      ],
+      "missing_required": [
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_water",
+        "commingling_controls",
+        "handling_records"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g6_4_handling",
+      "label": "stale_chain:sanitizer_residual_testing_protocol:uses_equipment_sanitizer_or_cleaner:truthy",
+      "answers": {
+        "handling_activities": true,
+        "sanitizer_residual_free_assurance": [
+          "residue_testing"
+        ],
+        "uses_equipment_sanitizer_or_cleaner": false
+      },
+      "visible_questions": [
+        "handling_activities",
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "uses_water",
+        "commingling_controls",
+        "noncertified_only_inputs_used",
+        "handling_records",
+        "facility_docs"
+      ],
+      "missing_required": [
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_water",
+        "commingling_controls",
+        "handling_records"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g6_4_handling",
+      "label": "stale_chain:wash_water_chlorine_added:uses_water:truthy",
+      "answers": {
+        "handling_activities": true,
+        "wash_water_additives_added": true,
+        "uses_water": false
+      },
+      "visible_questions": [
+        "handling_activities",
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "uses_water",
+        "commingling_controls",
+        "noncertified_only_inputs_used",
+        "handling_records",
+        "facility_docs"
+      ],
+      "missing_required": [
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "commingling_controls",
+        "handling_records"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g6_4_handling",
+      "label": "stale_chain:wash_water_chlorine_final_rinse:wash_water_additives_added:truthy",
+      "answers": {
+        "handling_activities": true,
+        "wash_water_chlorine_added": true,
+        "wash_water_additives_added": false
+      },
+      "visible_questions": [
+        "handling_activities",
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "uses_water",
+        "commingling_controls",
+        "noncertified_only_inputs_used",
+        "handling_records",
+        "facility_docs"
+      ],
+      "missing_required": [
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "uses_water",
+        "commingling_controls",
+        "handling_records"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g6_4_handling",
+      "label": "stale_chain:wash_water_chlorine_final_rinse_other:wash_water_chlorine_added:truthy",
+      "answers": {
+        "handling_activities": true,
+        "wash_water_chlorine_final_rinse": "other",
+        "wash_water_chlorine_added": false
+      },
+      "visible_questions": [
+        "handling_activities",
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "uses_water",
+        "commingling_controls",
+        "noncertified_only_inputs_used",
+        "handling_records",
+        "facility_docs"
+      ],
+      "missing_required": [
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "uses_water",
+        "commingling_controls",
+        "handling_records"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g6_5_sales_soe",
+      "label": "stale_chain:sourced_products_identification_detail:sales_soe_supplier_verification:eq",
+      "answers": {
+        "sourced_products_identified_organic": false,
+        "sales_soe_supplier_verification": "__not_an_option__"
+      },
+      "visible_questions": [
+        "sales_soe_channels",
+        "sales_soe_supplier_verification",
+        "sales_soe_lot_linkage",
+        "sales_soe_upload"
+      ],
+      "missing_required": [
+        "sales_soe_channels",
+        "sales_soe_lot_linkage"
+      ],
+      "missing_required_na": [
+        "sales_soe_channels",
+        "sales_soe_lot_linkage"
+      ]
+    },
+    {
+      "module": "g6_5_sales_soe",
+      "label": "stale_chain:sourcing_transport_verification_other:sales_soe_supplier_verification:eq",
+      "answers": {
+        "sourcing_transport_verification": [
+          "other"
+        ],
+        "sales_soe_supplier_verification": "__not_an_option__"
+      },
+      "visible_questions": [
+        "sales_soe_channels",
+        "sales_soe_supplier_verification",
+        "sales_soe_lot_linkage",
+        "sales_soe_upload"
+      ],
+      "missing_required": [
+        "sales_soe_channels",
+        "sales_soe_lot_linkage"
+      ],
+      "missing_required_na": [
+        "sales_soe_channels",
+        "sales_soe_lot_linkage"
+      ]
+    },
+    {
+      "module": "g6_5_sales_soe",
+      "label": "stale_chain:sourcing_transport_commingling_other:sales_soe_supplier_verification:eq",
+      "answers": {
+        "sourcing_transport_commingling": [
+          "other"
+        ],
+        "sales_soe_supplier_verification": "__not_an_option__"
+      },
+      "visible_questions": [
+        "sales_soe_channels",
+        "sales_soe_supplier_verification",
+        "sales_soe_lot_linkage",
+        "sales_soe_upload"
+      ],
+      "missing_required": [
+        "sales_soe_channels",
+        "sales_soe_lot_linkage"
+      ],
+      "missing_required_na": [
+        "sales_soe_channels",
+        "sales_soe_lot_linkage"
+      ]
+    },
+    {
+      "module": "g6_5_sales_soe",
+      "label": "stale_chain:sourced_records_link_detail:sales_soe_supplier_verification:eq",
+      "answers": {
+        "sourced_records_link_to_certified": false,
+        "sales_soe_supplier_verification": "__not_an_option__"
+      },
+      "visible_questions": [
+        "sales_soe_channels",
+        "sales_soe_supplier_verification",
+        "sales_soe_lot_linkage",
+        "sales_soe_upload"
+      ],
+      "missing_required": [
+        "sales_soe_channels",
+        "sales_soe_lot_linkage"
+      ],
+      "missing_required_na": [
+        "sales_soe_channels",
+        "sales_soe_lot_linkage"
+      ]
+    },
+    {
+      "module": "g8_0_record_keeping",
+      "label": "stale_chain:export_certificate_types_other:import_export_activity:includes",
+      "answers": {
+        "export_certificate_types": [
+          "other"
+        ],
+        "import_export_activity": [
+          "__not_an_option__"
+        ]
+      },
+      "visible_questions": [
+        "s11_records",
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "audit_trail_exhibit",
+        "import_export_activity"
+      ],
+      "missing_required": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering"
+      ],
+      "missing_required_na": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering"
+      ]
+    },
+    {
+      "module": "g8_0_record_keeping",
+      "label": "stale_chain:import_documentation_other:import_export_activity:includes",
+      "answers": {
+        "import_documentation": [
+          "other"
+        ],
+        "import_export_activity": [
+          "__not_an_option__"
+        ]
+      },
+      "visible_questions": [
+        "s11_records",
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "audit_trail_exhibit",
+        "import_export_activity"
+      ],
+      "missing_required": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering"
+      ],
+      "missing_required_na": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering"
+      ]
+    },
+    {
+      "module": "g9_0_facility_pest",
+      "label": "stale_chain:preventive_measures_documentation_other:material_tier:one_of",
+      "answers": {
+        "preventive_measures_documentation": [
+          "other"
+        ],
+        "material_tier": "__not_an_option__"
+      },
+      "visible_questions": [
+        "uses_pest_control_company",
+        "pest_control_records",
+        "pest_monitoring_practices",
+        "pest_monitoring_frequency",
+        "preventive_practices",
+        "mechanical_controls",
+        "material_tier"
+      ],
+      "missing_required": [
+        "uses_pest_control_company",
+        "pest_control_records",
+        "preventive_practices",
+        "mechanical_controls"
+      ],
+      "missing_required_na": []
     }
   ]
 }

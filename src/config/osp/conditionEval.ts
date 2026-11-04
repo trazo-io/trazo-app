@@ -20,6 +20,9 @@
  *   not_includes   value ∉ answer — deliberately TRUE while unanswered (carve-outs on
  *                  already-visible content only, never a page trigger)
  *   truthy/falsy   with null / '' / [] / 0 / false all falsy
+ *
+ * Visibility is transitive (2026-11-03): a condition on a question that is itself hidden
+ * fails, so a child never outlives its parent. See `visibility` below.
  */
 
 import type {
@@ -75,23 +78,40 @@ export const evaluate = (cond: ModuleCondition, answers: ModuleAnswers): boolean
 export const conditionsPass = (conds: ModuleCondition[], answers: ModuleAnswers): boolean =>
   conds.every((c) => evaluate(c, answers));
 
+/**
+ * Visible pages and questions, with visibility TRANSITIVE: a condition on a question that is
+ * itself hidden fails, whatever that question still holds. Mirrors _visibility() in
+ * conditions.py. One pass in definition order is enough because the backend's validate_module
+ * requires every condition to read a question defined earlier.
+ */
+const visibility = (
+  module: ModuleDefinition,
+  answers: ModuleAnswers
+): { pages: ModulePage[]; questions: Array<{ page: ModulePage; question: ModuleQuestion }> } => {
+  const shown = new Map<string, boolean>();
+  const passes = (conds: ModuleCondition[]) =>
+    conds.every((c) => shown.get(c.question) !== false && evaluate(c, answers));
+  const pages: ModulePage[] = [];
+  const questions: Array<{ page: ModulePage; question: ModuleQuestion }> = [];
+  for (const page of module.pages) {
+    const pageShown = passes(page.visible_when);
+    if (pageShown) pages.push(page);
+    for (const question of page.questions) {
+      const questionShown = pageShown && passes(question.visible_when);
+      shown.set(question.key, questionShown);
+      if (questionShown) questions.push({ page, question });
+    }
+  }
+  return { pages, questions };
+};
+
 export const visiblePages = (module: ModuleDefinition, answers: ModuleAnswers): ModulePage[] =>
-  module.pages.filter((p) => conditionsPass(p.visible_when, answers));
+  visibility(module, answers).pages;
 
 export const visibleQuestions = (
   module: ModuleDefinition,
   answers: ModuleAnswers
-): Array<{ page: ModulePage; question: ModuleQuestion }> => {
-  const out: Array<{ page: ModulePage; question: ModuleQuestion }> = [];
-  for (const page of visiblePages(module, answers)) {
-    for (const question of page.questions) {
-      if (conditionsPass(question.visible_when, answers)) {
-        out.push({ page, question });
-      }
-    }
-  }
-  return out;
-};
+): Array<{ page: ModulePage; question: ModuleQuestion }> => visibility(module, answers).questions;
 
 // Kinds completion validation skips — mirrors _UNVALIDATED_KINDS in conditions.py
 // (uploads become validatable when WS-3 storage lands).
