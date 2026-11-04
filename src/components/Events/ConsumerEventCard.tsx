@@ -392,6 +392,9 @@ interface ConsumerEventCardProps {
       title + date + a clamped meaning line + evidence chips. Performer
       and full field notes live in the expanded state. */
   slim?: boolean;
+  /** Render as a ROW inside a parent card (the consumer chapter): no border, radius, hover
+      lift or bottom margin of its own. The parent draws the container and the hairlines. */
+  flush?: boolean;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
   /** Production-level blockchain data to use when individual events lack their own */
@@ -437,6 +440,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   isLast = false,
   isGrouped = false,
   slim = false,
+  flush = false,
   suppressImpactLine = false,
   suppressShortDescription = false,
   isExpanded: controlledExpanded,
@@ -923,13 +927,13 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
           flex="1"
           w={{ base: 'full', md: 'auto' }}
           bg={bgColor}
-          borderRadius="xl"
-          borderWidth="1px"
+          borderRadius={flush ? 0 : 'xl'}
+          borderWidth={flush ? 0 : '1px'}
           borderColor={borderColor}
           overflow="clip"
           transition="all 0.2s"
-          _hover={{ shadow: 'md', transform: 'translateY(-1px)' }}
-          mb={{ base: 4, md: 0 }}>
+          _hover={flush ? undefined : { shadow: 'md', transform: 'translateY(-1px)' }}
+          mb={flush ? 0 : { base: 4, md: 0 }}>
           {/* Mobile-Optimized Card Header */}
           <Box p={{ base: 4, md: 4 }}>
             <HStack justify="space-between" align="flex-start" mb={2}>
