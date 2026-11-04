@@ -83,7 +83,7 @@ import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
 import { ConsumerEventCard } from 'components/Events/ConsumerEventCard';
-import { STATUS_TONE_TOKENS } from 'components/Design/StandardComponents';
+import { CHAPTER_HUE, categoryTone, eventTypeTone } from 'components/Events/categoryTone';
 import { getConsumerEventDescription, localizeConsumerDescription } from 'utils/eventDescriptions';
 import { PhotoDocumentationTooltip } from 'components/Education/EducationalTooltip';
 import type { VerificationLevel } from 'utils/verificationTierHelpers';
@@ -746,12 +746,9 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
   }, [isProofView, catParam]);
 
   type ChapterKey = 'trust' | 'soil' | 'care' | 'inputs' | 'pest' | 'harvest';
-  // A chapter is a KIND of work, not a status, so every chapter and category wears one neutral
-  // tone and the icon + title tell them apart (2026-11-04). They used to carry a hue each: Pest
-  // & Disease in RED, which reads as an alarm to a shopper looking at routine scouting, Crop
-  // Inputs in orange (warning), Harvest in green (approval). On this page colour is reserved
-  // for meaning and for actions: green marks a link or button, or the solid OMRI chip (a
-  // third-party match). A category wears neither.
+  // A chapter's colour is wayfinding, never a status, and it comes from ONE palette
+  // (components/Events/categoryTone.ts). Pest & Disease was RED, an alarm on routine scouting,
+  // and Crop Inputs ORANGE, the restricted-use warning's colour; no hue lives in this file.
   // Guard: consumerJourneyColourIsMeaning.test.ts.
   const CHAPTER_DEFS: Array<{
     key: ChapterKey;
@@ -1472,11 +1469,14 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                       mb={2}>
                       <HStack justify="space-between" align="start">
                         <HStack spacing={3} align="center">
-                          <Circle size="36px" bg={STATUS_TONE_TOKENS.neutral.circle} flexShrink={0}>
+                          <Circle
+                            size="36px"
+                            bg={categoryTone(CHAPTER_HUE[ch.key]).circle}
+                            flexShrink={0}>
                             <Icon
                               as={ch.icon}
                               aria-hidden="true"
-                              color={STATUS_TONE_TOKENS.neutral.glyph}
+                              color={categoryTone(CHAPTER_HUE[ch.key]).glyph}
                               boxSize={4}
                             />
                           </Circle>
@@ -1669,7 +1669,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                   <Icon
                     as={proofChapter.icon}
                     aria-hidden="true"
-                    color={STATUS_TONE_TOKENS.neutral.glyph}
+                    color={categoryTone(CHAPTER_HUE[proofChapter.key]).glyph}
                     boxSize={4}
                   />
                   <Text fontSize="sm" fontWeight="semibold" color={textColor}>
@@ -1728,11 +1728,11 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                             <HStack spacing={3}>
                               <Circle
                                 size="40px"
-                                bg={STATUS_TONE_TOKENS.neutral.circle}
+                                bg={eventTypeTone((item.events[0] as any)?.event_type).circle}
                                 flexShrink={0}>
                                 <Icon
                                   as={config.icon}
-                                  color={STATUS_TONE_TOKENS.neutral.glyph}
+                                  color={eventTypeTone((item.events[0] as any)?.event_type).glyph}
                                   boxSize={4}
                                 />
                               </Circle>

@@ -69,6 +69,7 @@ import { extractSubtypeCode } from 'utils/eventDataNormalizer';
 import { getRecordProvenance, type VerificationLevel } from 'utils/verificationTierHelpers';
 import { StandardImageGallery } from 'components/ImageGallery';
 import { nationalListCitation } from './nationalListCitations';
+import { eventTypeTone } from './categoryTone';
 
 /** Sub-types that have a dedicated `consumer.eventCard.summaryNoun.*` i18n key. */
 const SUMMARY_NOUN_SUBTYPES = ['FE', 'FU', 'PE', 'SC'];
@@ -899,7 +900,11 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
             bg={bgColor}
             border="3px solid"
             borderColor={accentColor}>
-            <Icon as={eventTypeConfig.icon} boxSize={{ base: 4, md: 5 }} color={mutedColor} />
+            <Icon
+              as={eventTypeConfig.icon}
+              boxSize={{ base: 4, md: 5 }}
+              color={eventTypeTone(event.event_type).glyph}
+            />
           </Circle>
 
           {/* "% verified" confidence indicator removed (2026-06): numeric

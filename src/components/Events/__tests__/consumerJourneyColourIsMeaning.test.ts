@@ -1,10 +1,13 @@
 /**
- * On the consumer journey, colour carries meaning or marks an action. Nothing else (2026-11-04).
+ * On the consumer journey, colour carries meaning, marks an action, or helps a shopper find a
+ * category. It never grades anything (2026-11-04).
  *
- * What this pass removed, all on the shopper's production page:
- *   - A hue per category: Pest & Disease RED (an alarm, on routine scouting), Crop Inputs orange,
- *     Weather blue, Soil yellow, Business teal, Harvest green. Same table again on the grouped
- *     card, the filter row and the timeline node icon. A category is a KIND of work, not a status.
+ * What this pass changed, all on the shopper's production page:
+ *   - Category hues lived in four tables, with Pest & Disease RED (an alarm, on routine
+ *     scouting) and Crop Inputs ORANGE (the restricted-use warning's colour). Category colour is
+ *     wayfinding and stays, from ONE palette (categoryTone.ts) that holds no status colour.
+ *     Oscar chose it from rendered options: soil yellow, care blue, inputs purple, pest teal,
+ *     harvest green, farm records gray.
  *   - Aggregate cards tinted per input (fungicide purple, fertilizer blue, scouting green).
  *   - A traffic-light pest-pressure badge: LOW green, HIGH red. A reading the farmer wrote down,
  *     turned into a verdict on the crop.
@@ -18,14 +21,23 @@
  *   - A green eco line, "Scouting adds no emissions ... helps avoid unnecessary spraying": a
  *     benefit Trazo wrote, not the farm.
  *
- * Green stays where it means something checkable (the solid OMRI chip, a third-party match) or
- * marks an action (links, buttons, the selected filter). The one non-gray, non-green hue left is
- * the restricted-use badge: a regulatory status, which is what a status colour is for.
+ * Outside the palette file, green stays where it means something checkable (the solid OMRI chip,
+ * a third-party match) or marks an action (links, buttons, the selected filter). The one other
+ * hue written in the journey or card is the restricted-use badge: a regulatory status, which is
+ * what a status colour is for.
  */
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
+import {
+  CHAPTER_HUE,
+  EVENT_TYPE_HUE,
+  categoryTone,
+  eventTypeTone
+} from 'components/Events/categoryTone';
+
+const STATUS_HUES = ['red', 'orange'];
 
 const FILES = {
   card: 'src/components/Events/ConsumerEventCard.tsx',
@@ -92,15 +104,25 @@ describe('consumer journey: colour is meaning, not decoration', () => {
     );
   });
 
-  it('gives every chapter and category one neutral tone, keyed by nothing', () => {
-    expect(CODE.journey).not.toMatch(/colorScheme:\s*['"]/); // no per-chapter scheme field
+  it('takes every category colour from the one palette, which holds no status colour', () => {
+    // No hue field or computed scheme in the journey: categories read categoryTone.ts.
+    expect(CODE.journey).not.toMatch(/colorScheme:\s*['"]/);
     expect(CODE.journey).not.toMatch(/categoryColor|bgColor:\s*['"]/);
     expect(CODE.journey).not.toMatch(/\$\{\s*\w+\.colorScheme\s*\}/); // `${ch.colorScheme}.50`
     expect(
-      (CODE.journey.match(/STATUS_TONE_TOKENS\.neutral\.(circle|glyph)/g) ?? []).length
+      (CODE.journey.match(/(categoryTone\(CHAPTER_HUE\[|eventTypeTone\()/g) ?? []).length
     ).toBeGreaterThanOrEqual(5);
-    // The timeline node icon in the card: muted, not per type.
-    expect(CODE.card).not.toMatch(/color=\{eventTypeConfig\.color\}/);
+    expect(CODE.card).toMatch(/color=\{eventTypeTone\(event\.event_type\)\.glyph\}/);
+    // Wayfinding, never a status: red and orange mean "wrong" and "caution" everywhere else,
+    // and orange is this page's restricted-use warning.
+    const hues = [...Object.values(CHAPTER_HUE), ...Object.values(EVENT_TYPE_HUE)];
+    expect(hues.filter((h) => STATUS_HUES.includes(h as string))).toEqual([]);
+    for (const t of [0, 1, 2, 3, 4, 5, 6, 7]) {
+      expect(eventTypeTone(t).glyph).not.toMatch(/^(red|orange)\./);
+    }
+    // Farm records stay gray (Run 8, R8-15), and pest is no longer an alarm.
+    expect(CHAPTER_HUE.trust).toBe('gray');
+    expect(categoryTone(CHAPTER_HUE.pest).glyph).not.toMatch(/^red\./);
   });
 
   it("draws no outlined badge with Chakra's inset ring in the default green", () => {
