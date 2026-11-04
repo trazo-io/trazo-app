@@ -87,7 +87,10 @@ describe("R8-15: the farm's own filings are stated as the farm's", () => {
     const keys = [...defs.matchAll(/key: '(\w+)'/g)].map((m) => m[1]);
     expect(keys[keys.length - 1]).toBe('trust');
     const trust = defs.slice(defs.indexOf("key: 'trust'"));
-    expect(trust).toMatch(/colorScheme: 'gray'/);
+    // Neutral by construction since 2026-11-04: no chapter carries a colour field at all, and
+    // every chapter circle reads STATUS_TONE_TOKENS.neutral (consumerJourneyColourIsMeaning).
+    expect(defs).not.toMatch(/colorScheme:/);
+    expect(journey).toMatch(/bg=\{STATUS_TONE_TOKENS\.neutral\.circle\}/);
     expect(trust).not.toMatch(/FaCertificate|purple/);
     for (const cat of [enUS, es419] as Record<string, string>[]) {
       expect(cat['consumer.journey.chapterFarmRecordsSubtitle']).toBeTruthy();

@@ -55,7 +55,7 @@ import {
   FaClipboardList,
   FaLayerGroup
 } from 'react-icons/fa';
-import { MdTimeline, MdEco, MdVerified, MdAgriculture } from 'react-icons/md';
+import { MdTimeline, MdAgriculture } from 'react-icons/md';
 import { useIntl } from 'react-intl';
 import { buyerPageWithheldReasonId } from 'utils/consumerDisplay';
 import { useParams, useSearchParams } from 'react-router-dom';
@@ -83,11 +83,8 @@ import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
 import { ConsumerEventCard } from 'components/Events/ConsumerEventCard';
-import {
-  getSustainabilityImpact,
-  getConsumerEventDescription,
-  localizeConsumerDescription
-} from 'utils/eventDescriptions';
+import { STATUS_TONE_TOKENS } from 'components/Design/StandardComponents';
+import { getConsumerEventDescription, localizeConsumerDescription } from 'utils/eventDescriptions';
 import { PhotoDocumentationTooltip } from 'components/Education/EducationalTooltip';
 import type { VerificationLevel } from 'utils/verificationTierHelpers';
 
@@ -307,66 +304,42 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
         case 0: // Weather
           return {
             icon: FaCloudRain,
-            color: 'blue.700',
-            bgColor: 'blue.50',
-            category: 'Weather',
-            categoryColor: 'blue'
+            category: 'Weather'
           };
         case 1: // Production
           return {
             icon: FaSeedling,
-            color: 'green.700',
-            bgColor: 'green.50',
-            category: 'Production',
-            categoryColor: 'green'
+            category: 'Production'
           };
         case 2: // Chemical
           return {
             icon: FaFlask,
-            color: 'orange.700',
-            bgColor: 'orange.50',
-            category: 'Crop Inputs',
-            categoryColor: 'orange'
+            category: 'Crop Inputs'
           };
         case 3: // General
           return {
             icon: FaClipboardList,
-            color: 'gray.600',
-            bgColor: 'gray.50',
-            category: 'Other Farm Activity',
-            categoryColor: 'gray'
+            category: 'Other Farm Activity'
           };
         case 4: // Equipment
           return {
             icon: FaTractor,
-            color: 'blue.900',
-            bgColor: 'blue.50',
-            category: 'Equipment',
-            categoryColor: 'blue'
+            category: 'Equipment'
           };
         case 5: // Soil Management
           return {
             icon: FaLayerGroup,
-            color: 'yellow.800',
-            bgColor: 'yellow.50',
-            category: 'Soil Management',
-            categoryColor: 'yellow'
+            category: 'Soil Management'
           };
         case 6: // Pest Management
           return {
             icon: FaBug,
-            color: 'red.700',
-            bgColor: 'red.50',
-            category: 'Pest Management',
-            categoryColor: 'red'
+            category: 'Pest Management'
           };
         case 7: // Business
           return {
             icon: FaCertificate,
-            color: 'teal.700',
-            bgColor: 'teal.50',
-            category: 'Business',
-            categoryColor: 'teal'
+            category: 'Business'
           };
       }
     }
@@ -382,10 +355,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
     ) {
       return {
         icon: FaCloudRain,
-        color: 'blue.700',
-        bgColor: 'blue.50',
-        category: 'Weather',
-        categoryColor: 'blue'
+        category: 'Weather'
       };
     }
 
@@ -403,10 +373,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
     ) {
       return {
         icon: FaFlask,
-        color: 'orange.700',
-        bgColor: 'orange.50',
-        category: 'Crop Inputs',
-        categoryColor: 'orange'
+        category: 'Crop Inputs'
       };
     }
 
@@ -428,10 +395,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
     ) {
       return {
         icon: FaSeedling,
-        color: 'green.700',
-        bgColor: 'green.50',
-        category: 'Production',
-        categoryColor: 'green'
+        category: 'Production'
       };
     }
 
@@ -450,10 +414,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
     ) {
       return {
         icon: FaTractor,
-        color: 'blue.900',
-        bgColor: 'blue.50',
-        category: 'Equipment',
-        categoryColor: 'blue'
+        category: 'Equipment'
       };
     }
 
@@ -473,10 +434,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
     ) {
       return {
         icon: FaSeedling,
-        color: 'yellow.800',
-        bgColor: 'yellow.50',
-        category: 'Soil Management',
-        categoryColor: 'yellow'
+        category: 'Soil Management'
       };
     }
 
@@ -495,10 +453,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
     ) {
       return {
         icon: FaBug,
-        color: 'red.700',
-        bgColor: 'red.50',
-        category: 'Pest Management',
-        categoryColor: 'red'
+        category: 'Pest Management'
       };
     }
 
@@ -515,20 +470,14 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
     ) {
       return {
         icon: FaCertificate,
-        color: 'teal.700',
-        bgColor: 'teal.50',
-        category: 'Business',
-        categoryColor: 'teal'
+        category: 'Business'
       };
     }
 
     // General Events (fallback)
     return {
-      icon: MdEco,
-      color: 'gray.600',
-      bgColor: 'gray.50',
-      category: 'General',
-      categoryColor: 'gray'
+      icon: FaClipboardList,
+      category: 'General'
     };
   };
 
@@ -797,12 +746,18 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
   }, [isProofView, catParam]);
 
   type ChapterKey = 'trust' | 'soil' | 'care' | 'inputs' | 'pest' | 'harvest';
+  // A chapter is a KIND of work, not a status, so every chapter and category wears one neutral
+  // tone and the icon + title tell them apart (2026-11-04). They used to carry a hue each: Pest
+  // & Disease in RED, which reads as an alarm to a shopper looking at routine scouting, Crop
+  // Inputs in orange (warning), Harvest in green (approval). On this page colour is reserved
+  // for meaning and for actions: green marks a link or button, or the solid OMRI chip (a
+  // third-party match). A category wears neither.
+  // Guard: consumerJourneyColourIsMeaning.test.ts.
   const CHAPTER_DEFS: Array<{
     key: ChapterKey;
     icon: any;
     title: string;
     subtitle: string;
-    colorScheme: string;
   }> = [
     {
       key: 'soil',
@@ -814,8 +769,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
       subtitle: intl.formatMessage({
         id: 'consumer.journey.chapterSoilSubtitle',
         defaultMessage: 'How the ground was prepared and planted'
-      }),
-      colorScheme: 'yellow'
+      })
     },
     {
       // Droplet, NOT a rain cloud. A rain cloud is precipitation — water that
@@ -835,8 +789,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
       subtitle: intl.formatMessage({
         id: 'consumer.journey.chapterCareSubtitle',
         defaultMessage: 'Irrigation and crop care through the season'
-      }),
-      colorScheme: 'blue'
+      })
     },
     {
       key: 'inputs',
@@ -848,8 +801,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
       subtitle: intl.formatMessage({
         id: 'consumer.journey.chapterInputsSubtitle',
         defaultMessage: 'Every input applied to this crop'
-      }),
-      colorScheme: 'orange'
+      })
     },
     {
       key: 'pest',
@@ -861,8 +813,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
       subtitle: intl.formatMessage({
         id: 'consumer.journey.chapterPestSubtitle',
         defaultMessage: 'Monitoring and pest management'
-      }),
-      colorScheme: 'red'
+      })
     },
     {
       key: 'harvest',
@@ -874,8 +825,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
       subtitle: intl.formatMessage({
         id: 'consumer.journey.chapterHarvestSubtitle',
         defaultMessage: 'Picking, quality, and handling'
-      }),
-      colorScheme: 'green'
+      })
     },
     {
       // Run 8 (R8-15): business events are what the FARM entered: a certificate it holds, an
@@ -894,8 +844,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
         id: 'consumer.journey.chapterFarmRecordsSubtitle',
         defaultMessage:
           'Entered by the farm. Independent confirmation, where there is any, is shown with the certification above.'
-      }),
-      colorScheme: 'gray'
+      })
     }
   ];
 
@@ -1405,32 +1354,32 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                   {categories.map((category) => {
                     const getEventConfig = (cat: string) => {
                       if (!cat || typeof cat !== 'string') {
-                        return { icon: MdTimeline, color: 'green.700' };
+                        return { icon: MdTimeline };
                       }
                       switch (cat.toLowerCase()) {
                         case 'all':
-                          return { icon: MdTimeline, color: 'green.700' };
+                          return { icon: MdTimeline };
                         case 'weather':
-                          return { icon: FaCloudRain, color: 'blue.700' };
+                          return { icon: FaCloudRain };
                         case 'crop inputs':
                         case 'chemical':
-                          return { icon: FaFlask, color: 'orange.700' };
+                          return { icon: FaFlask };
                         case 'production':
-                          return { icon: FaSeedling, color: 'green.700' };
+                          return { icon: FaSeedling };
                         case 'equipment':
-                          return { icon: FaTractor, color: 'blue.900' };
+                          return { icon: FaTractor };
                         case 'soil management':
-                          return { icon: FaLayerGroup, color: 'yellow.800' };
+                          return { icon: FaLayerGroup };
                         case 'pest management':
-                          return { icon: FaBug, color: 'red.700' };
+                          return { icon: FaBug };
                         case 'business':
-                          return { icon: FaCertificate, color: 'teal.700' };
+                          return { icon: FaCertificate };
                         case 'other farm activity':
                         case 'other farm activities':
                         case 'general':
-                          return { icon: FaClipboardList, color: 'gray.600' };
+                          return { icon: FaClipboardList };
                         default:
-                          return { icon: FaClipboardList, color: 'gray.600' };
+                          return { icon: FaClipboardList };
                       }
                     };
 
@@ -1467,18 +1416,18 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                         key={category}
                         size="sm"
                         variant={isSelected ? 'solid' : 'outline'}
-                        colorScheme={isSelected ? config.color.split('.')[0] : 'gray'}
-                        bg={isSelected ? config.color : 'transparent'}
+                        colorScheme="gray"
+                        bg={isSelected ? 'green.700' : 'transparent'}
                         color={isSelected ? 'white' : useColorModeValue('gray.700', 'gray.300')}
                         borderColor={
-                          isSelected ? config.color : useColorModeValue('gray.200', 'gray.600')
+                          isSelected ? 'green.700' : useColorModeValue('gray.200', 'gray.600')
                         }
                         onClick={() => setSelectedCategory(category)}
                         transition="all 0.2s"
                         _hover={{
                           transform: 'translateY(-1px)',
                           shadow: 'sm',
-                          bg: isSelected ? config.color : useColorModeValue('gray.50', 'gray.700')
+                          bg: isSelected ? 'green.800' : useColorModeValue('gray.50', 'gray.700')
                         }}
                         leftIcon={<Icon as={config.icon} boxSize={3} />}
                         minW="max-content"
@@ -1523,11 +1472,11 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                       mb={2}>
                       <HStack justify="space-between" align="start">
                         <HStack spacing={3} align="center">
-                          <Circle size="36px" bg={`${ch.colorScheme}.50`} flexShrink={0}>
+                          <Circle size="36px" bg={STATUS_TONE_TOKENS.neutral.circle} flexShrink={0}>
                             <Icon
                               as={ch.icon}
                               aria-hidden="true"
-                              color={`${ch.colorScheme}.600`}
+                              color={STATUS_TONE_TOKENS.neutral.glyph}
                               boxSize={4}
                             />
                           </Circle>
@@ -1720,7 +1669,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                   <Icon
                     as={proofChapter.icon}
                     aria-hidden="true"
-                    color={`${proofChapter.colorScheme}.600`}
+                    color={STATUS_TONE_TOKENS.neutral.glyph}
                     boxSize={4}
                   />
                   <Text fontSize="sm" fontWeight="semibold" color={textColor}>
@@ -1761,34 +1710,31 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                     // Deduplicate while preserving order
                     const uniqueSubtypes = [...new Set(subtypeNames)];
 
-                    const blockchainCount = item.events.filter(
-                      (evt) => evt.blockchain_verified || evt.extra_data?.blockchain_verified
-                    ).length;
-
-                    const impactCounts = { high: 0, medium: 0, low: 0 };
-                    item.events.forEach((evt) => {
-                      const level = getSustainabilityImpact(evt.description, evt);
-                      impactCounts[level]++;
-                    });
-
                     return (
                       <Box key={`group-${item.type}`}>
                         <Box
                           bg={bgColor}
                           borderRadius="xl"
                           border="1px solid"
-                          borderColor={isExpanded ? config.color : 'gray.200'}
+                          borderColor={isExpanded ? 'gray.300' : 'gray.200'}
                           overflow="hidden"
                           cursor="pointer"
                           onClick={() => toggleGroup(item.type)}
-                          _hover={{ borderColor: config.color, shadow: 'md' }}
+                          _hover={{ borderColor: 'gray.300', shadow: 'md' }}
                           transition="all 0.2s"
                           shadow={isExpanded ? 'sm' : 'none'}>
                           <Box p={4}>
                             {/* Row 1: Icon + Title + Date Range + Chevron */}
                             <HStack spacing={3}>
-                              <Circle size="40px" bg={config.bgColor} flexShrink={0}>
-                                <Icon as={config.icon} color={config.color} boxSize={4} />
+                              <Circle
+                                size="40px"
+                                bg={STATUS_TONE_TOKENS.neutral.circle}
+                                flexShrink={0}>
+                                <Icon
+                                  as={config.icon}
+                                  color={STATUS_TONE_TOKENS.neutral.glyph}
+                                  boxSize={4}
+                                />
                               </Circle>
                               <VStack align="start" spacing={0} flex={1}>
                                 <HStack>
@@ -1802,10 +1748,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                                       { count: totalEvents, category: item.category }
                                     )}
                                   </Text>
-                                  <Badge
-                                    colorScheme={config.categoryColor}
-                                    fontSize="xs"
-                                    borderRadius="full">
+                                  <Badge variant="neutral" fontSize="xs" borderRadius="full">
                                     {item.dateRange}
                                   </Badge>
                                 </HStack>
@@ -1848,37 +1791,10 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                                     })}
                                   </Badge>
                                 )}
-                              {/* Blockchain wording: "recorded" never "verified"
-                              (compliance rule). Impact-level badges ("Core
-                              Practices" / "Standard" / "Supplementary")
-                              removed 2026-06 — internal scoring jargon with
-                              no consumer meaning. */}
-                              {blockchainCount > 0 && (
-                                <Badge
-                                  colorScheme="green"
-                                  fontSize="xs"
-                                  borderRadius="full"
-                                  px={2}
-                                  py={0.5}>
-                                  <HStack spacing={1}>
-                                    <Icon as={MdVerified} boxSize={2.5} />
-                                    <Text>
-                                      {blockchainCount === totalEvents
-                                        ? intl.formatMessage({
-                                            id: 'consumer.journey.allRecorded',
-                                            defaultMessage: 'ALL RECORDED'
-                                          })
-                                        : intl.formatMessage(
-                                            {
-                                              id: 'consumer.journey.partialRecorded',
-                                              defaultMessage: '{count}/{total} RECORDED'
-                                            },
-                                            { count: blockchainCount, total: totalEvents }
-                                          )}
-                                    </Text>
-                                  </HStack>
-                                </Badge>
-                              )}
+                              {/* A green "ALL RECORDED" badge with a verified-seal icon was here,
+                                  counting events with `blockchain_verified`. Blockchain is not a
+                                  consumer surface (add-on withdrawn) and a seal reads as
+                                  "verified" whatever the words say. Deleted 2026-11-04. */}
                             </HStack>
 
                             {/* Row 4: Expand hint */}
@@ -1905,8 +1821,8 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                             mt={2}
                             ml={{ base: 0, md: 4 }}
                             pl={{ base: 2, md: 3 }}
-                            borderLeft="3px solid"
-                            borderColor={config.color}
+                            borderLeft="2px solid"
+                            borderColor="gray.200"
                             align="stretch">
                             {item.events.map((event, eventIndex) => {
                               const enhancedEvent = buildEnhancedEvent(event);

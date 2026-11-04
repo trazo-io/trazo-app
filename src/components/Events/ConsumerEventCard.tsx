@@ -44,7 +44,6 @@ import {
   FaCloudRain,
   FaClipboardList
 } from 'react-icons/fa';
-import { MdEco } from 'react-icons/md';
 import {
   getConsumerEventDescription,
   localizeConsumerDescription,
@@ -71,69 +70,6 @@ import { getRecordProvenance, type VerificationLevel } from 'utils/verificationT
 import { StandardImageGallery } from 'components/ImageGallery';
 import { nationalListCitation } from './nationalListCitations';
 
-/**
- * Colour + noun for the aggregate ("summary mode") card, keyed by two-letter sub-type code.
- *
- * Keyed off `event.subtype`, NOT `event.type` — normalization overwrites `type` with the
- * event family name ('chemical', 'production', …), so the `event.type === 'FE'` comparisons
- * this map replaced were permanently false and every aggregate event rendered its header
- * with no totals underneath. See eventDataNormalizer.extractSubtypeCode.
- */
-const SUMMARY_PALETTE: Record<
-  string,
-  { scheme: string; bg: string; border: string; icon: string; text: string; noun: string }
-> = {
-  FE: {
-    scheme: 'blue',
-    bg: 'blue.50',
-    border: 'blue.200',
-    icon: 'blue.500',
-    text: 'blue.600',
-    noun: 'Applications'
-  },
-  FU: {
-    scheme: 'purple',
-    bg: 'purple.50',
-    border: 'purple.200',
-    icon: 'purple.500',
-    text: 'purple.600',
-    noun: 'Applications'
-  },
-  PE: {
-    scheme: 'orange',
-    bg: 'orange.50',
-    border: 'orange.200',
-    icon: 'orange.500',
-    text: 'orange.600',
-    noun: 'Applications'
-  },
-  SC: {
-    scheme: 'green',
-    bg: 'green.50',
-    border: 'green.200',
-    icon: 'green.500',
-    text: 'green.600',
-    noun: 'Scouting Trips'
-  },
-  HA: {
-    scheme: 'yellow',
-    bg: 'yellow.50',
-    border: 'yellow.200',
-    icon: 'yellow.600',
-    text: 'yellow.700',
-    noun: 'Harvests'
-  }
-};
-
-const SUMMARY_PALETTE_FALLBACK = {
-  scheme: 'blue',
-  bg: 'gray.50',
-  border: 'gray.200',
-  icon: 'gray.500',
-  text: 'gray.600',
-  noun: 'Events'
-};
-
 /** Sub-types that have a dedicated `consumer.eventCard.summaryNoun.*` i18n key. */
 const SUMMARY_NOUN_SUBTYPES = ['FE', 'FU', 'PE', 'SC'];
 
@@ -144,6 +80,9 @@ const SUMMARY_NOUN_DEFAULTS: Record<string, string> = {
   PE: 'Pesticide Apps',
   SC: 'Scouting Trips'
 };
+
+/** Sub-types with a `consumer.eventCard.agg.noun.*` key (the aggregate block's header). */
+const AGG_NOUN_SUBTYPES = new Set(['FE', 'FU', 'PE', 'SC', 'HA']);
 
 /**
  * Enum value → i18n key for the consumer-visible label maps below.
@@ -814,23 +753,23 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   const getEventTypeIcon = (eventType?: number) => {
     switch (eventType) {
       case 0:
-        return { icon: FaCloudRain, color: 'blue.700' };
+        return { icon: FaCloudRain };
       case 1:
-        return { icon: FaSeedling, color: 'green.700' };
+        return { icon: FaSeedling };
       case 2:
-        return { icon: FaFlask, color: 'orange.700' };
+        return { icon: FaFlask };
       case 3:
-        return { icon: FaClipboardList, color: 'gray.600' };
+        return { icon: FaClipboardList };
       case 4:
-        return { icon: FaTractor, color: 'blue.900' };
+        return { icon: FaTractor };
       case 5:
-        return { icon: FaLayerGroup, color: 'yellow.800' };
+        return { icon: FaLayerGroup };
       case 6:
-        return { icon: FaBug, color: 'red.700' };
+        return { icon: FaBug };
       case 7:
-        return { icon: FaCertificate, color: 'teal.700' };
+        return { icon: FaCertificate };
       default:
-        return { icon: FaSeedling, color: 'green.700' };
+        return { icon: FaSeedling };
     }
   };
 
@@ -900,15 +839,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   // Hooks must run unconditionally at the top level, so they live here.
   const strongText = useColorModeValue('gray.800', 'white');
   const secondaryText = useColorModeValue('gray.700', 'gray.300');
-  const greenSoftBg = useColorModeValue('green.50', 'green.900');
-  const greenStrongText = useColorModeValue('green.800', 'green.100');
-  const greenBorder = useColorModeValue('green.200', 'green.700');
   const neutralSoftBg = useColorModeValue('gray.50', 'gray.800');
   const neutralBorder = useColorModeValue('gray.200', 'gray.700');
-  const summaryPalette =
-    (eventSubtype && SUMMARY_PALETTE[eventSubtype]) || SUMMARY_PALETTE_FALLBACK;
-  const summaryBg = useColorModeValue(summaryPalette.bg, 'gray.700');
-  const summaryBorder = useColorModeValue(summaryPalette.border, 'gray.600');
 
   return (
     <Box ref={cardRef} position="relative">
@@ -967,11 +899,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
             bg={bgColor}
             border="3px solid"
             borderColor={accentColor}>
-            <Icon
-              as={eventTypeConfig.icon}
-              boxSize={{ base: 4, md: 5 }}
-              color={eventTypeConfig.color}
-            />
+            <Icon as={eventTypeConfig.icon} boxSize={{ base: 4, md: 5 }} color={mutedColor} />
           </Circle>
 
           {/* "% verified" confidence indicator removed (2026-06): numeric
@@ -1034,7 +962,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   {/* Sprint 4 & 5: Summary badge for aggregate events with type-specific colors */}
                   {isSummaryEvent && (
                     <Badge
-                      colorScheme={summaryPalette.scheme}
+                      variant="neutral"
                       fontSize="xs"
                       px={2}
                       py={0.5}
@@ -1137,12 +1065,9 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   the most human thing on the page read as more system copy. Only one element on
                   the card gets a container now, and it is the farmer's quote. */}
               {!suppressImpactLine && !isGenericCopy(eventInfo.consumerImpact) && (
-                <HStack spacing={2} align="flex-start">
-                  <Icon as={FaLeaf} color="green.500" boxSize={3} mt="4px" flexShrink={0} />
-                  <Text fontSize="sm" color={greenStrongText} lineHeight="1.5">
-                    {eventInfo.consumerImpact}
-                  </Text>
-                </HStack>
+                <Text fontSize="sm" color={mutedColor} lineHeight="1.5">
+                  {eventInfo.consumerImpact}
+                </Text>
               )}
             </VStack>
 
@@ -1333,7 +1258,14 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                           // third party's name. `green.700` #2E7D32 measures 5.13:1.
                           bg={isVerifiedListing ? 'green.700' : 'transparent'}
                           color={isVerifiedListing ? 'white' : secondaryText}
+                          border="1px solid"
                           borderColor={isVerifiedListing ? 'green.700' : 'gray.300'}
+                          // Chakra's base `outline` variant (merged under Trazo's) adds an INSET
+                          // box-shadow in the badge's colorScheme, and with none passed that is
+                          // the theme default, green. Measured on the live page 2026-11-04: the
+                          // self-reported pill rendered a green.500 ring over the gray border, the
+                          // exact dressing-as-verification this chip exists to avoid.
+                          boxShadow="none"
                           fontSize="xs"
                           px={3}
                           py={1}
@@ -1594,7 +1526,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
               <Box
                 bg={neutralSoftBg}
                 borderLeft="3px solid"
-                borderColor="green.400"
+                borderColor={neutralBorder}
                 borderRadius="sm"
                 px={3}
                 py={3}>
@@ -1734,13 +1666,13 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 {isSummaryEvent && hasAggregateTotals && (
                   <Box
                     p={4}
-                    bg={summaryBg}
+                    bg={neutralSoftBg}
                     borderRadius="lg"
                     border="1px solid"
-                    borderColor={summaryBorder}>
+                    borderColor={neutralBorder}>
                     <HStack mb={3}>
-                      <Icon as={FaLayerGroup} color={summaryPalette.icon} boxSize={4} />
-                      <Text fontWeight="bold" fontSize="sm" color={summaryPalette.text}>
+                      <Icon as={FaLayerGroup} color={mutedColor} boxSize={4} />
+                      <Text fontWeight="bold" fontSize="sm" color={strongText}>
                         {intl.formatMessage(
                           { id: 'consumer.eventCard.agg.header' },
                           {
@@ -1753,7 +1685,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                             // even when a defaultMessage is supplied).
                             noun: intl.formatMessage({
                               id: `consumer.eventCard.agg.noun.${
-                                eventSubtype && eventSubtype in SUMMARY_PALETTE
+                                eventSubtype && AGG_NOUN_SUBTYPES.has(eventSubtype)
                                   ? eventSubtype
                                   : 'default'
                               }`
@@ -2015,17 +1947,9 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                                   defaultMessage: 'Average Pest Pressure'
                                 })}
                               </Text>
-                              <Badge
-                                colorScheme={
-                                  (event.average_pest_pressure ||
-                                    event.extra_data?.average_pest_pressure) === 'low'
-                                    ? 'green'
-                                    : (event.average_pest_pressure ||
-                                        event.extra_data?.average_pest_pressure) === 'medium'
-                                    ? 'yellow'
-                                    : 'red'
-                                }
-                                fontSize="xs">
+                              {/* Neutral (2026-11-04): a green LOW / red HIGH turned a reading the
+                                  farmer wrote down into a verdict on the crop. */}
+                              <Badge variant="neutral" fontSize="xs">
                                 {(
                                   event.average_pest_pressure ||
                                   event.extra_data?.average_pest_pressure
@@ -2034,17 +1958,10 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                             </Box>
                           )}
                           {/* Note: observations_summary removed — same content as "Farmer's Field Notes" (observation field) */}
-                          {/* Zero carbon note for scouting */}
-                          <Box gridColumn={{ md: 'span 2' }} mt={2}>
-                            <HStack spacing={2}>
-                              <Icon as={MdEco} color="green.500" boxSize={4} />
-                              <Text fontSize="xs" color="green.700" fontWeight="medium">
-                                {intl.formatMessage({
-                                  id: 'consumer.eventCard.agg.scoutingZeroCarbon'
-                                })}
-                              </Text>
-                            </HStack>
-                          </Box>
+                          {/* "Scouting adds no emissions ... it helps avoid unnecessary spraying"
+                              was here in green with an eco leaf: a benefit Trazo wrote, not the
+                              farm, with no basis for THIS farm's spraying, and a carbon line
+                              outside the expandable carbon section. Deleted 2026-11-04. */}
                         </>
                       )}
                     </SimpleGrid>
