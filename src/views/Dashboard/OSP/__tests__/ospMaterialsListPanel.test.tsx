@@ -44,7 +44,13 @@ const MATERIALS = [
     intended_for_use: false,
     source: 'plan',
     listing: 'OMRI #bay-1234',
-    entry_id: null
+    entry_id: null,
+    category: '',
+    agent_review: '',
+    agent_review_date: '',
+    agent_review_reference: '',
+    agent_review_use: '',
+    agent_review_statement: ''
   },
   {
     name: 'Rexius Organic Compost',
@@ -55,7 +61,14 @@ const MATERIALS = [
     intended_for_use: false,
     source: 'records',
     listing: '',
-    entry_id: null
+    entry_id: null,
+    category: 'fertilizer_amendment',
+    agent_review: 'approved',
+    agent_review_date: '2026-03-15',
+    agent_review_reference: 'WSDA approval email',
+    agent_review_use: '',
+    agent_review_statement:
+      "on WSDA's approved materials list dated 2026-03-15 (WSDA approval email), as recorded by the operator"
   }
 ];
 
@@ -135,5 +148,67 @@ describe('OSP Materials List editor', () => {
     renderPanel();
     expect(screen.getByText('In your records, not yet on the plan')).toBeInTheDocument();
     expect(screen.getByText('On the plan')).toBeInTheDocument();
+  });
+
+  it('sets the section on the form and a material no longer used', async () => {
+    renderPanel();
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText('Section of Serenade ASO on the form'), {
+        target: { value: 'pest_disease_weed' }
+      });
+    });
+    expect(answerMaterial.mock.calls[0][0].body).toEqual({
+      name: 'Serenade ASO',
+      category: 'pest_disease_weed'
+    });
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText('How Serenade ASO is used'), {
+        target: { value: 'discontinued' }
+      });
+    });
+    expect(answerMaterial.mock.calls[1][0].body).toEqual({
+      name: 'Serenade ASO',
+      status: 'discontinued'
+    });
+  });
+
+  it("holds an agent's approval until its list, letter or date is given, then sends them together", async () => {
+    renderPanel();
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText("Your certifying agent's review of Serenade ASO"), {
+        target: { value: 'approved' }
+      });
+    });
+    expect(answerMaterial).not.toHaveBeenCalled();
+    expect(screen.getByTestId('materials-review-needs-evidence')).toBeInTheDocument();
+    const reference = screen.getByLabelText("The agent's list or letter for Serenade ASO");
+    await act(async () => {
+      fireEvent.change(reference, { target: { value: 'CCOF OSP Materials List' } });
+      fireEvent.blur(reference);
+    });
+    expect(answerMaterial).toHaveBeenCalledTimes(1);
+    expect(answerMaterial.mock.calls[0][0].body).toEqual({
+      name: 'Serenade ASO',
+      agent_review_reference: 'CCOF OSP Materials List',
+      agent_review: 'approved'
+    });
+  });
+
+  it('records a request for review at once, and shows what the packet prints', async () => {
+    renderPanel();
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText("Your certifying agent's review of Serenade ASO"), {
+        target: { value: 'requested' }
+      });
+    });
+    expect(answerMaterial.mock.calls[0][0].body).toEqual({
+      name: 'Serenade ASO',
+      agent_review: 'requested'
+    });
+    expect(
+      screen.getByText(
+        "Your packet prints: on WSDA's approved materials list dated 2026-03-15 (WSDA approval email), as recorded by the operator."
+      )
+    ).toBeInTheDocument();
   });
 });

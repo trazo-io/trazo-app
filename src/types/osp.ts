@@ -471,7 +471,7 @@ export interface OSPMaterialListRow {
   manufacturer: string;
   reason: string;
   /** '' when the operator has not said; otherwise PlanMaterialEntry.status. */
-  status: '' | 'planned' | 'in_use';
+  status: '' | 'planned' | 'in_use' | 'discontinued';
   in_use: boolean;
   intended_for_use: boolean;
   /** 'plan' — declared only · 'records' — applied only · 'both'. */
@@ -480,6 +480,21 @@ export interface OSPMaterialListRow {
   listing: string;
   /** PlanMaterialEntry pk when the operator already has a row of their own for this product. */
   entry_id: number | null;
+  /** The operator's own row's section on the agent's form; '' until set. */
+  category:
+    | ''
+    | 'fertilizer_amendment'
+    | 'pest_disease_weed'
+    | 'production_aid'
+    | 'post_harvest'
+    | 'other';
+  /** The agent's review as the operator recorded it from the agent's own list; '' = not recorded. */
+  agent_review: '' | 'requested' | 'approved' | 'not_approved' | 'review_incomplete';
+  agent_review_date: string;
+  agent_review_reference: string;
+  agent_review_use: string;
+  /** How the packet prints the review; '' when none is recorded. */
+  agent_review_statement: string;
 }
 
 export interface OSPMaterialsListResponse {
@@ -489,8 +504,13 @@ export interface OSPMaterialsListResponse {
 export interface OSPMaterialAnswer {
   name: string;
   reason_for_use?: string;
-  status?: 'planned' | 'in_use';
+  status?: 'planned' | 'in_use' | 'discontinued';
   manufacturer?: string;
+  category?: string;
+  agent_review?: string;
+  agent_review_date?: string;
+  agent_review_reference?: string;
+  agent_review_use?: string;
 }
 
 /** One thing the operation's dated records did after the plan's newest answer. */
