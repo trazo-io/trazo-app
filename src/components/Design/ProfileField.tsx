@@ -128,20 +128,36 @@ export const InfoRow: React.FC<InfoRowProps> = ({
   };
 
   if (layout === 'inline') {
+    const inlineLabel = (
+      <HStack gap={1.5} align="center" flexShrink={0}>
+        <Text fontSize="sm" color="gray.600">
+          {label}
+        </Text>
+        {isPublic && (
+          <Tooltip label={publicLabel} placement="top" hasArrow openDelay={300}>
+            <Box as="span" display="inline-flex" aria-label={publicLabel}>
+              <Icon as={FaEye} boxSize={3} color="gray.400" />
+            </Box>
+          </Tooltip>
+        )}
+      </HStack>
+    );
+    // PROSE stacks. Right alignment suits a number, a date or a name; a sentence set flush
+    // right gets a ragged left edge that is hard to read ("Winter cover crops (cereal rye,
+    // vetch, ...)" on the farm profile, 2026-11-04). Past ~40 characters the label takes its own
+    // line and the value runs full width, left aligned. Measured on the value, so the same
+    // field stays inline on a farm that wrote three words.
+    if (typeof value === 'string' && value.length > 40) {
+      return (
+        <Box py={2.5}>
+          {inlineLabel}
+          <Box mt={1}>{renderValue()}</Box>
+        </Box>
+      );
+    }
     return (
       <Flex justify="space-between" align="baseline" gap={4} py={2.5}>
-        <HStack gap={1.5} align="center" flexShrink={0}>
-          <Text fontSize="sm" color="gray.600">
-            {label}
-          </Text>
-          {isPublic && (
-            <Tooltip label={publicLabel} placement="top" hasArrow openDelay={300}>
-              <Box as="span" display="inline-flex" aria-label={publicLabel}>
-                <Icon as={FaEye} boxSize={3} color="gray.400" />
-              </Box>
-            </Tooltip>
-          )}
-        </HStack>
+        {inlineLabel}
         <Box minW={0} textAlign="right">
           {renderValue()}
         </Box>
