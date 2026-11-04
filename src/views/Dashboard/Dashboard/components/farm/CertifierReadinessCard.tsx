@@ -190,9 +190,13 @@ function ReadinessRow({
   );
 }
 
-/** Rows split by a hairline. A CSS sibling border, so a row that renders null leaves no rule. */
+/**
+ * Rows split by a hairline. A CSS sibling border, so a row that renders null leaves no rule.
+ * gray.200, not gray.100: the theme's gray.100 is #F8F9FA, the page background, so a gray.100
+ * rule on a white card was invisible (2026-11-04).
+ */
 function ReadinessList({ children, testId }: { children: React.ReactNode; testId?: string }) {
-  const rule = useColorModeValue('gray.100', 'gray.600');
+  const rule = useColorModeValue('gray.200', 'gray.600');
   return (
     <Box data-testid={testId} sx={{ '& > * + *': { borderTopWidth: '1px', borderTopColor: rule } }}>
       {children}
@@ -320,6 +324,9 @@ export default function CertifierReadinessCard({
    * heading: that glyph is a state signal, not decoration, so it is not the same question.
    */
   const headerIconColor = useColorModeValue('gray.600', 'gray.400');
+  // Same rule as between rows. Separates the two scopes, and the findings from the close-out
+  // links, so a one-row section still reads as its own group.
+  const sectionRule = useColorModeValue('gray.200', 'gray.600');
 
   /**
    * Run 8b (8b-01): the plan's access rule and the record findings are two different things and
@@ -640,15 +647,23 @@ export default function CertifierReadinessCard({
               outrank anything found in a single season. Each carries its own concrete fix. */}
           {operationItems.length > 0 && (
             <VStack align="stretch" spacing={0} data-testid="readiness-operation-findings">
-              <HStack spacing={2}>
-                <Text fontSize="xs" fontWeight="bold" color={mutedColor} textTransform="uppercase">
+              {/* Wraps, and the label never shrinks: at 390px the "Trazo requires these records…"
+                  badge refused to shrink and squeezed "WHOLE OPERATION" to one letter per line
+                  (seen 2026-11-04, present on main before the row restyle). */}
+              <HStack spacing={2} flexWrap="wrap" rowGap={1}>
+                <Text
+                  fontSize="xs"
+                  fontWeight="bold"
+                  color={mutedColor}
+                  textTransform="uppercase"
+                  flexShrink={0}>
                   {intl.formatMessage({ id: 'certifierReadiness.operationScope' })}
                 </Text>
                 {/* Trazo's own share gate, stated as Trazo's. Shown only where the plan already
                     allows review links: on Starter the plan refuses first and the access notice
                     above says so. */}
                 {hasOperationBlockers && hasComplianceExports && (
-                  <Badge variant="danger" fontSize="xs" borderRadius="full">
+                  <Badge variant="danger" fontSize="xs" borderRadius="full" whiteSpace="normal">
                     {intl.formatMessage({ id: 'certifierReadiness.sharingBlocked' })}
                   </Badge>
                 )}
@@ -731,7 +746,12 @@ export default function CertifierReadinessCard({
               spacing-4 stack the label sat 28px over its first row against 12px over the
               operation's (2026-11-04). */}
           {data?.production && (
-            <VStack align="stretch" spacing={0}>
+            <VStack
+              align="stretch"
+              spacing={0}
+              {...(operationItems.length > 0
+                ? { borderTopWidth: '1px', borderTopColor: sectionRule, pt: 4 }
+                : {})}>
               {/* Scope label whenever both scopes are on screen — not only when the season also has
                 findings, otherwise a clean season under a blocked operation reads as unlabelled. */}
               {data?.production && operationItems.length > 0 && (
@@ -835,7 +855,12 @@ export default function CertifierReadinessCard({
               them linked to the next. A farmer had to know the product's information
               architecture to walk their own annual cycle. These are links to existing screens,
               not new surfaces. */}
-          <HStack spacing={4} flexWrap="wrap" pt={1}>
+          <HStack
+            spacing={4}
+            flexWrap="wrap"
+            pt={4}
+            borderTopWidth="1px"
+            borderTopColor={sectionRule}>
             <Link
               as={RouterLink}
               to={`/admin/dashboard/farm/${farmId}/profile`}
