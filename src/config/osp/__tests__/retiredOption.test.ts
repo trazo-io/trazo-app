@@ -54,3 +54,32 @@ describe('the retired "Neither" option on G8.0 import/export', () => {
     ]);
   });
 });
+
+/**
+ * The first retired RADIO option (2026.11.12). "Yes — Trazo lot IDs" told the certifier Trazo
+ * issues the operation's lot numbers and carries them on storage and sales records; it does
+ * neither. A scalar answer takes the same path as a list, and these pin that it does.
+ */
+const lots = g8.pages
+  .flatMap((p) => p.questions)
+  .find((q) => q.key === 'lot_numbering') as ModuleQuestion;
+
+describe('the retired "Trazo lot IDs" option on G8.0 lot numbering', () => {
+  it('is marked retired and no longer claims lot tags or sales records', () => {
+    const retired = lots.options.find((o) => o.value === 'trazo_lots');
+    expect(retired?.retired).toBe(true);
+    expect(retired?.label.en).not.toMatch(/lot tag|sales record/i);
+  });
+
+  it('counts as no answer, so the module asks for the numbering again', () => {
+    expect(effectiveValue(lots, 'trazo_lots')).toBeNull();
+    expect(missingRequired(g8, { lot_numbering: 'trazo_lots' })).toContain('lot_numbering');
+    expect(missingRequired(g8, { lot_numbering: 'none' })).not.toContain('lot_numbering');
+  });
+
+  it('is shown only while it is the stored answer', () => {
+    expect(offeredOptions(lots, 'trazo_lots').map((o) => o.value)).toContain('trazo_lots');
+    expect(offeredOptions(lots, null).map((o) => o.value)).toEqual(['own_system', 'none']);
+    expect(holdsRetiredOption(lots, 'trazo_lots')).toBe(true);
+  });
+});

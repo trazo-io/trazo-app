@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.11.11",
+  "content_version": "2026.11.12",
   "registry": {
-    "content_version": "2026.11.11",
+    "content_version": "2026.11.12",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -10891,8 +10891,8 @@
                   "es": "¿Toda carga sale con una identificación de lote que la vincula con el campo y la fecha de cosecha?"
                 },
                 "coaching": {
-                  "en": "Trazo lot tags carry the parcel and harvest date automatically — § 205.103(b)(2) requires records that track product from the field to the point of sale.",
-                  "es": "Las etiquetas de lote de Trazo llevan automáticamente la parcela y la fecha de cosecha — el § 205.103(b)(2) exige registros que rastreen el producto desde el campo hasta el punto de venta."
+                  "en": "A Trazo lot tag prints the lot ID and harvest date; the production record with that lot ID names the parcel. § 205.103(b)(2) requires records that track product from the field to the point of sale.",
+                  "es": "Una etiqueta de lote de Trazo imprime el ID de lote y la fecha de cosecha; el registro de producción con ese ID de lote indica la parcela. El § 205.103(b)(2) exige registros que rastreen el producto desde el campo hasta el punto de venta."
                 },
                 "options": [],
                 "required": true,
@@ -15317,10 +15317,11 @@
                   {
                     "value": "trazo_lots",
                     "label": {
-                      "en": "Yes — Trazo lot IDs (printed on lot tags and carried on harvest, storage, and sales records)",
-                      "es": "Sí — IDs de lote de Trazo (impresos en etiquetas de lote y presentes en registros de cosecha, almacenamiento y venta)"
+                      "en": "Yes: the lot IDs recorded in Trazo",
+                      "es": "Sí: los IDs de lote registrados en Trazo"
                     },
-                    "exclusive": false
+                    "exclusive": false,
+                    "retired": true
                   },
                   {
                     "value": "own_system",
@@ -18975,6 +18976,7 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "lot_numbering",
         "import_export_activity"
       ],
       "missing_required_na": [
@@ -18982,6 +18984,7 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "lot_numbering",
         "import_export_activity"
       ]
     },
