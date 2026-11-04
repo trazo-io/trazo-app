@@ -3255,72 +3255,9 @@ export function formatEventDate(dateString: string): string {
   }
 }
 
-/**
- * Get sustainability impact level for an event.
- * Impact semantics: HIGH = high environmental concern, MEDIUM = moderate, LOW = low concern (good).
- * When carbon_impact (CO₂e) is available, uses CO₂e-based thresholds consistent with
- * CarbonImpactPreview badges. Falls back to type-based heuristics when CO₂e is unavailable.
- */
-export function getSustainabilityImpact(
-  description: string,
-  event?: any
-): 'high' | 'medium' | 'low' {
-  // CO₂e-based classification: use actual carbon data when available
-  // Thresholds align with CarbonImpactPreview: >60=Very High, >15=Moderate/High, ≤15=Low/Very Low
-  const carbonImpact = typeof event?.carbon_impact === 'number' ? event.carbon_impact : null;
-  if (carbonImpact !== null && carbonImpact > 0) {
-    if (carbonImpact > 60) return 'high';
-    if (carbonImpact > 15) return 'medium';
-    return 'low';
-  }
-
-  // Chemical events: delegate to getConsumerEventDescription for nuanced impact
-  if (event && (event.event_type === 2 || event.type === 'chemical' || event.chemical_type)) {
-    const eventInfo = getConsumerEventDescription(description, event);
-    if (eventInfo.impact === 'HIGH') return 'high';
-    if (eventInfo.impact === 'MEDIUM') return 'medium';
-    if (eventInfo.impact === 'LOW') return 'low';
-  }
-
-  // Production events: classify by activity type
-  if (event && (event.event_type === 1 || event.type?.includes('production'))) {
-    const prodType = event.production_type || '';
-    // Harvesting/planting are significant operations
-    if (prodType === 'HA' || prodType === 'PL' || prodType === 'TR') return 'medium';
-    // Irrigation, pruning, equipment maintenance are routine low-impact activities
-    if (prodType === 'IR' || prodType === 'PR' || prodType === 'EM') return 'low';
-    // For other types, use fuel consumption as indicator
-    const fuelConsumed = parseFloat(event.fuel_consumed) || 0;
-    const areaCovered = parseFloat(event.area_covered) || 0;
-    const fuelPerHa = areaCovered > 0 ? fuelConsumed / areaCovered : fuelConsumed;
-    if (fuelPerHa > 20) return 'high';
-    if (fuelPerHa > 5) return 'medium';
-    return 'low';
-  }
-
-  // Soil management: generally beneficial/low-impact practices
-  if (event && event.type === 'soil_management') {
-    const soilType = event.soil_management_type || '';
-    if (soilType === 'CC' || soilType === 'TI' || soilType === 'ST' || soilType === 'CO')
-      return 'low';
-    return 'low';
-  }
-
-  // Pest management: monitoring and biological control are low-impact
-  if (event && event.type === 'pest_management') {
-    const pestType = event.pest_management_type || '';
-    if (pestType === 'BR' || pestType === 'SC' || pestType === 'IP') return 'low';
-    return 'medium';
-  }
-
-  // Weather and business events: monitoring/administrative
-  if (event && (event.type === 'weather' || event.type === 'business')) {
-    return 'low';
-  }
-
-  // Fallback: description-based
-  return 'low';
-}
+// getSustainabilityImpact was deleted 2026-11-04: a high/medium/low "sustainability impact"
+// grade for an event (a self-assigned grade, the retired-score class), whose one caller
+// counted it into a variable nothing rendered. Dormant-but-armed, so removed.
 
 // getEventTrustIndicators was deleted 2026-11-04: its two chips ("USDA Standards" from a carbon
 // flag, "Modern Farming" from equipment-name words) had no basis on a consumer surface. See the
@@ -3537,6 +3474,5 @@ export default {
   getTimelineEventTitle,
   getEventCategory,
   getImpactLevel,
-  formatEventDate,
-  getSustainabilityImpact
+  formatEventDate
 };
