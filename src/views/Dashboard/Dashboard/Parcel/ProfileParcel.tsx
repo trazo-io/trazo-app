@@ -39,7 +39,6 @@ import {
   HStack,
   Text,
   Heading,
-  SimpleGrid,
   Icon,
   Badge,
   Divider,
@@ -79,7 +78,7 @@ import {
   StandardSection,
   StandardQueryError
 } from 'components/Design/StandardComponents';
-import { InfoRow, FieldGroup, PageHeaderMeta } from 'components/Design/ProfileField';
+import { InfoRow, FieldGroup, PageHeaderMeta, FieldList } from 'components/Design/ProfileField';
 import { StandardImageGallery } from 'components/ImageGallery';
 import { useGetParcelQuery } from 'store/api/productApi';
 import LocationDisclosureSetting from 'components/Parcel/LocationDisclosureSetting';
@@ -598,36 +597,41 @@ function ProfileParcel(): React.ReactElement {
           <StandardCard variant="outline" padding={{ base: 0, md: 4 }} mb={0}>
             <VStack gap={{ base: 6, md: 7 }} align="stretch" divider={<Divider />}>
               <FieldGroup label={intl.formatMessage({ id: 'parcel.basicInformation' })}>
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacingX={6} spacingY={4}>
+                <FieldList columns={2}>
                   <InfoRow
+                    layout="inline"
                     icon={FaRulerCombined}
                     label={intl.formatMessage({ id: 'app.area' })}
                     value={areaLabel}
                   />
                   <InfoRow
+                    layout="inline"
                     icon={FaSeedling}
                     label={intl.formatMessage({ id: 'parcel.primaryCrop' })}
                     value={cropLabel}
                   />
                   <InfoRow
+                    layout="inline"
                     icon={FaHashtag}
                     label={intl.formatMessage({ id: 'parcel.uniqueCode' })}
                     value={parcel?.unique_code}
                   />
-                </SimpleGrid>
+                </FieldList>
               </FieldGroup>
 
               <FieldGroup label={intl.formatMessage({ id: 'parcel.locationDetails' })}>
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacingX={6} spacingY={4}>
+                <FieldList columns={2}>
                   {/* Street only. The old formatLocation() appended the FARM's city, state
                       and country, so this row repeated location already shown in the header
                       and on the farm profile. */}
                   <InfoRow
+                    layout="inline"
                     icon={FaMapMarkerAlt}
                     label={intl.formatMessage({ id: 'app.address' })}
                     value={parcel?.address}
                   />
                   <InfoRow
+                    layout="inline"
                     icon={FaGlobeAmericas}
                     label={intl.formatMessage({ id: 'app.coordinates' })}
                     value={
@@ -639,39 +643,44 @@ function ProfileParcel(): React.ReactElement {
                     }
                   />
                   <InfoRow
+                    layout="inline"
                     icon={FaMountain}
                     label={intl.formatMessage({ id: 'parcel.elevation' })}
                     value={parcel?.elevation ? `${parcel.elevation} ft` : undefined}
                   />
                   <InfoRow
+                    layout="inline"
                     icon={MdLocationOn}
                     label={intl.formatMessage({ id: 'app.zone' })}
                     value={establishment?.zone}
                   />
-                </SimpleGrid>
+                </FieldList>
               </FieldGroup>
 
               {hasContact && (
                 <FieldGroup label={intl.formatMessage({ id: 'app.contactInformation' })}>
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacingX={6} spacingY={4}>
+                  <FieldList columns={2}>
                     <InfoRow
+                      layout="inline"
                       icon={FaUser}
                       label={intl.formatMessage({ id: 'parcel.contactPerson' })}
                       value={parcel?.contact_person}
                     />
                     <InfoRow
+                      layout="inline"
                       icon={FaEnvelope}
                       label={intl.formatMessage({ id: 'app.email' })}
                       value={parcel?.contact_email}
                       type="email"
                     />
                     <InfoRow
+                      layout="inline"
                       icon={FaPhone}
                       label={intl.formatMessage({ id: 'app.phone' })}
                       value={parcel?.contact_phone}
                       type="phone"
                     />
-                  </SimpleGrid>
+                  </FieldList>
                 </FieldGroup>
               )}
 
@@ -679,13 +688,15 @@ function ProfileParcel(): React.ReactElement {
                 <FieldGroup label={intl.formatMessage({ id: 'parcel.soilHealth' })}>
                   {/* Definition rows, not four tinted stat tiles in orange/green/blue/purple.
                       A pH reading is a measurement; the hue carried no meaning. */}
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacingX={6} spacingY={4}>
+                  <FieldList columns={2}>
                     <InfoRow
+                      layout="inline"
                       icon={FaFlask}
                       label={intl.formatMessage({ id: 'parcel.phLevel' })}
                       value={details?.soil_ph ? parseFloat(details.soil_ph).toFixed(1) : undefined}
                     />
                     <InfoRow
+                      layout="inline"
                       icon={FaLeaf}
                       label={intl.formatMessage({ id: 'parcel.organicMatter' })}
                       value={
@@ -695,6 +706,7 @@ function ProfileParcel(): React.ReactElement {
                       }
                     />
                     <InfoRow
+                      layout="inline"
                       icon={FaFlask}
                       label={intl.formatMessage({ id: 'parcel.nitrogenPpm' })}
                       value={
@@ -704,6 +716,7 @@ function ProfileParcel(): React.ReactElement {
                       }
                     />
                     <InfoRow
+                      layout="inline"
                       icon={FaFlask}
                       label={intl.formatMessage({ id: 'parcel.phosphorusPpm' })}
                       value={
@@ -712,14 +725,15 @@ function ProfileParcel(): React.ReactElement {
                           : undefined
                       }
                     />
-                  </SimpleGrid>
+                  </FieldList>
                 </FieldGroup>
               )}
 
               {hasWaterData && (
                 <FieldGroup label={intl.formatMessage({ id: 'parcel.waterManagement' })}>
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacingX={6} spacingY={4}>
+                  <FieldList columns={2}>
                     <InfoRow
+                      layout="inline"
                       icon={FaTint}
                       label={intl.formatMessage({ id: 'parcel.irrigationEfficiency' })}
                       value={
@@ -729,11 +743,13 @@ function ProfileParcel(): React.ReactElement {
                       }
                     />
                     <InfoRow
+                      layout="inline"
                       icon={FaTint}
                       label={intl.formatMessage({ id: 'parcel.waterSource' })}
                       value={formatDisplayValue(details?.water_source_type)}
                     />
                     <InfoRow
+                      layout="inline"
                       icon={FaTint}
                       label={intl.formatMessage({ id: 'parcel.waterPh' })}
                       value={
@@ -743,6 +759,7 @@ function ProfileParcel(): React.ReactElement {
                       }
                     />
                     <InfoRow
+                      layout="inline"
                       icon={FaTint}
                       label={intl.formatMessage({ id: 'parcel.waterAllocation' })}
                       value={
@@ -751,29 +768,33 @@ function ProfileParcel(): React.ReactElement {
                           : undefined
                       }
                     />
-                  </SimpleGrid>
+                  </FieldList>
                 </FieldGroup>
               )}
 
               {hasConservationData && (
                 <FieldGroup label={intl.formatMessage({ id: 'parcel.conservationPractices' })}>
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacingX={6} spacingY={4}>
+                  <FieldList columns={2}>
                     <InfoRow
+                      layout="inline"
                       icon={FaSeedling}
                       label={intl.formatMessage({ id: 'parcel.coverCrops' })}
                       value={details?.cover_crop_management}
                     />
                     <InfoRow
+                      layout="inline"
                       icon={FaLeaf}
                       label={intl.formatMessage({ id: 'parcel.cropRotation' })}
                       value={details?.crop_rotation_pattern}
                     />
                     <InfoRow
+                      layout="inline"
                       icon={FaChartLine}
                       label={intl.formatMessage({ id: 'parcel.pestManagement' })}
                       value={details?.pest_management_strategy}
                     />
                     <InfoRow
+                      layout="inline"
                       icon={MdEco}
                       label={intl.formatMessage({ id: 'parcel.fertilizationProgram' })}
                       value={details?.fertilization_program}
@@ -782,11 +803,12 @@ function ProfileParcel(): React.ReactElement {
                         — that serializer getter falls back to `cover_crop_management`, which
                         would reprint the Cover crops row directly above. */}
                     <InfoRow
+                      layout="inline"
                       icon={FaLeaf}
                       label={intl.formatMessage({ id: 'parcel.keySustainabilityPractices' })}
                       value={details?.sustainability_practices}
                     />
-                  </SimpleGrid>
+                  </FieldList>
                 </FieldGroup>
               )}
 
@@ -798,18 +820,20 @@ function ProfileParcel(): React.ReactElement {
                   2026-08-11 along with that page. */}
               {(currentCompany?.name || establishment?.name) && (
                 <FieldGroup label={intl.formatMessage({ id: 'parcel.companyAndEstablishment' })}>
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacingX={6} spacingY={4}>
+                  <FieldList columns={2}>
                     <InfoRow
+                      layout="inline"
                       icon={FaBuilding}
                       label={intl.formatMessage({ id: 'app.company' })}
                       value={currentCompany?.name}
                     />
                     <InfoRow
+                      layout="inline"
                       icon={FaUsers}
                       label={intl.formatMessage({ id: 'app.establishment' })}
                       value={establishment?.name}
                     />
-                  </SimpleGrid>
+                  </FieldList>
                 </FieldGroup>
               )}
             </VStack>

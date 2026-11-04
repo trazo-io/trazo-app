@@ -8,7 +8,7 @@
  */
 import React from 'react';
 
-import { Box, Flex, HStack, Icon, Link, Text, Tooltip, VStack } from '@chakra-ui/react';
+import { Box, Flex, HStack, Icon, Link, SimpleGrid, Text, Tooltip, VStack } from '@chakra-ui/react';
 import { FaEye } from 'react-icons/fa';
 
 export interface InfoRowProps {
@@ -33,14 +33,17 @@ export interface InfoRowProps {
    * `stacked` (default): icon, uppercase eyebrow label, value underneath. The original look,
    * still used by the farm and parcel profiles.
    *
-   * `inline`: label on the left in sentence case, value on the right, no icon and no per-row
-   * eye marker. One field per line, so five fields take five lines on a phone instead of ten,
-   * and nothing on the row is decoration. Put inline rows in a `FieldList` and say what is on
-   * the public page ONCE per group (a `FieldGroup` label), not with an eye on every row: when
-   * every row in a card is public, five eyes carry no information.
+   * `inline`: label on the left in sentence case, value on the right, no icon. One field per
+   * line, so five fields take five lines on a phone instead of ten. Put inline rows in a
+   * `FieldList`.
    *
-   * The production profile uses `inline` for every row (2026-11-04). Farm and parcel move over
-   * when they are next redesigned; until then the two looks never share a page.
+   * Visibility, the rule: when every row in a list is public, say it ONCE with the list's
+   * `caption` and leave `isPublic` off (five eyes carry no information). When a list MIXES
+   * public and private rows (the farm profile's Location group: street private, city public),
+   * pass `isPublic` and the inline row draws the same small eye after its label.
+   *
+   * Production, farm and parcel profiles all use `inline` (2026-11-04); company settings is the
+   * one stacked caller left.
    */
   layout?: 'stacked' | 'inline';
 }
@@ -125,11 +128,36 @@ export const InfoRow: React.FC<InfoRowProps> = ({
   };
 
   if (layout === 'inline') {
-    return (
-      <Flex justify="space-between" align="baseline" gap={4} py={2.5}>
-        <Text fontSize="sm" color="gray.600" flexShrink={0}>
+    const inlineLabel = (
+      <HStack gap={1.5} align="center" flexShrink={0}>
+        <Text fontSize="sm" color="gray.600">
           {label}
         </Text>
+        {isPublic && (
+          <Tooltip label={publicLabel} placement="top" hasArrow openDelay={300}>
+            <Box as="span" display="inline-flex" aria-label={publicLabel}>
+              <Icon as={FaEye} boxSize={3} color="gray.400" />
+            </Box>
+          </Tooltip>
+        )}
+      </HStack>
+    );
+    // PROSE stacks. Right alignment suits a number, a date or a name; a sentence set flush
+    // right gets a ragged left edge that is hard to read ("Winter cover crops (cereal rye,
+    // vetch, ...)" on the farm profile, 2026-11-04). Past ~40 characters the label takes its own
+    // line and the value runs full width, left aligned. Measured on the value, so the same
+    // field stays inline on a farm that wrote three words.
+    if (typeof value === 'string' && value.length > 40) {
+      return (
+        <Box py={2.5}>
+          {inlineLabel}
+          <Box mt={1}>{renderValue()}</Box>
+        </Box>
+      );
+    }
+    return (
+      <Flex justify="space-between" align="baseline" gap={4} py={2.5}>
+        {inlineLabel}
         <Box minW={0} textAlign="right">
           {renderValue()}
         </Box>
@@ -224,22 +252,55 @@ export interface FieldListProps {
    */
   caption?: string;
   captionIcon?: React.ElementType;
+  /**
+   * 2 = two columns from `md` up, one on a phone. For lists in FULL-WIDTH cards (farm and
+   * parcel profiles): one column of label-left/value-right rows across ~1000px put the value
+   * ~900px from its label. Half-width cards (production) keep the default single column.
+   */
+  columns?: 1 | 2;
   children: React.ReactNode;
 }
 
-export const FieldList: React.FC<FieldListProps> = ({ caption, captionIcon, children }) => (
-  <Box>
-    {caption && (
-      <HStack gap={1.5} color="gray.500" mb={1}>
-        {captionIcon && <Icon as={captionIcon} boxSize={3} aria-hidden />}
-        <Text fontSize="xs">{caption}</Text>
-      </HStack>
-    )}
-    <Box sx={{ '& > * + *': { borderTopWidth: '1px', borderTopColor: 'gray.100' } }}>
-      {children}
+/**
+ * Rows split by hairlines. Every row but the first in its column carries a top rule. CSS
+ * sibling/nth selectors, NOT Chakra's `divider` prop: Stack places dividers from its React
+ * children, and an InfoRow with an empty value is a valid child that renders null, so `divider`
+ * drew two rules around the gap. Selectors only see rows that reached the DOM.
+ */
+export const FieldList: React.FC<FieldListProps> = ({
+  caption,
+  captionIcon,
+  columns = 1,
+  children
+}) => {
+  const rule = { borderTopWidth: '1px', borderTopColor: 'gray.100' };
+  return (
+    <Box>
+      {caption && (
+        <HStack gap={1.5} color="gray.500" mb={1}>
+          {captionIcon && <Icon as={captionIcon} boxSize={3} aria-hidden />}
+          <Text fontSize="xs">{caption}</Text>
+        </HStack>
+      )}
+      {columns === 1 ? (
+        <Box sx={{ '& > * + *': rule }}>{children}</Box>
+      ) : (
+        <SimpleGrid
+          columns={{ base: 1, md: 2 }}
+          columnGap={10}
+          sx={{
+            '& > * + *': rule,
+            // From md the second row sits beside the first, so it opens its column too.
+            '@media screen and (min-width: 48em)': {
+              '& > :nth-of-type(2)': { borderTopWidth: 0 }
+            }
+          }}>
+          {children}
+        </SimpleGrid>
+      )}
     </Box>
-  </Box>
-);
+  );
+};
 
 export interface PageHeaderMetaProps {
   /**

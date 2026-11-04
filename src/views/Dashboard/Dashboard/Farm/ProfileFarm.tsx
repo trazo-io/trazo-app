@@ -41,7 +41,6 @@ import {
   Flex,
   Heading,
   Text,
-  SimpleGrid,
   Icon,
   Badge,
   Link,
@@ -84,7 +83,7 @@ import {
   StandardInput,
   StandardAlert
 } from 'components/Design/StandardComponents';
-import { InfoRow, FieldGroup, PageHeaderMeta } from 'components/Design/ProfileField';
+import { InfoRow, FieldGroup, PageHeaderMeta, FieldList } from 'components/Design/ProfileField';
 import { useGetFarmQuery, useEditFarmMutation } from 'store/api/companyApi';
 import { StandardImageGallery } from 'components/ImageGallery';
 import CertificationManager from 'components/Certifications/CertificationManager';
@@ -673,19 +672,22 @@ function ProfileFarm() {
                               </HStack>
                             </Box>
                           )}
-                          <SimpleGrid columns={{ base: 1, md: 2 }} gap={{ base: 3, md: 4 }}>
+                          <FieldList columns={2}>
                             <InfoRow
+                              layout="inline"
                               icon={FaUsers}
                               label={intl.formatMessage({ id: 'farm.soe.responsiblePerson' })}
                               value={establishmentData.ofpp_responsible_person}
                             />
                             <InfoRow
+                              layout="inline"
                               icon={FaCalendar}
                               label={intl.formatMessage({ id: 'farm.soe.planDate' })}
                               value={establishmentData.fraud_prevention_plan_date}
                             />
                             {establishmentData.fraud_prevention_plan_document && (
                               <InfoRow
+                                layout="inline"
                                 icon={FaFileAlt}
                                 label={intl.formatMessage({ id: 'farm.soe.documentLabel' })}
                                 value={
@@ -699,7 +701,7 @@ function ProfileFarm() {
                                 }
                               />
                             )}
-                          </SimpleGrid>
+                          </FieldList>
                           {establishmentData.fraud_prevention_plan_document && (
                             <Link
                               href={establishmentData.fraud_prevention_plan_document}
@@ -952,7 +954,7 @@ function ProfileFarm() {
                 cityState ||
                 establishmentData.zone) && (
                 <FieldGroup label={intl.formatMessage({ id: 'app.location' })}>
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacingX={6} spacingY={4}>
+                  <FieldList columns={2}>
                     {/* Street address and ZIP are hard-nulled by the backend as location PII
                         — they are NOT marked public.
 
@@ -963,11 +965,13 @@ function ProfileFarm() {
                         this card exists to make legible: the street is private, the city and
                         state are what a shopper sees. */}
                     <InfoRow
+                      layout="inline"
                       icon={FaMapMarkerAlt}
                       label={intl.formatMessage({ id: 'app.address' })}
                       value={establishmentData.address}
                     />
                     <InfoRow
+                      layout="inline"
                       icon={FaMapMarkerAlt}
                       label={intl.formatMessage({ id: 'establishment.zipCode' })}
                       value={establishmentData.zip_code}
@@ -975,12 +979,14 @@ function ProfileFarm() {
                     {/* PUR box 3 on every line this farm files; the spray form inherits it. */}
                     {isCalifornia && (
                       <InfoRow
+                        layout="inline"
                         icon={FaFileAlt}
                         label={intl.formatMessage({ id: 'establishment.caOperatorId' })}
                         value={establishmentData.ca_operator_id}
                       />
                     )}
                     <InfoRow
+                      layout="inline"
                       icon={FaMapMarkerAlt}
                       label={intl.formatMessage({
                         id: 'farm.details.cityState',
@@ -991,13 +997,14 @@ function ProfileFarm() {
                       publicLabel={publicLabel}
                     />
                     <InfoRow
+                      layout="inline"
                       icon={FaMapMarkerAlt}
                       label={intl.formatMessage({ id: 'app.zone' })}
                       value={establishmentData.zone}
                       isPublic
                       publicLabel={publicLabel}
                     />
-                  </SimpleGrid>
+                  </FieldList>
                 </FieldGroup>
               )}
 
@@ -1010,27 +1017,30 @@ function ProfileFarm() {
                 establishmentData.contact_phone ||
                 establishmentData.contact_person) && (
                 <FieldGroup label={intl.formatMessage({ id: 'app.contactInformation' })}>
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacingX={6} spacingY={4}>
+                  <FieldList columns={2}>
                     {/* None of these reach a shopper — the backend nulls every contact field.
                         Buyers reach the operation through the BuyerDocRequest form instead. */}
                     <InfoRow
+                      layout="inline"
                       icon={FaEnvelope}
                       label={intl.formatMessage({ id: 'establishment.emailAddress' })}
                       value={establishmentData.email || establishmentData.contact_email}
                       type="email"
                     />
                     <InfoRow
+                      layout="inline"
                       icon={FaPhone}
                       label={intl.formatMessage({ id: 'app.phone' })}
                       value={establishmentData.phone || establishmentData.contact_phone}
                       type="phone"
                     />
                     <InfoRow
+                      layout="inline"
                       icon={FaUsers}
                       label={intl.formatMessage({ id: 'establishment.contactPerson' })}
                       value={establishmentData.contact_person}
                     />
-                  </SimpleGrid>
+                  </FieldList>
                 </FieldGroup>
               )}
 
@@ -1038,8 +1048,9 @@ function ProfileFarm() {
                 establishmentData.year_established ||
                 establishmentData.farming_method) && (
                 <FieldGroup label={intl.formatMessage({ id: 'establishment.operations' })}>
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacingX={6} spacingY={4}>
+                  <FieldList columns={2}>
                     <InfoRow
+                      layout="inline"
                       icon={FaTractor}
                       label={intl.formatMessage({ id: 'establishment.totalArea' })}
                       value={
@@ -1057,6 +1068,7 @@ function ProfileFarm() {
                       publicLabel={publicLabel}
                     />
                     <InfoRow
+                      layout="inline"
                       icon={FaCalendar}
                       label={intl.formatMessage({ id: 'establishment.yearEstablished' })}
                       value={establishmentData.year_established}
@@ -1069,11 +1081,12 @@ function ProfileFarm() {
                         self-created label under EU ECGT 2024/825. It used to render up in the
                         header as a purple badge. */}
                     <InfoRow
+                      layout="inline"
                       icon={FaTractor}
                       label={intl.formatMessage({ id: 'establishment.farmingMethod' })}
                       value={formatDisplayValue(establishmentData.farming_method)}
                     />
-                  </SimpleGrid>
+                  </FieldList>
                 </FieldGroup>
               )}
 
@@ -1081,8 +1094,9 @@ function ProfileFarm() {
                 getSoilHealthPractices().length > 0 ||
                 getIrrigationMethods().length > 0) && (
                 <FieldGroup label={intl.formatMessage({ id: 'app.agriculturalInformation' })}>
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacingX={6} spacingY={4}>
+                  <FieldList columns={2}>
                     <InfoRow
+                      layout="inline"
                       icon={FaTint}
                       label={intl.formatMessage({ id: 'establishment.waterSources' })}
                       value={getWaterSources().join(', ')}
@@ -1090,6 +1104,7 @@ function ProfileFarm() {
                       publicLabel={publicLabel}
                     />
                     <InfoRow
+                      layout="inline"
                       icon={FaLeaf}
                       label={intl.formatMessage({ id: 'establishment.soilHealthPractices' })}
                       value={getSoilHealthPractices().join(', ')}
@@ -1097,13 +1112,14 @@ function ProfileFarm() {
                       publicLabel={publicLabel}
                     />
                     <InfoRow
+                      layout="inline"
                       icon={FaTint}
                       label={intl.formatMessage({ id: 'establishment.irrigationMethods' })}
                       value={getIrrigationMethods().join(', ')}
                       isPublic
                       publicLabel={publicLabel}
                     />
-                  </SimpleGrid>
+                  </FieldList>
                 </FieldGroup>
               )}
 
@@ -1221,8 +1237,9 @@ function ProfileFarm() {
                     id: 'farm.details.links',
                     defaultMessage: 'Links'
                   })}>
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacingX={6} spacingY={4}>
+                  <FieldList columns={2}>
                     <InfoRow
+                      layout="inline"
                       icon={FaGlobe}
                       label={intl.formatMessage({ id: 'app.website' })}
                       value={currentCompany.website}
@@ -1231,6 +1248,7 @@ function ProfileFarm() {
                       publicLabel={publicLabel}
                     />
                     <InfoRow
+                      layout="inline"
                       icon={FaFacebook}
                       label={intl.formatMessage({
                         id: 'app.facebook',
@@ -1242,6 +1260,7 @@ function ProfileFarm() {
                       publicLabel={publicLabel}
                     />
                     <InfoRow
+                      layout="inline"
                       icon={FaInstagram}
                       label={intl.formatMessage({
                         id: 'app.instagram',
@@ -1252,7 +1271,7 @@ function ProfileFarm() {
                       isPublic
                       publicLabel={publicLabel}
                     />
-                  </SimpleGrid>
+                  </FieldList>
                 </FieldGroup>
               )}
             </VStack>
