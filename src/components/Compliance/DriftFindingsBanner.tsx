@@ -303,7 +303,10 @@ const DriftFindingsBanner: React.FC<DriftFindingsBannerProps> = ({ events }) => 
                       href={dw.omri_search_url}
                       isExternal
                       fontSize="xs"
-                      color="blue.600"
+                      fontWeight="semibold"
+                      // green.700, the app's link token: blue is reserved for Alert status="info"
+                      // (frontend.md), and this link no longer sits inside one.
+                      color="green.700"
                       mt={1}
                       display="inline-flex"
                       alignItems="center"
