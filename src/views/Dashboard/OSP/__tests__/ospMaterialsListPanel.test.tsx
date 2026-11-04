@@ -50,7 +50,10 @@ const MATERIALS = [
     agent_review_date: '',
     agent_review_reference: '',
     agent_review_use: '',
-    agent_review_statement: ''
+    agent_review_statement: '',
+    label_document: null as number | null,
+    label_document_title: '',
+    needs_label: false
   },
   {
     name: 'Rexius Organic Compost',
@@ -68,9 +71,20 @@ const MATERIALS = [
     agent_review_reference: 'WSDA approval email',
     agent_review_use: '',
     agent_review_statement:
-      "on WSDA's approved materials list dated 2026-03-15 (WSDA approval email), as recorded by the operator"
+      "on WSDA's approved materials list dated 2026-03-15 (WSDA approval email), as recorded by the operator",
+    label_document: null as number | null,
+    label_document_title: '',
+    needs_label: true
   }
 ];
+
+const uploadDocument = vi.fn<[Record<string, unknown>], { unwrap: () => Promise<{ id: number }> }>(
+  () => ({ unwrap: () => Promise.resolve({ id: 41 }) })
+);
+
+vi.mock('store/api/documentsApi', () => ({
+  useUploadFarmDocumentMutation: () => [uploadDocument, { isLoading: false }]
+}));
 
 vi.mock('store/api/ospApi', () => ({
   useGetOSPMaterialsListQuery: () => ({ data: { materials: MATERIALS }, isLoading: false }),
@@ -91,6 +105,69 @@ const renderPanel = () =>
 describe('OSP Materials List editor', () => {
   beforeEach(() => {
     answerMaterial.mockClear();
+    uploadDocument.mockClear();
+  });
+
+  it('asks for a label only on a row the agent asks one for', () => {
+    renderPanel();
+    expect(screen.getAllByTestId('materials-label-asked')).toHaveLength(1);
+    expect(
+      screen.getByText(
+        'Your certifier asks for the label of a product that is not OMRI or WSDA listed, or a photo of its container.'
+      )
+    ).toBeInTheDocument();
+  });
+
+  it('files the label in Documents first, then names it on the material', async () => {
+    renderPanel();
+    const file = new File(['label'], 'compost.png', { type: 'image/png' });
+    await act(async () => {
+      fireEvent.change(
+        screen.getByLabelText('Label or container photo for Rexius Organic Compost'),
+        {
+          target: { files: [file] }
+        }
+      );
+    });
+    expect(uploadDocument).toHaveBeenCalledTimes(1);
+    expect(uploadDocument.mock.calls[0][0]).toMatchObject({
+      companyId: '7',
+      farmId: '3',
+      file,
+      folder: 'uploads',
+      title: 'Label of Rexius Organic Compost'
+    });
+    expect(answerMaterial).toHaveBeenCalledTimes(1);
+    expect(answerMaterial.mock.calls[0][0].body).toEqual({
+      name: 'Rexius Organic Compost',
+      label_document: '41'
+    });
+  });
+
+  it('names a label on file and removes it from the material, not from Documents', async () => {
+    const compost = MATERIALS[1];
+    const stored = { ...compost };
+    Object.assign(compost, {
+      label_document: 41,
+      label_document_title: 'Label of Rexius Organic Compost'
+    });
+    try {
+      renderPanel();
+      expect(screen.getByTestId('materials-label-on-file')).toHaveTextContent(
+        'Label: Label of Rexius Organic Compost'
+      );
+      expect(screen.queryByTestId('materials-label-asked')).not.toBeInTheDocument();
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: 'Remove label' }));
+      });
+      expect(answerMaterial.mock.calls[0][0].body).toEqual({
+        name: 'Rexius Organic Compost',
+        label_document: ''
+      });
+      expect(uploadDocument).not.toHaveBeenCalled();
+    } finally {
+      Object.assign(compost, stored);
+    }
   });
 
   it('leaves both USDA use columns unstated until the operator picks one', () => {
