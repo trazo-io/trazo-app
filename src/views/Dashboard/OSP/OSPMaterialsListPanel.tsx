@@ -22,7 +22,13 @@ import React, { useEffect, useState } from 'react';
 import { Badge, Box, Flex, Stack, Text, useColorModeValue, useToast } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
 
-import { StandardCard, StandardInput, StandardSelect } from 'components/Design/StandardComponents';
+import {
+  StandardButton,
+  StandardCard,
+  StandardInput,
+  StandardSelect
+} from 'components/Design/StandardComponents';
+import { useUploadFarmDocumentMutation } from 'store/api/documentsApi';
 import { useAnswerOSPMaterialMutation, useGetOSPMaterialsListQuery } from 'store/api/ospApi';
 import type { OSPMaterialListRow } from 'types/osp';
 import { apiErrorMessage } from 'utils/apiErrorMessage';
@@ -56,8 +62,11 @@ const MaterialRowEditor: React.FC<{
   borderColor: string;
   mutedColor: string;
   save: (row: OSPMaterialListRow, body: Record<string, string>) => Promise<boolean>;
-}> = ({ row, isEditable, borderColor, mutedColor, save }) => {
+  attachLabel: (row: OSPMaterialListRow, file: File) => Promise<boolean>;
+}> = ({ row, isEditable, borderColor, mutedColor, save, attachLabel }) => {
   const intl = useIntl();
+  const labelInputId = React.useId();
+  const [labelBusy, setLabelBusy] = useState(false);
   // An approval picked before its list or date is held here, not sent: the server refuses an
   // agent decision with nothing behind it, and a refusal on the first click reads as a fault.
   const [pendingReview, setPendingReview] = useState<string | null>(null);
@@ -316,6 +325,76 @@ const MaterialRowEditor: React.FC<{
           )}
         </Text>
       )}
+
+      {/* The label or container photo, filed in the farm's Documents and linked to this material.
+          Offered on every row; only an agent that asks for it (OTCO C11 11.1) is told one is
+          missing, and only for a product its listing does not cover (`needs_label`). */}
+      <Flex align="center" gap={2} wrap="wrap" mt={2}>
+        <input
+          id={labelInputId}
+          type="file"
+          accept=".pdf,.jpg,.jpeg,.png"
+          style={{ display: 'none' }}
+          aria-label={String(
+            intl.formatMessage(
+              {
+                id: 'osp.materialsList.labelAria',
+                defaultMessage: 'Label or container photo for {name}'
+              },
+              { name: row.name }
+            )
+          )}
+          onChange={async (e) => {
+            const file = e.target.files?.[0];
+            e.target.value = '';
+            if (!file) return;
+            setLabelBusy(true);
+            await attachLabel(row, file);
+            setLabelBusy(false);
+          }}
+        />
+        {row.label_document ? (
+          <>
+            <Text fontSize="xs" data-testid="materials-label-on-file">
+              {intl.formatMessage(
+                { id: 'osp.materialsList.labelOnFile', defaultMessage: 'Label: {title}' },
+                { title: row.label_document_title }
+              )}
+            </Text>
+            <StandardButton
+              size="xs"
+              variant="ghost"
+              isDisabled={!isEditable || labelBusy}
+              onClick={() => save(row, { label_document: '' })}>
+              {intl.formatMessage({
+                id: 'osp.materialsList.labelRemove',
+                defaultMessage: 'Remove label'
+              })}
+            </StandardButton>
+          </>
+        ) : (
+          <StandardButton
+            size="xs"
+            variant="outline"
+            isLoading={labelBusy}
+            isDisabled={!isEditable}
+            onClick={() => document.getElementById(labelInputId)?.click()}>
+            {intl.formatMessage({
+              id: 'osp.materialsList.labelAdd',
+              defaultMessage: 'Add label or container photo'
+            })}
+          </StandardButton>
+        )}
+      </Flex>
+      {row.needs_label && !row.label_document && (
+        <Text fontSize="xs" color={mutedColor} mt={1} data-testid="materials-label-asked">
+          {intl.formatMessage({
+            id: 'osp.materialsList.labelAsked',
+            defaultMessage:
+              'Your certifier asks for the label of a product that is not OMRI or WSDA listed, or a photo of its container.'
+          })}
+        </Text>
+      )}
     </Box>
   );
 };
@@ -328,6 +407,7 @@ const OSPMaterialsListPanel: React.FC<Props> = ({ companyId, farmId, osp }) => {
 
   const { data } = useGetOSPMaterialsListQuery({ companyId, farmId, ospId: osp.id });
   const [answerMaterial] = useAnswerOSPMaterialMutation();
+  const [uploadDocument] = useUploadFarmDocumentMutation();
 
   const rows: OSPMaterialListRow[] = data?.materials ?? [];
   const isEditable = osp.status === 'draft' || osp.status === 'active';
@@ -367,6 +447,39 @@ const OSPMaterialsListPanel: React.FC<Props> = ({ companyId, farmId, osp }) => {
     }
   };
 
+  // The file goes to the farm's Documents first, then the material names it: the same two steps
+  // a supplier's certificate copy takes, so the label shows on the Documents page and cannot be
+  // deleted there while a material names it.
+  const attachLabel = async (row: OSPMaterialListRow, file: File): Promise<boolean> => {
+    let docId: number;
+    try {
+      const doc = await uploadDocument({
+        companyId,
+        farmId,
+        file,
+        folder: 'uploads',
+        title: intl.formatMessage(
+          { id: 'osp.materialsList.labelFileTitle', defaultMessage: 'Label of {name}' },
+          { name: row.name }
+        )
+      }).unwrap();
+      docId = doc.id;
+    } catch (err: any) {
+      toast({
+        status: 'error',
+        title: intl.formatMessage({
+          id: 'osp.materialsList.labelUploadFailed',
+          defaultMessage: 'Could not upload that file'
+        }),
+        description: apiErrorMessage(err) ?? intl.formatMessage({ id: 'app.errorTryAgain' }),
+        duration: 6000,
+        isClosable: true
+      });
+      return false;
+    }
+    return save(row, { label_document: String(docId) });
+  };
+
   if (rows.length === 0) return null;
 
   const unanswered = rows.filter((row) => !row.in_use && !row.intended_for_use).length;
@@ -404,6 +517,7 @@ const OSPMaterialsListPanel: React.FC<Props> = ({ companyId, farmId, osp }) => {
             borderColor={borderColor}
             mutedColor={mutedColor}
             save={save}
+            attachLabel={attachLabel}
           />
         ))}
       </Stack>

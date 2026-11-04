@@ -495,6 +495,11 @@ export interface OSPMaterialListRow {
   agent_review_use: string;
   /** How the packet prints the review; '' when none is recorded. */
   agent_review_statement: string;
+  /** The label or container photo filed for this material (a document id), null when none is. */
+  label_document: number | null;
+  label_document_title: string;
+  /** The plan's agent asks for this product's label (OTCO C11 11.1: not OMRI or WSDA listed). */
+  needs_label: boolean;
 }
 
 export interface OSPMaterialsListResponse {
@@ -511,6 +516,8 @@ export interface OSPMaterialAnswer {
   agent_review_date?: string;
   agent_review_reference?: string;
   agent_review_use?: string;
+  /** A document id, or '' to remove the label. */
+  label_document?: string;
 }
 
 /** One thing the operation's dated records did after the plan's newest answer. */
