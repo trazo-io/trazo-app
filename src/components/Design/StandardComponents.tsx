@@ -1987,18 +1987,10 @@ export const StatusRow = ({
   action?: ReactNode;
   testId?: string;
 }) => {
-  const circle = useColorModeValue(
-    // neutral is gray.200, not gray.100: gray.100 IS the page background (#F8F9FA), so on a
-    // page with no card around the rows (certifier review) the circle vanished.
-    { crit: 'red.50', warn: 'orange.50', neutral: 'gray.200', clear: 'green.50' }[tone],
-    'whiteAlpha.200'
-  );
-  const glyph = {
-    crit: STATUS_URGENCY_TOKENS.crit.icon,
-    warn: STATUS_URGENCY_TOKENS.warn.icon,
-    neutral: 'gray.600',
-    clear: 'green.700'
-  }[tone];
+  // Painted FROM the exported object, so a guard that reads STATUS_TONE_TOKENS reads what the
+  // row actually renders (the GUIDANCE_NOTE_TOKENS pattern).
+  const circle = useColorModeValue(STATUS_TONE_TOKENS[tone].circle, 'whiteAlpha.200');
+  const glyph = STATUS_TONE_TOKENS[tone].glyph;
   const titleColor = useColorModeValue('gray.700', 'gray.200');
   return (
     <HStack align="flex-start" spacing={3} py={3} data-testid={testId}>
@@ -2091,6 +2083,23 @@ export const GUIDANCE_NOTE_TOKENS = {
 export const STATUS_URGENCY_TOKENS = {
   warn: { text: 'orange.600', icon: 'orange.500', bar: 'orange.400' },
   crit: { text: 'red.700', icon: 'red.500', bar: 'red.400' }
+} as const;
+
+/**
+ * What StatusRow paints for each tone, exported so guards can read it (the GUIDANCE_NOTE_TOKENS
+ * reasoning: a guard that restates colours proves nothing about the component).
+ *
+ * `neutral` must stay gray: the certifier review page renders every finding in it, and
+ * `CertifierReview/__tests__/readinessIsNotAVerdict.test.tsx` asserts that, so repurposing
+ * `neutral` for another caller cannot quietly put a verdict colour on that page.
+ * Its circle is gray.200, not gray.100: gray.100 IS the page background (#F8F9FA), so on a page
+ * with no card around the rows the circle vanished.
+ */
+export const STATUS_TONE_TOKENS = {
+  crit: { circle: 'red.50', glyph: STATUS_URGENCY_TOKENS.crit.icon },
+  warn: { circle: 'orange.50', glyph: STATUS_URGENCY_TOKENS.warn.icon },
+  neutral: { circle: 'gray.200', glyph: 'gray.600' },
+  clear: { circle: 'green.50', glyph: 'green.700' }
 } as const;
 
 /**

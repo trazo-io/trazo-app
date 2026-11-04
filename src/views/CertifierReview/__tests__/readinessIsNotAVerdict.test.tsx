@@ -16,6 +16,7 @@ import theme from '../../../theme/theme';
 import enMessages from '../../../i18n/lang/en-US.json';
 import esMessages from '../../../i18n/lang/es-419.json';
 import CertifierReview from '../CertifierReview';
+import { STATUS_TONE_TOKENS } from 'components/Design/StandardComponents';
 
 const META = {
   operation_name: 'Calapooia Bend Farm',
@@ -122,9 +123,20 @@ describe('readiness on the certifier review page is not a verdict', () => {
       src.indexOf('function findingStyle'),
       src.indexOf('function findingLabel')
     );
-    // Since 2026-11-04 findings render through StatusRow, whose `crit`/`warn` tones ARE red and
-    // orange. Banning only the colour names would let a verdict back in under a tone name.
-    expect(fn).not.toMatch(/red|orange|'crit'|'warn'/);
-    expect(fn).toMatch(/'neutral'/);
+    // Since 2026-11-04 findings render through StatusRow, whose `crit`/`warn`/`clear` tones ARE
+    // red, orange and green. Banning only colour names would let a verdict back in under a tone
+    // name, and "contains 'neutral'" passed while one of three branches had changed (review of
+    // app #257). So: EVERY tone findingStyle returns is 'neutral', and there are three of them.
+    expect(fn).not.toMatch(/red|orange|green/);
+    const tones = [...fn.matchAll(/tone:\s*'(\w+)'/g)].map((m) => m[1]);
+    expect(tones).toEqual(['neutral', 'neutral', 'neutral']);
+  });
+
+  it("paints the neutral tone gray in the component itself, not only in this page's map", () => {
+    // The tone->colour map lives in the shared StatusRow. Read the object it paints from, so a
+    // future edit that recolours `neutral` for another caller fails HERE, on the page it would
+    // turn into a verdict.
+    expect(STATUS_TONE_TOKENS.neutral.circle).toMatch(/^gray\./);
+    expect(STATUS_TONE_TOKENS.neutral.glyph).toMatch(/^gray\./);
   });
 });
