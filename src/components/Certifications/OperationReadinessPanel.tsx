@@ -10,63 +10,32 @@
  * that could be improved. A checklist that cries wolf gets ignored, and an ignored
  * checklist is worse than none on the morning of an inspection.
  *
- * Two callers, one endpoint, so they can never disagree:
- *   - `variant="preshare"` sits above the certifier-link form
- *   - `variant="dashboard"` is the standalone farm-page checklist
+ * ONE caller (2026-11-04): it sits above the certifier-link form and stays silent when there
+ * is nothing to fix. A `dashboard` variant lived here too, with no caller anywhere. It is
+ * deleted rather than restyled because it carried a VERDICT: a green "Ready" badge and "Your
+ * records are in a state a certifier will accept". Trazo checks what is on file; the certifying
+ * agent decides (compliance.md). The farm-home card (CertifierReadinessCard) already shows these
+ * same operation findings as counts and rows, without a verdict.
+ *
+ * Rows are StatusRows, the same treatment and glyphs as the farm-home card, so the two lists of
+ * the same findings look the same. They were boxes with a 3px red/orange edge under a red Alert.
  */
 import React from 'react';
-import { Alert, AlertIcon, Badge, Box, HStack, Icon, Text, VStack } from '@chakra-ui/react';
-import { FaCheckCircle, FaExclamationTriangle, FaTimesCircle } from 'react-icons/fa';
+import { Text, VStack } from '@chakra-ui/react';
+import { FaExclamationCircle, FaInfoCircle } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
-import { StandardCard } from 'components/Design/StandardComponents';
-import { useGetOperationReadinessQuery, type ReadinessItem } from 'store/api/certifierLinkApi';
+import { StatusList, StatusRow } from 'components/Design/StandardComponents';
+import { useGetOperationReadinessQuery } from 'store/api/certifierLinkApi';
 
 import { resolveReadinessItem } from './readinessMessages';
 
 interface Props {
   companyId: string;
   farmId: string;
-  variant?: 'preshare' | 'dashboard';
 }
 
-const ItemRow: React.FC<{ item: ReadinessItem }> = ({ item }) => {
-  const intl = useIntl();
-  const isBlocker = item.status === 'blocker';
-  // The server sends a `code` and the values; the sentence is written in the viewer's locale.
-  // Its English `title`/`detail`/`fix` stay on the wire for the packet — see readinessMessages.ts.
-  const words = resolveReadinessItem(item, intl);
-  return (
-    <Box borderLeftWidth="3px" borderLeftColor={isBlocker ? 'red.500' : 'orange.400'} pl={3} py={1}>
-      <HStack align="flex-start" spacing={2}>
-        <Icon
-          as={isBlocker ? FaTimesCircle : FaExclamationTriangle}
-          color={isBlocker ? 'red.500' : 'orange.400'}
-          mt={1}
-          boxSize={3.5}
-          flexShrink={0}
-        />
-        <Box>
-          <Text fontSize="sm" fontWeight="semibold" color="gray.800">
-            {words.title}
-          </Text>
-          {words.detail && (
-            <Text fontSize="xs" color="gray.600">
-              {words.detail}
-            </Text>
-          )}
-          {words.fix && (
-            <Text fontSize="xs" color="green.700" fontWeight="medium" mt={0.5}>
-              {words.fix}
-            </Text>
-          )}
-        </Box>
-      </HStack>
-    </Box>
-  );
-};
-
-const OperationReadinessPanel: React.FC<Props> = ({ companyId, farmId, variant = 'dashboard' }) => {
+const OperationReadinessPanel: React.FC<Props> = ({ companyId, farmId }) => {
   const intl = useIntl();
   const { data, isLoading } = useGetOperationReadinessQuery({ companyId, farmId });
 
@@ -78,84 +47,50 @@ const OperationReadinessPanel: React.FC<Props> = ({ companyId, farmId, variant =
 
   const problems = [...data.blockers, ...data.warnings];
 
-  // Pre-share: stay silent when everything is fine. The farmer came to send a
-  // link, not to read a green tick.
-  if (variant === 'preshare' && problems.length === 0) return null;
-
-  const body = (
-    <VStack align="stretch" spacing={3}>
-      {data.ready && problems.length === 0 && (
-        <Alert status="success">
-          <AlertIcon />
-          <Text fontSize="sm">
-            {intl.formatMessage({
-              id: 'readiness.allClear',
-              defaultMessage:
-                'No blockers found. Your records are in a state a certifier will accept.'
-            })}
-          </Text>
-        </Alert>
-      )}
-
-      {data.blockers.length > 0 && (
-        <Alert status="error">
-          <AlertIcon />
-          <Text fontSize="sm">
-            {intl.formatMessage({
-              id: 'readiness.blockedIntro',
-              defaultMessage:
-                'Trazo requires these records before it creates a review link. These are checks on what is on file in Trazo, not a certification decision.'
-            })}
-          </Text>
-        </Alert>
-      )}
-
-      {problems.map((item) => (
-        <ItemRow key={item.key} item={item} />
-      ))}
-    </VStack>
-  );
-
-  if (variant === 'preshare') {
-    return <Box mb={3}>{body}</Box>;
-  }
+  // Stay silent when everything is fine. The farmer came to send a link, not to read a green tick.
+  if (problems.length === 0) return null;
 
   return (
-    <StandardCard
-      title={intl.formatMessage({
-        id: 'readiness.title',
-        defaultMessage: 'Inspection readiness'
-      })}
-      variant="elevated"
-      padding={{ base: 0, md: 4 }}>
-      <VStack align="stretch" spacing={3}>
-        <HStack justify="space-between">
-          <Text fontSize="sm" color="gray.600">
-            {intl.formatMessage({
-              id: 'readiness.description',
-              defaultMessage: 'What your inspector will check before you are certified.'
-            })}
-          </Text>
-          <Badge colorScheme={data.ready ? 'green' : 'red'}>
-            <HStack spacing={1}>
-              <Icon as={data.ready ? FaCheckCircle : FaTimesCircle} boxSize={3} />
-              <Text as="span">
-                {data.ready
-                  ? intl.formatMessage({ id: 'readiness.badge.ready', defaultMessage: 'Ready' })
-                  : intl.formatMessage(
-                      {
-                        id: 'readiness.badge.blocked',
-                        defaultMessage: '{count} to fix'
-                      },
-                      { count: data.blockers.length }
-                    )}
-              </Text>
-            </HStack>
-          </Badge>
-        </HStack>
-        {body}
-      </VStack>
-    </StandardCard>
+    <VStack align="stretch" spacing={1} mb={3} data-testid="operation-readiness-preshare">
+      {/* Why the link button below is disabled, and that this is Trazo's check, not a verdict.
+          A sentence, not a red Alert slab: the rows under it already carry the urgency. */}
+      {data.blockers.length > 0 && (
+        <Text fontSize="sm" color="gray.700">
+          {intl.formatMessage({
+            id: 'readiness.blockedIntro',
+            defaultMessage:
+              'Trazo requires these records before it creates a review link. These are checks on what is on file in Trazo, not a certification decision.'
+          })}
+        </Text>
+      )}
+      <StatusList>
+        {problems.map((item) => {
+          const isBlocker = item.status === 'blocker';
+          // The server sends a `code` and the values; the sentence is written in the viewer's
+          // locale. Its English title/detail/fix stay on the wire for the packet.
+          const words = resolveReadinessItem(item, intl);
+          return (
+            <StatusRow
+              key={item.key}
+              tone={isBlocker ? 'crit' : 'warn'}
+              icon={isBlocker ? FaExclamationCircle : FaInfoCircle}
+              title={words.title}>
+              {words.detail && (
+                <Text fontSize="xs" color="gray.600" lineHeight="1.5">
+                  {words.detail}
+                </Text>
+              )}
+              {/* Gray, not green: in green the instruction reads as a link (as on the farm home). */}
+              {words.fix && (
+                <Text fontSize="xs" color="gray.700" fontWeight="medium">
+                  {words.fix}
+                </Text>
+              )}
+            </StatusRow>
+          );
+        })}
+      </StatusList>
+    </VStack>
   );
 };
 
