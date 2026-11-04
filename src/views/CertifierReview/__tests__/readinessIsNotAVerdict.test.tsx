@@ -122,6 +122,9 @@ describe('readiness on the certifier review page is not a verdict', () => {
       src.indexOf('function findingStyle'),
       src.indexOf('function findingLabel')
     );
-    expect(fn).not.toMatch(/red|orange/);
+    // Since 2026-11-04 findings render through StatusRow, whose `crit`/`warn` tones ARE red and
+    // orange. Banning only the colour names would let a verdict back in under a tone name.
+    expect(fn).not.toMatch(/red|orange|'crit'|'warn'/);
+    expect(fn).toMatch(/'neutral'/);
   });
 });

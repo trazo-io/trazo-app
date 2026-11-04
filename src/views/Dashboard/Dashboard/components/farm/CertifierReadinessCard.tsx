@@ -44,7 +44,6 @@ import { Link as RouterLink } from 'react-router-dom';
 import {
   Badge,
   Box,
-  Circle,
   Heading,
   HStack,
   Icon,
@@ -65,7 +64,7 @@ import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import { resolveReadinessItem } from 'components/Certifications/readinessMessages';
 import { seasonRowDetail } from 'components/Certifications/seasonRowMessages';
-import { STATUS_URGENCY_TOKENS } from 'components/Design/StandardComponents';
+import { STATUS_URGENCY_TOKENS, StatusList, StatusRow } from 'components/Design/StandardComponents';
 import { useComplianceExports } from 'components/Guards/ComplianceExportsGuard';
 import { SETUP_HELP_EMAIL } from 'config/contactAddresses';
 import {
@@ -130,80 +129,13 @@ const MAX_VISIBLE_FINDINGS = 5;
  * a card: the same "coloured box with an edge" look that was retired from the drift banner for
  * reading louder than the decision it asks for.
  *
- * Now a row is a line in a list: a small tinted circle carrying the status glyph (the same
- * treatment as `StandardNotice`), the title and its badge, the detail, and the link that fixes
+ * Now a row is a `StatusRow` (design system) in a `StatusList`: a small tinted circle carrying the
+ * status glyph (the same treatment as `StandardNotice`), the title and its badge, the detail, and the link that fixes
  * it, with a hairline between rows. Urgency is still stated twice without colour: the glyph's
  * SHAPE (exclamation vs info) and, on season rows, the badge's WORDS ("Missing" / "Needs
  * attention"). The edge bar was decorative only (see STATUS_URGENCY_TOKENS), so nothing that
  * carried meaning was removed.
  */
-type RowTone = 'crit' | 'warn' | 'neutral' | 'clear';
-
-function ReadinessRow({
-  tone,
-  icon,
-  title,
-  badge,
-  children,
-  action,
-  testId
-}: {
-  tone: RowTone;
-  icon: React.ElementType;
-  title?: React.ReactNode;
-  badge?: React.ReactNode;
-  children?: React.ReactNode;
-  action?: React.ReactNode;
-  testId?: string;
-}) {
-  const circle = useColorModeValue(
-    { crit: 'red.50', warn: 'orange.50', neutral: 'gray.100', clear: 'green.50' }[tone],
-    'whiteAlpha.200'
-  );
-  const glyph = {
-    crit: STATUS_URGENCY_TOKENS.crit.icon,
-    warn: STATUS_URGENCY_TOKENS.warn.icon,
-    neutral: 'gray.600',
-    clear: 'green.700'
-  }[tone];
-  const titleColor = useColorModeValue('gray.700', 'gray.200');
-  return (
-    <HStack align="flex-start" spacing={3} py={3} data-testid={testId}>
-      <Circle size={7} bg={circle} flexShrink={0}>
-        <Icon as={icon} boxSize={3.5} color={glyph} aria-hidden />
-      </Circle>
-      <VStack align="start" spacing={1} flex={1} minW={0} pt={0.5}>
-        {(title || badge) && (
-          <HStack spacing={2} flexWrap="wrap">
-            {title && (
-              <Text fontSize="sm" fontWeight="semibold" color={titleColor}>
-                {title}
-              </Text>
-            )}
-            {badge}
-          </HStack>
-        )}
-        {children}
-        {action}
-      </VStack>
-    </HStack>
-  );
-}
-
-/**
- * Rows split by a hairline. A CSS sibling border, so a row that renders null leaves no rule.
- * gray.200, not gray.100: the theme's gray.100 is #F8F9FA, the page background, so a gray.100
- * rule on a white card was invisible (2026-11-04).
- */
-function ReadinessList({ children, testId }: { children: React.ReactNode; testId?: string }) {
-  const rule = useColorModeValue('gray.200', 'gray.600');
-  return (
-    <Box data-testid={testId} sx={{ '& > * + *': { borderTopWidth: '1px', borderTopColor: rule } }}>
-      {children}
-    </Box>
-  );
-}
-
 /** One link style for every "go fix it" action on the card (they were xs, some underlined). */
 function RowLink(props: React.ComponentProps<typeof Link> & { to?: string }) {
   return (
@@ -540,7 +472,7 @@ export default function CertifierReadinessCard({
             </HStack>
 
             {topLabel ? (
-              <ReadinessRow
+              <StatusRow
                 tone={topIsUrgent ? 'crit' : 'warn'}
                 icon={topIsUrgent ? FaExclamationCircle : FaInfoCircle}
                 title={
@@ -674,7 +606,7 @@ export default function CertifierReadinessCard({
           {/* ACCESS, from the plan. Kept out of the findings below: the findings are about the
               records and read the same on every plan. */}
           {showAccessNotice && (
-            <ReadinessRow
+            <StatusRow
               tone="neutral"
               icon={FaInfoCircle}
               testId="readiness-access-notice"
@@ -689,7 +621,7 @@ export default function CertifierReadinessCard({
               <Text fontSize="sm" color={textColor}>
                 {intl.formatMessage({ id: 'certifierReadiness.accessNotice' })}
               </Text>
-            </ReadinessRow>
+            </StatusRow>
           )}
 
           {/* OPERATION scope first: Trazo requires these before it creates a review link, so they
@@ -717,14 +649,14 @@ export default function CertifierReadinessCard({
                   </Badge>
                 )}
               </HStack>
-              <ReadinessList>
+              <StatusList>
                 {operationItems.map((item) => {
                   // The server sends a `code` and the VALUES; the sentence is written here, in
                   // the viewer's locale. `title`/`detail`/`fix` on the wire stay English because
                   // the certifier packet prints them — see `readinessMessages.ts`.
                   const words = resolveReadinessItem(item, intl);
                   return (
-                    <ReadinessRow
+                    <StatusRow
                       key={item.key}
                       tone={item.status === 'blocker' ? 'crit' : 'warn'}
                       icon={item.status === 'blocker' ? FaExclamationCircle : FaInfoCircle}
@@ -784,10 +716,10 @@ export default function CertifierReadinessCard({
                           {words.fix}
                         </Text>
                       )}
-                    </ReadinessRow>
+                    </StatusRow>
                   );
                 })}
-              </ReadinessList>
+              </StatusList>
             </VStack>
           )}
 
@@ -816,7 +748,7 @@ export default function CertifierReadinessCard({
                 A clean season under a blocked operation gets a plain line instead. */}
               {!data?.production ? null : findings.length === 0 ? (
                 totalOpen === 0 ? (
-                  <ReadinessRow
+                  <StatusRow
                     tone="clear"
                     icon={FaCheck}
                     title={intl.formatMessage({ id: 'certifierReadiness.allClearTitle' })}>
@@ -826,7 +758,7 @@ export default function CertifierReadinessCard({
                         { checked: data.checked_count }
                       )}
                     </Text>
-                  </ReadinessRow>
+                  </StatusRow>
                 ) : (
                   <Text fontSize="xs" color={mutedColor} pt={2}>
                     {intl.formatMessage(
@@ -837,7 +769,7 @@ export default function CertifierReadinessCard({
                 )
               ) : (
                 <VStack align="stretch" spacing={2}>
-                  <ReadinessList>
+                  <StatusList>
                     {visible.map((finding) => {
                       const style = statusStyle(finding.status);
                       const rowHref = finding.row_key
@@ -848,7 +780,7 @@ export default function CertifierReadinessCard({
                           }) ?? null
                         : null;
                       return (
-                        <ReadinessRow
+                        <StatusRow
                           key={finding.label}
                           tone={finding.status === 'FAIL' ? 'crit' : 'warn'}
                           icon={style.icon}
@@ -881,10 +813,10 @@ export default function CertifierReadinessCard({
                               {readinessFindingSection(intl, finding)}
                             </Text>
                           )}
-                        </ReadinessRow>
+                        </StatusRow>
                       );
                     })}
-                  </ReadinessList>
+                  </StatusList>
                   {hidden > 0 && (
                     <Text fontSize="xs" color={mutedColor}>
                       {intl.formatMessage(
