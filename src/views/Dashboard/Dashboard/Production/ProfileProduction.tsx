@@ -779,11 +779,11 @@ function ProfileProduction() {
           )}
         </Box>
 
-        {/* SPACING (2026-11-04): every card on this page passes `mb={0}`. StandardCard defaults to
-            a 24px bottom margin, and each card here already sits in a stack or grid that sets
-            its own gap, so the margin stacked on top of the gap: the last card in a grid pushed
-            24px of dead space under its block, and the drift notice measured 40px above and
-            16px below. The page VStack owns the rhythm between blocks; nothing else adds to it. */}
+        {/* SPACING (2026-11-04): every card on this page passes `mb={0}`. StandardCard used to
+            default to a 24px bottom margin, which stacked on the gap each stack or grid here
+            already sets: the last card in a grid pushed 24px of dead space under its block, and
+            the drift notice measured 40px above and 16px below. The default is 0 since the same
+            day; the explicit props stay as the statement that the page VStack owns the rhythm. */}
         {/* Photo Gallery Section */}
         {historyData?.images && historyData.images.length > 0 && (
           <StandardCard

@@ -98,6 +98,17 @@ describe('StandardCard / StandardAlert — margin props are not inert', () => {
     expect(a.firstElementChild!.className).not.toBe(b.firstElementChild!.className);
   });
 
+  // 2026-11-04: the PARENT owns the gap between cards. The old default of mb={6} stacked on
+  // every spaced parent (40px instead of 16 on the OSP module list, 40/16 around the production
+  // notice). Same class-equality technique as above: no prop must render exactly like mb={0}.
+  it('defaults to NO bottom margin, so a spaced parent is never doubled', () => {
+    const { container: none } = renderWithTheme(<StandardCard>x</StandardCard>);
+    const { container: zero } = renderWithTheme(<StandardCard mb={0}>x</StandardCard>);
+    const { container: six } = renderWithTheme(<StandardCard mb={6}>x</StandardCard>);
+    expect(none.firstElementChild!.className).toBe(zero.firstElementChild!.className);
+    expect(none.firstElementChild!.className).not.toBe(six.firstElementChild!.className);
+  });
+
   it('`mb` reaches the alert — the prop that let the OSP page adopt it at all', () => {
     const { container: a } = renderWithTheme(
       <StandardAlert status="info" mb={0} description="x" />

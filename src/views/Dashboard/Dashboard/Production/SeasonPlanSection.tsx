@@ -201,8 +201,8 @@ export const SeasonPlanSection: React.FC<SeasonPlanSectionProps> = ({
 
   return (
     <>
-      {/* mb={0}: the production page's stack sets the gap between blocks; StandardCard's
-          default 24px margin stacked on top of it (2026-11-04). */}
+      {/* mb={0}: the production page's stack sets the gap between blocks. Redundant since
+          StandardCard's default became 0 (2026-11-04), kept as the explicit statement. */}
       <StandardCard
         mb={0}
         title={intl.formatMessage({ id: 'seasonPlan.title' })}

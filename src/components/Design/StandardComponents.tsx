@@ -403,10 +403,12 @@ interface StandardCardProps {
    */
   padding?: string | number | object;
   /**
-   * Bottom margin. Defaults to 6 (24px) to preserve the spacing every existing
-   * caller was built against. Pass 0 when the card sits inside a VStack that
-   * already owns the gap — stacking `mb={6}` inside a `spacing={8}` VStack is
-   * how the farm profile ended up with 56px between every pair of cards.
+   * Bottom margin. Defaults to 0 since 2026-11-04: the PARENT owns the gap between cards
+   * (a VStack/SimpleGrid `spacing`), never the card. The old default of 6 (24px) stacked on
+   * top of every spaced parent: the farm profile once had 56px between cards, the production
+   * page 40px above a notice and 16px below it, the OSP module list 40px instead of 16. A card
+   * in a container with NO gap of its own passes `mb` explicitly; every such caller that
+   * relied on the old default was measured and given it in the same change.
    */
   mb?: number | string | object;
   /**
@@ -426,7 +428,7 @@ export const StandardCard = ({
   titleIcon,
   variant = 'elevated',
   padding = { base: 0, md: 4 },
-  mb = 6,
+  mb = 0,
   mt
 }: StandardCardProps) => {
   const bgColor = useColorModeValue('white', 'gray.800');
@@ -570,7 +572,9 @@ export const StandardStepper = ({
   const titleFontSize = manySteps ? 'xs' : { base: 'xs', md: 'sm' };
 
   return (
-    <StandardCard padding={{ base: 0, md: 6 }}>
+    // The step header always sits directly above its form, in all five callers, so it keeps
+    // the 24px it had when it inherited StandardCard's old default (now 0, 2026-11-04).
+    <StandardCard padding={{ base: 0, md: 6 }} mb={6}>
       <Box overflowX="auto" w="100%" py={2}>
         <HStack
           spacing={spacing}

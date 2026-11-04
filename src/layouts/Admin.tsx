@@ -362,7 +362,11 @@ export default function Dashboard(props: any) {
             <PanelContent
               paddingInlineStart={{ base: '4px', md: '15px' }}
               paddingInlineEnd={{ base: '4px', md: '15px' }}>
-              <PanelContainer padding={{ base: '4px 0px', lg: '30px 15px' }}>
+              {/* 24px at the bottom on phones (was 4px). The page above the footer used to get
+                  its breathing room from the LAST card's default 24px margin; that default is
+                  0 since 2026-11-04 (the parent owns the gap), so the layout says it once for
+                  every page, including the ones that never ended in a card. */}
+              <PanelContainer padding={{ base: '4px 0px 24px', lg: '30px 15px' }}>
                 {/* Suspense boundary so lazy-loaded dashboard route views (see App.tsx
                   lazyWithRetry conversion) have a fallback while their chunk loads. */}
                 <Suspense fallback={<div style={{ minHeight: '60vh' }} />}>
