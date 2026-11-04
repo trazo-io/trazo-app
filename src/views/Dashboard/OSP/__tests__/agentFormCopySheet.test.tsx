@@ -264,6 +264,120 @@ describe('the agent-form copy sheet', () => {
     expect(row).not.toHaveTextContent('No sale invoiced');
   });
 
+  const renewalRow = (kind: 'value' | 'not_recorded', value: string | null) => ({
+    step: '0',
+    item: 'renewal_deadline',
+    kind,
+    value,
+    source: kind === 'value' ? 'establishment' : '',
+    extra: {
+      renewal_dates: ['01-01', '04-01'],
+      edit: {
+        target: 'establishment',
+        field: 'certifier_renewal_date',
+        agent: 'otco',
+        options: ['01-01', '04-01']
+      }
+    }
+  });
+
+  it("records the agent's renewal date as a choice of its two, saved with the agent", async () => {
+    result = { data: { ...sheet, rows: [renewalRow('not_recorded', null)] } };
+    role = { canWrite: true, canManageCompany: true };
+    editFarm.mockClear();
+    renderSheet();
+    const row = screen.getByTestId('agent-sheet-renewal_deadline');
+    fireEvent.click(within(row).getByRole('button', { name: 'Add it to Trazo' }));
+    const select = within(row).getByLabelText('Value');
+    expect(Array.from(select.querySelectorAll('option')).map((o) => o.textContent)).toEqual([
+      'Choose',
+      'January 1',
+      'April 1'
+    ]);
+    fireEvent.change(select, { target: { value: '04-01' } });
+    fireEvent.click(within(row).getByRole('button', { name: 'Save' }));
+    await Promise.resolve();
+    expect(editFarm).toHaveBeenCalledWith({
+      companyId: '1',
+      farmId: '2',
+      establishmentData: { certifier_renewal_date: '04-01', certifier_renewal_date_agent: 'otco' }
+    });
+  });
+
+  it('gives a recorded renewal date with a way to change it', () => {
+    result = { data: { ...sheet, rows: [renewalRow('value', '01-01')] } };
+    renderSheet();
+    const row = screen.getByTestId('agent-sheet-renewal_deadline');
+    expect(row).toHaveTextContent('assigned your operation a January 1 renewal date');
+    expect(within(row).getByRole('button', { name: 'Change' })).toBeInTheDocument();
+  });
+
+  it("asks for the period before any figure, naming the agent's own months for the date", () => {
+    result = {
+      data: {
+        ...sheet,
+        rows: [
+          {
+            step: '6',
+            item: 'gross_sales',
+            kind: 'not_recorded',
+            value: null,
+            source: 'sales_records',
+            extra: {
+              reason: 'period_not_stated',
+              published_start: '2025-10-01',
+              published_end: '2026-09-30',
+              renewal_date: '01-01'
+            }
+          },
+          {
+            step: '6',
+            item: 'sales_period',
+            kind: 'not_recorded',
+            value: null,
+            source: '',
+            extra: {
+              where: 'annual_update',
+              published_start: '2025-10-01',
+              published_end: '2026-09-30',
+              renewal_date: '01-01'
+            }
+          }
+        ]
+      }
+    };
+    renderSheet();
+    expect(screen.getByTestId('agent-sheet-gross_sales')).toHaveTextContent(
+      "For a January 1 renewal, Oregon Tilth Certified Organic (OTCO)'s fee schedule asks for sales from Oct 1, 2025 to Sep 30, 2026."
+    );
+    expect(screen.getByTestId('agent-sheet-gross_sales')).not.toHaveTextContent('$');
+    expect(screen.getByTestId('agent-sheet-sales_period')).toHaveTextContent(
+      'For a January 1 renewal'
+    );
+  });
+
+  it('without a recorded date, says what each of the two dates asks for', () => {
+    result = {
+      data: {
+        ...sheet,
+        rows: [
+          {
+            step: '6',
+            item: 'gross_sales',
+            kind: 'not_recorded',
+            value: null,
+            source: 'sales_records',
+            extra: { reason: 'period_not_stated' }
+          }
+        ]
+      }
+    };
+    renderSheet();
+    expect(screen.getByTestId('agent-sheet-gross_sales')).toHaveTextContent(
+      'October to September for a January 1 renewal'
+    );
+  });
+
   it('renders nothing for an agent without a copy sheet', () => {
     result = { isError: true };
     const { container } = renderSheet();

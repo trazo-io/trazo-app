@@ -20,7 +20,12 @@ import { useIntl } from 'react-intl';
 import { formatDateOnly } from 'utils/dateOnly';
 import { apiErrorMessage } from 'utils/apiErrorMessage';
 
-import { StandardButton, StandardCard, StandardInput } from 'components/Design/StandardComponents';
+import {
+  StandardButton,
+  StandardCard,
+  StandardInput,
+  StandardSelect
+} from 'components/Design/StandardComponents';
 import { useUserRole } from 'hooks/useUserRole';
 import { useEditFarmMutation, useUpdateCompanyMutation } from 'store/api/companyApi';
 import { AgentFormSheetRow, useGetAgentFormSheetQuery } from 'store/api/ospApi';
@@ -159,6 +164,8 @@ interface EditTarget {
   target: 'establishment' | 'company';
   field: string;
   agent?: string;
+  /** A closed set the server accepts (an agent's renewal dates): offered as a choice, never typed. */
+  options?: string[];
 }
 
 /** Fill a value Trazo can hold, once, from the sheet. Saved to the farm or company record. */
@@ -167,7 +174,9 @@ const InlineEdit: React.FC<{
   companyId: string;
   farmId: string;
   initial?: string;
-}> = ({ edit, companyId, farmId, initial = '' }) => {
+  /** Words an option for the choice list; the stored value is sent as is. */
+  optionLabel?: (value: string) => string;
+}> = ({ edit, companyId, farmId, initial = '', optionLabel = (v) => v }) => {
   const intl = useIntl();
   const toast = useToast();
   const [open, setOpen] = useState(false);
@@ -181,8 +190,8 @@ const InlineEdit: React.FC<{
       if (edit.target === 'company') {
         await updateCompany({ companyId, companyData: { [edit.field]: value } }).unwrap();
       } else {
-        // A Client ID is kept with the agent that issued it.
-        const extra = edit.agent ? { certifier_client_id_agent: edit.agent } : {};
+        // A Client ID or a renewal date is kept with the agent that issued it.
+        const extra = edit.agent ? { [`${edit.field}_agent`]: edit.agent } : {};
         await editFarm({
           companyId,
           farmId,
@@ -207,20 +216,41 @@ const InlineEdit: React.FC<{
   if (!open)
     return (
       <StandardButton size="sm" variant="outline" mt={2} onClick={() => setOpen(true)}>
-        {intl.formatMessage({ id: 'osp.agentSheet.edit.add', defaultMessage: 'Add it to Trazo' })}
+        {initial
+          ? intl.formatMessage({ id: 'osp.agentSheet.edit.change', defaultMessage: 'Change' })
+          : intl.formatMessage({
+              id: 'osp.agentSheet.edit.add',
+              defaultMessage: 'Add it to Trazo'
+            })}
       </StandardButton>
     );
+  const label = intl.formatMessage({ id: 'osp.agentSheet.edit.label', defaultMessage: 'Value' });
   return (
     <HStack mt={2} spacing={2} align="flex-start">
-      <StandardInput
-        size="sm"
-        value={draft}
-        aria-label={intl.formatMessage({
-          id: 'osp.agentSheet.edit.label',
-          defaultMessage: 'Value'
-        })}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDraft(e.target.value)}
-      />
+      {edit.options ? (
+        <StandardSelect
+          size="sm"
+          value={draft}
+          aria-label={label}
+          placeholder={intl.formatMessage({
+            id: 'osp.agentSheet.edit.choose',
+            defaultMessage: 'Choose'
+          })}
+          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setDraft(e.target.value)}>
+          {edit.options.map((option) => (
+            <option key={option} value={option}>
+              {optionLabel(option)}
+            </option>
+          ))}
+        </StandardSelect>
+      ) : (
+        <StandardInput
+          size="sm"
+          value={draft}
+          aria-label={label}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDraft(e.target.value)}
+        />
+      )}
       <StandardButton
         size="sm"
         onClick={save}
@@ -254,6 +284,13 @@ const AgentFormCopySheet: React.FC<Props> = ({ companyId, farmId, ospId }) => {
         {label}
       </Link>
     ) : null;
+  /** "01-01" as the locale says a month and day ("January 1", "1 de enero"). */
+  const monthDay = (md: string) =>
+    intl.formatDate(new Date(`2000-${md}T00:00:00Z`), {
+      month: 'long',
+      day: 'numeric',
+      timeZone: 'UTC'
+    });
   const yoursLine = intl.formatMessage({
     id: 'osp.agentSheet.detail.yours',
     defaultMessage: 'Answer it on the form.'
@@ -265,14 +302,17 @@ const AgentFormCopySheet: React.FC<Props> = ({ companyId, farmId, ospId }) => {
     if (STATEMENTS[row.item]) return intl.formatMessage(STATEMENTS[row.item]);
     switch (row.item) {
       case 'renewal_deadline': {
+        if (row.kind === 'value')
+          return intl.formatMessage(
+            {
+              id: 'osp.agentSheet.detail.renewal_date_value',
+              defaultMessage:
+                '{agent} assigned your operation a {date} renewal date. The form and your fees are due before it, and it sets the 12 months of sales Step 6 asks for.'
+            },
+            { agent, date: monthDay(String(row.value)) }
+          );
         const dates = (Array.isArray(e.renewal_dates) ? e.renewal_dates : [])
-          .map((md: string) =>
-            intl.formatDate(new Date(`2000-${md}T00:00:00Z`), {
-              month: 'long',
-              day: 'numeric',
-              timeZone: 'UTC'
-            })
-          )
+          .map((md: string) => monthDay(md))
           .join(' / ');
         return intl.formatMessage(
           {
@@ -555,6 +595,30 @@ const AgentFormCopySheet: React.FC<Props> = ({ companyId, farmId, ospId }) => {
             id: 'osp.agentSheet.detail.sales_no_filing',
             defaultMessage: "Start this year's annual update to get a figure."
           });
+        // No figure while no period is set: the agent asks for its own 12 months (2026-11-04).
+        if (e.reason === 'period_not_stated')
+          return e.published_start
+            ? intl.formatMessage(
+                {
+                  id: 'osp.agentSheet.detail.sales_set_published',
+                  defaultMessage:
+                    "Set the sales period on your annual update above first. For a {date} renewal, {agent}'s fee schedule asks for sales from {start} to {end}."
+                },
+                {
+                  agent,
+                  date: monthDay(String(e.renewal_date)),
+                  start: date(e.published_start),
+                  end: date(e.published_end)
+                }
+              )
+            : intl.formatMessage(
+                {
+                  id: 'osp.agentSheet.detail.sales_set_period',
+                  defaultMessage:
+                    'Set the sales period on your annual update above first. {agent} asks for its own 12 months: October to September for a January 1 renewal, the calendar year for an April 1 renewal. Record your renewal date above to see yours.'
+                },
+                { agent }
+              );
         // The calendar-year fallback can still be running (a January cohort renews in November).
         if (e.reason === 'period_not_over')
           return intl.formatMessage(
@@ -613,20 +677,44 @@ const AgentFormCopySheet: React.FC<Props> = ({ companyId, farmId, ospId }) => {
           { agent }
         )}`;
       }
-      case 'sales_period':
-        return row.kind === 'value'
+      case 'sales_period': {
+        const published = e.published_start
           ? intl.formatMessage(
-              { id: 'osp.agentSheet.detail.sales_period', defaultMessage: '{start} to {end}' },
               {
-                start: date((row.value as { start: string }).start),
-                end: date((row.value as { end: string }).end)
+                id: 'osp.agentSheet.detail.sales_period_published',
+                defaultMessage:
+                  "For a {date} renewal, {agent}'s fee schedule asks for {start} to {end}."
+              },
+              {
+                agent,
+                date: monthDay(String(e.renewal_date)),
+                start: date(e.published_start),
+                end: date(e.published_end)
               }
             )
-          : intl.formatMessage({
-              id: 'osp.agentSheet.detail.sales_period_missing',
-              defaultMessage:
-                'Not set. Set the 12 months your agent asks for on your annual update above, the same months each year.'
-            });
+          : '';
+        if (row.kind === 'value') {
+          const v = row.value as { start: string; end: string };
+          const stated = intl.formatMessage(
+            { id: 'osp.agentSheet.detail.sales_period', defaultMessage: '{start} to {end}' },
+            { start: date(v.start), end: date(v.end) }
+          );
+          // A stated period other than the agent's own is shown beside it, never corrected.
+          return published && (v.start !== e.published_start || v.end !== e.published_end)
+            ? `${stated}. ${published}`
+            : stated;
+        }
+        return [
+          intl.formatMessage({
+            id: 'osp.agentSheet.detail.sales_period_missing',
+            defaultMessage:
+              'Not set. Set the 12 months your agent asks for on your annual update above, the same months each year.'
+          }),
+          published
+        ]
+          .filter(Boolean)
+          .join(' ');
+      }
       case 'payment':
         return (
           <>
@@ -763,8 +851,16 @@ const AgentFormCopySheet: React.FC<Props> = ({ companyId, farmId, ospId }) => {
                       <Box fontSize="sm" color="gray.800" mt={1} userSelect="text">
                         {detail(row)}
                       </Box>
-                      {edit && row.kind === 'not_recorded' && canEdit(edit) ? (
-                        <InlineEdit edit={edit} companyId={companyId} farmId={farmId} />
+                      {edit &&
+                      canEdit(edit) &&
+                      (row.kind === 'not_recorded' || (row.kind === 'value' && edit.options)) ? (
+                        <InlineEdit
+                          edit={edit}
+                          companyId={companyId}
+                          farmId={farmId}
+                          initial={row.kind === 'value' ? String(row.value) : ''}
+                          optionLabel={monthDay}
+                        />
                       ) : null}
                     </Box>
                   );
