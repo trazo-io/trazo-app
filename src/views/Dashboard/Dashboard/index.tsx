@@ -64,7 +64,6 @@ import imageFarm from 'assets/img/imageFarm.png';
 import TransparencySummaryCard from './components/farm/CarbonSummaryCard';
 import CertifierReadinessCard from './components/farm/CertifierReadinessCard';
 import CertifierDeadlinesStrip from './components/farm/CertifierDeadlinesStrip';
-import TrialStatusBanner from 'components/Trial/TrialStatusBanner';
 import { useTour } from 'hooks/useTour';
 import { useTourScenario } from 'hooks/useTourScenario';
 
@@ -529,8 +528,14 @@ export default function DashboardView() {
       px={{ base: 3, md: 6 }}
       pb={{ base: 8, md: 8 }}
       minH="100vh">
-      {/* Enhanced Trial Status Banner */}
-      <TrialStatusBanner />
+      {/* TrialStatusBanner was mounted here until 2026-11-04 and is deleted. Trazo sells no trial
+          (Starter is free forever) and its checkout never asks Stripe for one, so the banner was
+          dormant, but ARMED: the first subscription Stripe reported as "trialing" would have read
+          "Free Trial Active" on a PAID plan, then "Trial Expired · Upgrade now" to a paying farm.
+          The backend keeps its two trial tasks unscheduled on purpose (backend/scheduled_work.py,
+          DELIBERATELY_UNSCHEDULED_AND_WHY); this is the frontend matching that: nothing renders a
+          trial until a trial is actually sold and its copy is written for it. A trialing
+          subscription is still REPORTED, factually, on the Subscription page. */}
 
       {/* 🚀 2025 Best Practice: Welcome Banner for New Company Joiners */}
       {welcomeBannerVisible && (
