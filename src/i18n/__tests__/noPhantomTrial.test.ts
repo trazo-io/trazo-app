@@ -49,9 +49,16 @@ const isRendered = (key: string) =>
   ALL_SOURCE.includes(`\`${key}\``);
 
 /** The claim, in both languages. Not the word "trial" alone — a legacy `trialing` subscription
- *  may still be DESCRIBED, which is reporting, not selling. */
+ *  may still be DESCRIBED, which is reporting, not selling ("Trial ends on {date}" on the
+ *  Subscription page stays legal).
+ *
+ *  `free trial` / `prueba gratuita` / `prueba gratis` with NO number added 2026-11-04. The
+ *  pattern only knew the counted forms ("14-day free trial"), so the dashboard's TrialStatusBanner
+ *  rendered "Free Trial Active" and "Prueba gratis activa" past this guard for as long as it was
+ *  mounted. A free trial is the claim whether or not it names a length, and Spanish says it two
+ *  ways: matching only "gratuita" would have let the Spanish banner through again. */
 const OFFERS_A_TRIAL =
-  /(\d+[- ]day free trial|free \d+[- ]day trial|start (your )?free trial|prueba gratuita de \d+ d[ií]as|\d+ d[ií]as de prueba|iniciar prueba gratuita)/i;
+  /(free trial|free \d+[- ]day trial|prueba gratuita|prueba gratis|\d+ d[ií]as de prueba)/i;
 
 describe('no phantom trial in live copy', () => {
   it('finds source to scan (guards the guard)', () => {
