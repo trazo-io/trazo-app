@@ -34,15 +34,33 @@ const walk = (path: string, out: string[] = []): string[] => {
 const CONSUMER_SOURCE = CONSUMER_PATHS.flatMap((p) => walk(p))
   .map((f) => readFileSync(f, 'utf8'))
   .join('\n');
-const CARD = readFileSync(join(SRC, 'components/Events/ConsumerEventCard.tsx'), 'utf8');
-const CARD_CODE = CARD.replace(/\/\*[\s\S]*?\*\//g, '')
-  .replace(/\{\/\*[\s\S]*?\*\/\}/g, '')
-  .replace(/\/\/.*$/gm, '');
+const stripComments = (code: string) =>
+  code
+    .replace(/\{\/\*[\s\S]*?\*\/\}/g, '')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\/\/.*$/gm, '');
+const CARD_CODE = stripComments(
+  readFileSync(join(SRC, 'components/Events/ConsumerEventCard.tsx'), 'utf8')
+);
+// Every non-test source file, so a verbatim restoration of the deleted helper is caught
+// wherever it lands (it lived in utils/eventDescriptions.ts, outside the consumer paths).
+const ALL_SOURCE = walk(SRC)
+  .map((f) => stripComments(readFileSync(f, 'utf8')))
+  .join('\n');
+
+// The electricity chip, from where it reads the source to the end of its render block.
+const ELECTRICITY_BLOCK = (() => {
+  const start = CARD_CODE.indexOf('const elecSrc');
+  const end = CARD_CODE.indexOf('})()}', start);
+  return start === -1 || end === -1 ? '' : CARD_CODE.slice(start, end);
+})();
 
 describe('consumer chips need a basis', () => {
   it('reads the consumer surface (guards the guard)', () => {
     expect(CONSUMER_SOURCE.length).toBeGreaterThan(50_000);
-    expect(CARD_CODE).toContain('ELECTRICITY_SOURCE_KEYS');
+    expect(ALL_SOURCE.length).toBeGreaterThan(CONSUMER_SOURCE.length);
+    expect(ELECTRICITY_BLOCK).toContain('ELECTRICITY_SOURCE_KEYS[elecSrc]');
+    expect(ELECTRICITY_BLOCK).toMatch(/<Badge/);
   });
 
   it('renders neither unbasised trust indicator to a shopper', () => {
@@ -50,19 +68,28 @@ describe('consumer chips need a basis', () => {
       'consumer.eventCard.trust.usdaStandards',
       'consumer.eventCard.trust.modernFarming'
     ]) {
-      expect(
-        CONSUMER_SOURCE.includes(`'${key}'`) || CONSUMER_SOURCE.includes(`"${key}"`),
-        key
-      ).toBe(false);
+      expect(ALL_SOURCE.includes(`'${key}'`) || ALL_SOURCE.includes(`"${key}"`), key).toBe(false);
     }
-    expect(CARD_CODE).not.toMatch(/getEventTrustIndicators/);
-    // The carbon flag is not a farming-practice fact; no consumer chip may key on it.
-    expect(CARD_CODE).not.toMatch(/usda_factors_used\s*\)/);
+    expect(ALL_SOURCE).not.toMatch(/getEventTrustIndicators/);
+    // The carbon flag is not a farming-practice fact. The card may carry it in its props type
+    // (the journey still passes it through) but must never READ it: any use beyond the type
+    // field, in a condition, a ternary or `&&`, is a chip keyed on it.
+    const reads = CARD_CODE.replace(/usda_factors_used\?\s*:\s*boolean\s*;/g, '');
+    expect(reads).not.toMatch(/usda_factors_used/);
   });
 
-  it('never colours the electricity source by which source it is', () => {
-    expect(CARD_CODE).not.toMatch(/['"]solar['"]\s*\|\|/);
-    expect(CARD_CODE).not.toMatch(/colorScheme=\{\s*isSustainable/);
-    expect(CARD_CODE).not.toMatch(/FaWind/);
+  it('never colours or decorates the electricity source by which source it is', () => {
+    // One chip, neutral, whatever the source.
+    expect(ELECTRICITY_BLOCK.match(/<Badge\b/g)).toHaveLength(1);
+    expect(ELECTRICITY_BLOCK).toMatch(/<Badge\s+variant="neutral"/);
+    // No colour prop at all, computed or literal: neutral is the only paint.
+    expect(ELECTRICITY_BLOCK).not.toMatch(/\b(colorScheme|bg|bgColor|background|color)=/);
+    // The icon is fixed, never picked per source.
+    for (const m of ELECTRICITY_BLOCK.matchAll(/\bas=\{([^}]*)\}/g)) {
+      expect(m[1].trim(), 'icon must be a single static component').toMatch(/^\w+$/);
+    }
+    // The source is used to LABEL the chip (key lookup / raw fallback), never to branch on.
+    expect(ELECTRICITY_BLOCK).not.toMatch(/elecSrc\s*[!=]==?|[!=]==?\s*elecSrc/);
+    expect(ELECTRICITY_BLOCK).not.toMatch(/\.includes\(\s*elecSrc|switch\s*\(\s*elecSrc/);
   });
 });
