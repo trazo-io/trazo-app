@@ -18,7 +18,7 @@
  * a default; the operator picks one. Same rule as the § 11 registry next door.
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Badge, Box, Flex, Stack, Text, useColorModeValue, useToast } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
 
@@ -67,10 +67,15 @@ const MaterialRowEditor: React.FC<{
   const saveEvidence = (field: 'agent_review_date' | 'agent_review_reference', value: string) => {
     const body: Record<string, string> = { [field]: value };
     if (pendingReview) body.agent_review = pendingReview;
-    save(row, body).then((ok) => {
-      if (ok) setPendingReview(null);
-    });
+    save(row, body);
   };
+
+  // Released only once the refetched row carries the decision. Clearing it when the mutation
+  // resolves would show the stale row for a moment: the select snaps back and the date and
+  // reference inputs unmount while the grower is still typing.
+  useEffect(() => {
+    if (pendingReview && row.agent_review === pendingReview) setPendingReview(null);
+  }, [row.agent_review, pendingReview]);
 
   return (
     <Box borderWidth="1px" borderColor={borderColor} borderRadius="md" px={3} py={2}>

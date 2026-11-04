@@ -192,6 +192,50 @@ describe('OSP Materials List editor', () => {
       agent_review_reference: 'CCOF OSP Materials List',
       agent_review: 'approved'
     });
+    // The save has resolved but the list has not refetched yet: the decision and its inputs stay
+    // on screen rather than snapping back to the stored row while the grower is still typing.
+    expect(screen.getByLabelText("Your certifying agent's review of Serenade ASO")).toHaveValue(
+      'approved'
+    );
+    expect(
+      screen.getByLabelText("The agent's list or letter for Serenade ASO")
+    ).toBeInTheDocument();
+  });
+
+  it('lets go of a held approval once the refetched row carries it', async () => {
+    const { rerender } = renderPanel();
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText("Your certifying agent's review of Serenade ASO"), {
+        target: { value: 'approved' }
+      });
+    });
+    const serenade = MATERIALS[0];
+    const stored = { ...serenade };
+    Object.assign(serenade, {
+      agent_review: 'approved',
+      agent_review_reference: 'CCOF OSP Materials List',
+      agent_review_statement:
+        "on CCOF's approved materials list (CCOF OSP Materials List), as recorded by the operator"
+    });
+    try {
+      await act(async () => {
+        rerender(
+          <ChakraProvider>
+            <IntlProvider locale="en-US" messages={enUS as Record<string, string>}>
+              <OSPMaterialsListPanel companyId="7" farmId="3" osp={{ id: '11', status: 'draft' }} />
+            </IntlProvider>
+          </ChakraProvider>
+        );
+      });
+      expect(screen.queryByTestId('materials-review-needs-evidence')).not.toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "Your packet prints: on CCOF's approved materials list (CCOF OSP Materials List), as recorded by the operator."
+        )
+      ).toBeInTheDocument();
+    } finally {
+      Object.assign(serenade, stored);
+    }
   });
 
   it('records a request for review at once, and shows what the packet prints', async () => {
