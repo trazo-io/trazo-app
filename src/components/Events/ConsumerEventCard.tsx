@@ -22,7 +22,6 @@ import {
 import {
   FaLeaf,
   FaInfoCircle,
-  FaCheckCircle,
   FaChevronDown,
   FaChevronUp,
   FaSeedling,
@@ -33,7 +32,7 @@ import {
   FaCamera,
   FaThermometerHalf,
   FaTint,
-  FaWind,
+  FaBolt,
   FaFlask,
   FaTractor,
   FaSeedling as FaSeed,
@@ -49,8 +48,7 @@ import { MdEco } from 'react-icons/md';
 import {
   getConsumerEventDescription,
   localizeConsumerDescription,
-  formatEventDate,
-  getEventTrustIndicators
+  formatEventDate
 } from 'utils/eventDescriptions';
 import {
   localizeFieldValue,
@@ -552,7 +550,6 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
     intl.locale
   );
 
-  const trustIndicators = getEventTrustIndicators(event);
   const formattedDate = formatEventDate(event.date);
 
   // Sprint 4: Format date range for aggregate/summary events
@@ -1149,52 +1146,37 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
               )}
             </VStack>
 
-            {/* Enhanced Trust & Verification Indicators */}
+            {/* "Trust indicators" REMOVED 2026-11-04. Two chips, neither with a basis:
+                - "USDA Standards", a blue check, keyed on `usda_factors_used`: a CARBON flag
+                  meaning the emission maths used USDA/EPA factors (and hardcoded True for every
+                  production event in carbon/views.py). On a farming activity it read as "this
+                  practice meets a USDA standard". compliance.md bans both readings ("USDA
+                  Verified", a blanket "EPA/USDA-sourced"). The flag never reached the public
+                  payload at the top level, so the chip was dormant, but armed: one payload change
+                  away from printing.
+                - "Modern Farming", awarded when the EQUIPMENT NAME the farmer typed contained
+                  "modern", "precision" or "professional". A name is not a basis (the reason the
+                  "Natural Methods" chip went in Run 8b, 8b-06); it is an adjective awarded to the
+                  farm (noConsumerVirtueLabel's class, in a form that guard could not read).
+                Guard: consumerChipsNeedABasis.test.ts. */}
             <VStack spacing={2} mb={3} align="stretch">
-              {/* Primary trust indicators */}
-              {trustIndicators.length > 0 && (
-                <HStack spacing={2} flexWrap="wrap">
-                  {/* getEventTrustIndicators returns i18n KEYS, not display text. */}
-                  {trustIndicators.map((indicatorKey) => (
-                    <Badge
-                      key={indicatorKey}
-                      variant="subtle"
-                      colorScheme="blue"
-                      fontSize="xs"
-                      px={2}
-                      py={1}>
-                      <HStack spacing={1}>
-                        <Icon as={FaCheckCircle} aria-hidden="true" boxSize={3} />
-                        <Text>{intl.formatMessage({ id: indicatorKey })}</Text>
-                      </HStack>
-                    </Badge>
-                  ))}
-                </HStack>
-              )}
-              {/* Phase 3: Electricity source trust badge for IR events — solar/wind shown as green trust indicator */}
+              {/* The electricity source is a FACT the farmer reported, so it stays, NEUTRAL.
+                  Solar and wind used to turn the chip green with a wind glyph, "shown as green
+                  trust indicator": a self-reported input painted as an environmental benefit
+                  (FTC 16 CFR 260.4, ECGT 2024/825). A self-created label can be a colour. */}
               {(() => {
                 const elecSrc =
                   event.electricity_source ?? (event as any).extra_data?.electricity_source;
                 if (!elecSrc) return null;
-                const isSustainable = elecSrc === 'solar' || elecSrc === 'wind';
                 const elecKey = ELECTRICITY_SOURCE_KEYS[elecSrc];
                 // Unknown source falls back to the raw value rather than blanking the
                 // badge — a new backend enum should degrade to something readable.
                 const elecLabel = elecKey ? intl.formatMessage({ id: elecKey }) : elecSrc;
                 return (
                   <HStack spacing={2}>
-                    <Badge
-                      variant="subtle"
-                      colorScheme={isSustainable ? 'green' : 'gray'}
-                      fontSize="xs"
-                      px={2}
-                      py={1}>
+                    <Badge variant="neutral" fontSize="xs" px={2} py={1}>
                       <HStack spacing={1}>
-                        <Icon
-                          as={isSustainable ? FaWind : FaCheckCircle}
-                          aria-hidden="true"
-                          boxSize={3}
-                        />
+                        <Icon as={FaBolt} aria-hidden="true" boxSize={3} />
                         <Text>{elecLabel}</Text>
                       </HStack>
                     </Badge>

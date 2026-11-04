@@ -3322,64 +3322,9 @@ export function getSustainabilityImpact(
   return 'low';
 }
 
-/**
- * Get trust indicators for an event, as **i18n keys**.
- *
- * Returns keys rather than display text: these badges render on the consumer QR page, which
- * is bilingual (en-US / es-419), and they previously returned raw English ("USDA Standards")
- * that appeared untranslated in the middle of a localized Spanish page. Resolve each key
- * with `intl.formatMessage` at the render site — this module is a pure helper with no hook
- * access. Keys must exist in BOTH locale files.
- */
-export function getEventTrustIndicators(event: any): string[] {
-  const indicators: string[] = [];
-
-  // Photo documented - handle both album and albums structures
-  let hasPhotos = false;
-
-  // Primary: Check event.album (singular) structure from backend
-  if (
-    event.album &&
-    event.album.images &&
-    Array.isArray(event.album.images) &&
-    event.album.images.length > 0
-  ) {
-    hasPhotos = true;
-  }
-  // Secondary: Check legacy event.albums (plural) structure
-  else if (event.albums && Array.isArray(event.albums) && event.albums.length > 0) {
-    hasPhotos = event.albums.some((album: any) => {
-      if (!album) return false;
-      // Case 1: Nested structure with images array
-      if (album.images && album.images.length > 0) return true;
-      // Case 2: Direct image properties
-      if (album.image_url || album.image) return true;
-      return false;
-    });
-  }
-
-  // USDA verified
-  if (event.usda_factors_used) {
-    indicators.push('consumer.eventCard.trust.usdaStandards');
-  }
-
-  // Modern farming practices (based on product types)
-  if (event.equipment) {
-    const equipment = event.equipment.toLowerCase();
-    if (
-      equipment.includes('professional') ||
-      equipment.includes('precision') ||
-      equipment.includes('modern')
-    ) {
-      indicators.push('consumer.eventCard.trust.modernFarming');
-    }
-    // Run 8b (8b-06): a "Natural Methods" chip was added here when the product or equipment
-    // NAME contained "organic", "natural" or "neem". A name is not a basis, so no chip is drawn
-    // from it. The input's standing is the input chip's job, which names its source.
-  }
-
-  return indicators;
-}
+// getEventTrustIndicators was deleted 2026-11-04: its two chips ("USDA Standards" from a carbon
+// flag, "Modern Farming" from equipment-name words) had no basis on a consumer surface. See the
+// note in ConsumerEventCard and consumerChipsNeedABasis.test.ts.
 
 /**
  * Get timeline event title matching consumer card naming conventions.
@@ -3593,6 +3538,5 @@ export default {
   getEventCategory,
   getImpactLevel,
   formatEventDate,
-  getSustainabilityImpact,
-  getEventTrustIndicators
+  getSustainabilityImpact
 };
