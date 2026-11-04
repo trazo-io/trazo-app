@@ -407,6 +407,15 @@ interface StandardCardProps {
    * caller was built against. Pass 0 when the card sits inside a VStack that
    * already owns the gap — stacking `mb={6}` inside a `spacing={8}` VStack is
    * how the farm profile ended up with 56px between every pair of cards.
+   *
+   * NEVER: flip this default to 0 without a full inventory (tried 2026-11-04, app #262,
+   * backed out). It is LOAD-BEARING for every StandardCard placed directly inside
+   * StandardPage, which stacks its children with no gap of its own: those cards get their
+   * separation from this margin alone. A before/after gap measurement over 26 pages x 2
+   * widths (375 card positions) passed clean and still missed states it never reached (the
+   * traceback page with a result, TraceChain, the AllScans filters card); the review found
+   * them. Fix a doubled gap at its call site with `mb={0}` (OSPModuleListPage), or give
+   * StandardPage its own rhythm first and THEN remove this default.
    */
   mb?: number | string | object;
   /**

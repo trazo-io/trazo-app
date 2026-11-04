@@ -118,7 +118,10 @@ const ModuleCard = ({
   const blankAsked = row?.agent_asks_blank?.length ?? 0;
 
   return (
-    <StandardCard data-testid={`osp-module-${definition.key}`}>
+    // mb={0}: these cards sit in a SimpleGrid with spacing={4}, and StandardCard's default 24px
+    // bottom margin stacked on the grid's row gap: 40px between rows against 16px between
+    // columns (measured 2026-11-04). The grid owns the gap.
+    <StandardCard mb={0} data-testid={`osp-module-${definition.key}`}>
       <Flex direction="column" gap={3} h="full">
         {/* Label follows the button below it. "Start here" over a button reading "Review" is two
             instructions for one click. */}
