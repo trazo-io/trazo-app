@@ -9473,6 +9473,7 @@
   "osp.agentSheet.detail.acreage_removed": "Si hay acres que dejan la producción orgánica, incluye un mapa con los nuevos límites y por qué se retiraron (se transfirieron a otro productor, pasaron a convencional).",
   "osp.agentSheet.titleForms": "Los formularios de renovación de {agent}: qué copiar",
   "osp.agentSheet.introForms": "Completas estos formularios tú mismo y los presentas al agente: {forms}. Formulario por formulario: lo que Trazo tiene para que copies y lo que solo tú puedes responder. Nada de esto se presenta por ti.",
+  "osp.agentSheet.formSentByAgent": "{form} (una copia publicada anterior; completa la que te mandó el agente)",
   "equipment.title": "Equipo que tiene contacto con cultivos orgánicos",
   "equipment.subtitle": "Cada equipo que lista la tabla de equipo de tu plan: para qué se usa, si es exclusivo para la producción orgánica, y si es propio, rentado, prestado o contratado. Para lo que se comparte con trabajo no orgánico o viene de fuera, también cómo se limpia antes del uso orgánico y si se enjuaga. CCOF, OTCO y WSDA piden esta tabla.",
   "equipment.add": "Agregar equipo",

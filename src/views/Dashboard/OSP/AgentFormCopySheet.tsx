@@ -1211,7 +1211,19 @@ const AgentFormCopySheet: React.FC<Props> = ({ companyId, farmId, ospId }) => {
                 {forms.map((f, i) => (
                   <React.Fragment key={f.stem || f.title}>
                     {i ? ' · ' : ''}
-                    {ext(f.url, f.document_id || f.title)}
+                    {ext(
+                      f.url,
+                      f.sent_with_renewal
+                        ? intl.formatMessage(
+                            {
+                              id: 'osp.agentSheet.formSentByAgent',
+                              defaultMessage:
+                                '{form} (an earlier published copy; fill in the one the agent sent)'
+                            },
+                            { form: f.document_id || f.title }
+                          )
+                        : f.document_id || f.title
+                    )}
                   </React.Fragment>
                 ))}
               </>

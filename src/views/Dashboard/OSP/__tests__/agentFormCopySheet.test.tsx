@@ -544,7 +544,8 @@ describe('the agent-form copy sheet', () => {
         document_id: 'AGR 2521',
         revision: '',
         url: 'https://agr.wa.gov/',
-        stem: '2521-renewal-fee'
+        stem: '2521-renewal-fee',
+        sent_with_renewal: true
       },
       {
         title: 'Site Update Information',
@@ -596,6 +597,12 @@ describe('the agent-form copy sheet', () => {
     );
     // The fee form WSDA sends is not always the published edition: no revision is named for it.
     expect(screen.getByText(/AGR 2521; AGR 2516, R 01\/20/)).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', {
+        name: 'AGR 2521 (an earlier published copy; fill in the one the agent sent)'
+      })
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'AGR 2516' })).toBeInTheDocument();
   });
 
   it("speaks Spanish for WSDA's forms too", () => {

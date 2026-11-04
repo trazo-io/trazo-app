@@ -98,6 +98,8 @@ export interface AgentFormSheetForm {
   revision: string;
   url: string;
   stem?: string;
+  /** The agent sends its own copy with the renewal; the linked one is an earlier published edition. */
+  sent_with_renewal?: boolean;
 }
 
 export interface AgentFormSheet {

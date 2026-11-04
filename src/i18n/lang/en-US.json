@@ -9473,6 +9473,7 @@
   "osp.agentSheet.detail.acreage_removed": "If acreage leaves organic production, include a map of the new boundaries and why it was removed (transferred to another grower, converted to conventional).",
   "osp.agentSheet.titleForms": "{agent}'s renewal forms: what to copy",
   "osp.agentSheet.introForms": "You fill in these forms yourself and file them with the agent: {forms}. Form by form: what Trazo holds for you to copy, and what only you can answer. Nothing here is filed for you.",
+  "osp.agentSheet.formSentByAgent": "{form} (an earlier published copy; fill in the one the agent sent)",
   "equipment.title": "Equipment that contacts organic crops",
   "equipment.subtitle": "Each item your plan's equipment table lists: what it is used for, whether it is dedicated to organic production, and whether you own, rent, borrow or custom hire it. For anything shared with non-organic work or brought in, also how it is cleaned before organic use and whether it is rinsed. CCOF, OTCO and WSDA all ask for this table.",
   "equipment.add": "Add equipment",
