@@ -1031,9 +1031,7 @@ const OSPView: React.FC = () => {
           after the backend rejects the payload. (a)(2) gets an extra
           "registry gap" indicator when approved inputs aren't referenced
           in the narrative — matches the PDF's demotion logic. */}
-      {/* StandardPage stacks its children with no gap, so the cards on this page state their
-          own bottom margin (StandardCard's default became 0 on 2026-11-04). */}
-      <StandardCard mb={6}>
+      <StandardCard>
         {!isEditable && (
           <StandardAlert
             status="info"
@@ -1252,16 +1250,12 @@ const OSPView: React.FC = () => {
 
       {/* Approved inputs panel — drives the drift detector (Sprint 5.1). */}
       {companyId && farmId && (
-        <Box mb={6}>
-          <OSPApprovedInputsPanel companyId={companyId} farmId={farmId} osp={editableOsp} />
-        </Box>
+        <OSPApprovedInputsPanel companyId={companyId} farmId={farmId} osp={editableOsp} />
       )}
 
       {/* Notification of Changes panel — NOP 2615 §3.4 / 7 CFR 205.400(f). */}
       {companyId && farmId && (
-        <Box mb={6}>
-          <OSPChangeNotificationsPanel companyId={companyId} farmId={farmId} osp={editableOsp} />
-        </Box>
+        <OSPChangeNotificationsPanel companyId={companyId} farmId={farmId} osp={editableOsp} />
       )}
 
       {/* --- Secondary filings, BELOW the plan itself -------------------------
