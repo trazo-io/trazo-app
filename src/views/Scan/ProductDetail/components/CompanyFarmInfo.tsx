@@ -493,7 +493,7 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
                       defaultMessage: 'TYPE'
                     })}
                   </Text>
-                  <Badge colorScheme="green" borderRadius="full" px={3}>
+                  <Badge variant="neutral" borderRadius="full" px={3}>
                     {establishmentData.type}
                   </Badge>
                 </VStack>

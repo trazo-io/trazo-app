@@ -104,7 +104,7 @@ import {
   FaAward,
   FaGlobe,
   FaExternalLinkAlt,
-  FaCheckCircle,
+  FaQuoteLeft,
   FaTree,
   FaWater,
   FaRecycle,
@@ -195,7 +195,7 @@ export const FarmModal: React.FC<FarmModalProps> = ({ isOpen, onClose, establish
   const accentColor = useColorModeValue('green.700', 'green.300');
   const cardBg = useColorModeValue('gray.50', 'gray.700');
   const iconBg = useColorModeValue('green.50', 'green.900');
-  const messageBg = useColorModeValue('blue.50', 'blue.900');
+  const messageBg = useColorModeValue('gray.50', 'gray.700');
   const parcelItemBg = useColorModeValue('white', 'gray.800');
   const isMobile = useBreakpointValue({ base: true, md: false });
 
@@ -212,18 +212,10 @@ export const FarmModal: React.FC<FarmModalProps> = ({ isOpen, onClose, establish
     }
   };
 
-  const getFarmingMethodColor = (method: string) => {
-    switch (method?.toLowerCase()) {
-      case 'organic':
-        return 'green';
-      case 'conventional':
-        return 'blue';
-      case 'regenerative':
-        return 'purple';
-      default:
-        return 'gray';
-    }
-  };
+  // No colour map for farming method or farm type (2026-11-04). Organic was green,
+  // conventional blue, regenerative purple, and the farm TYPE was coloured through the same
+  // map. The words carry it; the one green that means "verified" lives in the certifications
+  // card, gated by the USDA Organic Integrity Database match.
 
   const headerContent = (
     <HStack spacing={4}>
@@ -241,8 +233,7 @@ export const FarmModal: React.FC<FarmModalProps> = ({ isOpen, onClose, establish
         <HStack spacing={2} flexWrap="wrap">
           {establishmentData.establishment_type && (
             <Badge
-              colorScheme={getFarmingMethodColor(establishmentData.establishment_type)}
-              variant="subtle"
+              variant="neutral"
               fontSize="xs"
               px={2}
               py={1}
@@ -253,8 +244,7 @@ export const FarmModal: React.FC<FarmModalProps> = ({ isOpen, onClose, establish
           )}
           {establishmentData.farming_method && (
             <Badge
-              colorScheme={getFarmingMethodColor(establishmentData.farming_method)}
-              variant="outline"
+              variant="neutral"
               fontSize="xs"
               px={2}
               py={1}
@@ -534,20 +524,21 @@ export const FarmModal: React.FC<FarmModalProps> = ({ isOpen, onClose, establish
         </Card>
       )}
 
-      {/* Consumer Message */}
+      {/* Consumer Message: the farm's own words, so a quote mark and neutral grey (2026-11-04).
+          It sat under a blue CHECK-circle, which reads as Trazo endorsing what the farm wrote. */}
       {establishmentData.custom_message && (
-        <Card bg={messageBg} borderRadius="lg" border="1px" borderColor="blue.200">
+        <Card bg={messageBg} borderRadius="lg" border="1px" borderColor="gray.200">
           <CardBody p={6}>
             <HStack mb={3}>
-              <Icon as={FaCheckCircle} color="blue.500" />
-              <Heading size="md" color="blue.700">
+              <Icon as={FaQuoteLeft} color="gray.500" />
+              <Heading size="md" color={textColor}>
                 {intl.formatMessage({
                   id: 'consumer.modal.messageToConsumers',
                   defaultMessage: 'Message to Consumers'
                 })}
               </Heading>
             </HStack>
-            <Text color="blue.600" lineHeight="tall" fontStyle="italic">
+            <Text color="gray.700" lineHeight="tall" fontStyle="italic">
               "{establishmentData.custom_message}"
             </Text>
           </CardBody>
@@ -582,7 +573,7 @@ export const FarmModal: React.FC<FarmModalProps> = ({ isOpen, onClose, establish
                   </Text>
                   <Wrap spacing={2}>
                     {establishmentData.water_sources.map((source, index) => (
-                      <Badge key={index} colorScheme="green" p={2} borderRadius="md">
+                      <Badge key={index} variant="neutral" p={2} borderRadius="md">
                         {localizeFieldValue(source, intl.locale)}
                       </Badge>
                     ))}
@@ -600,7 +591,7 @@ export const FarmModal: React.FC<FarmModalProps> = ({ isOpen, onClose, establish
                   </Text>
                   <Wrap spacing={2}>
                     {establishmentData.soil_health_practices.map((practice, index) => (
-                      <Badge key={index} colorScheme="orange" p={2} borderRadius="md">
+                      <Badge key={index} variant="neutral" p={2} borderRadius="md">
                         {localizeFieldValue(practice, intl.locale)}
                       </Badge>
                     ))}
@@ -618,7 +609,7 @@ export const FarmModal: React.FC<FarmModalProps> = ({ isOpen, onClose, establish
                   </Text>
                   <Wrap spacing={2}>
                     {establishmentData.irrigation_methods.map((method, index) => (
-                      <Badge key={index} colorScheme="blue" p={2} borderRadius="md">
+                      <Badge key={index} variant="neutral" p={2} borderRadius="md">
                         {localizeFieldValue(method, intl.locale)}
                       </Badge>
                     ))}
@@ -717,9 +708,7 @@ export const FarmModal: React.FC<FarmModalProps> = ({ isOpen, onClose, establish
                     <Text fontWeight="medium" color={textColor}>
                       {parcel.name}
                     </Text>
-                    <Badge colorScheme="green" variant="subtle">
-                      {parcel.area} ha
-                    </Badge>
+                    <Badge variant="neutral">{parcel.area} ha</Badge>
                   </HStack>
                 </Box>
               ))}
