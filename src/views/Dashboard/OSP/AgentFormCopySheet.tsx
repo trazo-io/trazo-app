@@ -307,7 +307,7 @@ const AgentFormCopySheet: React.FC<Props> = ({ companyId, farmId, ospId }) => {
             {
               id: 'osp.agentSheet.detail.renewal_date_value',
               defaultMessage:
-                '{agent} assigned your operation a {date} renewal date. The form and your fees are due before it, and it sets the 12 months of sales Step 6 asks for.'
+                '{agent} assigned your operation the renewal date {date}. The form and your fees are due before it, and it sets the 12 months of sales Step 6 asks for.'
             },
             { agent, date: monthDay(String(row.value)) }
           );
@@ -602,7 +602,7 @@ const AgentFormCopySheet: React.FC<Props> = ({ companyId, farmId, ospId }) => {
                 {
                   id: 'osp.agentSheet.detail.sales_set_published',
                   defaultMessage:
-                    "Set the sales period on your annual update above first. For a {date} renewal, {agent}'s fee schedule asks for sales from {start} to {end}."
+                    "Set the sales period on your annual update above first. For a renewal on {date}, {agent}'s fee schedule asks for sales from {start} to {end}."
                 },
                 {
                   agent,
@@ -629,7 +629,27 @@ const AgentFormCopySheet: React.FC<Props> = ({ companyId, farmId, ospId }) => {
             },
             { year: String(e.period_start).slice(0, 4) }
           );
-        const period = e.period_stated
+        // An April 1 renewal's period is the calendar year: the figure is given and named as the
+        // agent's months, not as a fallback (review of back #281).
+        const agentPeriod =
+          !e.period_stated && e.published_start
+            ? intl.formatMessage(
+                {
+                  id: 'osp.agentSheet.detail.sales_agent_period',
+                  defaultMessage:
+                    "{start} to {end}, the months {agent}'s fee schedule gives a renewal on {date}"
+                },
+                {
+                  start: date(e.published_start),
+                  end: date(e.published_end),
+                  agent,
+                  date: monthDay(String(e.renewal_date))
+                }
+              )
+            : '';
+        const period = agentPeriod
+          ? agentPeriod
+          : e.period_stated
           ? intl.formatMessage(
               { id: 'osp.agentSheet.detail.sales_period', defaultMessage: '{start} to {end}' },
               { start: date(e.period_start), end: date(e.period_end) }
@@ -683,7 +703,7 @@ const AgentFormCopySheet: React.FC<Props> = ({ companyId, farmId, ospId }) => {
               {
                 id: 'osp.agentSheet.detail.sales_period_published',
                 defaultMessage:
-                  "For a {date} renewal, {agent}'s fee schedule asks for {start} to {end}."
+                  "For a renewal on {date}, {agent}'s fee schedule asks for {start} to {end}."
               },
               {
                 agent,

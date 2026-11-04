@@ -308,7 +308,7 @@ describe('the agent-form copy sheet', () => {
     result = { data: { ...sheet, rows: [renewalRow('value', '01-01')] } };
     renderSheet();
     const row = screen.getByTestId('agent-sheet-renewal_deadline');
-    expect(row).toHaveTextContent('assigned your operation a January 1 renewal date');
+    expect(row).toHaveTextContent('assigned your operation the renewal date January 1');
     expect(within(row).getByRole('button', { name: 'Change' })).toBeInTheDocument();
   });
 
@@ -348,12 +348,45 @@ describe('the agent-form copy sheet', () => {
     };
     renderSheet();
     expect(screen.getByTestId('agent-sheet-gross_sales')).toHaveTextContent(
-      "For a January 1 renewal, Oregon Tilth Certified Organic (OTCO)'s fee schedule asks for sales from Oct 1, 2025 to Sep 30, 2026."
+      "For a renewal on January 1, Oregon Tilth Certified Organic (OTCO)'s fee schedule asks for sales from Oct 1, 2025 to Sep 30, 2026."
     );
     expect(screen.getByTestId('agent-sheet-gross_sales')).not.toHaveTextContent('$');
     expect(screen.getByTestId('agent-sheet-sales_period')).toHaveTextContent(
-      'For a January 1 renewal'
+      'For a renewal on January 1'
     );
+  });
+
+  it("names an April renewal's calendar-year figure as the agent's own months", () => {
+    result = {
+      data: {
+        ...sheet,
+        rows: [
+          {
+            step: '6',
+            item: 'gross_sales',
+            kind: 'value',
+            value: '700.00',
+            source: 'sales_records',
+            extra: {
+              period_start: '2025-01-01',
+              period_end: '2025-12-31',
+              period_stated: false,
+              n_sales: 1,
+              n_unpriced: 0,
+              published_start: '2025-01-01',
+              published_end: '2025-12-31',
+              renewal_date: '04-01'
+            }
+          }
+        ]
+      }
+    };
+    renderSheet();
+    const row = screen.getByTestId('agent-sheet-gross_sales');
+    expect(row).toHaveTextContent(
+      "$700.00 from 1 sale invoiced as organic, Jan 1, 2025 to Dec 31, 2025, the months Oregon Tilth Certified Organic (OTCO)'s fee schedule gives a renewal on April 1."
+    );
+    expect(row).not.toHaveTextContent('no sales period is set');
   });
 
   it('without a recorded date, says what each of the two dates asks for', () => {

@@ -9409,6 +9409,7 @@
   "osp.agentSheet.detail.sales_set_published": "Primero indica el periodo de ventas en tu actualización anual, arriba. Para una renovación del {date}, la tabla de tarifas de {agent} pide las ventas del {start} al {end}.",
   "osp.agentSheet.detail.sales_set_period": "Primero indica el periodo de ventas en tu actualización anual, arriba. {agent} pide un periodo propio de 12 meses: de octubre a septiembre para una renovación del 1 de enero, el año calendario para una del 1 de abril. Registra arriba tu fecha de renovación para ver el tuyo.",
   "osp.agentSheet.detail.sales_period_published": "Para una renovación del {date}, la tabla de tarifas de {agent} pide del {start} al {end}.",
+  "osp.agentSheet.detail.sales_agent_period": "del {start} al {end}, los meses que la tabla de tarifas de {agent} indica para una renovación del {date}",
   "equipment.title": "Equipo que tiene contacto con cultivos orgánicos",
   "equipment.subtitle": "Cada equipo que lista la tabla de equipo de tu plan: para qué se usa, si es exclusivo para la producción orgánica, y si es propio, rentado, prestado o contratado. Para lo que se comparte con trabajo no orgánico o viene de fuera, también cómo se limpia antes del uso orgánico y si se enjuaga. CCOF, OTCO y WSDA piden esta tabla.",
   "equipment.add": "Agregar equipo",
