@@ -2324,6 +2324,8 @@
   "certifierReadiness.noProduction": "Inicia una producción para ver qué te pedirá tu certificadora",
   "certifierReadiness.openRecord": "Abrir el registro",
   "certifierReadiness.openCountLabel": "{count, plural, one {pendiente} other {pendientes}}",
+  "certifierReadiness.countMissing": "{count, plural, one {# falta} other {# faltan}}",
+  "certifierReadiness.countNeedsAttention": "{count, plural, one {# requiere atención} other {# requieren atención}}",
   "certifierReadiness.operationScope": "Toda la operación",
   "certifierReadiness.seasonClear": "Las {checked} verificaciones de registros de esta temporada están cumplidas.",
   "certifierReadiness.seasonScope": "Esta temporada",

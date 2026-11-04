@@ -417,12 +417,23 @@ export default function CertifierReadinessCard({
     );
   }
 
-  const findings = data?.production ? data.findings || [] : [];
+  // MOST SERIOUS FIRST (2026-11-04). The server emits rows in CHECK order, so a "Missing" row
+  // could sit under a "Needs attention" one. Stable sort: within each status the server's order
+  // holds. Operation items already arrive blockers-then-warnings.
+  const findings = [...(data?.production ? data.findings || [] : [])].sort(
+    (a, b) => Number(b.status === 'FAIL') - Number(a.status === 'FAIL')
+  );
   const visible = findings.slice(0, MAX_VISIBLE_FINDINGS);
   const hidden = findings.length - visible.length;
 
   // ONE number, both scopes. Operation blockers used to be counted on a different page.
   const totalOpen = operationItems.length + findings.length;
+  // The same split the row badges use: an operation blocker gates the review link and a season
+  // FAIL is a missing record, so both count as "missing"; the rest "need attention".
+  const missingCount =
+    operationItems.filter((item) => item.status === 'blocker').length +
+    findings.filter((f) => f.status === 'FAIL').length;
+  const attentionCount = totalOpen - missingCount;
 
   // No season yet AND nothing outstanding at the operation level — the checks have nothing to
   // run against. Say so rather than implying a clean bill of health.
@@ -605,20 +616,58 @@ export default function CertifierReadinessCard({
             </VStack>
             {/* A bare 24px numeral next to "15 record checks" is a riddle: is it done, open, or a
                 grade? Label it. Right-aligned so the number still reads as the card's tally. */}
-            <VStack spacing={0} align="end" flexShrink={0}>
+            {/* The tally says HOW BAD, not just how many (2026-11-04): "1 missing" in red over
+                "1 needs attention" in orange, so the corner reads before any row does. The
+                number turns red when anything is missing. Zero keeps the plain label. */}
+            <VStack spacing={0} align="end" flexShrink={0} data-testid="readiness-tally">
               <Text
                 fontSize="2xl"
                 fontWeight="bold"
                 lineHeight="1.1"
-                color={totalOpen ? STATUS_URGENCY_TOKENS.warn.text : titleColor}>
+                color={
+                  missingCount
+                    ? STATUS_URGENCY_TOKENS.crit.text
+                    : totalOpen
+                    ? STATUS_URGENCY_TOKENS.warn.text
+                    : titleColor
+                }>
                 {totalOpen}
               </Text>
-              <Text fontSize="xs" color={mutedColor}>
-                {intl.formatMessage(
-                  { id: 'certifierReadiness.openCountLabel' },
-                  { count: totalOpen }
-                )}
-              </Text>
+              {totalOpen === 0 ? (
+                <Text fontSize="xs" color={mutedColor}>
+                  {intl.formatMessage(
+                    { id: 'certifierReadiness.openCountLabel' },
+                    { count: totalOpen }
+                  )}
+                </Text>
+              ) : (
+                <>
+                  {missingCount > 0 && (
+                    <Text
+                      fontSize="xs"
+                      fontWeight="semibold"
+                      color={STATUS_URGENCY_TOKENS.crit.text}
+                      whiteSpace="nowrap">
+                      {intl.formatMessage(
+                        { id: 'certifierReadiness.countMissing' },
+                        { count: missingCount }
+                      )}
+                    </Text>
+                  )}
+                  {attentionCount > 0 && (
+                    <Text
+                      fontSize="xs"
+                      fontWeight="semibold"
+                      color={STATUS_URGENCY_TOKENS.warn.text}
+                      whiteSpace="nowrap">
+                      {intl.formatMessage(
+                        { id: 'certifierReadiness.countNeedsAttention' },
+                        { count: attentionCount }
+                      )}
+                    </Text>
+                  )}
+                </>
+              )}
             </VStack>
           </HStack>
 
