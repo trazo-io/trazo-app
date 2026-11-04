@@ -18,8 +18,11 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import enUS from '../../../i18n/lang/en-US.json';
 import esES from '../../../i18n/lang/es-419.json';
 import DriftFindingsBanner from '../DriftFindingsBanner';
+import type { DriftWarning } from 'types/standardizedEvents';
 
-const finding = (possibleMatches: string[]) => ({
+const finding = (
+  possibleMatches: string[]
+): { id: number; date: string; drift_warning: DriftWarning } => ({
   id: 71,
   date: '2026-03-01T08:00:00Z',
   drift_warning: {

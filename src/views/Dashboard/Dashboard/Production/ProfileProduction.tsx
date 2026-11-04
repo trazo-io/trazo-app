@@ -39,6 +39,7 @@ import {
   FaMapMarkerAlt,
   FaChartLine,
   FaEye,
+  FaEyeSlash,
   FaLink,
   FaTag,
   FaEllipsisV,
@@ -59,7 +60,7 @@ import {
   StandardPageLoading,
   StandardSection
 } from 'components/Design/StandardComponents';
-import { InfoRow, PageHeaderMeta } from 'components/Design/ProfileField';
+import { FieldList, InfoRow, PageHeaderMeta } from 'components/Design/ProfileField';
 import { CorrectRecordModal } from 'components/Modals/CorrectRecordModal';
 import { ActivityDetailModal } from 'views/Dashboard/Activities/ActivityDetailModal';
 import type { ActivityRow } from 'store/api/activityFeedApi';
@@ -542,9 +543,13 @@ function ProfileProduction() {
    * Those two are why this disclosure earns its space: a farmer can see at a glance that
    * their revenue and their own contact details do NOT travel with the QR code.
    */
-  const publicLabel = intl.formatMessage({
-    id: 'farm.details.publicMarker',
-    defaultMessage: 'Shoppers see this when they scan a QR code from this farm'
+  const onPublicPageLabel = intl.formatMessage({
+    id: 'production.details.onPublicPage',
+    defaultMessage: 'On the lot\u2019s public page'
+  });
+  const offPublicPageLabel = intl.formatMessage({
+    id: 'production.details.offPublicPage',
+    defaultMessage: 'Not on the public page'
   });
 
   const timelineEvents = getUnifiedTimelineEvents();
@@ -774,6 +779,11 @@ function ProfileProduction() {
           )}
         </Box>
 
+        {/* SPACING (2026-11-04): every card on this page passes `mb={0}`. StandardCard defaults to
+            a 24px bottom margin, and each card here already sits in a stack or grid that sets
+            its own gap, so the margin stacked on top of the gap: the last card in a grid pushed
+            24px of dead space under its block, and the drift notice measured 40px above and
+            16px below. The page VStack owns the rhythm between blocks; nothing else adds to it. */}
         {/* Photo Gallery Section */}
         {historyData?.images && historyData.images.length > 0 && (
           <StandardCard
@@ -781,6 +791,7 @@ function ProfileProduction() {
               id: 'production.section.photoGallery',
               defaultMessage: 'Photo Gallery'
             })}
+            mb={0}
             variant="elevated"
             padding={{ base: 0, md: 4 }}>
             <StandardImageGallery
@@ -818,6 +829,7 @@ function ProfileProduction() {
                   id: 'production.cover.title',
                   defaultMessage: 'Cover Photo'
                 })}
+                mb={0}
                 variant="elevated"
                 padding={{ base: 0, md: 4 }}>
                 <VStack align="stretch" spacing={4}>
@@ -924,6 +936,7 @@ function ProfileProduction() {
                   id: 'production.section.qrAccess',
                   defaultMessage: 'QR Code & Consumer Access'
                 })}
+                mb={0}
                 variant="elevated"
                 padding={{ base: 0, md: 4 }}>
                 <VStack spacing={{ base: 3, md: 5 }} align="center">
@@ -1119,35 +1132,35 @@ function ProfileProduction() {
             w="100%"
             alignItems="start">
             <VStack align="stretch" spacing={{ base: 4, md: 6 }}>
-              {/* Production Details Section */}
+              {/* SEASON card (2026-11-04). Was titled "Production Details" directly under the
+                  "Production record" section heading: the same words twice, in two casings.
+                  "Season" names what the rows describe and sits beside "Location" and
+                  "Recorded by" as a peer. */}
               <StandardCard
                 title={intl.formatMessage({
-                  id: 'production.section.details',
-                  defaultMessage: 'Production Details'
+                  id: 'production.section.season',
+                  defaultMessage: 'Season'
                 })}
+                mb={0}
                 variant="elevated"
                 padding={{ base: 0, md: 4 }}>
-                <VStack align="stretch" gap={4}>
-                  <Text fontSize="xs" color="gray.500" lineHeight="1.7">
-                    <Icon as={FaEye} boxSize={3} color="gray.400" mr={2} verticalAlign="-1px" />
-                    {intl.formatMessage({
-                      id: 'production.details.publicLegend',
-                      defaultMessage:
-                        'Marked fields appear on this lot\u2019s public page when a shopper scans its QR code. Revenue and operator details stay private.'
-                    })}
-                  </Text>
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 3, md: 6 }}>
+                {/* Visibility is said ONCE per list, not with an eye on every row: every row in
+                    the first list is public, so five markers carried no information, and the
+                    legend paragraph that explained the markers goes with them. Revenue is the
+                    one field kept off the public page and gets its own list below. */}
+                <VStack align="stretch" gap={5}>
+                  <FieldList caption={onPublicPageLabel} captionIcon={FaEye}>
                     <InfoRow
+                      layout="inline"
                       icon={FaSeedling}
                       label={intl.formatMessage({
                         id: 'production.field.product',
                         defaultMessage: 'Product'
                       })}
                       value={historyData?.product?.name}
-                      isPublic
-                      publicLabel={publicLabel}
                     />
                     <InfoRow
+                      layout="inline"
                       icon={FaTractor}
                       label={intl.formatMessage({
                         id: 'production.field.type',
@@ -1155,45 +1168,48 @@ function ProfileProduction() {
                       })}
                       value={
                         historyData?.type === 'OR'
-                          ? 'Orchard'
+                          ? intl.formatMessage({
+                              id: 'production.type.orchard',
+                              defaultMessage: 'Orchard'
+                            })
                           : historyData?.type === 'GA'
-                          ? 'Garden'
+                          ? intl.formatMessage({
+                              id: 'production.type.garden',
+                              defaultMessage: 'Garden'
+                            })
                           : historyData?.type
                           ? historyData.type
                           : intl.formatMessage({ id: 'production.agriculturalProduction' })
                       }
-                      isPublic
-                      publicLabel={publicLabel}
                     />
                     <InfoRow
+                      layout="inline"
                       icon={FaCalendarAlt}
                       label={intl.formatMessage({
                         id: 'production.field.startDate',
-                        defaultMessage: 'Start Date'
+                        defaultMessage: 'Start date'
                       })}
                       value={formatDate(historyData?.start_date)}
-                      isPublic
-                      publicLabel={publicLabel}
                     />
                     <InfoRow
+                      layout="inline"
                       icon={FaCalendarAlt}
                       label={intl.formatMessage({
                         id: 'production.field.endDate',
-                        defaultMessage: 'End Date'
+                        defaultMessage: 'End date'
                       })}
                       value={
                         historyData?.finish_date
                           ? formatDate(historyData.finish_date)
                           : intl.formatMessage({
                               id: 'production.status.inProgress',
-                              defaultMessage: 'In Progress'
+                              defaultMessage: 'In progress'
                             })
                       }
-                      isPublic
-                      publicLabel={publicLabel}
                     />
                     {historyData?.start_date && historyData?.finish_date && (
                       <InfoRow
+                        layout="inline"
                         icon={FaCalendarAlt}
                         label={intl.formatMessage({
                           id: 'production.field.duration',
@@ -1209,52 +1225,25 @@ function ProfileProduction() {
                             )
                           }
                         )}
-                        isPublic
-                        publicLabel={publicLabel}
                       />
                     )}
                     {/* `amount && <Row/>` printed a bare "0" under End Date on every open season
                         whose amount is the number 0: React renders a falsy number. Test the value. */}
                     {Number(historyData?.production_amount) > 0 && (
                       <InfoRow
+                        layout="inline"
                         icon={FaClipboardList}
                         label={intl.formatMessage({
                           id: 'production.field.amount',
-                          defaultMessage: 'Production Amount'
+                          defaultMessage: 'Production amount'
                         })}
                         value={`${intl.formatNumber(Number(historyData.production_amount))} ${
                           historyData.production_unit || 'units'
                         }`}
-                        isPublic
-                        publicLabel={publicLabel}
-                      />
-                    )}
-                    {/* 🔴 F7 (2026-08-21) — the lot header is FROZEN once a season is
-                        finished, and until now that was the end of it: the API answers 423
-                        and there was no amendment path, so a farmer who finished with the
-                        wrong yield had no way to fix it and no way to explain it. The events
-                        underneath this header have had a correction sheet all along. */}
-                    {historyData?.finish_date && canWrite && (
-                      <StandardButton
-                        variant="ghost"
-                        size="sm"
-                        alignSelf="flex-start"
-                        leftIcon={<Icon as={FaExchangeAlt} />}
-                        onClick={() => setIsCorrectingHeader(true)}>
-                        {intl.formatMessage({ id: 'correct.season.action' })}
-                      </StandardButton>
-                    )}
-                    {Number(historyData?.earning) > 0 && (
-                      <InfoRow
-                        icon={FaChartLine}
-                        label={intl.formatMessage({
-                          id: 'production.field.revenue',
-                          defaultMessage: 'Revenue'
-                        })}
-                        value={`$${historyData.earning.toLocaleString()}`}
                       />
                     )}
                     <InfoRow
+                      layout="inline"
                       icon={FaLeaf}
                       label={intl.formatMessage({ id: 'production.environment' })}
                       value={
@@ -1262,10 +1251,36 @@ function ProfileProduction() {
                           ? intl.formatMessage({ id: 'production.outdoor' })
                           : intl.formatMessage({ id: 'production.indoor' })
                       }
-                      isPublic
-                      publicLabel={publicLabel}
                     />
-                  </SimpleGrid>
+                  </FieldList>
+                  {/* 🔴 F7 (2026-08-21) — the lot header is FROZEN once a season is
+                        finished, and until now that was the end of it: the API answers 423
+                        and there was no amendment path, so a farmer who finished with the
+                        wrong yield had no way to fix it and no way to explain it. The events
+                        underneath this header have had a correction sheet all along. */}
+                  {historyData?.finish_date && canWrite && (
+                    <StandardButton
+                      variant="ghost"
+                      size="sm"
+                      alignSelf="flex-start"
+                      leftIcon={<Icon as={FaExchangeAlt} />}
+                      onClick={() => setIsCorrectingHeader(true)}>
+                      {intl.formatMessage({ id: 'correct.season.action' })}
+                    </StandardButton>
+                  )}
+                  {Number(historyData?.earning) > 0 && (
+                    <FieldList caption={offPublicPageLabel} captionIcon={FaEyeSlash}>
+                      <InfoRow
+                        layout="inline"
+                        icon={FaChartLine}
+                        label={intl.formatMessage({
+                          id: 'production.field.revenue',
+                          defaultMessage: 'Revenue'
+                        })}
+                        value={`$${historyData.earning.toLocaleString()}`}
+                      />
+                    </FieldList>
+                  )}
                 </VStack>
               </StandardCard>
 
@@ -1277,33 +1292,37 @@ function ProfileProduction() {
                 <StandardCard
                   title={intl.formatMessage({
                     id: 'production.section.agInfo',
-                    defaultMessage: 'Agricultural Information'
+                    defaultMessage: 'Agricultural information'
                   })}
+                  mb={0}
                   variant="elevated"
                   padding={{ base: 0, md: 4 }}>
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 3, md: 6 }}>
+                  <FieldList>
                     {historyData?.age_of_plants && (
                       <InfoRow
+                        layout="inline"
                         icon={FaSeedling}
                         label={intl.formatMessage({
                           id: 'production.field.plantAge',
-                          defaultMessage: 'Plant Age'
+                          defaultMessage: 'Plant age'
                         })}
                         value={historyData.age_of_plants}
                       />
                     )}
                     {historyData?.number_of_plants && (
                       <InfoRow
+                        layout="inline"
                         icon={FaSeedling}
                         label={intl.formatMessage({
                           id: 'production.field.plantCount',
-                          defaultMessage: 'Number of Plants'
+                          defaultMessage: 'Number of plants'
                         })}
                         value={historyData.number_of_plants.toLocaleString()}
                       />
                     )}
                     {historyData?.soil_ph && (
                       <InfoRow
+                        layout="inline"
                         icon={FaLeaf}
                         label={intl.formatMessage({
                           id: 'production.field.soilPh',
@@ -1314,15 +1333,16 @@ function ProfileProduction() {
                     )}
                     {historyData?.crop_type && (
                       <InfoRow
+                        layout="inline"
                         icon={FaSeedling}
                         label={intl.formatMessage({
                           id: 'production.field.cropType',
-                          defaultMessage: 'Crop Type'
+                          defaultMessage: 'Crop type'
                         })}
                         value={historyData.crop_type}
                       />
                     )}
-                  </SimpleGrid>
+                  </FieldList>
                 </StandardCard>
               )}
             </VStack>
@@ -1334,10 +1354,12 @@ function ProfileProduction() {
                   id: 'production.section.location',
                   defaultMessage: 'Location'
                 })}
+                mb={0}
                 variant="elevated"
                 padding={{ base: 0, md: 4 }}>
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 3, md: 6 }}>
+                <FieldList caption={onPublicPageLabel} captionIcon={FaEye}>
                   <InfoRow
+                    layout="inline"
                     icon={FaBuilding}
                     label={intl.formatMessage({
                       // Key stays `…establishment` (the model name); the LABEL is "Farm".
@@ -1348,10 +1370,9 @@ function ProfileProduction() {
                     })}
                     value={historyData?.parcel?.establishment?.name || 'Unknown'}
                     onClick={() => navigate(`/admin/dashboard/farm/${farmId}`)}
-                    isPublic
-                    publicLabel={publicLabel}
                   />
                   <InfoRow
+                    layout="inline"
                     icon={MdLocationOn}
                     label={intl.formatMessage({
                       id: 'production.field.parcel',
@@ -1359,22 +1380,19 @@ function ProfileProduction() {
                     })}
                     value={historyData?.parcel?.name || 'Unknown'}
                     onClick={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}
-                    isPublic
-                    publicLabel={publicLabel}
                   />
                   {historyData?.parcel?.establishment?.location && (
                     <InfoRow
+                      layout="inline"
                       icon={FaMapMarkerAlt}
                       label={intl.formatMessage({
                         id: 'production.field.address',
                         defaultMessage: 'Address'
                       })}
                       value={historyData.parcel.establishment.location}
-                      isPublic
-                      publicLabel={publicLabel}
                     />
                   )}
-                </SimpleGrid>
+                </FieldList>
               </StandardCard>
 
               {/* The 5-star "Reputation Score" was removed here 2026-08-07.
@@ -1393,6 +1411,7 @@ function ProfileProduction() {
                   id: 'production.section.recordedBy',
                   defaultMessage: 'Recorded by'
                 })}
+                mb={0}
                 variant="elevated"
                 padding={{ base: 0, md: 4 }}>
                 <VStack spacing={{ base: 3, md: 6 }} align="stretch">
@@ -1437,8 +1456,13 @@ function ProfileProduction() {
 
         {/* Season plan BEFORE the timeline: the plan is what to do next, the timeline is what
             happened. Same ordering as farm home (deadlines → readiness → records). Renders
-            nothing when the production was started without a crop template. */}
-        <VStack spacing={{ base: 4, md: 6 }} align="stretch" w="100%" mb={{ base: 4, md: 6 }}>
+            nothing when the production was started without a crop template.
+            The wrapper HIDES ITSELF when empty (2026-11-04). It was a VStack with its own
+            margin, and when the section rendered nothing the empty wrapper still took a page
+            gap, doubling the space between "Production record" and the next block. A
+            display:none child is not a flex item, so it takes no gap. The wrapper stays for
+            `w="full"`: the page stack centres its children and StandardCard sets no width. */}
+        <Box w="full" sx={{ '&:empty': { display: 'none' } }}>
           <SeasonPlanSection
             productionId={historyData?.public_id || productionId || ''}
             farmId={farmId}
@@ -1446,7 +1470,7 @@ function ProfileProduction() {
             canWrite={canWrite}
             isFinished={Boolean(historyData?.finish_date)}
           />
-        </VStack>
+        </Box>
 
         {/* Production Timeline Section */}
 
@@ -1459,7 +1483,7 @@ function ProfileProduction() {
             accepts records dated after the finish and refuses ones dated inside the sealed
             season, naming the correction path. `?production=` names THIS season. */}
         {canWrite && timelineEvents.length > 0 && (
-          <VStack align="flex-start" spacing={1} mb={3}>
+          <VStack align="flex-start" spacing={1} w="full">
             <StandardButton
               variant="outline"
               size="sm"

@@ -201,7 +201,10 @@ export const SeasonPlanSection: React.FC<SeasonPlanSectionProps> = ({
 
   return (
     <>
+      {/* mb={0}: the production page's stack sets the gap between blocks; StandardCard's
+          default 24px margin stacked on top of it (2026-11-04). */}
       <StandardCard
+        mb={0}
         title={intl.formatMessage({ id: 'seasonPlan.title' })}
         subtitle={intl.formatMessage({ id: 'seasonPlan.subtitle' })}
         titleIcon={<Icon as={FaClipboardList} />}

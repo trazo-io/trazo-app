@@ -33,9 +33,11 @@ export {
 export {
   InfoRow,
   FieldGroup,
+  FieldList,
   PageHeaderMeta,
   type InfoRowProps,
   type FieldGroupProps,
+  type FieldListProps,
   type PageHeaderMetaProps
 } from './ProfileField';
 

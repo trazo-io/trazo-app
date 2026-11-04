@@ -10,31 +10,23 @@
  * production page — NOT per-event badges on the consumer-facing timeline
  * cards, which would leak compliance noise to QR-code viewers.
  *
+ * 2026-11-04 layout: built on `StandardNotice` (it was a hand-rolled cream Box with an orange
+ * bar and a top-right toggle that squeezed the text on a phone).
+ * Collapsed it shows the title, the inputs by name and date, and the action that clears the
+ * finding. The explanation, the CFR cite and the per-finding reasons sit behind "Show details".
+ *
  * Props:
  *   events: array of any shape that may include { id, date, drift_warning }.
  *   cfrReference: overrides the displayed CFR cite (default: 7 CFR 205.400(f)(1)).
  */
 
-import React, { useMemo, useState } from 'react';
-import {
-  Alert,
-  AlertIcon,
-  Badge,
-  Box,
-  Button,
-  Collapse,
-  HStack,
-  Icon,
-  Link,
-  Stack,
-  Text,
-  useColorModeValue,
-  VStack
-} from '@chakra-ui/react';
-import { FaExclamationTriangle, FaExternalLinkAlt, FaInfoCircle } from 'react-icons/fa';
+import React, { useMemo } from 'react';
+import { Badge, Box, Flex, Icon, Link, Text, useColorModeValue, VStack } from '@chakra-ui/react';
+import { FaExternalLinkAlt } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 
+import { StandardButton, StandardNotice } from 'components/Design/StandardComponents';
 import type { DriftWarning } from 'types/standardizedEvents';
 
 interface EventLike {
@@ -60,14 +52,18 @@ const RESOLUTION_LABEL_KEY: Record<DriftWarning['resolved_via'], string> = {
   seed_treated_prohibited: 'drift.resolution.seed_treated_prohibited'
 };
 
-const RESOLUTION_COLOR_SCHEME: Record<DriftWarning['resolved_via'], string> = {
-  omri: 'yellow',
-  wsda: 'yellow',
-  national_list: 'yellow',
-  unresolved: 'red',
-  seed_certification_missing: 'orange',
-  seed_search_incomplete: 'orange',
-  seed_treated_prohibited: 'red'
+// How the input was matched is a FACT about the lookup, so the catalogue matches and the
+// no-match case read neutral: "unresolved" means unconfirmed, and unknown is not prohibited (it
+// was red). Urgency colour is kept for the seed findings that do carry it. These are the
+// theme's semantic Badge variants; the old `yellow`/`orange` colorSchemes are not Trazo palettes.
+const RESOLUTION_BADGE_VARIANT: Record<DriftWarning['resolved_via'], string> = {
+  omri: 'neutral',
+  wsda: 'neutral',
+  national_list: 'neutral',
+  unresolved: 'neutral',
+  seed_certification_missing: 'warning',
+  seed_search_incomplete: 'warning',
+  seed_treated_prohibited: 'danger'
 };
 
 const DriftFindingsBanner: React.FC<DriftFindingsBannerProps> = ({ events }) => {
@@ -129,28 +125,10 @@ const DriftFindingsBanner: React.FC<DriftFindingsBannerProps> = ({ events }) => 
     }
     return intl.formatMessage({ id }, params as Record<string, string>);
   };
-  const [open, setOpen] = useState(false);
 
-  // Use Chakra `yellow.*` tokens — matches the existing compliance-warning
-  // palette already used by the audit export "warning" style on the backend.
-  const warnBg = useColorModeValue('yellow.50', 'yellow.900');
-  const warnBorder = useColorModeValue('yellow.400', 'yellow.600');
-  const warnHeaderFg = useColorModeValue('yellow.800', 'yellow.100');
-  // ⛔ A PROVISIONAL set gets the NEUTRAL register, not the warning one.
-  //
-  // `.claude/rules/frontend.md`: status colour = meaning, never decoration. Warning means
-  // "something needs attention" about a filed plan. A first-renewal grower is WRITING their
-  // plan; every material they log before adding it to the draft is an ordinary step in that
-  // work, not a fault. Painting it amber tells the cohort least able to judge severity that
-  // they are failing, and the predictable response is to stop logging — which costs them the
-  // records the plan is made from. Gray, an info glyph, and copy that names the next action.
-  const neutralBg = useColorModeValue('gray.50', 'gray.700');
-  const neutralBorder = useColorModeValue('gray.500', 'gray.400');
-  const neutralHeaderFg = useColorModeValue('gray.800', 'gray.100');
-  const bodyFg = useColorModeValue('gray.700', 'gray.200');
-  const detailBg = useColorModeValue('white', 'gray.800');
-  const labelFg = useColorModeValue('gray.500', 'gray.400');
-  const reasonFg = useColorModeValue('gray.600', 'gray.300');
+  const labelFg = useColorModeValue('gray.600', 'gray.400');
+  const reasonFg = useColorModeValue('gray.700', 'gray.300');
+  const ruleColor = useColorModeValue('gray.100', 'gray.700');
 
   const findings = useMemo(() => {
     if (!Array.isArray(events)) return [] as EventLike[];
@@ -159,104 +137,108 @@ const DriftFindingsBanner: React.FC<DriftFindingsBannerProps> = ({ events }) => 
 
   if (findings.length === 0) return null;
 
-  const count = findings.length;
   // Only when EVERY finding is provisional. One filed-plan finding in the set means a real
   // § 205.400(f)(2) obligation is present, and the whole banner keeps the warning register —
   // softening it would bury the one that matters.
+  //
+  // ⛔ A PROVISIONAL set gets the INFO register, not the warning one. `.claude/rules/frontend.md`:
+  // status colour = meaning, never decoration. A first-renewal grower is WRITING their plan;
+  // every material they log before adding it to the draft is an ordinary step in that work, not
+  // a fault. Painting it amber tells the cohort least able to judge severity that they are
+  // failing, and the predictable response is to stop logging, which costs them the records the
+  // plan is made from.
   const allProvisional = findings.every((e) => e.drift_warning?.provisional === true);
-  const bg = allProvisional ? neutralBg : warnBg;
-  const border = allProvisional ? neutralBorder : warnBorder;
-  const headerFg = allProvisional ? neutralHeaderFg : warnHeaderFg;
+
+  // The event date, as the page prints every other date ("May 20, 2026"), not the raw ISO
+  // slice. UTC, because the stored value is a UTC instant and `slice(0, 10)` (what this used to
+  // print) is its UTC calendar day: a local-zone format would move a midnight record a day back.
+  const formatDay = (raw?: string) => {
+    if (!raw) return null;
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return raw.slice(0, 10);
+    return intl.formatDate(d, { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
+  };
+
+  // Collapsed, the banner names WHICH inputs (the thing the grower has to act on), not a
+  // paragraph about how name matching works. Grouped by input: the same jug logged on three
+  // days is ONE thing to confirm on the plan, and listing it three times read as three problems.
+  // The title counts the same unit, so "2 inputs" sits over two rows. Three rows is what fits a
+  // phone without pushing the record off screen; the details list every record.
+  const groups: Array<{ label: string; records: EventLike[] }> = [];
+  findings.forEach((event) => {
+    const label = (event.drift_warning as DriftWarning).input_label || '—';
+    const key = label.trim().toLowerCase();
+    const found = groups.find((g) => g.label.trim().toLowerCase() === key);
+    if (found) found.records.push(event);
+    else groups.push({ label, records: [event] });
+  });
+  const inputCount = groups.length;
+  const SUMMARY_LIMIT = 3;
+  const summary = groups.slice(0, SUMMARY_LIMIT);
+  const hiddenCount = inputCount - summary.length;
 
   return (
-    <Box
-      bg={bg}
-      borderTopWidth="1px"
-      borderRightWidth="1px"
-      borderBottomWidth="1px"
-      borderLeftWidth="4px"
-      borderColor={border}
-      borderRadius={{ base: 'xl', md: '2xl' }}
-      boxShadow="0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
-      p={{ base: 3, md: 4 }}
+    <StandardNotice
+      status={allProvisional ? 'info' : 'warning'}
+      title={intl.formatMessage(
+        { id: allProvisional ? 'drift.banner.provisional.title' : 'drift.banner.title' },
+        { count: inputCount }
+      )}
       mb={{ base: 4, md: 6 }}
-      w="full">
-      <HStack align="start" justify="space-between" spacing={3} flexWrap="wrap">
-        <HStack align="start" spacing={3} flex={1} minW={0}>
-          <Icon
-            as={allProvisional ? FaInfoCircle : FaExclamationTriangle}
-            color={border}
-            mt={1}
-            boxSize={5}
-          />
-          <VStack align="start" spacing={1} flex={1} minW={0}>
-            <Text fontWeight="bold" fontSize="sm" color={headerFg}>
-              {intl.formatMessage(
-                { id: allProvisional ? 'drift.banner.provisional.title' : 'drift.banner.title' },
-                { count }
-              )}
-            </Text>
-            <Text fontSize="xs" color={bodyFg}>
-              {intl.formatMessage({
-                id: allProvisional ? 'drift.banner.provisional.body' : 'drift.banner.body'
-              })}
-            </Text>
-          </VStack>
-        </HStack>
-        <Button
-          size="sm"
-          variant="outline"
-          colorScheme={allProvisional ? 'gray' : 'yellow'}
-          onClick={() => setOpen((v) => !v)}>
-          {intl.formatMessage({
-            id: open ? 'drift.banner.hide' : 'drift.banner.show'
-          })}
-        </Button>
-      </HStack>
-
-      <Collapse in={open} animateOpacity>
-        <VStack align="stretch" spacing={2} mt={4}>
+      showDetailsLabel={intl.formatMessage({ id: 'drift.banner.show' })}
+      hideDetailsLabel={intl.formatMessage({ id: 'drift.banner.hide' })}
+      action={
+        // The action that CLEARS the finding leads. It used to sit at the bottom of the
+        // expanded section as a small link, while the top-right button only toggled text.
+        !allProvisional && identityPanelHref ? (
+          <StandardButton
+            size="sm"
+            variant="primary"
+            as={RouterLink}
+            {...({ to: identityPanelHref } as Record<string, string>)}
+            data-testid="drift-confirm-identities-link">
+            {intl.formatMessage({ id: 'drift.banner.confirmLink' })}
+          </StandardButton>
+        ) : undefined
+      }
+      details={
+        /* ONE surface. The details used to nest a white card per finding inside the amber
+           box, then a blue info alert inside that, then yellow badges: four grounds and three
+           hues for one finding. Now the rows sit on the notice itself, split by a hairline. */
+        <VStack align="stretch" spacing={0} w="full">
+          <Text fontSize="sm" pb={3}>
+            {intl.formatMessage({
+              id: allProvisional ? 'drift.banner.provisional.body' : 'drift.banner.body'
+            })}
+          </Text>
           {findings.map((event, idx) => {
             const dw = event.drift_warning as DriftWarning;
             const resolutionKey = RESOLUTION_LABEL_KEY[dw.resolved_via];
+            const day = formatDay(event.date);
             return (
               <Box
                 key={event.id ?? idx}
-                p={3}
-                bg={detailBg}
-                borderWidth="1px"
-                borderColor={border}
-                borderRadius="md">
-                <Stack direction={{ base: 'column', md: 'row' }} spacing={3} align="start">
-                  <VStack align="start" spacing={0} minW="120px">
-                    <Text fontSize="xs" color={labelFg}>
-                      {intl.formatMessage({ id: 'drift.detail.date' })}
-                    </Text>
-                    <Text fontSize="sm" fontWeight="semibold">
-                      {event.date ? event.date.slice(0, 10) : '—'}
-                    </Text>
-                  </VStack>
-                  <VStack align="start" spacing={0} flex={1} minW={0}>
-                    <Text fontSize="xs" color={labelFg}>
-                      {intl.formatMessage({ id: 'drift.detail.input' })}
-                    </Text>
-                    <Text fontSize="sm" fontWeight="semibold" noOfLines={2}>
-                      {dw.input_label || '—'}
-                    </Text>
-                    <Text fontSize="xs" color={reasonFg} noOfLines={3} mt={1}>
-                      {localizedReason(dw)}
-                    </Text>
-                  </VStack>
-                  <VStack align="start" spacing={1}>
-                    <Text fontSize="xs" color={labelFg}>
-                      {intl.formatMessage({ id: 'drift.detail.resolution' })}
-                    </Text>
-                    <Badge
-                      colorScheme={RESOLUTION_COLOR_SCHEME[dw.resolved_via] ?? 'red'}
-                      fontSize="11px">
-                      {resolutionKey ? intl.formatMessage({ id: resolutionKey }) : dw.resolved_via}
-                    </Badge>
-                    {/* CA-only: CDFA OIM registration sub-finding.
+                py={3}
+                borderTopWidth="1px"
+                borderColor={ruleColor}
+                data-testid="drift-finding-row">
+                <Text fontSize="sm" fontWeight="semibold" noOfLines={2}>
+                  {dw.input_label || '—'}
+                </Text>
+                <Text fontSize="xs" color={labelFg}>
+                  {intl.formatMessage({ id: 'drift.detail.date' })}: {day ?? '—'}
+                </Text>
+                <Text fontSize="sm" color={reasonFg} mt={1}>
+                  {localizedReason(dw)}
+                </Text>
+                <Flex gap={2} wrap="wrap" align="center" mt={2}>
+                  <Text fontSize="xs" color={labelFg}>
+                    {intl.formatMessage({ id: 'drift.detail.resolution' })}
+                  </Text>
+                  <Badge variant={RESOLUTION_BADGE_VARIANT[dw.resolved_via] ?? 'neutral'}>
+                    {resolutionKey ? intl.formatMessage({ id: resolutionKey }) : dw.resolved_via}
+                  </Badge>
+                  {/* CA-only: CDFA OIM registration sub-finding.
 
                         No registration NUMBER is rendered (2026-09-06). CDFA's published
                         Registered OIM Products list has three columns — Firm, Product Name,
@@ -268,99 +250,112 @@ const DriftFindingsBanner: React.FC<DriftFindingsBannerProps> = ({ events }) => 
                         unregistered. Legacy findings written before this change carry the old
                         `missing` default and mean the same thing, so they render the same way —
                         neutral grey, because "we did not check" is a fact, not an error. */}
-                    {dw.cdfa_oim_status &&
-                      (dw.cdfa_oim_status.status === 'unknown' ||
-                        dw.cdfa_oim_status.status === 'missing') && (
-                        <Badge colorScheme="gray" fontSize="11px">
-                          {intl.formatMessage({
-                            id: 'drift.resolution.cdfa_oim_unknown',
-                            defaultMessage: 'CDFA OIM not checked (CA)'
-                          })}
-                        </Badge>
+                  {dw.cdfa_oim_status &&
+                    (dw.cdfa_oim_status.status === 'unknown' ||
+                      dw.cdfa_oim_status.status === 'missing') && (
+                      <Badge colorScheme="gray" fontSize="11px">
+                        {intl.formatMessage({
+                          id: 'drift.resolution.cdfa_oim_unknown',
+                          defaultMessage: 'CDFA OIM not checked (CA)'
+                        })}
+                      </Badge>
+                    )}
+                  {dw.cdfa_oim_status && dw.cdfa_oim_status.status === 'registered' && (
+                    <Badge colorScheme="green" fontSize="11px">
+                      {intl.formatMessage({
+                        id: 'drift.resolution.cdfa_oim_registered',
+                        defaultMessage: 'CDFA OIM registered'
+                      })}
+                    </Badge>
+                  )}
+                  {/* CA-only: DPR Restricted Materials Permit sub-finding. */}
+                  {dw.ca_dpr_permit_status && dw.ca_dpr_permit_status.status === 'missing' && (
+                    <Badge colorScheme="red" fontSize="11px">
+                      {intl.formatMessage({ id: 'drift.resolution.ca_dpr_missing' })}
+                    </Badge>
+                  )}
+                  {dw.ca_dpr_permit_status && dw.ca_dpr_permit_status.status === 'expired' && (
+                    <Badge colorScheme="red" fontSize="11px">
+                      {intl.formatMessage(
+                        { id: 'drift.resolution.ca_dpr_expired' },
+                        {
+                          num: dw.ca_dpr_permit_status.permit_number || '—',
+                          expires: dw.ca_dpr_permit_status.expires || '—'
+                        }
                       )}
-                    {dw.cdfa_oim_status && dw.cdfa_oim_status.status === 'registered' && (
-                      <Badge colorScheme="green" fontSize="11px">
-                        {intl.formatMessage({
-                          id: 'drift.resolution.cdfa_oim_registered',
-                          defaultMessage: 'CDFA OIM registered'
-                        })}
-                      </Badge>
-                    )}
-                    {/* CA-only: DPR Restricted Materials Permit sub-finding. */}
-                    {dw.ca_dpr_permit_status && dw.ca_dpr_permit_status.status === 'missing' && (
-                      <Badge colorScheme="red" fontSize="11px">
-                        {intl.formatMessage({ id: 'drift.resolution.ca_dpr_missing' })}
-                      </Badge>
-                    )}
-                    {dw.ca_dpr_permit_status && dw.ca_dpr_permit_status.status === 'expired' && (
-                      <Badge colorScheme="red" fontSize="11px">
-                        {intl.formatMessage(
-                          { id: 'drift.resolution.ca_dpr_expired' },
-                          {
-                            num: dw.ca_dpr_permit_status.permit_number || '—',
-                            expires: dw.ca_dpr_permit_status.expires || '—'
-                          }
-                        )}
-                      </Badge>
-                    )}
-                    {dw.ca_dpr_permit_status && dw.ca_dpr_permit_status.status === 'present' && (
-                      <Badge colorScheme="green" fontSize="11px">
-                        {intl.formatMessage(
-                          { id: 'drift.resolution.ca_dpr_present' },
-                          {
-                            num: dw.ca_dpr_permit_status.permit_number || '—',
-                            county: dw.ca_dpr_permit_status.county || '—'
-                          }
-                        )}
-                      </Badge>
-                    )}
-                    {/* External catalog deep-link. OMRI for commercial
+                    </Badge>
+                  )}
+                  {dw.ca_dpr_permit_status && dw.ca_dpr_permit_status.status === 'present' && (
+                    <Badge colorScheme="green" fontSize="11px">
+                      {intl.formatMessage(
+                        { id: 'drift.resolution.ca_dpr_present' },
+                        {
+                          num: dw.ca_dpr_permit_status.permit_number || '—',
+                          county: dw.ca_dpr_permit_status.county || '—'
+                        }
+                      )}
+                    </Badge>
+                  )}
+                  {/* External catalog deep-link. OMRI for commercial
                         inputs, AOSCA Organic Seed Finder for seed findings. */}
-                    {dw.omri_search_url && (
-                      <Link
-                        href={dw.omri_search_url}
-                        isExternal
-                        fontSize="xs"
-                        color="blue.600"
-                        mt={1}
-                        display="inline-flex"
-                        alignItems="center"
-                        gap={1}>
-                        {intl.formatMessage({
-                          id: dw.resolved_via.startsWith('seed_')
-                            ? 'drift.detail.searchAosca'
-                            : 'drift.detail.searchOmri'
-                        })}
-                        <Icon as={FaExternalLinkAlt} boxSize={2.5} />
-                      </Link>
-                    )}
-                  </VStack>
-                </Stack>
+                  {dw.omri_search_url && (
+                    <Link
+                      href={dw.omri_search_url}
+                      isExternal
+                      fontSize="xs"
+                      color="blue.600"
+                      mt={1}
+                      display="inline-flex"
+                      alignItems="center"
+                      gap={1}>
+                      {intl.formatMessage({
+                        id: dw.resolved_via.startsWith('seed_')
+                          ? 'drift.detail.searchAosca'
+                          : 'drift.detail.searchOmri'
+                      })}
+                      <Icon as={FaExternalLinkAlt} boxSize={2.5} />
+                    </Link>
+                  )}
+                </Flex>
               </Box>
             );
           })}
-          <Alert status="info" fontSize="xs">
-            <AlertIcon />
-            <Text>
-              {intl.formatMessage({
-                id: 'drift.banner.nextStep'
-              })}
+          {!allProvisional && (
+            <Text fontSize="sm" pt={3} borderTopWidth="1px" borderColor={ruleColor}>
+              {intl.formatMessage({ id: 'drift.banner.nextStep' })}
             </Text>
-          </Alert>
-          {!allProvisional && identityPanelHref && (
-            <Link
-              as={RouterLink}
-              to={identityPanelHref}
-              fontSize="sm"
-              fontWeight="semibold"
-              color="blue.600"
-              data-testid="drift-confirm-identities-link">
-              {intl.formatMessage({ id: 'drift.banner.confirmLink' })}
-            </Link>
           )}
         </VStack>
-      </Collapse>
-    </Box>
+      }>
+      <Box as="ul" listStyleType="none" m={0} p={0} w="full" data-testid="drift-summary">
+        {summary.map((group) => {
+          // One record: its date. Several: how many, since a run of dates says less than the
+          // count and would not fit. The name truncates, never the date or the count.
+          const meta =
+            group.records.length === 1
+              ? formatDay(group.records[0].date)
+              : intl.formatMessage({ id: 'drift.banner.records' }, { count: group.records.length });
+          return (
+            <Flex as="li" key={group.label} fontSize="sm" gap={1} minW={0}>
+              <Text as="span" fontWeight="medium" color="gray.700" noOfLines={1} minW={0}>
+                {group.label}
+              </Text>
+              {meta && (
+                <Text as="span" color={labelFg} flexShrink={0} whiteSpace="nowrap">
+                  {'· '}
+                  {meta}
+                </Text>
+              )}
+            </Flex>
+          );
+        })}
+        {hiddenCount > 0 && (
+          <Text as="li" fontSize="sm" color={labelFg}>
+            {intl.formatMessage({ id: 'drift.banner.more' }, { count: hiddenCount })}
+          </Text>
+        )}
+      </Box>
+    </StandardNotice>
   );
 };
 

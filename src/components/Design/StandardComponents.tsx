@@ -1819,6 +1819,139 @@ export const StandardAlert = ({
   );
 };
 
+interface StandardNoticeProps {
+  status: 'warning' | 'info';
+  title: ReactNode;
+  /** The facts the reader acts on (which inputs, which records). Keep it to a few lines. */
+  children?: ReactNode;
+  /** The action that RESOLVES the notice. One primary button; it leads on every width. */
+  action?: ReactNode;
+  /** Explanation, citations, per-record reasons. Hidden until asked for. */
+  details?: ReactNode;
+  showDetailsLabel?: string;
+  hideDetailsLabel?: string;
+  mb?: ResponsiveValue<number | string>;
+  'data-testid'?: string;
+}
+
+/**
+ * A page-level notice that sits among cards: the same white surface, radius and shadow as
+ * StandardCard, with the status carried by a tinted icon and the words, not by painting the
+ * whole block.
+ *
+ * Why not StandardAlert. StandardAlert is the inline message inside a form or panel, and its
+ * tinted ground with a 4px bar is right there. Dropped between the white cards of a profile
+ * page, the same look became a second visual language: a cream slab with an orange edge,
+ * louder than anything else on the page, for a finding that needs a decision, not an alarm
+ * (reported 2026-11-04 with screenshots of the drift banner).
+ *
+ * Layout. Desktop: text left, actions right and vertically centred (details toggle, then the
+ * primary). Phone: actions in ONE row under the text, primary left, toggle right. The toggle
+ * is a text link with a chevron, never a padded button: as a ghost button it wrapped onto its
+ * own line at 390px and kept a focus box after every tap.
+ *
+ * Contrast: the icon takes the same steps StandardAlert's icon does (ALERT_ACCENT_SHADE) on
+ * the `.50` circle, which `theme/__tests__/alertContrast.test.ts` already measures.
+ */
+export const StandardNotice = ({
+  status,
+  title,
+  children,
+  action,
+  details,
+  showDetailsLabel,
+  hideDetailsLabel,
+  mb = 6,
+  'data-testid': testId
+}: StandardNoticeProps) => {
+  const { isOpen, onToggle } = useDisclosure();
+  const palette = ALERT_PALETTE[status];
+  const icons = { warning: MdWarning, info: MdInfo };
+  const surface = useColorModeValue('white', 'gray.800');
+  const rule = useColorModeValue('gray.100', 'gray.700');
+
+  const toggle = details ? (
+    <Box
+      as="button"
+      type="button"
+      onClick={onToggle}
+      aria-expanded={isOpen}
+      display="inline-flex"
+      alignItems="center"
+      gap={1}
+      minH="44px"
+      fontSize="sm"
+      fontWeight="semibold"
+      color="green.700"
+      whiteSpace="nowrap"
+      order={{ base: 2, md: 1 }}
+      // Hover underline only where hover exists: on a phone `:hover` sticks after a tap, so
+      // "Hide details" stayed underlined like a visited link.
+      sx={{ '@media (hover: hover)': { '&:hover': { textDecoration: 'underline' } } }}
+      _focusVisible={{ outline: '2px solid', outlineColor: 'green.700', outlineOffset: '2px' }}>
+      {isOpen ? hideDetailsLabel : showDetailsLabel}
+      <Icon
+        as={FaChevronDown}
+        boxSize={3}
+        transition="transform 0.2s"
+        transform={isOpen ? 'rotate(180deg)' : undefined}
+        aria-hidden
+      />
+    </Box>
+  ) : null;
+
+  return (
+    <Box
+      w="full"
+      bg={surface}
+      borderRadius={{ base: 'xl', md: '2xl' }}
+      boxShadow="0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+      p={{ base: 4, md: 6 }}
+      mb={mb}
+      role="status"
+      data-testid={testId}>
+      <Flex
+        direction={{ base: 'column', md: 'row' }}
+        align={{ base: 'stretch', md: 'center' }}
+        gap={{ base: 3, md: 6 }}>
+        <HStack align="flex-start" spacing={3} flex={1} minW={0}>
+          <Circle size={8} bg={`${palette}.50`} flexShrink={0}>
+            <Icon
+              as={icons[status]}
+              boxSize={4}
+              color={`${palette}.${ALERT_ACCENT_SHADE[status]}`}
+              aria-hidden
+            />
+          </Circle>
+          <Box flex={1} minW={0} pt={1}>
+            <Text fontWeight="semibold" fontSize={{ base: 'sm', md: 'md' }} color="gray.800">
+              {title}
+            </Text>
+            {children && <Box mt={1}>{children}</Box>}
+          </Box>
+        </HStack>
+        {(action || toggle) && (
+          <Flex
+            align="center"
+            gap={4}
+            flexShrink={0}
+            justify={{ base: 'space-between', md: 'flex-end' }}>
+            {toggle}
+            {action && <Box order={{ base: 1, md: 2 }}>{action}</Box>}
+          </Flex>
+        )}
+      </Flex>
+      {details && (
+        <Collapse in={isOpen} animateOpacity>
+          <Box mt={4} pt={4} borderTopWidth="1px" borderColor={rule}>
+            {details}
+          </Box>
+        </Collapse>
+      )}
+    </Box>
+  );
+};
+
 interface GuidanceNoteProps {
   children: ReactNode;
 }
@@ -2072,8 +2205,12 @@ interface StandardSectionProps {
   children: ReactNode;
 }
 
+// `w="full"` (2026-11-04). Without it the section shrink-wrapped to its content, and every
+// profile page wraps sections in a VStack, whose default `align="center"` then centred the
+// shrunken box: the production page's cards sat ~50px in from each side on a phone and ~130px
+// on desktop while the cards above them used the full column.
 export const StandardSection = ({ title, description, action, children }: StandardSectionProps) => (
-  <Box mb={8}>
+  <Box mb={8} w="full">
     <Flex justify="space-between" align="center" mb={4}>
       <VStack align="start" spacing={1}>
         {/* Responsive, not a fixed `lg`. At 375px a fixed `lg` renders 24px while a page
