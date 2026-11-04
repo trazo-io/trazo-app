@@ -411,6 +411,202 @@ describe('the agent-form copy sheet', () => {
     );
   });
 
+  const ccofSheet = {
+    agent: 'ccof',
+    agent_name: 'CCOF Certification Services, LLC',
+    form: {
+      title: 'Annual Renewal Contract',
+      document_id: 'Annual Renewal Contract',
+      revision: '',
+      url: 'https://www.ccof.org/payments/',
+      stem: 'Annual-Renewal-Contract'
+    },
+    forms: [
+      {
+        title: 'Annual Renewal Contract',
+        document_id: 'Annual Renewal Contract',
+        revision: '',
+        url: 'https://www.ccof.org/payments/',
+        stem: 'Annual-Renewal-Contract'
+      },
+      {
+        title: 'Crop Update',
+        document_id: 'ORGB88',
+        revision: 'V2, R1, 12/03/2024',
+        url: 'https://www.ccof.org/',
+        stem: 'Crop-Update-ORGB88'
+      }
+    ],
+    plan_version: 2,
+    filing_id: 9,
+    rows: [
+      {
+        step: '0',
+        item: 'ccof_due',
+        kind: 'note',
+        value: null,
+        source: '',
+        extra: {
+          due: '01-01',
+          withdraw_by: '02-15',
+          late_fee: '150',
+          portal: 'MyCCOF',
+          phone: '(831) 423-2263',
+          online_url: 'https://www.ccof.org/renew'
+        }
+      },
+      {
+        step: '2',
+        item: 'ccof_osp_update',
+        kind: 'yours',
+        value: null,
+        source: '',
+        extra: {
+          has_filing: true,
+          additions: 2,
+          deletions: 1,
+          application_info_changes: false,
+          osp_update_email: 'inbox@ccof.org',
+          portal: 'MyCCOF'
+        }
+      },
+      {
+        step: 'details',
+        item: 'submitter_name',
+        kind: 'value',
+        value: 'Ana M. Diaz',
+        source: 'filing',
+        extra: {}
+      },
+      {
+        step: 'terms',
+        item: 'ccof_accept_terms',
+        kind: 'yours',
+        value: null,
+        source: '',
+        extra: {}
+      },
+      {
+        step: 'orgb88',
+        item: 'crop_update_parcels',
+        kind: 'value',
+        value: [
+          {
+            number: '#01',
+            name: 'Home Ranch',
+            acres: 12.4,
+            planned: 'Honeycrisp 6.2 ac, Gala 6.2 ac',
+            crops: []
+          }
+        ],
+        source: 'parcels',
+        extra: { excluded: [] }
+      }
+    ]
+  };
+
+  it("words CCOF's contract: its dates, the Step 2 election beside the year's filing, and the crop update", () => {
+    result = { data: ccofSheet };
+    renderSheet();
+    expect(
+      screen.getByText("CCOF Certification Services, LLC's renewal forms: what to copy")
+    ).toBeInTheDocument();
+    const due = screen.getByTestId('agent-sheet-ccof_due');
+    expect(due).toHaveTextContent('by January 1');
+    expect(due).toHaveTextContent('February 15 is the last day to withdraw');
+    expect(due).toHaveTextContent('$150 late fee');
+    const step2 = screen.getByTestId('agent-sheet-ccof_osp_update');
+    expect(step2).toHaveTextContent('Yours to answer');
+    expect(step2).toHaveTextContent('2 additions and 1 deletion.');
+    expect(step2).toHaveTextContent('no update indicated as "no changes have occurred"');
+    expect(screen.getByTestId('agent-sheet-ccof_accept_terms')).toHaveTextContent(
+      'Signing your annual update in Trazo is not this acceptance.'
+    );
+    expect(screen.getByTestId('agent-sheet-crop_update_parcels')).toHaveTextContent(
+      '#01 · Home Ranch · 12.4 ac · planned: Honeycrisp 6.2 ac, Gala 6.2 ac'
+    );
+    expect(screen.getByText('Crop Update (ORGB88), only if your crops change')).toBeInTheDocument();
+  });
+
+  const wsdaSheet = {
+    agent: 'wsda',
+    agent_name: 'Washington State Department of Agriculture',
+    form: {
+      title: 'Renewal Fee Form',
+      document_id: 'AGR 2521',
+      revision: '',
+      url: 'https://agr.wa.gov/',
+      stem: '2521-renewal-fee'
+    },
+    forms: [
+      {
+        title: 'Renewal Fee Form',
+        document_id: 'AGR 2521',
+        revision: '',
+        url: 'https://agr.wa.gov/',
+        stem: '2521-renewal-fee'
+      },
+      {
+        title: 'Site Update Information',
+        document_id: 'AGR 2516',
+        revision: 'R 01/20',
+        url: 'https://agr.wa.gov/',
+        stem: '2516-site-update'
+      }
+    ],
+    plan_version: 2,
+    filing_id: 9,
+    rows: [
+      {
+        step: '0',
+        item: 'wsda_send',
+        kind: 'note',
+        value: null,
+        source: '',
+        extra: {
+          email: 'organic@agr.wa.gov',
+          check_payable_to: 'WSDA Organic Program',
+          mail: 'PO Box 42591, Olympia, WA 98504-2560',
+          courier: '1111 Washington St SE, Olympia, WA 98504-2560'
+        }
+      },
+      {
+        step: '2521',
+        item: 'wsda_gross_income',
+        kind: 'yours',
+        value: null,
+        source: '',
+        extra: { year: 2026, subtotal: '640.00', n_sales: 1, n_unpriced: 0 }
+      }
+    ]
+  };
+
+  it("leaves WSDA's income line to the books and gives Trazo's subtotal only as a cross-check", () => {
+    result = { data: wsdaSheet };
+    renderSheet();
+    const income = screen.getByTestId('agent-sheet-wsda_gross_income');
+    expect(income).toHaveTextContent('Yours to answer');
+    expect(income).not.toHaveTextContent('From Trazo');
+    expect(income).toHaveTextContent(
+      'Money received in 2026 from organic crops, products or services: copy it from your books'
+    );
+    expect(income).toHaveTextContent('As a cross-check, your sales records in Trazo show $640.00');
+    expect(screen.getByTestId('agent-sheet-wsda_send')).toHaveTextContent(
+      'the fee form and check go by mail: payable to WSDA Organic Program'
+    );
+    // The fee form WSDA sends is not always the published edition: no revision is named for it.
+    expect(screen.getByText(/AGR 2521; AGR 2516, R 01\/20/)).toBeInTheDocument();
+  });
+
+  it("speaks Spanish for WSDA's forms too", () => {
+    result = { data: wsdaSheet };
+    renderSheet('es-419', esLA);
+    expect(screen.getByText('Formulario de tarifa de renovación (AGR 2521)')).toBeInTheDocument();
+    expect(screen.getByTestId('agent-sheet-wsda_gross_income')).toHaveTextContent(
+      'cópialo de tu contabilidad'
+    );
+  });
+
   it('renders nothing for an agent without a copy sheet', () => {
     result = { isError: true };
     const { container } = renderSheet();

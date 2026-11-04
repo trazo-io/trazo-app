@@ -115,11 +115,93 @@ const ITEM_LABELS: Record<string, Msg> = {
   sales_period: { id: 'osp.agentSheet.item.sales_period', defaultMessage: 'Sales period' },
   payment: { id: 'osp.agentSheet.item.payment', defaultMessage: 'Payment' },
   billing_contact: { id: 'osp.agentSheet.item.billing_contact', defaultMessage: 'Billing contact' },
-  comments: { id: 'osp.agentSheet.item.comments', defaultMessage: 'Comments' }
+  comments: { id: 'osp.agentSheet.item.comments', defaultMessage: 'Comments' },
+  // CCOF: Annual Renewal Contract and Crop Update (ORGB88).
+  ccof_due: { id: 'osp.agentSheet.item.ccof_due', defaultMessage: 'Due date' },
+  ccof_changes_approved_first: {
+    id: 'osp.agentSheet.item.ccof_changes_approved_first',
+    defaultMessage: 'Changes to your plan'
+  },
+  ccof_continue_or_surrender: {
+    id: 'osp.agentSheet.item.ccof_continue_or_surrender',
+    defaultMessage: 'Continue or surrender'
+  },
+  ccof_osp_update: {
+    id: 'osp.agentSheet.item.ccof_osp_update',
+    defaultMessage: 'OSP update information'
+  },
+  operation_name: { id: 'osp.agentSheet.item.operation_name', defaultMessage: 'Operation name' },
+  client_code: { id: 'osp.agentSheet.item.client_code', defaultMessage: 'Client Code' },
+  submitter_name: { id: 'osp.agentSheet.item.submitter_name', defaultMessage: 'Name' },
+  submitter_email: { id: 'osp.agentSheet.item.submitter_email', defaultMessage: 'Email' },
+  surrender_date: {
+    id: 'osp.agentSheet.item.surrender_date',
+    defaultMessage: 'Date you no longer need certification'
+  },
+  surrender_reason: {
+    id: 'osp.agentSheet.item.surrender_reason',
+    defaultMessage: 'Reason for surrender'
+  },
+  ccof_terms: { id: 'osp.agentSheet.item.ccof_terms', defaultMessage: 'Terms 1 to 8' },
+  ccof_accept_terms: {
+    id: 'osp.agentSheet.item.ccof_accept_terms',
+    defaultMessage: 'I accept the above terms'
+  },
+  ccof_new_certificates: {
+    id: 'osp.agentSheet.item.ccof_new_certificates',
+    defaultMessage: 'New certificates'
+  },
+  crop_update_when: {
+    id: 'osp.agentSheet.item.crop_update_when',
+    defaultMessage: 'When to file it'
+  },
+  crop_update_operation_name: {
+    id: 'osp.agentSheet.item.operation_name',
+    defaultMessage: 'Operation name'
+  },
+  crop_update_date: { id: 'osp.agentSheet.item.crop_update_date', defaultMessage: 'Date' },
+  crop_update_parcels: {
+    id: 'osp.agentSheet.item.crop_update_parcels',
+    defaultMessage: 'Parcels, crops and acres'
+  },
+  // WSDA: Renewal Fee Form (AGR 2521) and Site Update Information (AGR 2516).
+  wsda_due: { id: 'osp.agentSheet.item.ccof_due', defaultMessage: 'Due date' },
+  wsda_send: { id: 'osp.agentSheet.item.wsda_send', defaultMessage: 'How to send it' },
+  cert_no: { id: 'osp.agentSheet.item.cert_no', defaultMessage: 'Cert No' },
+  wsda_gross_income: {
+    id: 'osp.agentSheet.item.wsda_gross_income',
+    defaultMessage: 'Gross annual income'
+  },
+  wsda_renewal_fee: { id: 'osp.agentSheet.item.wsda_renewal_fee', defaultMessage: 'Renewal fee' },
+  wsda_late_fee: { id: 'osp.agentSheet.item.wsda_late_fee', defaultMessage: 'Late fee' },
+  wsda_how_sent: {
+    id: 'osp.agentSheet.item.wsda_how_sent',
+    defaultMessage: 'How you are submitting'
+  },
+  wsda_sent_date: {
+    id: 'osp.agentSheet.item.wsda_sent_date',
+    defaultMessage: 'Date the application was sent'
+  },
+  site_changes: { id: 'osp.agentSheet.item.site_changes', defaultMessage: 'Sites and changes' },
+  acreage_removed: {
+    id: 'osp.agentSheet.item.acreage_removed',
+    defaultMessage: 'Acreage leaving organic production'
+  }
 };
 
 const STEP_TITLES: Record<string, Msg> = {
-  '0': { id: 'osp.agentSheet.step.before', defaultMessage: 'Before you file' }
+  '0': { id: 'osp.agentSheet.step.before', defaultMessage: 'Before you file' },
+  details: { id: 'osp.agentSheet.step.details', defaultMessage: 'Your details' },
+  terms: { id: 'osp.agentSheet.step.terms', defaultMessage: 'The contract terms' },
+  orgb88: {
+    id: 'osp.agentSheet.step.orgb88',
+    defaultMessage: 'Crop Update (ORGB88), only if your crops change'
+  },
+  '2521': { id: 'osp.agentSheet.step.2521', defaultMessage: 'Renewal Fee Form (AGR 2521)' },
+  '2516': {
+    id: 'osp.agentSheet.step.2516',
+    defaultMessage: 'Site Update Information (AGR 2516), only if a site changes'
+  }
 };
 
 const KIND_CHIPS: Record<AgentFormSheetRow['kind'], Msg> = {
@@ -351,6 +433,7 @@ const AgentFormCopySheet: React.FC<Props> = ({ companyId, farmId, ospId }) => {
           </>
         );
       case 'client_id':
+      case 'client_code':
         return row.kind === 'value'
           ? String(row.value)
           : intl.formatMessage({
@@ -359,6 +442,7 @@ const AgentFormCopySheet: React.FC<Props> = ({ companyId, farmId, ospId }) => {
                 "Not recorded yet. It is on your certificate and the agent's letters, and it is not your certificate number. Add it once and Trazo keeps it for next year."
             });
       case 'contact_name':
+      case 'submitter_name':
         if (row.kind !== 'value') break;
         return row.source === 'plan_author'
           ? intl.formatMessage(
@@ -764,6 +848,283 @@ const AgentFormCopySheet: React.FC<Props> = ({ companyId, farmId, ospId }) => {
             )
           : yoursLine;
       }
+      case 'ccof_due':
+        return (
+          <>
+            {intl.formatMessage(
+              {
+                id: 'osp.agentSheet.detail.ccof_due',
+                defaultMessage:
+                  "Submit the contract and pay your invoice by {due}: online, through {portal}, by mail or by phone ({phone}). {withdrawBy} is the last day to withdraw without owing next year's fees; after it the agent may send an overdue notice and a ${lateFee} late fee."
+              },
+              {
+                due: monthDay(String(e.due)),
+                portal: String(e.portal || ''),
+                phone: String(e.phone || ''),
+                withdrawBy: monthDay(String(e.withdraw_by)),
+                lateFee: String(e.late_fee || '')
+              }
+            )}{' '}
+            {ext(
+              e.online_url,
+              intl.formatMessage({
+                id: 'osp.agentSheet.link.online',
+                defaultMessage: 'File online'
+              })
+            )}
+          </>
+        );
+      case 'ccof_changes_approved_first':
+        return intl.formatMessage({
+          id: 'osp.agentSheet.detail.ccof_changes_approved_first',
+          defaultMessage:
+            'The agent asks for changes to your plan when they happen, not at the inspection, and approves them before you put them in place. New parcels and facilities are reviewed before they can be inspected.'
+        });
+      case 'ccof_continue_or_surrender':
+        return intl.formatMessage(
+          {
+            id: 'osp.agentSheet.detail.ccof_continue_or_surrender',
+            defaultMessage:
+              'Answer it on the form: continue (paying the invoice or having arranged a payment plan), or surrender. Surrendering after {withdrawBy} leaves the fees already accrued.'
+          },
+          { withdrawBy: monthDay(String(e.withdraw_by)) }
+        );
+      case 'ccof_osp_update': {
+        const consequence = intl.formatMessage({
+          id: 'osp.agentSheet.detail.ccof_no_update_means',
+          defaultMessage:
+            'The agent reads a contract with no update indicated as "no changes have occurred".'
+        });
+        if (!e.has_filing)
+          return `${intl.formatMessage({
+            id: 'osp.agentSheet.detail.changes_no_filing',
+            defaultMessage: "Start this year's annual update to see which sections changed."
+          })} ${consequence}`;
+        return `${intl.formatMessage(
+          {
+            id: 'osp.agentSheet.detail.ccof_osp_update',
+            defaultMessage:
+              'Your annual update lists {additions, plural, one {# addition} other {# additions}} and {deletions, plural, one {# deletion} other {# deletions}}{info, select, yes {, and changes to the application information} other {}}. If your plan changed, choose "needs to be updated" and send the updates to {email} or {portal}.'
+          },
+          {
+            additions: Number(e.additions || 0),
+            deletions: Number(e.deletions || 0),
+            info: e.application_info_changes ? 'yes' : 'no',
+            email: String(e.osp_update_email || ''),
+            portal: String(e.portal || '')
+          }
+        )} ${consequence}`;
+      }
+      case 'surrender_date':
+      case 'surrender_reason':
+        return intl.formatMessage({
+          id: 'osp.agentSheet.detail.surrender_only',
+          defaultMessage: 'Only if you are surrendering certification.'
+        });
+      case 'ccof_terms':
+        return intl.formatMessage({
+          id: 'osp.agentSheet.detail.ccof_terms',
+          defaultMessage:
+            "Accepting the contract agrees to its eight terms: you monitor your plan every year, what you send is true, you are bound by the agent's manuals and its Standards of Behavior, you pay its fees, you keep to the standards and its policies, you may sign for the operation, and you agree to its Terms of Use and Privacy Policy. Read them on the form."
+        });
+      case 'ccof_accept_terms':
+        return intl.formatMessage({
+          id: 'osp.agentSheet.detail.ccof_accept_terms',
+          defaultMessage:
+            'Tick it on the form after reading the terms. Signing your annual update in Trazo is not this acceptance.'
+        });
+      case 'ccof_new_certificates':
+        return intl.formatMessage({
+          id: 'osp.agentSheet.detail.ccof_new_certificates',
+          defaultMessage:
+            'The agent issues new NOP certificates to every certified operation by the end of January.'
+        });
+      case 'crop_update_when':
+        return intl.formatMessage({
+          id: 'osp.agentSheet.detail.crop_update_when',
+          defaultMessage:
+            'File it only if crops change on parcels already on your Client Profile: for each certified parcel, the crops current or planned within the next 12 months and the acres. Filing it lets the agent update your Client Profile Addendum, and only crops and parcels listed there may be sold as organic. The agent also has an Excel version.'
+        });
+      case 'crop_update_date':
+        return intl.formatMessage({
+          id: 'osp.agentSheet.detail.crop_update_date',
+          defaultMessage: 'Date it the day you file it.'
+        });
+      case 'crop_update_parcels':
+      case 'site_changes': {
+        const ccof = row.item === 'crop_update_parcels';
+        if (row.kind !== 'value')
+          return ccof
+            ? intl.formatMessage({
+                id: 'osp.agentSheet.detail.crop_update_parcels_none',
+                defaultMessage:
+                  "No parcel's application says it is already on the agent's certificate with a parcel number."
+              })
+            : intl.formatMessage({
+                id: 'osp.agentSheet.detail.site_changes_none',
+                defaultMessage:
+                  "No parcel's application says it is already on the agent's certificate with a site number."
+              });
+        const parcels =
+          (row.value as {
+            number: string;
+            name: string;
+            acres: number | null;
+            planned: string;
+          }[]) || [];
+        return (
+          <VStack align="stretch" spacing={1}>
+            <Text>
+              {ccof
+                ? intl.formatMessage({
+                    id: 'osp.agentSheet.detail.crop_update_parcels',
+                    defaultMessage:
+                      "From your parcels' applications, with the number the certificate prints. The form asks for acres per crop; Trazo holds each parcel's acres, so split them by crop yourself."
+                  })
+                : intl.formatMessage({
+                    id: 'osp.agentSheet.detail.site_changes',
+                    defaultMessage:
+                      "From your parcels' applications, with the site number the certificate prints. Compare each with your Certified Operation Profile and write what changes: crops or varieties, acres, and whether the site's total acreage drops. Production or planting records that show the site number and name may be sent instead."
+                  })}
+            </Text>
+            {parcels.map((p) => (
+              <Text key={`${p.number}-${p.name}`} fontWeight="semibold">
+                {[
+                  p.number,
+                  p.name,
+                  p.acres != null
+                    ? intl.formatMessage(
+                        { id: 'osp.agentSheet.detail.acres', defaultMessage: '{acres} ac' },
+                        { acres: intl.formatNumber(p.acres) }
+                      )
+                    : '',
+                  p.planned
+                    ? intl.formatMessage(
+                        { id: 'osp.agentSheet.detail.planned', defaultMessage: 'planned: {crops}' },
+                        { crops: p.planned }
+                      )
+                    : ''
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </Text>
+            ))}
+          </VStack>
+        );
+      }
+      case 'wsda_due':
+        return intl.formatMessage(
+          {
+            id: 'osp.agentSheet.detail.wsda_due',
+            defaultMessage:
+              'Your renewal application and fee are due by {due}. The agent sends both forms: fill in the copies it sent. Each month after {due} adds a ${lateFee} late fee.'
+          },
+          { due: monthDay(String(e.due)), lateFee: String(e.late_fee_per_month || '') }
+        );
+      case 'wsda_send':
+        return intl.formatMessage(
+          {
+            id: 'osp.agentSheet.detail.wsda_send',
+            defaultMessage:
+              'You can email the application to {email}, but the fee form and check go by mail: payable to {payee}, {mail} (by courier: {courier}).'
+          },
+          {
+            email: String(e.email || ''),
+            payee: String(e.check_payable_to || ''),
+            mail: String(e.mail || ''),
+            courier: String(e.courier || '')
+          }
+        );
+      case 'cert_no':
+        return row.kind === 'value'
+          ? String(row.value)
+          : intl.formatMessage({
+              id: 'osp.agentSheet.detail.cert_no_missing',
+              defaultMessage: 'Not recorded. It is on your certificate from the agent.'
+            });
+      case 'wsda_gross_income': {
+        const year = String(e.year || '');
+        const ask = intl.formatMessage(
+          {
+            id: 'osp.agentSheet.detail.wsda_income',
+            defaultMessage:
+              'Money received in {year, select, none {the last calendar year} other {{year}}} from organic crops, products or services: copy it from your books (year-end packer statements, 1099s).'
+          },
+          { year: year || 'none' }
+        );
+        if (e.reason === 'no_filing')
+          return `${ask} ${intl.formatMessage({
+            id: 'osp.agentSheet.detail.wsda_income_no_filing',
+            defaultMessage: "Start this year's annual update to see Trazo's cross-check."
+          })}`;
+        if (e.reason === 'period_not_over')
+          return intl.formatMessage(
+            {
+              id: 'osp.agentSheet.detail.wsda_income_not_over',
+              defaultMessage:
+                'Calendar {year} is not over yet. Copy the income received in it from your books once it is.'
+            },
+            { year }
+          );
+        if (e.subtotal != null)
+          return `${ask} ${intl.formatMessage(
+            {
+              id: 'osp.agentSheet.detail.wsda_income_cross_check',
+              defaultMessage:
+                'As a cross-check, your sales records in Trazo show {amount} invoiced as organic and dated in {year}. Money paid in another year than the sale, and services, make the two differ.'
+            },
+            { amount: money(e.subtotal), year }
+          )}`;
+        return `${ask} ${
+          Number(e.n_unpriced) > 0
+            ? intl.formatMessage(
+                {
+                  id: 'osp.agentSheet.detail.wsda_income_unpriced',
+                  defaultMessage:
+                    '{count, plural, one {# sale} other {# sales}} in {year} {count, plural, one {has} other {have}} no amount recorded, so there is no cross-check.'
+                },
+                { count: Number(e.n_unpriced), year }
+              )
+            : intl.formatMessage(
+                {
+                  id: 'osp.agentSheet.detail.wsda_income_no_sales',
+                  defaultMessage: 'No sale invoiced as organic is recorded for {year}.'
+                },
+                { year }
+              )
+        }`;
+      }
+      case 'wsda_renewal_fee':
+        return intl.formatMessage({
+          id: 'osp.agentSheet.detail.wsda_renewal_fee',
+          defaultMessage:
+            "From the agent's fee table on the form, by the income above. The table also sets a minimum fee for larger operations."
+        });
+      case 'wsda_late_fee':
+        return intl.formatMessage(
+          {
+            id: 'osp.agentSheet.detail.wsda_late_fee',
+            defaultMessage:
+              '${lateFee} for each month after {due}. Leave it blank if you file on time.'
+          },
+          { lateFee: String(e.late_fee_per_month || ''), due: monthDay(String(e.due)) }
+        );
+      case 'wsda_how_sent':
+        return intl.formatMessage({
+          id: 'osp.agentSheet.detail.wsda_how_sent',
+          defaultMessage: 'Answer it on the form. The fee form and check always go by mail.'
+        });
+      case 'wsda_sent_date':
+        return intl.formatMessage({
+          id: 'osp.agentSheet.detail.wsda_sent_date',
+          defaultMessage: 'Only if you send the application and the fee separately.'
+        });
+      case 'acreage_removed':
+        return intl.formatMessage({
+          id: 'osp.agentSheet.detail.acreage_removed',
+          defaultMessage:
+            'If acreage leaves organic production, include a map of the new boundaries and why it was removed (transferred to another grower, converted to conventional).'
+        });
       case 'dba':
         return row.kind === 'value'
           ? String(row.value)
@@ -809,35 +1170,72 @@ const AgentFormCopySheet: React.FC<Props> = ({ companyId, farmId, ospId }) => {
 
   const canEdit = (edit: EditTarget) => (edit.target === 'company' ? canManageCompany : canWrite);
   const steps = Array.from(new Set(sheet.rows.map((r) => r.step)));
+  const forms = sheet.forms && sheet.forms.length ? sheet.forms : [sheet.form];
 
   return (
     <StandardCard>
       <VStack align="stretch" spacing={4}>
         <Box>
           <Text fontSize="lg" fontWeight="semibold">
-            {intl.formatMessage(
-              {
-                id: 'osp.agentSheet.title',
-                defaultMessage: "{agent}'s renewal form: what to copy"
-              },
-              { agent }
-            )}
+            {forms.length > 1
+              ? intl.formatMessage(
+                  {
+                    id: 'osp.agentSheet.titleForms',
+                    defaultMessage: "{agent}'s renewal forms: what to copy"
+                  },
+                  { agent }
+                )
+              : intl.formatMessage(
+                  {
+                    id: 'osp.agentSheet.title',
+                    defaultMessage: "{agent}'s renewal form: what to copy"
+                  },
+                  { agent }
+                )}
           </Text>
           <Text fontSize="sm" color="gray.600" mt={1}>
-            {intl.formatMessage(
-              {
-                id: 'osp.agentSheet.intro',
-                defaultMessage:
-                  'You fill in and sign {form} ({revision}) yourself, with the agent. Step by step: what Trazo holds for you to copy, and what only you can answer. Nothing here is filed for you.'
-              },
-              { form: sheet.form.document_id || sheet.form.title, revision: sheet.form.revision }
-            )}{' '}
-            {ext(
-              sheet.form.url,
-              intl.formatMessage({
-                id: 'osp.agentSheet.formLink',
-                defaultMessage: "The agent's form"
-              })
+            {forms.length > 1 ? (
+              <>
+                {intl.formatMessage(
+                  {
+                    id: 'osp.agentSheet.introForms',
+                    defaultMessage:
+                      'You fill in these forms yourself and file them with the agent: {forms}. Form by form: what Trazo holds for you to copy, and what only you can answer. Nothing here is filed for you.'
+                  },
+                  {
+                    forms: forms
+                      .map((f) => [f.document_id || f.title, f.revision].filter(Boolean).join(', '))
+                      .join('; ')
+                  }
+                )}{' '}
+                {forms.map((f, i) => (
+                  <React.Fragment key={f.stem || f.title}>
+                    {i ? ' · ' : ''}
+                    {ext(f.url, f.document_id || f.title)}
+                  </React.Fragment>
+                ))}
+              </>
+            ) : (
+              <>
+                {intl.formatMessage(
+                  {
+                    id: 'osp.agentSheet.intro',
+                    defaultMessage:
+                      'You fill in and sign {form} ({revision}) yourself, with the agent. Step by step: what Trazo holds for you to copy, and what only you can answer. Nothing here is filed for you.'
+                  },
+                  {
+                    form: sheet.form.document_id || sheet.form.title,
+                    revision: sheet.form.revision
+                  }
+                )}{' '}
+                {ext(
+                  sheet.form.url,
+                  intl.formatMessage({
+                    id: 'osp.agentSheet.formLink',
+                    defaultMessage: "The agent's form"
+                  })
+                )}
+              </>
             )}
           </Text>
         </Box>
