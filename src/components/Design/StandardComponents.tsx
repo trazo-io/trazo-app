@@ -1942,11 +1942,16 @@ export const StandardNotice = ({
       aria-label={ariaLabel}
       data-testid={testId}>
       {onDismiss && (
+        // 44px touch target (CLAUDE.md), like the details toggle above; Chakra's `md` CloseButton
+        // is 32px (review of app #259). The offsets shrink by the same 6px each way, so the glyph
+        // stays where it was: centre 28px in on a phone, 32px from md.
         <CloseButton
           position="absolute"
-          top={{ base: 3, md: 4 }}
-          right={{ base: 3, md: 4 }}
+          top={{ base: 1.5, md: 2.5 }}
+          right={{ base: 1.5, md: 2.5 }}
           size="md"
+          minW="44px"
+          minH="44px"
           aria-label={dismissLabel}
           onClick={onDismiss}
         />
