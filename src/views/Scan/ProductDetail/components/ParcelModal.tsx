@@ -302,7 +302,8 @@ export const ParcelModal: React.FC<ParcelModalProps> = ({ isOpen, onClose, parce
                 <Text color="gray.700" fontWeight="medium">
                   {parcelData.current_history.name}
                 </Text>
-                <Badge variant="neutral">
+                {/* In progress, so the status colour for it (CLAUDE.md, "Status colour = meaning"). */}
+                <Badge variant="warning">
                   {intl.formatMessage({ id: 'consumer.modal.active', defaultMessage: 'Active' })}
                 </Badge>
               </HStack>

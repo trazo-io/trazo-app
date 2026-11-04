@@ -122,6 +122,14 @@ describe('product page: green is not a claim', () => {
     expect(carbon).not.toMatch(/FaLeaf/);
   });
 
+  it('gives an in-progress status its status colour, not neutral', () => {
+    // CLAUDE.md "Status colour = meaning": in progress -> variant="warning"; facts -> neutral.
+    const modal = code(`${DIR}/components/ParcelModal.tsx`);
+    const at = modal.indexOf("id: 'consumer.modal.active'");
+    expect(at).toBeGreaterThan(0);
+    expect(modal.slice(modal.lastIndexOf('<Badge', at), at)).toMatch(/variant="warning"/);
+  });
+
   it('keeps the dead grade/score section deleted', () => {
     expect(existsSync(resolve(process.cwd(), `${DIR}/components/ProductDetailsSection.tsx`))).toBe(
       false
