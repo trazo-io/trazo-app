@@ -1453,20 +1453,26 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                 ).slice(0, visibleCountByChapter[ch.key] ?? 1);
                 const hiddenCount = ch.events.length - visibleCards.length;
                 return (
-                  <Box key={ch.key}>
-                    {/* Chapter header card — small card of its own (like the
-                        journey header above), with the event cards as
-                        SIBLINGS below it. No father container wrapping the
-                        events; a bare floating heading between carded
-                        neighbors read unfinished. */}
+                  <Box
+                    key={ch.key}
+                    data-testid="journey-chapter"
+                    bg={bgColor}
+                    borderWidth="1px"
+                    borderColor="gray.200"
+                    borderRadius="xl"
+                    overflow="clip">
+                    {/* ONE card per chapter (2026-11-04, Oscar chose it from rendered options):
+                        the header on top, the events as ROWS divided by hairlines, the "See all"
+                        link as the card's last row. It was a header card with each event as a
+                        sibling card below and the link floating outside both, so a chapter read
+                        as three loose pieces. A heading on the page background was the other
+                        option and was rejected for the reason it was dropped before: a bare
+                        heading between carded neighbours reads unfinished. */}
                     <Box
-                      bg={bgColor}
-                      borderWidth="1px"
+                      borderBottomWidth="1px"
                       borderColor="gray.200"
-                      borderRadius="xl"
                       px={{ base: 3, md: 4 }}
-                      py={3}
-                      mb={2}>
+                      py={3}>
                       <HStack justify="space-between" align="start">
                         <HStack spacing={3} align="center">
                           <Circle
@@ -1549,51 +1555,57 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                       )}
                     </Box>
 
-                    {/* Highlight cards — top-level, flat */}
-                    <VStack spacing={2} align="stretch">
+                    {/* Highlight events — rows of this chapter's card */}
+                    <VStack spacing={0} align="stretch">
                       {(() => {
                         const { repeatImpact, repeatShort } = computeRepeatedCopy(visibleCards);
-                        return visibleCards.map((event) => {
+                        return visibleCards.map((event, i) => {
                           const enhancedEvent = buildEnhancedEvent(event);
                           return (
-                            <ConsumerEventCard
+                            <Box
                               key={event.id}
-                              event={enhancedEvent}
-                              isGrouped
-                              slim
-                              suppressImpactLine={repeatImpact.has(String(event.id))}
-                              suppressShortDescription={repeatShort.has(String(event.id))}
-                              isExpanded={expandedEventId === event.id}
-                              onToggleExpand={() => toggleEventExpand(event.id)}
-                              producerAction={buildProducerAction(event)}
-                              producerVisibilityBadge={buildVisibilityBadge(event)}
-                              productionBlockchain={productionBlockchain}
-                            />
+                              borderTopWidth={i > 0 ? '1px' : 0}
+                              borderColor="gray.100">
+                              <ConsumerEventCard
+                                event={enhancedEvent}
+                                isGrouped
+                                flush
+                                slim
+                                suppressImpactLine={repeatImpact.has(String(event.id))}
+                                suppressShortDescription={repeatShort.has(String(event.id))}
+                                isExpanded={expandedEventId === event.id}
+                                onToggleExpand={() => toggleEventExpand(event.id)}
+                                producerAction={buildProducerAction(event)}
+                                producerVisibilityBadge={buildVisibilityBadge(event)}
+                                productionBlockchain={productionBlockchain}
+                              />
+                            </Box>
                           );
                         });
                       })()}
                     </VStack>
 
                     {hiddenCount > 0 && (
-                      <Button
-                        mt={2}
-                        px={1}
-                        size="xs"
-                        variant="link"
-                        colorScheme="green"
-                        onClick={() => openProofView(ch.key)}>
-                        {/* Names the destination (2026-08-02). "+2 more in the full record"
+                      <Box borderTopWidth="1px" borderColor="gray.100" px={{ base: 3, md: 4 }}>
+                        <Button
+                          size="xs"
+                          variant="link"
+                          colorScheme="green"
+                          minH="44px"
+                          onClick={() => openProofView(ch.key)}>
+                          {/* Names the destination (2026-08-02). "+2 more in the full record"
                             reads like an inline expander, but it switches to the full-record
                             view filtered to this chapter — so the label now says the chapter
                             and the TOTAL it will show, not the remainder it hides. */}
-                        {intl.formatMessage(
-                          {
-                            id: 'consumer.journey.seeAllInChapter',
-                            defaultMessage: 'See all {count} in {chapter} →'
-                          },
-                          { count: ch.events.length, chapter: ch.title }
-                        )}
-                      </Button>
+                          {intl.formatMessage(
+                            {
+                              id: 'consumer.journey.seeAllInChapter',
+                              defaultMessage: 'See all {count} in {chapter} →'
+                            },
+                            { count: ch.events.length, chapter: ch.title }
+                          )}
+                        </Button>
+                      </Box>
                     )}
                   </Box>
                 );
