@@ -44,7 +44,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import {
   Badge,
   Box,
-  Divider,
+  Circle,
   Heading,
   HStack,
   Icon,
@@ -55,6 +55,7 @@ import {
   useColorModeValue
 } from '@chakra-ui/react';
 import {
+  FaCheck,
   FaClipboardCheck,
   FaClipboardList,
   FaExclamationCircle,
@@ -123,6 +124,96 @@ export function readinessFindingSection(
 const MAX_VISIBLE_FINDINGS = 5;
 
 /**
+ * ROW LOOK (2026-11-04). Every row on this card used to be its own gray box with a 1px border
+ * and a 4px red or orange edge, and the season list also drew a divider BETWEEN the boxes. On
+ * the farm home, the first screen after sign-in, that stacked five or six tinted slabs inside
+ * a card: the same "coloured box with an edge" look that was retired from the drift banner for
+ * reading louder than the decision it asks for.
+ *
+ * Now a row is a line in a list: a small tinted circle carrying the status glyph (the same
+ * treatment as `StandardNotice`), the title and its badge, the detail, and the link that fixes
+ * it, with a hairline between rows. Urgency is still stated twice without colour: the glyph's
+ * SHAPE (exclamation vs info) and, on season rows, the badge's WORDS ("Missing" / "Needs
+ * attention"). The edge bar was decorative only (see STATUS_URGENCY_TOKENS), so nothing that
+ * carried meaning was removed.
+ */
+type RowTone = 'crit' | 'warn' | 'neutral' | 'clear';
+
+function ReadinessRow({
+  tone,
+  icon,
+  title,
+  badge,
+  children,
+  action,
+  testId
+}: {
+  tone: RowTone;
+  icon: React.ElementType;
+  title?: React.ReactNode;
+  badge?: React.ReactNode;
+  children?: React.ReactNode;
+  action?: React.ReactNode;
+  testId?: string;
+}) {
+  const circle = useColorModeValue(
+    { crit: 'red.50', warn: 'orange.50', neutral: 'gray.100', clear: 'green.50' }[tone],
+    'whiteAlpha.200'
+  );
+  const glyph = {
+    crit: STATUS_URGENCY_TOKENS.crit.icon,
+    warn: STATUS_URGENCY_TOKENS.warn.icon,
+    neutral: 'gray.600',
+    clear: 'green.700'
+  }[tone];
+  const titleColor = useColorModeValue('gray.700', 'gray.200');
+  return (
+    <HStack align="flex-start" spacing={3} py={3} data-testid={testId}>
+      <Circle size={7} bg={circle} flexShrink={0}>
+        <Icon as={icon} boxSize={3.5} color={glyph} aria-hidden />
+      </Circle>
+      <VStack align="start" spacing={1} flex={1} minW={0} pt={0.5}>
+        {(title || badge) && (
+          <HStack spacing={2} flexWrap="wrap">
+            {title && (
+              <Text fontSize="sm" fontWeight="semibold" color={titleColor}>
+                {title}
+              </Text>
+            )}
+            {badge}
+          </HStack>
+        )}
+        {children}
+        {action}
+      </VStack>
+    </HStack>
+  );
+}
+
+/** Rows split by a hairline. A CSS sibling border, so a row that renders null leaves no rule. */
+function ReadinessList({ children, testId }: { children: React.ReactNode; testId?: string }) {
+  const rule = useColorModeValue('gray.100', 'gray.600');
+  return (
+    <Box data-testid={testId} sx={{ '& > * + *': { borderTopWidth: '1px', borderTopColor: rule } }}>
+      {children}
+    </Box>
+  );
+}
+
+/** One link style for every "go fix it" action on the card (they were xs, some underlined). */
+function RowLink(props: React.ComponentProps<typeof Link> & { to?: string }) {
+  return (
+    <Link
+      fontSize="sm"
+      fontWeight="semibold"
+      color="green.700"
+      sx={{ '@media (hover: hover)': { '&:hover': { textDecoration: 'underline' } } }}
+      {...props}
+    />
+  );
+}
+
+/**
  * FAIL = a required record appears missing; REVIEW = present but needs attention.
  *
  * `badgeVariant`, not `colorScheme`. `theme/components/badge.js` gives Badge a `defaultProps.variant`
@@ -136,15 +227,11 @@ function statusStyle(status: CertifierReadinessFinding['status']) {
   return status === 'FAIL'
     ? {
         badgeVariant: 'danger',
-        accent: 'red',
-        icon: FaExclamationCircle,
-        iconColor: STATUS_URGENCY_TOKENS.crit.icon
+        icon: FaExclamationCircle
       }
     : {
         badgeVariant: 'warning',
-        accent: 'orange',
-        icon: FaInfoCircle,
-        iconColor: STATUS_URGENCY_TOKENS.warn.icon
+        icon: FaInfoCircle
       };
 }
 
@@ -233,10 +320,6 @@ export default function CertifierReadinessCard({
    * heading: that glyph is a state signal, not decoration, so it is not the same question.
    */
   const headerIconColor = useColorModeValue('gray.600', 'gray.400');
-  const rowBg = useColorModeValue('gray.50', 'gray.700');
-  const rowBorder = useColorModeValue('gray.200', 'gray.600');
-  const clearBg = useColorModeValue('green.50', 'green.900');
-  const clearBorder = useColorModeValue('green.200', 'green.700');
 
   /**
    * Run 8b (8b-01): the plan's access rule and the record findings are two different things and
@@ -439,33 +522,15 @@ export default function CertifierReadinessCard({
             </HStack>
 
             {topLabel ? (
-              <Box
-                bg={rowBg}
-                border="1px solid"
-                borderColor={rowBorder}
-                borderLeft="4px solid"
-                borderLeftColor={
-                  topIsUrgent ? STATUS_URGENCY_TOKENS.crit.bar : STATUS_URGENCY_TOKENS.warn.bar
-                }
-                borderRadius="md"
-                p={3}>
-                <HStack spacing={2} align="start">
-                  <Icon
-                    as={topIsUrgent ? FaExclamationCircle : FaInfoCircle}
-                    color={
-                      topIsUrgent
-                        ? STATUS_URGENCY_TOKENS.crit.icon
-                        : STATUS_URGENCY_TOKENS.warn.icon
-                    }
-                    boxSize={4}
-                    mt={0.5}
-                    flexShrink={0}
-                  />
-                  <Text fontSize="sm" fontWeight="semibold" color={textColor} noOfLines={2}>
+              <ReadinessRow
+                tone={topIsUrgent ? 'crit' : 'warn'}
+                icon={topIsUrgent ? FaExclamationCircle : FaInfoCircle}
+                title={
+                  <Box as="span" noOfLines={2}>
                     {topLabel}
-                  </Text>
-                </HStack>
-              </Box>
+                  </Box>
+                }
+              />
             ) : (
               <Text fontSize="sm" fontWeight="semibold" color={titleColor}>
                 {intl.formatMessage({ id: 'certifierReadiness.allClearTitle' })}
@@ -553,36 +618,28 @@ export default function CertifierReadinessCard({
           {/* ACCESS, from the plan. Kept out of the findings below: the findings are about the
               records and read the same on every plan. */}
           {showAccessNotice && (
-            <Box
-              data-testid="readiness-access-notice"
-              bg={rowBg}
-              border="1px solid"
-              borderColor={rowBorder}
-              borderRadius="md"
-              p={3}>
-              <HStack spacing={2} align="start" flexWrap="wrap">
-                <Icon as={FaInfoCircle} color={headerIconColor} boxSize={4} mt={0.5} />
-                <Text fontSize="sm" color={textColor} flex={1} minW="200px">
-                  {intl.formatMessage({ id: 'certifierReadiness.accessNotice' })}
-                </Text>
-                <Link
+            <ReadinessRow
+              tone="neutral"
+              icon={FaInfoCircle}
+              testId="readiness-access-notice"
+              action={
+                <RowLink
                   as={RouterLink}
                   to="/admin/dashboard/pricing"
-                  data-testid="readiness-access-notice-link"
-                  fontSize="xs"
-                  fontWeight="semibold"
-                  color="green.700"
-                  textDecoration="underline">
+                  data-testid="readiness-access-notice-link">
                   {intl.formatMessage({ id: 'app.complianceExports.cta' })} →
-                </Link>
-              </HStack>
-            </Box>
+                </RowLink>
+              }>
+              <Text fontSize="sm" color={textColor}>
+                {intl.formatMessage({ id: 'certifierReadiness.accessNotice' })}
+              </Text>
+            </ReadinessRow>
           )}
 
           {/* OPERATION scope first: Trazo requires these before it creates a review link, so they
               outrank anything found in a single season. Each carries its own concrete fix. */}
           {operationItems.length > 0 && (
-            <VStack align="stretch" spacing={2} data-testid="readiness-operation-findings">
+            <VStack align="stretch" spacing={0} data-testid="readiness-operation-findings">
               <HStack spacing={2}>
                 <Text fontSize="xs" fontWeight="bold" color={mutedColor} textTransform="uppercase">
                   {intl.formatMessage({ id: 'certifierReadiness.operationScope' })}
@@ -596,227 +653,178 @@ export default function CertifierReadinessCard({
                   </Badge>
                 )}
               </HStack>
-              {operationItems.map((item) => {
-                // The server sends a `code` and the VALUES; the sentence is written here, in
-                // the viewer's locale. `title`/`detail`/`fix` on the wire stay English because
-                // the certifier packet prints them — see `readinessMessages.ts`.
-                const words = resolveReadinessItem(item, intl);
-                return (
-                  <Box
-                    key={item.key}
-                    bg={rowBg}
-                    border="1px solid"
-                    borderColor={rowBorder}
-                    borderLeft="4px solid"
-                    borderLeftColor={
-                      item.status === 'blocker'
-                        ? STATUS_URGENCY_TOKENS.crit.bar
-                        : STATUS_URGENCY_TOKENS.warn.bar
-                    }
-                    borderRadius="md"
-                    p={3}>
-                    <HStack spacing={2} align="start">
-                      <Icon
-                        as={item.status === 'blocker' ? FaExclamationCircle : FaInfoCircle}
-                        color={
-                          item.status === 'blocker'
-                            ? STATUS_URGENCY_TOKENS.crit.icon
-                            : STATUS_URGENCY_TOKENS.warn.icon
-                        }
-                        boxSize={4}
-                        mt={0.5}
-                        flexShrink={0}
-                      />
-                      <VStack align="start" spacing={1} flex={1} minW={0}>
-                        <Text fontSize="sm" fontWeight="semibold" color={textColor}>
-                          {words.title}
+              <ReadinessList>
+                {operationItems.map((item) => {
+                  // The server sends a `code` and the VALUES; the sentence is written here, in
+                  // the viewer's locale. `title`/`detail`/`fix` on the wire stay English because
+                  // the certifier packet prints them — see `readinessMessages.ts`.
+                  const words = resolveReadinessItem(item, intl);
+                  return (
+                    <ReadinessRow
+                      key={item.key}
+                      tone={item.status === 'blocker' ? 'crit' : 'warn'}
+                      icon={item.status === 'blocker' ? FaExclamationCircle : FaInfoCircle}
+                      title={words.title}
+                      action={
+                        <>
+                          {item.code === 'ofpp.missing' ? (
+                            // Two routes to a plan on file, plus a person to ask (Run 8b, D2).
+                            <HStack spacing={4} flexWrap="wrap">
+                              <RowLink
+                                as={RouterLink}
+                                to={`/admin/dashboard/farm/${farmId}/profile`}
+                                data-testid="readiness-operation-link-ofpp">
+                                {intl.formatMessage({ id: 'certifierReadiness.ofppUpload' })} →
+                              </RowLink>
+                              <RowLink
+                                as={RouterLink}
+                                to={`/admin/dashboard/farm/${farmId}/osp/module/g2_0_fraud_prevention`}
+                                data-testid="readiness-operation-link-ofpp-module">
+                                {intl.formatMessage({ id: 'certifierReadiness.ofppModule' })} →
+                              </RowLink>
+                              <RowLink
+                                href={`mailto:${SETUP_HELP_EMAIL}`}
+                                data-testid="readiness-operation-link-ofpp-help">
+                                {intl.formatMessage({ id: 'certifierReadiness.setupHelp' })}
+                              </RowLink>
+                            </HStack>
+                          ) : (
+                            FINDING_ROUTES[item.key] && (
+                              <RowLink
+                                as={RouterLink}
+                                to={FINDING_ROUTES[item.key](farmId, { firstParcelId })}
+                                data-testid={`readiness-operation-link-${item.key}`}>
+                                {intl.formatMessage({
+                                  id:
+                                    item.key === 'records'
+                                      ? firstParcelId
+                                        ? 'certifierReadiness.recordsStartSeason'
+                                        : 'certifierReadiness.recordsAddParcel'
+                                      : 'certifierReadiness.fixNow'
+                                })}{' '}
+                                →
+                              </RowLink>
+                            )
+                          )}
+                        </>
+                      }>
+                      {words.detail && (
+                        <Text fontSize="xs" color={mutedColor} lineHeight="1.5">
+                          {words.detail}
                         </Text>
-                        {words.detail && (
-                          <Text fontSize="xs" color={mutedColor} lineHeight="1.5">
-                            {words.detail}
-                          </Text>
-                        )}
-                        {words.fix && (
-                          <Text fontSize="xs" color="green.700" fontWeight="medium">
-                            {words.fix}
-                          </Text>
-                        )}
-                        {/* A finding must be a task, not a puzzle: route the
-                          farmer to the editor that clears it (2026-08-10 —
-                          fix text alone made them map prose to navigation). */}
-                        {item.code === 'ofpp.missing' ? (
-                          // Two routes to a plan on file, plus a person to ask (Run 8b, D2).
-                          <HStack spacing={4} flexWrap="wrap">
-                            <Link
-                              as={RouterLink}
-                              to={`/admin/dashboard/farm/${farmId}/profile`}
-                              data-testid="readiness-operation-link-ofpp"
-                              fontSize="xs"
-                              fontWeight="semibold"
-                              color="green.700"
-                              textDecoration="underline">
-                              {intl.formatMessage({ id: 'certifierReadiness.ofppUpload' })} →
-                            </Link>
-                            <Link
-                              as={RouterLink}
-                              to={`/admin/dashboard/farm/${farmId}/osp/module/g2_0_fraud_prevention`}
-                              data-testid="readiness-operation-link-ofpp-module"
-                              fontSize="xs"
-                              fontWeight="semibold"
-                              color="green.700"
-                              textDecoration="underline">
-                              {intl.formatMessage({ id: 'certifierReadiness.ofppModule' })} →
-                            </Link>
-                            <Link
-                              href={`mailto:${SETUP_HELP_EMAIL}`}
-                              data-testid="readiness-operation-link-ofpp-help"
-                              fontSize="xs"
-                              fontWeight="semibold"
-                              color="green.700"
-                              textDecoration="underline">
-                              {intl.formatMessage({ id: 'certifierReadiness.setupHelp' })}
-                            </Link>
-                          </HStack>
-                        ) : (
-                          FINDING_ROUTES[item.key] && (
-                            <Link
-                              as={RouterLink}
-                              to={FINDING_ROUTES[item.key](farmId, { firstParcelId })}
-                              data-testid={`readiness-operation-link-${item.key}`}
-                              fontSize="xs"
-                              fontWeight="semibold"
-                              color="green.700"
-                              textDecoration="underline">
-                              {intl.formatMessage({
-                                id:
-                                  item.key === 'records'
-                                    ? firstParcelId
-                                      ? 'certifierReadiness.recordsStartSeason'
-                                      : 'certifierReadiness.recordsAddParcel'
-                                    : 'certifierReadiness.fixNow'
-                              })}{' '}
-                              →
-                            </Link>
-                          )
-                        )}
-                      </VStack>
-                    </HStack>
-                  </Box>
-                );
-              })}
+                      )}
+                      {/* Gray, not green: in green the instruction read as a second link sitting
+                          directly above the real one. */}
+                      {words.fix && (
+                        <Text fontSize="xs" color={textColor} fontWeight="medium">
+                          {words.fix}
+                        </Text>
+                      )}
+                    </ReadinessRow>
+                  );
+                })}
+              </ReadinessList>
             </VStack>
           )}
 
-          {/* Scope label whenever both scopes are on screen — not only when the season also has
-              findings, otherwise a clean season under a blocked operation reads as unlabelled. */}
-          {data?.production && operationItems.length > 0 && (
-            <Text fontSize="xs" fontWeight="bold" color={mutedColor} textTransform="uppercase">
-              {intl.formatMessage({ id: 'certifierReadiness.seasonScope' })}
-            </Text>
-          )}
+          {/* Label and list in ONE zero-gap stack, like the operation scope above: in the card's
+              spacing-4 stack the label sat 28px over its first row against 12px over the
+              operation's (2026-11-04). */}
+          {data?.production && (
+            <VStack align="stretch" spacing={0}>
+              {/* Scope label whenever both scopes are on screen — not only when the season also has
+                findings, otherwise a clean season under a blocked operation reads as unlabelled. */}
+              {data?.production && operationItems.length > 0 && (
+                <Text fontSize="xs" fontWeight="bold" color={mutedColor} textTransform="uppercase">
+                  {intl.formatMessage({ id: 'certifierReadiness.seasonScope' })}
+                </Text>
+              )}
 
-          {/* The green "Nothing outstanding" panel requires BOTH scopes clear (`totalOpen === 0`).
-              Gating it on `findings.length` alone put a reassuring green box directly beneath a red
-              "a certifier will not accept this operation until these are resolved" — the card
-              contradicting itself, which is the exact defect this consolidation set out to remove.
-              A clean season under a blocked operation gets a plain line instead. */}
-          {!data?.production ? null : findings.length === 0 ? (
-            totalOpen === 0 ? (
-              <Box
-                bg={clearBg}
-                border="1px solid"
-                borderColor={clearBorder}
-                borderRadius="lg"
-                p={4}>
-                <Text fontSize="sm" fontWeight="semibold" color={titleColor}>
-                  {intl.formatMessage({ id: 'certifierReadiness.allClearTitle' })}
-                </Text>
-                <Text fontSize="xs" color={mutedColor} mt={1}>
-                  {intl.formatMessage(
-                    { id: 'certifierReadiness.allClearHelp' },
-                    { checked: data.checked_count }
+              {/* The green "Nothing outstanding" panel requires BOTH scopes clear (`totalOpen === 0`).
+                Gating it on `findings.length` alone put a reassuring green box directly beneath a red
+                "a certifier will not accept this operation until these are resolved" — the card
+                contradicting itself, which is the exact defect this consolidation set out to remove.
+                A clean season under a blocked operation gets a plain line instead. */}
+              {!data?.production ? null : findings.length === 0 ? (
+                totalOpen === 0 ? (
+                  <ReadinessRow
+                    tone="clear"
+                    icon={FaCheck}
+                    title={intl.formatMessage({ id: 'certifierReadiness.allClearTitle' })}>
+                    <Text fontSize="xs" color={mutedColor}>
+                      {intl.formatMessage(
+                        { id: 'certifierReadiness.allClearHelp' },
+                        { checked: data.checked_count }
+                      )}
+                    </Text>
+                  </ReadinessRow>
+                ) : (
+                  <Text fontSize="xs" color={mutedColor} pt={2}>
+                    {intl.formatMessage(
+                      { id: 'certifierReadiness.seasonClear' },
+                      { checked: data.checked_count }
+                    )}
+                  </Text>
+                )
+              ) : (
+                <VStack align="stretch" spacing={2}>
+                  <ReadinessList>
+                    {visible.map((finding) => {
+                      const style = statusStyle(finding.status);
+                      const rowHref = finding.row_key
+                        ? ROW_ROUTES[finding.row_key]?.({
+                            farmId,
+                            parcelId: data.production?.parcel_id,
+                            productionId: data.production?.id
+                          }) ?? null
+                        : null;
+                      return (
+                        <ReadinessRow
+                          key={finding.label}
+                          tone={finding.status === 'FAIL' ? 'crit' : 'warn'}
+                          icon={style.icon}
+                          title={readinessFindingLabel(intl, finding)}
+                          badge={
+                            <Badge variant={style.badgeVariant} fontSize="xs" borderRadius="full">
+                              {intl.formatMessage({
+                                id:
+                                  finding.status === 'FAIL'
+                                    ? 'certifierReadiness.statusMissing'
+                                    : 'certifierReadiness.statusNeedsAttention'
+                              })}
+                            </Badge>
+                          }
+                          action={
+                            rowHref && (
+                              <RowLink
+                                as={RouterLink}
+                                to={rowHref}
+                                data-testid={`readiness-row-link-${finding.row_key}`}>
+                                {intl.formatMessage({ id: 'certifierReadiness.openRecord' })} →
+                              </RowLink>
+                            )
+                          }>
+                          <Text fontSize="xs" color={mutedColor} lineHeight="1.5">
+                            {readinessFindingDetail(intl, finding)}
+                          </Text>
+                          {finding.section_hint && (
+                            <Text fontSize="xs" color={mutedColor} fontStyle="italic">
+                              {readinessFindingSection(intl, finding)}
+                            </Text>
+                          )}
+                        </ReadinessRow>
+                      );
+                    })}
+                  </ReadinessList>
+                  {hidden > 0 && (
+                    <Text fontSize="xs" color={mutedColor}>
+                      {intl.formatMessage(
+                        { id: 'certifierReadiness.moreItems' },
+                        { count: hidden }
+                      )}
+                    </Text>
                   )}
-                </Text>
-              </Box>
-            ) : (
-              <Text fontSize="xs" color={mutedColor}>
-                {intl.formatMessage(
-                  { id: 'certifierReadiness.seasonClear' },
-                  { checked: data.checked_count }
-                )}
-              </Text>
-            )
-          ) : (
-            <VStack align="stretch" spacing={2} divider={<Divider borderColor={rowBorder} />}>
-              {visible.map((finding) => {
-                const style = statusStyle(finding.status);
-                const rowHref = finding.row_key
-                  ? ROW_ROUTES[finding.row_key]?.({
-                      farmId,
-                      parcelId: data.production?.parcel_id,
-                      productionId: data.production?.id
-                    }) ?? null
-                  : null;
-                return (
-                  <Box
-                    key={finding.label}
-                    bg={rowBg}
-                    border="1px solid"
-                    borderColor={rowBorder}
-                    borderLeft="4px solid"
-                    borderLeftColor={`${style.accent}.400`}
-                    borderRadius="md"
-                    p={3}>
-                    <HStack spacing={2} align="start">
-                      <Icon
-                        as={style.icon}
-                        color={style.iconColor}
-                        boxSize={4}
-                        mt={0.5}
-                        flexShrink={0}
-                      />
-                      <VStack align="start" spacing={1} flex={1} minW={0}>
-                        <HStack spacing={2} flexWrap="wrap">
-                          <Text fontSize="sm" fontWeight="semibold" color={textColor}>
-                            {readinessFindingLabel(intl, finding)}
-                          </Text>
-                          <Badge variant={style.badgeVariant} fontSize="xs" borderRadius="full">
-                            {intl.formatMessage({
-                              id:
-                                finding.status === 'FAIL'
-                                  ? 'certifierReadiness.statusMissing'
-                                  : 'certifierReadiness.statusNeedsAttention'
-                            })}
-                          </Badge>
-                        </HStack>
-                        <Text fontSize="xs" color={mutedColor} lineHeight="1.5">
-                          {readinessFindingDetail(intl, finding)}
-                        </Text>
-                        {finding.section_hint && (
-                          <Text fontSize="xs" color={mutedColor} fontStyle="italic">
-                            {readinessFindingSection(intl, finding)}
-                          </Text>
-                        )}
-                        {rowHref && (
-                          <Link
-                            as={RouterLink}
-                            to={rowHref}
-                            fontSize="xs"
-                            fontWeight="semibold"
-                            color="green.700"
-                            data-testid={`readiness-row-link-${finding.row_key}`}>
-                            {intl.formatMessage({ id: 'certifierReadiness.openRecord' })} →
-                          </Link>
-                        )}
-                      </VStack>
-                    </HStack>
-                  </Box>
-                );
-              })}
-              {hidden > 0 && (
-                <Text fontSize="xs" color={mutedColor}>
-                  {intl.formatMessage({ id: 'certifierReadiness.moreItems' }, { count: hidden })}
-                </Text>
+                </VStack>
               )}
             </VStack>
           )}
