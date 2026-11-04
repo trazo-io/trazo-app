@@ -1213,7 +1213,9 @@ function ProfileProduction() {
                         publicLabel={publicLabel}
                       />
                     )}
-                    {historyData?.production_amount && (
+                    {/* `amount && <Row/>` printed a bare "0" under End Date on every open season
+                        whose amount is the number 0: React renders a falsy number. Test the value. */}
+                    {Number(historyData?.production_amount) > 0 && (
                       <InfoRow
                         icon={FaClipboardList}
                         label={intl.formatMessage({
@@ -1242,7 +1244,7 @@ function ProfileProduction() {
                         {intl.formatMessage({ id: 'correct.season.action' })}
                       </StandardButton>
                     )}
-                    {historyData?.earning && (
+                    {Number(historyData?.earning) > 0 && (
                       <InfoRow
                         icon={FaChartLine}
                         label={intl.formatMessage({
