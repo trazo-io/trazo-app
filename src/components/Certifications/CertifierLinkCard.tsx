@@ -442,7 +442,7 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
         )}
 
         {canWrite && canMintLinks && (
-          <OperationReadinessPanel companyId={companyId} farmId={farmId} variant="preshare" />
+          <OperationReadinessPanel companyId={companyId} farmId={farmId} />
         )}
 
         {canWrite && !canMintLinks && <ComplianceExportsUpsell compact />}

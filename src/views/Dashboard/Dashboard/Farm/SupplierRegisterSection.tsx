@@ -35,7 +35,8 @@ import {
   StandardCard,
   StandardField,
   StandardInput,
-  StandardSelect
+  StandardSelect,
+  StatusList
 } from 'components/Design/StandardComponents';
 import { useUploadFarmDocumentMutation } from 'store/api/documentsApi';
 import {
@@ -216,10 +217,13 @@ const SupplierRow = ({
       ref={ref}
       data-testid={`supplier-${supplier.id}`}
       data-highlighted={highlighted ? 'true' : undefined}
-      p={{ base: 2, md: 3 }}
-      borderWidth="1px"
-      borderRadius="md"
-      borderColor={highlighted ? 'green.600' : 'gray.200'}>
+      // A row in the section's list, not a bordered box inside the card (2026-11-04: the
+      // card-in-card look retired across the app). The deep-linked supplier gets a soft green
+      // ground instead of the green border, so it still stands out when the page scrolls to it.
+      py={3}
+      px={highlighted ? 3 : 0}
+      bg={highlighted ? 'green.50' : undefined}
+      borderRadius={highlighted ? 'md' : undefined}>
       <HStack spacing={2} flexWrap="wrap">
         <Icon as={FaSeedling} color="green.700" boxSize={4} />
         <Text fontSize="sm" fontWeight="semibold">
@@ -432,64 +436,75 @@ const SupplierRegisterSection = ({ companyId, farmId, state }: Props) => {
               <Text fontSize="xs" color="gray.600">
                 {intl.formatMessage({ id: 'suppliers.unconfirmed.help' })}
               </Text>
-              <VStack align="stretch" spacing={2} mt={2}>
-                {unconfirmed.map((u) => (
-                  <Box
-                    key={u.name}
-                    data-testid="unconfirmed-spelling"
-                    p={2}
-                    borderWidth="1px"
-                    borderRadius="md"
-                    borderColor={
-                      focusSpelling && sameSpelling(u.name, focusSpelling)
-                        ? 'green.600'
-                        : 'gray.200'
-                    }>
-                    <Text fontSize="sm">
-                      {intl.formatMessage(
-                        { id: 'suppliers.unconfirmed.row' },
-                        { name: u.name, count: u.records }
-                      )}
-                    </Text>
-                    <HStack spacing={2} mt={1} flexWrap="wrap">
-                      {active.length > 0 && (
-                        <>
-                          <StandardSelect
-                            aria-label={intl.formatMessage(
-                              { id: 'suppliers.unconfirmed.attachTo' },
-                              { name: u.name }
-                            )}
-                            size="sm"
-                            maxW="xs"
-                            value={attachTo[u.name] ?? ''}
-                            onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                              setAttachTo({ ...attachTo, [u.name]: e.target.value })
-                            }>
-                            <option value="">
-                              {intl.formatMessage({ id: 'suppliers.unconfirmed.choose' })}
-                            </option>
-                            {active.map((s) => (
-                              <option key={s.id} value={String(s.id)}>
-                                {s.name}
-                              </option>
-                            ))}
-                          </StandardSelect>
+              {/* Rows with hairlines, not a bordered box per spelling (2026-11-04). The spelling a
+                  deep link points at gets the same soft green ground as a highlighted supplier. */}
+              <Box mt={1}>
+                <StatusList>
+                  {unconfirmed.map((u) => {
+                    const focused = Boolean(focusSpelling && sameSpelling(u.name, focusSpelling));
+                    return (
+                      <Box
+                        key={u.name}
+                        data-testid="unconfirmed-spelling"
+                        data-highlighted={focused ? 'true' : undefined}
+                        py={3}
+                        px={focused ? 3 : 0}
+                        bg={focused ? 'green.50' : undefined}
+                        borderRadius={focused ? 'md' : undefined}>
+                        <Text fontSize="sm">
+                          {intl.formatMessage(
+                            { id: 'suppliers.unconfirmed.row' },
+                            { name: u.name, count: u.records }
+                          )}
+                        </Text>
+                        <HStack spacing={2} mt={1} flexWrap="wrap">
+                          {active.length > 0 && (
+                            <>
+                              <StandardSelect
+                                aria-label={intl.formatMessage(
+                                  { id: 'suppliers.unconfirmed.attachTo' },
+                                  { name: u.name }
+                                )}
+                                size="sm"
+                                maxW="xs"
+                                value={attachTo[u.name] ?? ''}
+                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                                  setAttachTo({ ...attachTo, [u.name]: e.target.value })
+                                }>
+                                <option value="">
+                                  {intl.formatMessage({ id: 'suppliers.unconfirmed.choose' })}
+                                </option>
+                                {active.map((s) => (
+                                  <option key={s.id} value={String(s.id)}>
+                                    {s.name}
+                                  </option>
+                                ))}
+                              </StandardSelect>
+                              <StandardButton
+                                variant="outline"
+                                size="sm"
+                                isDisabled={!attachTo[u.name]}
+                                onClick={() => attach(u.name)}>
+                                {intl.formatMessage({ id: 'suppliers.unconfirmed.attach' })}
+                              </StandardButton>
+                            </>
+                          )}
                           <StandardButton
-                            variant="outline"
+                            variant="ghost"
                             size="sm"
-                            isDisabled={!attachTo[u.name]}
-                            onClick={() => attach(u.name)}>
-                            {intl.formatMessage({ id: 'suppliers.unconfirmed.attach' })}
+                            // Flush with the name above: a ghost button's side padding indented
+                            // it off the row's left edge. Underline on hover instead of a fill.
+                            px={0}
+                            _hover={{ bg: 'transparent', textDecoration: 'underline' }}
+                            onClick={() => startAdding(u.name)}>
+                            {intl.formatMessage({ id: 'suppliers.unconfirmed.create' })}
                           </StandardButton>
-                        </>
-                      )}
-                      <StandardButton variant="ghost" size="sm" onClick={() => startAdding(u.name)}>
-                        {intl.formatMessage({ id: 'suppliers.unconfirmed.create' })}
-                      </StandardButton>
-                    </HStack>
-                  </Box>
-                ))}
-              </VStack>
+                        </HStack>
+                      </Box>
+                    );
+                  })}
+                </StatusList>
+              </Box>
             </Box>
           )}
 
@@ -557,15 +572,19 @@ const SupplierRegisterSection = ({ companyId, farmId, state }: Props) => {
               {intl.formatMessage({ id: 'suppliers.empty' })}
             </Text>
           )}
-          {[...active, ...archived].map((s) => (
-            <SupplierRow
-              key={s.id}
-              supplier={s}
-              companyId={companyId}
-              farmId={farmId}
-              highlighted={focusSupplier === s.id}
-            />
-          ))}
+          {suppliers.length > 0 && (
+            <StatusList>
+              {[...active, ...archived].map((s) => (
+                <SupplierRow
+                  key={s.id}
+                  supplier={s}
+                  companyId={companyId}
+                  farmId={farmId}
+                  highlighted={focusSupplier === s.id}
+                />
+              ))}
+            </StatusList>
+          )}
         </VStack>
       </StandardCard>
     </Box>
