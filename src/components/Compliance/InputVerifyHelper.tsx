@@ -39,11 +39,10 @@ import {
   Flex,
   Icon,
   Link,
-  Stack,
   Text,
   VStack
 } from '@chakra-ui/react';
-import { FaCheckCircle, FaExclamationTriangle, FaExternalLinkAlt, FaSearch } from 'react-icons/fa';
+import { FaCheck, FaExclamationTriangle, FaExternalLinkAlt, FaSearch, FaTag } from 'react-icons/fa';
 
 /**
  * Extend a compact control's HIT AREA to the 44px touch minimum without growing it visually —
@@ -82,6 +81,7 @@ const TOUCH_TARGET = {
 };
 import { useIntl } from 'react-intl';
 
+import { StatusList, StatusRow } from 'components/Design/StandardComponents';
 import { useLazyVerifyInputQuery } from 'store/api/ospApi';
 import type { InputVerifyResult } from 'types/osp';
 import { parseDateOnly } from 'utils/dateOnly';
@@ -294,7 +294,8 @@ const ResultCard: React.FC<{
             href={search}
             isExternal
             fontSize="xs"
-            color="blue.600"
+            fontWeight="semibold"
+            color="green.700"
             display="inline-flex"
             gap={1}
             alignItems="center">
@@ -374,217 +375,141 @@ const ResultCard: React.FC<{
               )}
             </Text>
           )}
-          {omriCandidates.map((candidate) => (
+          <StatusList>
+            {omriCandidates.map((candidate) => (
+              <MatchRow
+                key={candidate.pk}
+                badgeLabel="OMRI"
+                attached={attachedOmriPk === candidate.pk}
+                title={candidate.product_name}
+                subtitle={omriSubtitle(candidate)}
+                action={
+                  onAttachOmri ? (
+                    <AttachAction
+                      attached={attachedOmriPk === candidate.pk}
+                      onAttach={() => onAttachOmri(candidate.pk)}
+                      onDetach={() => onAttachOmri(null)}
+                    />
+                  ) : undefined
+                }
+              />
+            ))}
+          </StatusList>
+        </VStack>
+      )}
+      {/* The single answers, one list: an unambiguous OMRI match, WSDA, the National List. */}
+      {((hasOMRI && !ambiguousOmri) || hasWSDA || hasNL) && (
+        <StatusList>
+          {hasOMRI && !ambiguousOmri && (
             <MatchRow
-              key={candidate.pk}
               badgeLabel="OMRI"
-              badgeColor="purple"
-              title={candidate.product_name}
-              subtitle={omriSubtitle(candidate)}
+              attached={omriAttached}
+              title={result.omri_product_name || ''}
+              // Through `omriSubtitle`, so the UNAMBIGUOUS match carries its edition date too.
+              // It used to build `OMRI #<id>` inline and print no edition, which had it exactly
+              // backwards: the edition appeared only in the multi-match list, and was missing from
+              // the single row a grower actually attaches to a record. Same daily-republication
+              // reason as above, on the path that ends in a stored listing.
+              //
+              // Reading the candidate rather than the top-level fields is safe and not a guess:
+              // `matched_omri` IS `omri_candidates[0]` on both server branches
+              // (certifications/views.py:206 and :217), so a match always has its row here. The
+              // `find` is still by pk, and it still falls back to the ID alone, so a response that
+              // ever stops holding the row degrades to the old subtitle instead of dropping the ID.
+              subtitle={
+                omriSubtitle(
+                  omriCandidates.find((candidate) => candidate.pk === result.omri_product_pk) ?? {
+                    omri_id: result.omri_product_id ?? null
+                  }
+                ) || undefined
+              }
               action={
                 onAttachOmri ? (
-                  attachedOmriPk === candidate.pk ? (
-                    <HStack spacing={2}>
-                      <Text
-                        fontSize="xs"
-                        color="green.700"
-                        fontWeight="semibold"
-                        whiteSpace="nowrap">
-                        {intl.formatMessage({
-                          id: 'inputVerify.attached',
-                          defaultMessage: 'Attached to this record'
-                        })}
-                      </Text>
-                      <Button
-                        size="xs"
-                        variant="link"
-                        colorScheme="gray"
-                        {...TOUCH_TARGET}
-                        onClick={() => onAttachOmri(null)}>
-                        {intl.formatMessage({
-                          id: 'inputVerify.detach',
-                          defaultMessage: 'Remove'
-                        })}
-                      </Button>
-                    </HStack>
-                  ) : (
-                    <Button
-                      size="xs"
-                      variant="outline"
-                      colorScheme="green"
-                      {...TOUCH_TARGET}
-                      onClick={() => onAttachOmri(candidate.pk)}>
-                      {intl.formatMessage({
-                        id: 'inputVerify.attach',
-                        defaultMessage: 'Use this listing'
-                      })}
-                    </Button>
-                  )
+                  <AttachAction
+                    attached={omriAttached}
+                    onAttach={() => onAttachOmri(result.omri_product_pk as number)}
+                    onDetach={() => onAttachOmri(null)}
+                  />
                 ) : undefined
               }
             />
-          ))}
-        </VStack>
-      )}
-      {hasOMRI && !ambiguousOmri && (
-        <MatchRow
-          badgeLabel="OMRI"
-          badgeColor="purple"
-          title={result.omri_product_name || ''}
-          // Through `omriSubtitle`, so the UNAMBIGUOUS match carries its edition date too.
-          // It used to build `OMRI #<id>` inline and print no edition, which had it exactly
-          // backwards: the edition appeared only in the multi-match list, and was missing from
-          // the single row a grower actually attaches to a record. Same daily-republication
-          // reason as above, on the path that ends in a stored listing.
-          //
-          // Reading the candidate rather than the top-level fields is safe and not a guess:
-          // `matched_omri` IS `omri_candidates[0]` on both server branches
-          // (certifications/views.py:206 and :217), so a match always has its row here. The
-          // `find` is still by pk, and it still falls back to the ID alone, so a response that
-          // ever stops holding the row degrades to the old subtitle instead of dropping the ID.
-          subtitle={
-            omriSubtitle(
-              omriCandidates.find((candidate) => candidate.pk === result.omri_product_pk) ?? {
-                omri_id: result.omri_product_id ?? null
-              }
-            ) || undefined
-          }
-          action={
-            onAttachOmri ? (
-              omriAttached ? (
-                <HStack spacing={2}>
-                  <Text fontSize="xs" color="green.700" fontWeight="semibold" whiteSpace="nowrap">
-                    {intl.formatMessage({
-                      id: 'inputVerify.attached',
-                      defaultMessage: 'Attached to this record'
-                    })}
-                  </Text>
-                  <Button
-                    size="xs"
-                    variant="link"
-                    colorScheme="gray"
-                    {...TOUCH_TARGET}
-                    onClick={() => onAttachOmri(null)}>
-                    {intl.formatMessage({ id: 'inputVerify.detach', defaultMessage: 'Remove' })}
-                  </Button>
-                </HStack>
-              ) : (
-                <Button
-                  size="xs"
-                  variant="outline"
-                  colorScheme="green"
-                  {...TOUCH_TARGET}
-                  onClick={() => onAttachOmri(result.omri_product_pk as number)}>
-                  {intl.formatMessage({
-                    id: 'inputVerify.attach',
-                    defaultMessage: 'Use this listing'
-                  })}
-                </Button>
-              )
-            ) : undefined
-          }
-        />
-      )}
-      {hasWSDA && (
-        <MatchRow
-          badgeLabel="WSDA"
-          badgeColor="teal"
-          title={result.wsda_material_name || ''}
-          subtitle={[
-            wsdaProductNumber(result.wsda_material_id)
-              ? intl.formatMessage(
-                  {
-                    id: 'inputVerify.wsdaProductNumber',
-                    defaultMessage: 'WSDA Product #{number}'
-                  },
-                  { number: wsdaProductNumber(result.wsda_material_id) }
-                )
-              : '',
-            result.wsda_material_category
-          ]
-            .filter(Boolean)
-            .join(' · ')}
-          /*
+          )}
+          {hasWSDA && (
+            <MatchRow
+              badgeLabel="WSDA"
+              attached={attachedWsdaPk != null && attachedWsdaPk === result.wsda_material_pk}
+              title={result.wsda_material_name || ''}
+              subtitle={[
+                wsdaProductNumber(result.wsda_material_id)
+                  ? intl.formatMessage(
+                      {
+                        id: 'inputVerify.wsdaProductNumber',
+                        defaultMessage: 'WSDA Product #{number}'
+                      },
+                      { number: wsdaProductNumber(result.wsda_material_id) }
+                    )
+                  : '',
+                result.wsda_material_category
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+              /*
             Attachable since 2026-09-02. It was not, and the record had no WSDA column — so a
             product listed only by WSDA (23 of the 42 seeded brands: Feather Meal 13-0-0,
             AzaMax, Kaligreen, Madex HP …) could never be more than "grower-reported", and a
             grower after the stronger chip was quietly pushed to attach a neighbouring OMRI
             row instead. CCOF accepts either listing; the record now holds either.
           */
-          action={
-            onAttachWsda ? (
-              attachedWsdaPk != null && attachedWsdaPk === result.wsda_material_pk ? (
-                <HStack spacing={2}>
-                  <Text fontSize="xs" color="green.700" fontWeight="semibold" whiteSpace="nowrap">
-                    {intl.formatMessage({
-                      id: 'inputVerify.attached',
-                      defaultMessage: 'Attached to this record'
-                    })}
-                  </Text>
-                  <Button
-                    size="xs"
-                    variant="link"
-                    colorScheme="gray"
-                    {...TOUCH_TARGET}
-                    onClick={() => onAttachWsda(null)}>
-                    {intl.formatMessage({ id: 'inputVerify.detach', defaultMessage: 'Remove' })}
-                  </Button>
-                </HStack>
-              ) : (
-                <Button
-                  size="xs"
-                  variant="outline"
-                  colorScheme="green"
-                  {...TOUCH_TARGET}
-                  onClick={() => onAttachWsda(result.wsda_material_pk as number)}>
-                  {intl.formatMessage({
-                    id: 'inputVerify.attach',
-                    defaultMessage: 'Use this listing'
-                  })}
-                </Button>
-              )
-            ) : undefined
-          }
-        />
-      )}
-      {hasNL && (
-        <MatchRow
-          badgeLabel={
-            nlNonsynthetic
-              ? intl.formatMessage({
-                  id: 'inputVerify.nonsynthetic',
-                  defaultMessage: 'Nonsynthetic'
-                })
-              : intl.formatMessage({
-                  id: 'inputVerify.nationalList',
-                  defaultMessage: 'National List'
-                })
-          }
-          badgeColor={nlNonsynthetic ? 'gray' : 'blue'}
-          title={result.national_list_substance_name || ''}
-          tone={nlProhibited ? 'prohibited' : 'allowed'}
-          subtitle={[
-            nlNonsynthetic
-              ? intl.formatMessage({
-                  id: 'inputVerify.nonsyntheticNote',
-                  defaultMessage: 'allowed without a National List entry'
-                })
-              : result.national_list_citation || result.national_list_cfr_section,
-            // Two static ids, not one interpolated one: a dynamic message id is invisible to the
-            // locale-parity test and shows up as a runtime "missing message" instead.
-            nlProhibited
-              ? intl.formatMessage({
-                  id: 'inputVerify.nlStatus.prohibited',
-                  defaultMessage: 'prohibited'
-                })
-              : intl.formatMessage({
-                  id: 'inputVerify.nlStatus.allowed',
-                  defaultMessage: 'allowed'
-                })
-          ]
-            .filter(Boolean)
-            .join(' · ')}
-        />
+              action={
+                onAttachWsda ? (
+                  <AttachAction
+                    attached={attachedWsdaPk != null && attachedWsdaPk === result.wsda_material_pk}
+                    onAttach={() => onAttachWsda(result.wsda_material_pk as number)}
+                    onDetach={() => onAttachWsda(null)}
+                  />
+                ) : undefined
+              }
+            />
+          )}
+          {hasNL && (
+            <MatchRow
+              badgeLabel={
+                nlNonsynthetic
+                  ? intl.formatMessage({
+                      id: 'inputVerify.nonsynthetic',
+                      defaultMessage: 'Nonsynthetic'
+                    })
+                  : intl.formatMessage({
+                      id: 'inputVerify.nationalList',
+                      defaultMessage: 'National List'
+                    })
+              }
+              title={result.national_list_substance_name || ''}
+              tone={nlProhibited ? 'prohibited' : 'allowed'}
+              subtitle={[
+                nlNonsynthetic
+                  ? intl.formatMessage({
+                      id: 'inputVerify.nonsyntheticNote',
+                      defaultMessage: 'allowed without a National List entry'
+                    })
+                  : result.national_list_citation || result.national_list_cfr_section,
+                // Two static ids, not one interpolated one: a dynamic message id is invisible to the
+                // locale-parity test and shows up as a runtime "missing message" instead.
+                nlProhibited
+                  ? intl.formatMessage({
+                      id: 'inputVerify.nlStatus.prohibited',
+                      defaultMessage: 'prohibited'
+                    })
+                  : intl.formatMessage({
+                      id: 'inputVerify.nlStatus.allowed',
+                      defaultMessage: 'allowed'
+                    })
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+            />
+          )}
+        </StatusList>
       )}
       <Text fontSize="xs" color="gray.500">
         {intl.formatMessage({
@@ -610,72 +535,94 @@ const ResultCard: React.FC<{
  */
 const MatchRow: React.FC<{
   badgeLabel: string;
-  badgeColor: string;
   title: string;
   subtitle?: string;
   tone?: 'allowed' | 'prohibited';
+  /** This listing is the one attached to the record. */
+  attached?: boolean;
   /** Grower action for this row (attach / detach). Rendered after the text, never before. */
   action?: React.ReactNode;
-}> = ({ badgeLabel, badgeColor, title, subtitle, tone = 'allowed', action }) => (
+}> = ({ badgeLabel, title, subtitle, tone = 'allowed', attached = false, action }) => (
   /*
-   * Column below 480px, row above.
+   * A StatusRow in a StatusList (2026-11-04), not a green box per match. The old card painted
+   * EVERY candidate green (green.50 ground, green border, green check) before the grower had
+   * chosen anything, so six options read as six approvals; and the check, green.500 on green.50,
+   * was under the 3:1 a glyph owes. Green now appears only on the row actually ATTACHED to the
+   * record. A candidate is neutral; a prohibited National List hit stays red (the verdict above).
    *
-   * MEASURED 2026-09-01 at 390px: inline, the attach button left ~150px for the title and
-   * "Entrust SC Naturalyte Insect Control" rendered as "Entrust SC Naturalyte Insect…". The
-   * product name is the evidence on this card — it is what the grower checks against the label
-   * in their hand — so the action drops beneath it rather than truncating it. With no action
-   * the Stack has a single child and column vs row is indistinguishable, so rows without one
-   * are unchanged.
+   * The source badge is neutral for every catalog. It was purple (OMRI), teal (WSDA) and blue
+   * (National List): colour as decoration, which frontend.md retires (purple and blue carry no
+   * meaning here). The words name the source.
+   *
+   * `data-tone` stays on the row: prohibitedInputVerdict.test reads it, because emotion turns
+   * a ground colour into a class the DOM cannot show.
    */
-  <Stack
-    direction={{ base: 'column', smd: 'row' }}
-    spacing={2}
-    align={{ base: 'stretch', smd: 'center' }}
-    p={2}
-    bg={tone === 'prohibited' ? 'red.50' : 'green.50'}
-    borderWidth="1px"
-    borderColor={tone === 'prohibited' ? 'red.500' : 'green.200'}
-    borderRadius="md"
-    _dark={
-      tone === 'prohibited'
-        ? { bg: 'red.900', borderColor: 'red.600' }
-        : { bg: 'green.900', borderColor: 'green.700' }
-    }
-    data-tone={tone}>
-    <HStack spacing={2} align="center" flex={1} minW={0}>
-      <Icon
-        as={tone === 'prohibited' ? FaExclamationTriangle : FaCheckCircle}
-        color={tone === 'prohibited' ? 'red.800' : 'green.500'}
-        // Dark mode is not reachable in this app today (no ColorModeScript, no toggle), but the
-        // `_dark` background above is already declared — and red.800/red.900 glyphs on a red.900
-        // ground would be the same colour twice. Declared light so the trap is not waiting.
-        _dark={{ color: tone === 'prohibited' ? 'red.100' : 'green.200' }}
-      />
-      <Badge colorScheme={badgeColor} fontSize="11px">
-        {badgeLabel}
-      </Badge>
-      <Box flex={1} minW={0}>
-        <Text fontSize="sm" fontWeight="semibold" noOfLines={2}>
+  <Box data-tone={tone} data-attached={attached ? 'true' : undefined}>
+    <StatusRow
+      tone={tone === 'prohibited' ? 'crit' : attached ? 'clear' : 'neutral'}
+      icon={tone === 'prohibited' ? FaExclamationTriangle : attached ? FaCheck : FaTag}
+      // Two lines, then ellipsis: the product name is the evidence the grower checks against
+      // the label in their hand, so the action sits BELOW it and never squeezes it.
+      title={
+        <Text as="span" noOfLines={2}>
           {title}
         </Text>
-        {subtitle && (
-          <Text
-            fontSize="xs"
-            color={tone === 'prohibited' ? 'red.900' : 'gray.600'}
-            _dark={{ color: tone === 'prohibited' ? 'red.100' : 'gray.300' }}
-            fontWeight={tone === 'prohibited' ? 'semibold' : 'normal'}
-            noOfLines={1}>
-            {subtitle}
-          </Text>
-        )}
-      </Box>
-    </HStack>
-    {action && (
-      <Box flexShrink={0} alignSelf={{ base: 'flex-start', smd: 'center' }}>
-        {action}
-      </Box>
-    )}
-  </Stack>
+      }
+      badge={
+        <Badge variant="neutral" fontSize="11px">
+          {badgeLabel}
+        </Badge>
+      }
+      action={action}>
+      {subtitle && (
+        <Text
+          fontSize="xs"
+          color={tone === 'prohibited' ? 'red.900' : 'gray.600'}
+          fontWeight={tone === 'prohibited' ? 'semibold' : 'normal'}
+          noOfLines={1}>
+          {subtitle}
+        </Text>
+      )}
+    </StatusRow>
+  </Box>
 );
+
+/**
+ * Attach / detach for one listing. Attaching stays an explicit act of the grower
+ * (omriAttachIsExplicit.test): a text action under the name, not an outlined pill on every row.
+ * The hit area keeps the 44px TOUCH_TARGET.
+ */
+const AttachAction: React.FC<{
+  attached: boolean;
+  onAttach: () => void;
+  onDetach: () => void;
+}> = ({ attached, onAttach, onDetach }) => {
+  const intl = useIntl();
+  return attached ? (
+    <HStack spacing={3}>
+      <Text fontSize="xs" color="green.700" fontWeight="semibold" whiteSpace="nowrap">
+        {intl.formatMessage({
+          id: 'inputVerify.attached',
+          defaultMessage: 'Attached to this record'
+        })}
+      </Text>
+      <Button size="xs" variant="link" colorScheme="gray" {...TOUCH_TARGET} onClick={onDetach}>
+        {intl.formatMessage({ id: 'inputVerify.detach', defaultMessage: 'Remove' })}
+      </Button>
+    </HStack>
+  ) : (
+    <Link
+      as="button"
+      type="button"
+      fontSize="sm"
+      fontWeight="semibold"
+      color="green.700"
+      {...TOUCH_TARGET}
+      sx={{ '@media (hover: hover)': { '&:hover': { textDecoration: 'underline' } } }}
+      onClick={onAttach}>
+      {intl.formatMessage({ id: 'inputVerify.attach', defaultMessage: 'Use this listing' })} →
+    </Link>
+  );
+};
 
 export default InputVerifyHelper;
