@@ -92,10 +92,22 @@ export interface AgentFormSheetRow {
   extra: Record<string, unknown>;
 }
 
+export interface AgentFormSheetForm {
+  title: string;
+  document_id: string;
+  revision: string;
+  url: string;
+  stem?: string;
+  /** The agent sends its own copy with the renewal; the linked one is an earlier published edition. */
+  sent_with_renewal?: boolean;
+}
+
 export interface AgentFormSheet {
   agent: string;
   agent_name: string;
-  form: { title: string; document_id: string; revision: string; url: string };
+  form: AgentFormSheetForm;
+  /** Every form the sheet covers, in the agent's order; the first is `form`. */
+  forms?: AgentFormSheetForm[];
   plan_version: number;
   filing_id: number | null;
   establishment_id: number;
