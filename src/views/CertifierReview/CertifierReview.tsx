@@ -36,7 +36,7 @@ import {
   Link
 } from '@chakra-ui/react';
 import {
-  FaCheckCircle,
+  FaCheck,
   FaDownload,
   FaExclamationCircle,
   FaFileAlt,
@@ -46,7 +46,7 @@ import {
 import { useIntl } from 'react-intl';
 import { useParams } from 'react-router-dom';
 
-import { StandardButton } from 'components/Design/StandardComponents';
+import { StandardButton, StatusList, StatusRow } from 'components/Design/StandardComponents';
 import { config } from 'config/environment';
 import { formatDateOnly, formatDateFromTimestamp } from 'utils/dateOnly';
 import {
@@ -112,18 +112,28 @@ const formatDate = (value?: string | null) => formatDateOnly(value) ?? null;
  * checks whether a record is present, so it says that: "Missing" or "For review", in neutral
  * colours. Nothing here reads as a certifier's verdict.
  */
+// Every status maps to the NEUTRAL StatusRow tone (2026-11-04, rows replaced edged boxes). The
+// glyph shape and the badge words tell Missing from For review; colour does not, by design.
 function findingStyle(status: ReadinessFinding['status']) {
   if (status === 'FAIL') {
     return {
-      tone: 'gray.500',
+      tone: 'neutral' as const,
       icon: FaExclamationCircle,
       labelId: 'certifierReview.status.missing'
     };
   }
   if (status === 'REVIEW') {
-    return { tone: 'gray.400', icon: FaInfoCircle, labelId: 'certifierReview.status.forReview' };
+    return {
+      tone: 'neutral' as const,
+      icon: FaInfoCircle,
+      labelId: 'certifierReview.status.forReview'
+    };
   }
-  return { tone: 'gray.300', icon: FaInfoCircle, labelId: 'certifierReview.status.notAssessed' };
+  return {
+    tone: 'neutral' as const,
+    icon: FaInfoCircle,
+    labelId: 'certifierReview.status.notAssessed'
+  };
 }
 
 /** The row's name in the reader's language, or the server's English label if it has none. */
@@ -168,13 +178,9 @@ const CertifierReview: React.FC = () => {
   const [buildJob, setBuildJob] = useState<ExportJob | null>(null);
   const [buildError, setBuildError] = useState<'failed' | 'timeout' | null>(null);
 
-  const rowBg = useColorModeValue('gray.50', 'gray.700');
   const rowBorder = useColorModeValue('gray.200', 'gray.600');
   const textColor = useColorModeValue('gray.700', 'gray.200');
   const mutedColor = useColorModeValue('gray.500', 'gray.400');
-  const clearBg = useColorModeValue('green.50', 'green.900');
-  const clearBorder = useColorModeValue('green.200', 'green.700');
-  const clearText = useColorModeValue('green.700', 'green.300');
 
   const apiRoot = `${config.API_ROOT_URL}/api`;
 
@@ -358,113 +364,86 @@ const CertifierReview: React.FC = () => {
               {productionsWithFindings.length === 0 && notAssessedTotal > 0 ? (
                 /* No finding, but rows were not assessed: a fact about scope, never the
                    green all-clear (review of app #95). The rows are listed by the toggle below. */
-                <Box bg={rowBg} border="1px solid" borderColor={rowBorder} borderRadius="lg" p={4}>
-                  <HStack spacing={2}>
-                    <Icon as={FaInfoCircle} color={mutedColor} boxSize={4} />
-                    <Text
-                      fontSize="sm"
-                      color={textColor}
-                      data-testid="certifier-no-findings-some-not-assessed">
-                      {intl.formatMessage(
-                        {
-                          id: 'certifierReview.readinessNoFindingsSomeNotAssessed',
-                          defaultMessage:
-                            'No finding across {count, plural, one {# season} other {# seasons}} in this window; {notAssessed, plural, one {# row was} other {# rows were}} not assessed'
-                        },
-                        { count: readiness.total_productions, notAssessed: notAssessedTotal }
-                      )}
-                    </Text>
-                  </HStack>
-                </Box>
+                <StatusRow tone="neutral" icon={FaInfoCircle}>
+                  <Text
+                    fontSize="sm"
+                    color={textColor}
+                    data-testid="certifier-no-findings-some-not-assessed">
+                    {intl.formatMessage(
+                      {
+                        id: 'certifierReview.readinessNoFindingsSomeNotAssessed',
+                        defaultMessage:
+                          'No finding across {count, plural, one {# season} other {# seasons}} in this window; {notAssessed, plural, one {# row was} other {# rows were}} not assessed'
+                      },
+                      { count: readiness.total_productions, notAssessed: notAssessedTotal }
+                    )}
+                  </Text>
+                </StatusRow>
               ) : productionsWithFindings.length === 0 ? (
-                <Box
-                  bg={clearBg}
-                  border="1px solid"
-                  borderColor={clearBorder}
-                  borderRadius="lg"
-                  p={4}>
-                  <HStack spacing={2}>
-                    <Icon as={FaCheckCircle} color={clearText} boxSize={4} />
-                    <Text fontSize="sm" fontWeight="semibold" color={clearText}>
-                      {intl.formatMessage(
-                        {
-                          id: 'certifierReview.readinessAllClear',
-                          defaultMessage:
-                            'No outstanding items across {count, plural, one {# season} other {# seasons}} in this window'
-                        },
-                        { count: readiness.total_productions }
-                      )}
-                    </Text>
-                  </HStack>
-                </Box>
+                <StatusRow
+                  tone="clear"
+                  icon={FaCheck}
+                  title={intl.formatMessage(
+                    {
+                      id: 'certifierReview.readinessAllClear',
+                      defaultMessage:
+                        'No outstanding items across {count, plural, one {# season} other {# seasons}} in this window'
+                    },
+                    { count: readiness.total_productions }
+                  )}
+                />
               ) : (
                 productionsWithFindings.map((production) => (
                   <Box key={production.production_id}>
                     <Text fontSize="sm" fontWeight="semibold" color={textColor} mb={2}>
                       {production.production_name}
                     </Text>
-                    <VStack align="stretch" spacing={2}>
+                    {/* Rows in a list, not a gray box with an edge per finding (2026-11-04).
+                        Same StatusRow as the farm-home card, held to the NEUTRAL tone here. */}
+                    <StatusList>
                       {production.findings.map((finding) => {
                         const style = findingStyle(finding.status);
                         return (
-                          <Box
+                          <StatusRow
                             key={finding.label}
-                            bg={rowBg}
-                            border="1px solid"
-                            borderColor={rowBorder}
-                            borderLeft="4px solid"
-                            borderLeftColor={style.tone}
-                            borderRadius="md"
-                            p={3}>
-                            <HStack spacing={2} align="start">
-                              <Icon
-                                as={style.icon}
-                                color={style.tone}
-                                boxSize={4}
-                                mt={0.5}
-                                flexShrink={0}
-                              />
-                              <VStack align="start" spacing={1} flex={1} minW={0}>
-                                <HStack spacing={2} flexWrap="wrap">
-                                  <Text fontSize="sm" fontWeight="semibold" color={textColor}>
-                                    {findingLabel(intl, finding)}
-                                  </Text>
-                                  <Badge variant="neutral" fontSize="xs" borderRadius="full">
-                                    {intl.formatMessage({ id: style.labelId })}
-                                  </Badge>
-                                </HStack>
-                                <Text fontSize="xs" color={mutedColor} lineHeight="1.5">
-                                  {finding.detail}
+                            tone={style.tone}
+                            icon={style.icon}
+                            title={findingLabel(intl, finding)}
+                            badge={
+                              <Badge variant="neutral" fontSize="xs" borderRadius="full">
+                                {intl.formatMessage({ id: style.labelId })}
+                              </Badge>
+                            }>
+                            <Text fontSize="xs" color={mutedColor} lineHeight="1.5">
+                              {finding.detail}
+                            </Text>
+                            {/* Where to look in the PDF dossier. This was on the wire and
+                                in the interface above but never rendered, so a reviewer got
+                                a finding with no way to find the underlying records short of
+                                reading a 900KB PDF end to end. */}
+                            {finding.section_hint && (
+                              <HStack spacing={1} pt={0.5}>
+                                <Icon
+                                  as={FaFileAlt}
+                                  boxSize={2.5}
+                                  color={mutedColor}
+                                  aria-hidden="true"
+                                />
+                                <Text fontSize="xs" color={mutedColor}>
+                                  {intl.formatMessage(
+                                    {
+                                      id: 'certifierReview.findingLocation',
+                                      defaultMessage: 'In the dossier: {section}'
+                                    },
+                                    { section: finding.section_hint }
+                                  )}
                                 </Text>
-                                {/* Where to look in the PDF dossier. This was on the wire and
-                                    in the interface above but never rendered, so a reviewer got
-                                    a finding with no way to find the underlying records short of
-                                    reading a 900KB PDF end to end. */}
-                                {finding.section_hint && (
-                                  <HStack spacing={1} pt={0.5}>
-                                    <Icon
-                                      as={FaFileAlt}
-                                      boxSize={2.5}
-                                      color={mutedColor}
-                                      aria-hidden="true"
-                                    />
-                                    <Text fontSize="xs" color={mutedColor}>
-                                      {intl.formatMessage(
-                                        {
-                                          id: 'certifierReview.findingLocation',
-                                          defaultMessage: 'In the dossier: {section}'
-                                        },
-                                        { section: finding.section_hint }
-                                      )}
-                                    </Text>
-                                  </HStack>
-                                )}
-                              </VStack>
-                            </HStack>
-                          </Box>
+                              </HStack>
+                            )}
+                          </StatusRow>
                         );
                       })}
-                    </VStack>
+                    </StatusList>
                   </Box>
                 ))
               )}

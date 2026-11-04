@@ -1952,6 +1952,83 @@ export const StandardNotice = ({
   );
 };
 
+export type StatusTone = 'crit' | 'warn' | 'neutral' | 'clear';
+
+/**
+ * One finding, check or status line inside a card: a small tinted circle carrying the glyph,
+ * the title and its badge, the detail, and the action that resolves it. Put rows in a
+ * `StatusList`, which draws the hairline between them.
+ *
+ * Why it exists (2026-11-04). The farm-home readiness card and the certifier review page both
+ * drew every finding as its own gray box with a 1px border and a 4px coloured edge, so a card
+ * of six findings was six tinted slabs. Oscar picked rows over boxes on rendered screenshots,
+ * and rejected a SOLID red circle for `crit` (too loud beside the red badge): the circle stays
+ * tinted for every tone.
+ *
+ * Tone is meaning, never decoration (frontend.md). `crit`/`warn` take STATUS_URGENCY_TOKENS;
+ * a surface that must not read as a verdict (the certifier review page) uses `neutral` only,
+ * and its guard bans the other two names. Urgency is never carried by colour alone: the glyph
+ * SHAPE and the badge WORDS say it too.
+ */
+export const StatusRow = ({
+  tone,
+  icon,
+  title,
+  badge,
+  children,
+  action,
+  testId
+}: {
+  tone: StatusTone;
+  icon: React.ElementType;
+  title?: ReactNode;
+  badge?: ReactNode;
+  children?: ReactNode;
+  action?: ReactNode;
+  testId?: string;
+}) => {
+  // Painted FROM the exported object, so a guard that reads STATUS_TONE_TOKENS reads what the
+  // row actually renders (the GUIDANCE_NOTE_TOKENS pattern).
+  const circle = useColorModeValue(STATUS_TONE_TOKENS[tone].circle, 'whiteAlpha.200');
+  const glyph = STATUS_TONE_TOKENS[tone].glyph;
+  const titleColor = useColorModeValue('gray.700', 'gray.200');
+  return (
+    <HStack align="flex-start" spacing={3} py={3} data-testid={testId}>
+      <Circle size={7} bg={circle} flexShrink={0}>
+        <Icon as={icon} boxSize={3.5} color={glyph} aria-hidden />
+      </Circle>
+      <VStack align="start" spacing={1} flex={1} minW={0} pt={0.5}>
+        {(title || badge) && (
+          <HStack spacing={2} flexWrap="wrap">
+            {title && (
+              <Text fontSize="sm" fontWeight="semibold" color={titleColor}>
+                {title}
+              </Text>
+            )}
+            {badge}
+          </HStack>
+        )}
+        {children}
+        {action}
+      </VStack>
+    </HStack>
+  );
+};
+
+/**
+ * StatusRows split by a hairline. A CSS sibling border, so a row that renders null leaves no
+ * rule. gray.200, not gray.100: the theme's gray.100 is #F8F9FA, the page background, so a
+ * gray.100 rule on a white card is invisible.
+ */
+export const StatusList = ({ children, testId }: { children: ReactNode; testId?: string }) => {
+  const rule = useColorModeValue('gray.200', 'gray.600');
+  return (
+    <Box data-testid={testId} sx={{ '& > * + *': { borderTopWidth: '1px', borderTopColor: rule } }}>
+      {children}
+    </Box>
+  );
+};
+
 interface GuidanceNoteProps {
   children: ReactNode;
 }
@@ -2006,6 +2083,23 @@ export const GUIDANCE_NOTE_TOKENS = {
 export const STATUS_URGENCY_TOKENS = {
   warn: { text: 'orange.600', icon: 'orange.500', bar: 'orange.400' },
   crit: { text: 'red.700', icon: 'red.500', bar: 'red.400' }
+} as const;
+
+/**
+ * What StatusRow paints for each tone, exported so guards can read it (the GUIDANCE_NOTE_TOKENS
+ * reasoning: a guard that restates colours proves nothing about the component).
+ *
+ * `neutral` must stay gray: the certifier review page renders every finding in it, and
+ * `CertifierReview/__tests__/readinessIsNotAVerdict.test.tsx` asserts that, so repurposing
+ * `neutral` for another caller cannot quietly put a verdict colour on that page.
+ * Its circle is gray.200, not gray.100: gray.100 IS the page background (#F8F9FA), so on a page
+ * with no card around the rows the circle vanished.
+ */
+export const STATUS_TONE_TOKENS = {
+  crit: { circle: 'red.50', glyph: STATUS_URGENCY_TOKENS.crit.icon },
+  warn: { circle: 'orange.50', glyph: STATUS_URGENCY_TOKENS.warn.icon },
+  neutral: { circle: 'gray.200', glyph: 'gray.600' },
+  clear: { circle: 'green.50', glyph: 'green.700' }
 } as const;
 
 /**
