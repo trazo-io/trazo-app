@@ -2324,6 +2324,8 @@
   "certifierReadiness.noProduction": "Start a production to see what your certifier will ask for",
   "certifierReadiness.openRecord": "Open the record",
   "certifierReadiness.openCountLabel": "{count, plural, one {open item} other {open items}}",
+  "certifierReadiness.countMissing": "{count, plural, other {# missing}}",
+  "certifierReadiness.countNeedsAttention": "{count, plural, one {# needs attention} other {# need attention}}",
   "certifierReadiness.operationScope": "Whole operation",
   "certifierReadiness.seasonClear": "All {checked} record checks are satisfied for this season.",
   "certifierReadiness.seasonScope": "This season",
