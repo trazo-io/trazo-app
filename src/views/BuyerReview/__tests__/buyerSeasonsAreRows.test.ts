@@ -40,6 +40,13 @@ describe('buyer seasons are rows', () => {
     expect(LIST).toMatch(/<Link[\s\S]*\{\.\.\.TOUCH_TARGET\}/);
   });
 
+  it('keeps a visible keyboard focus ring on the compact link', () => {
+    // The Link theme suppresses focus; TOUCH_TARGET restores the app's one ring.
+    expect(read('src/components/Design/StandardComponents.tsx')).toMatch(
+      /export const TOUCH_TARGET = \{\s*_focusVisible: \{ boxShadow: 'outline' \}/
+    );
+  });
+
   it('has one TOUCH_TARGET, in the design system', () => {
     expect(read('src/components/Design/StandardComponents.tsx')).toMatch(
       /export const TOUCH_TARGET = \{/
