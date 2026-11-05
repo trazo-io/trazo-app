@@ -66,7 +66,7 @@ export function bootPrefetchPlan(pathname: string, companyHint: string | null): 
   const plan: PrefetchEntry[] = [['getCompany', companyId]];
   if (!farmId) return plan;
   if (view === 'farm') {
-    const numericScope = { companyId, farmId: Number(farmId) }; // SmartUsageCard, CertifierReadinessCard
+    const numericScope = { companyId, farmId: Number(farmId) }; // FarmHomeHeader, CertifierReadinessCard
     const stringScope = { companyId: String(companyId), farmId }; // CertifierDeadlinesStrip `scope`
     plan.push(
       ['getFarmDashboardMetrics', numericScope],

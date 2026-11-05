@@ -235,9 +235,7 @@ describe('empty states', () => {
      * the parcel profile page", and they were right: there was no way in.
      *
      * `minH` is fine and deliberately not matched: it is a floor, content can still grow, and
-     * it is the right way to stop a loading skeleton from collapsing (SmartUsageCard uses
-     * `h="290px"` on its skeletons to match the real card's `minH="290px"`, which is correct —
-     * hence the allowance for files whose only fixed heights sit in a loading/error branch).
+     * it is the right way to stop a loading skeleton from collapsing.
      *
      * ⚠️ Only the MOBILE step is banned. A definite height is legitimate from the breakpoint
      * where a layout places a `height: 100%` image beside the text and needs something to
@@ -246,8 +244,6 @@ describe('empty states', () => {
     const offenders: { file: string; line: number; prop: string }[] = [];
     for (const file of files) {
       const rel = relative(SRC, file);
-      // skeletons deliberately mirror the real card's minH so the layout does not jump
-      if (rel === 'views/Dashboard/Dashboard/components/SmartUsageCard.jsx') continue;
       const code = codeOf(readFileSync(file, 'utf8'));
       for (const m of code.matchAll(/<Card\b/g)) {
         let i = m.index! + m[0].length;

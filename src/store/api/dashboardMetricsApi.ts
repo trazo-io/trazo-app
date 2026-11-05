@@ -124,6 +124,8 @@ export interface FarmDashboardMetrics {
   // its `transparency_tier` label left this payload on 2026-09-05 (nothing rendered them).
   scored_productions: number;
   total_documented_events: number;
+  // Images in the albums of those activities (season albums excluded).
+  photo_count?: number;
   total_productions: number;
   // Seasons with no finish date yet.
   productions_in_progress: number;
