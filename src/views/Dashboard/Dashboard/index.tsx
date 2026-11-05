@@ -534,9 +534,13 @@ export default function DashboardView() {
         </StandardNotice>
       )}
 
-      {/* Farm tiles only when there is another farm to switch to. With one farm the solid green
-          tile repeated the breadcrumb and the page title (2026-11-05); the sidebar switches too. */}
-      {(establishments?.length ?? 0) > 1 && (
+      {/* The farm tiles row: shown when there is another farm to switch to, OR when it carries
+          an action — "+ New" farm, or the farm-limit tile that leads to the Extra Farm add-on. This
+          row is the ONLY place either lives (review of #286: gating on "more than one farm" alone
+          took both away from every one-farm account). Hidden only when it would be a lone green
+          tile repeating the page title: a pilot capped by agreement, or a read-only member. */}
+      {((establishments?.length ?? 0) > 1 ||
+        (canWrite && (canCreateEstablishment || farmCapacity.atLimit))) && (
         <Box>
           <Flex
             direction={{ base: 'column', xl: 'row' }}

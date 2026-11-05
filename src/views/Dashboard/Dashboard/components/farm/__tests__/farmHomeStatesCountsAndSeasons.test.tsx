@@ -16,11 +16,18 @@ import enUS from '../../../../../../i18n/lang/en-US.json';
 
 let metrics: Record<string, unknown> | undefined;
 let seasons: Array<Record<string, unknown>> = [];
+let seasonsState: Record<string, boolean> = {};
 vi.mock('store/api/dashboardMetricsApi', () => ({
   useGetFarmDashboardMetricsQuery: () => ({ data: metrics ? { metrics } : undefined })
 }));
 vi.mock('store/api/historyApi', () => ({
-  useGetFarmProductionsQuery: () => ({ data: seasons, isLoading: false })
+  useGetFarmProductionsQuery: () => ({
+    data: seasonsState.isError || seasonsState.isUninitialized ? undefined : seasons,
+    isLoading: false,
+    isUninitialized: false,
+    isError: false,
+    ...seasonsState
+  })
 }));
 
 import FarmHomeHeader from '../FarmHomeHeader';
@@ -83,6 +90,7 @@ describe('farm home header', () => {
 
 describe('seasons underway', () => {
   beforeEach(() => {
+    seasonsState = {};
     seasons = [
       {
         id: 7,
@@ -147,5 +155,31 @@ describe('seasons underway', () => {
     seasons = [];
     wrap(<SeasonsUnderwayCard farmId={2} parcels={parcels} />);
     expect(screen.getByText(/No season underway/)).toBeTruthy();
+  });
+
+  it('says the load failed, never "no season underway", when the request fails', () => {
+    seasonsState = { isError: true };
+    wrap(<SeasonsUnderwayCard farmId={2} parcels={parcels} />);
+    expect(screen.queryByText(/No season underway/)).toBeNull();
+    expect(screen.queryByTestId('seasons-load-failed')).not.toBeNull();
+  });
+
+  it('shows loading, not the empty state, for a query that has not run', () => {
+    seasonsState = { isUninitialized: true };
+    wrap(<SeasonsUnderwayCard farmId={2} parcels={parcels} />);
+    expect(screen.queryByText(/No season underway/)).toBeNull();
+  });
+
+  it('prefers the parcel id the API sends, and never leaves a row without a way in', () => {
+    seasons = [
+      { id: 7, name: 'Onions 2026', parcel: 'Renamed Terrace', parcel_id: 11, finish_date: null },
+      { id: 9, name: 'Carrots 2026', parcel: 'Unknown Block', finish_date: null }
+    ];
+    wrap(<SeasonsUnderwayCard farmId={2} parcels={parcels} />);
+    const hrefs = screen.getAllByRole('link').map((a) => a.getAttribute('href'));
+    expect(hrefs).toContain('/admin/dashboard/farm/2/parcel/11/production/7/finish');
+    const [, carrots] = screen.getAllByTestId('season-underway-row');
+    const link = carrots.querySelector('a');
+    expect(link?.getAttribute('href')).toBe('/admin/dashboard/farm/2/activities');
   });
 });

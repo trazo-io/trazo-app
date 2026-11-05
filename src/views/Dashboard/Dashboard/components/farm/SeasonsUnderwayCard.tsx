@@ -54,7 +54,11 @@ export default function SeasonsUnderwayCard({ farmId, parcels = [] }: Props) {
   const titleColor = useColorModeValue('gray.700', 'gray.200');
   const iconColor = useColorModeValue('gray.600', 'gray.400');
   const muted = useColorModeValue('gray.500', 'gray.400');
-  const { data, isLoading } = useGetFarmProductionsQuery(farmId, { skip: !farmId });
+  // A failed or not-yet-run query is never "no season underway": that empty state tells the
+  // grower to start a season that may already exist (review of #286).
+  const { data, isLoading, isUninitialized, isError } = useGetFarmProductionsQuery(farmId, {
+    skip: !farmId
+  });
 
   const underway: Season[] = ((data as Season[]) || [])
     .filter((s) => !s.finish_date)
@@ -80,10 +84,14 @@ export default function SeasonsUnderwayCard({ farmId, parcels = [] }: Props) {
             </VStack>
           </HStack>
 
-          {isLoading ? (
+          {isLoading || isUninitialized ? (
             <Flex justify="center" py={6}>
               <Spinner color="gray.400" />
             </Flex>
+          ) : isError ? (
+            <Text fontSize="sm" color={muted} py={2} data-testid="seasons-load-failed">
+              {intl.formatMessage({ id: 'farmHome.seasons.loadFailed' })}
+            </Text>
           ) : underway.length === 0 ? (
             <Text fontSize="sm" color={muted} py={2}>
               {intl.formatMessage({ id: 'farmHome.seasons.none' })}
@@ -95,6 +103,9 @@ export default function SeasonsUnderwayCard({ farmId, parcels = [] }: Props) {
                 const base = parcelId
                   ? `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/${s.id}`
                   : null;
+                // No parcel resolved (an older API without parcel_id, a renamed parcel): the
+                // row still gets a way in, to the farm's Activities page, never no action.
+                const fallback = `/admin/dashboard/farm/${farmId}/activities`;
                 // Season names are often "Onions 2026 — Upper Terrace": say the parcel and crop
                 // only when the name does not already.
                 const named = (s.name || '').toLowerCase();
@@ -137,6 +148,19 @@ export default function SeasonsUnderwayCard({ farmId, parcels = [] }: Props) {
                         {meta.join(' · ')}
                       </Text>
                     </Box>
+                    {!base && (
+                      <Link
+                        as={RouterLink}
+                        to={fallback}
+                        fontSize="sm"
+                        fontWeight="semibold"
+                        color="green.700"
+                        flexShrink={0}
+                        sx={rowLinkSx}
+                        {...TOUCH_TARGET}>
+                        {intl.formatMessage({ id: 'farmHome.seasons.openActivities' })}
+                      </Link>
+                    )}
                     {base && (
                       <HStack spacing={5} flexShrink={0}>
                         <Link

@@ -21,17 +21,9 @@ interface Props {
   farmId: number;
   name: string;
   location?: string;
-  /** Show the seasons counts in the strip. Off when a seasons list sits right below. */
-  showSeasonCounts?: boolean;
 }
 
-export default function FarmHomeHeader({
-  companyId,
-  farmId,
-  name,
-  location,
-  showSeasonCounts = true
-}: Props) {
+export default function FarmHomeHeader({ companyId, farmId, name, location }: Props) {
   const intl = useIntl();
   const navigate = useNavigate();
   const titleColor = useColorModeValue('gray.800', 'white');
@@ -39,7 +31,14 @@ export default function FarmHomeHeader({
   const { data } = useGetFarmDashboardMetricsQuery(
     // Skipped until the company loads; 0 is never sent.
     { companyId: companyId ?? 0, farmId },
-    { skip: !companyId || !farmId }
+    {
+      skip: !companyId || !farmId,
+      // Same refresh the deleted SmartUsageCard used. Finishing a season or logging an activity
+      // invalidates History/Event tags, not this query's Farm tag, so without these the counts
+      // would trail the seasons list below them (review of #286).
+      pollingInterval: 10 * 60 * 1000,
+      refetchOnMountOrArgChange: 300
+    }
   );
   const m = data?.metrics;
   const profilePath = `/admin/dashboard/farm/${farmId}/profile`;
@@ -61,10 +60,9 @@ export default function FarmHomeHeader({
         {m && (
           <PageHeaderMeta
             items={[
-              showSeasonCounts
-                ? fmt('farmHome.meta.seasonsUnderway', m.productions_in_progress)
-                : null,
-              showSeasonCounts ? fmt('farmHome.meta.seasonsFinished', m.scored_productions) : null,
+              // The underway count summarises the list below it; the list carries the actions.
+              fmt('farmHome.meta.seasonsUnderway', m.productions_in_progress),
+              fmt('farmHome.meta.seasonsFinished', m.scored_productions),
               fmt('farmHome.meta.activities', m.total_documented_events),
               fmt('farmHome.meta.photos', m.photo_count),
               fmt('farmHome.meta.qrScans', m.monthly_scans)

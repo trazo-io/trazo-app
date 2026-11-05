@@ -3177,6 +3177,8 @@
   "farmHome.seasons.untitled": "Untitled season",
   "farmHome.seasons.open": "Open",
   "farmHome.seasons.finish": "Finish season",
+  "farmHome.seasons.loadFailed": "Seasons could not be loaded. Refresh the page to try again.",
+  "farmHome.seasons.openActivities": "Open in Activities",
   "dashboard.kgCO2e": "{value} kg CO₂e",
   "dashboard.loadingDashboardMetrics": "Loading Dashboard Metrics",
   "dashboard.netFootprint": "Direct operational emissions:",
