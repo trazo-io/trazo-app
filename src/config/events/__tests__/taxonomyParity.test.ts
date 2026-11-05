@@ -46,11 +46,22 @@ describe('event registry matches the backend taxonomy', () => {
     expect(kinds().length).toBeGreaterThanOrEqual(8);
   });
 
+  it('names every backend kind', () => {
+    // A kind added on the backend with no name here would otherwise compare as `undefined`.
+    for (const k of kinds()) {
+      expect(
+        FRONTEND_NAME_FOR_SLUG[k.slug],
+        `no frontend name for backend kind ${k.slug}`
+      ).toBeDefined();
+    }
+  });
+
   it('has exactly the backend codes, each under the expected name', () => {
     const fromBackend = Object.fromEntries(
       kinds().map((k) => [k.code, FRONTEND_NAME_FOR_SLUG[k.slug]])
     );
-    expect({ ...EVENT_TYPE_CODE_TO_NAME }).toEqual(fromBackend);
+    // toStrictEqual, not toEqual: toEqual treats an `undefined` value as a missing key.
+    expect({ ...EVENT_TYPE_CODE_TO_NAME }).toStrictEqual(fromBackend);
   });
 
   it('maps names back to the same codes', () => {
