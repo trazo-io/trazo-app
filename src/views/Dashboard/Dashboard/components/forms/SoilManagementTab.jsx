@@ -16,7 +16,6 @@ import {
   SimpleGrid,
   Flex,
   Switch,
-  Badge,
   Divider,
   Icon
 } from '@chakra-ui/react';
@@ -2654,21 +2653,16 @@ const SoilManagementTab = forwardRef(
                         <Box
                           p={4}
                           mb={4}
-                          bg={isGrazingSummary ? 'blue.50' : 'gray.50'}
+                          bg={isGrazingSummary ? 'white' : 'gray.50'}
                           borderRadius="md"
                           border="1px solid"
-                          borderColor={isGrazingSummary ? 'blue.200' : 'gray.200'}>
+                          borderColor={isGrazingSummary ? 'gray.300' : 'gray.200'}>
                           <HStack justify="space-between" align="center">
                             <VStack align="start" spacing={0}>
                               <HStack>
                                 <Text fontWeight="semibold" fontSize="sm">
                                   Grazing Summary Mode
                                 </Text>
-                                {isGrazingSummary && (
-                                  <Badge colorScheme="blue" size="sm">
-                                    Active
-                                  </Badge>
-                                )}
                               </HStack>
                               <Text fontSize="xs" color="gray.600">
                                 {isGrazingSummary
@@ -2681,7 +2675,6 @@ const SoilManagementTab = forwardRef(
                               control={methods.control}
                               render={({ field }) => (
                                 <Switch
-                                  colorScheme="blue"
                                   size="lg"
                                   isChecked={field.value === 'true'}
                                   onChange={(e) =>

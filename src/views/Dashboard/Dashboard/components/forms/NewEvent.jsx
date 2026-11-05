@@ -3679,7 +3679,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
       onBack={handleBack}
       backLabel={backToParcelLabel}
       rightAction={
-        <Badge colorScheme="green" variant="subtle" px={3} py={1} borderRadius="full">
+        <Badge variant="neutral" px={3} py={1} borderRadius="full">
           <HStack spacing={1}>
             <Icon as={FaTasks} boxSize={3} />
             <Text fontSize="sm">
@@ -3832,14 +3832,17 @@ function NewEvent({ isEdit = false, eventId = null }) {
                             a date with no sign of which message, which is how somebody answers for
                             the wrong one. The words are quoted, never an input: they are a record of
                             what a person reported. */}
+                        {/* Neutral, like the voice banner below and for its reason: a PENDING note
+                            is what someone reported, not yet anyone's record, so it must not wear
+                            the green of an applied state (2026-11-04). */}
                         {activeFieldNote && activeFieldNote.status === 'pending' && (
                           <Box
-                            bg="green.50"
+                            bg="white"
                             borderWidth="1px"
-                            borderColor="green.200"
+                            borderColor="gray.300"
                             borderRadius="md"
                             p={3}>
-                            <Text fontSize="sm" fontWeight="semibold" color="green.700">
+                            <Text fontSize="sm" fontWeight="semibold" color="gray.800">
                               {intl.formatMessage(
                                 { id: 'events.fieldNote.loggingFrom' },
                                 {
@@ -4300,11 +4303,11 @@ function NewEvent({ isEdit = false, eventId = null }) {
                         <Box
                           mt={3}
                           p={3}
-                          bg="green.50"
+                          bg="white"
                           borderWidth="1px"
-                          borderColor="green.200"
+                          borderColor="gray.300"
                           borderRadius="md">
-                          <Text fontSize="sm" fontWeight="semibold" color="green.700" mb={1}>
+                          <Text fontSize="sm" fontWeight="semibold" color="gray.800" mb={1}>
                             {activePlanItem.name}
                           </Text>
                           <Text fontSize="xs" color="gray.700">
@@ -4316,12 +4319,12 @@ function NewEvent({ isEdit = false, eventId = null }) {
                         <Box
                           mt={3}
                           p={3}
-                          bg="green.50"
+                          bg="white"
                           borderWidth="1px"
-                          borderColor="green.200"
+                          borderColor="gray.300"
                           borderRadius="md">
                           <HStack justify="space-between">
-                            <Text fontSize="sm" fontWeight="semibold" color="green.700">
+                            <Text fontSize="sm" fontWeight="semibold" color="gray.800">
                               {intl.formatMessage(
                                 { id: 'events.template.applied' },
                                 { name: intl.formatMessage({ id: appliedTemplateKey }) }
@@ -4910,7 +4913,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
                         w={{ base: '100%', md: 'auto' }}>
                         <StandardButton
                           variant="outline"
-                          colorScheme="blue"
                           onClick={handleOpenPreview}
                           leftIcon={<FaEye />}
                           size={{ base: 'md', md: 'lg' }}
@@ -5024,7 +5026,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
                           w={{ base: '100%', md: 'auto' }}>
                           <StandardButton
                             variant="outline"
-                            colorScheme="blue"
                             onClick={handleOpenPreview}
                             leftIcon={<FaEye />}
                             size={{ base: 'md', md: 'lg' }}

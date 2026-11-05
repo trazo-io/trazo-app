@@ -362,7 +362,10 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
     }
   };
 
-  /** One approved catalogue substance, removable while the plan is editable. */
+  /** One approved catalogue substance, removable while the plan is editable.
+   *  Registry chips are gray (2026-11-04). OMRI was purple, the National List blue, WSDA teal:
+   *  a colour per source that encodes nothing the section heading does not already say, and
+   *  blue is reserved for info alerts. Same call as the input lookup's source badges (#263). */
   const renderNationalListChip = (
     s: { id: number; substance_name: string },
     scheme: string,
@@ -598,7 +601,7 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
           <MatchRow
             key={`omri-${row.pk}`}
             badge="OMRI"
-            badgeScheme="purple"
+            badgeScheme="gray"
             identifier={row.omri_id ? `#${row.omri_id}` : null}
             name={row.product_name}
             action={
@@ -619,7 +622,7 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
                   ? 'osp.approvedInputs.kind.nonsynthetic'
                   : 'osp.approvedInputs.kind.national_list'
             })}
-            badgeScheme={row.is_national_list_entry === false ? 'gray' : 'blue'}
+            badgeScheme="gray"
             identifier={
               row.is_national_list_entry === false ? null : row.citation || row.cfr_section
             }
@@ -653,7 +656,7 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
           <MatchRow
             key={`wsda-${row.pk}`}
             badge="WSDA"
-            badgeScheme="teal"
+            badgeScheme="gray"
             // ⛔ Only a REAL WSDA Product # — a bare integer — may be shown. Trazo's seeded
             // catalogue also holds ids of the shape `WSDA-REG-BIOAG-2025-003`, which is not a
             // format WSDA issues; printing one invites a certifier to look up a registration
@@ -763,7 +766,7 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
                   key={`omri-${p.id}`}
                   label={p.omri_id ? `OMRI #${p.omri_id}` : undefined}
                   hasArrow>
-                  <Tag size="md" colorScheme="purple" borderRadius="md">
+                  <Tag size="md" colorScheme="gray" borderRadius="md">
                     <TagLabel>{p.product_name}</TagLabel>
                     <TagCloseButton
                       isDisabled={!isEditable}
@@ -800,7 +803,7 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
           ) : (
             <Flex wrap="wrap" gap={2}>
               {nlListed.map((s) =>
-                renderNationalListChip(s, 'blue', s.citation || s.cfr_section || undefined)
+                renderNationalListChip(s, 'gray', s.citation || s.cfr_section || undefined)
               )}
             </Flex>
           )}
@@ -844,7 +847,7 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
                   key={`wsda-${w.id}`}
                   label={w.wsda_id ? `WSDA ${w.wsda_id}` : undefined}
                   hasArrow>
-                  <Tag size="md" colorScheme="teal" borderRadius="md">
+                  <Tag size="md" colorScheme="gray" borderRadius="md">
                     <TagLabel>{w.brand_name}</TagLabel>
                     <TagCloseButton
                       isDisabled={!isEditable}

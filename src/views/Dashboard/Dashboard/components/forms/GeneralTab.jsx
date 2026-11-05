@@ -761,7 +761,6 @@ const GeneralTab = forwardRef(
                             <Switch
                               isChecked={field.value === 'true'}
                               onChange={(e) => field.onChange(e.target.checked ? 'true' : 'false')}
-                              colorScheme="blue"
                               size="lg"
                             />
                           )}
