@@ -58,6 +58,21 @@ describe('NewEvent save path toasts', () => {
     expect(gapsBranch).toContain("celebrateMilestone('first-event')");
   });
 
+  it("puts a pick inside a spray's PHI in the same one warning, ahead of the gaps", () => {
+    // 2026-11-05: the save response carries `phi_conflicts` for a spray or a pick. It must not
+    // raise a second toast: one warning, titled for the PHI when there is one.
+    expect(savePath).toContain('phi_conflicts');
+    expect(count(savePath, "status: 'warning'")).toBe(1);
+    const warning = savePath.slice(0, savePath.indexOf("status: 'warning'"));
+    expect(warning).toContain("id: 'app.phiConflictSavedTitle'");
+    expect(savePath).toContain('completenessGaps.length > 0 || phiConflicts.length > 0');
+    // Review of app #273: under a "Saved." title the gaps take the inline label, never the
+    // title again; and the title counts picks.
+    expect(savePath).toContain("id: 'app.completenessGapsInlineLabel'");
+    expect(savePath).not.toContain('`${gapsTitle} ${gapNames}`');
+    expect(savePath).toContain('{ count: phiPickCount }');
+  });
+
   it('keeps the removed carbon-calculation fallback string out', () => {
     expect(SRC).not.toContain('complete data for carbon calculation');
   });

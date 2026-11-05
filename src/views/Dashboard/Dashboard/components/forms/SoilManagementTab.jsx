@@ -2661,13 +2661,15 @@ const SoilManagementTab = forwardRef(
                             <VStack align="start" spacing={0}>
                               <HStack>
                                 <Text fontWeight="semibold" fontSize="sm">
-                                  Grazing Summary Mode
+                                  {intl.formatMessage({ id: 'events.section.soil.grazingSummary' })}
                                 </Text>
                               </HStack>
                               <Text fontSize="xs" color="gray.600">
-                                {isGrazingSummary
-                                  ? 'Log a whole grazing rotation as one summary (e.g., "sheep, 4 paddocks over 6 weeks")'
-                                  : 'Enable to log a full grazing rotation at once'}
+                                {intl.formatMessage({
+                                  id: isGrazingSummary
+                                    ? 'events.section.soil.grazingSummaryOn'
+                                    : 'events.section.soil.grazingSummaryOff'
+                                })}
                               </Text>
                             </VStack>
                             <Controller
