@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.11.12",
+  "content_version": "2026.11.13",
   "registry": {
-    "content_version": "2026.11.12",
+    "content_version": "2026.11.13",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -3849,6 +3849,511 @@
                 "max_length": null
               },
               {
+                "key": "applies_deficiency_materials",
+                "kind": "boolean",
+                "label": {
+                  "en": "Do you apply synthetic micronutrients or magnesium sulfate to manage plant or soil deficiencies?",
+                  "es": "¿Aplicas micronutrientes sintéticos o sulfato de magnesio para corregir deficiencias de las plantas o del suelo?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [],
+                "nop_cite": "§ 205.601(j)(6)-(7)",
+                "prefill": {
+                  "source": "deficiency_materials_evidence"
+                },
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "deficiency_materials",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Which of them?",
+                  "es": "¿Cuáles?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "micronutrients",
+                    "label": {
+                      "en": "Synthetic micronutrients (boron, zinc, copper, iron, manganese, molybdenum, selenium, cobalt)",
+                      "es": "Micronutrientes sintéticos (boro, zinc, cobre, hierro, manganeso, molibdeno, selenio, cobalto)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "magnesium_sulfate",
+                    "label": {
+                      "en": "Magnesium sulfate",
+                      "es": "Sulfato de magnesio"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "applies_deficiency_materials",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "micronutrient_verification",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How do you verify the micronutrient deficiency of each crop or field before you apply?",
+                  "es": "¿Cómo verificas la deficiencia de micronutrientes de cada cultivo o campo antes de aplicar?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "soil_analysis",
+                    "label": {
+                      "en": "Soil analysis",
+                      "es": "Análisis de suelo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "tissue_analysis",
+                    "label": {
+                      "en": "Tissue analysis",
+                      "es": "Análisis de tejido"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "crop_advisor",
+                    "label": {
+                      "en": "Recommendations from a crop advisor",
+                      "es": "Recomendaciones de un asesor de cultivos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "regional_deficiency",
+                    "label": {
+                      "en": "Documented regional deficiency",
+                      "es": "Deficiencia regional documentada"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "visual_observation",
+                    "label": {
+                      "en": "Visual observation",
+                      "es": "Observación visual"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otro (describe abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "deficiency_materials",
+                    "op": "includes",
+                    "value": "micronutrients"
+                  }
+                ],
+                "nop_cite": "§ 205.601(j)(7)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "micronutrient_verification_other",
+                "kind": "text",
+                "label": {
+                  "en": "Describe the other method",
+                  "es": "Describe el otro método"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "micronutrient_verification",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "micronutrient_method_agent_approval",
+                "kind": "radio",
+                "label": {
+                  "en": "Has your certifying agent approved that method?",
+                  "es": "¿Tu agencia certificadora aprobó ese método?"
+                },
+                "coaching": {
+                  "en": "The rule accepts a method other than soil or tissue testing only as approved by the certifying agent (§ 205.601(j)(7)).",
+                  "es": "La norma acepta un método distinto del análisis de suelo o de tejido solo si lo aprueba la agencia certificadora (§ 205.601(j)(7))."
+                },
+                "options": [
+                  {
+                    "value": "approved_by_agent",
+                    "label": {
+                      "en": "Approved by my certifying agent (in writing or in my approved OSP)",
+                      "es": "Aprobado por mi agencia certificadora (por escrito o en mi OSP aprobado)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "for_agent_review",
+                    "label": {
+                      "en": "Described here for my agent's approval",
+                      "es": "Lo describo aquí para que mi agencia lo apruebe"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "deficiency_materials",
+                    "op": "includes",
+                    "value": "micronutrients"
+                  },
+                  {
+                    "question": "micronutrient_verification",
+                    "op": "includes_any",
+                    "value": [
+                      "crop_advisor",
+                      "regional_deficiency",
+                      "visual_observation",
+                      "other"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.601(j)(7)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "magnesium_sulfate_verification",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How do you verify the magnesium deficiency before you apply magnesium sulfate?",
+                  "es": "¿Cómo verificas la deficiencia de magnesio antes de aplicar sulfato de magnesio?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "soil_analysis",
+                    "label": {
+                      "en": "Soil analysis",
+                      "es": "Análisis de suelo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "tissue_analysis",
+                    "label": {
+                      "en": "Tissue analysis",
+                      "es": "Análisis de tejido"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "crop_advisor",
+                    "label": {
+                      "en": "Recommendations from a crop advisor",
+                      "es": "Recomendaciones de un asesor de cultivos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "regional_deficiency",
+                    "label": {
+                      "en": "Documented regional deficiency",
+                      "es": "Deficiencia regional documentada"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "visual_observation",
+                    "label": {
+                      "en": "Visual observation",
+                      "es": "Observación visual"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otro (describe abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "deficiency_materials",
+                    "op": "includes",
+                    "value": "magnesium_sulfate"
+                  }
+                ],
+                "nop_cite": "§ 205.601(j)(6)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "magnesium_sulfate_verification_other",
+                "kind": "text",
+                "label": {
+                  "en": "Describe the other method",
+                  "es": "Describe el otro método"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "magnesium_sulfate_verification",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "applies_calcium_chloride",
+                "kind": "boolean",
+                "label": {
+                  "en": "Do you apply calcium chloride in the field or orchard?",
+                  "es": "¿Aplicas cloruro de calcio en el campo o en el huerto?"
+                },
+                "coaching": {
+                  "en": "A calcium chloride dip after harvest is handling, not field application.",
+                  "es": "Un baño con cloruro de calcio después de la cosecha es manejo poscosecha, no aplicación en el campo."
+                },
+                "options": [],
+                "required": true,
+                "visible_when": [],
+                "nop_cite": "§ 205.602(c)",
+                "prefill": {
+                  "source": "calcium_chloride_evidence"
+                },
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "calcium_chloride_foliar",
+                "kind": "boolean",
+                "label": {
+                  "en": "Is it applied as a foliar spray?",
+                  "es": "¿Lo aplicas como aspersión foliar?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "applies_calcium_chloride",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.602(c)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "calcium_chloride_disorder",
+                "kind": "text",
+                "label": {
+                  "en": "Which physiological disorder does it treat?",
+                  "es": "¿Qué trastorno fisiológico trata?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "applies_calcium_chloride",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.602(c)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": {
+                  "en": "e.g. bitter pit",
+                  "es": "p. ej., bitter pit (mancha amarga)"
+                },
+                "max_length": null
+              },
+              {
+                "key": "applies_potassium_chloride",
+                "kind": "boolean",
+                "label": {
+                  "en": "Do you apply potassium chloride (muriate of potash)?",
+                  "es": "¿Aplicas cloruro de potasio (muriato de potasio)?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [],
+                "nop_cite": "§ 205.602(e)",
+                "prefill": {
+                  "source": "potassium_chloride_evidence"
+                },
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "chloride_accumulation_practices",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How do you keep chloride from building up in the soil?",
+                  "es": "¿Cómo evitas que el cloruro se acumule en el suelo?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "soil_chloride_tests",
+                    "label": {
+                      "en": "Soil chloride monitored by testing",
+                      "es": "Monitoreo del cloruro del suelo con análisis"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "rate_to_potassium_need",
+                    "label": {
+                      "en": "Rate limited to the crop's potassium need",
+                      "es": "Dosis limitada a la necesidad de potasio del cultivo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "split_applications",
+                    "label": {
+                      "en": "Split applications",
+                      "es": "Aplicaciones divididas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "sensitive_blocks_avoided",
+                    "label": {
+                      "en": "Chloride-sensitive blocks avoided",
+                      "es": "Se evitan los bloques sensibles al cloruro"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otro (describe abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "applies_potassium_chloride",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.602(e)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "chloride_accumulation_other",
+                "kind": "text",
+                "label": {
+                  "en": "Describe the other practice",
+                  "es": "Describe la otra práctica"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "chloride_accumulation_practices",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
                 "key": "tillage_practices",
                 "kind": "textarea",
                 "label": {
@@ -7615,6 +8120,124 @@
                   }
                 ],
                 "nop_cite": "§ 205.206(e)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "applies_copper_materials",
+                "kind": "boolean",
+                "label": {
+                  "en": "Do you apply copper sulfate or fixed coppers for plant disease control?",
+                  "es": "¿Aplicas sulfato de cobre o cobres fijos para el control de enfermedades de las plantas?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "applies_pest_weed_disease_inputs",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.601(i)(2)-(3)",
+                "prefill": {
+                  "source": "copper_evidence"
+                },
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "copper_accumulation_practices",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How do you keep copper from building up in the soil?",
+                  "es": "¿Cómo evitas que el cobre se acumule en el suelo?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "soil_copper_tests",
+                    "label": {
+                      "en": "Soil copper tested over the years",
+                      "es": "Análisis de cobre en el suelo a lo largo de los años"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "lowest_label_rate",
+                    "label": {
+                      "en": "Lowest labeled rate",
+                      "es": "La dosis más baja de la etiqueta"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "limited_applications",
+                    "label": {
+                      "en": "A limited number of applications per season",
+                      "es": "Un número limitado de aplicaciones por temporada"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "rotated_materials",
+                    "label": {
+                      "en": "Rotated with non-copper materials",
+                      "es": "Rotación con materiales sin cobre"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otro (describe abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "applies_copper_materials",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.601(i)(2)-(3)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "copper_accumulation_other",
+                "kind": "text",
+                "label": {
+                  "en": "Describe the other practice",
+                  "es": "Describe la otra práctica"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "copper_accumulation_practices",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
@@ -17560,6 +18183,9 @@
         "system_type",
         "fertility_components",
         "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
         "tillage_practices",
         "fertility_monitoring",
         "erosion_practices"
@@ -17568,6 +18194,9 @@
         "system_type",
         "fertility_components",
         "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
         "tillage_practices",
         "fertility_monitoring",
         "erosion_practices"
@@ -17576,6 +18205,9 @@
         "system_type",
         "fertility_components",
         "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
         "tillage_practices",
         "fertility_monitoring",
         "erosion_practices"
@@ -17594,6 +18226,9 @@
         "rotation_plan",
         "fertility_components",
         "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
         "tillage_practices",
         "fertility_monitoring",
         "erosion_practices"
@@ -17602,6 +18237,9 @@
         "rotation_plan",
         "fertility_components",
         "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
         "tillage_practices",
         "fertility_monitoring",
         "erosion_practices"
@@ -17610,6 +18248,9 @@
         "rotation_plan",
         "fertility_components",
         "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
         "tillage_practices",
         "fertility_monitoring",
         "erosion_practices"
@@ -17633,6 +18274,9 @@
         "in_lieu_other",
         "fertility_components",
         "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
         "tillage_practices",
         "fertility_monitoring",
         "erosion_practices"
@@ -17641,6 +18285,9 @@
         "in_lieu_other",
         "fertility_components",
         "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
         "tillage_practices",
         "fertility_monitoring",
         "erosion_practices"
@@ -17649,6 +18296,9 @@
         "in_lieu_other",
         "fertility_components",
         "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
         "tillage_practices",
         "fertility_monitoring",
         "erosion_practices"
@@ -17666,6 +18316,9 @@
         "system_type",
         "fertility_components",
         "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
         "tillage_practices",
         "fertility_monitoring",
         "erosion_practices"
@@ -17674,6 +18327,9 @@
         "system_type",
         "fertility_components",
         "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
         "tillage_practices",
         "erosion_practices"
       ],
@@ -17681,6 +18337,9 @@
         "system_type",
         "fertility_components",
         "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
         "tillage_practices",
         "erosion_practices"
       ]
@@ -17697,6 +18356,9 @@
         "system_type",
         "fertility_components",
         "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
         "tillage_practices",
         "fertility_monitoring",
         "monitoring_frequency",
@@ -17707,6 +18369,9 @@
         "system_type",
         "fertility_components",
         "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
         "tillage_practices",
         "monitoring_frequency",
         "erosion_practices"
@@ -17715,10 +18380,296 @@
         "system_type",
         "fertility_components",
         "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
         "tillage_practices",
         "monitoring_frequency",
         "erosion_practices"
       ]
+    },
+    {
+      "module": "g4_0_rotation_soil",
+      "label": "micronutrients_visual",
+      "answers": {
+        "applies_deficiency_materials": true,
+        "deficiency_materials": [
+          "micronutrients"
+        ],
+        "micronutrient_verification": [
+          "visual_observation"
+        ]
+      },
+      "visible_questions": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "deficiency_materials",
+        "micronutrient_verification",
+        "micronutrient_method_agent_approval",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ],
+      "missing_required": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "micronutrient_method_agent_approval",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ],
+      "missing_required_na": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "micronutrient_method_agent_approval",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ]
+    },
+    {
+      "module": "g4_0_rotation_soil",
+      "label": "magnesium_only_with_stale_method",
+      "answers": {
+        "applies_deficiency_materials": true,
+        "deficiency_materials": [
+          "magnesium_sulfate"
+        ],
+        "micronutrient_verification": [
+          "visual_observation"
+        ]
+      },
+      "visible_questions": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "deficiency_materials",
+        "magnesium_sulfate_verification",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ],
+      "missing_required": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "magnesium_sulfate_verification",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ],
+      "missing_required_na": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "magnesium_sulfate_verification",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ]
+    },
+    {
+      "module": "g4_0_rotation_soil",
+      "label": "micronutrients_soil_tested",
+      "answers": {
+        "applies_deficiency_materials": true,
+        "deficiency_materials": [
+          "micronutrients",
+          "magnesium_sulfate"
+        ],
+        "micronutrient_verification": [
+          "soil_analysis"
+        ]
+      },
+      "visible_questions": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "deficiency_materials",
+        "micronutrient_verification",
+        "magnesium_sulfate_verification",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ],
+      "missing_required": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "magnesium_sulfate_verification",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ],
+      "missing_required_na": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "magnesium_sulfate_verification",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ]
+    },
+    {
+      "module": "g4_0_rotation_soil",
+      "label": "calcium_chloride_no",
+      "answers": {
+        "applies_calcium_chloride": false,
+        "calcium_chloride_foliar": true
+      },
+      "visible_questions": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ],
+      "missing_required": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ],
+      "missing_required_na": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ]
+    },
+    {
+      "module": "g5_0_pest",
+      "label": "unanswered",
+      "answers": {},
+      "visible_questions": [
+        "prevention_practices",
+        "burns_crop_residue",
+        "weed_management_practices",
+        "plastic_mulch_used",
+        "applies_pest_weed_disease_inputs",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_methods",
+        "monitoring_records"
+      ],
+      "missing_required": [
+        "prevention_practices",
+        "burns_crop_residue",
+        "weed_management_practices",
+        "plastic_mulch_used",
+        "applies_pest_weed_disease_inputs",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_records"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g5_0_pest",
+      "label": "copper_without_inputs",
+      "answers": {
+        "applies_pest_weed_disease_inputs": false,
+        "applies_copper_materials": true,
+        "copper_accumulation_practices": [
+          "other"
+        ]
+      },
+      "visible_questions": [
+        "prevention_practices",
+        "burns_crop_residue",
+        "weed_management_practices",
+        "plastic_mulch_used",
+        "applies_pest_weed_disease_inputs",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_methods",
+        "monitoring_records"
+      ],
+      "missing_required": [
+        "prevention_practices",
+        "burns_crop_residue",
+        "weed_management_practices",
+        "plastic_mulch_used",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_records"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g5_0_pest",
+      "label": "copper_other_practice",
+      "answers": {
+        "applies_pest_weed_disease_inputs": true,
+        "applies_copper_materials": true,
+        "copper_accumulation_practices": [
+          "other"
+        ]
+      },
+      "visible_questions": [
+        "prevention_practices",
+        "burns_crop_residue",
+        "weed_management_practices",
+        "plastic_mulch_used",
+        "applies_pest_weed_disease_inputs",
+        "input_use_triggers",
+        "input_use_conditions",
+        "applies_copper_materials",
+        "copper_accumulation_practices",
+        "copper_accumulation_other",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_methods",
+        "monitoring_records"
+      ],
+      "missing_required": [
+        "prevention_practices",
+        "burns_crop_residue",
+        "weed_management_practices",
+        "plastic_mulch_used",
+        "input_use_conditions",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_records"
+      ],
+      "missing_required_na": []
     },
     {
       "module": "g6_1_harvest_transport",
@@ -19208,6 +20159,9 @@
         "system_type",
         "fertility_components",
         "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
         "tillage_practices",
         "fertility_monitoring",
         "erosion_practices"
@@ -19215,6 +20169,9 @@
       "missing_required": [
         "fertility_components",
         "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
         "tillage_practices",
         "fertility_monitoring",
         "erosion_practices"
@@ -19222,6 +20179,266 @@
       "missing_required_na": [
         "fertility_components",
         "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ]
+    },
+    {
+      "module": "g4_0_rotation_soil",
+      "label": "stale_chain:micronutrient_verification:applies_deficiency_materials:truthy",
+      "answers": {
+        "deficiency_materials": [
+          "micronutrients"
+        ],
+        "applies_deficiency_materials": false
+      },
+      "visible_questions": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ],
+      "missing_required": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ],
+      "missing_required_na": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ]
+    },
+    {
+      "module": "g4_0_rotation_soil",
+      "label": "stale_chain:micronutrient_verification_other:deficiency_materials:includes",
+      "answers": {
+        "micronutrient_verification": [
+          "other"
+        ],
+        "deficiency_materials": [
+          "__not_an_option__"
+        ]
+      },
+      "visible_questions": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ],
+      "missing_required": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ],
+      "missing_required_na": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ]
+    },
+    {
+      "module": "g4_0_rotation_soil",
+      "label": "stale_chain:micronutrient_method_agent_approval:applies_deficiency_materials:truthy",
+      "answers": {
+        "deficiency_materials": [
+          "micronutrients"
+        ],
+        "micronutrient_verification": [
+          "crop_advisor"
+        ],
+        "applies_deficiency_materials": false
+      },
+      "visible_questions": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ],
+      "missing_required": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ],
+      "missing_required_na": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ]
+    },
+    {
+      "module": "g4_0_rotation_soil",
+      "label": "stale_chain:magnesium_sulfate_verification:applies_deficiency_materials:truthy",
+      "answers": {
+        "deficiency_materials": [
+          "magnesium_sulfate"
+        ],
+        "applies_deficiency_materials": false
+      },
+      "visible_questions": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ],
+      "missing_required": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ],
+      "missing_required_na": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ]
+    },
+    {
+      "module": "g4_0_rotation_soil",
+      "label": "stale_chain:magnesium_sulfate_verification_other:deficiency_materials:includes",
+      "answers": {
+        "magnesium_sulfate_verification": [
+          "other"
+        ],
+        "deficiency_materials": [
+          "__not_an_option__"
+        ]
+      },
+      "visible_questions": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ],
+      "missing_required": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ],
+      "missing_required_na": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ]
+    },
+    {
+      "module": "g4_0_rotation_soil",
+      "label": "stale_chain:chloride_accumulation_other:applies_potassium_chloride:truthy",
+      "answers": {
+        "chloride_accumulation_practices": [
+          "other"
+        ],
+        "applies_potassium_chloride": false
+      },
+      "visible_questions": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ],
+      "missing_required": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ],
+      "missing_required_na": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
         "tillage_practices",
         "fertility_monitoring",
         "erosion_practices"
@@ -19238,6 +20455,9 @@
         "system_type",
         "fertility_components",
         "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
         "tillage_practices",
         "fertility_monitoring",
         "erosion_practices"
@@ -19246,6 +20466,9 @@
         "system_type",
         "fertility_components",
         "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
         "tillage_practices",
         "erosion_practices"
       ],
@@ -19253,6 +20476,9 @@
         "system_type",
         "fertility_components",
         "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
         "tillage_practices",
         "erosion_practices"
       ]
@@ -19270,6 +20496,9 @@
         "system_type",
         "fertility_components",
         "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
         "tillage_practices",
         "fertility_monitoring",
         "erosion_practices"
@@ -19278,6 +20507,9 @@
         "system_type",
         "fertility_components",
         "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
         "tillage_practices",
         "erosion_practices"
       ],
@@ -19285,6 +20517,9 @@
         "system_type",
         "fertility_components",
         "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
         "tillage_practices",
         "erosion_practices"
       ]
@@ -19302,6 +20537,9 @@
         "system_type",
         "fertility_components",
         "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
         "tillage_practices",
         "fertility_monitoring",
         "monitoring_frequency",
@@ -19311,6 +20549,9 @@
         "system_type",
         "fertility_components",
         "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
         "tillage_practices",
         "monitoring_frequency",
         "erosion_practices"
@@ -19319,6 +20560,9 @@
         "system_type",
         "fertility_components",
         "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
         "tillage_practices",
         "monitoring_frequency",
         "erosion_practices"
@@ -19417,6 +20661,67 @@
       ],
       "missing_required": [
         "prevention_practices",
+        "weed_management_practices",
+        "plastic_mulch_used",
+        "applies_pest_weed_disease_inputs",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_records"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g5_0_pest",
+      "label": "stale_chain:copper_accumulation_practices:applies_pest_weed_disease_inputs:truthy",
+      "answers": {
+        "applies_copper_materials": true,
+        "applies_pest_weed_disease_inputs": false
+      },
+      "visible_questions": [
+        "prevention_practices",
+        "burns_crop_residue",
+        "weed_management_practices",
+        "plastic_mulch_used",
+        "applies_pest_weed_disease_inputs",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_methods",
+        "monitoring_records"
+      ],
+      "missing_required": [
+        "prevention_practices",
+        "burns_crop_residue",
+        "weed_management_practices",
+        "plastic_mulch_used",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_records"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g5_0_pest",
+      "label": "stale_chain:copper_accumulation_other:applies_copper_materials:truthy",
+      "answers": {
+        "copper_accumulation_practices": [
+          "other"
+        ],
+        "applies_copper_materials": false
+      },
+      "visible_questions": [
+        "prevention_practices",
+        "burns_crop_residue",
+        "weed_management_practices",
+        "plastic_mulch_used",
+        "applies_pest_weed_disease_inputs",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_methods",
+        "monitoring_records"
+      ],
+      "missing_required": [
+        "prevention_practices",
+        "burns_crop_residue",
         "weed_management_practices",
         "plastic_mulch_used",
         "applies_pest_weed_disease_inputs",
