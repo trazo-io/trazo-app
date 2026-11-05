@@ -113,6 +113,18 @@ function valuesFor(
         );
       return { parts: joinList(intl, parts, 0) };
     }
+    case 'pre_harvest_intervals.inside': {
+      // A spray logged with no product name arrives as "" (the server sends no English phrase);
+      // the reader's language says it had none (review of back #301).
+      const values: Record<string, string | number> = {};
+      for (const [name, value] of Object.entries(params)) {
+        if (typeof value === 'number' || typeof value === 'string') values[name] = value;
+      }
+      if (!values.product) {
+        values.product = intl.formatMessage({ id: 'certifierReadiness.phiNoProduct' });
+      }
+      return values;
+    }
     default: {
       // Numbers stay numbers (plural rules read them); dates and names pass through as written.
       const values: Record<string, string | number> = {};

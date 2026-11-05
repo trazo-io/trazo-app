@@ -3257,7 +3257,11 @@ function NewEvent({ isEdit = false, eventId = null }) {
       const completenessGaps = Array.isArray(savedEvent?.completeness_gaps)
         ? savedEvent.completeness_gaps
         : [];
-      if (completenessGaps.length > 0) {
+      // A pick on this production that came sooner after a spray than the PHI recorded for it, from
+      // the operation's own dates (`phi_check` on the server). It leads the one warning: a mistyped
+      // date is best fixed now, while the grower is still here, and the record is saved either way.
+      const phiConflicts = Array.isArray(savedEvent?.phi_conflicts) ? savedEvent.phi_conflicts : [];
+      if (completenessGaps.length > 0 || phiConflicts.length > 0) {
         const gapNames = completenessGaps
           .map((key) =>
             COMPLETENESS_GAP_LABELS[key]
@@ -3268,12 +3272,54 @@ function NewEvent({ isEdit = false, eventId = null }) {
                 key.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase())
           )
           .join(', ');
+        const gapsTitle = intl.formatMessage({
+          id: 'app.completenessGapsSavedTitle',
+          defaultMessage: 'Saved. A certifier will also want:'
+        });
+        // Inside a description that follows a "Saved." title, the gaps take a label without it
+        // (review of app #273: the toast said "Saved." twice).
+        const gapsLabel = intl.formatMessage({
+          id: 'app.completenessGapsInlineLabel',
+          defaultMessage: 'A certifier will also want:'
+        });
+        // Picks, not lines: one pick inside two sprays' PHIs is one pick with two lines.
+        const phiPickCount = new Set(phiConflicts.map((c) => c.pick_id)).size;
+        const phiLines = phiConflicts.slice(0, 3).map((c) =>
+          intl.formatMessage(
+            {
+              id: 'app.phiConflictLine',
+              defaultMessage:
+                '{product}, applied {applied}: picked {picked}, {days, plural, one {# day} other {# days}} after (PHI {phi} days)'
+            },
+            {
+              product:
+                c.product ||
+                intl.formatMessage({
+                  id: 'app.phiConflictNoProduct',
+                  defaultMessage: 'A spray with no product name'
+                }),
+              applied: c.applied,
+              picked: c.picked,
+              days: c.days,
+              phi: c.phi_days
+            }
+          )
+        );
+        const details = phiConflicts.length
+          ? [...phiLines, ...(gapNames ? [`${gapsLabel} ${gapNames}`] : [])].join(' · ')
+          : gapNames;
         toast({
-          title: intl.formatMessage({
-            id: 'app.completenessGapsSavedTitle',
-            defaultMessage: 'Saved. A certifier will also want:'
-          }),
-          description: savedRecordCount > 1 ? `${savedToText} · ${gapNames}` : gapNames,
+          title: phiConflicts.length
+            ? intl.formatMessage(
+                {
+                  id: 'app.phiConflictSavedTitle',
+                  defaultMessage:
+                    'Saved. {count, plural, one {A pick} other {# picks}} came sooner after a spray than its recorded PHI:'
+                },
+                { count: phiPickCount }
+              )
+            : gapsTitle,
+          description: savedRecordCount > 1 ? `${savedToText} · ${details}` : details,
           status: 'warning',
           duration: 8000,
           isClosable: true
