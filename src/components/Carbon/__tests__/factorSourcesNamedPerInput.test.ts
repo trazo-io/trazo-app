@@ -1,0 +1,95 @@
+/**
+ * The consumer's "where the factors come from" card names the source PER INPUT (2026-11-05).
+ *
+ * `USDACredibilityBadge` renders inside the QR page's carbon section. Until this date it told a
+ * shopper "Government-Sourced Emission Factors", "All carbon calculations in Trazo use emission
+ * factors published by US government agencies", showed an "EPA/USDA-Sourced" and a green
+ * "Government Data" chip, and listed "USDA Agricultural Research Service" as a source.
+ *
+ * None of it held: phosphorus and potassium factors are Trazo estimates, pesticides and herbicides
+ * use academic LCA (`.claude/rules/carbon-methodology.md`), and the "USDA ARS" line is an
+ * attribution `trazo-back/carbon/services/verified_emission_factors.py` records as a non-citation.
+ * compliance.md forbids the blanket form; provenance is stated per input class.
+ */
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
+
+import { describe, expect, it } from 'vitest';
+
+import enUS from '../../../i18n/lang/en-US.json';
+import es419 from '../../../i18n/lang/es-419.json';
+
+const BLANKET = [
+  /EPA\/USDA/i,
+  /government[- ]sourced/i,
+  /government data/i,
+  /datos gubernamentales/i,
+  /all carbon calculations/i,
+  /todos los c[aá]lculos/i,
+  /(fuentes?|datos|factores)[^"]{0,40}gubernamental/i,
+  /Agricultural Research Service/i,
+  /Servicio de Investigaci[oó]n Agr[ií]cola/i
+];
+
+/** Terms the consumer copy rule bans outright (CLAUDE.md, transparency-first.md). */
+const JARGON = [
+  /emission factors?/i,
+  /factor(es)? de emisi[oó]n/i,
+  /\bCO2e\b/,
+  /\bLCA\b/,
+  /\bScope [123]\b/i,
+  /\balcance [123]\b/i
+];
+
+const card = (messages: Record<string, string>) =>
+  Object.entries(messages).filter(([key]) => key.startsWith('app.usdaBadge.'));
+
+describe('the factor-source card states provenance per input, never a blanket claim', () => {
+  for (const [name, messages] of [
+    ['en-US', enUS],
+    ['es-419', es419]
+  ] as const) {
+    it(`${name}: no blanket provenance`, () => {
+      const entries = card(messages as unknown as Record<string, string>);
+      expect(entries.length).toBeGreaterThan(10); // not vacuous
+      const offenders = entries.filter(([, text]) => BLANKET.some((re) => re.test(text)));
+      expect(offenders).toEqual([]);
+    });
+
+    it(`${name}: no carbon jargon a shopper cannot read`, () => {
+      const offenders = card(messages as unknown as Record<string, string>).filter(([, text]) =>
+        JARGON.some((re) => re.test(text))
+      );
+      expect(offenders).toEqual([]);
+    });
+
+    it(`${name}: names the estimate and the academic sources`, () => {
+      const m = messages as unknown as Record<string, string>;
+      expect(m['app.usdaBadge.trazoEstimate']).toBeTruthy();
+      expect(m['app.usdaBadge.academicLca']).toMatch(/Audsley/);
+    });
+  }
+});
+
+describe('the activity wizard attributes advice only to the source an item names', () => {
+  const preview = readFileSync(resolve(__dirname, '../../Events/CarbonImpactPreview.tsx'), 'utf8');
+
+  it('reads the real component', () => {
+    expect(preview).toContain('calculation.recommendations');
+  });
+
+  it('shows the impact level the backend sends, never a default one', () => {
+    // The backend sends "High", "Medium" (and "Transparency", a category, not a level):
+    // trazo-back carbon/services/event_carbon_calculator.py. A first fix dropped the line.
+    expect(preview).toMatch(/IMPACT_LEVEL_KEYS\[rec\.impact\]/);
+    expect(preview).toMatch(/High: 'carbon\.recommendation\.impactHigh'/);
+    expect(preview).toMatch(/Medium: 'carbon\.recommendation\.impactMedium'/);
+    expect(preview).not.toMatch(/rec\.impact\s*\|\|/);
+  });
+
+  it('never rewrites or defaults the source to an agency', () => {
+    // It printed rec.source with EPA swapped for USDA, and "USDA" when there was none.
+    expect(preview).not.toMatch(/source\?\.replace\(/);
+    expect(preview).not.toMatch(/\|\|\s*'(USDA|EPA)[^']*'/);
+  });
+});
