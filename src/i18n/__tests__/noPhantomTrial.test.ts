@@ -14,9 +14,10 @@
  * corrected, the success copy had been corrected, and the modal was missed: the
  * "fixed on the audited surface, alive on its sibling" shape this codebase keeps producing.
  *
- * Scoped to keys that are actually RENDERED. Dozens of dead `app.*Trial*` keys still sit in the
- * catalogue from the pre-2026-08 pricing model; they make no claim to anyone and deleting them
- * is a separate cleanup. What must never be true is that a LIVE string offers a trial.
+ * Scoped first to keys that are actually RENDERED. The 38 dead trial keys left from the
+ * pre-2026-08 pricing model ("14-Day Free Trial", "Start Your Free Trial", "Why do you need my
+ * credit card for the free trial?") were deleted 2026-11-05, so the catalogue as a whole is now
+ * held to the same rule: a dead key is one import away from a live claim.
  */
 import { readdirSync, readFileSync, statSync } from 'fs';
 import { join, resolve } from 'path';
@@ -57,8 +58,22 @@ const isRendered = (key: string) =>
  *  rendered "Free Trial Active" and "Prueba gratis activa" past this guard for as long as it was
  *  mounted. A free trial is the claim whether or not it names a length, and Spanish says it two
  *  ways: matching only "gratuita" would have let the Spanish banner through again. */
-const OFFERS_A_TRIAL =
-  /(free trial|free \d+[- ]day trial|prueba gratuita|prueba gratis|\d+ d[ií]as de prueba)/i;
+// The counted and named forms, plus a trial word followed by a duration (review of app #278:
+// "Try Trazo free for 14 days" and "access to all features for 14 days" slipped past the
+// adjacent-phrase forms). The duration needs a trial word before it, so "kept for 30 days"
+// stays legal.
+const OFFERS_A_TRIAL = new RegExp(
+  [
+    'free trial',
+    'free \\d+[- ]day trial',
+    'prueba gratuita',
+    'prueba gratis',
+    '\\d+ d[ií]as de prueba',
+    '\\b(free|try|access\\b[^.]{0,20}?\\bto)\\b[^.]{0,40}?\\bfor \\d+ days?\\b',
+    '\\b(gratis|prueba|acceso\\b[^.]{0,20}?\\ba)\\b[^.]{0,40}?\\b(por|durante) \\d+ d[ií]as\\b'
+  ].join('|'),
+  'i'
+);
 
 describe('no phantom trial in live copy', () => {
   it('finds source to scan (guards the guard)', () => {
@@ -78,6 +93,13 @@ describe('no phantom trial in live copy', () => {
         .map(([key, value]) => `${key} = ${value}`);
 
       expect(offenders, 'Starter is free forever — no card, no clock, no trial').toEqual([]);
+    });
+
+    it(`${locale}: no string in the catalogue offers a trial, rendered or not`, () => {
+      const offenders = Object.entries(catalogue as Record<string, string>)
+        .filter(([, value]) => typeof value === 'string' && OFFERS_A_TRIAL.test(value))
+        .map(([key, value]) => `${key} = ${value}`);
+      expect(offenders, 'a dead key is one import away from a live claim').toEqual([]);
     });
   }
 });
