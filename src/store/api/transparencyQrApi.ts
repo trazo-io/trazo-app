@@ -106,7 +106,10 @@ export interface BuyerDocRequestResponse {
 // Blockchain integrity verification response
 export interface BlockchainIntegrityResponse {
   status: 'verified' | 'submitted' | 'tampered' | 'pending';
-  data_integrity: 'intact' | 'tampered' | 'no_hash' | 'check_failed';
+  // 'inconclusive' (back #298): a version-1 seal whose events tie on `index` and that no event
+  // order reproduces. v1 cannot tell a changed record from a changed row order, so this is
+  // neither 'intact' nor 'tampered'; ProductDetail treats it as unchecked.
+  data_integrity: 'intact' | 'tampered' | 'inconclusive' | 'no_hash' | 'check_failed';
   data_integrity_detail: string;
   tx_hash?: string;
   verified?: boolean;
