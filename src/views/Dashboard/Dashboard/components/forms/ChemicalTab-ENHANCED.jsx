@@ -2097,13 +2097,13 @@ const ChemicalTab = forwardRef(
                   {isSummaryMode && chemicalType === 'FE' && (
                     <Box
                       p={4}
-                      bg="blue.50"
+                      bg="gray.50"
                       borderRadius="md"
                       border="1px solid"
-                      borderColor="blue.200"
+                      borderColor="gray.200"
                       mb={4}>
-                      <Text fontWeight="semibold" color="blue.700" mb={4}>
-                        <Icon as={FaCalculator} mr={2} />
+                      <Text fontWeight="semibold" color="gray.700" mb={4}>
+                        <Icon as={FaCalculator} mr={2} color="gray.500" />
                         {intl.formatMessage({
                           id: 'events.chemical.aggregate.periodHeading',
                           defaultMessage: 'Aggregate Application Period'
@@ -5292,52 +5292,25 @@ const ChemicalTab = forwardRef(
 
                     {/* Phase 3: Electric Equipment Info Box */}
                     {watch('application_fuel_type') === 'electric' && (
-                      <Box
-                        p={3}
-                        bg="blue.50"
-                        borderRadius="md"
-                        border="1px solid"
-                        borderColor="blue.200">
-                        <Text fontSize="sm" color="blue.700">
-                          <Icon as={FaBolt} mr={2} color="blue.600" />
-                          <Text as="span" fontWeight="semibold">
-                            {intl.formatMessage({
-                              id: 'events.chemical.electricEquipment.label',
-                              defaultMessage: 'Electric Equipment:'
-                            })}
-                          </Text>{' '}
-                          {intl.formatMessage({
-                            id: 'events.chemical.electricEquipment.body',
-                            defaultMessage:
-                              'Enter energy consumption in kilowatt-hours (kWh). Grid electricity uses 0.365 kg CO₂e/kWh. Solar/wind powered equipment has zero emissions.'
-                          })}
-                        </Text>
-                      </Box>
+                      <StandardAlert
+                        status="info"
+                        mb={0}
+                        title={intl.formatMessage({ id: 'events.electricEquipment.title' })}
+                        description={intl.formatMessage({ id: 'events.electricEquipment.body' })}
+                      />
                     )}
 
-                    <Box
-                      bg="blue.50"
-                      p={3}
-                      borderRadius="md"
-                      borderLeft="4px"
-                      borderLeftColor="blue.400"
-                      mt={2}>
-                      <HStack spacing={2} mb={1}>
-                        <Icon as={FaFlask} color="blue.500" fontSize="sm" />
-                        <Text fontSize="sm" fontWeight="semibold" color="blue.700">
-                          {intl.formatMessage({
-                            id: 'events.chemical.applicationCarbon.heading',
-                            defaultMessage: 'Application Carbon Tracking'
-                          })}
-                        </Text>
-                      </HStack>
-                      <Text fontSize="xs" color="blue.600">
-                        {intl.formatMessage({
-                          id: 'events.chemical.applicationCarbon.body',
-                          defaultMessage:
-                            'Application equipment fuel (sprayers, spreaders, etc.) contributes significantly to chemical operation carbon footprint. Documenting actual fuel usage provides consumers with complete transparency into your chemical application practices.'
+                    <Box mt={2}>
+                      <StandardAlert
+                        status="info"
+                        mb={0}
+                        title={intl.formatMessage({
+                          id: 'events.chemical.applicationCarbon.heading'
                         })}
-                      </Text>
+                        description={intl.formatMessage({
+                          id: 'events.chemical.applicationCarbon.body'
+                        })}
+                      />
                     </Box>
 
                     {/* No `onEnterActualFuel` here on purpose. ChemicalTab renders this
