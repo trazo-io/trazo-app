@@ -26,6 +26,7 @@ import {
   StandardSpinner
 } from 'components/Design/StandardComponents';
 import TraceChain, { type TraceDoc } from 'components/Traceback/TraceChain';
+import { TraceRows } from 'components/Traceback/TraceRows';
 
 type Match = {
   sale_id: number;
@@ -251,28 +252,24 @@ export const ReviewTraceback = ({ token, apiRoot }: Props) => {
                 )}
               />
             )}
-            {state.matches.map((m) => (
-              <HStack
-                key={m.sale_id}
-                justify="space-between"
-                borderWidth="1px"
-                borderRadius="md"
-                p={3}
-                spacing={3}>
-                <Box flex={1} minW={0}>
-                  <Text fontWeight="semibold">
-                    {[m.date, m.buyer, m.quantity, m.invoice].filter(Boolean).join(' · ')}
-                  </Text>
-                  <Text fontSize="sm" color="gray.600">
-                    {[m.crop, m.parcel, m.season].filter(Boolean).join(' · ')} ·{' '}
-                    {t(`traceback.matchedOn.${m.matched_on}`)}
-                  </Text>
-                </Box>
-                <StandardButton size="sm" flexShrink={0} onClick={() => openSale(m.sale_id)}>
-                  {t('traceback.matches.trace')}
-                </StandardButton>
-              </HStack>
-            ))}
+            <TraceRows>
+              {state.matches.map((m) => (
+                <HStack key={m.sale_id} justify="space-between" py={3} spacing={3}>
+                  <Box flex={1} minW={0}>
+                    <Text fontWeight="semibold">
+                      {[m.date, m.buyer, m.quantity, m.invoice].filter(Boolean).join(' · ')}
+                    </Text>
+                    <Text fontSize="sm" color="gray.600">
+                      {[m.crop, m.parcel, m.season].filter(Boolean).join(' · ')} ·{' '}
+                      {t(`traceback.matchedOn.${m.matched_on}`)}
+                    </Text>
+                  </Box>
+                  <StandardButton size="sm" flexShrink={0} onClick={() => openSale(m.sale_id)}>
+                    {t('traceback.matches.trace')}
+                  </StandardButton>
+                </HStack>
+              ))}
+            </TraceRows>
           </VStack>
         )}
         {state.kind === 'lotMatches' && state.matches.length === 0 && (
@@ -293,28 +290,24 @@ export const ReviewTraceback = ({ token, apiRoot }: Props) => {
             {state.truncated && (
               <StandardAlert status="info" mb={0} description={t('traceback.matches.truncated')} />
             )}
-            {state.matches.map((m) => (
-              <HStack
-                key={m.pick_id}
-                justify="space-between"
-                borderWidth="1px"
-                borderRadius="md"
-                p={3}
-                spacing={3}>
-                <Box flex={1} minW={0}>
-                  <Text fontWeight="semibold">
-                    {[m.date, m.lot_code, m.quantity, m.storage].filter(Boolean).join(' · ')}
-                  </Text>
-                  <Text fontSize="sm" color="gray.600">
-                    {[m.crop, m.parcel, m.season].filter(Boolean).join(' · ')} ·{' '}
-                    {t(`traceback.matchedOn.${m.matched_on}`)}
-                  </Text>
-                </Box>
-                <StandardButton size="sm" flexShrink={0} onClick={() => openPick(m.pick_id)}>
-                  {t('traceback.lot.matches.trace')}
-                </StandardButton>
-              </HStack>
-            ))}
+            <TraceRows>
+              {state.matches.map((m) => (
+                <HStack key={m.pick_id} justify="space-between" py={3} spacing={3}>
+                  <Box flex={1} minW={0}>
+                    <Text fontWeight="semibold">
+                      {[m.date, m.lot_code, m.quantity, m.storage].filter(Boolean).join(' · ')}
+                    </Text>
+                    <Text fontSize="sm" color="gray.600">
+                      {[m.crop, m.parcel, m.season].filter(Boolean).join(' · ')} ·{' '}
+                      {t(`traceback.matchedOn.${m.matched_on}`)}
+                    </Text>
+                  </Box>
+                  <StandardButton size="sm" flexShrink={0} onClick={() => openPick(m.pick_id)}>
+                    {t('traceback.lot.matches.trace')}
+                  </StandardButton>
+                </HStack>
+              ))}
+            </TraceRows>
           </VStack>
         )}
         {state.kind === 'trace' && (

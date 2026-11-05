@@ -12,14 +12,26 @@
  * - `fileHref` decides how a file opens on this surface; a file it returns null for is named as on
  *   file but not shared here (a reviewer whose link does not include source files).
  * - Never a total, percentage or pass badge: a COUNT of missing links, and each one named.
+ * - ROWS, not boxes (2026-11-04). Each missing link was a cream slab with an orange edge and its
+ *   own outline button, and each pick, input and sale a bordered box inside its card, so one
+ *   trace was a stack of 20+ boxes. Gaps are StatusRows (the readiness card's shape: a tinted
+ *   circle, what is missing, how to close it, a link); picks, inputs and sales are rows split by
+ *   a hairline. On the reviewer's link every tone is neutral: a certifier surface states what is
+ *   missing, it does not grade it (the certifier review's own rule, #257).
  */
 import React, { ReactNode } from 'react';
-import { Badge, Box, HStack, Text, VStack, Wrap, WrapItem } from '@chakra-ui/react';
-import { FaArrowDown, FaPaperclip } from 'react-icons/fa';
+import { Badge, Box, HStack, Link, Text, VStack, Wrap, WrapItem } from '@chakra-ui/react';
+import { FaArrowDown, FaExclamationTriangle, FaInfoCircle, FaPaperclip } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
-import { StandardAlert, StandardButton, StandardCard } from 'components/Design/StandardComponents';
+import {
+  StandardButton,
+  StandardCard,
+  StatusList,
+  StatusRow
+} from 'components/Design/StandardComponents';
 import OnHandByLocation from './OnHandByLocation';
+import { TraceRows } from './TraceRows';
 
 export type TraceGap = {
   hop: string;
@@ -106,6 +118,22 @@ const MISSING_ON_ROW: Record<string, { label: string; value: string }> = {
   }
 };
 
+// The 44px touch floor without a 44px-tall control: an invisible hit area around a text link
+// (the input lookup's pattern). MEASURED earlier on this page: a bare link was 21px tall.
+const TOUCH_TARGET = {
+  position: 'relative' as const,
+  _before: {
+    content: '""',
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: '100%',
+    minWidth: '44px',
+    height: '44px'
+  }
+};
+
 const Fact = ({ label, value }: { label: string; value?: string | null }) =>
   value ? (
     <Text fontSize="sm">
@@ -148,7 +176,7 @@ const SaleLine = ({
   t: (id: string, values?: Record<string, string | number>) => string;
   onOpenSale?: (saleId: number) => void;
 }) => (
-  <HStack justify="space-between" borderWidth="1px" borderRadius="md" p={3} spacing={3}>
+  <HStack justify="space-between" py={3} spacing={3}>
     <Box flex={1} minW={0}>
       <Text fontWeight="semibold" fontSize="sm">
         {[sale.date, sale.buyer, sale.quantity, sale.invoice].filter(Boolean).join(' · ')}
@@ -294,40 +322,56 @@ export const TraceChain = ({
       </Wrap>
     ) : null;
 
-  const gapsFor = (hop: string) =>
-    (tb.gaps || [])
-      .filter((g: TraceGap) => g.hop === hop)
-      .map((g: TraceGap, i: number) => {
-        const to = fixPath ? fixPath(g) : null;
-        return (
-          // The readiness card's finding shape: what is missing, how to close it, and a link to
-          // where. A bare "Fix" sent the farmer to a season page with no hint that a sale cannot
-          // be edited, only voided and entered again (MEASURED in the 2026-10-20 browser run).
-          <StandardAlert key={`${hop}-${g.code}-${g.ref}-${i}`} status="warning" mb={2}>
-            <Text fontSize="sm" fontWeight="semibold">
-              {t(`traceback.gap.${g.code}`, { input: inputName(g) })}
-            </Text>
-            {forOperation && <Text fontSize="sm">{t(`traceback.gapHow.${g.code}`)}</Text>}
-            {/* A button, not a text link: MEASURED at 768px the link was 21px tall, under the
-                44px touch floor, and this is the one tap the page exists for. */}
-            {to && onNavigate && (
-              <StandardButton size="sm" variant="outline" mt={1} onClick={() => onNavigate(to)}>
-                {t('traceback.gap.fix')}
-              </StandardButton>
-            )}
-          </StandardAlert>
-        );
-      });
+  const gapsFor = (hop: string) => {
+    const gaps = (tb.gaps || []).filter((g: TraceGap) => g.hop === hop);
+    if (!gaps.length) return null;
+    return (
+      <StatusList>
+        {gaps.map((g: TraceGap, i: number) => {
+          const to = fixPath ? fixPath(g) : null;
+          return (
+            // The readiness card's finding shape: what is missing, how to close it, and a link to
+            // where. A bare "Fix" sent the farmer to a season page with no hint that a sale cannot
+            // be edited, only voided and entered again (MEASURED in the 2026-10-20 browser run).
+            <StatusRow
+              key={`${hop}-${g.code}-${g.ref}-${i}`}
+              testId="trace-gap"
+              tone={forOperation ? 'warn' : 'neutral'}
+              icon={forOperation ? FaExclamationTriangle : FaInfoCircle}
+              title={t(`traceback.gap.${g.code}`, { input: inputName(g) })}
+              action={
+                to && onNavigate ? (
+                  <Link
+                    as="button"
+                    type="button"
+                    fontSize="sm"
+                    fontWeight="semibold"
+                    color="green.700"
+                    onClick={() => onNavigate(to)}
+                    {...TOUCH_TARGET}>
+                    {t('traceback.gap.fix')}
+                    <Text as="span" aria-hidden="true">
+                      {' →'}
+                    </Text>
+                  </Link>
+                ) : undefined
+              }>
+              {forOperation && (
+                <Text fontSize="sm" color="gray.600">
+                  {t(`traceback.gapHow.${g.code}`)}
+                </Text>
+              )}
+            </StatusRow>
+          );
+        })}
+      </StatusList>
+    );
+  };
 
   // One pick's facts, the same card on a sale trace (every pick it names) and on a lot trace
   // (the anchored pick).
   const pickCard = (p: any, i: number) => (
-    <WrapItem
-      key={p.id ?? `${p.lot_code}-${i}`}
-      borderWidth="1px"
-      borderRadius="md"
-      p={3}
-      minW="220px">
+    <Box key={p.id ?? `${p.lot_code}-${i}`} py={3}>
       <VStack align="start" spacing={0}>
         <Fact label={t('traceback.field.lotCode')} value={p.lot_code} />
         <Fact label={t('traceback.field.date')} value={p.date} />
@@ -346,7 +390,7 @@ export const TraceChain = ({
         <Fact label={t('traceback.field.handlerDocument')} value={p.handler_document} />
         <Files docs={p.documents} />
       </VStack>
-    </WrapItem>
+    </Box>
   );
 
   return (
@@ -357,7 +401,7 @@ export const TraceChain = ({
       <Box mb={4}>
         {tb.gaps.length ? (
           <Badge
-            variant="warning"
+            variant={forOperation ? 'warning' : 'neutral'}
             fontSize="sm"
             px={3}
             py={1}
@@ -368,7 +412,7 @@ export const TraceChain = ({
             })}
           </Badge>
         ) : (
-          <Text fontSize="md" fontWeight="semibold" color="green.700">
+          <Text fontSize="md" fontWeight="semibold" color={forOperation ? 'green.700' : 'gray.800'}>
             {t('traceback.summary.none')}
           </Text>
         )}
@@ -379,7 +423,7 @@ export const TraceChain = ({
               card, so the chain below still reads lot -> season -> inputs. */}
           <StandardCard title={t('traceback.hop.lot')}>
             <Box mb={3}>{gapsFor('picks')}</Box>
-            <Wrap spacing={3}>{(tb.picks || []).map(pickCard)}</Wrap>
+            <TraceRows>{(tb.picks || []).map(pickCard)}</TraceRows>
             <Box mt={4}>
               <Text fontWeight="semibold">{t('traceback.hop.lotSales')}</Text>
               <Text fontSize="sm" color="gray.600" mb={2}>
@@ -388,11 +432,11 @@ export const TraceChain = ({
               {(tb.sales || []).length === 0 ? (
                 <Text fontSize="sm">{t('traceback.lotSales.none')}</Text>
               ) : (
-                <VStack align="stretch" spacing={2}>
+                <TraceRows>
                   {tb.sales.map((sale: any) => (
                     <SaleLine key={sale.sale_id} sale={sale} t={t} onOpenSale={onOpenSale} />
                   ))}
-                </VStack>
+                </TraceRows>
               )}
             </Box>
             {/* Sales that name no pick may hold this one; the records cannot say, so they are
@@ -405,11 +449,11 @@ export const TraceChain = ({
                 <Text fontSize="sm" color="gray.600" mb={2}>
                   {t('traceback.lotSales.unlinkedHelp')}
                 </Text>
-                <VStack align="stretch" spacing={2}>
+                <TraceRows>
                   {tb.sales_naming_no_pick.map((sale: any) => (
                     <SaleLine key={sale.sale_id} sale={sale} t={t} onOpenSale={onOpenSale} />
                   ))}
-                </VStack>
+                </TraceRows>
               </Box>
             )}
           </StandardCard>
@@ -449,7 +493,7 @@ export const TraceChain = ({
             {tb.picks.length === 0 ? (
               <Text fontSize="sm">{t('traceback.picks.none')}</Text>
             ) : (
-              <Wrap spacing={3}>{tb.picks.map(pickCard)}</Wrap>
+              <TraceRows>{tb.picks.map(pickCard)}</TraceRows>
             )}
           </StandardCard>
         </>
@@ -472,9 +516,9 @@ export const TraceChain = ({
         {tb.inputs.length === 0 ? (
           <Text fontSize="sm">{t('traceback.inputs.none')}</Text>
         ) : (
-          <VStack align="stretch" spacing={2}>
+          <TraceRows>
             {tb.inputs.map((r: any) => (
-              <Box key={`${r.kind}-${r.event_id}`} borderWidth="1px" borderRadius="md" p={3}>
+              <Box key={`${r.kind}-${r.event_id}`} py={3}>
                 <Text fontWeight="semibold">
                   {[r.date, r.product || t(`traceback.inputKind.${r.kind}`)]
                     .filter(Boolean)
@@ -503,7 +547,7 @@ export const TraceChain = ({
                   </Text>
                 )}
                 {r.inside_phi && (
-                  <Badge variant="warning" mt={1} textTransform="none">
+                  <Badge variant={forOperation ? 'warning' : 'neutral'} mt={1} textTransform="none">
                     {t('traceback.input.insidePhi')}
                   </Badge>
                 )}
@@ -520,7 +564,7 @@ export const TraceChain = ({
                     <Text as="span" color="gray.600">
                       {t(MISSING_ON_ROW[g.code].label)}:{' '}
                     </Text>
-                    <Badge variant="warning" textTransform="none">
+                    <Badge variant="neutral" textTransform="none">
                       {t(MISSING_ON_ROW[g.code].value)}
                     </Badge>
                   </Text>
@@ -528,7 +572,7 @@ export const TraceChain = ({
                 <Files docs={r.documents} />
               </Box>
             ))}
-          </VStack>
+          </TraceRows>
         )}
       </StandardCard>
 

@@ -275,7 +275,7 @@ describe('Traceback from a harvest lot', () => {
       '{input}',
       '2026-09-26 · section NB2 · 41 bins'
     );
-    const gap = screen.getByText(text).closest('[role="alert"]');
+    const gap = screen.getByText(text).closest('[data-testid="trace-gap"]');
     fireEvent.click(
       within(gap as HTMLElement).getByRole('button', { name: messages['traceback.gap.fix'] })
     );
