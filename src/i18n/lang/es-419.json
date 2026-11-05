@@ -3162,7 +3162,7 @@
   "dashboard.recordsCard.seasonsUnderway": "Temporadas en curso",
   "dashboard.recordsCard.buyerPage": "Página de compradores, últimos 30 días",
   "dashboard.recordsCard.qrScans": "Escaneos QR",
-  "dashboard.recordsCard.notRecorded": "Sin registro",
+  "dashboard.recordsCard.visitorsNotRecorded": "Visitantes únicos: sin registro para estos escaneos",
   "dashboard.recordsCard.share": "Comparte tus códigos QR",
   "dashboard.kgCO2e": "{value} kg CO₂e",
   "dashboard.loadingDashboardMetrics": "Cargando métricas del panel",

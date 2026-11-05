@@ -132,12 +132,16 @@ const SmartUsageCard = ({ companyId, farmId, buyerPagePath }) => {
                 layout="inline"
                 dense
                 label={intl.formatMessage({ id: 'dashboard.consumerReach' })}
-                value={
-                  count(metrics.consumer_reach) ??
-                  intl.formatMessage({ id: 'dashboard.recordsCard.notRecorded' })
-                }
+                value={count(metrics.consumer_reach)}
               />
             </FieldList>
+            {/* An unknown count is said in words, under the rows, not squeezed into the value
+                slot: at 1366 each column is ~160px and "Not recorded" broke as "Not record / ed". */}
+            {metrics.consumer_reach == null && (
+              <Text fontSize="xs" color={mutedColor} pt={1} data-testid="visitors-not-recorded">
+                {intl.formatMessage({ id: 'dashboard.recordsCard.visitorsNotRecorded' })}
+              </Text>
+            )}
           </Box>
         </SimpleGrid>
         <Box>

@@ -74,7 +74,8 @@ describe('farm-home records card', () => {
   it('says an unknown visitor count is not recorded, never a number', () => {
     metrics = { ...metrics, consumer_reach: null };
     renderCard();
-    expect(row('Unique visitors').textContent).toContain('Not recorded');
+    expect(screen.queryByText('Unique visitors')).toBeNull();
+    expect(screen.getByTestId('visitors-not-recorded').textContent).toMatch(/not recorded/);
   });
 
   it('links to the buyer page', () => {
