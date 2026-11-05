@@ -99,6 +99,22 @@ const findings = [
     section_hint: null
   },
   {
+    label: 'National List conditions (§ 205.601(j)(6), (j)(7); § 205.602(c))',
+    row_key: 'national_list_conditions',
+    status: 'REVIEW',
+    detail:
+      '1 calcium chloride record(s) applied to the soil (§ 205.602(c) allows a foliar spray only); 2 micronutrient application(s) with no soil or tissue result on file on or before the date',
+    detail_code: 'national_list_conditions.records',
+    params: {
+      calcium_soil: 1,
+      calcium_method_unknown: 0,
+      micronutrient_no_result: 2,
+      micronutrient_purpose: 0,
+      magnesium_no_soil_result: 0
+    },
+    section_hint: 'Input Material Application Records section'
+  },
+  {
     label: 'Something new (§ 205.999)',
     row_key: 'something_new',
     status: 'REVIEW',
@@ -184,6 +200,14 @@ describe('season row details speak the reader language', () => {
     expect(text).toContain(
       'Plan v4, Borrador: 4 de 6 secciones superan el mínimo de narrativa; por debajo del mínimo: Plan de monitoreo (a)(3) y Barreras contra la mezcla (a)(5).'
     );
+    // Only the counts above zero are said, each with its own citation, joined by semicolons.
+    expect(text).toContain(
+      'Condiciones de la Lista Nacional (§ 205.601(j)(6), (j)(7); § 205.602(c))'
+    );
+    expect(text).toContain(
+      '1 registro de cloruro de calcio aplicado al suelo (§ 205.602(c) solo lo permite como aspersión foliar); 2 aplicaciones de micronutrientes sin un resultado de suelo o tejido registrado en la fecha de la aplicación o antes. Abre cada registro para revisarlo frente a la condición.'
+    );
+    expect(text).not.toContain('sulfato de magnesio');
     expect(text).not.toContain('fill before audit');
     // A code the catalogue does not know keeps the server's true English sentence.
     expect(text).toContain('A sentence the catalogue has not learned yet');

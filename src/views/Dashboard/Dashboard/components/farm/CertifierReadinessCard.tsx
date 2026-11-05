@@ -193,6 +193,7 @@ export const ROW_ROUTES: Record<string, (ctx: RowRouteContext) => string | null>
     `/admin/dashboard/farm/${farmId}/osp/module/materials_application#logged-names`,
   input_traceability: productionPage,
   record_completeness_chemical: productionPage,
+  national_list_conditions: productionPage,
   compost: productionPage,
   raw_manure_interval: productionPage,
   seed_sourcing: productionPage,
