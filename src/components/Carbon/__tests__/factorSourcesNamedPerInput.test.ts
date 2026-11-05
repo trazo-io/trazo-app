@@ -22,8 +22,20 @@ const BLANKET = [
   /government data/i,
   /datos gubernamentales/i,
   /all carbon calculations/i,
-  /todos los cálculos/i,
-  /Agricultural Research Service/i
+  /todos los c[aá]lculos/i,
+  /(fuentes?|datos|factores)[^"]{0,40}gubernamental/i,
+  /Agricultural Research Service/i,
+  /Servicio de Investigaci[oó]n Agr[ií]cola/i
+];
+
+/** Terms the consumer copy rule bans outright (CLAUDE.md, transparency-first.md). */
+const JARGON = [
+  /emission factors?/i,
+  /factor(es)? de emisi[oó]n/i,
+  /\bCO2e\b/,
+  /\bLCA\b/,
+  /\bScope [123]\b/i,
+  /\balcance [123]\b/i
 ];
 
 const card = (messages: Record<string, string>) =>
@@ -38,6 +50,13 @@ describe('the factor-source card states provenance per input, never a blanket cl
       const entries = card(messages as unknown as Record<string, string>);
       expect(entries.length).toBeGreaterThan(10); // not vacuous
       const offenders = entries.filter(([, text]) => BLANKET.some((re) => re.test(text)));
+      expect(offenders).toEqual([]);
+    });
+
+    it(`${name}: no carbon jargon a shopper cannot read`, () => {
+      const offenders = card(messages as unknown as Record<string, string>).filter(([, text]) =>
+        JARGON.some((re) => re.test(text))
+      );
       expect(offenders).toEqual([]);
     });
 
