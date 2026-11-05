@@ -16,7 +16,7 @@
  *     with complete transparency" (a completeness promise, on a farmer's form).
  *   - "Certifier Notified?" was hardcoded English.
  */
-import { readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { resolve } from 'path';
 import { describe, expect, it } from 'vitest';
 import en from 'i18n/lang/en-US.json';
@@ -31,22 +31,27 @@ const code = (f: string) =>
 const EN = en as Record<string, string>;
 const ES = es as Record<string, string>;
 
-// The backend's grid factor, read from the calculator itself (CI checks trazo-back out beside us).
+// The backend's grid factor, read from the calculator itself (CI checks trazo-back out beside
+// us). A frontend-only checkout has no sibling: the backend cases skip there instead of crashing
+// the whole file at load (the consumerVisibility.test.ts pattern; review of app #277).
+const FACTORS_PY = resolve(
+  process.cwd(),
+  '..',
+  'trazo-back',
+  'carbon',
+  'services',
+  'emission_factors.py'
+);
+const hasBackend = existsSync(FACTORS_PY);
 const BACKEND_GRID = (() => {
-  const src = readFileSync(
-    resolve(process.cwd(), '..', 'trazo-back', 'carbon', 'services', 'emission_factors.py'),
-    'utf8'
-  );
+  if (!hasBackend) return '';
+  const src = readFileSync(FACTORS_PY, 'utf8');
   const block = src.slice(src.indexOf('ELECTRICITY_FACTORS = {'));
   const m = block.match(/"grid":\s*\{\s*"value":\s*([0-9.]+)/);
   return m ? m[1] : '';
 })();
 
 describe('form info notes', () => {
-  it('reads the backend grid factor (guards the guard)', () => {
-    expect(BACKEND_GRID).toMatch(/^0\.\d+$/);
-  });
-
   it.each(['ProductionTab.jsx', 'ChemicalTab-ENHANCED.jsx', 'GeneralTab.jsx'])(
     '%s draws no hand-built blue box',
     (f) => {
@@ -58,17 +63,11 @@ describe('form info notes', () => {
   );
 
   it.each(['events.electricEquipment.body', 'events.production.electricPump.body'])(
-    '%s quotes the factor the calculator uses, from its real source',
+    '%s names its real source, never the stale 0.39 or NRCS',
     (key) => {
-      for (const [loc, cat] of [
-        ['en', EN],
-        ['es', ES]
-      ] as const) {
-        const v = cat[key];
-        expect(v, `${loc} ${key}`).toBeTruthy();
-        expect(v).toContain(BACKEND_GRID);
-        expect(v).toMatch(/EPA eGRID/);
-        expect(v).not.toMatch(/0\.39\b|NRCS/);
+      for (const cat of [EN, ES]) {
+        expect(cat[key], key).toMatch(/EPA eGRID/);
+        expect(cat[key]).not.toMatch(/0\.39\b|NRCS/);
       }
     }
   );
@@ -91,4 +90,17 @@ describe('form info notes', () => {
     expect(EN['events.chemical.electricEquipment.body']).toBeUndefined();
     expect(ES['events.chemical.electricEquipment.body']).toBeUndefined();
   });
+});
+
+describe.skipIf(!hasBackend)('form info notes quote the calculator', () => {
+  it('reads the backend grid factor (guards the guard)', () => {
+    expect(BACKEND_GRID).toMatch(/^0\.\d+$/);
+  });
+
+  it.each(['events.electricEquipment.body', 'events.production.electricPump.body'])(
+    '%s quotes the grid factor the calculator uses',
+    (key) => {
+      for (const cat of [EN, ES]) expect(cat[key], key).toContain(BACKEND_GRID);
+    }
+  );
 });
