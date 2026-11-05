@@ -30,6 +30,8 @@ import { ChakraProvider } from '@chakra-ui/react';
 import enUS from '../../../../i18n/lang/en-US.json';
 
 const verifyResult: Record<string, unknown> = {};
+// Read lazily by the mock below, like `verifyResult`.
+const planRows: Record<string, unknown>[] = [];
 
 // `vi.mock` is hoisted above the imports, so the factory may not close over a `const`
 // declared below it — only over one it reads lazily at call time, like `verifyResult`.
@@ -45,7 +47,7 @@ vi.mock('store/api/ospApi', () => {
     useRemoveApprovedInputMutation: mutation,
     useAddPlanMaterialMutation: mutation,
     useDeletePlanMaterialMutation: mutation,
-    useGetPlanMaterialsQuery: () => ({ data: [] })
+    useGetPlanMaterialsQuery: () => ({ data: planRows })
   };
 });
 
@@ -72,6 +74,62 @@ const renderPanel = (result: Record<string, unknown>, osp: Record<string, unknow
     </ChakraProvider>
   );
 };
+
+describe('the materials you entered (browser check, 2026-11-05)', () => {
+  const NOT_FOUND = {
+    found: false,
+    status: 'not_found',
+    omri_product_pk: null,
+    national_list_substance_pk: null,
+    wsda_material_pk: null
+  };
+
+  it('does not list a listed product twice: a row named as it holds answers about it', () => {
+    planRows.splice(
+      0,
+      planRows.length,
+      {
+        id: 12,
+        product_name: 'Lime sulfur',
+        category: 'pest_disease_weed',
+        category_display: 'Pest, weed and disease control materials (CCOF §B)',
+        listing_statement: 'National List substance',
+        manufacturer: ''
+      },
+      {
+        id: 13,
+        product_name: 'Rexius Organic Compost',
+        category: 'fertilizer_amendment',
+        category_display: 'Fertilizers and soil amendments (CCOF §A)',
+        listing_statement: 'no third-party listing on file',
+        manufacturer: ''
+      }
+    );
+    try {
+      renderPanel(NOT_FOUND, {
+        ...OSP,
+        approved_national_list_substances: [
+          {
+            id: 93,
+            substance_name: 'lime  Sulfur',
+            cfr_section: '205.601',
+            citation: '§ 205.601',
+            is_national_list_entry: true,
+            status: 'allowed'
+          }
+        ]
+      });
+      expect(screen.getByText(/Materials you entered/i).textContent).toMatch(/\(1\)/);
+      expect(screen.getByText('Rexius Organic Compost')).toBeTruthy();
+      // The app's own words for the section; never the server's CCOF-numbered display name.
+      expect(screen.getByText('Fertilizers and soil amendments')).toBeTruthy();
+      expect(screen.queryByText(/CCOF §/)).toBeNull();
+      expect(screen.getByText('Your packet prints: no third-party listing on file.')).toBeTruthy();
+    } finally {
+      planRows.splice(0, planRows.length);
+    }
+  });
+});
 
 describe('approved-inputs search — every match is offered, not just the winner', () => {
   it('renders every OMRI candidate, not only `omri_product_pk`', () => {

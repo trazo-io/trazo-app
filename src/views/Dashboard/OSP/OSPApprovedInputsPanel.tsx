@@ -181,6 +181,10 @@ interface OSPApprovedInputsPanelProps {
   osp: OSP;
 }
 
+/** The server's match key for a material name: case and spacing only (`plan_materials._norm`). */
+const normName = (name: string | null | undefined): string =>
+  (name || '').split(/\s+/).filter(Boolean).join(' ').toLowerCase();
+
 const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
   companyId,
   farmId,
@@ -241,7 +245,20 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
   const { data: operatorRows } = useGetPlanMaterialsQuery({ companyId, farmId, ospId: osp.id });
   const [addPlanMaterial, { isLoading: isAddingOwn }] = useAddPlanMaterialMutation();
   const [deletePlanMaterial] = useDeletePlanMaterialMutation();
-  const ownRows = operatorRows || [];
+  // A row named exactly as a listed product on this plan holds the operator's answers ABOUT that
+  // product (use, section, reason, review, label), written by the Materials List editor below. The
+  // packet prints the two as one row (`plan_materials._fold`, by name), so this list does not show it
+  // a second time as a material "you entered" (browser check, 2026-11-05: Lime sulfur twice).
+  const listedNames = new Set(
+    [
+      ...nlList.map((s) => s.substance_name),
+      ...omriList.map((p) => p.product_name),
+      ...wsdaList.map((w) => w.brand_name)
+    ].map((n) => normName(n))
+  );
+  const ownRows = (operatorRows || []).filter(
+    (row: PlanMaterialEntry) => !listedNames.has(normName(row.product_name))
+  );
 
   const totalApproved = nlList.length + omriList.length + wsdaList.length + ownRows.length;
 
@@ -895,10 +912,20 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
                   gap={3}
                   wrap="wrap">
                   <VStack align="start" spacing={0} minW={0} flex={1}>
-                    <HStack spacing={2} wrap="wrap">
-                      <Badge colorScheme="gray" fontSize="11px">
-                        {row.category_display}
-                      </Badge>
+                    <HStack spacing={2} wrap="wrap" maxW="100%">
+                      {/* The app's own words for the section: the server's display name is
+                          English and names CCOF's sections, which an OTCO or WSDA plan does not
+                          have. Wraps instead of running under the Remove button. */}
+                      {row.category && (
+                        <Badge
+                          colorScheme="gray"
+                          fontSize="11px"
+                          whiteSpace="normal"
+                          textTransform="none"
+                          maxW="100%">
+                          {intl.formatMessage({ id: `osp.materialsList.category.${row.category}` })}
+                        </Badge>
+                      )}
                       {row.manufacturer && (
                         <Text fontSize="xs" color={subtextColor}>
                           {row.manufacturer}
@@ -909,9 +936,16 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
                       {row.product_name}
                     </Text>
                     {/* Server-computed. Never assembled here from the basis code — the sentence
-                        a certifier reads must have one author. */}
+                        a certifier reads must have one author. It is the packet's English, so it is
+                        quoted as what the packet prints, the way the Materials List editor does. */}
                     <Text fontSize="xs" color={subtextColor}>
-                      {row.listing_statement}
+                      {intl.formatMessage(
+                        {
+                          id: 'osp.materialsList.reviewPrints',
+                          defaultMessage: 'Your packet prints: {statement}.'
+                        },
+                        { statement: row.listing_statement }
+                      )}
                     </Text>
                   </VStack>
                   {isEditable && (
