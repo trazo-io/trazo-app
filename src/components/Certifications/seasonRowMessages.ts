@@ -113,6 +113,28 @@ function valuesFor(
         );
       return { parts: joinList(intl, parts, 0) };
     }
+    case 'national_list_conditions.records': {
+      // Each part carries its own parenthetical citation, so the parts are joined with semicolons
+      // (as the packet's English is) rather than a conjunction that would run the citations together.
+      const parts = (
+        [
+          'calcium_soil',
+          'calcium_method_unknown',
+          'micronutrient_no_result',
+          'micronutrient_no_value',
+          'micronutrient_purpose',
+          'magnesium_no_soil_result'
+        ] as const
+      )
+        .filter((key) => asCount(params[key]) > 0)
+        .map((key) =>
+          intl.formatMessage(
+            { id: `certifierReadiness.nationalListPart.${key}` },
+            { count: asCount(params[key]) }
+          )
+        );
+      return { parts: parts.join('; ') };
+    }
     case 'pre_harvest_intervals.inside': {
       // A spray logged with no product name arrives as "" (the server sends no English phrase);
       // the reader's language says it had none (review of back #301).
