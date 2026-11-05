@@ -167,7 +167,14 @@ const dashboardMetricsApi = baseApi.injectEndpoints({
         method: 'GET',
         credentials: 'include'
       }),
-      providesTags: (result, error, { farmId }) => [{ type: 'Farm', id: farmId }]
+      // Also History and Event: finishing a season or logging an activity invalidates those (not
+      // Farm), and the farm-home header's counts sit right above a seasons list that does refetch
+      // on them. Without these the two disagree until the next poll (review of #286).
+      providesTags: (result, error, { farmId }) => [
+        { type: 'Farm', id: farmId },
+        'History',
+        'Event'
+      ]
     }),
     getFarmComprehensiveDashboard: build.query<
       ComprehensiveDashboardResponse,
