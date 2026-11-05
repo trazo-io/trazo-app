@@ -56,6 +56,7 @@ const SmartUsageCard = ({ companyId, farmId, buyerPagePath }) => {
   const {
     data: dashboardResponse,
     isLoading,
+    isUninitialized,
     error
   } = useGetFarmDashboardMetricsQuery(
     { companyId, farmId },
@@ -70,7 +71,9 @@ const SmartUsageCard = ({ companyId, farmId, buyerPagePath }) => {
   const count = (n) => (typeof n === 'number' ? n.toLocaleString(intl.locale) : null);
 
   let body;
-  if (isLoading) {
+  // A skipped query (no company or farm yet) is not a failure: it reports no data and no error
+  // with `isUninitialized`, and until 2026-11-05 fell through to "Unable to load" (review of #284).
+  if (isLoading || isUninitialized) {
     body = (
       <Flex justify="center" align="center" minH="200px">
         <Spinner color="gray.400" />

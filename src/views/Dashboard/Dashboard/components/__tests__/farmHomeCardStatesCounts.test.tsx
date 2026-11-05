@@ -16,8 +16,12 @@ import { MemoryRouter } from 'react-router-dom';
 import enUS from '../../../../../i18n/lang/en-US.json';
 
 let metrics: Record<string, unknown> = {};
+let skipped = false;
 vi.mock('store/api/dashboardMetricsApi', () => ({
-  useGetFarmDashboardMetricsQuery: () => ({ data: { metrics }, isLoading: false, error: undefined })
+  useGetFarmDashboardMetricsQuery: () =>
+    skipped
+      ? { data: undefined, isLoading: false, isUninitialized: true, error: undefined }
+      : { data: { metrics }, isLoading: false, isUninitialized: false, error: undefined }
 }));
 
 import SmartUsageCard from '../SmartUsageCard';
@@ -37,6 +41,7 @@ const row = (label: string) => screen.getByText(label).closest('div')!.parentEle
 
 describe('farm-home records card', () => {
   beforeEach(() => {
+    skipped = false;
     metrics = {
       consumer_reach: 1,
       monthly_scans: 14,
@@ -76,5 +81,11 @@ describe('farm-home records card', () => {
     renderCard();
     const link = screen.getByRole('link', { name: /Share your QR codes/ });
     expect(link.getAttribute('href')).toBe('/admin/dashboard/farm/2/buyer');
+  });
+
+  it('does not call a query that has not run yet a failure', () => {
+    skipped = true;
+    const { container } = renderCard();
+    expect(container.textContent).not.toMatch(/Unable/i);
   });
 });
