@@ -3276,6 +3276,14 @@ function NewEvent({ isEdit = false, eventId = null }) {
           id: 'app.completenessGapsSavedTitle',
           defaultMessage: 'Saved. A certifier will also want:'
         });
+        // Inside a description that follows a "Saved." title, the gaps take a label without it
+        // (review of app #273: the toast said "Saved." twice).
+        const gapsLabel = intl.formatMessage({
+          id: 'app.completenessGapsInlineLabel',
+          defaultMessage: 'A certifier will also want:'
+        });
+        // Picks, not lines: one pick inside two sprays' PHIs is one pick with two lines.
+        const phiPickCount = new Set(phiConflicts.map((c) => c.pick_id)).size;
         const phiLines = phiConflicts.slice(0, 3).map((c) =>
           intl.formatMessage(
             {
@@ -3284,7 +3292,12 @@ function NewEvent({ isEdit = false, eventId = null }) {
                 '{product}, applied {applied}: picked {picked}, {days, plural, one {# day} other {# days}} after (PHI {phi} days)'
             },
             {
-              product: c.product,
+              product:
+                c.product ||
+                intl.formatMessage({
+                  id: 'app.phiConflictNoProduct',
+                  defaultMessage: 'A spray with no product name'
+                }),
               applied: c.applied,
               picked: c.picked,
               days: c.days,
@@ -3293,14 +3306,18 @@ function NewEvent({ isEdit = false, eventId = null }) {
           )
         );
         const details = phiConflicts.length
-          ? [...phiLines, ...(gapNames ? [`${gapsTitle} ${gapNames}`] : [])].join(' · ')
+          ? [...phiLines, ...(gapNames ? [`${gapsLabel} ${gapNames}`] : [])].join(' · ')
           : gapNames;
         toast({
           title: phiConflicts.length
-            ? intl.formatMessage({
-                id: 'app.phiConflictSavedTitle',
-                defaultMessage: 'Saved. A pick came sooner after a spray than its recorded PHI:'
-              })
+            ? intl.formatMessage(
+                {
+                  id: 'app.phiConflictSavedTitle',
+                  defaultMessage:
+                    'Saved. {count, plural, one {A pick} other {# picks}} came sooner after a spray than its recorded PHI:'
+                },
+                { count: phiPickCount }
+              )
             : gapsTitle,
           description: savedRecordCount > 1 ? `${savedToText} · ${details}` : details,
           status: 'warning',

@@ -66,6 +66,11 @@ describe('NewEvent save path toasts', () => {
     const warning = savePath.slice(0, savePath.indexOf("status: 'warning'"));
     expect(warning).toContain("id: 'app.phiConflictSavedTitle'");
     expect(savePath).toContain('completenessGaps.length > 0 || phiConflicts.length > 0');
+    // Review of app #273: under a "Saved." title the gaps take the inline label, never the
+    // title again; and the title counts picks.
+    expect(savePath).toContain("id: 'app.completenessGapsInlineLabel'");
+    expect(savePath).not.toContain('`${gapsTitle} ${gapNames}`');
+    expect(savePath).toContain('{ count: phiPickCount }');
   });
 
   it('keeps the removed carbon-calculation fallback string out', () => {
