@@ -121,6 +121,7 @@ function valuesFor(
           'calcium_soil',
           'calcium_method_unknown',
           'micronutrient_no_result',
+          'micronutrient_no_value',
           'micronutrient_purpose',
           'magnesium_no_soil_result'
         ] as const

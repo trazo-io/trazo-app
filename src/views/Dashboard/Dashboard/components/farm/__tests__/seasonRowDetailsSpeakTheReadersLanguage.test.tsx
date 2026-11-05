@@ -109,6 +109,7 @@ const findings = [
       calcium_soil: 1,
       calcium_method_unknown: 0,
       micronutrient_no_result: 2,
+      micronutrient_no_value: 0,
       micronutrient_purpose: 0,
       magnesium_no_soil_result: 0
     },
