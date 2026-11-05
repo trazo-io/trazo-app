@@ -188,13 +188,13 @@ const MaterialRowEditor: React.FC<{
       </Stack>
 
       {/* The section and the agent's review share a row that wraps. Each select is given the width
-          its longest option needs (measured 2026-11-05 at 14px: the Spanish post-harvest section
-          ~383px, the approved-list review ~296px), so on a narrow card each takes its own line
-          instead of cutting its own words off. */}
+          its longest option needs plus its padding (measured 2026-11-05 at 14px: the Spanish
+          production-aids section ~473px, the approved-list review ~296px), so on a narrow card each
+          takes its own line instead of cutting its own words off. */}
       <Flex wrap="wrap" gap={2} mt={2} align="center">
         <StandardSelect
           size="sm"
-          flex={{ base: '1 1 100%', md: '1 1 420px' }}
+          flex={{ base: '1 1 100%', md: '1 1 520px' }}
           isDisabled={!isEditable}
           value={row.category}
           aria-label={String(

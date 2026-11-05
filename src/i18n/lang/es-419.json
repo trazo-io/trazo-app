@@ -6530,7 +6530,7 @@
   "osp.materialsList.category.unset": "Sección sin definir",
   "osp.materialsList.category.fertilizer_amendment": "Fertilizantes y enmiendas del suelo",
   "osp.materialsList.category.pest_disease_weed": "Control de plagas, malezas y enfermedades",
-  "osp.materialsList.category.production_aid": "Auxiliares de producción (semillas, sustratos, adyuvantes)",
+  "osp.materialsList.category.production_aid": "Auxiliares de producción (tratamientos de semilla, sustratos, adyuvantes)",
   "osp.materialsList.category.post_harvest": "Materiales de poscosecha (agua de lavado, desinfectantes)",
   "osp.materialsList.category.other": "Otro",
   "osp.materialsList.reviewAria": "Revisión de tu agente certificador para {name}",
