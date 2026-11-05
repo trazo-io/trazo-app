@@ -1,4 +1,3 @@
-export { ModernSidebar } from './ModernSidebar';
 export { UltraMobileProductionJourney } from './UltraMobileProductionJourney';
 export { CompanyFarmInfo } from './CompanyFarmInfo';
 export { ParcelMapInfo } from './ParcelMapInfo';
