@@ -584,10 +584,7 @@ const PestManagementTab = forwardRef(
             pest_species_observed: data.pest_species_observed || null,
             average_pest_pressure: data.average_pest_pressure || null,
             // Auto-populate from Farmer's Field Notes (observation field) to avoid redundant input
-            observations_summary: data.observations_summary || data.observation || null,
-            // Zero carbon marker for pest scouting
-            carbon_impact: 'zero',
-            carbon_notes: 'Pest scouting is observational and does not directly produce emissions'
+            observations_summary: data.observations_summary || data.observation || null
           })
         }
       };

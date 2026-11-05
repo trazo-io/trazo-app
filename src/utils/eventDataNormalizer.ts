@@ -2504,20 +2504,6 @@ function normalizePestManagementEventData(
     if (observationsSummary) {
       (pestData as any).observations_summary = observationsSummary;
     }
-
-    // Zero carbon marker for pest scouting
-    const carbonImpact = rawData.carbon_impact || rawData.extra_data?.carbon_impact;
-    if (carbonImpact) {
-      (pestData as any).carbon_impact = carbonImpact;
-    } else {
-      // Default to zero for pest scouting as it's observational
-      (pestData as any).carbon_impact = 'zero';
-    }
-
-    const carbonNotes = rawData.carbon_notes || rawData.extra_data?.carbon_notes;
-    if (carbonNotes) {
-      (pestData as any).carbon_notes = carbonNotes;
-    }
   } else {
     // Explicitly mark individual events as non-summary
     (pestData as any).is_summary = false;
