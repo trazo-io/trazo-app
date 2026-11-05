@@ -20,7 +20,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Box, HStack, Stack, Text, VStack } from '@chakra-ui/react';
+import { Box, HStack, Stack, Text } from '@chakra-ui/react';
 import { FaRandom, FaRoute, FaSearch } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -34,7 +34,8 @@ import {
   StandardPageLoading,
   StandardQueryError,
   StandardSearchInput,
-  StandardSegmentedControl
+  StandardSegmentedControl,
+  StatusList
 } from 'components/Design/StandardComponents';
 import {
   useGetLotTracebackQuery,
@@ -246,15 +247,9 @@ export const TracebackPage = () => {
           {lotSearch.currentData?.truncated && (
             <StandardAlert status="info" mb={3} description={t('traceback.matches.truncated')} />
           )}
-          <VStack align="stretch" spacing={2}>
+          <StatusList>
             {lotMatches!.map((m: any) => (
-              <HStack
-                key={m.pick_id}
-                justify="space-between"
-                borderWidth="1px"
-                borderRadius="md"
-                p={3}
-                spacing={3}>
+              <HStack key={m.pick_id} justify="space-between" py={3} spacing={3}>
                 <Box flex={1} minW={0}>
                   <Text fontWeight="semibold">
                     {[m.date, m.lot_code, m.quantity, m.storage].filter(Boolean).join(' · ')}
@@ -272,7 +267,7 @@ export const TracebackPage = () => {
                 </StandardButton>
               </HStack>
             ))}
-          </VStack>
+          </StatusList>
         </StandardCard>
       )}
 
@@ -307,15 +302,9 @@ export const TracebackPage = () => {
               )}
             />
           )}
-          <VStack align="stretch" spacing={2}>
+          <StatusList>
             {matches!.map((m: any) => (
-              <HStack
-                key={m.sale_id}
-                justify="space-between"
-                borderWidth="1px"
-                borderRadius="md"
-                p={3}
-                spacing={3}>
+              <HStack key={m.sale_id} justify="space-between" py={3} spacing={3}>
                 {/* minW 0 lets a long match label wrap instead of squeezing the button
                     (MEASURED in the E2E run: "matched on a harvest lot code of the season"
                     pushed the label into the button edge). */}
@@ -336,7 +325,7 @@ export const TracebackPage = () => {
                 </StandardButton>
               </HStack>
             ))}
-          </VStack>
+          </StatusList>
         </StandardCard>
       )}
 

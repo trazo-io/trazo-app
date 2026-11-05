@@ -389,7 +389,7 @@ describe('TracebackPage', () => {
     state.trace = TRACE;
     renderAt('/admin/dashboard/farm/1/traceback?sale=7');
     // The pick-lot fix opens the harvest record; after saving NewEvent returns to `next`.
-    const gap = screen.getByText(PICK_GAP).closest('[role="alert"]');
+    const gap = screen.getByText(PICK_GAP).closest('[data-testid="trace-gap"]');
     fireEvent.click(
       within(gap as HTMLElement).getByRole('button', { name: messages['traceback.gap.fix'] })
     );
@@ -407,7 +407,7 @@ describe('TracebackPage', () => {
       '{input}',
       '2026-05-02 · X'
     );
-    const gap = screen.getByText(text).closest('[role="alert"]');
+    const gap = screen.getByText(text).closest('[data-testid="trace-gap"]');
     fireEvent.click(
       within(gap as HTMLElement).getByRole('button', { name: messages['traceback.gap.fix'] })
     );
@@ -453,7 +453,7 @@ describe('TracebackPage', () => {
       '{input}',
       '2026-04-02 · Draper'
     );
-    const gap = screen.getByText(text).closest('[role="alert"]');
+    const gap = screen.getByText(text).closest('[data-testid="trace-gap"]');
     fireEvent.click(
       within(gap as HTMLElement).getByRole('button', { name: messages['traceback.gap.fix'] })
     );
@@ -525,7 +525,7 @@ describe('TracebackPage', () => {
       '{input}',
       '2025-04-02 · Honeycrisp'
     );
-    const gap = screen.getByText(text).closest('[role="alert"]');
+    const gap = screen.getByText(text).closest('[data-testid="trace-gap"]');
     fireEvent.click(
       within(gap as HTMLElement).getByRole('button', { name: messages['traceback.gap.fix'] })
     );
