@@ -116,22 +116,19 @@ export interface CertifierReadiness {
 }
 
 export interface FarmDashboardMetrics {
-  // Consumer engagement
-  consumer_reach: number;
+  // QR page, rolling last 30 days. `consumer_reach` is null when scans carry no session or IP
+  // fingerprint: the visitor count is unknown and is never estimated (2026-11-05).
+  consumer_reach: number | null;
   monthly_scans: number;
-  scan_growth_percentage: number;
-  // Finished, published seasons — a COUNT. The farm-level `transparency_score` average and its
-  // `transparency_tier` label left this payload on 2026-09-05 (nothing rendered them).
+  // Finished seasons, published or not: a COUNT. The farm-level `transparency_score` average and
+  // its `transparency_tier` label left this payload on 2026-09-05 (nothing rendered them).
   scored_productions: number;
   total_documented_events: number;
-  // Production counts
   total_productions: number;
-  // Seasons with no finish date yet. Not simply `total_productions - scored_productions`:
-  // a finished-but-unpublished season is neither scored nor underway.
+  // Seasons with no finish date yet.
   productions_in_progress: number;
-  blockchain_verified_count: number;
-  // Subscription
-  subscription_usage_percentage: number;
+  // Removed 2026-11-05 with the farm-home card rebuild: scan_growth_percentage,
+  // blockchain_verified_count, subscription_usage_percentage.
 }
 
 export interface DashboardMetricsResponse {

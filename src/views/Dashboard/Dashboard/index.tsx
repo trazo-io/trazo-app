@@ -887,20 +887,9 @@ export default function DashboardView() {
         {establishment ? (
           <Box data-tour="smart-usage-card">
             <SmartUsageCard
-              // Required props for backend API call
               companyId={activeCompany?.id}
               farmId={establishment.id}
-              // Smart action handlers
-              onViewAnalytics={() => navigate(`/admin/dashboard/farm/${establishment.id}/buyer`)}
-              onUpgradeSubscription={() => navigate('/admin/dashboard/pricing')}
-              // "growth" = log more events; /productions was never a route (dead
-              // link found 2026-08-11) — the Activities page is where logging lives.
-              onOptimizeCarbon={() =>
-                navigate(`/admin/dashboard/farm/${establishment.id}/activities`)
-              }
-              onShareTransparency={() =>
-                navigate(`/admin/dashboard/farm/${establishment.id}/buyer`)
-              }
+              buyerPagePath={`/admin/dashboard/farm/${establishment.id}/buyer`}
             />
           </Box>
         ) : (
