@@ -58,14 +58,12 @@ const walk = (dir: string, out: string[] = []): string[] => {
  * - `views/Pages/Profile/Overview/**` and `views/Applications/**` are unmodified Creative Tim
  *   template pages (`p="12px 5px"`, `px="22px"` — values from a different design system).
  * - `views/Dashboard/ScannedProducts` is ORPHANED — rendered by no route.
- * - `components/Education/TrustComparisonWidget` has zero importers.
  */
 const KNOWN_UNFIXED = [
   'views/Scan/',
   'views/Pages/Profile/Overview/',
   'views/Applications/',
-  'views/Dashboard/ScannedProducts/',
-  'components/Education/TrustComparisonWidget'
+  'views/Dashboard/ScannedProducts/'
 ];
 
 /** Read the opening tag of a JSX element, respecting `{}` nesting so `{{ base: 0 }}` survives. */
@@ -109,8 +107,9 @@ describe('card padding layers', () => {
   it('has a corpus to check', () => {
     // If the tree moves, every assertion below would pass by finding nothing.
     expect(files.length).toBeGreaterThan(200);
-    expect(files.filter((f) => /<StandardCard\b/.test(readFileSync(f, 'utf8'))).length)
-      .toBeGreaterThan(30);
+    expect(
+      files.filter((f) => /<StandardCard\b/.test(readFileSync(f, 'utf8'))).length
+    ).toBeGreaterThan(30);
   });
 
   it('gives no StandardCard a mobile padding inset', () => {
@@ -217,8 +216,10 @@ describe('card padding layers', () => {
     // field spacing. Horizontal was the problem; vertical was never measured as one.
     const py = body.match(/py=\{\{\s*base:\s*(\d+)/);
     expect(py, 'SectionBox lost its responsive py').toBeTruthy();
-    expect(Number(py![1]), 'mobile py must stay non-zero — it is the only section separator')
-      .toBeGreaterThan(0);
+    expect(
+      Number(py![1]),
+      'mobile py must stay non-zero — it is the only section separator'
+    ).toBeGreaterThan(0);
   });
 
   it('nests no CardBody inside a StandardCard', () => {
