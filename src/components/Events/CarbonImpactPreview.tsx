@@ -220,6 +220,14 @@ interface CarbonImpactPreviewProps {
   onEnterActualFuel?: () => void;
 }
 
+// The impact LEVELS the backend sends with a recommendation. "Transparency" is also sent, as a
+// category rather than a level, and is not shown as one.
+const IMPACT_LEVEL_KEYS: Record<string, string> = {
+  High: 'carbon.recommendation.impactHigh',
+  Medium: 'carbon.recommendation.impactMedium',
+  Low: 'carbon.recommendation.impactLow'
+};
+
 export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
   ({ eventType, formData, calculation, isCalculating = false, onEnterActualFuel }) => {
     const intl = useIntl();
@@ -614,14 +622,26 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                           Save ${rec.potential_savings} • Reduce {rec.carbon_reduction.toFixed(1)}{' '}
                           kg CO₂e
                         </Text>
-                      ) : rec.source ? (
-                        <Text fontSize="sm">
-                          {intl.formatMessage(
-                            { id: 'carbon.recommendation.source' },
-                            { source: rec.source }
+                      ) : (
+                        <>
+                          {rec.impact && IMPACT_LEVEL_KEYS[rec.impact] && (
+                            <Text fontSize="sm">
+                              {intl.formatMessage(
+                                { id: 'carbon.recommendation.impact' },
+                                { level: intl.formatMessage({ id: IMPACT_LEVEL_KEYS[rec.impact] }) }
+                              )}
+                            </Text>
                           )}
-                        </Text>
-                      ) : null}
+                          {rec.source && (
+                            <Text fontSize="sm">
+                              {intl.formatMessage(
+                                { id: 'carbon.recommendation.source' },
+                                { source: rec.source }
+                              )}
+                            </Text>
+                          )}
+                        </>
+                      )}
                     </StandardAlert>
                   ))}
 
