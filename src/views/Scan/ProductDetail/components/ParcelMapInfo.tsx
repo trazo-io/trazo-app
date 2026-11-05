@@ -25,7 +25,7 @@ import {
   FaSeedling,
   FaExpand,
   FaCompress,
-  FaLeaf,
+  FaTint,
   FaInfoCircle,
   FaUsers,
   FaCertificate
@@ -189,7 +189,7 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({
             </Text>
           </VStack>
           {hasGeo && (
-            <Badge colorScheme="green" borderRadius="full" fontSize="xs">
+            <Badge variant="neutral" borderRadius="full" fontSize="xs">
               {intl.formatMessage({
                 id: 'consumer.farm.fieldMap',
                 defaultMessage: 'Field Map'
@@ -374,7 +374,7 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({
               {parcelData?.irrigationType && (
                 <VStack align="start" spacing={1}>
                   <HStack spacing={2}>
-                    <Icon as={FaLeaf} color="green.500" boxSize={4} />
+                    <Icon as={FaTint} color="green.500" boxSize={4} />
                     <Text fontSize="xs" color={mutedColor} fontWeight="semibold">
                       {intl.formatMessage({
                         id: 'consumer.farm.irrigation',
@@ -415,16 +415,18 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({
               <Divider />
               <Box>
                 <VStack spacing={4} align="stretch">
-                  {/* What makes this parcel special */}
+                  {/* The farm's own description of the parcel. It was headed "WHAT MAKES THIS
+                      PARCEL SPECIAL" in a green box with a leaf: Trazo vouching for the farm's
+                      marketing copy. It is the farm's words, so it says so, neutrally
+                      (2026-11-04). Not on the public payload today (_build_public_parcel). */}
                   {parcelData?.transparency_description && (
-                    <Box p={4} bg="green.50" borderRadius="lg" border="1px" borderColor="green.200">
+                    <Box p={4} bg="gray.50" borderRadius="lg" border="1px" borderColor="gray.200">
                       <VStack spacing={2} align="stretch">
                         <HStack>
-                          <Icon as={FaLeaf} color="green.600" boxSize={4} />
-                          <Text fontWeight="bold" color="green.700" fontSize="xs">
+                          <Text fontWeight="bold" color="gray.600" fontSize="xs">
                             {intl.formatMessage({
-                              id: 'consumer.farm.whatMakesParcelSpecial',
-                              defaultMessage: 'WHAT MAKES THIS PARCEL SPECIAL'
+                              id: 'consumer.farm.parcelInFarmWords',
+                              defaultMessage: "IN THE FARM'S WORDS"
                             })}
                           </Text>
                         </HStack>

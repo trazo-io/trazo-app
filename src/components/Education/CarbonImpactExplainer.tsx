@@ -12,7 +12,7 @@ import {
   Link
 } from '@chakra-ui/react';
 import { Link as RouterLink } from 'react-router-dom';
-import { FaLeaf, FaChevronDown, FaChevronUp, FaGlobeAmericas } from 'react-icons/fa';
+import { FaCircle, FaChevronDown, FaChevronUp, FaGlobeAmericas } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import USDACredibilityBadge from '../Carbon/USDACredibilityBadge';
 
@@ -50,7 +50,9 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
   const intl = useIntl();
 
   const bgColor = useColorModeValue('white', 'gray.800');
-  const cardBg = useColorModeValue('green.50', 'green.900');
+  // White, like every other card on the page (2026-11-04). A green tint on an EMISSIONS figure
+  // frames it as an environmental good, which no number here can claim.
+  const cardBg = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.800', 'white');
   const mutedColor = useColorModeValue('gray.600', 'gray.400');
   const accentColor = useColorModeValue('green.700', 'green.300');
@@ -295,7 +297,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
                 <VStack spacing={3} align="stretch">
                   {emissionCategories.map((item, idx) => (
                     <HStack key={idx} spacing={3}>
-                      <Icon as={FaLeaf} color="green.400" boxSize={3} />
+                      <Icon as={FaCircle} color="gray.400" boxSize={1.5} mt="7px" />
                       <Box>
                         <Text fontSize="sm" fontWeight="medium">
                           {item.label}

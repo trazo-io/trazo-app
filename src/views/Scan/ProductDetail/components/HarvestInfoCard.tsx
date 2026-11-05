@@ -9,11 +9,10 @@ import {
   useColorModeValue,
   Flex
 } from '@chakra-ui/react';
-import { FaBoxes, FaLeaf, FaBarcode, FaUserTie, FaSeedling } from 'react-icons/fa';
+import { FaBoxes, FaBarcode, FaUserTie, FaWeightHanging, FaInfoCircle } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
-import { localizeFieldValue } from 'utils/fieldDisplayUtils';
 // Consumer-readable batch quantity — see utils/consumerDisplay.ts
 import { formatHarvestQuantity } from 'utils/consumerDisplay';
 
@@ -29,7 +28,6 @@ interface HarvestDetails {
   // broke. The server stopped sending them (`transparency_views.py`, harvestDetails); leaving
   // them off the type means adding a render branch back would not typecheck.
   farmer_notes?: string;
-  production_method?: string;
 }
 
 interface HarvestInfoCardProps {
@@ -52,15 +50,16 @@ export const HarvestInfoCard: React.FC<HarvestInfoCardProps> = ({ harvestDetails
   const hasAmount = harvestDetails.amount !== undefined && harvestDetails.amount > 0;
   const hasLot = harvestDetails.lot_number;
   const hasFarmerNotes = harvestDetails.farmer_notes;
-  const hasProductionMethod = harvestDetails.production_method;
-
-  // Check if production method is special (not conventional)
-  const isSpecialMethod =
-    hasProductionMethod &&
-    !harvestDetails.production_method?.toLowerCase().includes('conventional');
+  // `production_method` is deliberately NOT on the type and NOT read (2026-11-04). This card
+  // showed any value other than "conventional" in a green bordered box with a seedling
+  // ("Prominent for organic/sustainable/regenerative"), and the owner-only summary labels the
+  // farm's own dropdown "organic" as "Certified Organic". The public payload stopped sending it
+  // (transparency_views.py: amount, unit and lot only), which left the box dormant but armed:
+  // one payload change from printing a self-declared certification in green. Certification is
+  // shown, database-gated, in the certifications card and nowhere else.
 
   // Don't render if no meaningful data
-  if (!hasAmount && !hasLot && !hasFarmerNotes && !hasProductionMethod) {
+  if (!hasAmount && !hasLot && !hasFarmerNotes) {
     return null;
   }
 
@@ -87,26 +86,6 @@ export const HarvestInfoCard: React.FC<HarvestInfoCardProps> = ({ harvestDetails
           </VStack>
         </HStack>
 
-        {/* Production Method Badge - Prominent for organic/sustainable/regenerative */}
-        {isSpecialMethod && (
-          <Box
-            bg={useColorModeValue('green.50', 'green.900')}
-            p={3}
-            borderRadius="lg"
-            borderWidth="2px"
-            borderColor="green.400">
-            <HStack spacing={3} justify="center">
-              <Icon as={FaSeedling} color="green.500" boxSize={5} />
-              <Text
-                fontWeight="bold"
-                fontSize="md"
-                color={useColorModeValue('green.700', 'green.200')}>
-                {localizeFieldValue(harvestDetails.production_method || '', intl.locale)}
-              </Text>
-            </HStack>
-          </Box>
-        )}
-
         {/* Harvest Info Grid */}
         <SimpleGrid columns={{ base: 2, md: 4 }} spacing={3}>
           {/* Production Amount */}
@@ -116,7 +95,7 @@ export const HarvestInfoCard: React.FC<HarvestInfoCardProps> = ({ harvestDetails
               p={3}
               borderRadius="lg"
               textAlign="center">
-              <Icon as={FaLeaf} color="green.500" boxSize={4} mb={1} />
+              <Icon as={FaWeightHanging} color="green.500" boxSize={4} mb={1} />
               {(() => {
                 const formatted = formatHarvestQuantity(
                   harvestDetails.amount as number,
@@ -197,15 +176,12 @@ export const HarvestInfoCard: React.FC<HarvestInfoCardProps> = ({ harvestDetails
         )}
 
         {/* Transparency Note */}
-        <Box
-          bg={useColorModeValue('green.50', 'green.900')}
-          p={3}
-          borderRadius="md"
-          borderLeft="3px solid"
-          borderLeftColor="green.400">
+        {/* Neutral (2026-11-04): this note says the records are the FARM's, so it must not wear
+            the green and the leaf that read as an endorsement. */}
+        <Box bg={useColorModeValue('gray.50', 'gray.700')} p={3} borderRadius="md">
           <HStack spacing={2}>
-            <Icon as={FaLeaf} color="green.500" boxSize={3} />
-            <Text fontSize="xs" color={useColorModeValue('green.700', 'green.200')}>
+            <Icon as={FaInfoCircle} color={mutedColor} boxSize={3} />
+            <Text fontSize="xs" color={useColorModeValue('gray.700', 'gray.200')}>
               {intl.formatMessage({ id: 'app.batchTraceabilityNote' })}
             </Text>
           </HStack>

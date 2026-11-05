@@ -2896,7 +2896,7 @@
   "consumer.farm.type": "TYPE",
   "consumer.farm.visitWebsite": "Visit Website",
   "consumer.farm.water": "WATER ({count})",
-  "consumer.farm.whatMakesParcelSpecial": "WHAT MAKES THIS PARCEL SPECIAL",
+  "consumer.farm.parcelInFarmWords": "IN THE FARM'S WORDS",
   "consumer.footer.howOurDataWorks": "How our data works",
   "consumer.footer.privacySettings": "Privacy Settings",
   "consumer.habitat.animal.cattle": "Cattle",

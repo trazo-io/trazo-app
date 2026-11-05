@@ -2,7 +2,6 @@ export { ModernSidebar } from './ModernSidebar';
 export { UltraMobileProductionJourney } from './UltraMobileProductionJourney';
 export { CompanyFarmInfo } from './CompanyFarmInfo';
 export { ParcelMapInfo } from './ParcelMapInfo';
-export { ProductDetailsSection } from './ProductDetailsSection';
 export { SimilarProducts } from './SimilarProducts';
 export { CompanyModal } from './CompanyModal';
 export { FarmModal } from './FarmModal';

@@ -2896,7 +2896,7 @@
   "consumer.farm.type": "TIPO",
   "consumer.farm.visitWebsite": "Visitar sitio web",
   "consumer.farm.water": "AGUA ({count})",
-  "consumer.farm.whatMakesParcelSpecial": "QUÉ HACE ESPECIAL A ESTA PARCELA",
+  "consumer.farm.parcelInFarmWords": "EN PALABRAS DE LA FINCA",
   "consumer.footer.howOurDataWorks": "Cómo funcionan nuestros datos",
   "consumer.footer.privacySettings": "Configuración de privacidad",
   "consumer.habitat.animal.cattle": "Ganado",

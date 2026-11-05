@@ -132,7 +132,7 @@ export const ParcelModal: React.FC<ParcelModalProps> = ({ isOpen, onClose, parce
   const accentColor = useColorModeValue('green.700', 'green.300');
   const cardBg = useColorModeValue('gray.50', 'gray.700');
   const iconBg = useColorModeValue('green.50', 'green.900');
-  const currentProdBg = useColorModeValue('blue.50', 'blue.900');
+  const currentProdBg = useColorModeValue('gray.50', 'gray.700');
   const isMobile = useBreakpointValue({ base: true, md: false });
 
   const getSoilTypeIcon = (soilType: string) => {
@@ -158,13 +158,7 @@ export const ParcelModal: React.FC<ParcelModalProps> = ({ isOpen, onClose, parce
           {parcelData.name}
         </Heading>
         <HStack spacing={2} flexWrap="wrap">
-          <Badge
-            colorScheme="blue"
-            variant="subtle"
-            fontSize="xs"
-            px={2}
-            py={1}
-            borderRadius="full">
+          <Badge variant="neutral" fontSize="xs" px={2} py={1} borderRadius="full">
             {parcelData.area} {parcelData.areaUnit || 'hectares'}
           </Badge>
         </HStack>
@@ -292,11 +286,11 @@ export const ParcelModal: React.FC<ParcelModalProps> = ({ isOpen, onClose, parce
 
       {/* Current Production */}
       {parcelData.current_history && (
-        <Card bg={currentProdBg} borderRadius="lg" border="1px" borderColor="blue.200">
+        <Card bg={currentProdBg} borderRadius="lg" border="1px" borderColor="gray.200">
           <CardBody p={6}>
             <HStack mb={3}>
-              <Icon as={FaSeedling} color="blue.500" />
-              <Heading size="md" color="blue.700">
+              <Icon as={FaSeedling} color="gray.500" />
+              <Heading size="md" color="gray.800">
                 {intl.formatMessage({
                   id: 'consumer.modal.currentProduction',
                   defaultMessage: 'Current Production'
@@ -305,24 +299,25 @@ export const ParcelModal: React.FC<ParcelModalProps> = ({ isOpen, onClose, parce
             </HStack>
             <VStack spacing={3} align="stretch">
               <HStack justify="space-between">
-                <Text color="blue.600" fontWeight="medium">
+                <Text color="gray.700" fontWeight="medium">
                   {parcelData.current_history.name}
                 </Text>
-                <Badge colorScheme="blue" variant="subtle">
+                {/* In progress, so the status colour for it (CLAUDE.md, "Status colour = meaning"). */}
+                <Badge variant="warning">
                   {intl.formatMessage({ id: 'consumer.modal.active', defaultMessage: 'Active' })}
                 </Badge>
               </HStack>
               {parcelData.current_history.crop_type && (
                 <HStack>
-                  <Icon as={FaSeedling} color="blue.500" />
-                  <Text color="blue.600" fontSize="sm">
+                  <Icon as={FaSeedling} color="gray.500" />
+                  <Text color="gray.700" fontSize="sm">
                     Crop: {parcelData.current_history.crop_type}
                   </Text>
                 </HStack>
               )}
               <HStack>
-                <Icon as={FaCalendarAlt} color="blue.500" />
-                <Text color="blue.600" fontSize="sm">
+                <Icon as={FaCalendarAlt} color="gray.500" />
+                <Text color="gray.700" fontSize="sm">
                   Started: {formatDateFromTimestamp(parcelData.current_history.start_date)}
                 </Text>
               </HStack>
@@ -409,7 +404,7 @@ export const ParcelModal: React.FC<ParcelModalProps> = ({ isOpen, onClose, parce
                     defaultMessage: 'Completed Productions This Year:'
                   })}
                 </Text>
-                <Badge colorScheme="green" variant="subtle" px={3} py={1}>
+                <Badge variant="neutral" px={3} py={1}>
                   {parcelData.productions_completed}
                 </Badge>
               </HStack>
@@ -421,7 +416,7 @@ export const ParcelModal: React.FC<ParcelModalProps> = ({ isOpen, onClose, parce
                       defaultMessage: 'Total Productions:'
                     })}
                   </Text>
-                  <Badge colorScheme="blue" variant="subtle" px={3} py={1}>
+                  <Badge variant="neutral" px={3} py={1}>
                     {parcelData.total_productions}
                   </Badge>
                 </HStack>

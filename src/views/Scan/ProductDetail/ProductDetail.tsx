@@ -54,7 +54,7 @@ import {
   FaLeaf,
   FaCertificate,
   FaChartLine,
-  FaCheckCircle,
+  FaCamera,
   FaSeedling,
   FaLink,
   FaShieldAlt,
@@ -1270,7 +1270,7 @@ function ProductDetail() {
                               <VStack align="start" spacing={1.5}>
                                 {organicSummary.has_input_data && (
                                   <HStack spacing={2}>
-                                    <Icon as={FaLeaf} color="green.600" boxSize={3.5} mt="2px" />
+                                    <Icon as={FaLeaf} color="gray.500" boxSize={3.5} mt="2px" />
                                     <Text fontSize="sm" color="gray.700">
                                       {organicSummary.all_inputs_organic
                                         ? intl.formatMessage(
@@ -1424,7 +1424,7 @@ function ProductDetail() {
                                 <HStack key={p.key} spacing={2} align="start">
                                   <Icon
                                     as={iconFor(p.key)}
-                                    color="green.600"
+                                    color="gray.500"
                                     boxSize={3.5}
                                     mt="2px"
                                   />
@@ -1541,7 +1541,7 @@ function ProductDetail() {
                       if (photoEventCount === 0) return null;
                       return (
                         <HStack align="start" spacing={3}>
-                          <Icon as={FaCheckCircle} color="green.500" size="20px" mt={1} />
+                          <Icon as={FaCamera} color="green.500" size="20px" mt={1} />
                           <Box>
                             <Text fontWeight="semibold" color="gray.800">
                               {intl.formatMessage(
