@@ -99,12 +99,11 @@ const USDACredibilityBadge: React.FC<USDACredibilityBadgeProps> = ({
             </Text>
 
             <HStack spacing={2}>
-              <Badge colorScheme="blue" variant="subtle">
-                <Icon as={FiCheckCircle} boxSize={3} mr={1} />
+              {/* One neutral chip. A green "Government Data" chip sat beside it until
+                  2026-11-05: P2O5 and K2O are Trazo estimates and pesticides and herbicides use
+                  academic LCA (carbon-methodology.md), so "government data" was a blanket claim. */}
+              <Badge colorScheme="gray" variant="subtle">
                 {intl.formatMessage({ id: 'app.usdaBadge.epaUsdaSourced' })}
-              </Badge>
-              <Badge colorScheme="green" variant="subtle">
-                {intl.formatMessage({ id: 'app.usdaBadge.governmentData' })}
               </Badge>
             </HStack>
           </VStack>
@@ -138,7 +137,7 @@ const USDACredibilityBadge: React.FC<USDACredibilityBadgeProps> = ({
             </HStack>
             <HStack>
               <Icon as={FiCheckCircle} color="green.500" boxSize={4} flexShrink={0} />
-              <Text fontSize="sm">{intl.formatMessage({ id: 'app.usdaBadge.usdaArs' })}</Text>
+              <Text fontSize="sm">{intl.formatMessage({ id: 'app.usdaBadge.academicLca' })}</Text>
             </HStack>
             <HStack>
               <Icon as={FiCheckCircle} color="green.500" boxSize={4} flexShrink={0} />
@@ -149,6 +148,13 @@ const USDACredibilityBadge: React.FC<USDACredibilityBadgeProps> = ({
             <HStack>
               <Icon as={FiCheckCircle} color="green.500" boxSize={4} flexShrink={0} />
               <Text fontSize="sm">{intl.formatMessage({ id: 'app.usdaBadge.epaEgrid' })}</Text>
+            </HStack>
+            {/* An estimate is not a published source: it gets an info mark, not a check. "USDA
+                Agricultural Research Service" was listed here until 2026-11-05, an attribution
+                verified_emission_factors.py records as a non-citation (an internal estimate). */}
+            <HStack>
+              <Icon as={FiInfo} color="gray.500" boxSize={4} flexShrink={0} />
+              <Text fontSize="sm">{intl.formatMessage({ id: 'app.usdaBadge.trazoEstimate' })}</Text>
             </HStack>
           </VStack>
         </Box>
