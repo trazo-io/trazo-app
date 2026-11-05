@@ -1,7 +1,7 @@
 /**
  * The summary-mode panels speak the user's language (2026-11-04).
  *
- * The harvest, irrigation and grazing summary-mode panels carried hardcoded English titles and
+ * The harvest, irrigation, grazing and scouting summary-mode panels carried hardcoded English titles and
  * descriptions ("Irrigation Summary Mode", "Log multiple irrigations as one summary ..."), and a
  * hardcoded "Active" badge beside each switch, so a Spanish-speaking grower read English in the
  * middle of a translated form. The chemical and pruning panels already used keys.
@@ -20,6 +20,7 @@ const code = (f: string) =>
     .replace(/\/\/.*$/gm, '');
 
 const KEYS = [
+  'events.section.production.harvestSummary',
   'events.section.production.harvestSummaryOn',
   'events.section.production.harvestSummaryOff',
   'events.section.production.irrigationSummary',
@@ -27,7 +28,10 @@ const KEYS = [
   'events.section.production.irrigationSummaryOff',
   'events.section.soil.grazingSummary',
   'events.section.soil.grazingSummaryOn',
-  'events.section.soil.grazingSummaryOff'
+  'events.section.soil.grazingSummaryOff',
+  'events.section.pest.scoutingSummary',
+  'events.section.pest.scoutingSummaryOn',
+  'events.section.pest.scoutingSummaryOff'
 ];
 
 describe('summary-mode panels are translated', () => {
@@ -39,18 +43,23 @@ describe('summary-mode panels are translated', () => {
     expect(s).not.toBe(e);
   });
 
-  it.each(['ProductionTab.jsx', 'SoilManagementTab.jsx'])(
+  it.each(['ProductionTab.jsx', 'SoilManagementTab.jsx', 'PestManagementTab.jsx'])(
     '%s renders no hardcoded summary-mode English',
     (f) => {
       const src = code(f);
       expect(src).not.toMatch(/'(Log multiple|Log a whole|Enable to log)[^']*'/);
-      expect(src).not.toMatch(/>\s*(Irrigation|Grazing) Summary Mode\s*</);
+      expect(src).not.toMatch(/>\s*(Harvest|Irrigation|Grazing|Scouting) Summary Mode\s*</);
       // The "Active" badge beside a summary switch: hardcoded, and it only repeated the switch.
       expect(src).not.toMatch(/<Badge[^>]*>\s*Active\s*<\/Badge>/);
+      // The scouting panel's "Zero Carbon Impact" leaf line: the eco claim removed in #265.
+      expect(src).not.toMatch(/Zero Carbon Impact/);
       for (const key of KEYS.filter(
         (k) =>
           src.includes(`'${k}'`) ||
-          k.includes(f === 'SoilManagementTab.jsx' ? '.soil.' : '.production.')
+          k.includes(
+            { 'SoilManagementTab.jsx': '.soil.', 'PestManagementTab.jsx': '.pest.' }[f] ??
+              '.production.'
+          )
       )) {
         expect(src, key).toContain(`'${key}'`);
       }

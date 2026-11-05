@@ -10,8 +10,7 @@ import {
   SimpleGrid,
   Box,
   Divider,
-  Switch,
-  Badge
+  Switch
 } from '@chakra-ui/react';
 import {
   StandardButton,
@@ -20,7 +19,8 @@ import {
   StandardSelect,
   StandardTextarea,
   SectionHeader,
-  SectionBox
+  SectionBox,
+  GuidanceNote
 } from 'components/Design/StandardComponents';
 import { FormProvider, useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -753,31 +753,28 @@ const PestManagementTab = forwardRef(
               )}
 
               {/* Sprint 5: Aggregate Pest Scouting Support - Summary Mode Toggle */}
-              {/* Standardized: blue color scheme for toggle (matches Production/Chemical summary mode pattern) */}
+              {/* Neutral like the other summary-mode panels (2026-11-04): a mode is not a status. */}
               {pestType === 'SC' && (
                 <Box
                   p={4}
-                  bg={isSummaryMode ? 'blue.50' : 'gray.50'}
+                  bg={isSummaryMode ? 'white' : 'gray.50'}
                   borderRadius="md"
                   border="1px solid"
-                  borderColor={isSummaryMode ? 'blue.200' : 'gray.200'}
+                  borderColor={isSummaryMode ? 'gray.300' : 'gray.200'}
                   mb={4}>
                   <HStack justify="space-between" align="center">
                     <VStack align="start" spacing={0}>
                       <HStack>
                         <Text fontWeight="semibold" fontSize="sm">
-                          Scouting Summary Mode
+                          {intl.formatMessage({ id: 'events.section.pest.scoutingSummary' })}
                         </Text>
-                        {isSummaryMode && (
-                          <Badge colorScheme="blue" size="sm">
-                            Active
-                          </Badge>
-                        )}
                       </HStack>
                       <Text fontSize="xs" color="gray.600">
-                        {isSummaryMode
-                          ? 'Log multiple scouting trips as one summary (e.g., "24 weekly scouting trips")'
-                          : 'Enable to log multiple scouting trips at once'}
+                        {intl.formatMessage({
+                          id: isSummaryMode
+                            ? 'events.section.pest.scoutingSummaryOn'
+                            : 'events.section.pest.scoutingSummaryOff'
+                        })}
                       </Text>
                     </VStack>
                     <Controller
@@ -785,7 +782,6 @@ const PestManagementTab = forwardRef(
                       control={methods.control}
                       render={({ field }) => (
                         <Switch
-                          colorScheme="blue"
                           size="lg"
                           isChecked={field.value === 'true'}
                           onChange={(e) => field.onChange(e.target.checked ? 'true' : 'false')}
@@ -794,20 +790,9 @@ const PestManagementTab = forwardRef(
                     />
                   </HStack>
 
-                  {/* Benefits of Summary Mode - Standardized: blue color scheme (matches Chemical pattern) */}
-                  {isSummaryMode && (
-                    <Box mt={3} p={2} bg="blue.100" borderRadius="md">
-                      <Text fontSize="xs" color="blue.700">
-                        <Icon as={FaCheckCircle} mr={1} />
-                        {/* F38 fix (2026-06): removed unsourced "93% time savings" stat (compliance: no fabricated statistics). */}
-                        <strong>Save time:</strong> Log multiple scouting trips with one entry.
-                      </Text>
-                      <Text fontSize="xs" color="blue.600" mt={1}>
-                        <Icon as={FaLeaf} mr={1} />
-                        Zero Carbon Impact - Scouting is observational
-                      </Text>
-                    </Box>
-                  )}
+                  {/* A "benefits" box was here: "Save time" with a green check, and "Zero Carbon
+                      Impact - Scouting is observational" with a leaf, in hardcoded English. The eco
+                      line is the claim removed from the shopper card in #265; deleted 2026-11-04. */}
                 </Box>
               )}
 
@@ -1009,30 +994,13 @@ const PestManagementTab = forwardRef(
                    only contain quantitative fields). The observation field maps to description and
                    is auto-copied to observations_summary in onSubmit for ConsumerEventCard display. */}
 
-                  {/* Zero Carbon Note */}
-                  <Box
-                    mt={4}
-                    p={3}
-                    bg="teal.50"
-                    borderRadius="md"
-                    border="1px solid"
-                    borderColor="teal.200">
-                    <HStack spacing={2} mb={1}>
-                      <Icon as={FaLeaf} color="teal.500" fontSize="sm" />
-                      <Text fontSize="sm" fontWeight="semibold" color="teal.700">
-                        Zero Carbon Impact
-                      </Text>
-                    </HStack>
-                    <Text fontSize="xs" color="teal.600">
-                      Pest scouting is observational, so there are no emissions to estimate.
-                      <br />
-                      {/* F38 fix (2026-06): removed unsourced "+30 points" figure and the
-                            FAO attribution that did not substantiate it (compliance: no
-                            fabricated statistics or unsourced claims). */}
-                      <strong>Why scouting is worth logging:</strong> § 205.206(e) permits a
-                      National List substance only where the practices in (a)–(d) proved
-                      insufficient. Your scouting record is the evidence that they did.
-                    </Text>
+                  {/* Was a teal box with a leaf headed "Zero Carbon Impact", in hardcoded English: an
+                      eco badge on an observation. The reason scouting matters is the § 205.206(e)
+                      point, so that leads; the emissions fact is a plain clause (2026-11-04). */}
+                  <Box mt={4}>
+                    <GuidanceNote>
+                      {intl.formatMessage({ id: 'events.pest.scoutingNote.body' })}
+                    </GuidanceNote>
                   </Box>
                 </Box>
               )}
