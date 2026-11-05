@@ -742,16 +742,18 @@ const GeneralTab = forwardRef(
                       <HStack
                         justify="space-between"
                         p={3}
-                        bg="blue.50"
+                        bg="gray.50"
                         borderRadius="md"
                         border="1px solid"
-                        borderColor="blue.200">
+                        borderColor="gray.200">
                         <Box>
                           <Text fontSize="sm" fontWeight="bold">
-                            Certifier Notified?
+                            {intl.formatMessage({ id: 'events.general.fields.certifierNotified' })}
                           </Text>
                           <Text fontSize="xs" color="gray.600">
-                            NOP requires notifying the certifying agent of contamination events.
+                            {intl.formatMessage({
+                              id: 'events.general.fields.certifierNotifiedHelp'
+                            })}
                           </Text>
                         </Box>
                         <Controller

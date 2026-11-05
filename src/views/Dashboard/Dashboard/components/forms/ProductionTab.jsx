@@ -7,7 +7,6 @@ import {
   Box,
   VStack,
   Text,
-  Icon,
   useColorModeValue,
   SimpleGrid,
   Switch,
@@ -35,7 +34,6 @@ import {
   FaBalanceScale,
   FaTruck,
   FaTools,
-  FaBolt,
   FaShieldAlt
 } from 'react-icons/fa';
 import { FormProvider, useForm, Controller } from 'react-hook-form';
@@ -4530,23 +4528,16 @@ const ProductionTab = forwardRef(
                       <>
                         {/* For electric irrigation, energy is auto-calculated from water volume + water source */}
                         {productionType === 'IR' && watch('fuel_type') !== 'diesel' ? (
-                          <Box
-                            p={3}
-                            bg="blue.50"
-                            borderRadius="md"
-                            border="1px solid"
-                            borderColor="blue.200">
-                            <Text fontSize="sm" color="blue.700">
-                              <Icon as={FaBolt} mr={2} color="blue.600" />
-                              <Text as="span" fontWeight="semibold">
-                                Electric Pump:
-                              </Text>{' '}
-                              Energy consumption is automatically calculated from your water volume
-                              and water source using USDA NRCS pump efficiency factors (0.39 kg
-                              CO₂/kWh). If you use a diesel pump, select "Diesel" as Fuel Type
-                              above.
-                            </Text>
-                          </Box>
+                          <StandardAlert
+                            status="info"
+                            mb={0}
+                            title={intl.formatMessage({
+                              id: 'events.production.electricPump.title'
+                            })}
+                            description={intl.formatMessage({
+                              id: 'events.production.electricPump.body'
+                            })}
+                          />
                         ) : (
                           <>
                             <HStack spacing={4} align="stretch">
@@ -4636,22 +4627,14 @@ const ProductionTab = forwardRef(
 
                             {/* Electric Equipment Info Box */}
                             {watch('fuel_type') === 'electric' && (
-                              <Box
-                                p={3}
-                                bg="blue.50"
-                                borderRadius="md"
-                                border="1px solid"
-                                borderColor="blue.200">
-                                <Text fontSize="sm" color="blue.700">
-                                  <Icon as={FaBolt} mr={2} color="blue.600" />
-                                  <Text as="span" fontWeight="semibold">
-                                    Electric Equipment:
-                                  </Text>{' '}
-                                  Enter energy consumption in kilowatt-hours (kWh). Grid electricity
-                                  uses 0.365 kg CO₂e/kWh. Solar/wind powered equipment has zero
-                                  emissions.
-                                </Text>
-                              </Box>
+                              <StandardAlert
+                                status="info"
+                                mb={0}
+                                title={intl.formatMessage({ id: 'events.electricEquipment.title' })}
+                                description={intl.formatMessage({
+                                  id: 'events.electricEquipment.body'
+                                })}
+                              />
                             )}
                           </>
                         )}
