@@ -3456,10 +3456,10 @@ const ProductionTab = forwardRef(
                     <Box gridColumn={{ md: 'span 2' }} mb={2}>
                       <HStack
                         p={3}
-                        bg={isSummaryMode ? 'blue.50' : 'gray.50'}
+                        bg={isSummaryMode ? 'white' : 'gray.50'}
                         borderRadius="md"
                         borderWidth="1px"
-                        borderColor={isSummaryMode ? 'blue.200' : 'gray.200'}
+                        borderColor={isSummaryMode ? 'gray.300' : 'gray.200'}
                         justify="space-between">
                         <VStack align="start" spacing={0}>
                           <HStack>
@@ -3468,11 +3468,6 @@ const ProductionTab = forwardRef(
                                 id: 'events.section.production.harvestSummary'
                               })}
                             </Text>
-                            {isSummaryMode && (
-                              <Badge colorScheme="blue" size="sm">
-                                Active
-                              </Badge>
-                            )}
                           </HStack>
                           <Text fontSize="xs" color="gray.600">
                             {isSummaryMode
@@ -3485,7 +3480,6 @@ const ProductionTab = forwardRef(
                           control={methods.control}
                           render={({ field }) => (
                             <Switch
-                              colorScheme="blue"
                               size="lg"
                               isChecked={field.value === 'true'}
                               onChange={(e) => field.onChange(e.target.checked ? 'true' : 'false')}
@@ -3989,11 +3983,11 @@ const ProductionTab = forwardRef(
 
                     <Box
                       p={3}
-                      bg={watch('temperature_control') === 'true' ? 'blue.50' : 'gray.50'}
+                      bg={watch('temperature_control') === 'true' ? 'white' : 'gray.50'}
                       borderRadius="md"
                       borderWidth="1px"
                       borderColor={
-                        watch('temperature_control') === 'true' ? 'blue.200' : 'gray.200'
+                        watch('temperature_control') === 'true' ? 'gray.300' : 'gray.200'
                       }>
                       <HStack justify="space-between">
                         <VStack align="start" spacing={0}>
@@ -4014,7 +4008,6 @@ const ProductionTab = forwardRef(
                           control={methods.control}
                           render={({ field }) => (
                             <Switch
-                              colorScheme="blue"
                               size="lg"
                               isChecked={field.value === 'true'}
                               onChange={(e) => field.onChange(e.target.checked ? 'true' : 'false')}
@@ -5281,21 +5274,16 @@ const ProductionTab = forwardRef(
                           <Box gridColumn={{ md: 'span 2' }} mb={2}>
                             <HStack
                               p={3}
-                              bg={isSummaryMode ? 'blue.50' : 'gray.50'}
+                              bg={isSummaryMode ? 'white' : 'gray.50'}
                               borderRadius="md"
                               borderWidth="1px"
-                              borderColor={isSummaryMode ? 'blue.200' : 'gray.200'}
+                              borderColor={isSummaryMode ? 'gray.300' : 'gray.200'}
                               justify="space-between">
                               <VStack align="start" spacing={0}>
                                 <HStack>
                                   <Text fontWeight="semibold" fontSize="sm">
                                     Irrigation Summary Mode
                                   </Text>
-                                  {isSummaryMode && (
-                                    <Badge colorScheme="blue" size="sm">
-                                      Active
-                                    </Badge>
-                                  )}
                                 </HStack>
                                 <Text fontSize="xs" color="gray.600">
                                   {isSummaryMode
@@ -5308,7 +5296,6 @@ const ProductionTab = forwardRef(
                                 control={methods.control}
                                 render={({ field }) => (
                                   <Switch
-                                    colorScheme="blue"
                                     size="lg"
                                     isChecked={field.value === 'true'}
                                     onChange={(e) =>

@@ -137,7 +137,11 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
   const toast = useToast();
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const mutedColor = useColorModeValue('gray.600', 'gray.400');
-  const suggestedBg = useColorModeValue('green.50', 'green.900');
+  // A SUGGESTED row is the catalogue's guess, not the farm's answer, so it is neutral and dashed
+  // until a person ticks it (2026-11-04). It was green.50 with a green dashed border: the colour
+  // of a confirmed answer, on the one panel whose point is that Trazo suggests and the farm
+  // confirms. Green arrives with the tick (the checkbox), and only then.
+  const suggestedBg = useColorModeValue('gray.50', 'gray.700');
 
   const { data, isLoading, isError } = useGetOSPRecordTypesQuery({
     companyId,
@@ -551,7 +555,7 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
                       py={2}
                       borderWidth="1px"
                       borderStyle={isSuggested ? 'dashed' : 'solid'}
-                      borderColor={isSuggested ? 'green.300' : borderColor}
+                      borderColor={isSuggested ? 'gray.300' : borderColor}
                       bg={isSuggested ? suggestedBg : 'transparent'}
                       borderRadius="md">
                       <Checkbox
@@ -567,7 +571,7 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
                               {row.cfr_cite}
                             </Text>
                             {row.basis && (
-                              <Text fontSize="xs" color="green.700">
+                              <Text fontSize="xs" color={mutedColor}>
                                 {row.basis}
                               </Text>
                             )}

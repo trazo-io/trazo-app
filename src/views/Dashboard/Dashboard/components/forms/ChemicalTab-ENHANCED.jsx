@@ -1984,15 +1984,15 @@ const ChemicalTab = forwardRef(
                     (chemicalType === 'FE' || chemicalType === 'FU' || chemicalType === 'PE') && (
                       <Box
                         p={4}
-                        bg={isSummaryMode ? 'blue.50' : 'gray.50'}
+                        bg={isSummaryMode ? 'white' : 'gray.50'}
                         borderRadius="md"
                         border="1px solid"
-                        borderColor={isSummaryMode ? 'blue.200' : 'gray.200'}
+                        borderColor={isSummaryMode ? 'gray.300' : 'gray.200'}
                         mb={4}>
                         <HStack justify="space-between" align="center">
                           <Box flex={1}>
                             {isSummaryMode && (
-                              <Badge colorScheme="blue" mb={2}>
+                              <Badge variant="neutral" mb={2}>
                                 {intl.formatMessage({
                                   id: 'events.chemical.summaryMode.badge',
                                   defaultMessage: 'Summary Mode'
@@ -2050,7 +2050,6 @@ const ChemicalTab = forwardRef(
                                 onChange={(e) =>
                                   field.onChange(e.target.checked ? 'true' : 'false')
                                 }
-                                colorScheme="blue"
                                 size="lg"
                               />
                             )}

@@ -894,8 +894,10 @@ const OSPModuleWizard = () => {
   const agentRefs = data?.agent_refs ?? null;
   // `rgba(74, 222, 128, .08)` was TAILWIND green-400 — a foreign palette literal, the exact
   // class `.claude/rules/frontend.md` bans. Same tint derived from OUR green.700 (#2E7D32).
-  const suggestionBg = useColorModeValue('green.50', 'rgba(46, 125, 50, 0.18)');
-  const suggestionBorder = useColorModeValue('green.200', 'green.700');
+  // Neutral (2026-11-04): a suggestion is not an answer until the farm accepts it, so it must
+  // not wear the green an accepted answer gets.
+  const suggestionBg = useColorModeValue('gray.50', 'gray.700');
+  const suggestionBorder = useColorModeValue('gray.200', 'gray.600');
 
   const isUnanswered = (value: AnswerValue): boolean =>
     value === undefined ||
@@ -1202,7 +1204,7 @@ const OSPModuleWizard = () => {
                                   bg={suggestionBg}
                                   borderRadius="md">
                                   <HStack align="flex-start" spacing={2}>
-                                    <Box as={FaMagic} color="green.700" mt={0.5} flexShrink={0} />
+                                    <Box as={FaMagic} color="gray.600" mt={0.5} flexShrink={0} />
                                     <Box minW={0}>
                                       <Text fontSize="sm">
                                         <Text as="span" fontWeight="semibold">
