@@ -72,9 +72,12 @@ describe('farm home header', () => {
     expect(screen.getByText(/seasons underway/).textContent).not.toMatch(/photo/);
   });
 
-  it('gives the farm profile a button', () => {
+  it('reaches the farm profile: a link on a phone, an outlined button from md', () => {
     wrap(<FarmHomeHeader companyId={1} farmId={2} name="Calapooia Bend Farm" />);
-    expect(screen.getByRole('button', { name: /Farm profile/ })).toBeTruthy();
+    // jsdom renders the base breakpoint, so the md button is present but hidden.
+    const link = screen.getByRole('link', { name: /Farm profile/ });
+    expect(link.getAttribute('href')).toBe('/admin/dashboard/farm/2/profile');
+    expect(screen.getByRole('button', { name: /Farm profile/, hidden: true })).toBeTruthy();
   });
 });
 

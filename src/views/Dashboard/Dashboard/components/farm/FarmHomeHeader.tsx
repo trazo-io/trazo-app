@@ -7,13 +7,13 @@
  * the QR window stated. No total, percentage or grade.
  */
 import React from 'react';
-import { Box, Flex, Heading, Text, VStack, useColorModeValue } from '@chakra-ui/react';
+import { Box, Flex, Heading, Link, Text, VStack, useColorModeValue } from '@chakra-ui/react';
 import { FaArrowRight } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useIntl } from 'react-intl';
 
 import { PageHeaderMeta } from 'components/Design/ProfileField';
-import { StandardButton } from 'components/Design/StandardComponents';
+import { StandardButton, TOUCH_TARGET } from 'components/Design/StandardComponents';
 import { useGetFarmDashboardMetricsQuery } from 'store/api/dashboardMetricsApi';
 
 interface Props {
@@ -42,6 +42,7 @@ export default function FarmHomeHeader({
     { skip: !companyId || !farmId }
   );
   const m = data?.metrics;
+  const profilePath = `/admin/dashboard/farm/${farmId}/profile`;
 
   const fmt = (id: string, count: number | null | undefined) =>
     typeof count === 'number' ? intl.formatMessage({ id }, { count }) : null;
@@ -70,15 +71,29 @@ export default function FarmHomeHeader({
             ]}
           />
         )}
+        {/* Phone: a text link under the counts. The button beside the title took half of a
+            390px row in Spanish ("Perfil de la finca") and squeezed the farm name. */}
+        <Link
+          as={RouterLink}
+          to={profilePath}
+          display={{ base: 'inline-flex', md: 'none' }}
+          pt={1}
+          fontSize="sm"
+          fontWeight="semibold"
+          color="green.700"
+          {...TOUCH_TARGET}>
+          {intl.formatMessage({ id: 'farmHome.profileLink' })}&nbsp;
+          <span aria-hidden="true">→</span>
+        </Link>
       </VStack>
-      {/* An outlined button, not a text link: the profile holds the certifier link, the audit
-          dossier and the exports, and a link in the corner of the header was easy to miss. */}
-      <Box flexShrink={0} pt={{ base: 1, md: 2 }}>
+      {/* From md, an outlined button: the profile holds the certifier link, the audit dossier and
+          the exports, and a link in the corner of a wide header was easy to miss. */}
+      <Box flexShrink={0} pt={2} display={{ base: 'none', md: 'block' }}>
         <StandardButton
           variant="outline"
           size="sm"
           rightIcon={<FaArrowRight aria-hidden />}
-          onClick={() => navigate(`/admin/dashboard/farm/${farmId}/profile`)}>
+          onClick={() => navigate(profilePath)}>
           {intl.formatMessage({ id: 'farmHome.profileLink' })}
         </StandardButton>
       </Box>
