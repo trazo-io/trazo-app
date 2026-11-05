@@ -29,6 +29,8 @@ import {
   StandardSelect
 } from 'components/Design/StandardComponents';
 import { useUploadFarmDocumentMutation } from 'store/api/documentsApi';
+import { DOCUMENT_DOWNLOAD_URL } from 'config';
+import { env } from 'config/environment';
 import { useAnswerOSPMaterialMutation, useGetOSPMaterialsListQuery } from 'store/api/ospApi';
 import type { OSPMaterialListRow } from 'types/osp';
 import { apiErrorMessage } from 'utils/apiErrorMessage';
@@ -63,7 +65,9 @@ const MaterialRowEditor: React.FC<{
   mutedColor: string;
   save: (row: OSPMaterialListRow, body: Record<string, string>) => Promise<boolean>;
   attachLabel: (row: OSPMaterialListRow, file: File) => Promise<boolean>;
-}> = ({ row, isEditable, borderColor, mutedColor, save, attachLabel }) => {
+  companyId: string;
+  farmId: string;
+}> = ({ row, isEditable, borderColor, mutedColor, save, attachLabel, companyId, farmId }) => {
   const intl = useIntl();
   const labelInputId = React.useId();
   const [labelBusy, setLabelBusy] = useState(false);
@@ -144,39 +148,6 @@ const MaterialRowEditor: React.FC<{
           </option>
         </StandardSelect>
 
-        <StandardSelect
-          size="sm"
-          maxW={{ base: 'full', md: '230px' }}
-          isDisabled={!isEditable}
-          value={row.category}
-          aria-label={String(
-            intl.formatMessage(
-              {
-                id: 'osp.materialsList.categoryAria',
-                defaultMessage: 'Section of {name} on the form'
-              },
-              { name: row.name }
-            )
-          )}
-          onChange={(e) => {
-            const value = e.target.value;
-            if (value) save(row, { category: value });
-          }}>
-          {!row.category && (
-            <option value="">
-              {intl.formatMessage({
-                id: 'osp.materialsList.category.unset',
-                defaultMessage: 'Section not set'
-              })}
-            </option>
-          )}
-          {CATEGORIES.map((category) => (
-            <option key={category} value={category}>
-              {intl.formatMessage({ id: `osp.materialsList.category.${category}` })}
-            </option>
-          ))}
-        </StandardSelect>
-
         <StandardInput
           key={`reason:${row.reason}`}
           size="sm"
@@ -216,10 +187,46 @@ const MaterialRowEditor: React.FC<{
         />
       </Stack>
 
-      <Stack direction={{ base: 'column', md: 'row' }} spacing={2} mt={2} align={{ md: 'center' }}>
+      {/* The section and the agent's review share a row that wraps. Each select is given the width
+          its longest option needs plus its padding (measured 2026-11-05 at 14px: the Spanish
+          production-aids section ~473px, the approved-list review ~296px), so on a narrow card each
+          takes its own line instead of cutting its own words off. */}
+      <Flex wrap="wrap" gap={2} mt={2} align="center">
         <StandardSelect
           size="sm"
-          maxW={{ base: 'full', md: '280px' }}
+          flex={{ base: '1 1 100%', md: '1 1 520px' }}
+          isDisabled={!isEditable}
+          value={row.category}
+          aria-label={String(
+            intl.formatMessage(
+              {
+                id: 'osp.materialsList.categoryAria',
+                defaultMessage: 'Section of {name} on the form'
+              },
+              { name: row.name }
+            )
+          )}
+          onChange={(e) => {
+            const value = e.target.value;
+            if (value) save(row, { category: value });
+          }}>
+          {!row.category && (
+            <option value="">
+              {intl.formatMessage({
+                id: 'osp.materialsList.category.unset',
+                defaultMessage: 'Section not set'
+              })}
+            </option>
+          )}
+          {CATEGORIES.map((category) => (
+            <option key={category} value={category}>
+              {intl.formatMessage({ id: `osp.materialsList.category.${category}` })}
+            </option>
+          ))}
+        </StandardSelect>
+        <StandardSelect
+          size="sm"
+          flex={{ base: '1 1 100%', md: '1 1 340px' }}
           isDisabled={!isEditable}
           value={review}
           aria-label={String(
@@ -259,7 +266,7 @@ const MaterialRowEditor: React.FC<{
               key={`reviewDate:${row.agent_review_date}`}
               size="sm"
               type="date"
-              maxW={{ base: 'full', md: '170px' }}
+              flex={{ base: '1 1 100%', md: '0 0 170px' }}
               isDisabled={!isEditable}
               defaultValue={row.agent_review_date}
               aria-label={String(
@@ -280,6 +287,7 @@ const MaterialRowEditor: React.FC<{
             <StandardInput
               key={`reviewRef:${row.agent_review_reference}`}
               size="sm"
+              flex={{ base: '1 1 100%', md: '1 1 220px' }}
               isDisabled={!isEditable}
               defaultValue={row.agent_review_reference}
               placeholder={intl.formatMessage({
@@ -303,7 +311,7 @@ const MaterialRowEditor: React.FC<{
             />
           </>
         )}
-      </Stack>
+      </Flex>
 
       {pendingReview && (
         <Text fontSize="xs" color={mutedColor} mt={1} data-testid="materials-review-needs-evidence">
@@ -356,11 +364,18 @@ const MaterialRowEditor: React.FC<{
         {row.label_document ? (
           <>
             <Text fontSize="xs" data-testid="materials-label-on-file">
-              {intl.formatMessage(
-                { id: 'osp.materialsList.labelOnFile', defaultMessage: 'Label: {title}' },
-                { title: row.label_document_title }
-              )}
+              {intl.formatMessage({
+                id: 'osp.materialsList.labelOnFile',
+                defaultMessage: 'Label on file in Documents'
+              })}
             </Text>
+            <StandardButton
+              as="a"
+              href={env.getApiUrl(DOCUMENT_DOWNLOAD_URL(companyId, farmId, row.label_document))}
+              size="xs"
+              variant="ghost">
+              {intl.formatMessage({ id: 'osp.materialsList.labelOpen', defaultMessage: 'Open' })}
+            </StandardButton>
             <StandardButton
               size="xs"
               variant="ghost"
@@ -518,6 +533,8 @@ const OSPMaterialsListPanel: React.FC<Props> = ({ companyId, farmId, osp }) => {
             mutedColor={mutedColor}
             save={save}
             attachLabel={attachLabel}
+            companyId={companyId}
+            farmId={farmId}
           />
         ))}
       </Stack>

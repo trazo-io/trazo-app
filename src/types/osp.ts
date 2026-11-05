@@ -289,6 +289,8 @@ export type PlanMaterialListingBasis =
   | 'none_unlisted';
 
 export type PlanMaterialCategory =
+  /** Not chosen yet: the backend default since migration 0070 (back #294). */
+  | ''
   | 'fertilizer_amendment'
   | 'pest_disease_weed'
   | 'production_aid'
