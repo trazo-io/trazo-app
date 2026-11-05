@@ -28,7 +28,8 @@ import {
   StandardButton,
   StandardCard,
   StatusList,
-  StatusRow
+  StatusRow,
+  TOUCH_TARGET
 } from 'components/Design/StandardComponents';
 import OnHandByLocation from './OnHandByLocation';
 
@@ -114,22 +115,6 @@ const MISSING_ON_ROW: Record<string, { label: string; value: string }> = {
   supplier_certificate_missing: {
     label: 'traceback.field.supplierCertificate',
     value: 'traceback.missing.noCoveringCopy'
-  }
-};
-
-// The 44px touch floor without a 44px-tall control: an invisible hit area around a text link
-// (the input lookup's pattern). MEASURED earlier on this page: a bare link was 21px tall.
-const TOUCH_TARGET = {
-  position: 'relative' as const,
-  _before: {
-    content: '""',
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: '100%',
-    minWidth: '44px',
-    height: '44px'
   }
 };
 
