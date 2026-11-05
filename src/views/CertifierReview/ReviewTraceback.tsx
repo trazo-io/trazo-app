@@ -23,10 +23,10 @@ import {
   StandardButton,
   StandardSearchInput,
   StandardSegmentedControl,
-  StandardSpinner
+  StandardSpinner,
+  StatusList
 } from 'components/Design/StandardComponents';
 import TraceChain, { type TraceDoc } from 'components/Traceback/TraceChain';
-import { TraceRows } from 'components/Traceback/TraceRows';
 
 type Match = {
   sale_id: number;
@@ -252,7 +252,7 @@ export const ReviewTraceback = ({ token, apiRoot }: Props) => {
                 )}
               />
             )}
-            <TraceRows>
+            <StatusList>
               {state.matches.map((m) => (
                 <HStack key={m.sale_id} justify="space-between" py={3} spacing={3}>
                   <Box flex={1} minW={0}>
@@ -269,7 +269,7 @@ export const ReviewTraceback = ({ token, apiRoot }: Props) => {
                   </StandardButton>
                 </HStack>
               ))}
-            </TraceRows>
+            </StatusList>
           </VStack>
         )}
         {state.kind === 'lotMatches' && state.matches.length === 0 && (
@@ -290,7 +290,7 @@ export const ReviewTraceback = ({ token, apiRoot }: Props) => {
             {state.truncated && (
               <StandardAlert status="info" mb={0} description={t('traceback.matches.truncated')} />
             )}
-            <TraceRows>
+            <StatusList>
               {state.matches.map((m) => (
                 <HStack key={m.pick_id} justify="space-between" py={3} spacing={3}>
                   <Box flex={1} minW={0}>
@@ -307,7 +307,7 @@ export const ReviewTraceback = ({ token, apiRoot }: Props) => {
                   </StandardButton>
                 </HStack>
               ))}
-            </TraceRows>
+            </StatusList>
           </VStack>
         )}
         {state.kind === 'trace' && (

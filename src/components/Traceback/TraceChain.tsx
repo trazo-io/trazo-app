@@ -16,7 +16,7 @@
  *   own outline button, and each pick, input and sale a bordered box inside its card, so one
  *   trace was a stack of 20+ boxes. Gaps are StatusRows (the readiness card's shape: a tinted
  *   circle, what is missing, how to close it, a link); picks, inputs and sales are rows split by
- *   a hairline. On the reviewer's link every tone is neutral: a certifier surface states what is
+ *   a hairline (StatusList for both). On the reviewer's link every tone is neutral: a certifier surface states what is
  *   missing, it does not grade it (the certifier review's own rule, #257).
  */
 import React, { ReactNode } from 'react';
@@ -31,7 +31,6 @@ import {
   StatusRow
 } from 'components/Design/StandardComponents';
 import OnHandByLocation from './OnHandByLocation';
-import { TraceRows } from './TraceRows';
 
 export type TraceGap = {
   hop: string;
@@ -423,7 +422,7 @@ export const TraceChain = ({
               card, so the chain below still reads lot -> season -> inputs. */}
           <StandardCard title={t('traceback.hop.lot')}>
             <Box mb={3}>{gapsFor('picks')}</Box>
-            <TraceRows>{(tb.picks || []).map(pickCard)}</TraceRows>
+            <StatusList>{(tb.picks || []).map(pickCard)}</StatusList>
             <Box mt={4}>
               <Text fontWeight="semibold">{t('traceback.hop.lotSales')}</Text>
               <Text fontSize="sm" color="gray.600" mb={2}>
@@ -432,11 +431,11 @@ export const TraceChain = ({
               {(tb.sales || []).length === 0 ? (
                 <Text fontSize="sm">{t('traceback.lotSales.none')}</Text>
               ) : (
-                <TraceRows>
+                <StatusList>
                   {tb.sales.map((sale: any) => (
                     <SaleLine key={sale.sale_id} sale={sale} t={t} onOpenSale={onOpenSale} />
                   ))}
-                </TraceRows>
+                </StatusList>
               )}
             </Box>
             {/* Sales that name no pick may hold this one; the records cannot say, so they are
@@ -449,11 +448,11 @@ export const TraceChain = ({
                 <Text fontSize="sm" color="gray.600" mb={2}>
                   {t('traceback.lotSales.unlinkedHelp')}
                 </Text>
-                <TraceRows>
+                <StatusList>
                   {tb.sales_naming_no_pick.map((sale: any) => (
                     <SaleLine key={sale.sale_id} sale={sale} t={t} onOpenSale={onOpenSale} />
                   ))}
-                </TraceRows>
+                </StatusList>
               </Box>
             )}
           </StandardCard>
@@ -493,7 +492,7 @@ export const TraceChain = ({
             {tb.picks.length === 0 ? (
               <Text fontSize="sm">{t('traceback.picks.none')}</Text>
             ) : (
-              <TraceRows>{tb.picks.map(pickCard)}</TraceRows>
+              <StatusList>{tb.picks.map(pickCard)}</StatusList>
             )}
           </StandardCard>
         </>
@@ -516,7 +515,7 @@ export const TraceChain = ({
         {tb.inputs.length === 0 ? (
           <Text fontSize="sm">{t('traceback.inputs.none')}</Text>
         ) : (
-          <TraceRows>
+          <StatusList>
             {tb.inputs.map((r: any) => (
               <Box key={`${r.kind}-${r.event_id}`} py={3}>
                 <Text fontWeight="semibold">
@@ -572,7 +571,7 @@ export const TraceChain = ({
                 <Files docs={r.documents} />
               </Box>
             ))}
-          </TraceRows>
+          </StatusList>
         )}
       </StandardCard>
 

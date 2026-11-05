@@ -14,8 +14,7 @@ import React from 'react';
 import { Box, Text, VStack } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
 
-import { StandardCard } from 'components/Design/StandardComponents';
-import { TraceRows } from './TraceRows';
+import { StandardCard, StatusList } from 'components/Design/StandardComponents';
 
 export type OnHandLocation = {
   location: string;
@@ -76,7 +75,7 @@ export const OnHandByLocation = ({ onHand }: { onHand: OnHand }) => {
       {onHand.locations.length === 0 ? (
         <Text fontSize="sm">{t('traceback.picks.none')}</Text>
       ) : (
-        <TraceRows>
+        <StatusList>
           {onHand.locations.map((row) => (
             <Box key={row.location || '__not_recorded__'} py={3} data-testid="on-hand-location">
               <Text fontWeight="semibold">{place(row.location)}</Text>
@@ -114,7 +113,7 @@ export const OnHandByLocation = ({ onHand }: { onHand: OnHand }) => {
               )}
             </Box>
           ))}
-        </TraceRows>
+        </StatusList>
       )}
       {onHand.unallocated_sales.length > 0 && (
         <Box mt={4}>

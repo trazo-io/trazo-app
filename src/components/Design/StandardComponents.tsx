@@ -2066,7 +2066,8 @@ export const StatusRow = ({
 };
 
 /**
- * StatusRows split by a hairline. A CSS sibling border, so a row that renders null leaves no
+ * Rows split by a hairline: StatusRows, or any plain row given `py={3}` (the traceback's picks,
+ * inputs and matches use it that way). A CSS sibling border, so a row that renders null leaves no
  * rule. gray.200, not gray.100: the theme's gray.100 is #F8F9FA, the page background, so a
  * gray.100 rule on a white card is invisible.
  */

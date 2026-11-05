@@ -34,7 +34,8 @@ import {
   StandardPageLoading,
   StandardQueryError,
   StandardSearchInput,
-  StandardSegmentedControl
+  StandardSegmentedControl,
+  StatusList
 } from 'components/Design/StandardComponents';
 import {
   useGetLotTracebackQuery,
@@ -43,7 +44,6 @@ import {
   useSearchTracebackSalesQuery
 } from 'store/api/historyApi';
 import TraceChain, { type TraceDoc, type TraceGap } from 'components/Traceback/TraceChain';
-import { TraceRows } from 'components/Traceback/TraceRows';
 import { DOCUMENT_DOWNLOAD_URL } from 'config';
 import { env } from 'config/environment';
 
@@ -247,7 +247,7 @@ export const TracebackPage = () => {
           {lotSearch.currentData?.truncated && (
             <StandardAlert status="info" mb={3} description={t('traceback.matches.truncated')} />
           )}
-          <TraceRows>
+          <StatusList>
             {lotMatches!.map((m: any) => (
               <HStack key={m.pick_id} justify="space-between" py={3} spacing={3}>
                 <Box flex={1} minW={0}>
@@ -267,7 +267,7 @@ export const TracebackPage = () => {
                 </StandardButton>
               </HStack>
             ))}
-          </TraceRows>
+          </StatusList>
         </StandardCard>
       )}
 
@@ -302,7 +302,7 @@ export const TracebackPage = () => {
               )}
             />
           )}
-          <TraceRows>
+          <StatusList>
             {matches!.map((m: any) => (
               <HStack key={m.sale_id} justify="space-between" py={3} spacing={3}>
                 {/* minW 0 lets a long match label wrap instead of squeezing the button
@@ -325,7 +325,7 @@ export const TracebackPage = () => {
                 </StandardButton>
               </HStack>
             ))}
-          </TraceRows>
+          </StatusList>
         </StandardCard>
       )}
 

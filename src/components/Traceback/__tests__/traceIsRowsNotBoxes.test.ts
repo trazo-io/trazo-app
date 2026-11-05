@@ -40,11 +40,13 @@ describe('a trace is rows, not boxes', () => {
   it('draws no bordered box per item in any traceback list', () => {
     for (const f of LISTS) {
       // An item box is a 1px border with a radius; cards come from StandardCard, rules from
-      // TraceRows / StatusList.
+      // StatusList.
       expect(code(f), f).not.toMatch(/borderWidth="1px"[\s\S]{0,80}borderRadius="md"/);
     }
-    for (const f of LISTS.slice(1)) expect(code(f), f).toMatch(/<TraceRows>/);
-    expect(CHAIN.match(/<TraceRows>/g)?.length ?? 0).toBeGreaterThanOrEqual(4);
+    for (const f of LISTS.slice(1)) expect(code(f), f).toMatch(/<StatusList>/);
+    // The gap list plus the pick, input and two sale lists.
+    expect(CHAIN.match(/<StatusList>/g)?.length ?? 0).toBeGreaterThanOrEqual(5);
+    expect(CHAIN).not.toMatch(/TraceRows/);
   });
 
   it('states each missing link as a StatusRow, not a warning slab', () => {
