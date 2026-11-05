@@ -14,9 +14,10 @@
  * corrected, the success copy had been corrected, and the modal was missed: the
  * "fixed on the audited surface, alive on its sibling" shape this codebase keeps producing.
  *
- * Scoped to keys that are actually RENDERED. Dozens of dead `app.*Trial*` keys still sit in the
- * catalogue from the pre-2026-08 pricing model; they make no claim to anyone and deleting them
- * is a separate cleanup. What must never be true is that a LIVE string offers a trial.
+ * Scoped first to keys that are actually RENDERED. The 36 dead `app.*Trial*` keys left from the
+ * pre-2026-08 pricing model ("14-Day Free Trial", "Start Your Free Trial", "Why do you need my
+ * credit card for the free trial?") were deleted 2026-11-05, so the catalogue as a whole is now
+ * held to the same rule: a dead key is one import away from a live claim.
  */
 import { readdirSync, readFileSync, statSync } from 'fs';
 import { join, resolve } from 'path';
@@ -78,6 +79,13 @@ describe('no phantom trial in live copy', () => {
         .map(([key, value]) => `${key} = ${value}`);
 
       expect(offenders, 'Starter is free forever — no card, no clock, no trial').toEqual([]);
+    });
+
+    it(`${locale}: no string in the catalogue offers a trial, rendered or not`, () => {
+      const offenders = Object.entries(catalogue as Record<string, string>)
+        .filter(([, value]) => typeof value === 'string' && OFFERS_A_TRIAL.test(value))
+        .map(([key, value]) => `${key} = ${value}`);
+      expect(offenders, 'a dead key is one import away from a live claim').toEqual([]);
     });
   }
 });
