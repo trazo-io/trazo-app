@@ -66,22 +66,9 @@ const wsdaProductNumber = (raw?: string | null): string => {
   return WSDA_PRODUCT_NUMBER_RE.test(value) ? value : '';
 };
 
-const TOUCH_TARGET = {
-  position: 'relative' as const,
-  _before: {
-    content: '""',
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: '100%',
-    minWidth: '44px',
-    height: '44px'
-  }
-};
 import { useIntl } from 'react-intl';
 
-import { StatusList, StatusRow } from 'components/Design/StandardComponents';
+import { StatusList, StatusRow, TOUCH_TARGET } from 'components/Design/StandardComponents';
 import { useLazyVerifyInputQuery } from 'store/api/ospApi';
 import type { InputVerifyResult } from 'types/osp';
 import { parseDateOnly } from 'utils/dateOnly';

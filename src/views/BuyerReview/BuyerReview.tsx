@@ -19,9 +19,11 @@ import {
   Box,
   Center,
   Divider,
+  Flex,
   Heading,
   HStack,
   Icon,
+  Link,
   Spinner,
   Text,
   VStack,
@@ -31,7 +33,7 @@ import { FaExternalLinkAlt, FaLeaf } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import { useParams } from 'react-router-dom';
 
-import { StandardButton } from 'components/Design/StandardComponents';
+import { StatusList, TOUCH_TARGET } from 'components/Design/StandardComponents';
 import { config } from 'config/environment';
 import { formatDateOnly, formatDateFromTimestamp } from 'utils/dateOnly';
 import {
@@ -73,6 +75,7 @@ const BuyerReview: React.FC = () => {
 
   const rowBg = useColorModeValue('gray.50', 'gray.700');
   const rowBorder = useColorModeValue('gray.200', 'gray.600');
+  const surface = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.700', 'gray.200');
   const mutedColor = useColorModeValue('gray.500', 'gray.400');
 
@@ -169,51 +172,71 @@ const BuyerReview: React.FC = () => {
         {meta.seasons.length === 0 && (
           <Text color={mutedColor}>{intl.formatMessage({ id: 'buyerReview.seasons.empty' })}</Text>
         )}
-        <VStack spacing={3} align="stretch">
-          {meta.seasons.map((season) => (
-            <HStack
-              key={season.public_id}
-              borderWidth="1px"
-              borderColor={rowBorder}
-              borderRadius="lg"
-              p={4}
-              justify="space-between"
-              align="flex-start"
-              flexWrap="wrap"
-              gap={3}>
-              <VStack align="flex-start" spacing={1}>
-                <HStack spacing={2} flexWrap="wrap">
-                  <Text fontWeight="semibold" color={textColor}>
-                    {season.product || season.name}
-                  </Text>
-                  {season.in_progress ? (
-                    <Badge variant="warning">
-                      {intl.formatMessage({ id: 'buyerReview.season.inProgress' })}
-                    </Badge>
-                  ) : (
-                    <Badge variant="neutral">
-                      {intl.formatMessage({ id: 'buyerReview.season.finished' })}
-                    </Badge>
-                  )}
-                </HStack>
-                <Text fontSize="sm" color={mutedColor}>
-                  {[season.parcel, formatDate(season.start_date), formatDate(season.finish_date)]
-                    .filter(Boolean)
-                    .join(' · ')}
-                </Text>
-              </VStack>
-              <StandardButton
-                as="a"
-                href={seasonUrl(season)}
-                target="_blank"
-                rel="noopener noreferrer"
-                size="sm"
-                rightIcon={<FaExternalLinkAlt />}>
-                {intl.formatMessage({ id: 'buyerReview.season.open' })}
-              </StandardButton>
-            </HStack>
-          ))}
-        </VStack>
+        {/* One card of rows (2026-11-04). Each season was its own bordered box with a SOLID green
+            "View records" button: eleven solid buttons on one phone screen, and the button jumped
+            beside or under the text depending on name length. Rows split by a hairline, the link
+            as text at the row's end, with the 44px hit area kept. */}
+        {meta.seasons.length > 0 && (
+          <Box
+            borderWidth="1px"
+            borderColor={rowBorder}
+            borderRadius="lg"
+            bg={surface}
+            px={4}
+            data-testid="buyer-seasons">
+            <StatusList>
+              {meta.seasons.map((season) => (
+                <Flex
+                  key={season.public_id}
+                  py={3}
+                  gap={{ base: 1, md: 4 }}
+                  direction={{ base: 'column', md: 'row' }}
+                  justify="space-between"
+                  align={{ base: 'flex-start', md: 'center' }}>
+                  <VStack align="flex-start" spacing={1} minW={0}>
+                    <HStack spacing={2} flexWrap="wrap">
+                      <Text fontWeight="semibold" color={textColor}>
+                        {season.product || season.name}
+                      </Text>
+                      {season.in_progress ? (
+                        <Badge variant="warning">
+                          {intl.formatMessage({ id: 'buyerReview.season.inProgress' })}
+                        </Badge>
+                      ) : (
+                        <Badge variant="neutral">
+                          {intl.formatMessage({ id: 'buyerReview.season.finished' })}
+                        </Badge>
+                      )}
+                    </HStack>
+                    <Text fontSize="sm" color={mutedColor}>
+                      {[
+                        season.parcel,
+                        formatDate(season.start_date),
+                        formatDate(season.finish_date)
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </Text>
+                  </VStack>
+                  <Link
+                    href={seasonUrl(season)}
+                    isExternal
+                    fontSize="sm"
+                    fontWeight="semibold"
+                    color="green.700"
+                    flexShrink={0}
+                    display="inline-flex"
+                    alignItems="center"
+                    gap={1.5}
+                    {...TOUCH_TARGET}>
+                    {intl.formatMessage({ id: 'buyerReview.season.open' })}
+                    <Icon as={FaExternalLinkAlt} boxSize={3} aria-hidden />
+                  </Link>
+                </Flex>
+              ))}
+            </StatusList>
+          </Box>
+        )}
 
         <Text fontSize="xs" color={mutedColor}>
           {intl.formatMessage(

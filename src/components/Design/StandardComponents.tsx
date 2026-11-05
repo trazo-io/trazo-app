@@ -2137,6 +2137,31 @@ export const STATUS_URGENCY_TOKENS = {
 } as const;
 
 /**
+ * The 44px touch floor for a compact control: an invisible hit area centred on it, so a text
+ * link or an xs button keeps its visual size and still meets the target. Spread it onto the
+ * control (`{...TOUCH_TARGET}`). One copy: the input lookup, the traceback and the buyer page
+ * each had their own until 2026-11-04.
+ *
+ * It also carries the app's ONE focus ring (the `outline` shadow token, theme/components/
+ * button.js). The `Link` theme sets `_focus: { boxShadow: 'none' }`, so a text link made compact
+ * with this object had no visible keyboard focus at all (review of app #276).
+ */
+export const TOUCH_TARGET = {
+  _focusVisible: { boxShadow: 'outline' },
+  position: 'relative' as const,
+  _before: {
+    content: '""',
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: '100%',
+    minWidth: '44px',
+    height: '44px'
+  }
+};
+
+/**
  * What StatusRow paints for each tone, exported so guards can read it (the GUIDANCE_NOTE_TOKENS
  * reasoning: a guard that restates colours proves nothing about the component).
  *
