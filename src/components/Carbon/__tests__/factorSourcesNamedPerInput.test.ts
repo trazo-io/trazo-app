@@ -78,6 +78,15 @@ describe('the activity wizard attributes advice only to the source an item names
     expect(preview).toContain('calculation.recommendations');
   });
 
+  it('shows the impact level the backend sends, never a default one', () => {
+    // The backend sends "High", "Medium" (and "Transparency", a category, not a level):
+    // trazo-back carbon/services/event_carbon_calculator.py. A first fix dropped the line.
+    expect(preview).toMatch(/IMPACT_LEVEL_KEYS\[rec\.impact\]/);
+    expect(preview).toMatch(/High: 'carbon\.recommendation\.impactHigh'/);
+    expect(preview).toMatch(/Medium: 'carbon\.recommendation\.impactMedium'/);
+    expect(preview).not.toMatch(/rec\.impact\s*\|\|/);
+  });
+
   it('never rewrites or defaults the source to an agency', () => {
     // It printed rec.source with EPA swapped for USDA, and "USDA" when there was none.
     expect(preview).not.toMatch(/source\?\.replace\(/);
