@@ -3,8 +3,10 @@
  * Phase 5 slice 2b). WSDA AGR 2196 and CCOF's Materials Application ask it per material.
  *
  *   - A statement belongs to one material, this plan version and one identified restriction.
- *   - The restriction is either regulation wording Trazo holds (a § 205.602 condition of use) or
- *     wording the operator copies from its source, which prints as not verified by Trazo.
+ *   - The restriction is either regulation wording Trazo holds (a § 205.602 condition of use, or a
+ *     § 205.601 annotation held verbatim: fixed coppers, copper sulfate, magnesium sulfate,
+ *     micronutrients) or wording the operator copies from its source, which prints as not verified
+ *     by Trazo. The backend sends the citation; the panel prints it as given.
  *   - "How it is met" is the operator's statement, never a compliance result.
  *   - No restriction on record reads "restriction not documented", never "no restrictions".
  *   - A change of answer replaces the current statement; a statement entered by mistake (a mistyped
