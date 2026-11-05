@@ -154,7 +154,11 @@ describe('OSP Materials List editor', () => {
     try {
       renderPanel();
       expect(screen.getByTestId('materials-label-on-file')).toHaveTextContent(
-        'Label: Label of Rexius Organic Compost'
+        'Label on file in Documents'
+      );
+      expect(screen.getByRole('link', { name: 'Open' })).toHaveAttribute(
+        'href',
+        expect.stringContaining('/companies/7/establishments/3/documents/41/download/')
       );
       expect(screen.queryByTestId('materials-label-asked')).not.toBeInTheDocument();
       await act(async () => {
