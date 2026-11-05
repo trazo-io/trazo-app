@@ -25,6 +25,7 @@ import {
   HStack,
   Icon,
   Link,
+  SimpleGrid,
   Spinner,
   Text,
   VStack,
@@ -83,49 +84,59 @@ const SmartUsageCard = ({ companyId, farmId, buyerPagePath }) => {
     );
   } else {
     body = (
-      <VStack align="stretch" spacing={4}>
-        <Box data-testid="records-counts">
-          <GroupLabel color={mutedColor}>
-            {intl.formatMessage({ id: 'dashboard.recordsCard.records' })}
-          </GroupLabel>
-          <FieldList>
-            <InfoRow
-              layout="inline"
-              label={intl.formatMessage({ id: 'dashboard.recordsCard.activities' })}
-              value={count(metrics.total_documented_events)}
-            />
-            <InfoRow
-              layout="inline"
-              label={intl.formatMessage({ id: 'dashboard.recordsCard.seasonsUnderway' })}
-              value={count(metrics.productions_in_progress)}
-            />
-            <InfoRow
-              layout="inline"
-              label={intl.formatMessage({ id: 'dashboard.finishedSeasons' })}
-              value={count(metrics.scored_productions)}
-            />
-          </FieldList>
-        </Box>
-        <Box data-testid="buyer-page-counts">
-          <GroupLabel color={mutedColor}>
-            {intl.formatMessage({ id: 'dashboard.recordsCard.buyerPage' })}
-          </GroupLabel>
-          <FieldList>
-            <InfoRow
-              layout="inline"
-              label={intl.formatMessage({ id: 'dashboard.recordsCard.qrScans' })}
-              value={count(metrics.monthly_scans)}
-            />
-            <InfoRow
-              layout="inline"
-              label={intl.formatMessage({ id: 'dashboard.consumerReach' })}
-              value={
-                count(metrics.consumer_reach) ??
-                intl.formatMessage({ id: 'dashboard.recordsCard.notRecorded' })
-              }
-            />
-          </FieldList>
-        </Box>
+      <VStack align="stretch" spacing={3}>
+        {/* Side by side from md, so the card matches the Farm Profile card beside it (290px at
+            1366, where one column made it 356px). Stacked on a phone: the cards stack there anyway,
+            and two columns wrapped "Buyer page, last 30 days" out of line at 390px. */}
+        <SimpleGrid columns={{ base: 1, md: 2 }} spacingX={6} spacingY={3}>
+          <Box data-testid="records-counts">
+            <GroupLabel color={mutedColor}>
+              {intl.formatMessage({ id: 'dashboard.recordsCard.records' })}
+            </GroupLabel>
+            <FieldList>
+              <InfoRow
+                layout="inline"
+                dense
+                label={intl.formatMessage({ id: 'dashboard.recordsCard.activities' })}
+                value={count(metrics.total_documented_events)}
+              />
+              <InfoRow
+                layout="inline"
+                dense
+                label={intl.formatMessage({ id: 'dashboard.recordsCard.seasonsUnderway' })}
+                value={count(metrics.productions_in_progress)}
+              />
+              <InfoRow
+                layout="inline"
+                dense
+                label={intl.formatMessage({ id: 'dashboard.finishedSeasons' })}
+                value={count(metrics.scored_productions)}
+              />
+            </FieldList>
+          </Box>
+          <Box data-testid="buyer-page-counts">
+            <GroupLabel color={mutedColor}>
+              {intl.formatMessage({ id: 'dashboard.recordsCard.buyerPage' })}
+            </GroupLabel>
+            <FieldList>
+              <InfoRow
+                layout="inline"
+                dense
+                label={intl.formatMessage({ id: 'dashboard.recordsCard.qrScans' })}
+                value={count(metrics.monthly_scans)}
+              />
+              <InfoRow
+                layout="inline"
+                dense
+                label={intl.formatMessage({ id: 'dashboard.consumerReach' })}
+                value={
+                  count(metrics.consumer_reach) ??
+                  intl.formatMessage({ id: 'dashboard.recordsCard.notRecorded' })
+                }
+              />
+            </FieldList>
+          </Box>
+        </SimpleGrid>
         <Box>
           <Link
             as={RouterLink}
@@ -146,7 +157,7 @@ const SmartUsageCard = ({ companyId, farmId, buyerPagePath }) => {
   return (
     <Card h="100%">
       <CardBody>
-        <VStack align="stretch" spacing={4} w="100%">
+        <VStack align="stretch" spacing={3} w="100%">
           <HStack spacing={3} align="start">
             <Icon as={FaQrcode} color={iconColor} boxSize={5} mt={1} aria-hidden />
             <Heading as="h3" size="sm" fontWeight="600" color={titleColor} pt={1}>

@@ -46,6 +46,12 @@ export interface InfoRowProps {
    * one stacked caller left.
    */
   layout?: 'stacked' | 'inline';
+  /**
+   * Inline rows only: 6px vertical padding instead of 10px. For a short list of counts in a
+   * half-width dashboard card (farm home, 2026-11-05), where the default made the card ~80px
+   * taller than the card beside it. Profile pages keep the default.
+   */
+  dense?: boolean;
 }
 
 export const InfoRow: React.FC<InfoRowProps> = ({
@@ -57,7 +63,8 @@ export const InfoRow: React.FC<InfoRowProps> = ({
   publicLabel,
   onClick,
   noOfLines,
-  layout = 'stacked'
+  layout = 'stacked',
+  dense = false
 }) => {
   // Empty rows render nothing — that is how the profile pages hide unset fields.
   if (value === null || value === undefined || value === '') return null;
@@ -149,14 +156,14 @@ export const InfoRow: React.FC<InfoRowProps> = ({
     // field stays inline on a farm that wrote three words.
     if (typeof value === 'string' && value.length > 40) {
       return (
-        <Box py={2.5}>
+        <Box py={dense ? 1.5 : 2.5}>
           {inlineLabel}
           <Box mt={1}>{renderValue()}</Box>
         </Box>
       );
     }
     return (
-      <Flex justify="space-between" align="baseline" gap={4} py={2.5}>
+      <Flex justify="space-between" align="baseline" gap={4} py={dense ? 1.5 : 2.5}>
         {inlineLabel}
         <Box minW={0} textAlign="right">
           {renderValue()}
