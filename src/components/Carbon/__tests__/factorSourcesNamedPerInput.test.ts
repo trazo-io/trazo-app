@@ -11,6 +11,9 @@
  * attribution `trazo-back/carbon/services/verified_emission_factors.py` records as a non-citation.
  * compliance.md forbids the blanket form; provenance is stated per input class.
  */
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
+
 import { describe, expect, it } from 'vitest';
 
 import enUS from '../../../i18n/lang/en-US.json';
@@ -66,4 +69,18 @@ describe('the factor-source card states provenance per input, never a blanket cl
       expect(m['app.usdaBadge.academicLca']).toMatch(/Audsley/);
     });
   }
+});
+
+describe('the activity wizard attributes advice only to the source an item names', () => {
+  const preview = readFileSync(resolve(__dirname, '../../Events/CarbonImpactPreview.tsx'), 'utf8');
+
+  it('reads the real component', () => {
+    expect(preview).toContain('calculation.recommendations');
+  });
+
+  it('never rewrites or defaults the source to an agency', () => {
+    // It printed rec.source with EPA swapped for USDA, and "USDA" when there was none.
+    expect(preview).not.toMatch(/source\?\.replace\(/);
+    expect(preview).not.toMatch(/\|\|\s*'(USDA|EPA)[^']*'/);
+  });
 });

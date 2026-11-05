@@ -192,12 +192,17 @@ interface CarbonCalculation {
     estimated_cost: number;
     cost_per_co2e: number;
   };
+  // What carbon/services/event_carbon_calculator.py sends: `message`, `impact` and (only when
+  // the item names one) `source`; `title` and the savings pair are optional.
   recommendations?: Array<{
     type: string;
-    title: string;
-    description: string;
-    potential_savings: number;
-    carbon_reduction: number;
+    title?: string;
+    message?: string;
+    description?: string;
+    impact?: string;
+    source?: string;
+    potential_savings?: number;
+    carbon_reduction?: number;
   }>;
 }
 
@@ -600,23 +605,23 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
 
                   {calculation.recommendations.slice(0, 2).map((rec, index) => (
                     // Rich body, so it rides `children` rather than the string `description`.
-                    <StandardAlert
-                      key={index}
-                      status="info"
-                      title={rec.title || rec.message || 'USDA Best Practice'}>
-                      <Text fontSize="sm">
-                        {rec.potential_savings && rec.carbon_reduction ? (
-                          <>
-                            Save ${rec.potential_savings} • Reduce {rec.carbon_reduction.toFixed(1)}{' '}
-                            kg CO₂e
-                          </>
-                        ) : (
-                          <>
-                            Transparency Impact: {rec.impact || 'High'} • Source:{' '}
-                            {rec.source?.replace('EPA', 'USDA') || 'USDA'}
-                          </>
-                        )}
-                      </Text>
+                    <StandardAlert key={index} status="info" title={rec.title || rec.message}>
+                      {/* No invented attribution: the source line renders only when the item
+                          names one, verbatim. It used to print rec.source with EPA swapped for
+                          USDA, and "USDA" when there was none (2026-11-05). */}
+                      {rec.potential_savings && rec.carbon_reduction ? (
+                        <Text fontSize="sm">
+                          Save ${rec.potential_savings} • Reduce {rec.carbon_reduction.toFixed(1)}{' '}
+                          kg CO₂e
+                        </Text>
+                      ) : rec.source ? (
+                        <Text fontSize="sm">
+                          {intl.formatMessage(
+                            { id: 'carbon.recommendation.source' },
+                            { source: rec.source }
+                          )}
+                        </Text>
+                      ) : null}
                     </StandardAlert>
                   ))}
 
