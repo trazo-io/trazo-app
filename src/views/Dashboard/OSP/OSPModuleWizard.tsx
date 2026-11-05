@@ -897,7 +897,10 @@ const OSPModuleWizard = () => {
   // Neutral (2026-11-04): a suggestion is not an answer until the farm accepts it, so it must
   // not wear the green an accepted answer gets.
   const suggestionBg = useColorModeValue('gray.50', 'gray.700');
-  const suggestionBorder = useColorModeValue('gray.200', 'gray.600');
+  // Dark mode: gray.600 on the gray.700 fill is ~1.6:1, under the 3.0 non-text floor, so the
+  // border and the wand step up to gray.500 / gray.300.
+  const suggestionBorder = useColorModeValue('gray.200', 'gray.500');
+  const suggestionIconColor = useColorModeValue('gray.600', 'gray.300');
 
   const isUnanswered = (value: AnswerValue): boolean =>
     value === undefined ||
@@ -1204,7 +1207,12 @@ const OSPModuleWizard = () => {
                                   bg={suggestionBg}
                                   borderRadius="md">
                                   <HStack align="flex-start" spacing={2}>
-                                    <Box as={FaMagic} color="gray.600" mt={0.5} flexShrink={0} />
+                                    <Box
+                                      as={FaMagic}
+                                      color={suggestionIconColor}
+                                      mt={0.5}
+                                      flexShrink={0}
+                                    />
                                     <Box minW={0}>
                                       <Text fontSize="sm">
                                         <Text as="span" fontWeight="semibold">

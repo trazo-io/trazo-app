@@ -39,11 +39,24 @@ const TABS = [
   'GeneralTab.jsx'
 ];
 
-/** The JSX a condition guards: from the marker to the first closing of its first element. */
-function block(src: string, marker: string, span = 500): string {
+/** A marker that must occur exactly once: an ambiguous one would check the wrong block. */
+function uniqueAt(src: string, marker: string): number {
   const at = src.indexOf(marker);
   expect(at, `marker not found: ${marker}`).toBeGreaterThan(0);
+  expect(src.lastIndexOf(marker), `marker is not unique: ${marker}`).toBe(at);
+  return at;
+}
+
+/** The JSX a condition guards: from the marker forward. */
+function block(src: string, marker: string, span = 500): string {
+  const at = uniqueAt(src, marker);
   return src.slice(at, at + span);
+}
+
+/** The banner around a message id: from the enclosing `<Box` to just past the id. */
+function bannerAround(src: string, messageId: string): string {
+  const at = uniqueAt(src, messageId);
+  return src.slice(src.lastIndexOf('<Box', at), at + 80);
 }
 
 describe('a suggestion is not green', () => {
@@ -58,14 +71,20 @@ describe('a suggestion is not green', () => {
     expect(WIZARD).toMatch(/const suggestionBg = useColorModeValue\('gray\./);
     expect(WIZARD).toMatch(/const suggestionBorder = useColorModeValue\('gray\./);
     expect(WIZARD).not.toMatch(/as=\{FaMagic\} color="green/);
+    expect(WIZARD).toMatch(
+      /const suggestionIconColor = useColorModeValue\('gray\.\d+', 'gray\.300'\)/
+    );
   });
 
   it.each([
-    ["activeFieldNote && activeFieldNote.status === 'pending' && ("],
-    ['activePlanItem && !showVoiceCapture && ('],
-    ['appliedTemplateKey && !showVoiceCapture && (']
-  ])('activity form: %s banner is neutral', (marker) => {
-    expect(block(NEW_EVENT, marker, 420)).not.toMatch(/green\./);
+    // A PENDING crew note, the season-plan item (the catalogue's values), an applied template.
+    ["id: 'events.fieldNote.loggingFrom'"],
+    ["id: 'seasonPlan.logFromPlanNote'"],
+    ["id: 'events.template.applied'"]
+  ])('activity form: the banner around %s is neutral', (messageId) => {
+    const banner = bannerAround(NEW_EVENT, messageId);
+    expect(banner).toMatch(/<Box/);
+    expect(banner).not.toMatch(/green\./);
   });
 
   it('registry chips are gray, not a colour per source', () => {
@@ -75,10 +94,10 @@ describe('a suggestion is not green', () => {
   });
 
   it('no blue switch or badge in the activity form', () => {
+    // The whole file, not tag by tag: a tag regex stops at the `>` inside `(e) =>`, and these
+    // Switches put onChange before colorScheme, so a per-tag check passed vacuously.
     for (const f of [...TABS, 'NewEvent.jsx']) {
-      const src = code(`${FORMS}/${f}`);
-      const tags = src.match(/<(Switch|Badge|StandardButton)\b[^>]*>/g) ?? [];
-      for (const t of tags) expect(t, `${f}: ${t.slice(0, 80)}`).not.toMatch(/colorScheme="blue"/);
+      expect(code(`${FORMS}/${f}`), f).not.toMatch(/colorScheme="blue"/);
     }
   });
 });
