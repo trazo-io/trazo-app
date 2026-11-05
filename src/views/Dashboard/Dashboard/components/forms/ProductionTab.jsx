@@ -3470,9 +3470,11 @@ const ProductionTab = forwardRef(
                             </Text>
                           </HStack>
                           <Text fontSize="xs" color="gray.600">
-                            {isSummaryMode
-                              ? 'Log multiple harvests as one summary (e.g., "24 picks over 3 months")'
-                              : 'Enable to log multiple harvest events at once'}
+                            {intl.formatMessage({
+                              id: isSummaryMode
+                                ? 'events.section.production.harvestSummaryOn'
+                                : 'events.section.production.harvestSummaryOff'
+                            })}
                           </Text>
                         </VStack>
                         <Controller
@@ -4342,10 +4344,10 @@ const ProductionTab = forwardRef(
                     <Box gridColumn={{ md: 'span 2' }} mb={2}>
                       <HStack
                         p={3}
-                        bg={isSummaryMode ? 'orange.50' : 'gray.50'}
+                        bg={isSummaryMode ? 'white' : 'gray.50'}
                         borderRadius="md"
                         borderWidth="1px"
-                        borderColor={isSummaryMode ? 'orange.200' : 'gray.200'}
+                        borderColor={isSummaryMode ? 'gray.300' : 'gray.200'}
                         justify="space-between">
                         <VStack align="start" spacing={0}>
                           <HStack>
@@ -4355,11 +4357,6 @@ const ProductionTab = forwardRef(
                                 id: 'production.pruning.summaryToggleLabel'
                               })}
                             </Text>
-                            {isSummaryMode && (
-                              <Badge colorScheme="orange" size="sm">
-                                Active
-                              </Badge>
-                            )}
                           </HStack>
                           <Text fontSize="xs" color="gray.600">
                             {isSummaryMode
@@ -4376,7 +4373,6 @@ const ProductionTab = forwardRef(
                           control={methods.control}
                           render={({ field }) => (
                             <Switch
-                              colorScheme="orange"
                               size="lg"
                               isChecked={field.value === 'true'}
                               onChange={(e) => field.onChange(e.target.checked ? 'true' : 'false')}
@@ -5282,13 +5278,17 @@ const ProductionTab = forwardRef(
                               <VStack align="start" spacing={0}>
                                 <HStack>
                                   <Text fontWeight="semibold" fontSize="sm">
-                                    Irrigation Summary Mode
+                                    {intl.formatMessage({
+                                      id: 'events.section.production.irrigationSummary'
+                                    })}
                                   </Text>
                                 </HStack>
                                 <Text fontSize="xs" color="gray.600">
-                                  {isSummaryMode
-                                    ? 'Log multiple irrigations as one summary (e.g., "12 irrigations in May")'
-                                    : 'Enable to log multiple irrigation events at once'}
+                                  {intl.formatMessage({
+                                    id: isSummaryMode
+                                      ? 'events.section.production.irrigationSummaryOn'
+                                      : 'events.section.production.irrigationSummaryOff'
+                                  })}
                                 </Text>
                               </VStack>
                               <Controller
