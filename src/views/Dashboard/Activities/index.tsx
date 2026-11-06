@@ -42,7 +42,7 @@ import {
 } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import {
   StandardButton,
@@ -187,7 +187,13 @@ const ActivitiesPage = () => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
-  const [view, setView] = useState<'calendar' | 'list'>('calendar');
+  // `?parcel=<id>&view=list` opens the list already filtered to one parcel: the parcel page's
+  // "See all N activities" link lands here (2026-11-06), with `from` below for the season. Read once, as the initial state; the
+  // filters stay the farmer's to change.
+  const [searchParams] = useSearchParams();
+  const [view, setView] = useState<'calendar' | 'list'>(
+    searchParams.get('view') === 'list' ? 'list' : 'calendar'
+  );
   const [typeFilter, setTypeFilter] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const verbModal = useDisclosure();
@@ -202,9 +208,14 @@ const ActivitiesPage = () => {
   // fall out of sync with a separate boolean.
   const [detailRow, setDetailRow] = useState<ActivityRow | null>(null);
   const [daySheetIso, setDaySheetIso] = useState<string | null>(null);
-  const [parcelFilter, setParcelFilter] = useState('');
-  const [rangeKey, setRangeKey] = useState<RangeKey>('all');
-  const [customStart, setCustomStart] = useState('');
+  const [parcelFilter, setParcelFilter] = useState(searchParams.get('parcel') || '');
+  // `?from=YYYY-MM-DD` (with `view=list`) starts the list at a season's first day, so the parcel
+  // page's "See all 12 activities" lands on those 12, not on every season of the parcel.
+  const fromParam = /^\d{4}-\d{2}-\d{2}$/.test(searchParams.get('from') || '')
+    ? (searchParams.get('from') as string)
+    : '';
+  const [rangeKey, setRangeKey] = useState<RangeKey>(fromParam ? 'custom' : 'all');
+  const [customStart, setCustomStart] = useState(fromParam);
   const [customEnd, setCustomEnd] = useState('');
 
   const monthStart = cursor;

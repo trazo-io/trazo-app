@@ -3199,6 +3199,7 @@
   "parcelPage.startSeason": "Start a season",
   "parcelPage.logActivity": "Log activity",
   "parcelPage.since": "since {date}",
+  "parcelPage.activities.seeAll": "See all {count} activities",
   "dashboard.kgCO2e": "{value} kg CO₂e",
   "dashboard.loadingDashboardMetrics": "Loading Dashboard Metrics",
   "dashboard.netFootprint": "Direct operational emissions:",
