@@ -414,11 +414,7 @@ function UnifiedSubscriptionDashboard() {
       name: 'app.establishments',
       used: Math.max(0, activeCompany?.establishments?.length || 0),
       limit: formatLimit(features?.max_establishments ?? 0),
-      colorScheme: 'green',
-      // One farm on a one-farm plan is the plan's shape, not a warning: it painted a solid red
-      // bar and icon on every Compliance and pilot account (screen audit 2026-11-06). Over the
-      // limit (a downgrade that kept its farms) still reads red.
-      atLimitIsNormal: true
+      colorScheme: 'green'
     },
     {
       icon: FaMapMarkedAlt,
@@ -1193,9 +1189,6 @@ function UnifiedSubscriptionDashboard() {
                           // the fallback for the unlimited case.
                           const usageScheme = isUnlimited
                             ? metric.colorScheme
-                            : (metric as { atLimitIsNormal?: boolean }).atLimitIsNormal &&
-                              metric.used === metric.limit
-                            ? 'gray'
                             : percentage >= 100
                             ? 'red'
                             : percentage >= 80

@@ -42,6 +42,13 @@ describe('breadcrumb section', () => {
     expect(sectionCrumbId(path)).toBe(id);
   });
 
+  it('names nothing on the consumer subdomain, which mounts its password page at /settings', () => {
+    // Same base path, same navbar: without this a shopper's change-password page read
+    // "Home / Company Settings" (review of #298).
+    expect(sectionCrumbId('/admin/dashboard/settings', true)).toBeNull();
+    expect(sectionCrumbId('/admin/dashboard/settings', false)).toBe('app.companySettings');
+  });
+
   it('every section label exists in both locales', () => {
     const ids = CASES.map(([, id]) => id).filter(Boolean) as string[];
     for (const id of ids) {

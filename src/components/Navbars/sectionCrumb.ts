@@ -35,7 +35,13 @@ const RULES: Array<[RegExp, string]> = [
   [/^\/admin\/dashboard\/settings\/?$/, 'app.companySettings']
 ];
 
-export const sectionCrumbId = (pathname: string): string | null => {
+/**
+ * `consumer`: the consumer subdomain mounts its own pages under the same `/admin/dashboard` base
+ * and the same AdminNavbar, so `/admin/dashboard/settings` there is the shopper's change-password
+ * page, not Company Settings (review of #298). The section crumb is a producer-app feature.
+ */
+export const sectionCrumbId = (pathname: string, consumer = false): string | null => {
+  if (consumer) return null;
   for (const [re, id] of RULES) if (re.test(pathname)) return id;
   return null;
 };

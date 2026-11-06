@@ -30,6 +30,7 @@ import { SidebarContext } from 'contexts/SidebarContext';
 import { useIntl } from 'react-intl';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { sectionCrumbId } from './sectionCrumb';
+import { isConsumerSubdomain } from 'utils/subdomain';
 import { useSelector } from 'react-redux';
 import { FaClock } from 'react-icons/fa';
 
@@ -83,7 +84,7 @@ export default function AdminNavbar(props: AdminNavbarProps) {
   const { farmId, parcelId } = useParams<{ farmId: string; parcelId: string }>();
 
   // The page's own section, after farm / parcel (Activities, Documents, a season...).
-  const sectionId = sectionCrumbId(useLocation().pathname);
+  const sectionId = sectionCrumbId(useLocation().pathname, isConsumerSubdomain());
   // A crumb links back up whenever something more specific follows it.
   const farmIsLink = Boolean(parcelId || sectionId);
   const parcelIsLink = Boolean(sectionId);
