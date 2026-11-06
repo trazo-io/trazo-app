@@ -26,7 +26,6 @@ import {
   AlertDialogOverlay
 } from '@chakra-ui/react';
 import {
-  FaRegCheckCircle,
   FaRegDotCircle,
   FaPlus,
   FaPlay,
@@ -38,9 +37,8 @@ import {
 import React, { useEffect, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
+import SeasonActivityList from './SeasonActivityList';
 import { IoEllipsisVerticalSharp } from 'react-icons/io5';
-import EnhancedTimelineRow from 'components/Tables/EnhancedTimelineRow';
-import { getTimelineEventTitle } from 'utils/eventDescriptions';
 import { setCurrentHistory } from 'store/features/historySlice';
 import { useGetCurrentHistoryQuery, useDeleteProductionMutation } from 'store/api/historyApi';
 import { useIntl } from 'react-intl';
@@ -135,6 +133,21 @@ const TrackList = ({ amount }) => {
   // "Add event"). green.500 under white is 2.78:1 — the same failure fixed app-wide; it was
   // missed by the sweep because the colour arrives through a variable, not a literal prop.
   const bgButton = useColorModeValue('green.700', 'gray.800');
+
+  // "See all N activities" → the Activities list filtered to this parcel, starting at the
+  // season's earliest record. Not `start_date` alone: an activity can be dated before the
+  // season's start (residue worked in on Jun 16 for a Jun 20 sowing) and still belong to it,
+  // and the page would then show 11 where the card promised 12.
+  const seasonFrom = [
+    currentHistory?.start_date,
+    ...(currentHistory?.events || []).map((e) => e.date)
+  ]
+    .filter(Boolean)
+    .map((d) => String(d).slice(0, 10))
+    .sort()[0];
+  const allActivitiesPath = `/admin/dashboard/farm/${farmId}/activities?parcel=${parcelId}&view=list${
+    seasonFrom ? `&from=${seasonFrom}` : ''
+  }`;
 
   const handleEventClick = (event) => {
     setSelectedEvent(event);
@@ -262,44 +275,10 @@ const TrackList = ({ amount }) => {
         mb="12px"
         position="relative"
         data-tour="events-timeline">
-        <Box
-          maxH={{ base: '400px', md: '450px' }}
-          overflowY="auto"
-          pt={2}
-          /*
-            MEASURED 2026-08-23 at 430px: the cards inside this scroll region sat 35px
-            from the card's left edge and 51px from its right — 16px off centre, which
-            reads as a layout mistake rather than a margin.
-
-            `pr` alone was reserving room for the scrollbar, so the pad landed on ONE
-            side and the scrollbar's own 8px landed on the same side. `scrollbarGutter:
-            'stable both-edges'` is the property built for this: it reserves the gutter
-            symmetrically, so the content stays centred whether or not a scrollbar is
-            showing — which also matters because a phone paints an OVERLAY scrollbar
-            (0px) while this desktop browser paints a classic one (8px), so a hand-tuned
-            one-sided offset can only ever be right on one of them.
-          */
-          px={{ base: '8px', md: '12px' }}
-          sx={{
-            // Reserved symmetrically so the list stays centred; see the note above.
-            scrollbarGutter: 'stable both-edges',
-            '&::-webkit-scrollbar': {
-              width: '8px'
-            },
-            '&::-webkit-scrollbar-track': {
-              bg: 'gray.100',
-              borderRadius: 'full'
-            },
-            // Neutral, not brand: a scrollbar says "there is more content", which is
-            // not a brand statement, and green.500 on this track is 2.64:1 anyway.
-            '&::-webkit-scrollbar-thumb': {
-              bg: 'gray.500',
-              borderRadius: 'full',
-              _hover: {
-                bg: 'gray.600'
-              }
-            }
-          }}>
+        {/* No inner scroll (2026-11-06): the season's activities are month groups of one-line
+            rows, the latest six shown and the rest behind "Show all", so the card grows with
+            the page instead of hiding most of the season behind a 450px scroll box. */}
+        <Box pt={2} pe={{ base: 0, md: '20px' }}>
           <Flex direction="column" width={'100%'} pb={4}>
             {/* `isUninitialized` — see HistoryCard: a skip gated on `currentCompany?.id`
                 reports `isLoading: false` before it has ever run, which reached the empty
@@ -310,27 +289,13 @@ const TrackList = ({ amount }) => {
               </Flex>
             ) : (
               <>
-                {currentHistory?.events?.map((event, index, arr) => {
-                  return (
-                    <EnhancedTimelineRow
-                      minW={{ base: '100%', md: '390px' }}
-                      key={`${parcelId}-${event.id}-${index}`}
-                      logo={event.certified ? FaRegCheckCircle : FaRegDotCircle}
-                      title={getTimelineEventTitle(event, intl)}
-                      date={new Date(event.date).toDateString()}
-                      /* was green.300 (1.65:1) / blue.400 (2.65:1) — both under the 3.0 a
-                         non-text mark owes, and blue carries no meaning in this palette */
-                      color={event.certified ? 'green.700' : 'gray.500'}
-                      index={index}
-                      arrLength={arr.length}
-                      url={`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/event/${event.id}?event_type=${event.event_type}`}
-                      event={event}
-                      members={currentHistory?.members || []}
-                      isLast={index === arr.length - 1}
-                      onEventClick={() => handleEventClick(event)}
-                    />
-                  );
-                })}
+                {currentHistory?.events?.length > 0 && (
+                  <SeasonActivityList
+                    events={currentHistory.events}
+                    onOpen={handleEventClick}
+                    allActivitiesPath={allActivitiesPath}
+                  />
+                )}
                 {/* `!(x?.length > 0)`, not `!x?.length > 0`. The old form parsed as
                     `(!length) > 0` and worked only by accident — `true > 0` coerces to
                     `1 > 0`. The three sibling branches below already used the correct form. */}

@@ -96,38 +96,18 @@ describe('mobile horizontal rhythm', () => {
     ).not.toMatch(/(?<![a-zA-Z])(px|pl|ps|paddingLeft|paddingX)=/);
   });
 
-  it('reserves scrollbar room on both edges, never one', () => {
+  it('keeps the parcel cards free of inner scroll regions', () => {
     /*
-     * Both files, because they are grid siblings that had a byte-identical
-     * `pr={{ base: '8px', md: '12px' }}` — this repo's most common defect is a fix that lands
-     * on one of a pair.
+     * Both cards had a 450px scroll box (and a one-sided `pr` that put the list 16px off
+     * centre, measured 2026-08-23). HistoryCard lost its box on 2026-11-06 with the season rows,
+     * TrackList the same day with the month timeline (latest six, "Show all" in place). A second
+     * scrollbar inside the page hid most of the season; keep both cards growing with the page.
      */
-    // HistoryCard lost its inner scroll on 2026-11-06 (a parcel holds a handful of seasons; a
-    // 450px scroll box inside the page was a second scrollbar for a short list). Assert that
-    // stays true, so the pair cannot silently diverge again; TrackList keeps its region.
-    expect(
-      codeOf('views/Dashboard/Parcel/components/HistoryCard.jsx'),
-      'HistoryCard regrew an inner scroll region: give it symmetric padding like TrackList'
-    ).not.toContain('overflowY="auto"');
-    for (const rel of ['views/Dashboard/Parcel/components/TrackList.jsx']) {
-      const code = codeOf(rel);
-      const i = code.indexOf('overflowY="auto"');
-      expect(i, `${rel} no longer has a vertical scroll region`).toBeGreaterThan(-1);
-      const tagStart = code.lastIndexOf('<Box', i);
-      const tag = openingTagAt(code, tagStart, 'Box');
-      expect(
-        tag,
-        `${rel}: a lone \`pr\` on a scroll region stacks with the scrollbar's own width on the ` +
-          `SAME side — measured 16px off centre. Use \`px\`.`
-      ).not.toMatch(/(?<![a-zA-Z])pr=/);
-      expect(tag, `${rel}: the region needs symmetric horizontal padding`).toMatch(
-        /(?<![a-zA-Z])px=/
-      );
-      expect(
-        tag,
-        `${rel}: \`scrollbarGutter: 'stable both-edges'\` is what keeps it centred whether the ` +
-          `browser paints an overlay scrollbar (phone, 0px) or a classic one (desktop, 8px)`
-      ).toMatch(/scrollbarGutter: 'stable both-edges'/);
+    for (const rel of [
+      'views/Dashboard/Parcel/components/HistoryCard.jsx',
+      'views/Dashboard/Parcel/components/TrackList.jsx'
+    ]) {
+      expect(codeOf(rel), `${rel} regrew an inner scroll region`).not.toContain('overflowY="auto"');
     }
   });
 
