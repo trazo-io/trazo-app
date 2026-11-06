@@ -256,6 +256,29 @@ describe('approved-inputs search — every match is offered, not just the winner
     ).toBeTruthy();
   });
 
+  it('names the condition on the single-match path too, not only in the candidate list', () => {
+    // Review of app #288: the fallback row built when `national_list_candidates` is absent
+    // hardcoded `subsection: null`, so it could only ever print the generic line.
+    renderPanel({
+      found: true,
+      status: 'matched',
+      omri_product_pk: null,
+      wsda_material_pk: null,
+      national_list_substance_pk: 3,
+      national_list_substance_name: 'Calcium chloride (brine process)',
+      national_list_cfr_section: '205.602',
+      national_list_status: 'prohibited',
+      national_list_conditional: true,
+      national_list_subsection: 'c'
+    });
+    expect(screen.queryAllByRole('button', { name: /Add to OSP/i })).toHaveLength(1);
+    expect(
+      screen.queryAllByText(
+        'Restricted use: only as a foliar spray to treat a physiological disorder associated with calcium uptake'
+      )
+    ).toHaveLength(1);
+  });
+
   it('labels a conditional row on the plan as restricted use, not as an ordinary input', () => {
     const { container } = renderPanel(
       {

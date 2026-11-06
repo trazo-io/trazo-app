@@ -642,10 +642,10 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
               cfr_section: result.national_list_cfr_section,
               citation: result.national_list_citation ?? null,
               is_national_list_entry: result.national_list_is_entry !== false,
-              subsection: null,
+              subsection: result.national_list_subsection ?? null,
               status: result.national_list_status,
               is_conditionally_permitted: result.national_list_conditional === true,
-              restriction_notes: null
+              restriction_notes: result.national_list_restriction_notes ?? null
             }
           ]
         : [];
