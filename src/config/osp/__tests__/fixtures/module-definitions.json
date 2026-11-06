@@ -9195,6 +9195,15 @@
                   {
                     "value": "self_managed_adjacent",
                     "label": {
+                      "en": "I manage the adjoining land myself — no third-party spray risk",
+                      "es": "Yo mismo manejo la tierra colindante — sin riesgo de aspersión de terceros"
+                    },
+                    "exclusive": false,
+                    "retired": true
+                  },
+                  {
+                    "value": "self_managed_adjacent_precautions",
+                    "label": {
                       "en": "My operation manages the adjoining non-organic land and takes precautions against drift (describe below)",
                       "es": "Mi operación maneja la tierra colindante no orgánica y toma precauciones contra la deriva (descríbelas abajo)"
                     },
@@ -9221,14 +9230,6 @@
                     "label": {
                       "en": "Roadside or utility right-of-way no-spray registration",
                       "es": "Registro de no fumigación en banquinas de caminos o servidumbres de servicios públicos"
-                    },
-                    "exclusive": false
-                  },
-                  {
-                    "value": "roadside_agency_agreement",
-                    "label": {
-                      "en": "Written agreement with the agency managing weed control along roadways (for example the county road department)",
-                      "es": "Acuerdo escrito con la agencia que maneja el control de malezas a lo largo de los caminos (por ejemplo el departamento de caminos del condado)"
                     },
                     "exclusive": false
                   },
@@ -9374,7 +9375,7 @@
                   {
                     "question": "drift_safeguards",
                     "op": "includes",
-                    "value": "self_managed_adjacent"
+                    "value": "self_managed_adjacent_precautions"
                   }
                 ],
                 "nop_cite": null,
@@ -19783,7 +19784,7 @@
       "answers": {
         "drift_safeguards": [
           "sensitive_crop_registry",
-          "self_managed_adjacent"
+          "self_managed_adjacent_precautions"
         ]
       },
       "visible_questions": [
