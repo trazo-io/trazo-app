@@ -24,6 +24,7 @@ import {
 import { useContext, useEffect, useState } from 'react';
 
 import AdminNavbarLinks from './AdminNavbarLinks';
+import { PAGE_MAX_W } from 'components/Design/StandardComponents';
 import PropTypes from 'prop-types';
 import { SidebarContext } from 'contexts/SidebarContext';
 import { useIntl } from 'react-intl';
@@ -211,21 +212,28 @@ export default function AdminNavbar(props: AdminNavbarProps) {
       mx="auto"
       mt={secondaryMargin}
       pb="8px"
+      // 16px from md, both sides: the page column's gutter (PAGE_GUTTER md = 4), so the
+      // breadcrumb and the page title start at the same x and the icons end where the cards do.
+      // It was 20px left / 30px right (2026-11-06).
       px={{
         base: '12px',
         sm: paddingX,
-        md: '30px'
+        md: '16px'
       }}
       ps={{
         base: '12px',
         sm: paddingS,
-        md: '20px'
+        md: '16px'
       }}
       pt="8px"
       top="18px"
       w="auto">
+      {/* Capped like the page column (PAGE_MAX_W, centred): on a 1920px screen the breadcrumb
+          sat at the panel's left edge while the capped content started 50-76px further in. */}
       <Flex
         w="100%"
+        maxW={PAGE_MAX_W}
+        mx="auto"
         h="100%"
         minH={{ base: '56px', sm: '60px', md: '64px' }}
         align="center"

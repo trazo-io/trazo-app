@@ -70,21 +70,20 @@ describe('mobile header overflow', () => {
       .toMatch(/<Wrap[^>]*flexShrink=\{0\}/);
   });
 
-  it('lets the Parcel Application button wrap on mobile', () => {
+  it('keeps the Parcel Application status out of a button label', () => {
+    /*
+     * Until 2026-11-06 the parcel header carried a button whose label was CONCATENATED
+     * ("Parcel Application · In progress (4)"); in es-419 it ran long and the page wrapper's
+     * overflow:hidden clipped the count. The status now lives in ParcelApplicationCard as a
+     * badge plus one row per missing item, so no label is built by concatenation.
+     */
     const code = codeOf('Parcel/index.jsx');
-    const btn = code.match(/<Button\b[\s\S]*?parcelApp\.title[\s\S]*?<\/Button>/);
-    expect(btn, 'the Parcel Application button moved — this would pass vacuously').toBeTruthy();
-    const decl = code.slice(code.indexOf('<Button'), code.indexOf('parcelApp.title'));
+    expect(code, 'the parcel page no longer mounts the application card').toContain(
+      '<ParcelApplicationCard'
+    );
     expect(
-      decl,
-      'the label is built by concatenation and runs long in es-419; nowrap + the page wrapper' +
-        "'s overflow:hidden clipped it"
-    ).toMatch(/whiteSpace=\{\{\s*base:\s*'normal'/);
-    expect(decl, 'h="auto" is what lets it grow to a second line once it wraps').toMatch(
-      /h="auto"/
-    );
-    expect(decl, 'minH keeps the 44px touch target when the label is short').toMatch(
-      /minH="44px"/
-    );
+      code,
+      'a status concatenated into a header button label is back; it clips in es-419'
+    ).not.toMatch(/parcelApp\.status\./);
   });
 });

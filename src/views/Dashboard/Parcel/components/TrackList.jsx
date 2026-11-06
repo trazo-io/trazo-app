@@ -198,21 +198,11 @@ const TrackList = ({ amount }) => {
           <Flex justify="space-between" align="center" pb={4}>
             <HStack spacing={3}>
               <Text fontSize={{ base: 'md', md: 'lg' }} color={textColor} fontWeight="600">
-                {intl.formatMessage({ id: 'app.currentProduction' })}
+                {intl.formatMessage({ id: 'parcelPage.currentSeason' })}
               </Text>
               {currentHistory?.product && (
-                <Badge
-                  bg="green.50"
-                  color="green.700"
-                  borderRadius="md"
-                  px={2}
-                  py={1}
-                  fontSize="xs"
-                  fontWeight="500"
-                  textTransform="none"
-                  w="fit-content"
-                  border="1px solid"
-                  borderColor="green.200">
+                // The crop is a fact, not a status: neutral, as on the farm home (2026-11-06).
+                <Badge variant="neutral" fontSize="11px" w="fit-content">
                   {currentHistory?.product}
                 </Badge>
               )}
@@ -257,12 +247,10 @@ const TrackList = ({ amount }) => {
           {/* Production info moved to be more compact */}
           {currentHistory?.product && (
             <HStack justify="space-between" pt={4}>
-              <Text fontSize="xs" color="gray.500" fontWeight="medium">
+              {/* "Active Production" sat opposite this date: the card's title already says so. */}
+              <Text fontSize="xs" color="gray.600" fontWeight="medium">
                 {intl.formatMessage({ id: 'parcel.started' })}{' '}
                 {formatDateFromTimestamp(currentHistory?.start_date, intl.locale)}
-              </Text>
-              <Text fontSize="xs" color="gray.500" fontWeight="medium">
-                {intl.formatMessage({ id: 'parcel.activeProduction' })}
               </Text>
             </HStack>
           )}
@@ -349,8 +337,8 @@ const TrackList = ({ amount }) => {
                 {!(currentHistory?.events?.length > 0) && !currentHistory?.product && (
                   <StandardEmptyState
                     icon={FaSeedling}
-                    title={intl.formatMessage({ id: 'parcel.noCurrentProductionYet' })}
-                    description={intl.formatMessage({ id: 'parcel.startProductionDescription' })}
+                    title={intl.formatMessage({ id: 'parcelPage.noSeasonUnderway' })}
+                    description={intl.formatMessage({ id: 'parcelPage.startSeasonDescription' })}
                     action={
                       canWrite ? (
                         <StandardButton
@@ -359,7 +347,7 @@ const TrackList = ({ amount }) => {
                               `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/add`
                             )
                           }>
-                          {intl.formatMessage({ id: 'app.startProduction' })}
+                          {intl.formatMessage({ id: 'parcelPage.startSeason' })}
                         </StandardButton>
                       ) : undefined
                     }
@@ -439,7 +427,7 @@ const TrackList = ({ amount }) => {
                 }}
                 transition="all 0.2s"
                 onClick={onAddEventMenuOpen}>
-                {intl.formatMessage({ id: 'app.addEvent' })}
+                {intl.formatMessage({ id: 'parcelPage.logActivity' })}
               </Button>
             )}
 
@@ -466,7 +454,7 @@ const TrackList = ({ amount }) => {
                   )
                 }>
                 <Text as="span" display={{ base: 'none', smd: 'inline' }}>
-                  {intl.formatMessage({ id: 'app.finishProduction' })}
+                  {intl.formatMessage({ id: 'farmHome.seasons.finish' })}
                 </Text>
                 <Text as="span" display={{ base: 'inline', smd: 'none' }}>
                   {intl.formatMessage({ id: 'app.finish' })}

@@ -59,24 +59,22 @@ const openingTagAt = (code: string, index: number, name: string) => {
 };
 
 describe('mobile horizontal rhythm', () => {
-  it('gives the hand-rolled pages the same mobile gutter as StandardPage', () => {
+  it('gives the hand-rolled pages the same column as StandardPage', () => {
+    // One gutter and one cap, declared once (2026-11-06). The hand-rolled pages used to restate
+    // the gutter as a literal (and the farm home put the cap inside it, 48px narrower than every
+    // StandardPage page), so the column moved as the farmer navigated.
     const std = codeOf('components/Design/StandardComponents.tsx');
-    // The value every other page is being held to. Read from the source rather than hard-coded,
-    // so changing the standard moves the pages with it instead of turning this red.
-    expect(
-      std,
-      'StandardPage no longer declares a page gutter — this would pass vacuously'
-    ).toMatch(/px=\{\{ base: 3, md: 4 \}\}/);
+    expect(std, 'the shared gutter moved or changed').toMatch(
+      /export const PAGE_GUTTER = \{ base: 3, md: 4 \}/
+    );
+    expect(std, 'StandardPage no longer uses the shared gutter').toMatch(/px=\{PAGE_GUTTER\}/);
 
     for (const rel of ['views/Dashboard/Dashboard/index.tsx', 'views/Dashboard/Parcel/index.jsx']) {
       const code = codeOf(rel);
-      const m = code.match(/px=\{\{\s*base:\s*([^,]+),/);
-      expect(m, `${rel} has no page-level px — the wrapper moved`).toBeTruthy();
-      expect(
-        m![1].trim(),
-        `${rel} sets its own mobile gutter. StandardPage uses \`base: 3\`; anything else steps ` +
-          `the cards in or out as the farmer navigates between pages`
-      ).toBe('3');
+      expect(code, `${rel} sets its own gutter instead of PAGE_GUTTER`).toMatch(
+        /px=\{PAGE_GUTTER\}/
+      );
+      expect(code, `${rel} does not wrap its content in PageColumn`).toContain('<PageColumn>');
     }
   });
 
@@ -86,10 +84,11 @@ describe('mobile horizontal rhythm', () => {
      * already had the page gutter, so title and cards sat on two grids 16px apart.
      */
     const code = codeOf('views/Dashboard/Parcel/index.jsx');
-    const i = code.indexOf('{establishment?.name}');
+    // The title is the PARCEL's name since 2026-11-06 (it showed the farm's name before).
+    const i = code.indexOf('{data?.name ||');
     expect(i, 'the parcel page title moved — this would pass vacuously').toBeGreaterThan(-1);
-    const tagStart = code.lastIndexOf('<Text', i);
-    const tag = openingTagAt(code, tagStart, 'Text');
+    const tagStart = code.lastIndexOf('<Heading', i);
+    const tag = openingTagAt(code, tagStart, 'Heading');
     expect(
       tag,
       'the page title must not add its own horizontal padding — the page gutter is the only ' +
@@ -103,10 +102,14 @@ describe('mobile horizontal rhythm', () => {
      * `pr={{ base: '8px', md: '12px' }}` — this repo's most common defect is a fix that lands
      * on one of a pair.
      */
-    for (const rel of [
-      'views/Dashboard/Parcel/components/HistoryCard.jsx',
-      'views/Dashboard/Parcel/components/TrackList.jsx'
-    ]) {
+    // HistoryCard lost its inner scroll on 2026-11-06 (a parcel holds a handful of seasons; a
+    // 450px scroll box inside the page was a second scrollbar for a short list). Assert that
+    // stays true, so the pair cannot silently diverge again; TrackList keeps its region.
+    expect(
+      codeOf('views/Dashboard/Parcel/components/HistoryCard.jsx'),
+      'HistoryCard regrew an inner scroll region: give it symmetric padding like TrackList'
+    ).not.toContain('overflowY="auto"');
+    for (const rel of ['views/Dashboard/Parcel/components/TrackList.jsx']) {
       const code = codeOf(rel);
       const i = code.indexOf('overflowY="auto"');
       expect(i, `${rel} no longer has a vertical scroll region`).toBeGreaterThan(-1);
