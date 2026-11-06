@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.11.13",
+  "content_version": "2026.11.14",
   "registry": {
-    "content_version": "2026.11.13",
+    "content_version": "2026.11.14",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
