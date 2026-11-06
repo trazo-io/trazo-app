@@ -502,6 +502,11 @@ export default function DashboardView() {
       */
       px={{ base: 3, md: 6 }}
       pb={{ base: 8, md: 8 }}
+      // Same cap as StandardPage (PAGE_MAX_W, 8xl = 1440px). Uncapped, a 1,780px screen spread
+      // each row across ~1,550px and left a parcel's status a thousand pixels from its name.
+      maxW="8xl"
+      mx="auto"
+      w="100%"
       minH="100vh">
       {/* TrialStatusBanner was mounted here until 2026-11-04 and is deleted. Trazo sells no trial
           (Starter is free forever) and its checkout never asks Stripe for one, so the banner was

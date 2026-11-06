@@ -16,6 +16,7 @@ import {
   Badge,
   Box,
   Flex,
+  Grid,
   Heading,
   HStack,
   Icon,
@@ -68,7 +69,8 @@ export default function FarmParcelsCard({ farmId, parcels = [] }: Props) {
   const quickAdd = useDisclosure();
   const titleColor = useColorModeValue('gray.700', 'gray.200');
   const iconColor = useColorModeValue('gray.600', 'gray.400');
-  const muted = useColorModeValue('gray.500', 'gray.400');
+  // gray.600, not gray.500: acres and crop are read on a phone outdoors, at 12px.
+  const muted = useColorModeValue('gray.600', 'gray.400');
   const company = useSelector((state: any) => state.company?.currentCompany);
 
   // Same gate the "+ New" tile used (utils/subscriptionLimits): a button the server would refuse
@@ -166,91 +168,98 @@ export default function FarmParcelsCard({ farmId, parcels = [] }: Props) {
                 ].filter(Boolean);
                 const missing = (p.evidence_missing || []).length;
                 return (
-                  // Open stays on the right at every width; on a phone the statuses wrap under
-                  // the name instead of pushing Open onto a line of its own.
-                  <Flex key={p.id} py={3} gap={4} align="center" data-testid="farm-parcel-row">
-                    <Flex
-                      flex={1}
-                      minW={0}
-                      gap={{ base: 1.5, md: 4 }}
-                      align={{ base: 'flex-start', md: 'center' }}
-                      direction={{ base: 'column', md: 'row' }}>
-                      <HStack spacing={3} flex={1} minW={0} align="center">
-                        {photo && (
-                          <Image
-                            src={photo}
-                            alt=""
-                            boxSize="40px"
-                            borderRadius="md"
-                            objectFit="cover"
-                            flexShrink={0}
-                          />
-                        )}
-                        <Box minW={0}>
-                          <Text
-                            fontSize="sm"
-                            fontWeight="semibold"
-                            color={titleColor}
-                            noOfLines={1}>
-                            {p.name}
+                  // A three-column grid from md: name | status | Open. The status column starts at
+                  // the same x on every row, so the statuses read down as a column instead of
+                  // floating at the far right of a 1,400px row, ~1,000px from the parcel they
+                  // describe (wide-screen review, 2026-11-06). On a phone: name and Open on one
+                  // line, statuses under the name.
+                  <Grid
+                    key={p.id}
+                    py={3}
+                    columnGap={6}
+                    rowGap={1.5}
+                    alignItems="center"
+                    templateColumns={{
+                      base: 'minmax(0, 1fr) auto',
+                      md: 'minmax(180px, 320px) minmax(0, 1fr) auto'
+                    }}
+                    templateAreas={{
+                      base: '"name open" "status open"',
+                      md: '"name status open"'
+                    }}
+                    data-testid="farm-parcel-row">
+                    <HStack gridArea="name" spacing={3} minW={0} align="center">
+                      {photo && (
+                        <Image
+                          src={photo}
+                          alt=""
+                          boxSize="40px"
+                          borderRadius="md"
+                          objectFit="cover"
+                          flexShrink={0}
+                        />
+                      )}
+                      <Box minW={0}>
+                        <Text fontSize="sm" fontWeight="semibold" color={titleColor} noOfLines={1}>
+                          {p.name}
+                        </Text>
+                        {meta.length > 0 && (
+                          <Text fontSize="xs" color={muted}>
+                            {meta.join(' · ')}
                           </Text>
-                          {meta.length > 0 && (
-                            <Text fontSize="xs" color={muted}>
-                              {meta.join(' · ')}
-                            </Text>
-                          )}
-                        </Box>
-                      </HStack>
-
-                      <HStack
-                        spacing={3}
-                        flexWrap="wrap"
-                        rowGap={1}
-                        justify={{ base: 'flex-start', md: 'flex-end' }}>
-                        {p.application_status === 'complete' && (
-                          <Badge variant="brand" fontSize="11px">
-                            {intl.formatMessage({ id: 'parcel.card.appAnswersComplete' })}
-                          </Badge>
                         )}
-                        {/* The evidence half, always with the answers half when outstanding: a ✓
+                      </Box>
+                    </HStack>
+
+                    <HStack gridArea="status" spacing={3} flexWrap="wrap" rowGap={1} minW={0}>
+                      {p.application_status === 'complete' && (
+                        // Done is quiet (green tint), the work left is what draws the eye. A solid
+                        // green "done" chip was the loudest thing on every row next to a pale
+                        // orange "in progress": the attention pointed at the wrong rows.
+                        <Badge variant="subtle" colorScheme="green" fontSize="11px">
+                          {intl.formatMessage({ id: 'parcel.card.appAnswersComplete' })}
+                        </Badge>
+                      )}
+                      {/* The evidence half, always with the answers half when outstanding: a ✓
                           on the answers alone is the badge that printed above "[REVIEW] no
                           operator map attached" in the certifier packet. */}
-                        {p.application_status === 'complete' &&
-                          p.evidence_status === 'outstanding' && (
-                            <Badge variant="neutral" fontSize="11px">
-                              {intl.formatMessage(
-                                { id: 'parcel.card.evidenceOutstanding' },
-                                { count: missing || 1 }
-                              )}
-                            </Badge>
-                          )}
-                        {p.application_status === 'in_progress' && (
-                          <Badge variant="warning" fontSize="11px">
-                            {intl.formatMessage({ id: 'parcel.card.appInProgress' })}
+                      {p.application_status === 'complete' &&
+                        p.evidence_status === 'outstanding' && (
+                          <Badge variant="neutral" fontSize="11px">
+                            {intl.formatMessage(
+                              { id: 'parcel.card.evidenceOutstanding' },
+                              { count: missing || 1 }
+                            )}
                           </Badge>
                         )}
-                        {p.application_status === 'not_started' && (
-                          <Link
-                            as={RouterLink}
-                            to={`${base}/${p.id}/application`}
-                            fontSize="xs"
-                            fontWeight="semibold"
-                            color="green.700"
-                            sx={linkSx}
-                            {...TOUCH_TARGET}>
-                            {intl.formatMessage({ id: 'farmHome.parcels.startApplication' })}
-                          </Link>
-                        )}
-                        {/* A fact, not a verdict: plain text, no green dot (2026-11-06). */}
-                        {p.has_current_production && (
-                          <Text fontSize="xs" color={muted}>
-                            {intl.formatMessage({ id: 'farmHome.parcels.seasonUnderway' })}
-                          </Text>
-                        )}
-                      </HStack>
-                    </Flex>
+                      {p.application_status === 'in_progress' && (
+                        <Badge variant="warning" fontSize="11px">
+                          {intl.formatMessage({ id: 'parcel.card.appInProgress' })}
+                        </Badge>
+                      )}
+                      {p.application_status === 'not_started' && (
+                        <Link
+                          as={RouterLink}
+                          to={`${base}/${p.id}/application`}
+                          fontSize="xs"
+                          fontWeight="semibold"
+                          color="green.700"
+                          sx={linkSx}
+                          {...TOUCH_TARGET}>
+                          {intl.formatMessage({ id: 'farmHome.parcels.startApplication' })}
+                        </Link>
+                      )}
+                      {/* A fact, not a verdict: plain text, no green dot (2026-11-06). */}
+                      {p.has_current_production && (
+                        <Text fontSize="xs" color={muted}>
+                          {intl.formatMessage({ id: 'farmHome.parcels.seasonUnderway' })}
+                        </Text>
+                      )}
+                    </HStack>
 
                     <Link
+                      gridArea="open"
+                      justifySelf="end"
                       as={RouterLink}
                       to={`${base}/${p.id}`}
                       fontSize="sm"
@@ -265,7 +274,7 @@ export default function FarmParcelsCard({ farmId, parcels = [] }: Props) {
                       {...TOUCH_TARGET}>
                       {intl.formatMessage({ id: 'farmHome.seasons.open' })}
                     </Link>
-                  </Flex>
+                  </Grid>
                 );
               })}
             </StatusList>

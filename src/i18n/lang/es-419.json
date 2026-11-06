@@ -3168,7 +3168,7 @@
   "farmHome.meta.photos": "{count, plural, one {# foto} other {# fotos}}",
   "farmHome.meta.qrScans": "{count, plural, one {# escaneo QR} other {# escaneos QR}} en los últimos 30 días",
   "farmHome.seasons.title": "Temporadas en curso",
-  "farmHome.seasons.subtitle": "Cierra una temporada para incluirla en tu paquete para el certificador",
+  "farmHome.seasons.subtitle": "Cierra una temporada para incluirla en el paquete de tu certificador",
   "farmHome.seasons.none": "No hay temporadas en curso. Empieza una desde una parcela.",
   "farmHome.seasons.started": "empezó el {date}",
   "farmHome.seasons.activities": "{count, plural, one {# actividad} other {# actividades}}",
