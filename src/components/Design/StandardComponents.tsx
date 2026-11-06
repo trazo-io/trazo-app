@@ -178,7 +178,6 @@ export const StandardPage = ({
   contentMaxW
 }: StandardPageProps) => {
   const intl = useIntl();
-  const bgColor = useColorModeValue('surface.canvas', 'gray.900');
   const isMobile = useBreakpointValue({ base: true, md: false });
 
   // Determine if we need the full hero or just a minimal header
@@ -191,11 +190,17 @@ export const StandardPage = ({
   const backButtonWrap = { whiteSpace: 'normal', h: 'auto', py: 1.5, textAlign: 'left' } as const;
 
   return (
-    <Box bg={bgColor} minH="100vh">
+    // No background of its own (2026-11-06): the page sits on the app body, like the farm home
+    // and the parcel page. Painting `surface.canvas` (#F4F5F7) over the body (#F8F9FA) drew a
+    // darker panel from the header down on every StandardPage page: the seam Documents and
+    // button.js had each patched locally.
+    <Box minH="100vh">
       {/* Minimal Header - Just back button, aligned with content */}
       {needsMinimalHeader && (
         <Box
-          bg="linear-gradient(135deg, #FAFAFA 0%, #F8F9FA 100%)"
+          // Transparent, not a lighter gradient: the header read as a band on top of the
+          // canvas (#FAFAFA over #F4F5F7), a seam the farm and parcel pages never had (2026-11-06).
+          bg="transparent"
           pt={PAGE_TOP}
           pb="24px"
           // Third gutter in the same component, now the same as the hero's and the body's.
@@ -218,7 +223,9 @@ export const StandardPage = ({
       {/* Full Hero Header Section - With title */}
       {hasHeroContent && (
         <Box
-          bg="linear-gradient(135deg, #FAFAFA 0%, #F8F9FA 100%)"
+          // Transparent, not a lighter gradient: the header read as a band on top of the
+          // canvas (#FAFAFA over #F4F5F7), a seam the farm and parcel pages never had (2026-11-06).
+          bg="transparent"
           pt={PAGE_TOP}
           pb={{ base: '64px', md: '80px' }}
           px={PAGE_GUTTER}>

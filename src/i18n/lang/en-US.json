@@ -22,6 +22,8 @@
   "activities.farmHasNoBlocks": "{farm} has no parcels yet",
   "activities.farmHasNoBlocksDetail": "Every activity is logged on a parcel. Add one first: a name and its acres.",
   "activities.filter.all": "All",
+  "activities.goToLatest": "Go to {month}",
+  "activities.emptyMonth": "Nothing logged in {month}. The latest activity is {date}.",
   "activities.filter.allParcels": "All parcels",
   "activities.filter.clear": "Clear filters",
   "activities.filter.from": "From",

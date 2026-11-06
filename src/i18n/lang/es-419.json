@@ -22,6 +22,8 @@
   "activities.farmHasNoBlocks": "{farm} todavía no tiene parcelas",
   "activities.farmHasNoBlocksDetail": "Cada actividad se registra en una parcela. Agrega una primero: un nombre y sus acres.",
   "activities.filter.all": "Todas",
+  "activities.goToLatest": "Ir a {month}",
+  "activities.emptyMonth": "Nada registrado en {month}. La última actividad es del {date}.",
   "activities.filter.allParcels": "Todas las parcelas",
   "activities.filter.clear": "Limpiar filtros",
   "activities.filter.from": "Desde",

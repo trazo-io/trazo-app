@@ -19,13 +19,7 @@ import {
   Flex,
   Grid,
   Icon,
-  Table,
-  Tbody,
-  Td,
   Text,
-  Th,
-  Thead,
-  Tr,
   useColorMode,
   useDisclosure,
   VStack,
@@ -54,7 +48,8 @@ import {
   StandardPagination,
   StandardSearchInput,
   StandardSegmentedControl,
-  StandardSelect
+  StandardSelect,
+  StatusList
 } from 'components/Design/StandardComponents';
 import type { Parcel } from 'types/company';
 import { ACTIVITY_VERBS } from 'config/activityVerbs';
@@ -70,8 +65,10 @@ import type { ActivityRow } from 'store/api/activityFeedApi';
 import type { RootState } from 'store/index';
 import { useTour } from 'hooks/useTour';
 import { ActivityDetailModal } from './ActivityDetailModal';
-import { ActivityListItem, TYPE_BADGE } from './ActivityListItem';
 import { CALENDAR_FAMILY, TYPE_ICON } from 'config/events/eventTypeAppearance';
+import { ActivityTimelineRow, MonthTimeline } from 'components/Events/ActivityTimeline';
+import { formatDateFromTimestamp } from 'utils/dateOnly';
+import { eventTypeTone } from 'components/Events/categoryTone';
 
 /**
  * Verb → event_type mapping now lives in the SHARED config (config/activityVerbs) so
@@ -156,6 +153,17 @@ const rangeToWindow = (
       return {};
   }
 };
+
+/**
+ * Unselected filter chips are neutral (2026-11-06). Seven green-outlined pills were the loudest
+ * thing above the list; green is kept for the one chip that is ON.
+ */
+const QUIET_CHIP = {
+  borderColor: 'gray.300',
+  color: 'gray.700',
+  bg: 'white',
+  _hover: { bg: 'gray.50', borderColor: 'gray.400' }
+} as const;
 
 const ActivitiesPage = () => {
   const intl = useIntl();
@@ -242,6 +250,22 @@ const ActivitiesPage = () => {
     },
     { skip: !companyId || !farmId }
   );
+
+  // An empty month is not an empty record (2026-11-06): after harvest the calendar opens on a
+  // month with nothing in it and read as "nothing was logged". When the shown month is empty,
+  // ask once for the latest activity (same type and parcel filters) and offer to jump to it.
+  const monthIsEmpty =
+    view === 'calendar' && !isLoading && !isFetching && (data?.activities?.length ?? 0) === 0;
+  const { data: latestData } = useGetActivityFeedQuery(
+    {
+      companyId,
+      farmId: farmId || '',
+      eventType: typeFilter ?? undefined,
+      parcelId: parcelFilter || undefined
+    },
+    { skip: !companyId || !farmId || !monthIsEmpty }
+  );
+  const latestDate = monthIsEmpty ? latestData?.activities?.[0]?.date ?? null : null;
 
   const rows = useMemo(() => {
     let out = data?.activities ?? [];
@@ -465,6 +489,7 @@ const ActivitiesPage = () => {
                 borderRadius="full"
                 aria-pressed={typeFilter === null}
                 variant={typeFilter === null ? 'primary' : 'outline'}
+                {...(typeFilter === null ? {} : QUIET_CHIP)}
                 onClick={() => setTypeFilter(null)}>
                 {intl.formatMessage({ id: 'activities.filter.all' })}
               </StandardButton>
@@ -477,6 +502,17 @@ const ActivitiesPage = () => {
                   borderRadius="full"
                   aria-pressed={typeFilter === t}
                   variant={typeFilter === t ? 'primary' : 'outline'}
+                  {...(typeFilter === t ? {} : QUIET_CHIP)}
+                  // The category's glyph in its own hue, so the chip and the rows it filters
+                  // read as one key; on the selected chip it inherits the white label.
+                  leftIcon={
+                    <Icon
+                      as={TYPE_ICON[t]}
+                      boxSize={3}
+                      color={typeFilter === t ? undefined : eventTypeTone(t).glyph}
+                      aria-hidden
+                    />
+                  }
                   onClick={() => setTypeFilter(typeFilter === t ? null : t)}>
                   {typeLabel(t)}
                 </StandardButton>
@@ -649,6 +685,46 @@ const ActivitiesPage = () => {
                   <FaChevronRight />
                 </StandardButton>
               </Flex>
+              {latestDate && (
+                <Flex
+                  mb={4}
+                  gap={3}
+                  align={{ base: 'flex-start', md: 'center' }}
+                  direction={{ base: 'column', md: 'row' }}
+                  data-testid="calendar-empty-month">
+                  <Text fontSize="sm" color="gray.600">
+                    {intl.formatMessage(
+                      { id: 'activities.emptyMonth' },
+                      {
+                        month: monthTitle,
+                        date: formatDateFromTimestamp(latestDate, intl.locale, {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric'
+                        })
+                      }
+                    )}
+                  </Text>
+                  <StandardButton
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      const d = new Date(String(latestDate).slice(0, 10) + 'T12:00:00');
+                      setCursor(new Date(d.getFullYear(), d.getMonth(), 1));
+                    }}>
+                    {intl.formatMessage(
+                      { id: 'activities.goToLatest' },
+                      {
+                        month: formatDateFromTimestamp(latestDate, intl.locale, {
+                          month: 'long',
+                          year: 'numeric'
+                        })
+                      }
+                    )}{' '}
+                    →
+                  </StandardButton>
+                </Flex>
+              )}
               <Box overflowX="auto">
                 <Grid templateColumns="repeat(7, minmax(96px, 1fr))" gap={1} minW="680px">
                   {[0, 1, 2, 3, 4, 5, 6].map((d) => (
@@ -822,85 +898,32 @@ const ActivitiesPage = () => {
                 </VStack>
               ) : (
                 <Box>
-                  {/* ONE list, two shapes.
-                    A four-column table does not survive a phone. `overflowX="auto"` with no
-                    floor on the table width let it shrink to the container instead of
-                    scrolling, and at 390px every cell wrapped to ONE CHARACTER PER LINE — the
-                    ACTIVITY and PARCEL columns rendered as vertical stacks of letters. Giving
-                    it a `minW` fixed the wrapping but bought a sideways scroll, which hides the
-                    parcel — the column that answers "which block?" — off-screen by default.
-                    So below `md` the same rows render as cards, where the reading order is the
-                    order a grower asks in: when, what kind, what happened, which block. */}
-                  <VStack
-                    display={{ base: 'flex', md: 'none' }}
-                    align="stretch"
-                    spacing={2}
-                    data-testid="activities-list-cards">
-                    {visibleRows.map((row) => (
-                      <ActivityListItem
-                        key={`${row.event_type}-${row.event_id}`}
-                        row={row}
-                        intl={intl}
+                  {/* One list, one shape, at every width (2026-11-06): month groups along a thin
+                      rule, one line per activity, the same rows as the parcel page's current
+                      season (components/Events/ActivityTimeline). It replaced a four-column
+                      table on desktop (PARCEL squeezed to "Bottom / Ground / A", dates as
+                      2026-08-31, every type the same green chip) and cards on a phone. The
+                      parcel now rides in the line under the title, where it never wraps. */}
+                  <MonthTimeline
+                    items={visibleRows}
+                    dateOf={(row) => row.date}
+                    keyOf={(row) => `${row.event_type}-${row.event_id}`}
+                    renderRow={(row) => (
+                      <ActivityTimelineRow
+                        date={row.date}
+                        eventType={row.event_type}
+                        title={activityTitle(row, intl)}
+                        meta={[
+                          typeLabel(row.event_type),
+                          row.parcel_name,
+                          activitySummary(row, intl) || row.description
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')}
                         onClick={() => openEvent(row)}
                       />
-                    ))}
-                  </VStack>
-
-                  <Box display={{ base: 'none', md: 'block' }} overflowX="auto">
-                    <Table size="sm" minW="720px">
-                      <Thead>
-                        {/* ACTIVITY takes the slack, so the three narrow columns keep their
-                            headers on one line — PARCEL was breaking to "PARCE / L" once the
-                            description column grew. */}
-                        <Tr>
-                          <Th whiteSpace="nowrap">
-                            {intl.formatMessage({ id: 'activities.col.date' })}
-                          </Th>
-                          <Th whiteSpace="nowrap">
-                            {intl.formatMessage({ id: 'activities.col.type' })}
-                          </Th>
-                          <Th w="100%">{intl.formatMessage({ id: 'activities.col.detail' })}</Th>
-                          <Th whiteSpace="nowrap">
-                            {intl.formatMessage({ id: 'activities.col.parcel' })}
-                          </Th>
-                        </Tr>
-                      </Thead>
-                      <Tbody>
-                        {visibleRows.map((row) => (
-                          <Tr
-                            key={`${row.event_type}-${row.event_id}`}
-                            onClick={() => openEvent(row)}
-                            cursor="pointer"
-                            _hover={{ bg: 'green.50' }}>
-                            <Td whiteSpace="nowrap">
-                              <Text fontSize="sm">{row.date?.slice(0, 10) ?? '—'}</Text>
-                            </Td>
-                            <Td>
-                              <Badge variant={TYPE_BADGE[row.event_type]} fontSize="11px">
-                                {typeLabel(row.event_type)}
-                              </Badge>
-                            </Td>
-                            <Td>
-                              <Text fontSize="sm" fontWeight="medium">
-                                {activityTitle(row, intl)}
-                              </Text>
-                              {(() => {
-                                const summary = activitySummary(row, intl) || row.description;
-                                return summary ? (
-                                  <Text fontSize="xs" color="gray.600" noOfLines={1}>
-                                    {summary}
-                                  </Text>
-                                ) : null;
-                              })()}
-                            </Td>
-                            <Td>
-                              <Text fontSize="sm">{row.parcel_name}</Text>
-                            </Td>
-                          </Tr>
-                        ))}
-                      </Tbody>
-                    </Table>
-                  </Box>
+                    )}
+                  />
 
                   {/* Outside the scroll container on purpose: when the pager lived inside it, a
                     sideways scroll of the table carried the pagination off with it. */}
@@ -1049,17 +1072,25 @@ const ActivitiesPage = () => {
             </Text>
           </VStack>
         }>
-        <VStack align="stretch" spacing={2}>
+        {/* The same row as the list and the parcel page (ActivityTimelineRow). */}
+        <StatusList>
           {daySheetRows.map((row) => (
-            <ActivityListItem
+            <ActivityTimelineRow
               key={`${row.event_type}-${row.event_id}`}
-              row={row}
-              intl={intl}
-              showDate={false}
+              date={row.date}
+              eventType={row.event_type}
+              title={activityTitle(row, intl)}
+              meta={[
+                typeLabel(row.event_type),
+                row.parcel_name,
+                activitySummary(row, intl) || row.description
+              ]
+                .filter(Boolean)
+                .join(' · ')}
               onClick={() => openEvent(row)}
             />
           ))}
-        </VStack>
+        </StatusList>
       </ResponsiveModal>
 
       <ActivityDetailModal
