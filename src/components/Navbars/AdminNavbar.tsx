@@ -28,7 +28,8 @@ import { PAGE_MAX_W } from 'components/Design/StandardComponents';
 import PropTypes from 'prop-types';
 import { SidebarContext } from 'contexts/SidebarContext';
 import { useIntl } from 'react-intl';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { sectionCrumbId } from './sectionCrumb';
 import { useSelector } from 'react-redux';
 import { FaClock } from 'react-icons/fa';
 
@@ -80,6 +81,12 @@ export default function AdminNavbar(props: AdminNavbarProps) {
   const [currentParcel, setCurrentParcel] = useState<any>(null);
 
   const { farmId, parcelId } = useParams<{ farmId: string; parcelId: string }>();
+
+  // The page's own section, after farm / parcel (Activities, Documents, a season...).
+  const sectionId = sectionCrumbId(useLocation().pathname);
+  // A crumb links back up whenever something more specific follows it.
+  const farmIsLink = Boolean(parcelId || sectionId);
+  const parcelIsLink = Boolean(sectionId);
 
   const establishments = useSelector(
     (state: RootState) => state.company.currentCompany?.establishments
@@ -284,8 +291,12 @@ export default function AdminNavbar(props: AdminNavbarProps) {
                 /
               </Box>
             }>
-            {/* Home - Always visible, never truncates */}
-            <BreadcrumbItem color={mainText}>
+            {/* Home: on a phone only when nothing deeper follows the farm. A 320px row holds two
+                crumbs, not four (measured: a parcel sub-page needed ~480px of a 290px row), so
+                below md the trail keeps its last two levels; desktop shows all of it. */}
+            <BreadcrumbItem
+              color={mainText}
+              display={{ base: farmIsLink ? 'none' : 'inline-flex', md: 'inline-flex' }}>
               <BreadcrumbLink
                 href="/admin/dashboard/"
                 onClick={handleHomeClick}
@@ -308,11 +319,17 @@ export default function AdminNavbar(props: AdminNavbarProps) {
 
             {/* Establishment - Smart space allocation based on context */}
             {currentEstablishment && (
-              <BreadcrumbItem color={mainText}>
+              <BreadcrumbItem
+                color={mainText}
+                // Hidden on a phone below a parcel page's sub-section (see Home above).
+                display={{
+                  base: currentParcel && sectionId ? 'none' : 'inline-flex',
+                  md: 'inline-flex'
+                }}>
                 <BreadcrumbLink
-                  href={parcelId ? `/admin/dashboard/farm/${farmId}` : undefined}
-                  onClick={parcelId ? handleEstablishmentClick : undefined}
-                  aria-current={!parcelId ? 'page' : undefined}
+                  href={farmIsLink ? `/admin/dashboard/farm/${farmId}` : undefined}
+                  onClick={farmIsLink ? handleEstablishmentClick : undefined}
+                  aria-current={!farmIsLink ? 'page' : undefined}
                   /*
                    * ⚠️ INVERTED before this change, and that is the whole bug.
                    *
@@ -323,20 +340,22 @@ export default function AdminNavbar(props: AdminNavbarProps) {
                    * looked like the link. People tap the green one and conclude navigation is
                    * broken.
                    */
-                  color={parcelId ? 'green.700' : 'gray.700'}
+                  color={farmIsLink ? 'green.700' : 'gray.700'}
                   fontSize={{ base: 'sm', md: 'md' }}
                   fontWeight="500"
-                  {...(parcelId ? CRUMB_TAP_TARGET : {})}
+                  {...(farmIsLink ? CRUMB_TAP_TARGET : {})}
                   title={currentEstablishment.name}
                   // Smart allocation: More space when alone, conservative when sharing with parcel
                   isTruncated
+                  // Sharing the row whenever another crumb follows: the parcel OR a section (review
+                  // of #295: on /activities a long farm name left no room for the section at 320px).
                   maxW={
-                    currentParcel
+                    currentParcel || sectionId
                       ? { base: '120px', sm: '160px', smd: '200px', md: '220px', lg: '300px' } // Sharing space
                       : { base: '180px', sm: '250px', smd: '320px', md: '400px', lg: '500px' } // Taking full space
                   }
                   _hover={
-                    parcelId
+                    farmIsLink
                       ? {
                           // darker on hover, per the palette rule — and an underline, so the
                           // affordance does not rest on colour alone
@@ -346,7 +365,7 @@ export default function AdminNavbar(props: AdminNavbarProps) {
                         }
                       : {}
                   }
-                  cursor={parcelId ? 'pointer' : 'default'}
+                  cursor={farmIsLink ? 'pointer' : 'default'}
                   transition="all 0.2s ease">
                   {currentEstablishment.name}
                 </BreadcrumbLink>
@@ -357,19 +376,51 @@ export default function AdminNavbar(props: AdminNavbarProps) {
             {currentParcel && (
               <BreadcrumbItem color={mainText}>
                 <BreadcrumbLink
-                  // The current page. Neutral, and marked as such for assistive tech — it was
-                  // green.700 + bold, i.e. dressed as the only link in the row while carrying
-                  // `cursor: default`.
+                  // The current page unless a section follows (a season, the profile...); then
+                  // it links back to the parcel, green like every other link in the row.
+                  href={
+                    parcelIsLink ? `/admin/dashboard/farm/${farmId}/parcel/${parcelId}` : undefined
+                  }
+                  onClick={
+                    parcelIsLink
+                      ? (e: React.MouseEvent) => {
+                          e.preventDefault();
+                          navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`);
+                        }
+                      : undefined
+                  }
+                  aria-current={parcelIsLink ? undefined : 'page'}
+                  color={parcelIsLink ? 'green.700' : 'gray.700'}
+                  fontSize={{ base: 'sm', md: 'md' }}
+                  fontWeight={parcelIsLink ? '500' : '600'}
+                  title={currentParcel.name}
+                  {...(parcelIsLink ? CRUMB_TAP_TARGET : {})}
+                  _hover={
+                    parcelIsLink
+                      ? { color: 'green.800', textDecoration: 'underline', cursor: 'pointer' }
+                      : {}
+                  }
+                  // Optimized breakpoints for better space utilization
+                  isTruncated
+                  maxW={{ base: '100px', sm: '140px', smd: '180px', md: '200px', lg: '250px' }}
+                  cursor={parcelIsLink ? 'pointer' : 'default'}>
+                  {currentParcel.name}
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+            )}
+
+            {/* The section this page is (2026-11-06): the last crumb, the current page. */}
+            {sectionId && currentEstablishment && (
+              <BreadcrumbItem color={mainText}>
+                <BreadcrumbLink
                   aria-current="page"
                   color="gray.700"
                   fontSize={{ base: 'sm', md: 'md' }}
                   fontWeight="600"
-                  title={currentParcel.name}
-                  // Optimized breakpoints for better space utilization
                   isTruncated
-                  maxW={{ base: '100px', sm: '140px', smd: '180px', md: '200px', lg: '250px' }}
+                  maxW={{ base: '120px', sm: '160px', md: '220px' }}
                   cursor="default">
-                  {currentParcel.name}
+                  {intl.formatMessage({ id: sectionId })}
                 </BreadcrumbLink>
               </BreadcrumbItem>
             )}
