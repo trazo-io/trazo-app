@@ -812,7 +812,7 @@ export default function DashboardView() {
         )}
 
         {establishment?.id && (
-          <Box mt={{ base: 2, md: 4 }} data-tour="farm-home-header">
+          <Box mt={{ base: 0, md: 4 }} data-tour="farm-home-header">
             <FarmHomeHeader
               companyId={activeCompany?.id}
               farmId={establishment.id}

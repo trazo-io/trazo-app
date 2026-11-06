@@ -81,7 +81,8 @@ import {
   StandardPageLoading,
   StandardSection,
   StandardInput,
-  StandardAlert
+  StandardAlert,
+  PAGE_TITLE
 } from 'components/Design/StandardComponents';
 import { InfoRow, FieldGroup, PageHeaderMeta, FieldList } from 'components/Design/ProfileField';
 import { useGetFarmQuery, useEditFarmMutation } from 'store/api/companyApi';
@@ -289,7 +290,7 @@ function ProfileFarm() {
               with the title wrapping beside it. */}
           <Flex direction="row" justify="space-between" align="flex-start" gap={3}>
             <VStack align="flex-start" gap={1} minW={0}>
-              <Heading as="h1" size={{ base: 'lg', md: 'xl' }} color="gray.800">
+              <Heading as="h1" {...PAGE_TITLE}>
                 {establishmentData.name}
               </Heading>
               {currentCompany?.name && (

@@ -58,7 +58,8 @@ import {
   StandardButton,
   StandardPage,
   StandardPageLoading,
-  StandardSection
+  StandardSection,
+  PAGE_TITLE
 } from 'components/Design/StandardComponents';
 import { FieldList, InfoRow, PageHeaderMeta } from 'components/Design/ProfileField';
 import { CorrectRecordModal } from 'components/Modals/CorrectRecordModal';
@@ -584,7 +585,7 @@ function ProfileProduction() {
             align={{ base: 'stretch', md: 'flex-start' }}
             gap={3}>
             <VStack align="flex-start" gap={1} minW={0}>
-              <Heading as="h1" size={{ base: 'lg', md: 'xl' }} color="gray.800">
+              <Heading as="h1" {...PAGE_TITLE}>
                 {historyData?.product?.name || historyData?.name}
               </Heading>
               {historyData?.lot_id && (

@@ -137,6 +137,30 @@ export const PAGE_MAX_W = '8xl';
  */
 export const PAGE_GUTTER = { base: 3, md: 4 } as const;
 
+/**
+ * The app's one page-title style (2026-11-06, option C of three rendered): Heading `lg` (24px on a
+ * phone, 30px from md) in gray.800, and a 14px gray.600 description. Until then StandardPage's
+ * 41 pages titled themselves at 48px in green.700 with an 18px description, while the farm home,
+ * the parcel page and the three profiles used 36px gray: two scales, and green spent on
+ * decoration. Spread onto the page's h1 Heading.
+ */
+export const PAGE_TITLE = {
+  size: 'lg',
+  color: 'gray.800',
+  fontWeight: 'bold',
+  letterSpacing: '-0.01em'
+} as const;
+
+export const PAGE_DESCRIPTION = { fontSize: 'sm', color: 'gray.600', lineHeight: '1.6' } as const;
+
+/**
+ * Space above a StandardPage title. From md the top bar is one 75px row, so 91px puts the title
+ * 40px under the breadcrumb, where the farm home and the parcel page put theirs. It was 120px at
+ * every width, so a StandardPage title sat ~30px lower than the hand-built pages (measured
+ * 2026-11-06). On a phone the bar wraps to two rows and 120px is still right.
+ */
+const PAGE_TOP = { base: '120px', md: '91px' } as const;
+
 export const PageColumn = ({ children }: { children: ReactNode }) => (
   <Container maxW={PAGE_MAX_W} mx="auto" px={0} w="100%">
     {children}
@@ -172,7 +196,7 @@ export const StandardPage = ({
       {needsMinimalHeader && (
         <Box
           bg="linear-gradient(135deg, #FAFAFA 0%, #F8F9FA 100%)"
-          pt={{ base: '120px', md: '120px' }}
+          pt={PAGE_TOP}
           pb="24px"
           // Third gutter in the same component, now the same as the hero's and the body's.
           // The Container matches too, so on a page that constrains its content the Back
@@ -195,7 +219,7 @@ export const StandardPage = ({
       {hasHeroContent && (
         <Box
           bg="linear-gradient(135deg, #FAFAFA 0%, #F8F9FA 100%)"
-          pt={{ base: '120px', md: '120px' }}
+          pt={PAGE_TOP}
           pb={{ base: '64px', md: '80px' }}
           px={PAGE_GUTTER}>
           {/* The hero NEVER has a width of its own: it takes `contentMaxW`, so it is capped
@@ -223,18 +247,12 @@ export const StandardPage = ({
                   )}
 
                   {title && (
-                    <Heading
-                      as="h1"
-                      size="lg"
-                      color="green.700"
-                      fontWeight="bold"
-                      letterSpacing="-0.02em"
-                      w="full">
+                    <Heading as="h1" {...PAGE_TITLE} w="full">
                       {title}
                     </Heading>
                   )}
                   {description && (
-                    <Text fontSize="sm" color="gray.600" fontWeight="normal" lineHeight="1.6">
+                    <Text {...PAGE_DESCRIPTION} fontWeight="normal">
                       {description}
                     </Text>
                   )}
@@ -288,26 +306,18 @@ export const StandardPage = ({
                     </Box>
                   )}
 
-                  <Flex direction="row" align="center" gap={4} w="full" justify="space-between">
+                  <Flex direction="row" align="flex-start" gap={4} w="full" justify="space-between">
                     <VStack spacing={2} align="flex-start" flex={1} minW={0}>
                       {title && (
-                        <Heading
-                          as="h1"
-                          size="2xl"
-                          color="green.700"
-                          fontWeight="bold"
-                          textAlign="left"
-                          letterSpacing="-0.02em">
+                        <Heading as="h1" {...PAGE_TITLE} textAlign="left">
                           {title}
                         </Heading>
                       )}
                       {description && (
                         <Text
-                          fontSize="lg"
-                          color="gray.600"
+                          {...PAGE_DESCRIPTION}
                           fontWeight="normal"
                           maxW="70ch"
-                          lineHeight="1.7"
                           textAlign="left">
                           {description}
                         </Text>
