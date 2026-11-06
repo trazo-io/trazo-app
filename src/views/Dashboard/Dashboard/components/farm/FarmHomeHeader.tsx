@@ -13,7 +13,7 @@ import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useIntl } from 'react-intl';
 
 import { PageHeaderMeta } from 'components/Design/ProfileField';
-import { StandardButton, TOUCH_TARGET } from 'components/Design/StandardComponents';
+import { StandardButton, TOUCH_TARGET, PAGE_TITLE } from 'components/Design/StandardComponents';
 import { useGetFarmDashboardMetricsQuery } from 'store/api/dashboardMetricsApi';
 
 interface Props {
@@ -26,7 +26,6 @@ interface Props {
 export default function FarmHomeHeader({ companyId, farmId, name, location }: Props) {
   const intl = useIntl();
   const navigate = useNavigate();
-  const titleColor = useColorModeValue('gray.800', 'white');
   const muted = useColorModeValue('gray.600', 'gray.400');
   const { data } = useGetFarmDashboardMetricsQuery(
     // Skipped until the company loads; 0 is never sent.
@@ -49,7 +48,7 @@ export default function FarmHomeHeader({ companyId, farmId, name, location }: Pr
   return (
     <Flex justify="space-between" align="flex-start" gap={3} data-testid="farm-home-header">
       <VStack align="flex-start" spacing={1} minW={0}>
-        <Heading as="h1" size={{ base: 'lg', md: 'xl' }} color={titleColor}>
+        <Heading as="h1" {...PAGE_TITLE}>
           {name}
         </Heading>
         {location && (

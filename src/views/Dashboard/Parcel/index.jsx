@@ -31,7 +31,8 @@ import {
   PageColumn,
   StandardButton,
   StandardMenuItem,
-  TOUCH_TARGET
+  TOUCH_TARGET,
+  PAGE_TITLE
 } from 'components/Design/StandardComponents';
 import { useUserRole } from 'hooks/useUserRole';
 import { toLatLngPath } from 'utils/parcelPolygon';
@@ -53,7 +54,6 @@ export default function ParcelView() {
   const navigate = useNavigate();
   const { canWrite } = useUserRole();
 
-  const mainText = useColorModeValue('gray.700', 'gray.200');
   const cardColor = useColorModeValue('white', 'gray.700');
 
   const currentCompany = useSelector((state) => state.company.currentCompany);
@@ -157,6 +157,7 @@ export default function ParcelView() {
           Farm"), one muted line of facts, and the profile one click away. The Parcel Application
           moved from a green status-in-the-label button here to its own card below. */}
         <Flex
+          mt={{ base: 0, md: 4 }}
           mb={{ base: '16px', md: '24px' }}
           justify="space-between"
           align="flex-start"
@@ -165,7 +166,7 @@ export default function ParcelView() {
           <Box minW={0}>
             {/* Same title scale as the farm home and the farm profile (Heading lg/xl): this is
                 their child page, and the parent's title was half again as large. */}
-            <Heading as="h1" size={{ base: 'lg', md: 'xl' }} color={mainText}>
+            <Heading as="h1" {...PAGE_TITLE}>
               {data?.name || '\u00a0'}
             </Heading>
             <PageHeaderMeta
