@@ -181,7 +181,36 @@ const TransitionCard = ({
   );
 };
 
-const BufferEditor = ({
+/**
+ * Yes / No / not answered, for a border question the agents ask as Y/N. A checkbox cannot say
+ * "not answered": unticked read as No, so a border nobody answered and a border the grower said
+ * was not organic looked the same (CCOF ORGB49 D1, OTCO C2 2.2; 2026-11-06).
+ */
+const TriStateSelect = ({
+  value,
+  onChange,
+  isDisabled
+}: {
+  value: boolean | null | undefined;
+  onChange: (value: boolean | null) => void;
+  isDisabled: boolean;
+}) => {
+  const intl = useIntl();
+  return (
+    <StandardSelect
+      value={value === true ? 'yes' : value === false ? 'no' : ''}
+      onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+        onChange(e.target.value === 'yes' ? true : e.target.value === 'no' ? false : null)
+      }
+      isDisabled={isDisabled}>
+      <option value="">{intl.formatMessage({ id: 'parcelApp.buffers.notAnswered' })}</option>
+      <option value="yes">{intl.formatMessage({ id: 'osp.wizard.yes' })}</option>
+      <option value="no">{intl.formatMessage({ id: 'osp.wizard.no' })}</option>
+    </StandardSelect>
+  );
+};
+
+export const BufferEditor = ({
   rows,
   canWrite,
   onChange
@@ -263,13 +292,51 @@ const BufferEditor = ({
                 isDisabled={!canWrite}
               />
             </StandardField>
-            <StandardField label={intl.formatMessage({ id: 'parcelApp.buffers.cropGrown' })}>
-              <StandardInput
-                value={row.crop_grown_in_buffer ?? ''}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  update(index, { crop_grown_in_buffer: e.target.value })
+            <StandardField label={intl.formatMessage({ id: 'parcelApp.buffers.adjacentOrganicQ' })}>
+              <TriStateSelect
+                value={row.adjacent_is_organic}
+                onChange={(v) => update(index, { adjacent_is_organic: v })}
+                isDisabled={!canWrite}
+              />
+            </StandardField>
+            <StandardField label={intl.formatMessage({ id: 'parcelApp.buffers.cropGrownQ' })}>
+              <TriStateSelect
+                value={row.buffer_crop_grown}
+                onChange={(v) =>
+                  // A "no" with a crop named is refused by the server; clear the name with the no.
+                  update(
+                    index,
+                    v === false
+                      ? { buffer_crop_grown: v, crop_grown_in_buffer: '' }
+                      : { buffer_crop_grown: v }
+                  )
                 }
-                placeholder={intl.formatMessage({ id: 'parcelApp.buffers.cropPlaceholder' })}
+                isDisabled={!canWrite}
+              />
+            </StandardField>
+            {row.buffer_crop_grown !== false && (
+              <StandardField label={intl.formatMessage({ id: 'parcelApp.buffers.cropGrown' })}>
+                <StandardInput
+                  value={row.crop_grown_in_buffer ?? ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    update(index, { crop_grown_in_buffer: e.target.value })
+                  }
+                  placeholder={intl.formatMessage({ id: 'parcelApp.buffers.cropPlaceholder' })}
+                  isDisabled={!canWrite}
+                />
+              </StandardField>
+            )}
+            <StandardField label={intl.formatMessage({ id: 'parcelApp.buffers.distanceFt' })}>
+              <StandardInput
+                type="number"
+                min="0"
+                value={row.prohibited_use_distance_ft ?? ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  update(index, {
+                    prohibited_use_distance_ft:
+                      e.target.value === '' ? null : Number(e.target.value)
+                  })
+                }
                 isDisabled={!canWrite}
               />
             </StandardField>
@@ -317,14 +384,6 @@ const BufferEditor = ({
               />
             </StandardField>
             <Box pt={{ md: 8 }}>
-              <Checkbox
-                isChecked={row.adjacent_is_organic === true}
-                onChange={(e) => update(index, { adjacent_is_organic: e.target.checked })}
-                isDisabled={!canWrite}>
-                <Text fontSize="sm">
-                  {intl.formatMessage({ id: 'parcelApp.buffers.adjacentOrganic' })}
-                </Text>
-              </Checkbox>
               <Checkbox
                 isChecked={row.neighbor_notified === true}
                 onChange={(e) =>
@@ -1021,6 +1080,99 @@ const ParcelApplicationWizard = () => {
                       }
                     )}
                   </Text>
+                ))}
+              </Stack>
+            )}
+          </Box>
+        );
+      }
+      case 'parcel_change_notifications': {
+        // Read-only: what §D prints. Filed on the OSP screen, not here.
+        const rows = data?.change_notifications ?? [];
+        return (
+          <Box p={4} borderWidth="1px" borderColor="gray.200" borderRadius="md">
+            {rows.length === 0 ? (
+              <Text fontSize="sm" color="gray.600">
+                {intl.formatMessage({ id: 'parcelApp.changes.none' })}
+              </Text>
+            ) : (
+              <Stack spacing={2} data-embed="parcel_change_notifications">
+                {rows.map((n, i) => (
+                  <Box key={`${n.category}-${i}`}>
+                    <Text fontSize="sm" fontWeight="semibold" color="gray.700">
+                      {`${
+                        n.date_notified
+                          ? formatDateOnly(n.date_notified, intl.locale)
+                          : n.recorded
+                          ? intl.formatMessage(
+                              { id: 'parcelApp.changes.recorded' },
+                              { date: formatDateOnly(n.recorded, intl.locale) }
+                            )
+                          : '—'
+                      } · ${intl.formatMessage({
+                        id: `osp.changeNotifications.category.${n.category}`,
+                        defaultMessage: n.category
+                      })}`}
+                    </Text>
+                    {n.description && (
+                      <Text fontSize="sm" color="gray.700">
+                        {n.description}
+                      </Text>
+                    )}
+                    <Text fontSize="xs" color="gray.600">
+                      {n.acknowledged
+                        ? intl.formatMessage(
+                            { id: 'parcelApp.changes.acknowledged' },
+                            { date: formatDateOnly(n.acknowledged, intl.locale) }
+                          )
+                        : intl.formatMessage({ id: 'parcelApp.changes.notAcknowledged' })}
+                    </Text>
+                  </Box>
+                ))}
+              </Stack>
+            )}
+          </Box>
+        );
+      }
+      case 'contamination_incidents': {
+        // Read-only: what §D prints. Recorded as a General activity on the season.
+        const rows = data?.contamination_incidents ?? [];
+        return (
+          <Box p={4} borderWidth="1px" borderColor="gray.200" borderRadius="md">
+            {rows.length === 0 ? (
+              <Text fontSize="sm" color="gray.600">
+                {intl.formatMessage({ id: 'parcelApp.incidents.none' })}
+              </Text>
+            ) : (
+              <Stack spacing={2} data-embed="contamination_incidents">
+                {rows.map((e, i) => (
+                  <Box key={`${e.date}-${i}`}>
+                    <Text fontSize="sm" fontWeight="semibold" color="gray.700">
+                      {`${e.date ? formatDateOnly(e.date, intl.locale) : '—'} · ${
+                        e.source
+                          ? intl.formatMessage({
+                              id: `enums.contamination_sources.${e.source}`,
+                              defaultMessage: e.source
+                            })
+                          : intl.formatMessage({ id: 'parcelApp.incidents.sourceUnknown' })
+                      }`}
+                    </Text>
+                    {e.description && (
+                      <Text fontSize="sm" color="gray.700">
+                        {e.description}
+                      </Text>
+                    )}
+                    <Text fontSize="xs" color="gray.600">
+                      {e.certifier_notified
+                        ? e.certifier_notification_date
+                          ? intl.formatMessage(
+                              { id: 'parcelApp.incidents.notifiedOn' },
+                              { date: formatDateOnly(e.certifier_notification_date, intl.locale) }
+                            )
+                          : intl.formatMessage({ id: 'parcelApp.incidents.notified' })
+                        : intl.formatMessage({ id: 'parcelApp.incidents.notNotified' })}
+                    </Text>
+                  </Box>
                 ))}
               </Stack>
             )}
