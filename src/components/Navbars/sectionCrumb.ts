@@ -17,7 +17,6 @@ const RULES: Array<[RegExp, string]> = [
   [new RegExp(`^${PARCEL}/production/[^/]+/?$`), 'breadcrumb.season'],
   [new RegExp(`^${PARCEL}/event/add/?$`), 'parcelPage.logActivity'],
   [new RegExp(`^${PARCEL}/event/[^/]+/change/?$`), 'app.edit'],
-  [new RegExp(`^${PARCEL}/event/[^/]+/?$`), 'breadcrumb.activity'],
   [new RegExp(`^${PARCEL}/profile/?$`), 'parcelPage.profileLink'],
   [new RegExp(`^${PARCEL}/application/?$`), 'parcelPage.application.title'],
   [new RegExp(`^${PARCEL}/change/?$`), 'app.edit'],

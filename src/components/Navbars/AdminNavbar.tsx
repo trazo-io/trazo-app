@@ -291,8 +291,12 @@ export default function AdminNavbar(props: AdminNavbarProps) {
                 /
               </Box>
             }>
-            {/* Home - Always visible, never truncates */}
-            <BreadcrumbItem color={mainText}>
+            {/* Home: on a phone only when nothing deeper follows the farm. A 320px row holds two
+                crumbs, not four (measured: a parcel sub-page needed ~480px of a 290px row), so
+                below md the trail keeps its last two levels; desktop shows all of it. */}
+            <BreadcrumbItem
+              color={mainText}
+              display={{ base: farmIsLink ? 'none' : 'inline-flex', md: 'inline-flex' }}>
               <BreadcrumbLink
                 href="/admin/dashboard/"
                 onClick={handleHomeClick}
@@ -315,7 +319,13 @@ export default function AdminNavbar(props: AdminNavbarProps) {
 
             {/* Establishment - Smart space allocation based on context */}
             {currentEstablishment && (
-              <BreadcrumbItem color={mainText}>
+              <BreadcrumbItem
+                color={mainText}
+                // Hidden on a phone below a parcel page's sub-section (see Home above).
+                display={{
+                  base: currentParcel && sectionId ? 'none' : 'inline-flex',
+                  md: 'inline-flex'
+                }}>
                 <BreadcrumbLink
                   href={farmIsLink ? `/admin/dashboard/farm/${farmId}` : undefined}
                   onClick={farmIsLink ? handleEstablishmentClick : undefined}
@@ -337,8 +347,10 @@ export default function AdminNavbar(props: AdminNavbarProps) {
                   title={currentEstablishment.name}
                   // Smart allocation: More space when alone, conservative when sharing with parcel
                   isTruncated
+                  // Sharing the row whenever another crumb follows: the parcel OR a section (review
+                  // of #295: on /activities a long farm name left no room for the section at 320px).
                   maxW={
-                    currentParcel
+                    currentParcel || sectionId
                       ? { base: '120px', sm: '160px', smd: '200px', md: '220px', lg: '300px' } // Sharing space
                       : { base: '180px', sm: '250px', smd: '320px', md: '400px', lg: '500px' } // Taking full space
                   }
