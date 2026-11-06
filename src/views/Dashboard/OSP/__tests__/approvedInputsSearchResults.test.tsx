@@ -218,6 +218,73 @@ describe('approved-inputs search — every match is offered, not just the winner
     expect(screen.getByText(/Prohibited in organic production/i)).toBeTruthy();
   });
 
+  it('offers a § 205.602 row allowed for one use, with that use, and still refuses ash', () => {
+    // Calcium chloride (c) is prohibited EXCEPT as a foliar spray for a calcium-uptake disorder;
+    // the server accepts it on a plan (back #319). Ash from manure burning (a) has no such use.
+    renderPanel({
+      found: true,
+      status: 'matched',
+      omri_product_pk: null,
+      wsda_material_pk: null,
+      national_list_substance_pk: 3,
+      national_list_candidates: [
+        {
+          pk: 3,
+          substance_name: 'Calcium chloride (brine process)',
+          cfr_section: '205.602',
+          subsection: 'c',
+          status: 'prohibited',
+          is_conditionally_permitted: true
+        },
+        {
+          pk: 4,
+          substance_name: 'Ash from manure burning',
+          cfr_section: '205.602',
+          subsection: 'a',
+          status: 'prohibited',
+          is_conditionally_permitted: false
+        }
+      ]
+    });
+
+    expect(screen.queryAllByRole('button', { name: /Add to OSP/i })).toHaveLength(1);
+    expect(screen.getAllByText(/Prohibited in organic production/i)).toHaveLength(1);
+    expect(
+      screen.getByText(
+        'Restricted use: only as a foliar spray to treat a physiological disorder associated with calcium uptake'
+      )
+    ).toBeTruthy();
+  });
+
+  it('labels a conditional row on the plan as restricted use, not as an ordinary input', () => {
+    const { container } = renderPanel(
+      {
+        found: false,
+        status: 'not_found',
+        omri_product_pk: null,
+        national_list_substance_pk: null,
+        wsda_material_pk: null
+      },
+      {
+        ...OSP,
+        approved_national_list_substances: [
+          {
+            id: 3,
+            substance_name: 'Calcium chloride (brine process)',
+            cfr_section: '205.602',
+            citation: '\u00a7 205.602(c)',
+            subsection: 'c',
+            is_national_list_entry: true,
+            status: 'prohibited',
+            is_conditionally_permitted: true
+          }
+        ]
+      }
+    );
+    expect(screen.getByText('Calcium chloride (brine process) (restricted use)')).toBeTruthy();
+    expect(container.querySelectorAll('[data-restricted="true"]')).toHaveLength(1);
+  });
+
   it('never prints a WSDA identifier that is not a real WSDA Product #', () => {
     renderPanel({
       found: true,
