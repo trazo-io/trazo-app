@@ -107,7 +107,25 @@ export const CERTIFIER_ONLY_EVENT_FIELDS: readonly string[] = [
   // EventPreviewModal builds its "how consumers will see this event" card from RAW WIZARD DATA,
   // never through the public API — so without this entry the preview would show the grower their
   // own private note as though a shopper were about to read it.
-  'private_note'
+  'private_note',
+  // Input application RATES (2026-11-05). The registry already kept `application_rate` off every
+  // consumer surface (chemicalEvent.ts: a shopper cannot read a rate without the label beside
+  // it), but the legacy extra_data spellings below were still allow-listed on the public payload.
+  // The backend now strips the whole family; mirrored here so the producer's preview agrees.
+  'application_rate',
+  'application_rate_unit',
+  'application_rate_oz_acre',
+  'application_rate_range',
+  'application_rate_tons_acre',
+  'rate_L_ha',
+  'rate_fl_oz_acre',
+  'rate_g_ha',
+  'rate_kg_ha',
+  'rate_lbs_acre',
+  'rate_oz_acre',
+  'solubor_rate_kg_ha',
+  'zinc_sulfate_rate_kg_ha',
+  'n_applied_lbs_acre'
 ];
 
 /**
