@@ -60,7 +60,7 @@ export const useTourStore = create<TourStoreState>()(
       activeStepIndex: 0,
       checklistDismissed: false,
       checklistCompleted: false,
-      checklistActivityBaseline: null,
+      checklistActivityBaselines: {},
       celebratedMilestones: {},
       visitedPages: {},
       restartRequested: false,
@@ -109,7 +109,10 @@ export const useTourStore = create<TourStoreState>()(
 
       dismissChecklist: () => set({ checklistDismissed: true }),
       markChecklistCompleted: () => set({ checklistCompleted: true }),
-      setChecklistActivityBaseline: (count: number) => set({ checklistActivityBaseline: count }),
+      setChecklistActivityBaseline: (farmId: string, count: number) =>
+        set((state) => ({
+          checklistActivityBaselines: { ...state.checklistActivityBaselines, [farmId]: count }
+        })),
 
       celebrateMilestone: (milestoneId: string) =>
         set((state) => ({
@@ -137,7 +140,7 @@ export const useTourStore = create<TourStoreState>()(
           activeStepIndex: 0,
           checklistDismissed: false,
           checklistCompleted: false,
-          checklistActivityBaseline: null,
+          checklistActivityBaselines: {},
           celebratedMilestones: {},
           visitedPages: {},
           restartRequested: true,

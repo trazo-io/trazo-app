@@ -419,17 +419,21 @@ export function useOnboardingChecklist() {
     () => ((productions as any[]) || []).reduce((n, p) => n + (p?.events_count ?? 0), 0),
     [productions]
   );
-  const baseline = useTourStore((s) => s.checklistActivityBaseline);
+  // Per farm: activityCount comes from the routed farm's productions, so the baseline it is
+  // compared against must be that farm's own (review of #297).
+  const baseline = useTourStore((s) =>
+    farmId ? s.checklistActivityBaselines?.[farmId] ?? null : null
+  );
   const setBaseline = useTourStore((s) => s.setChecklistActivityBaseline);
   useEffect(() => {
     const action = completedPilotPanelAction({
       pilotStepsComplete,
       dismissed: checklistDismissed,
-      loaded: !isLoadingProductions && !!productions,
+      loaded: !!farmId && !isLoadingProductions && !!productions,
       baseline,
       activityCount
     });
-    if (action === 'set-baseline') setBaseline(activityCount);
+    if (action === 'set-baseline' && farmId) setBaseline(farmId, activityCount);
     if (action === 'dismiss') dismissChecklist();
   }, [
     pilotStepsComplete,
@@ -439,7 +443,8 @@ export function useOnboardingChecklist() {
     activityCount,
     baseline,
     setBaseline,
-    dismissChecklist
+    dismissChecklist,
+    farmId
   ]);
   const isVisible =
     hasCompany &&

@@ -10,7 +10,7 @@
  * These tests pin the two properties that fix is made of: the items exist, and they are not
  * chained behind the season.
  */
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 // Indexed by a computed key below, so widen from the literal-keyed JSON type.
 import enCatalogue from '../../i18n/lang/en-US.json';
@@ -24,6 +24,7 @@ import {
   resolveWriterCompletion,
   completedPilotPanelAction
 } from '../useOnboardingChecklist';
+import { useTourStore } from '../../store/tourStore';
 
 const FARM = '148';
 
@@ -230,5 +231,32 @@ describe('completed pilot panel: hides after the first activity logged after set
     expect(
       completedPilotPanelAction({ ...base, loaded: false, baseline: null, activityCount: 0 })
     ).toBeNull();
+  });
+});
+
+describe('completed pilot panel: the baseline is per farm', () => {
+  // The activity count is the routed farm's, so one shared baseline let a farm switch dismiss
+  // the panel with nothing logged: baseline 12 noted on farm A, farm B already holds 20, and
+  // 20 > 12 read as "a new activity" (review of #297).
+  beforeEach(() => useTourStore.setState({ checklistActivityBaselines: {} }));
+
+  it('notes one farm without touching another', () => {
+    useTourStore.getState().setChecklistActivityBaseline('148', 12);
+    useTourStore.getState().setChecklistActivityBaseline('149', 20);
+    expect(useTourStore.getState().checklistActivityBaselines).toEqual({ '148': 12, '149': 20 });
+  });
+
+  it('a farm with more pre-existing activities sets its own baseline instead of dismissing', () => {
+    useTourStore.getState().setChecklistActivityBaseline('148', 12);
+    const farmB = useTourStore.getState().checklistActivityBaselines['149'] ?? null;
+    expect(
+      completedPilotPanelAction({
+        pilotStepsComplete: true,
+        dismissed: false,
+        loaded: true,
+        baseline: farmB,
+        activityCount: 20
+      })
+    ).toBe('set-baseline');
   });
 });
