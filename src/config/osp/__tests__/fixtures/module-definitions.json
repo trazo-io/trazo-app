@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.11.15",
+  "content_version": "2026.11.16",
   "registry": {
-    "content_version": "2026.11.15",
+    "content_version": "2026.11.16",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -6270,6 +6270,25 @@
                 "max_length": null
               },
               {
+                "key": "streams_or_channels_adjacent",
+                "kind": "boolean",
+                "label": {
+                  "en": "Are streams, shorelines, gullies or irrigation channels (canals, ditches) on or next to the land where certified crops grow?",
+                  "es": "¿Hay arroyos, riberas, cárcavas o canales de riego (canales, acequias) en la tierra donde crecen los cultivos certificados o junto a ella?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.200",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
                 "key": "habitat_biodiversity_practices",
                 "kind": "checkbox_group",
                 "label": {
@@ -9135,6 +9154,25 @@
             "visible_when": [],
             "questions": [
               {
+                "key": "drift_risk_present",
+                "kind": "boolean",
+                "label": {
+                  "en": "Is there any risk of drift of prohibited materials from neighboring non-organic producers onto your organic land?",
+                  "es": "¿Existe algún riesgo de que la deriva de materiales prohibidos de productores vecinos no orgánicos llegue a tu tierra orgánica?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.202(c)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
                 "key": "drift_safeguards",
                 "kind": "checkbox_group",
                 "label": {
@@ -9147,10 +9185,27 @@
                 },
                 "options": [
                   {
+                    "value": "none_no_surrounding_prohibited_use",
+                    "label": {
+                      "en": "None: no surrounding use of prohibited materials",
+                      "es": "Ninguna: no se usan materiales prohibidos en los alrededores"
+                    },
+                    "exclusive": true
+                  },
+                  {
                     "value": "self_managed_adjacent",
                     "label": {
                       "en": "I manage the adjoining land myself — no third-party spray risk",
                       "es": "Yo mismo manejo la tierra colindante — sin riesgo de aspersión de terceros"
+                    },
+                    "exclusive": false,
+                    "retired": true
+                  },
+                  {
+                    "value": "self_managed_adjacent_precautions",
+                    "label": {
+                      "en": "My operation manages the adjoining non-organic land and takes precautions against drift (describe below)",
+                      "es": "Mi operación maneja la tierra colindante no orgánica y toma precauciones contra la deriva (descríbelas abajo)"
                     },
                     "exclusive": false
                   },
@@ -9279,6 +9334,59 @@
                 "max_length": null
               },
               {
+                "key": "drift_registry_name",
+                "kind": "text",
+                "label": {
+                  "en": "Which drift monitoring program or registry?",
+                  "es": "¿Qué programa o registro de monitoreo de deriva?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "drift_safeguards",
+                    "op": "includes",
+                    "value": "sensitive_crop_registry"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": {
+                  "en": "e.g., DriftWatch",
+                  "es": "p. ej., DriftWatch"
+                },
+                "max_length": null
+              },
+              {
+                "key": "self_managed_precautions",
+                "kind": "textarea",
+                "label": {
+                  "en": "What precautions keep drift from the adjoining non-organic land you manage off the organic crops?",
+                  "es": "¿Qué precauciones evitan que la deriva de la tierra colindante no orgánica que manejas llegue a los cultivos orgánicos?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "drift_safeguards",
+                    "op": "includes",
+                    "value": "self_managed_adjacent_precautions"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
                 "key": "drift_response_procedure",
                 "kind": "textarea",
                 "label": {
@@ -9343,6 +9451,113 @@
                   }
                 ],
                 "nop_cite": "§ 205.202(c)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "borders_public_road",
+                "kind": "boolean",
+                "label": {
+                  "en": "Is your organic land bordered by a public road?",
+                  "es": "¿Tu tierra orgánica colinda con un camino público?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.202(c)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "roadside_management_steps",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Steps taken to prevent contamination from roadside management",
+                  "es": "Medidas tomadas para evitar la contaminación por el manejo de los bordes del camino"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "no_spray_signs",
+                    "label": {
+                      "en": "\"No spray\" signs",
+                      "es": "Letreros de \"No fumigar\""
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "agency_notification",
+                    "label": {
+                      "en": "Notification of the county, city or state",
+                      "es": "Notificación al condado, la ciudad o el estado"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "roadside_manager_agreement",
+                    "label": {
+                      "en": "Agreements with roadside managers",
+                      "es": "Acuerdos con quienes manejan los bordes del camino"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otra (describe abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "borders_public_road",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.202(c)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "roadside_management_steps_other",
+                "kind": "text",
+                "label": {
+                  "en": "Describe the other step",
+                  "es": "Describe la otra medida"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "borders_public_road",
+                    "op": "truthy",
+                    "value": null
+                  },
+                  {
+                    "question": "roadside_management_steps",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
@@ -18055,6 +18270,7 @@
       "visible_questions": [
         "soil_water_practices",
         "irrigation_efficiency_monitoring",
+        "streams_or_channels_adjacent",
         "habitat_biodiversity_practices",
         "conservation_plan_agency",
         "invasive_species_practices",
@@ -18100,6 +18316,7 @@
       "visible_questions": [
         "soil_water_practices",
         "irrigation_efficiency_monitoring",
+        "streams_or_channels_adjacent",
         "habitat_biodiversity_practices",
         "conservation_plan_agency",
         "invasive_species_practices",
@@ -18137,6 +18354,7 @@
       "visible_questions": [
         "soil_water_practices",
         "irrigation_efficiency_monitoring",
+        "streams_or_channels_adjacent",
         "habitat_biodiversity_practices",
         "conservation_plan_agency",
         "invasive_species_practices",
@@ -19285,9 +19503,11 @@
         "split_operation",
         "parallel_production",
         "buffer_strategies",
+        "drift_risk_present",
         "drift_safeguards",
         "drift_response_procedure",
         "runoff_risk_present",
+        "borders_public_road",
         "prohibited_materials_on_site",
         "treated_lumber_any",
         "uses_production_equipment"
@@ -19325,9 +19545,11 @@
         "nonorganic_crops_products",
         "nonorganic_system_materials",
         "buffer_strategies",
+        "drift_risk_present",
         "drift_safeguards",
         "drift_response_procedure",
         "runoff_risk_present",
+        "borders_public_road",
         "prohibited_materials_on_site",
         "treated_lumber_any",
         "uses_production_equipment"
@@ -19363,9 +19585,11 @@
         "split_operation",
         "parallel_production",
         "buffer_strategies",
+        "drift_risk_present",
         "drift_safeguards",
         "drift_response_procedure",
         "runoff_risk_present",
+        "borders_public_road",
         "prohibited_materials_on_site",
         "treated_lumber_any",
         "uses_production_equipment"
@@ -19400,9 +19624,11 @@
         "split_operation",
         "parallel_production",
         "buffer_strategies",
+        "drift_risk_present",
         "drift_safeguards",
         "drift_response_procedure",
         "runoff_risk_present",
+        "borders_public_road",
         "prohibited_materials_on_site",
         "treated_lumber_any",
         "treated_lumber_policy",
@@ -19439,9 +19665,11 @@
         "split_operation",
         "parallel_production",
         "buffer_strategies",
+        "drift_risk_present",
         "drift_safeguards",
         "drift_response_procedure",
         "runoff_risk_present",
+        "borders_public_road",
         "prohibited_materials_on_site",
         "treated_lumber_any",
         "uses_production_equipment"
@@ -19467,6 +19695,170 @@
     },
     {
       "module": "g6_0_production",
+      "label": "road_with_other_step",
+      "answers": {
+        "borders_public_road": true,
+        "roadside_management_steps": [
+          "no_spray_signs",
+          "other"
+        ]
+      },
+      "visible_questions": [
+        "split_operation",
+        "parallel_production",
+        "buffer_strategies",
+        "drift_risk_present",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "borders_public_road",
+        "roadside_management_steps",
+        "roadside_management_steps_other",
+        "prohibited_materials_on_site",
+        "treated_lumber_any",
+        "uses_production_equipment"
+      ],
+      "missing_required": [
+        "split_operation",
+        "parallel_production",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ],
+      "missing_required_na": [
+        "split_operation",
+        "parallel_production",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ]
+    },
+    {
+      "module": "g6_0_production",
+      "label": "no_road_stale_steps",
+      "answers": {
+        "borders_public_road": false,
+        "roadside_management_steps": [
+          "other"
+        ]
+      },
+      "visible_questions": [
+        "split_operation",
+        "parallel_production",
+        "buffer_strategies",
+        "drift_risk_present",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "borders_public_road",
+        "prohibited_materials_on_site",
+        "treated_lumber_any",
+        "uses_production_equipment"
+      ],
+      "missing_required": [
+        "split_operation",
+        "parallel_production",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ],
+      "missing_required_na": [
+        "split_operation",
+        "parallel_production",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ]
+    },
+    {
+      "module": "g6_0_production",
+      "label": "drift_registry_and_self_managed",
+      "answers": {
+        "drift_safeguards": [
+          "sensitive_crop_registry",
+          "self_managed_adjacent_precautions"
+        ]
+      },
+      "visible_questions": [
+        "split_operation",
+        "parallel_production",
+        "buffer_strategies",
+        "drift_risk_present",
+        "drift_safeguards",
+        "drift_registry_name",
+        "self_managed_precautions",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "borders_public_road",
+        "prohibited_materials_on_site",
+        "treated_lumber_any",
+        "uses_production_equipment"
+      ],
+      "missing_required": [
+        "split_operation",
+        "parallel_production",
+        "buffer_strategies",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ],
+      "missing_required_na": [
+        "split_operation",
+        "parallel_production",
+        "buffer_strategies",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ]
+    },
+    {
+      "module": "g6_0_production",
+      "label": "drift_none",
+      "answers": {
+        "drift_safeguards": [
+          "none_no_surrounding_prohibited_use"
+        ]
+      },
+      "visible_questions": [
+        "split_operation",
+        "parallel_production",
+        "buffer_strategies",
+        "drift_risk_present",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "borders_public_road",
+        "prohibited_materials_on_site",
+        "treated_lumber_any",
+        "uses_production_equipment"
+      ],
+      "missing_required": [
+        "split_operation",
+        "parallel_production",
+        "buffer_strategies",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ],
+      "missing_required_na": [
+        "split_operation",
+        "parallel_production",
+        "buffer_strategies",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ]
+    },
+    {
+      "module": "g6_0_production",
       "label": "equipment_sop_and_other",
       "answers": {
         "uses_production_equipment": true,
@@ -19479,9 +19871,11 @@
         "split_operation",
         "parallel_production",
         "buffer_strategies",
+        "drift_risk_present",
         "drift_safeguards",
         "drift_response_procedure",
         "runoff_risk_present",
+        "borders_public_road",
         "prohibited_materials_on_site",
         "treated_lumber_any",
         "uses_production_equipment",
@@ -19527,9 +19921,11 @@
         "split_operation",
         "parallel_production",
         "buffer_strategies",
+        "drift_risk_present",
         "drift_safeguards",
         "drift_response_procedure",
         "runoff_risk_present",
+        "borders_public_road",
         "prohibited_materials_on_site",
         "treated_lumber_any",
         "uses_production_equipment"
@@ -20607,6 +21003,7 @@
       "visible_questions": [
         "soil_water_practices",
         "irrigation_efficiency_monitoring",
+        "streams_or_channels_adjacent",
         "habitat_biodiversity_practices",
         "conservation_plan_agency",
         "invasive_species_practices",
@@ -20744,9 +21141,11 @@
         "split_operation",
         "parallel_production",
         "buffer_strategies",
+        "drift_risk_present",
         "drift_safeguards",
         "drift_response_procedure",
         "runoff_risk_present",
+        "borders_public_road",
         "prohibited_materials_on_site",
         "treated_lumber_any",
         "uses_production_equipment"
