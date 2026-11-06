@@ -5,20 +5,18 @@ import { describe, expect, it } from 'vitest';
 
 import theme from '../../../theme/theme';
 import { CALENDAR_FAMILY, TYPE_ICON } from '../eventTypeAppearance';
+import { EVENT_TYPE_HUE } from '../../../components/Events/categoryTone';
 
 /**
- * The calendar is the ONE surface allowed a per-family hue, and this is what keeps that
- * exception from becoming the next drift.
+ * One category palette (2026-11-06): the calendar's chips and the timeline rows (parcel page,
+ * Activities list, QR journey) colour a category the same way, palette B in
+ * components/Events/categoryTone. Until then the calendar swapped inputs and pest against the
+ * timeline (teal inputs here, purple there).
  *
- * Everywhere a glyph already sits beside the chip — timeline, activity feed, detail modal — a
- * family renders in the single tonal green (`TYPE_BADGE`, all eight entries identical). The
- * month view is different: the chip stands alone, with no icon beside it, no title, no
- * description, and a label that truncates. One hue there is a month of identical pills.
- *
- * So the rule is not "one hue everywhere", it is: colour is free only where another channel
- * already carries identity. These assertions hold the calendar to the three things that make
- * its exception safe — the hues are measured, they never claim a status colour, and they are
- * never the only signal.
+ * These assertions hold the palette to what makes category colour safe: the hues are measured,
+ * they never claim a status colour, the coloured categories stay distinct, the record-keeping
+ * ones share one neutral, the calendar agrees with categoryTone, and colour is never the only
+ * signal (a glyph rides with every hue).
  */
 
 const srgbToLinear = (channel: number) => {
@@ -95,13 +93,36 @@ describe('calendar family tokens', () => {
     expect(used, `a family borrowed a status colour: ${used.join(', ')}`).toEqual([]);
   });
 
-  it('every family is visually distinct — the hue has to do its job', () => {
-    // Two families sharing a fill is the Weather/Equipment defect that made the old seven-hue
-    // system fail at the one thing it claimed to do.
-    const fills = CODES.map((c) => FAMILY[CALENDAR_FAMILY[c]].bg.toUpperCase());
-    expect(new Set(fills).size, `families share a fill: ${JSON.stringify(fills)}`).toBe(
-      CODES.length
+  it('the coloured categories are distinct; the record-keeping ones share one neutral', () => {
+    // Two coloured families sharing a fill is the Weather/Equipment defect that made the old
+    // seven-hue system fail. General, equipment and business are one gray on purpose (palette B,
+    // "farm records"), told apart by glyph and word.
+    const NEUTRAL = [3, 4, 7];
+    const coloured = CODES.filter((c) => !NEUTRAL.includes(c)).map((c) =>
+      FAMILY[CALENDAR_FAMILY[c]].bg.toUpperCase()
     );
+    expect(
+      new Set(coloured).size,
+      `coloured families share a fill: ${JSON.stringify(coloured)}`
+    ).toBe(coloured.length);
+    expect(new Set(NEUTRAL.map((c) => CALENDAR_FAMILY[c]))).toEqual(new Set(['other']));
+  });
+
+  it('the calendar colours each category the way the timeline does (categoryTone)', () => {
+    const SAME: Record<string, string> = {
+      green: 'production',
+      blue: 'sky',
+      purple: 'inputs',
+      yellow: 'soil',
+      teal: 'pest',
+      gray: 'other'
+    };
+    for (const code of CODES) {
+      expect(
+        CALENDAR_FAMILY[code],
+        `event_type ${code}: calendar family disagrees with categoryTone (${EVENT_TYPE_HUE[code]})`
+      ).toBe(SAME[EVENT_TYPE_HUE[code]]);
+    }
   });
 
   it('colour is never the only signal — every family also has a glyph', () => {
@@ -121,20 +142,7 @@ describe('calendar family tokens', () => {
     expect(at, 'the calendar chip no longer uses the family hue').toBeGreaterThan(-1);
     const chip = code.slice(at, at + 700);
     expect(chip, 'the calendar chip renders a hue with no glyph').toMatch(
-      /TYPE_ICON\[row\.event_type\]/
+      /iconForActivity\(row\.event_type/
     );
-  });
-
-  it('the hue stays CALENDAR-only — surfaces with a glyph keep the tonal green', () => {
-    // If CALENDAR_FAMILY spreads to the timeline, the exception has become the rule again.
-    const offenders: string[] = [];
-    for (const rel of [
-      '../../../components/Tables/EnhancedTimelineRow.tsx',
-      '../../../views/Dashboard/Activities/ActivityListItem.tsx'
-    ]) {
-      const code = readFileSync(join(__dirname, rel), 'utf8');
-      if (/CALENDAR_FAMILY/.test(code)) offenders.push(rel);
-    }
-    expect(offenders, `per-family hue leaked to: ${offenders.join(', ')}`).toEqual([]);
   });
 });

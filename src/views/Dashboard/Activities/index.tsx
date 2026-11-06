@@ -19,18 +19,10 @@ import {
   Flex,
   Grid,
   Icon,
-  Table,
-  Tbody,
-  Td,
   Text,
-  Th,
-  Thead,
-  Tr,
   useColorMode,
   useDisclosure,
-  VStack,
-  Wrap,
-  WrapItem
+  VStack
 } from '@chakra-ui/react';
 import {
   FaCalendarAlt,
@@ -54,10 +46,16 @@ import {
   StandardPagination,
   StandardSearchInput,
   StandardSegmentedControl,
-  StandardSelect
+  StandardSelect,
+  StatusList
 } from 'components/Design/StandardComponents';
 import type { Parcel } from 'types/company';
-import { ACTIVITY_VERBS } from 'config/activityVerbs';
+import {
+  ACTIVITY_VERBS,
+  activityMatchesVerb,
+  iconForActivity,
+  verbForKey
+} from 'config/activityVerbs';
 import { verbMayGoMulti } from 'config/events/multiParcel';
 import { activitySummary, activityTitle } from 'config/events/narrative';
 import { ResponsiveModal } from 'components/Design/ResponsiveModal';
@@ -70,8 +68,9 @@ import type { ActivityRow } from 'store/api/activityFeedApi';
 import type { RootState } from 'store/index';
 import { useTour } from 'hooks/useTour';
 import { ActivityDetailModal } from './ActivityDetailModal';
-import { ActivityListItem, TYPE_BADGE } from './ActivityListItem';
-import { CALENDAR_FAMILY, TYPE_ICON } from 'config/events/eventTypeAppearance';
+import { CALENDAR_FAMILY } from 'config/events/eventTypeAppearance';
+import { ActivityTimelineRow, MonthTimeline } from 'components/Events/ActivityTimeline';
+import { formatDateFromTimestamp } from 'utils/dateOnly';
 
 /**
  * Verb → event_type mapping now lives in the SHARED config (config/activityVerbs) so
@@ -194,7 +193,11 @@ const ActivitiesPage = () => {
   const [view, setView] = useState<'calendar' | 'list'>(
     searchParams.get('view') === 'list' ? 'list' : 'calendar'
   );
-  const [typeFilter, setTypeFilter] = useState<number | null>(null);
+  // Filter by ACTIVITY, the 17 tiles of "Log activity", not by event model (2026-11-06). The six
+  // model chips put 12 of the 17 under "Production", so "my irrigations" was not a filter.
+  const [verbFilter, setVerbFilter] = useState('');
+  const activeVerb = verbFilter ? verbForKey(verbFilter) : undefined;
+  const typeFilter = activeVerb ? activeVerb.eventType : null;
   const [search, setSearch] = useState('');
   const verbModal = useDisclosure();
   const quickAddParcel = useDisclosure();
@@ -243,6 +246,26 @@ const ActivitiesPage = () => {
     { skip: !companyId || !farmId }
   );
 
+  // An empty month is not an empty record (2026-11-06): after harvest the calendar opens on a
+  // month with nothing in it and read as "nothing was logged". When the shown month is empty,
+  // ask once for the latest activity (same type and parcel filters) and offer to jump to it.
+  const monthIsEmpty =
+    view === 'calendar' && !isLoading && !isFetching && (data?.activities?.length ?? 0) === 0;
+  const { data: latestData } = useGetActivityFeedQuery(
+    {
+      companyId,
+      farmId: farmId || '',
+      eventType: typeFilter ?? undefined,
+      parcelId: parcelFilter || undefined
+    },
+    { skip: !companyId || !farmId || !monthIsEmpty }
+  );
+  const latestDate = monthIsEmpty
+    ? (latestData?.activities ?? []).find(
+        (r) => !activeVerb || activityMatchesVerb(activeVerb, r.event_type, r.subtype)
+      )?.date ?? null
+    : null;
+
   const rows = useMemo(() => {
     let out = data?.activities ?? [];
     // The SERVER does the parcel filtering that matters (it applies before the payload caps,
@@ -252,6 +275,11 @@ const ActivitiesPage = () => {
     // fewer rows rather than another block's rows under a label naming this one.
     if (parcelFilter) {
       out = out.filter((r) => String(r.parcel_id) === parcelFilter);
+    }
+    // The server narrows by event type; the subtype half of a verb (Irrigation = production IR)
+    // is applied here.
+    if (activeVerb) {
+      out = out.filter((r) => activityMatchesVerb(activeVerb, r.event_type, r.subtype));
     }
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -264,7 +292,7 @@ const ActivitiesPage = () => {
       );
     }
     return out;
-  }, [data, search, parcelFilter]);
+  }, [data, search, parcelFilter, activeVerb]);
 
   // Client-side: the activities endpoint returns the farm's whole log in one response, and the
   // list rendered every row of it. Paging is presentation only — `rows` (search-filtered) stays
@@ -284,18 +312,15 @@ const ActivitiesPage = () => {
   // in range: landing on page 3 of a fresh search result is disorienting.
   useEffect(() => {
     setListPage(1);
-  }, [search, typeFilter, parcelFilter, rangeKey, customStart, customEnd]);
+  }, [search, verbFilter, parcelFilter, rangeKey, customStart, customEnd]);
 
   // The parcel select and the type pills narrow BOTH views; the range narrows the list only,
   // so it does not count as active while the calendar is showing.
   const hasActiveFilter =
-    !!parcelFilter ||
-    typeFilter !== null ||
-    !!search.trim() ||
-    (view === 'list' && rangeKey !== 'all');
+    !!parcelFilter || !!verbFilter || !!search.trim() || (view === 'list' && rangeKey !== 'all');
   const clearFilters = () => {
     setParcelFilter('');
-    setTypeFilter(null);
+    setVerbFilter('');
     setSearch('');
     setRangeKey('all');
     setCustomStart('');
@@ -331,8 +356,6 @@ const ActivitiesPage = () => {
     for (let i = 0; i < cells.length; i += 7) out.push(cells.slice(i, i + 7));
     return out;
   }, [cursor, monthEnd]);
-
-  const typeLabel = (t: number) => intl.formatMessage({ id: `activities.type.${t}` });
 
   // Clicking an activity OPENS it, it does not start editing it. Edit stays one deliberate
   // button inside the detail modal — the same modal the parcel timeline opens — so nobody
@@ -453,37 +476,6 @@ const ActivitiesPage = () => {
           direction={{ base: 'column', smd: 'row' }}
           align={{ base: 'stretch', smd: 'flex-end' }}
           wrap="wrap">
-          <Wrap
-            spacing={2}
-            flex="1 1 auto"
-            role="group"
-            aria-label={intl.formatMessage({ id: 'activities.filter.label' })}>
-            <WrapItem>
-              <StandardButton
-                size="sm"
-                minH="44px"
-                borderRadius="full"
-                aria-pressed={typeFilter === null}
-                variant={typeFilter === null ? 'primary' : 'outline'}
-                onClick={() => setTypeFilter(null)}>
-                {intl.formatMessage({ id: 'activities.filter.all' })}
-              </StandardButton>
-            </WrapItem>
-            {[1, 2, 5, 6, 0, 7].map((t) => (
-              <WrapItem key={t}>
-                <StandardButton
-                  size="sm"
-                  minH={FILTER_CONTROL_H}
-                  borderRadius="full"
-                  aria-pressed={typeFilter === t}
-                  variant={typeFilter === t ? 'primary' : 'outline'}
-                  onClick={() => setTypeFilter(typeFilter === t ? null : t)}>
-                  {typeLabel(t)}
-                </StandardButton>
-              </WrapItem>
-            ))}
-          </Wrap>
-
           {/* Same shape as the Buyer page's scan filters: labelled selects, stacked on a
               phone, with Clear appearing only once something is narrowing. A select with one
               option is a label wearing a chevron, so the parcel filter is rendered only on a
@@ -495,7 +487,29 @@ const ActivitiesPage = () => {
             wrap="wrap"
             // A one-parcel farm on the calendar has no selects to show; without this the
             // empty flex item still spends the parent's gap.
-            display={parcels.length > 1 || view === 'list' || hasActiveFilter ? 'flex' : 'none'}>
+            display="flex">
+            <Box minW={{ base: 'full', smd: '220px' }}>
+              <Text fontSize="xs" color="gray.600" mb={1}>
+                {intl.formatMessage({ id: 'activities.filter.activity' })}
+              </Text>
+              <StandardSelect
+                size="md"
+                h={FILTER_CONTROL_H}
+                value={verbFilter}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                  setVerbFilter(e.target.value)
+                }
+                aria-label={intl.formatMessage({ id: 'activities.filter.activity' })}>
+                <option value="">
+                  {intl.formatMessage({ id: 'activities.filter.allActivities' })}
+                </option>
+                {ACTIVITY_VERBS.map((v) => (
+                  <option key={v.key} value={v.key}>
+                    {intl.formatMessage({ id: `activities.verb.${v.key}` })}
+                  </option>
+                ))}
+              </StandardSelect>
+            </Box>
             {parcels.length > 1 ? (
               <Box minW={{ base: 'full', smd: '200px' }}>
                 <Text fontSize="xs" color="gray.600" mb={1}>
@@ -649,6 +663,46 @@ const ActivitiesPage = () => {
                   <FaChevronRight />
                 </StandardButton>
               </Flex>
+              {latestDate && (
+                <Flex
+                  mb={4}
+                  gap={3}
+                  align={{ base: 'flex-start', md: 'center' }}
+                  direction={{ base: 'column', md: 'row' }}
+                  data-testid="calendar-empty-month">
+                  <Text fontSize="sm" color="gray.600">
+                    {intl.formatMessage(
+                      { id: 'activities.emptyMonth' },
+                      {
+                        month: monthTitle,
+                        date: formatDateFromTimestamp(latestDate, intl.locale, {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric'
+                        })
+                      }
+                    )}
+                  </Text>
+                  <StandardButton
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      const d = new Date(String(latestDate).slice(0, 10) + 'T12:00:00');
+                      setCursor(new Date(d.getFullYear(), d.getMonth(), 1));
+                    }}>
+                    {intl.formatMessage(
+                      { id: 'activities.goToLatest' },
+                      {
+                        month: formatDateFromTimestamp(latestDate, intl.locale, {
+                          month: 'long',
+                          year: 'numeric'
+                        })
+                      }
+                    )}{' '}
+                    →
+                  </StandardButton>
+                </Flex>
+              )}
               <Box overflowX="auto">
                 <Grid templateColumns="repeat(7, minmax(96px, 1fr))" gap={1} minW="680px">
                   {[0, 1, 2, 3, 4, 5, 6].map((d) => (
@@ -747,7 +801,7 @@ const ActivitiesPage = () => {
                                     alignItems="center"
                                     gap={1}>
                                     <Icon
-                                      as={TYPE_ICON[row.event_type] ?? TYPE_ICON[3]}
+                                      as={iconForActivity(row.event_type, row.subtype)}
                                       boxSize="11px"
                                       flexShrink={0}
                                       aria-hidden
@@ -822,85 +876,29 @@ const ActivitiesPage = () => {
                 </VStack>
               ) : (
                 <Box>
-                  {/* ONE list, two shapes.
-                    A four-column table does not survive a phone. `overflowX="auto"` with no
-                    floor on the table width let it shrink to the container instead of
-                    scrolling, and at 390px every cell wrapped to ONE CHARACTER PER LINE — the
-                    ACTIVITY and PARCEL columns rendered as vertical stacks of letters. Giving
-                    it a `minW` fixed the wrapping but bought a sideways scroll, which hides the
-                    parcel — the column that answers "which block?" — off-screen by default.
-                    So below `md` the same rows render as cards, where the reading order is the
-                    order a grower asks in: when, what kind, what happened, which block. */}
-                  <VStack
-                    display={{ base: 'flex', md: 'none' }}
-                    align="stretch"
-                    spacing={2}
-                    data-testid="activities-list-cards">
-                    {visibleRows.map((row) => (
-                      <ActivityListItem
-                        key={`${row.event_type}-${row.event_id}`}
-                        row={row}
-                        intl={intl}
+                  {/* One list, one shape, at every width (2026-11-06): month groups along a thin
+                      rule, one line per activity, the same rows as the parcel page's current
+                      season (components/Events/ActivityTimeline). It replaced a four-column
+                      table on desktop (PARCEL squeezed to "Bottom / Ground / A", dates as
+                      2026-08-31, every type the same green chip) and cards on a phone. The
+                      parcel now rides in the line under the title, where it never wraps. */}
+                  <MonthTimeline
+                    items={visibleRows}
+                    dateOf={(row) => row.date}
+                    keyOf={(row) => `${row.event_type}-${row.event_id}`}
+                    renderRow={(row) => (
+                      <ActivityTimelineRow
+                        date={row.date}
+                        eventType={row.event_type}
+                        title={activityTitle(row, intl)}
+                        subtype={row.subtype}
+                        meta={[row.parcel_name, activitySummary(row, intl) || row.description]
+                          .filter(Boolean)
+                          .join(' · ')}
                         onClick={() => openEvent(row)}
                       />
-                    ))}
-                  </VStack>
-
-                  <Box display={{ base: 'none', md: 'block' }} overflowX="auto">
-                    <Table size="sm" minW="720px">
-                      <Thead>
-                        {/* ACTIVITY takes the slack, so the three narrow columns keep their
-                            headers on one line — PARCEL was breaking to "PARCE / L" once the
-                            description column grew. */}
-                        <Tr>
-                          <Th whiteSpace="nowrap">
-                            {intl.formatMessage({ id: 'activities.col.date' })}
-                          </Th>
-                          <Th whiteSpace="nowrap">
-                            {intl.formatMessage({ id: 'activities.col.type' })}
-                          </Th>
-                          <Th w="100%">{intl.formatMessage({ id: 'activities.col.detail' })}</Th>
-                          <Th whiteSpace="nowrap">
-                            {intl.formatMessage({ id: 'activities.col.parcel' })}
-                          </Th>
-                        </Tr>
-                      </Thead>
-                      <Tbody>
-                        {visibleRows.map((row) => (
-                          <Tr
-                            key={`${row.event_type}-${row.event_id}`}
-                            onClick={() => openEvent(row)}
-                            cursor="pointer"
-                            _hover={{ bg: 'green.50' }}>
-                            <Td whiteSpace="nowrap">
-                              <Text fontSize="sm">{row.date?.slice(0, 10) ?? '—'}</Text>
-                            </Td>
-                            <Td>
-                              <Badge variant={TYPE_BADGE[row.event_type]} fontSize="11px">
-                                {typeLabel(row.event_type)}
-                              </Badge>
-                            </Td>
-                            <Td>
-                              <Text fontSize="sm" fontWeight="medium">
-                                {activityTitle(row, intl)}
-                              </Text>
-                              {(() => {
-                                const summary = activitySummary(row, intl) || row.description;
-                                return summary ? (
-                                  <Text fontSize="xs" color="gray.600" noOfLines={1}>
-                                    {summary}
-                                  </Text>
-                                ) : null;
-                              })()}
-                            </Td>
-                            <Td>
-                              <Text fontSize="sm">{row.parcel_name}</Text>
-                            </Td>
-                          </Tr>
-                        ))}
-                      </Tbody>
-                    </Table>
-                  </Box>
+                    )}
+                  />
 
                   {/* Outside the scroll container on purpose: when the pager lived inside it, a
                     sideways scroll of the table carried the pagination off with it. */}
@@ -1049,17 +1047,22 @@ const ActivitiesPage = () => {
             </Text>
           </VStack>
         }>
-        <VStack align="stretch" spacing={2}>
+        {/* The same row as the list and the parcel page (ActivityTimelineRow). */}
+        <StatusList>
           {daySheetRows.map((row) => (
-            <ActivityListItem
+            <ActivityTimelineRow
               key={`${row.event_type}-${row.event_id}`}
-              row={row}
-              intl={intl}
-              showDate={false}
+              date={row.date}
+              eventType={row.event_type}
+              title={activityTitle(row, intl)}
+              subtype={row.subtype}
+              meta={[row.parcel_name, activitySummary(row, intl) || row.description]
+                .filter(Boolean)
+                .join(' · ')}
               onClick={() => openEvent(row)}
             />
           ))}
-        </VStack>
+        </StatusList>
       </ResponsiveModal>
 
       <ActivityDetailModal

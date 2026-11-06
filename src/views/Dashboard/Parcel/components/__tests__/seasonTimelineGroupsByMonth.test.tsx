@@ -46,13 +46,13 @@ const wrap = (onOpen = vi.fn()) =>
 describe('season timeline', () => {
   it('groups by month, newest month and newest activity first', () => {
     wrap();
-    const months = screen.getAllByTestId('season-activity-month');
+    const months = screen.getAllByTestId('activity-timeline-month');
     expect(months.map((m) => m.querySelector('p')?.textContent)).toEqual([
       'August 2026',
       'July 2026'
     ]);
     const augustDates = within(months[0])
-      .getAllByTestId('season-activity-row')
+      .getAllByTestId('activity-timeline-row')
       .map((r) => r.querySelector('p')?.textContent);
     expect(augustDates).toEqual(['Aug 28', 'Aug 20', 'Aug 12']);
   });
@@ -61,14 +61,14 @@ describe('season timeline', () => {
     // At 100 activities neither an inner scroll box nor expanding in place works: the card is a
     // summary, the Activities page (search, filters, calendar) holds the season.
     wrap();
-    expect(screen.getAllByTestId('season-activity-row')).toHaveLength(6);
+    expect(screen.getAllByTestId('activity-timeline-row')).toHaveLength(6);
     const link = screen.getByRole('link', { name: /See all 8 activities/ });
     expect(link.getAttribute('href')).toBe('/admin/dashboard/farm/1/activities?parcel=2&view=list');
   });
 
   it('puts the category and only the first line of the notes under the title', () => {
     wrap();
-    const first = screen.getAllByTestId('season-activity-row')[0];
+    const first = screen.getAllByTestId('activity-timeline-row')[0];
     expect(first.textContent).toContain('Note 2');
     expect(first.textContent).not.toContain('more');
     expect(first.textContent).not.toMatch(/CO₂|CO2|kg/);
@@ -77,7 +77,7 @@ describe('season timeline', () => {
   it('opens the activity it was tapped on', () => {
     const onOpen = vi.fn();
     wrap(onOpen);
-    fireEvent.click(screen.getAllByTestId('season-activity-row')[0]);
+    fireEvent.click(screen.getAllByTestId('activity-timeline-row')[0]);
     expect(onOpen).toHaveBeenCalledWith(expect.objectContaining({ id: 2 }));
   });
 
@@ -99,7 +99,7 @@ describe('season timeline', () => {
       </ChakraProvider>
     );
     spy.mockRestore();
-    expect(screen.getAllByTestId('season-activity-row')).toHaveLength(2);
+    expect(screen.getAllByTestId('activity-timeline-row')).toHaveLength(2);
     expect(errors.filter((m) => /same key/i.test(m))).toEqual([]);
   });
 });

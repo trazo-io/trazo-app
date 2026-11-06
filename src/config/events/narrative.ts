@@ -15,23 +15,9 @@
 import type { IntlShape } from 'react-intl';
 
 import type { ActivityRow } from 'store/api/activityFeedApi';
+import { verbForEvent } from 'config/activityVerbs';
 
 /** Production subtypes → verb keys (display only — entry mapping lives in activityVerbs). */
-const PRODUCTION_SUBTYPE_VERB: Record<string, string> = {
-  PL: 'planting',
-  TR: 'planting',
-  IR: 'irrigation',
-  HA: 'harvest',
-  PH: 'harvest',
-  EM: 'cleanout',
-  CU: 'field_work',
-  PR: 'field_work',
-  MO: 'field_work',
-  TH: 'field_work',
-  CM: 'field_work',
-  PO: 'field_work',
-  FP: 'field_work'
-};
 
 const EVENT_TYPE_VERB: Record<number, string> = {
   0: 'weather',
@@ -46,10 +32,14 @@ const EVENT_TYPE_VERB: Record<number, string> = {
  * (event_type, subtype) → verb key. Takes the two values rather than a row so the detail
  * modal, which holds a full event and not an `ActivityRow`, can ask the same question.
  */
+// The "Log activity" tiles decide what an activity is called, here as in the picker, the
+// filter and the row icon (2026-11-06). This file kept its own subtype map, written before
+// pruning, pollination, frost protection, transport, buffer use and seed search got tiles
+// (2026-08-22), so a transport row read "Field work" beside a truck icon.
 export const verbKeyFor = (eventType: number, subtype?: string | null): string | null => {
-  if (eventType === 1) {
-    return PRODUCTION_SUBTYPE_VERB[subtype ?? ''] ?? 'field_work';
-  }
+  const verb = verbForEvent(eventType, subtype);
+  if (verb) return verb.key;
+  if (eventType === 1) return 'field_work';
   return EVENT_TYPE_VERB[eventType] ?? null;
 };
 

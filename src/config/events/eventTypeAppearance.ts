@@ -100,15 +100,17 @@ export const TYPE_BADGE: Record<number, string> = {
  *
  * ⚠️ Pair every use with `TYPE_ICON` — colour must never be the sole signal.
  */
+// Same categories, same hues as components/Events/categoryTone EVENT_TYPE_HUE (palette B):
+// general, equipment and business share the neutral gray there, so they share `other` here.
 export const CALENDAR_FAMILY: Record<number, string> = {
   0: 'sky',
   1: 'production',
   2: 'inputs',
   3: 'other',
-  4: 'equipment',
+  4: 'other',
   5: 'soil',
   6: 'pest',
-  7: 'business'
+  7: 'other'
 };
 
 export const TYPE_ICON: Record<number, IconType> = {
