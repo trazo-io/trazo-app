@@ -532,29 +532,38 @@ const HistoryCard = ({ amount }) => {
                             // from `transparencyScore || carbonScore`, so a CARBON number could be
                             // labelled a transparency verdict.
 
+                            // In the reader's locale, full year (2026-11-06). This was fixed
+                            // to 'en-US' with a 2-digit year, so the Spanish page read
+                            // "desde el Jun 20, 26" and "Mar 5, 26 - Jun 8, 26".
+                            const dayMonth = { day: 'numeric', month: 'short' };
+                            const full = { ...dayMonth, year: 'numeric' };
                             const formatDateRange = (startDate, endDate) => {
-                              const start = formatDateFromTimestamp(startDate, 'en-US', {
-                                month: 'short',
-                                day: 'numeric',
-                                year: '2-digit'
-                              });
-
-                              if (endDate) {
-                                const end = formatDateFromTimestamp(endDate, 'en-US', {
-                                  month: 'short',
-                                  day: 'numeric',
-                                  year: '2-digit'
-                                });
-                                return `${start} - ${end}`;
+                              if (!endDate) {
+                                return intl.formatMessage(
+                                  { id: 'parcelPage.since' },
+                                  { date: formatDateFromTimestamp(startDate, intl.locale, full) }
+                                );
                               }
-
-                              // "since Jun 20, 26", not "Jun 20, 26 - Ongoing": the badge beside
-                              // it already says the season is underway.
-                              return intl.formatMessage(
-                                { id: 'parcelPage.since' },
-                                { date: start }
+                              const sameYear =
+                                String(startDate).slice(0, 4) === String(endDate).slice(0, 4);
+                              const start = formatDateFromTimestamp(
+                                startDate,
+                                intl.locale,
+                                sameYear ? dayMonth : full
                               );
+                              const end = formatDateFromTimestamp(endDate, intl.locale, full);
+                              return `${start} – ${end}`;
                             };
+
+                            // Crop only when the season's name does not already say it
+                            // ("Carrots 2026 — Bottom Ground A" printed "Product: Carrots" below).
+                            const crop =
+                              production.product &&
+                              !String(production.name || '')
+                                .toLowerCase()
+                                .includes(String(production.product).toLowerCase())
+                                ? production.product
+                                : null;
 
                             return (
                               <Box
@@ -662,13 +671,21 @@ const HistoryCard = ({ amount }) => {
                                             </Badge>
                                             <Text
                                               fontSize="xs"
-                                              color="gray.500"
-                                              fontWeight="medium"
-                                              whiteSpace="nowrap">
-                                              {formatDateRange(
-                                                production.start_date,
-                                                production.finish_date
-                                              )}
+                                              color="gray.600"
+                                              fontWeight="medium">
+                                              {[
+                                                formatDateRange(
+                                                  production.start_date,
+                                                  production.finish_date
+                                                ),
+                                                intl.formatMessage(
+                                                  { id: 'farmHome.seasons.activities' },
+                                                  { count: production.events_count ?? 0 }
+                                                ),
+                                                crop
+                                              ]
+                                                .filter(Boolean)
+                                                .join(' · ')}
                                             </Text>
                                           </Flex>
                                         </VStack>
@@ -751,14 +768,16 @@ const HistoryCard = ({ amount }) => {
                                             );
                                           }
 
+                                          // Initials on gray, not green: green on this page means
+                                          // a live season, and a person is not a status (2026-11-06).
                                           if (membersArray.length === 1) {
                                             return (
                                               <Avatar
                                                 size="sm"
                                                 name={membersArray[0].name}
                                                 src={membersArray[0].image}
-                                                bg="green.700"
-                                                color="white"
+                                                bg="gray.200"
+                                                color="gray.700"
                                               />
                                             );
                                           }
@@ -770,8 +789,8 @@ const HistoryCard = ({ amount }) => {
                                                   key={member.id}
                                                   name={member.name}
                                                   src={member.image}
-                                                  bg="green.700"
-                                                  color="white"
+                                                  bg="gray.200"
+                                                  color="gray.700"
                                                 />
                                               ))}
                                             </AvatarGroup>
@@ -780,53 +799,10 @@ const HistoryCard = ({ amount }) => {
                                       </Box>
                                     </Flex>
 
-                                    {/* Product & Team Info Row */}
-                                    <Flex
-                                      wrap="wrap"
-                                      justify="space-between"
-                                      align="center"
-                                      gap={2}>
-                                      <HStack spacing={1} minW={0} flex={1}>
-                                        <Text
-                                          fontSize="xs"
-                                          color="gray.500"
-                                          fontWeight="medium"
-                                          whiteSpace="nowrap">
-                                          {intl.formatMessage({ id: 'parcel.productLabel' })}
-                                        </Text>
-                                        <Text
-                                          fontSize="xs"
-                                          color="gray.700"
-                                          fontWeight="600"
-                                          noOfLines={1}
-                                          minW={0}>
-                                          {production.product || 'Agricultural Product'}
-                                        </Text>
-                                      </HStack>
-                                      <HStack spacing={1} flexShrink={0}>
-                                        {/* Records in THIS season.
-                                            Replaced "Team: N member" 2026-08-11. Team size is
-                                            near-constant for the ICP (mid-size wholesale orchards
-                                            run one or two operators), so it read the same on every
-                                            card — while the card said nothing about the one thing
-                                            it is a list OF. The aggregate "28 events documented"
-                                            above spans every season on the parcel; this is the
-                                            per-season number a grower needs when a certifier asks
-                                            about one year. `events_count` was already on the wire,
-                                            annotated in `get_optimized_list_queryset`. */}
-                                        <Text
-                                          fontSize="xs"
-                                          color="gray.500"
-                                          fontWeight="medium"
-                                          whiteSpace="nowrap">
-                                          {intl.formatMessage({ id: 'parcel.recordsLabel' })}
-                                        </Text>
-                                        <Text fontSize="xs" color="gray.700" fontWeight="600">
-                                          {production.events_count ?? 0}
-                                        </Text>
-                                      </HStack>
-                                    </Flex>
-
+                                    {/* The "Product: X / Records: N" row folded into the line under
+                                        the name (2026-11-06): the crop only when the name does not
+                                        already say it, and the count as "N activities", the word
+                                        the summary above uses. */}
                                     {/* Traceability — FINISHED seasons only.
                                         At inspection a certifier picks a lot and traces it forward
                                         to a sale (§ 205.103(b)(2)). Measured across 166 seasons,

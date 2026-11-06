@@ -201,18 +201,8 @@ const TrackList = ({ amount }) => {
                 {intl.formatMessage({ id: 'parcelPage.currentSeason' })}
               </Text>
               {currentHistory?.product && (
-                <Badge
-                  bg="green.50"
-                  color="green.700"
-                  borderRadius="md"
-                  px={2}
-                  py={1}
-                  fontSize="xs"
-                  fontWeight="500"
-                  textTransform="none"
-                  w="fit-content"
-                  border="1px solid"
-                  borderColor="green.200">
+                // The crop is a fact, not a status: neutral, as on the farm home (2026-11-06).
+                <Badge variant="neutral" fontSize="11px" w="fit-content">
                   {currentHistory?.product}
                 </Badge>
               )}

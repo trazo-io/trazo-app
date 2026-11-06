@@ -1341,12 +1341,13 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                   )}
                   <VStack align="flex-start" spacing={1} flex={1} minW={0}>
                     <Tooltip label={title} placement="top" hasArrow openDelay={500}>
+                      {/* One step below the card title ("Current season"), not level
+                          with it: an activity is an entry IN the card (2026-11-06). */}
                       <Text
-                        fontSize={{ base: 'md', md: 'lg' }}
+                        fontSize={{ base: 'sm', md: 'md' }}
                         fontWeight="600"
                         color={textColor}
-                        noOfLines={2}
-                        letterSpacing="-0.02em">
+                        noOfLines={2}>
                         {title}
                       </Text>
                     </Tooltip>
