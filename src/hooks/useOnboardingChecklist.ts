@@ -198,6 +198,23 @@ export function resolveOspSectionDetail(osps?: any[]): ChecklistItem['detail'] |
   };
 }
 
+/**
+ * What the completed pilot panel should do with the farm's activity count (2026-11-06): note
+ * the count the first time setup is seen complete, then dismiss once one more activity exists.
+ */
+export function completedPilotPanelAction(args: {
+  pilotStepsComplete: boolean;
+  dismissed: boolean;
+  loaded: boolean;
+  baseline: number | null;
+  activityCount: number;
+}): 'set-baseline' | 'dismiss' | null {
+  const { pilotStepsComplete, dismissed, loaded, baseline, activityCount } = args;
+  if (!pilotStepsComplete || dismissed || !loaded) return null;
+  if (baseline == null) return 'set-baseline';
+  return activityCount > baseline ? 'dismiss' : null;
+}
+
 export function useOnboardingChecklist() {
   const { canWrite } = useUserRole();
   const checklistDismissed = useTourStore((s) => s.checklistDismissed);
@@ -229,9 +246,14 @@ export function useOnboardingChecklist() {
 
   // Fetch productions for the current farm (RTK Query)
   const estIdNum = farmId ? Number(farmId) : 0;
+  // A pilot whose steps are complete still shows "These setup steps are complete" until the
+  // farm's first activity is logged (Oscar, 2026-11-06), so their seasons keep loading until
+  // then. Once an activity is seen the panel dismisses itself (below) and the request stops.
+  const pilotPlan = canWrite && isPilotSubscription(company?.subscription);
+  const awaitingFirstActivity = pilotPlan && checklistCompleted && !checklistDismissed;
   const { data: productions, isLoading: isLoadingProductions } = useGetProductionsByFarmQuery(
     { farmId: estIdNum },
-    { skip: checklistSettled || !estIdNum || isNaN(estIdNum) }
+    { skip: (checklistSettled && !awaitingFirstActivity) || !estIdNum || isNaN(estIdNum) }
   );
 
   // OSP existence for the current farm. Same "completed only from real data" rule as the season
@@ -387,6 +409,43 @@ export function useOnboardingChecklist() {
   // later loads skip the data requests and show only that line; a self-serve writer's panel
   // still hides on completion as before.
   const pilotStepsComplete = isPilot && (allComplete || checklistCompleted);
+
+  // The completed pilot panel stays until the farm logs its first activity AFTER setup, then
+  // goes for good (Oscar, 2026-11-06: "hide it after the first activity"). Not "any activity":
+  // logging records is one of the four required pilot steps, so every completed pilot already
+  // has some, and the Run 8b sentence would never show. The count at completion is the
+  // baseline; one more is the trigger. `dismissChecklist` is persisted.
+  const activityCount = useMemo(
+    () => ((productions as any[]) || []).reduce((n, p) => n + (p?.events_count ?? 0), 0),
+    [productions]
+  );
+  // Per farm: activityCount comes from the routed farm's productions, so the baseline it is
+  // compared against must be that farm's own (review of #297).
+  const baseline = useTourStore((s) =>
+    farmId ? s.checklistActivityBaselines?.[farmId] ?? null : null
+  );
+  const setBaseline = useTourStore((s) => s.setChecklistActivityBaseline);
+  useEffect(() => {
+    const action = completedPilotPanelAction({
+      pilotStepsComplete,
+      dismissed: checklistDismissed,
+      loaded: !!farmId && !isLoadingProductions && !!productions,
+      baseline,
+      activityCount
+    });
+    if (action === 'set-baseline' && farmId) setBaseline(farmId, activityCount);
+    if (action === 'dismiss') dismissChecklist();
+  }, [
+    pilotStepsComplete,
+    checklistDismissed,
+    isLoadingProductions,
+    productions,
+    activityCount,
+    baseline,
+    setBaseline,
+    dismissChecklist,
+    farmId
+  ]);
   const isVisible =
     hasCompany &&
     hasEstablishments &&

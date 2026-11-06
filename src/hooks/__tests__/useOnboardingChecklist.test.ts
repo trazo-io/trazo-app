@@ -10,7 +10,7 @@
  * These tests pin the two properties that fix is made of: the items exist, and they are not
  * chained behind the season.
  */
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 // Indexed by a computed key below, so widen from the literal-keyed JSON type.
 import enCatalogue from '../../i18n/lang/en-US.json';
@@ -21,8 +21,10 @@ const es = esCatalogue as Record<string, string>;
 import {
   WRITER_ITEMS,
   resolveOspSectionDetail,
-  resolveWriterCompletion
+  resolveWriterCompletion,
+  completedPilotPanelAction
 } from '../useOnboardingChecklist';
+import { useTourStore } from '../../store/tourStore';
 
 const FARM = '148';
 
@@ -192,5 +194,69 @@ describe('resolveWriterCompletion — certifier prerequisites', () => {
     expect(done['file-osp']).toBe(false);
     expect(done['upload-ofpp']).toBe(false);
     expect(done['add-parcel']).toBe(false);
+  });
+});
+
+describe('completed pilot panel: hides after the first activity logged after setup', () => {
+  const base = { pilotStepsComplete: true, dismissed: false, loaded: true };
+
+  it('notes the activity count the first time setup is seen complete', () => {
+    expect(completedPilotPanelAction({ ...base, baseline: null, activityCount: 12 })).toBe(
+      'set-baseline'
+    );
+  });
+
+  it('stays while no new activity has been logged', () => {
+    // Logging records is a required pilot step, so a completed pilot always has some: the
+    // existing ones must not hide the panel, or "These setup steps are complete" never shows.
+    expect(completedPilotPanelAction({ ...base, baseline: 12, activityCount: 12 })).toBeNull();
+  });
+
+  it('dismisses once one more activity exists', () => {
+    expect(completedPilotPanelAction({ ...base, baseline: 12, activityCount: 13 })).toBe('dismiss');
+  });
+
+  it('does nothing before setup is complete, after a dismissal, or while loading', () => {
+    expect(
+      completedPilotPanelAction({
+        ...base,
+        pilotStepsComplete: false,
+        baseline: 1,
+        activityCount: 9
+      })
+    ).toBeNull();
+    expect(
+      completedPilotPanelAction({ ...base, dismissed: true, baseline: 1, activityCount: 9 })
+    ).toBeNull();
+    expect(
+      completedPilotPanelAction({ ...base, loaded: false, baseline: null, activityCount: 0 })
+    ).toBeNull();
+  });
+});
+
+describe('completed pilot panel: the baseline is per farm', () => {
+  // The activity count is the routed farm's, so one shared baseline let a farm switch dismiss
+  // the panel with nothing logged: baseline 12 noted on farm A, farm B already holds 20, and
+  // 20 > 12 read as "a new activity" (review of #297).
+  beforeEach(() => useTourStore.setState({ checklistActivityBaselines: {} }));
+
+  it('notes one farm without touching another', () => {
+    useTourStore.getState().setChecklistActivityBaseline('148', 12);
+    useTourStore.getState().setChecklistActivityBaseline('149', 20);
+    expect(useTourStore.getState().checklistActivityBaselines).toEqual({ '148': 12, '149': 20 });
+  });
+
+  it('a farm with more pre-existing activities sets its own baseline instead of dismissing', () => {
+    useTourStore.getState().setChecklistActivityBaseline('148', 12);
+    const farmB = useTourStore.getState().checklistActivityBaselines['149'] ?? null;
+    expect(
+      completedPilotPanelAction({
+        pilotStepsComplete: true,
+        dismissed: false,
+        loaded: true,
+        baseline: farmB,
+        activityCount: 20
+      })
+    ).toBe('set-baseline');
   });
 });
