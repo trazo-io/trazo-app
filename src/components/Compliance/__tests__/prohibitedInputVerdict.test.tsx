@@ -108,3 +108,39 @@ describe('InputVerifyHelper — a § 205.602 match reads as prohibited, not as v
     expect(rows[0].getAttribute('data-tone')).toBe('allowed');
   });
 });
+
+describe('InputVerifyHelper — a § 205.602 row allowed for one use reads as that use, not a violation', () => {
+  // 2026-11-06: calcium chloride, sprayed on Honeycrisp for bitter pit, read as "a violation your
+  // certifier must be told about". § 205.602(c) allows it as a foliar spray for a calcium-uptake
+  // disorder; the server types the row (`national_list_conditional`).
+  const CALCIUM = {
+    ...PROHIBITED,
+    national_list_substance_name: 'Calcium chloride (brine process)',
+    national_list_citation: '\u00a7 205.602(c)',
+    national_list_subsection: 'c',
+    national_list_conditional: true
+  };
+
+  it('states the condition and never the violation', () => {
+    const { container } = renderWith(CALCIUM);
+    expect(screen.queryByText(/Prohibited in organic crop production/i)).toBeNull();
+    expect(screen.queryByText(/violation/i)).toBeNull();
+    expect(screen.getByText(/Allowed only for the use the rule names/i)).toBeTruthy();
+    const body = container.querySelector('[data-verdict="restricted"]')?.textContent || '';
+    expect(body).toContain('Calcium chloride (brine process)');
+    expect(body).toContain('\u00a7 205.602(c)');
+    expect(body).toContain(
+      'only as a foliar spray to treat a physiological disorder associated with calcium uptake'
+    );
+    const rows = container.querySelectorAll('[data-tone]');
+    expect(rows.length).toBe(1);
+    expect(rows[0].getAttribute('data-tone')).toBe('restricted');
+  });
+
+  it('keeps the violation for a prohibited row the server did not type as conditional', () => {
+    // A note alone softens nothing: only the typed flag does.
+    renderWith({ ...CALCIUM, national_list_conditional: false });
+    expect(screen.getByText(/Prohibited in organic crop production/i)).toBeTruthy();
+    expect(screen.queryByText(/Allowed only for the use the rule names/i)).toBeNull();
+  });
+});

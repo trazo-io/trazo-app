@@ -71,6 +71,7 @@ import type {
   OSP,
   PlanMaterialEntry
 } from 'types/osp';
+import { nationalListCondition } from 'components/Compliance/nationalListCondition';
 import { apiErrorMessage } from 'utils/apiErrorMessage';
 
 interface ChangeLogSectionProps {
@@ -383,14 +384,61 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
    *  Registry chips are gray (2026-11-04). OMRI was purple, the National List blue, WSDA teal:
    *  a colour per source that encodes nothing the section heading does not already say, and
    *  blue is reserved for info alerts. Same call as the input lookup's source badges (#263). */
+  /** "Restricted use: only as a foliar spray ..." for a § 205.602 row allowed for one use. */
+  const restrictedUseNote = (
+    cfrSection: string | null | undefined,
+    subsection: string | null | undefined
+  ) => {
+    const condition = nationalListCondition(intl, cfrSection, subsection);
+    return condition
+      ? intl.formatMessage(
+          {
+            id: 'osp.approvedInputs.restrictedUse',
+            defaultMessage: 'Restricted use: {condition}'
+          },
+          { condition }
+        )
+      : intl.formatMessage({
+          id: 'osp.approvedInputs.restrictedUseGeneric',
+          defaultMessage: 'Restricted use: only for the use the rule names'
+        });
+  };
+
   const renderNationalListChip = (
-    s: { id: number; substance_name: string },
+    s: {
+      id: number;
+      substance_name: string;
+      cfr_section?: string | null;
+      subsection?: string | null;
+      is_conditionally_permitted?: boolean;
+    },
     scheme: string,
     tooltip: string | undefined
   ) => (
-    <Tooltip key={`nl-${s.id}`} label={tooltip} hasArrow>
-      <Tag size="md" colorScheme={scheme} borderRadius="md">
-        <TagLabel>{s.substance_name}</TagLabel>
+    <Tooltip
+      key={`nl-${s.id}`}
+      label={
+        s.is_conditionally_permitted
+          ? [tooltip, restrictedUseNote(s.cfr_section, s.subsection)].filter(Boolean).join(' · ')
+          : tooltip
+      }
+      hasArrow>
+      <Tag
+        size="md"
+        colorScheme={scheme}
+        borderRadius="md"
+        data-restricted={s.is_conditionally_permitted ? 'true' : undefined}>
+        <TagLabel>
+          {s.is_conditionally_permitted
+            ? intl.formatMessage(
+                {
+                  id: 'osp.approvedInputs.restrictedChip',
+                  defaultMessage: '{name} (restricted use)'
+                },
+                { name: s.substance_name }
+              )
+            : s.substance_name}
+        </TagLabel>
         <TagCloseButton
           isDisabled={!isEditable}
           onClick={() =>
@@ -423,12 +471,15 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
     badgeScheme,
     identifier,
     name,
+    note,
     action
   }: {
     badge: string;
     badgeScheme: string;
     identifier?: string | null;
     name: string;
+    /** A line under the name: the condition of a § 205.602 row allowed for one use. */
+    note?: string;
     action: React.ReactNode;
   }) => (
     <Flex
@@ -453,6 +504,11 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
         <Text fontSize="sm" fontWeight="semibold" noOfLines={2}>
           {name}
         </Text>
+        {note && (
+          <Text fontSize="xs" color="gray.800" data-note="restricted-use">
+            {note}
+          </Text>
+        )}
       </VStack>
       {action}
     </Flex>
@@ -586,9 +642,10 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
               cfr_section: result.national_list_cfr_section,
               citation: result.national_list_citation ?? null,
               is_national_list_entry: result.national_list_is_entry !== false,
-              subsection: null,
+              subsection: result.national_list_subsection ?? null,
               status: result.national_list_status,
-              restriction_notes: null
+              is_conditionally_permitted: result.national_list_conditional === true,
+              restriction_notes: result.national_list_restriction_notes ?? null
             }
           ]
         : [];
@@ -601,8 +658,10 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
     // and both answer the same search. `status` therefore has to be read PER ROW: reading it
     // from whichever entry ranked first would put an ordinary Add button next to a substance
     // banned in organic production the moment a query matched one of each.
-    const isProhibited = (row: { status?: string | null }) =>
-      (row.status || '').toLowerCase() === 'prohibited';
+    // Three § 205.602 rows are prohibited EXCEPT for one use the rule names ((c), (e), (h)); the
+    // server accepts them on a plan and prints the condition beside them. Typed by the server.
+    const isProhibited = (row: { status?: string | null; is_conditionally_permitted?: boolean }) =>
+      (row.status || '').toLowerCase() === 'prohibited' && row.is_conditionally_permitted !== true;
 
     if (!hasOMRI && !hasNL && !hasWSDA) {
       return renderNoMatch();
@@ -644,6 +703,11 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
               row.is_national_list_entry === false ? null : row.citation || row.cfr_section
             }
             name={row.substance_name}
+            note={
+              row.is_conditionally_permitted
+                ? restrictedUseNote(row.cfr_section, row.subsection)
+                : undefined
+            }
             action={
               isProhibited(row) ? (
                 // The server refuses this too (add_approved_input). The control is removed here

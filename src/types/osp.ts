@@ -75,6 +75,10 @@ export interface ApprovedNationalListInput {
   /** False for a nonsynthetic substance: allowed without a National List entry, so never filed under one. */
   is_national_list_entry?: boolean;
   status: string | null;
+  /** A § 205.602 row the rule allows for one stated use; the plan may carry it. */
+  is_conditionally_permitted?: boolean;
+  subsection?: string | null;
+  restriction_notes?: string | null;
 }
 
 export interface ApprovedOMRIInput {
@@ -237,6 +241,15 @@ export interface InputVerifyResult {
   national_list_is_entry?: boolean | null;
   national_list_status: string | null;
   /**
+   * A § 205.602 row the rule allows for one stated use ((c), (e), (h)). Typed by the server from
+   * `annotation_kind`; the client never reads it from the note's prose.
+   */
+  national_list_conditional?: boolean | null;
+  /** The paragraph letter ("c"), so the client words the condition in the reader's language. */
+  national_list_subsection?: string | null;
+  /** The rule's text as stored, in English. */
+  national_list_restriction_notes?: string | null;
+  /**
    * Every § 205.601/602 entry the query could mean, best first. `status` travels PER ROW
    * because the catalogue holds prohibited substances alongside allowed ones and both answer
    * the same search — reading the status of whichever row ranked first would put an ordinary
@@ -250,6 +263,7 @@ export interface InputVerifyResult {
     is_national_list_entry?: boolean;
     subsection: string | null;
     status: string | null;
+    is_conditionally_permitted?: boolean;
     restriction_notes: string | null;
   }[];
   national_list_candidate_count?: number;
@@ -290,12 +304,7 @@ export type PlanMaterialListingBasis =
 
 export type PlanMaterialCategory =
   /** Not chosen yet: the backend default since migration 0070 (back #294). */
-  | ''
-  | 'fertilizer_amendment'
-  | 'pest_disease_weed'
-  | 'production_aid'
-  | 'post_harvest'
-  | 'other';
+  '' | 'fertilizer_amendment' | 'pest_disease_weed' | 'production_aid' | 'post_harvest' | 'other';
 
 export interface PlanMaterialEntry {
   id: number;

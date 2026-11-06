@@ -73,6 +73,8 @@ import { useLazyVerifyInputQuery } from 'store/api/ospApi';
 import type { InputVerifyResult } from 'types/osp';
 import { parseDateOnly } from 'utils/dateOnly';
 
+import { nationalListCondition } from './nationalListCondition';
+
 interface InputVerifyHelperProps {
   /** Current value of the input field the farmer is about to save. */
   name: string;
@@ -262,7 +264,22 @@ const ResultCard: React.FC<{
   const noMatch = !hasOMRI && !hasWSDA && !hasNL;
   // 33 of the 97 seeded National List rows are prohibited, and they answer ordinary searches:
   // "manure" returns "Ash from manure burning" (§ 205.602).
-  const nlProhibited = hasNL && (result.national_list_status || '').toLowerCase() === 'prohibited';
+  const nlListedProhibited =
+    hasNL && (result.national_list_status || '').toLowerCase() === 'prohibited';
+  // Three § 205.602 rows are prohibited EXCEPT for one use the rule names: (c) calcium chloride,
+  // (e) potassium chloride, (h) sodium nitrate. The server types them; the prose never decides.
+  // Until 2026-11-06 calcium chloride, sprayed on Honeycrisp for bitter pit, read here as "a
+  // violation your certifier must be told about".
+  const nlConditional = nlListedProhibited && result.national_list_conditional === true;
+  const nlProhibited = nlListedProhibited && !nlConditional;
+  const nlCondition = nlConditional
+    ? nationalListCondition(intl, result.national_list_cfr_section, result.national_list_subsection)
+    : null;
+  const nlSection = result.national_list_citation
+    ? result.national_list_citation
+    : result.national_list_cfr_section
+    ? `\u00a7 ${result.national_list_cfr_section}`
+    : '\u00a7 205.602';
 
   if (noMatch) {
     const search = `https://www.omri.org/omri-search?query=${encodeURIComponent(query)}`;
@@ -299,6 +316,45 @@ const ResultCard: React.FC<{
 
   return (
     <VStack align="stretch" spacing={2} mt={2}>
+      {nlConditional && (
+        <Alert status="warning" fontSize="xs" mt={0} data-verdict="restricted">
+          <AlertIcon />
+          <VStack align="start" spacing={1}>
+            <Text fontWeight="semibold">
+              {intl.formatMessage({
+                id: 'inputVerify.restricted.title',
+                defaultMessage: 'Allowed only for the use the rule names'
+              })}
+            </Text>
+            <Text>
+              {nlCondition
+                ? intl.formatMessage(
+                    {
+                      id: 'inputVerify.restricted.body',
+                      defaultMessage:
+                        '{name}: {section} allows it {condition}. Record the use on each application; your certifier checks it against this condition.'
+                    },
+                    {
+                      name: result.national_list_substance_name || '',
+                      section: nlSection,
+                      condition: nlCondition
+                    }
+                  )
+                : intl.formatMessage(
+                    {
+                      id: 'inputVerify.restricted.bodyGeneric',
+                      defaultMessage:
+                        '{name}: {section} prohibits it except for the use the rule names. Record the use on each application; your certifier checks it against the rule.'
+                    },
+                    {
+                      name: result.national_list_substance_name || '',
+                      section: nlSection
+                    }
+                  )}
+            </Text>
+          </VStack>
+        </Alert>
+      )}
       {nlProhibited && (
         <Alert status="error" fontSize="xs" mt={0}>
           <AlertIcon />
@@ -472,7 +528,7 @@ const ResultCard: React.FC<{
                     })
               }
               title={result.national_list_substance_name || ''}
-              tone={nlProhibited ? 'prohibited' : 'allowed'}
+              tone={nlProhibited ? 'prohibited' : nlConditional ? 'restricted' : 'allowed'}
               subtitle={[
                 nlNonsynthetic
                   ? intl.formatMessage({
@@ -486,6 +542,11 @@ const ResultCard: React.FC<{
                   ? intl.formatMessage({
                       id: 'inputVerify.nlStatus.prohibited',
                       defaultMessage: 'prohibited'
+                    })
+                  : nlConditional
+                  ? intl.formatMessage({
+                      id: 'inputVerify.nlStatus.restricted',
+                      defaultMessage: 'restricted use'
                     })
                   : intl.formatMessage({
                       id: 'inputVerify.nlStatus.allowed',
@@ -524,7 +585,7 @@ const MatchRow: React.FC<{
   badgeLabel: string;
   title: string;
   subtitle?: string;
-  tone?: 'allowed' | 'prohibited';
+  tone?: 'allowed' | 'prohibited' | 'restricted';
   /** This listing is the one attached to the record. */
   attached?: boolean;
   /** Grower action for this row (attach / detach). Rendered after the text, never before. */
@@ -546,8 +607,22 @@ const MatchRow: React.FC<{
    */
   <Box data-tone={tone} data-attached={attached ? 'true' : undefined}>
     <StatusRow
-      tone={tone === 'prohibited' ? 'crit' : attached ? 'clear' : 'neutral'}
-      icon={tone === 'prohibited' ? FaExclamationTriangle : attached ? FaCheck : FaTag}
+      tone={
+        tone === 'prohibited'
+          ? 'crit'
+          : tone === 'restricted'
+          ? 'warn'
+          : attached
+          ? 'clear'
+          : 'neutral'
+      }
+      icon={
+        tone === 'prohibited' || tone === 'restricted'
+          ? FaExclamationTriangle
+          : attached
+          ? FaCheck
+          : FaTag
+      }
       // Two lines, then ellipsis: the product name is the evidence the grower checks against
       // the label in their hand, so the action sits BELOW it and never squeezes it.
       title={
@@ -564,8 +639,10 @@ const MatchRow: React.FC<{
       {subtitle && (
         <Text
           fontSize="xs"
-          color={tone === 'prohibited' ? 'red.900' : 'gray.600'}
-          fontWeight={tone === 'prohibited' ? 'semibold' : 'normal'}
+          color={
+            tone === 'prohibited' ? 'red.900' : tone === 'restricted' ? 'gray.800' : 'gray.600'
+          }
+          fontWeight={tone === 'allowed' ? 'normal' : 'semibold'}
           noOfLines={1}>
           {subtitle}
         </Text>
