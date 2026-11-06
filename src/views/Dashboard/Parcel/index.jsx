@@ -2,6 +2,7 @@
 import {
   Flex,
   Grid,
+  Heading,
   Text,
   useColorModeValue,
   Box,
@@ -26,7 +27,8 @@ import TrackList from './components/TrackList';
 // assets
 import { FaArrowRight, FaDrawPolygon, FaEllipsisH } from 'react-icons/fa';
 import {
-  PAGE_MAX_W,
+  PAGE_GUTTER,
+  PageColumn,
   StandardButton,
   StandardMenuItem,
   TOUCH_TARGET
@@ -131,166 +133,166 @@ export default function ParcelView() {
         16px right of the cards it titles — the split-grid defect frontend.md names. Removed;
         the page gutter is the only horizontal inset now.
       */
-      px={{ base: 3, md: '24px' }}
+      // The app's one page column (2026-11-06): this gutter, then PageColumn's PAGE_MAX_W cap,
+      // the same as StandardPage and the farm home. Uncapped, a 1,780px screen stretched the
+      // cards to 1,430px.
+      px={PAGE_GUTTER}
       w="100%"
-      // The app's one page width (PAGE_MAX_W, the same cap as StandardPage and the farm home).
-      // Uncapped, a 1,780px screen stretched the cards to 1,430px (2026-11-06).
-      maxW={PAGE_MAX_W}
-      mx="auto"
       overflow="hidden">
-      {/* Mounted HERE, not on the parcel profile page. Profile is a drill-down at
+      <PageColumn>
+        {/* Mounted HERE, not on the parcel profile page. Profile is a drill-down at
           /parcel/:id/profile that a farmer reaches deliberately; this is the parcel dashboard
           they land on, and it is the page that draws the map. A consent prompt on a page nobody
           routinely opens collects no consent — the first version of this shipped on profile and
           simply never appeared. */}
-      <LocationDisclosurePrompt
-        parcelId={parcelId}
-        level={data?.location_disclosure_level}
-        choiceMade={data?.location_disclosure_choice_made}
-        hasBoundary={Boolean(data?.polygon)}
-      />
+        <LocationDisclosurePrompt
+          parcelId={parcelId}
+          level={data?.location_disclosure_level}
+          choiceMade={data?.location_disclosure_choice_made}
+          hasBoundary={Boolean(data?.polygon)}
+        />
 
-      {/* Page header, the same shape as the farm home: the PARCEL's name (this page titled
+        {/* Page header, the same shape as the farm home: the PARCEL's name (this page titled
           itself with the farm's name until 2026-11-06, so every parcel page read "Calapooia Bend
           Farm"), one muted line of facts, and the profile one click away. The Parcel Application
           moved from a green status-in-the-label button here to its own card below. */}
-      <Flex
-        mb={{ base: '16px', md: '24px' }}
-        justify="space-between"
-        align="flex-start"
-        gap={3}
-        data-testid="parcel-page-header">
-        <Box minW={0}>
-          <Text
-            as="h1"
-            color={mainText}
-            fontSize={{ base: 'xl', md: '2xl' }}
-            fontWeight="bold"
-            lineHeight="1.2">
-            {data?.name || '\u00a0'}
-          </Text>
-          <PageHeaderMeta
-            items={[
-              establishment?.name,
-              [establishment?.city || establishment?.zone, establishment?.state]
-                .filter(Boolean)
-                .join(', '),
-              data?.area != null && data?.area !== '' && !Number.isNaN(Number(data.area))
-                ? intl.formatMessage(
-                    { id: 'parcel.card.acres' },
-                    { count: (Number(data.area) * 2.47105).toFixed(1) }
-                  )
-                : null,
-              data?.product || null
-            ]}
-          />
-          {/* Phone: a text link under the facts (the farm home's pattern). */}
-          <Box display={{ base: 'block', md: 'none' }} pt={1}>
-            <Text
-              as={RouterLink}
-              to={`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/profile`}
-              fontSize="sm"
-              fontWeight="semibold"
-              color="green.700"
-              {...TOUCH_TARGET}>
-              {intl.formatMessage({ id: 'parcelPage.profileLink' })}&nbsp;
-              <span aria-hidden="true">→</span>
-            </Text>
+        <Flex
+          mb={{ base: '16px', md: '24px' }}
+          justify="space-between"
+          align="flex-start"
+          gap={3}
+          data-testid="parcel-page-header">
+          <Box minW={0}>
+            {/* Same title scale as the farm home and the farm profile (Heading lg/xl): this is
+                their child page, and the parent's title was half again as large. */}
+            <Heading as="h1" size={{ base: 'lg', md: 'xl' }} color={mainText}>
+              {data?.name || '\u00a0'}
+            </Heading>
+            <PageHeaderMeta
+              items={[
+                establishment?.name,
+                [establishment?.city || establishment?.zone, establishment?.state]
+                  .filter(Boolean)
+                  .join(', '),
+                data?.area != null && data?.area !== '' && !Number.isNaN(Number(data.area))
+                  ? intl.formatMessage(
+                      { id: 'parcel.card.acres' },
+                      { count: (Number(data.area) * 2.47105).toFixed(1) }
+                    )
+                  : null,
+                data?.product || null
+              ]}
+            />
+            {/* Phone: a text link under the facts (the farm home's pattern). */}
+            <Box display={{ base: 'block', md: 'none' }} pt={1}>
+              <Text
+                as={RouterLink}
+                to={`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/profile`}
+                fontSize="sm"
+                fontWeight="semibold"
+                color="green.700"
+                {...TOUCH_TARGET}>
+                {intl.formatMessage({ id: 'parcelPage.profileLink' })}&nbsp;
+                <span aria-hidden="true">→</span>
+              </Text>
+            </Box>
           </Box>
-        </Box>
-        <Box flexShrink={0} display={{ base: 'none', md: 'block' }}>
-          <StandardButton
-            variant="outline"
-            size="sm"
-            rightIcon={<FaArrowRight aria-hidden />}
-            onClick={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/profile`)}>
-            {intl.formatMessage({ id: 'parcelPage.profileLink' })}
-          </StandardButton>
-        </Box>
-      </Flex>
-      <Grid
-        templateColumns={{ md: '1fr', lg: '1.8fr 1.2fr' }}
-        templateRows={{ md: '1fr auto', lg: '1fr' }}
-        my={{ base: '20px', md: '26px' }}
-        gap={{ base: '16px', md: '24px' }}
-        w="100%"
-        maxW="100%">
-        <CardWithMap
-          polygon={isFetching ? null : data?.polygon}
-          center={isFetching ? null : data?.map_metadata?.center}
-          zoom={isFetching ? null : data?.map_metadata?.zoom}
-          otherParcels={isFetching ? [] : otherParcels}
-          name={isFetching ? null : data?.name}
-          menu={
-            canWrite && !isFetching ? (
-              // A shortcut to the parcel's boundary step, which also shows the farm's other
-              // parcels. Styled like Google's own map controls beside it (white, square).
-              <Menu placement="bottom-end">
-                <MenuButton
-                  as={IconButton}
-                  icon={<Icon as={FaEllipsisH} />}
-                  aria-label={intl.formatMessage({ id: 'parcel.map.menu' })}
-                  size="md"
-                  // 44px: the touch floor (Google's own controls beside it are 40px).
-                  w="44px"
-                  minW="44px"
-                  h="44px"
-                  bg="white"
-                  color="gray.700"
-                  borderRadius="2px"
-                  boxShadow="0 1px 4px rgba(0,0,0,0.3)"
-                  _hover={{ bg: 'gray.50' }}
-                />
-                <MenuList>
-                  <StandardMenuItem
-                    icon={<Icon as={FaDrawPolygon} />}
-                    onClick={() =>
-                      navigate(
-                        `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/change?step=boundary`
-                      )
-                    }>
-                    {intl.formatMessage({
-                      id:
-                        toLatLngPath(data?.polygon).length >= 3
-                          ? 'parcel.map.editOutline'
-                          : 'parcel.map.drawOutline'
-                    })}
-                  </StandardMenuItem>
-                </MenuList>
-              </Menu>
-            ) : null
-          }
-        />
-        {data && !isFetching ? (
-          <ParcelApplicationCard
-            farmId={farmId}
-            parcelId={parcelId}
-            status={data.application_status}
-            missing={data.application_missing}
-            evidenceStatus={data.evidence_status}
-            evidenceMissing={data.evidence_missing}
+          <Box flexShrink={0} display={{ base: 'none', md: 'block' }}>
+            <StandardButton
+              variant="outline"
+              size="sm"
+              rightIcon={<FaArrowRight aria-hidden />}
+              onClick={() =>
+                navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/profile`)
+              }>
+              {intl.formatMessage({ id: 'parcelPage.profileLink' })}
+            </StandardButton>
+          </Box>
+        </Flex>
+        <Grid
+          templateColumns={{ md: '1fr', lg: '1.8fr 1.2fr' }}
+          templateRows={{ md: '1fr auto', lg: '1fr' }}
+          my={{ base: '20px', md: '26px' }}
+          gap={{ base: '16px', md: '24px' }}
+          w="100%"
+          maxW="100%">
+          <CardWithMap
+            polygon={isFetching ? null : data?.polygon}
+            center={isFetching ? null : data?.map_metadata?.center}
+            zoom={isFetching ? null : data?.map_metadata?.zoom}
+            otherParcels={isFetching ? [] : otherParcels}
+            name={isFetching ? null : data?.name}
+            menu={
+              canWrite && !isFetching ? (
+                // A shortcut to the parcel's boundary step, which also shows the farm's other
+                // parcels. Styled like Google's own map controls beside it (white, square).
+                <Menu placement="bottom-end">
+                  <MenuButton
+                    as={IconButton}
+                    icon={<Icon as={FaEllipsisH} />}
+                    aria-label={intl.formatMessage({ id: 'parcel.map.menu' })}
+                    size="md"
+                    // 44px: the touch floor (Google's own controls beside it are 40px).
+                    w="44px"
+                    minW="44px"
+                    h="44px"
+                    bg="white"
+                    color="gray.700"
+                    borderRadius="2px"
+                    boxShadow="0 1px 4px rgba(0,0,0,0.3)"
+                    _hover={{ bg: 'gray.50' }}
+                  />
+                  <MenuList>
+                    <StandardMenuItem
+                      icon={<Icon as={FaDrawPolygon} />}
+                      onClick={() =>
+                        navigate(
+                          `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/change?step=boundary`
+                        )
+                      }>
+                      {intl.formatMessage({
+                        id:
+                          toLatLngPath(data?.polygon).length >= 3
+                            ? 'parcel.map.editOutline'
+                            : 'parcel.map.drawOutline'
+                      })}
+                    </StandardMenuItem>
+                  </MenuList>
+                </Menu>
+              ) : null
+            }
           />
-        ) : (
-          <Card p="0px" bg={cardColor}>
-            <CardBody p="0px" w="100%" h={{ base: '200px', lg: '290px' }} borderRadius="15px">
-              <Shimmer height="100%" borderRadius="15px" />
-            </CardBody>
-          </Card>
-        )}
-      </Grid>
-      <Grid
-        templateColumns={{ sm: '1fr', md: '1fr', lg: '1fr 1fr' }}
-        templateRows={{ sm: '1fr auto', md: '1fr', lg: '1fr' }}
-        gap={{ base: '16px', md: '24px' }}
-        w="100%"
-        maxW="100%">
-        <TrackList amount={40} />
-        <HistoryCard
-          title={intl.formatMessage({ id: 'parcel.history' })}
-          amount={data?.productions_completed}
-          captions={historyCardTitles}
-        />
-      </Grid>
+          {data && !isFetching ? (
+            <ParcelApplicationCard
+              farmId={farmId}
+              parcelId={parcelId}
+              status={data.application_status}
+              missing={data.application_missing}
+              evidenceStatus={data.evidence_status}
+              evidenceMissing={data.evidence_missing}
+            />
+          ) : (
+            <Card p="0px" bg={cardColor}>
+              <CardBody p="0px" w="100%" h={{ base: '200px', lg: '290px' }} borderRadius="15px">
+                <Shimmer height="100%" borderRadius="15px" />
+              </CardBody>
+            </Card>
+          )}
+        </Grid>
+        <Grid
+          templateColumns={{ sm: '1fr', md: '1fr', lg: '1fr 1fr' }}
+          templateRows={{ sm: '1fr auto', md: '1fr', lg: '1fr' }}
+          gap={{ base: '16px', md: '24px' }}
+          w="100%"
+          maxW="100%">
+          <TrackList amount={40} />
+          <HistoryCard
+            title={intl.formatMessage({ id: 'parcel.history' })}
+            amount={data?.productions_completed}
+            captions={historyCardTitles}
+          />
+        </Grid>
+      </PageColumn>
     </Flex>
   );
 }

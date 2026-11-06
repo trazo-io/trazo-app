@@ -128,6 +128,21 @@ interface StandardPageProps {
 // cap instead of restating '8xl': one width rule for the whole app, in one place.
 export const PAGE_MAX_W = '8xl';
 
+/**
+ * The app's one page column (2026-11-06): the gutter OUTSIDE, the PAGE_MAX_W cap inside, so every
+ * page's content is the same width and starts at the same x. The farm home and the parcel page
+ * had put their padding inside the cap (content 48px narrower, 24px further right than a
+ * StandardPage page at 1920px). AdminNavbar uses the same cap and gutter, so the breadcrumb and
+ * the page title share a left edge at every width.
+ */
+export const PAGE_GUTTER = { base: 3, md: 4 } as const;
+
+export const PageColumn = ({ children }: { children: ReactNode }) => (
+  <Container maxW={PAGE_MAX_W} mx="auto" px={0} w="100%">
+    {children}
+  </Container>
+);
+
 export const StandardPage = ({
   children,
   title,
@@ -162,7 +177,7 @@ export const StandardPage = ({
           // Third gutter in the same component, now the same as the hero's and the body's.
           // The Container matches too, so on a page that constrains its content the Back
           // button lands on that column instead of out at the window edge.
-          px={{ base: 3, md: 4 }}>
+          px={PAGE_GUTTER}>
           <Container maxW={contentMaxW || PAGE_MAX_W} mx="auto" px={0}>
             <StandardButton
               variant="outline"
@@ -182,7 +197,7 @@ export const StandardPage = ({
           bg="linear-gradient(135deg, #FAFAFA 0%, #F8F9FA 100%)"
           pt={{ base: '120px', md: '120px' }}
           pb={{ base: '64px', md: '80px' }}
-          px={{ base: 3, md: 4 }}>
+          px={PAGE_GUTTER}>
           {/* The hero NEVER has a width of its own: it takes `contentMaxW`, so it is capped
               exactly where the body is capped, and runs full width when the body does.
               Defaulting this to '6xl' while the content below defaulted to unconstrained is
@@ -322,7 +337,7 @@ export const StandardPage = ({
         // SAME gutter as the hero above (that Box uses `px={{ base: 3, md: 4 }}`). They used
         // to differ by 8px, so a page's title and its content sat on two grids that almost
         // lined up — the worst kind, since it reads as a mistake rather than a margin.
-        px={{ base: 3, md: 4 }}
+        px={PAGE_GUTTER}
         mt={needsMinimalHeader ? '16px' : hasHeroContent ? '-40px' : '0'}
         position="relative"
         zIndex={10}>
