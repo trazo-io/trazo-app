@@ -21,7 +21,7 @@ const welcomeTourFresh: TourDefinition = {
   trigger: { type: 'first-visit', page: '/admin/dashboard' },
   steps: [
     {
-      target: '[data-tour="farm-carousel"]',
+      target: '[data-tour="farm-home-header"]',
       titleKey: 'tour.welcomeFresh.step1.title',
       contentKey: 'tour.welcomeFresh.step1.content',
       placement: 'bottom',

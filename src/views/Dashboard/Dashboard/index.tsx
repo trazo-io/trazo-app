@@ -16,9 +16,7 @@ import {
   Center,
   Tooltip
 } from '@chakra-ui/react';
-import { S3Image } from 'components/Design';
 import { StandardNotice } from 'components/Design/StandardComponents';
-import { useBatchS3Images } from 'hooks/useBatchS3Images';
 import { useSelector } from 'react-redux';
 import { useMemo } from 'react';
 // Custom icons
@@ -51,9 +49,6 @@ import {
 import ActiveUsers from './components/ActiveUsers';
 import BarChart from 'components/Charts/BarChart';
 import Card from 'components/Card/Card';
-import SmartUsageCard from './components/SmartUsageCard';
-import CardWithImage from 'components/Card/CardWithImage';
-import Shimmer from 'components/Shimmer/Shimmer';
 import CarouselHorizontal from 'components/Carousel/CarouselHorizontal';
 import { FaPlus, FaLeaf, FaWifi, FaLock } from 'react-icons/fa';
 import LineChart from 'components/Charts/LineChart';
@@ -65,6 +60,8 @@ import imageFarm from 'assets/img/imageFarm.png';
 import TransparencySummaryCard from './components/farm/CarbonSummaryCard';
 import CertifierReadinessCard from './components/farm/CertifierReadinessCard';
 import CertifierDeadlinesStrip from './components/farm/CertifierDeadlinesStrip';
+import FarmHomeHeader from './components/farm/FarmHomeHeader';
+import SeasonsUnderwayCard from './components/farm/SeasonsUnderwayCard';
 import { useTour } from 'hooks/useTour';
 import { useTourScenario } from 'hooks/useTourScenario';
 
@@ -292,15 +289,6 @@ export default function DashboardView() {
   const hoverBg = useColorModeValue('green.50', 'green.900');
   const borderColor = useColorModeValue('gray.200', 'green.700');
 
-  const bgGradient = useColorModeValue(
-    'linear-gradient(to right, green.50, transparent)',
-    'linear-gradient(to right, green.900, transparent)'
-  );
-  const shadowHover = useColorModeValue(
-    '0 20px 27px 0 rgba(0, 0, 0, 0.05)',
-    '0 20px 27px 0 rgba(0, 0, 0, 0.2)'
-  );
-
   const establishments = useSelector((state) => state.company.currentCompany?.establishments);
 
   const activeCompany = useSelector((state) => state.company.currentCompany);
@@ -437,20 +425,6 @@ export default function DashboardView() {
     }
   }, [farmId, establishments]);
 
-  // 2025 Best Practice: Batch load S3 images for establishment
-  const s3Urls = useMemo(() => {
-    const urls = [];
-    if (establishment?.image) {
-      urls.push(establishment.image);
-    }
-    return urls;
-  }, [establishment]);
-
-  const { presignedUrls } = useBatchS3Images({
-    s3Urls,
-    enabled: s3Urls.length > 0
-  });
-
   // Redirect to first establishment when accessing root dashboard
   useEffect(() => {
     // Only redirect if we're on the exact dashboard root (not any establishment page)
@@ -560,261 +534,282 @@ export default function DashboardView() {
         </StandardNotice>
       )}
 
-      <Box>
-        <Flex
-          direction={{ base: 'column', xl: 'row' }}
-          gap={{ base: 4, md: 4, lg: 5, xl: 6 }}
-          align="flex-start">
-          <Box flex="2" w="100%" pt={{ base: 3, md: 4, lg: 6, xl: 0 }}>
-            <VStack spacing={3} align="stretch">
-              {/* Mobile: Simple Horizontal Scrollable Layout */}
-              {isMobile ? (
-                <VStack spacing={6} align="stretch" w="100%">
-                  <Box
-                    data-tour="farm-carousel"
-                    ref={establishmentScrollRef}
-                    overflowX="auto"
-                    overflowY="hidden"
-                    pt="2px"
-                    onScroll={handleEstablishmentScroll}
-                    sx={{
-                      '&::-webkit-scrollbar': {
-                        display: 'none'
-                      },
-                      scrollbarWidth: 'none',
-                      msOverflowStyle: 'none',
-                      WebkitOverflowScrolling: 'touch'
-                    }}>
-                    <HStack spacing={3} py={2} px={1} w="max-content">
-                      {establishments ? (
-                        <>
-                          {establishments.map((prop) => (
-                            <NavLink
-                              key={prop.id}
-                              to={`/admin/dashboard/farm/${prop.id}`}
-                              style={{ textDecoration: 'none' }}>
-                              <Card
-                                p={4}
-                                cursor="pointer"
-                                bg={prop.id === establishment?.id ? 'green.700' : cardBg}
+      {/* The farm tiles row: shown when there is another farm to switch to, OR when it carries
+          an action — "+ New" farm, or the farm-limit tile that leads to the Extra Farm add-on. This
+          row is the ONLY place either lives (review of #286: gating on "more than one farm" alone
+          took both away from every one-farm account). Hidden only when it would be a lone green
+          tile repeating the page title: a pilot capped by agreement, or a read-only member. */}
+      {((establishments?.length ?? 0) > 1 ||
+        (canWrite && (canCreateEstablishment || farmCapacity.atLimit))) && (
+        <Box>
+          <Flex
+            direction={{ base: 'column', xl: 'row' }}
+            gap={{ base: 4, md: 4, lg: 5, xl: 6 }}
+            align="flex-start">
+            <Box flex="2" w="100%" pt={{ base: 3, md: 4, lg: 6, xl: 0 }}>
+              <VStack spacing={3} align="stretch">
+                {/* Mobile: Simple Horizontal Scrollable Layout */}
+                {isMobile ? (
+                  <VStack spacing={6} align="stretch" w="100%">
+                    <Box
+                      data-tour="farm-carousel"
+                      ref={establishmentScrollRef}
+                      overflowX="auto"
+                      overflowY="hidden"
+                      pt="2px"
+                      onScroll={handleEstablishmentScroll}
+                      sx={{
+                        '&::-webkit-scrollbar': {
+                          display: 'none'
+                        },
+                        scrollbarWidth: 'none',
+                        msOverflowStyle: 'none',
+                        WebkitOverflowScrolling: 'touch'
+                      }}>
+                      <HStack spacing={3} py={2} px={1} w="max-content">
+                        {establishments ? (
+                          <>
+                            {establishments.map((prop) => (
+                              <NavLink
+                                key={prop.id}
+                                to={`/admin/dashboard/farm/${prop.id}`}
+                                style={{ textDecoration: 'none' }}>
+                                <Card
+                                  p={4}
+                                  cursor="pointer"
+                                  bg={prop.id === establishment?.id ? 'green.700' : cardBg}
+                                  h={cardHeight}
+                                  w={cardWidth}
+                                  minW={cardWidth}
+                                  maxW={cardWidth}
+                                  flexShrink={0}
+                                  className={`trazo-card establishment-card ${
+                                    prop.id === establishment?.id ? 'selected' : ''
+                                  }`}
+                                  _hover={{
+                                    transform: 'translateY(-2px)',
+                                    boxShadow: 'lg',
+                                    transition: 'all 0.2s'
+                                  }}>
+                                  <Flex align="center" gap={4} h="full" px={2}>
+                                    <Box
+                                      bg={prop.id === establishment?.id ? 'white' : 'green.700'}
+                                      p={{ base: 3, md: 2 }}
+                                      borderRadius="lg"
+                                      flexShrink={0}>
+                                      <HomeIcon
+                                        h={{ base: '22px', md: '24px' }}
+                                        w={{ base: '22px', md: '24px' }}
+                                        color={
+                                          prop.id === establishment?.id ? 'green.700' : 'white'
+                                        }
+                                      />
+                                    </Box>
+                                    <Box flex="1" overflow="hidden">
+                                      <Text
+                                        fontWeight="bold"
+                                        fontSize={{ base: 'md', md: 'md' }}
+                                        color={prop.id === establishment?.id ? 'white' : textColor}
+                                        noOfLines={2}
+                                        lineHeight="1.3"
+                                        title={prop.name}>
+                                        {prop.name}
+                                      </Text>
+                                      <Text
+                                        fontSize={{ base: 'sm', md: 'sm' }}
+                                        color={
+                                          prop.id === establishment?.id ? 'green.100' : 'gray.500'
+                                        }
+                                        noOfLines={1}
+                                        mt={1}
+                                        title={formatFarmLocation(prop)}>
+                                        {formatFarmLocation(prop)}
+                                      </Text>
+                                    </Box>
+                                  </Flex>
+                                </Card>
+                              </NavLink>
+                            ))}
+                            {canWrite &&
+                              farmCapacity.atLimit &&
+                              renderFarmLimitTile({ base: '72px', md: '100px' }, cardHeight)}
+                            {canWrite && canCreateEstablishment && (
+                              <Button
+                                p="0px"
+                                w={{ base: '60px', md: '100px' }}
                                 h={cardHeight}
-                                w={cardWidth}
-                                minW={cardWidth}
-                                maxW={cardWidth}
+                                minW={{ base: '60px', md: '100px' }}
                                 flexShrink={0}
-                                className={`trazo-card establishment-card ${
-                                  prop.id === establishment?.id ? 'selected' : ''
-                                }`}
+                                bg="transparent"
+                                color="green.700"
+                                borderRadius="xl"
+                                border="2px dashed"
+                                borderColor="gray.200"
                                 _hover={{
+                                  bg: 'green.50',
+                                  borderColor: 'green.600',
                                   transform: 'translateY(-2px)',
-                                  boxShadow: 'lg',
-                                  transition: 'all 0.2s'
-                                }}>
-                                <Flex align="center" gap={4} h="full" px={2}>
-                                  <Box
-                                    bg={prop.id === establishment?.id ? 'white' : 'green.700'}
-                                    p={{ base: 3, md: 2 }}
-                                    borderRadius="lg"
-                                    flexShrink={0}>
-                                    <HomeIcon
-                                      h={{ base: '22px', md: '24px' }}
-                                      w={{ base: '22px', md: '24px' }}
-                                      color={prop.id === establishment?.id ? 'green.700' : 'white'}
-                                    />
-                                  </Box>
-                                  <Box flex="1" overflow="hidden">
-                                    <Text
-                                      fontWeight="bold"
-                                      fontSize={{ base: 'md', md: 'md' }}
-                                      color={prop.id === establishment?.id ? 'white' : textColor}
-                                      noOfLines={2}
-                                      lineHeight="1.3"
-                                      title={prop.name}>
-                                      {prop.name}
-                                    </Text>
-                                    <Text
-                                      fontSize={{ base: 'sm', md: 'sm' }}
-                                      color={
-                                        prop.id === establishment?.id ? 'green.100' : 'gray.500'
-                                      }
-                                      noOfLines={1}
-                                      mt={1}
-                                      title={formatFarmLocation(prop)}>
-                                      {formatFarmLocation(prop)}
-                                    </Text>
-                                  </Box>
+                                  boxShadow: 'lg'
+                                }}
+                                onClick={toggleAddEstablishment}>
+                                <Flex direction="column" align="center" justify="center" gap={0.5}>
+                                  <Icon
+                                    as={FaPlus}
+                                    color="green.700"
+                                    fontSize={{ base: '14px', md: '20px' }}
+                                  />
+                                  <Text fontSize="xs" fontWeight="medium" color="green.700">
+                                    {intl.formatMessage({ id: 'app.new' })}
+                                  </Text>
                                 </Flex>
-                              </Card>
-                            </NavLink>
-                          ))}
-                          {canWrite &&
-                            farmCapacity.atLimit &&
-                            renderFarmLimitTile({ base: '72px', md: '100px' }, cardHeight)}
-                          {canWrite && canCreateEstablishment && (
-                            <Button
-                              p="0px"
-                              w={{ base: '60px', md: '100px' }}
-                              h={cardHeight}
-                              minW={{ base: '60px', md: '100px' }}
-                              flexShrink={0}
-                              bg="transparent"
-                              color="green.700"
-                              borderRadius="xl"
-                              border="2px dashed"
-                              borderColor="gray.200"
-                              _hover={{
-                                bg: 'green.50',
-                                borderColor: 'green.600',
-                                transform: 'translateY(-2px)',
-                                boxShadow: 'lg'
-                              }}
-                              onClick={toggleAddEstablishment}>
-                              <Flex direction="column" align="center" justify="center" gap={0.5}>
-                                <Icon
-                                  as={FaPlus}
-                                  color="green.700"
-                                  fontSize={{ base: '14px', md: '20px' }}
-                                />
-                                <Text fontSize="xs" fontWeight="medium" color="green.700">
-                                  {intl.formatMessage({ id: 'app.new' })}
-                                </Text>
-                              </Flex>
-                            </Button>
-                          )}
-                        </>
-                      ) : null}
-                    </HStack>
-                  </Box>
-
-                  {/* Dynamic progress line indicator - only show when content is actually scrollable */}
-                  {isEstablishmentsScrollable && (
-                    <Box w="100%" h="3px" bg="gray.200" borderRadius="full" position="relative">
-                      <Box
-                        h="full"
-                        bg="green.700"
-                        borderRadius="full"
-                        w={`${scrollProgress * 100}%`}
-                        position="absolute"
-                        left="0"
-                        top="0"
-                        transition="width 0.2s ease"
-                      />
+                              </Button>
+                            )}
+                          </>
+                        ) : null}
+                      </HStack>
                     </Box>
-                  )}
-                </VStack>
-              ) : (
-                /* Desktop: Grid Layout */
-                <Grid
-                  templateColumns={{
-                    md: 'repeat(auto-fill, minmax(240px, 1fr))'
-                  }}
-                  gap={4}>
-                  {establishments ? (
-                    <>
-                      {establishments.map((prop) => (
-                        <NavLink
-                          key={prop.id}
-                          to={`/admin/dashboard/farm/${prop.id}`}
-                          style={{ textDecoration: 'none' }}>
-                          <Card
-                            p={4}
-                            cursor="pointer"
-                            bg={prop.id === establishment?.id ? 'green.700' : cardBg}
-                            h="90px"
-                            minH="90px"
-                            maxH="90px"
-                            className={`trazo-card establishment-card ${
-                              prop.id === establishment?.id ? 'selected' : ''
-                            }`}
+
+                    {/* Dynamic progress line indicator - only show when content is actually scrollable */}
+                    {isEstablishmentsScrollable && (
+                      <Box w="100%" h="3px" bg="gray.200" borderRadius="full" position="relative">
+                        <Box
+                          h="full"
+                          bg="green.700"
+                          borderRadius="full"
+                          w={`${scrollProgress * 100}%`}
+                          position="absolute"
+                          left="0"
+                          top="0"
+                          transition="width 0.2s ease"
+                        />
+                      </Box>
+                    )}
+                  </VStack>
+                ) : (
+                  /* Desktop: Grid Layout */
+                  <Grid
+                    templateColumns={{
+                      md: 'repeat(auto-fill, minmax(240px, 1fr))'
+                    }}
+                    gap={4}>
+                    {establishments ? (
+                      <>
+                        {establishments.map((prop) => (
+                          <NavLink
+                            key={prop.id}
+                            to={`/admin/dashboard/farm/${prop.id}`}
+                            style={{ textDecoration: 'none' }}>
+                            <Card
+                              p={4}
+                              cursor="pointer"
+                              bg={prop.id === establishment?.id ? 'green.700' : cardBg}
+                              h="90px"
+                              minH="90px"
+                              maxH="90px"
+                              className={`trazo-card establishment-card ${
+                                prop.id === establishment?.id ? 'selected' : ''
+                              }`}
+                              _hover={{
+                                transform: 'translateY(-2px)',
+                                boxShadow: 'lg',
+                                transition: 'all 0.2s'
+                              }}>
+                              <Flex align="center" gap={3} h="full">
+                                <Box
+                                  bg={prop.id === establishment?.id ? 'white' : 'green.700'}
+                                  p={2}
+                                  borderRadius="md"
+                                  flexShrink={0}>
+                                  <HomeIcon
+                                    h="24px"
+                                    w="24px"
+                                    color={prop.id === establishment?.id ? 'green.700' : 'white'}
+                                  />
+                                </Box>
+                                <Box flex="1" overflow="hidden">
+                                  <Text
+                                    fontWeight="bold"
+                                    fontSize="md"
+                                    color={prop.id === establishment?.id ? 'white' : textColor}
+                                    noOfLines={1}
+                                    title={prop.name}>
+                                    {prop.name}
+                                  </Text>
+                                  <Text
+                                    fontSize="sm"
+                                    color={prop.id === establishment?.id ? 'green.100' : 'gray.500'}
+                                    noOfLines={1}
+                                    title={formatFarmLocation(prop)}>
+                                    {formatFarmLocation(prop)}
+                                  </Text>
+                                </Box>
+                              </Flex>
+                            </Card>
+                          </NavLink>
+                        ))}
+                        {canWrite &&
+                          farmCapacity.atLimit &&
+                          renderFarmLimitTile(
+                            { base: '72px', md: '77px' },
+                            {
+                              base: '70px',
+                              md: '90px'
+                            }
+                          )}
+                        {canWrite && canCreateEstablishment && (
+                          <Button
+                            p="0px"
+                            w={{ base: '60px', md: '77px' }}
+                            h={{ base: '70px', md: '90px' }}
+                            bg="transparent"
+                            color="green.700"
+                            borderRadius="xl"
+                            border="2px dashed"
+                            borderColor="gray.200"
                             _hover={{
+                              bg: 'green.50',
+                              borderColor: 'green.600',
                               transform: 'translateY(-2px)',
-                              boxShadow: 'lg',
-                              transition: 'all 0.2s'
-                            }}>
-                            <Flex align="center" gap={3} h="full">
-                              <Box
-                                bg={prop.id === establishment?.id ? 'white' : 'green.700'}
-                                p={2}
-                                borderRadius="md"
-                                flexShrink={0}>
-                                <HomeIcon
-                                  h="24px"
-                                  w="24px"
-                                  color={prop.id === establishment?.id ? 'green.700' : 'white'}
-                                />
-                              </Box>
-                              <Box flex="1" overflow="hidden">
-                                <Text
-                                  fontWeight="bold"
-                                  fontSize="md"
-                                  color={prop.id === establishment?.id ? 'white' : textColor}
-                                  noOfLines={1}
-                                  title={prop.name}>
-                                  {prop.name}
-                                </Text>
-                                <Text
-                                  fontSize="sm"
-                                  color={prop.id === establishment?.id ? 'green.100' : 'gray.500'}
-                                  noOfLines={1}
-                                  title={formatFarmLocation(prop)}>
-                                  {formatFarmLocation(prop)}
-                                </Text>
-                              </Box>
+                              boxShadow: 'lg'
+                            }}
+                            onClick={toggleAddEstablishment}>
+                            <Flex direction="column" align="center" justify="center" gap={0.5}>
+                              <Icon
+                                as={FaPlus}
+                                color="green.700"
+                                fontSize={{ base: '14px', md: '20px' }}
+                              />
+                              <Text fontSize="xs" fontWeight="medium" color="green.700">
+                                {intl.formatMessage({ id: 'app.new' }) || 'New'}
+                              </Text>
                             </Flex>
-                          </Card>
-                        </NavLink>
-                      ))}
-                      {canWrite &&
-                        farmCapacity.atLimit &&
-                        renderFarmLimitTile(
-                          { base: '72px', md: '77px' },
-                          {
-                            base: '70px',
-                            md: '90px'
-                          }
+                          </Button>
                         )}
-                      {canWrite && canCreateEstablishment && (
-                        <Button
-                          p="0px"
-                          w={{ base: '60px', md: '77px' }}
-                          h={{ base: '70px', md: '90px' }}
-                          bg="transparent"
-                          color="green.700"
-                          borderRadius="xl"
-                          border="2px dashed"
-                          borderColor="gray.200"
-                          _hover={{
-                            bg: 'green.50',
-                            borderColor: 'green.600',
-                            transform: 'translateY(-2px)',
-                            boxShadow: 'lg'
-                          }}
-                          onClick={toggleAddEstablishment}>
-                          <Flex direction="column" align="center" justify="center" gap={0.5}>
-                            <Icon
-                              as={FaPlus}
-                              color="green.700"
-                              fontSize={{ base: '14px', md: '20px' }}
-                            />
-                            <Text fontSize="xs" fontWeight="medium" color="green.700">
-                              {intl.formatMessage({ id: 'app.new' }) || 'New'}
-                            </Text>
-                          </Flex>
-                        </Button>
-                      )}
-                    </>
-                  ) : (
-                    <Text color="gray.500" fontSize="sm" textAlign="center" py={8}>
-                      {intl.formatMessage({ id: 'app.noEstablishments' }) ||
-                        'No establishments found. Create your first establishment to get started.'}
-                    </Text>
-                  )}
-                </Grid>
-              )}
-            </VStack>
-          </Box>
-        </Flex>
-      </Box>
+                      </>
+                    ) : (
+                      <Text color="gray.500" fontSize="sm" textAlign="center" py={8}>
+                        {intl.formatMessage({ id: 'app.noEstablishments' }) ||
+                          'No establishments found. Create your first establishment to get started.'}
+                      </Text>
+                    )}
+                  </Grid>
+                )}
+              </VStack>
+            </Box>
+          </Flex>
+        </Box>
+      )}
+
+      {establishment?.id && (
+        <Box mt={{ base: 2, md: 4 }} data-tour="farm-home-header">
+          <FarmHomeHeader
+            companyId={activeCompany?.id}
+            farmId={establishment.id}
+            name={establishment.name}
+            location={formatFarmLocation(establishment)}
+          />
+        </Box>
+      )}
 
       {/* Page order, top to bottom: DEADLINES → READINESS → identity/share → RECORDS.
           Dates the certifier sets, then what is outstanding against those records — FIRST,
@@ -841,63 +836,14 @@ export default function DashboardView() {
         </Box>
       )}
 
-      <Grid
-        templateColumns={{ base: '1fr', md: '1fr', lg: '1.8fr 1.2fr' }}
-        templateRows={{ base: 'auto', md: '1fr auto', lg: '1fr' }}
-        my={{ base: 6, md: 6 }}
-        gap={{ base: 4, md: 6 }}>
-        {establishment ? (
-          <CardWithImage
-            title={intl.formatMessage({ id: 'app.establishmentProfile' })}
-            name={establishment?.name}
-            description={establishment?.description}
-            state={establishment?.state}
-            city={establishment?.city}
-            zone={establishment?.zone}
-            readMoreLink={`/admin/dashboard/farm/${establishment?.id}/profile`}
-            bgGradient={bgGradient}
-            borderLeft="4px solid"
-            borderColor="green.500"
-            boxShadow={shadowHover}
-            fillHeight
-            _hover={{
-              boxShadow: shadowHover
-            }}
-            image={
-              establishment?.image ? (
-                <S3Image
-                  src={establishment.image}
-                  alt="establishment image"
-                  width="100%"
-                  height="100%"
-                  objectFit={'cover'}
-                  borderRadius="15px"
-                  lazy={true}
-                  presignedUrl={presignedUrls[establishment.image]}
-                />
-              ) : undefined
-            }
-          />
-        ) : (
-          <Card minH="290px" bg={cardBg}>
-            <Shimmer height="290px" borderRadius="15px" />
-          </Card>
-        )}
-
-        {establishment ? (
-          <Box data-tour="smart-usage-card">
-            <SmartUsageCard
-              companyId={activeCompany?.id}
-              farmId={establishment.id}
-              buyerPagePath={`/admin/dashboard/farm/${establishment.id}/buyer`}
-            />
-          </Box>
-        ) : (
-          <Card minH="290px" bg={cardBg}>
-            <Shimmer height="290px" borderRadius="15px" />
-          </Card>
-        )}
-      </Grid>
+      {/* Seasons underway, after readiness: a season has to be finished before the certifier
+          packet covers it. Replaces the Farm Profile card (now the header's button) and the
+          "Records and buyer page" card (its counts are the header's fact line), 2026-11-05. */}
+      {establishment?.id && (
+        <Box width="100%" my={{ base: 4, md: 6 }}>
+          <SeasonsUnderwayCard farmId={establishment.id} parcels={establishment.parcels} />
+        </Box>
+      )}
 
       {/* Single Transparency Overview Card for selected establishment */}
       {/* {establishment?.id && (
