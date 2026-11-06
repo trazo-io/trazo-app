@@ -36,6 +36,28 @@ export interface BufferZoneRow {
   neighbor_notification_date?: string | null;
   /** ISO date the adjacent land last received a prohibited material (§ 205.202(c)). */
   prohibited_use_last_date?: string;
+  /** Tri-state Y/N "is a crop grown in the buffer" (CCOF D1, OTCO C2 2.2). `false` with a crop named is refused. */
+  buffer_crop_grown?: boolean | null;
+  /** Feet from prohibited-material applications (WSDA AGR 2264 ref 14). */
+  prohibited_use_distance_ft?: number | null;
+}
+
+/** A § 205.400(f) notice that names this parcel, as §D prints it. `category` is the server's code. */
+export interface ParcelChangeNotice {
+  date_notified: string | null;
+  recorded: string | null;
+  category: string;
+  description: string;
+  acknowledged: string | null;
+}
+
+/** A contamination incident recorded on one of this parcel's seasons. `source` is the server's code. */
+export interface ParcelContaminationIncident {
+  date: string | null;
+  source: string;
+  description: string;
+  certifier_notified: boolean;
+  certifier_notification_date: string | null;
 }
 
 export interface ParcelApplicationResponse {
@@ -56,6 +78,10 @@ export interface ParcelApplicationResponse {
     border_side: string;
     signed: string | null;
   }>;
+  /** §D: the change notifications that name this parcel (read-only in the wizard). */
+  change_notifications?: ParcelChangeNotice[];
+  /** §D: contamination incidents recorded on this parcel's seasons (read-only in the wizard). */
+  contamination_incidents?: ParcelContaminationIncident[];
   status: { state: 'not_started' | 'in_progress' | 'complete'; missing: string[] };
 }
 
