@@ -10,7 +10,7 @@ import React from 'react';
 import { Box, Circle, Flex, Icon, Text, VStack } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
 
-import { TYPE_ICON } from 'config/events/eventTypeAppearance';
+import { iconForActivity } from 'config/activityVerbs';
 import { eventTypeTone } from 'components/Events/categoryTone';
 import { StatusList } from 'components/Design/StandardComponents';
 import { formatDateFromTimestamp, formatWallClockTime } from 'utils/dateOnly';
@@ -18,13 +18,15 @@ import { formatDateFromTimestamp, formatWallClockTime } from 'utils/dateOnly';
 interface RowProps {
   date: string | null | undefined;
   eventType: number;
+  /** The record's own subtype: picks the activity's icon (drop, box, scissors...). */
+  subtype?: string | null;
   title: string;
-  /** One muted line under the title: category, parcel, first line of the notes. */
+  /** One muted line under the title: parcel, first line of the notes. */
   meta?: string;
   onClick: () => void;
 }
 
-export function ActivityTimelineRow({ date, eventType, title, meta, onClick }: RowProps) {
+export function ActivityTimelineRow({ date, eventType, subtype, title, meta, onClick }: RowProps) {
   const intl = useIntl();
   const tone = eventTypeTone(eventType);
   return (
@@ -52,7 +54,12 @@ export function ActivityTimelineRow({ date, eventType, title, meta, onClick }: R
         </Text>
       </Box>
       <Circle size="28px" bg={tone.circle} flexShrink={0} mt={0.5}>
-        <Icon as={TYPE_ICON[eventType]} boxSize={3.5} color={tone.glyph} aria-hidden />
+        <Icon
+          as={iconForActivity(eventType, subtype)}
+          boxSize={3.5}
+          color={tone.glyph}
+          aria-hidden
+        />
       </Circle>
       <Box minW={0} flex={1}>
         <Text fontSize="sm" fontWeight="semibold" color="gray.700" noOfLines={1}>
@@ -86,7 +93,11 @@ export function MonthTimeline<T>({ items, dateOf, keyOf, renderRow }: MonthTimel
     if (!g) {
       g = {
         key,
-        label: formatDateFromTimestamp(d, intl.locale, { month: 'long', year: 'numeric' }) || key,
+        label:
+          formatDateFromTimestamp(d, intl.locale, { month: 'long', year: 'numeric' }) ||
+          // A row with no date (ActivityRow.date is nullable) groups under a translated heading,
+          // never the raw key (review of #294).
+          intl.formatMessage({ id: 'activities.undated' }),
         items: []
       };
       groups.push(g);

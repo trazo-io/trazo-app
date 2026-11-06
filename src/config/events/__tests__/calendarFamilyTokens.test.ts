@@ -142,7 +142,7 @@ describe('calendar family tokens', () => {
     expect(at, 'the calendar chip no longer uses the family hue').toBeGreaterThan(-1);
     const chip = code.slice(at, at + 700);
     expect(chip, 'the calendar chip renders a hue with no glyph').toMatch(
-      /TYPE_ICON\[row\.event_type\]/
+      /iconForActivity\(row\.event_type/
     );
   });
 });

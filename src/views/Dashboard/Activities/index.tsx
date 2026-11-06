@@ -22,9 +22,7 @@ import {
   Text,
   useColorMode,
   useDisclosure,
-  VStack,
-  Wrap,
-  WrapItem
+  VStack
 } from '@chakra-ui/react';
 import {
   FaCalendarAlt,
@@ -52,7 +50,12 @@ import {
   StatusList
 } from 'components/Design/StandardComponents';
 import type { Parcel } from 'types/company';
-import { ACTIVITY_VERBS } from 'config/activityVerbs';
+import {
+  ACTIVITY_VERBS,
+  activityMatchesVerb,
+  iconForActivity,
+  verbForKey
+} from 'config/activityVerbs';
 import { verbMayGoMulti } from 'config/events/multiParcel';
 import { activitySummary, activityTitle } from 'config/events/narrative';
 import { ResponsiveModal } from 'components/Design/ResponsiveModal';
@@ -65,10 +68,9 @@ import type { ActivityRow } from 'store/api/activityFeedApi';
 import type { RootState } from 'store/index';
 import { useTour } from 'hooks/useTour';
 import { ActivityDetailModal } from './ActivityDetailModal';
-import { CALENDAR_FAMILY, TYPE_ICON } from 'config/events/eventTypeAppearance';
+import { CALENDAR_FAMILY } from 'config/events/eventTypeAppearance';
 import { ActivityTimelineRow, MonthTimeline } from 'components/Events/ActivityTimeline';
 import { formatDateFromTimestamp } from 'utils/dateOnly';
-import { eventTypeTone } from 'components/Events/categoryTone';
 
 /**
  * Verb → event_type mapping now lives in the SHARED config (config/activityVerbs) so
@@ -154,17 +156,6 @@ const rangeToWindow = (
   }
 };
 
-/**
- * Unselected filter chips are neutral (2026-11-06). Seven green-outlined pills were the loudest
- * thing above the list; green is kept for the one chip that is ON.
- */
-const QUIET_CHIP = {
-  borderColor: 'gray.300',
-  color: 'gray.700',
-  bg: 'white',
-  _hover: { bg: 'gray.50', borderColor: 'gray.400' }
-} as const;
-
 const ActivitiesPage = () => {
   const intl = useIntl();
   /* One hook, not one per chip: `useColorModeValue` cannot be called inside the day loop, and
@@ -202,7 +193,11 @@ const ActivitiesPage = () => {
   const [view, setView] = useState<'calendar' | 'list'>(
     searchParams.get('view') === 'list' ? 'list' : 'calendar'
   );
-  const [typeFilter, setTypeFilter] = useState<number | null>(null);
+  // Filter by ACTIVITY, the 17 tiles of "Log activity", not by event model (2026-11-06). The six
+  // model chips put 12 of the 17 under "Production", so "my irrigations" was not a filter.
+  const [verbFilter, setVerbFilter] = useState('');
+  const activeVerb = verbFilter ? verbForKey(verbFilter) : undefined;
+  const typeFilter = activeVerb ? activeVerb.eventType : null;
   const [search, setSearch] = useState('');
   const verbModal = useDisclosure();
   const quickAddParcel = useDisclosure();
@@ -265,7 +260,11 @@ const ActivitiesPage = () => {
     },
     { skip: !companyId || !farmId || !monthIsEmpty }
   );
-  const latestDate = monthIsEmpty ? latestData?.activities?.[0]?.date ?? null : null;
+  const latestDate = monthIsEmpty
+    ? (latestData?.activities ?? []).find(
+        (r) => !activeVerb || activityMatchesVerb(activeVerb, r.event_type, r.subtype)
+      )?.date ?? null
+    : null;
 
   const rows = useMemo(() => {
     let out = data?.activities ?? [];
@@ -276,6 +275,11 @@ const ActivitiesPage = () => {
     // fewer rows rather than another block's rows under a label naming this one.
     if (parcelFilter) {
       out = out.filter((r) => String(r.parcel_id) === parcelFilter);
+    }
+    // The server narrows by event type; the subtype half of a verb (Irrigation = production IR)
+    // is applied here.
+    if (activeVerb) {
+      out = out.filter((r) => activityMatchesVerb(activeVerb, r.event_type, r.subtype));
     }
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -288,7 +292,7 @@ const ActivitiesPage = () => {
       );
     }
     return out;
-  }, [data, search, parcelFilter]);
+  }, [data, search, parcelFilter, activeVerb]);
 
   // Client-side: the activities endpoint returns the farm's whole log in one response, and the
   // list rendered every row of it. Paging is presentation only — `rows` (search-filtered) stays
@@ -308,18 +312,15 @@ const ActivitiesPage = () => {
   // in range: landing on page 3 of a fresh search result is disorienting.
   useEffect(() => {
     setListPage(1);
-  }, [search, typeFilter, parcelFilter, rangeKey, customStart, customEnd]);
+  }, [search, verbFilter, parcelFilter, rangeKey, customStart, customEnd]);
 
   // The parcel select and the type pills narrow BOTH views; the range narrows the list only,
   // so it does not count as active while the calendar is showing.
   const hasActiveFilter =
-    !!parcelFilter ||
-    typeFilter !== null ||
-    !!search.trim() ||
-    (view === 'list' && rangeKey !== 'all');
+    !!parcelFilter || !!verbFilter || !!search.trim() || (view === 'list' && rangeKey !== 'all');
   const clearFilters = () => {
     setParcelFilter('');
-    setTypeFilter(null);
+    setVerbFilter('');
     setSearch('');
     setRangeKey('all');
     setCustomStart('');
@@ -355,8 +356,6 @@ const ActivitiesPage = () => {
     for (let i = 0; i < cells.length; i += 7) out.push(cells.slice(i, i + 7));
     return out;
   }, [cursor, monthEnd]);
-
-  const typeLabel = (t: number) => intl.formatMessage({ id: `activities.type.${t}` });
 
   // Clicking an activity OPENS it, it does not start editing it. Edit stays one deliberate
   // button inside the detail modal — the same modal the parcel timeline opens — so nobody
@@ -477,49 +476,6 @@ const ActivitiesPage = () => {
           direction={{ base: 'column', smd: 'row' }}
           align={{ base: 'stretch', smd: 'flex-end' }}
           wrap="wrap">
-          <Wrap
-            spacing={2}
-            flex="1 1 auto"
-            role="group"
-            aria-label={intl.formatMessage({ id: 'activities.filter.label' })}>
-            <WrapItem>
-              <StandardButton
-                size="sm"
-                minH="44px"
-                borderRadius="full"
-                aria-pressed={typeFilter === null}
-                variant={typeFilter === null ? 'primary' : 'outline'}
-                {...(typeFilter === null ? {} : QUIET_CHIP)}
-                onClick={() => setTypeFilter(null)}>
-                {intl.formatMessage({ id: 'activities.filter.all' })}
-              </StandardButton>
-            </WrapItem>
-            {[1, 2, 5, 6, 0, 7].map((t) => (
-              <WrapItem key={t}>
-                <StandardButton
-                  size="sm"
-                  minH={FILTER_CONTROL_H}
-                  borderRadius="full"
-                  aria-pressed={typeFilter === t}
-                  variant={typeFilter === t ? 'primary' : 'outline'}
-                  {...(typeFilter === t ? {} : QUIET_CHIP)}
-                  // The category's glyph in its own hue, so the chip and the rows it filters
-                  // read as one key; on the selected chip it inherits the white label.
-                  leftIcon={
-                    <Icon
-                      as={TYPE_ICON[t]}
-                      boxSize={3}
-                      color={typeFilter === t ? undefined : eventTypeTone(t).glyph}
-                      aria-hidden
-                    />
-                  }
-                  onClick={() => setTypeFilter(typeFilter === t ? null : t)}>
-                  {typeLabel(t)}
-                </StandardButton>
-              </WrapItem>
-            ))}
-          </Wrap>
-
           {/* Same shape as the Buyer page's scan filters: labelled selects, stacked on a
               phone, with Clear appearing only once something is narrowing. A select with one
               option is a label wearing a chevron, so the parcel filter is rendered only on a
@@ -531,7 +487,29 @@ const ActivitiesPage = () => {
             wrap="wrap"
             // A one-parcel farm on the calendar has no selects to show; without this the
             // empty flex item still spends the parent's gap.
-            display={parcels.length > 1 || view === 'list' || hasActiveFilter ? 'flex' : 'none'}>
+            display="flex">
+            <Box minW={{ base: 'full', smd: '220px' }}>
+              <Text fontSize="xs" color="gray.600" mb={1}>
+                {intl.formatMessage({ id: 'activities.filter.activity' })}
+              </Text>
+              <StandardSelect
+                size="md"
+                h={FILTER_CONTROL_H}
+                value={verbFilter}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                  setVerbFilter(e.target.value)
+                }
+                aria-label={intl.formatMessage({ id: 'activities.filter.activity' })}>
+                <option value="">
+                  {intl.formatMessage({ id: 'activities.filter.allActivities' })}
+                </option>
+                {ACTIVITY_VERBS.map((v) => (
+                  <option key={v.key} value={v.key}>
+                    {intl.formatMessage({ id: `activities.verb.${v.key}` })}
+                  </option>
+                ))}
+              </StandardSelect>
+            </Box>
             {parcels.length > 1 ? (
               <Box minW={{ base: 'full', smd: '200px' }}>
                 <Text fontSize="xs" color="gray.600" mb={1}>
@@ -823,7 +801,7 @@ const ActivitiesPage = () => {
                                     alignItems="center"
                                     gap={1}>
                                     <Icon
-                                      as={TYPE_ICON[row.event_type] ?? TYPE_ICON[3]}
+                                      as={iconForActivity(row.event_type, row.subtype)}
                                       boxSize="11px"
                                       flexShrink={0}
                                       aria-hidden
@@ -913,11 +891,8 @@ const ActivitiesPage = () => {
                         date={row.date}
                         eventType={row.event_type}
                         title={activityTitle(row, intl)}
-                        meta={[
-                          typeLabel(row.event_type),
-                          row.parcel_name,
-                          activitySummary(row, intl) || row.description
-                        ]
+                        subtype={row.subtype}
+                        meta={[row.parcel_name, activitySummary(row, intl) || row.description]
                           .filter(Boolean)
                           .join(' · ')}
                         onClick={() => openEvent(row)}
@@ -1080,11 +1055,8 @@ const ActivitiesPage = () => {
               date={row.date}
               eventType={row.event_type}
               title={activityTitle(row, intl)}
-              meta={[
-                typeLabel(row.event_type),
-                row.parcel_name,
-                activitySummary(row, intl) || row.description
-              ]
+              subtype={row.subtype}
+              meta={[row.parcel_name, activitySummary(row, intl) || row.description]
                 .filter(Boolean)
                 .join(' · ')}
               onClick={() => openEvent(row)}

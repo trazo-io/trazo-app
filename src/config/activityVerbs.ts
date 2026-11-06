@@ -22,6 +22,7 @@
  * and the next subtype belongs under an existing family, not on a new tile.
  */
 
+import { TYPE_ICON } from 'config/events/eventTypeAppearance';
 import {
   FaBorderAll,
   FaBoxOpen,
@@ -354,4 +355,24 @@ export const subtypeQuestionFor = ({
   // plan branch. (Chemical's tile pins nothing DELIBERATELY, but it does offer a family, so it
   // returns above; this stays the fallback for a verb added with neither.)
   return allSubtypesForType;
+};
+
+/**
+ * The icon an activity shows everywhere it is listed: its "Log activity" tile's icon (a drop for
+ * Irrigation, a box for Harvest), falling back to the category's glyph for a record no tile
+ * covers. Rows, calendar chips and the Activities filter use it, so the farmer sees the same
+ * icon for the same activity on every screen (2026-11-06).
+ */
+export const iconForActivity = (eventType: number, subtype?: string | null): IconType =>
+  verbForEvent(eventType, subtype)?.icon ?? TYPE_ICON[eventType] ?? TYPE_ICON[3];
+
+/** Does a feed row belong to this verb? Event type, and the verb's subtype(s) when it has them. */
+export const activityMatchesVerb = (
+  verb: ActivityVerb,
+  eventType: number,
+  subtype?: string | null
+): boolean => {
+  if (verb.eventType !== eventType) return false;
+  const codes = [verb.subtype, ...(verb.subtypeChoices ?? [])].filter(Boolean);
+  return codes.length === 0 || codes.includes(subtype ?? '');
 };

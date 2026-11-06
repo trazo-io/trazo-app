@@ -125,3 +125,43 @@ describe('Activities calendar, empty month', () => {
     expect(screen.queryByTestId('calendar-empty-month')).toBeNull();
   });
 });
+
+describe('Activities filter', () => {
+  beforeEach(() => {
+    state.windowed = [
+      { ...row(1, '2026-08-31T17:00:00Z', 'Home Field West'), subtype: 'IR', name: null },
+      { ...row(2, '2026-08-28T13:45:00Z', 'Bottom Ground A'), subtype: 'MO', name: null },
+      { ...row(3, '2026-08-20T05:00:00Z', 'Bottom Ground B'), subtype: 'IR', name: null }
+    ];
+    state.latest = [];
+  });
+
+  it('filters by the 17 activities of Log activity, not by event model', () => {
+    renderActivities('/admin/dashboard/farm/21/activities?view=list&from=2026-01-01');
+    const select = screen.getByRole('combobox', { name: 'Activity' });
+    const options = within(select)
+      .getAllByRole('option')
+      .map((o) => o.textContent);
+    expect(options).toContain('Irrigation');
+    expect(options).toContain('Pruning & canopy');
+    expect(options).not.toContain('Production');
+    expect(options).toHaveLength(18);
+    fireEvent.change(select, { target: { value: 'irrigation' } });
+    const rows = screen.getAllByTestId('activity-timeline-row');
+    expect(rows).toHaveLength(2);
+    expect(rows.every((r) => !r.textContent?.includes('Bottom Ground A'))).toBe(true);
+  });
+
+  it('drops the model word from the line under each title', () => {
+    renderActivities('/admin/dashboard/farm/21/activities?view=list&from=2026-01-01');
+    const first = screen.getAllByTestId('activity-timeline-row')[0];
+    expect(first.textContent).not.toMatch(/Production ·/);
+  });
+
+  it('groups an activity with no date under a translated heading', () => {
+    state.windowed = [{ ...row(4, null as unknown as string, 'River Block'), subtype: 'IR' }];
+    renderActivities('/admin/dashboard/farm/21/activities?view=list&from=2026-01-01');
+    const month = screen.getByTestId('activity-timeline-month');
+    expect(month.querySelector('p')?.textContent).toBe('No date');
+  });
+});

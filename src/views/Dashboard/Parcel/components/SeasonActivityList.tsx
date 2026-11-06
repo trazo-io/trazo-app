@@ -68,12 +68,8 @@ export default function SeasonActivityList({
             date={e.date}
             eventType={e.event_type}
             title={getTimelineEventTitle(e, intl)}
-            meta={[
-              intl.formatMessage({ id: `activities.type.${e.event_type}` }),
-              firstLine(e.description)
-            ]
-              .filter(Boolean)
-              .join(' · ')}
+            subtype={typeof e.type === 'string' ? e.type : null}
+            meta={firstLine(e.description)}
             onClick={() => onOpen(e)}
           />
         )}
