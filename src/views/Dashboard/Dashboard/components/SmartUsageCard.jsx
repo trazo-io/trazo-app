@@ -56,6 +56,7 @@ const SmartUsageCard = ({ companyId, farmId, buyerPagePath }) => {
   const {
     data: dashboardResponse,
     isLoading,
+    isUninitialized,
     error
   } = useGetFarmDashboardMetricsQuery(
     { companyId, farmId },
@@ -70,7 +71,9 @@ const SmartUsageCard = ({ companyId, farmId, buyerPagePath }) => {
   const count = (n) => (typeof n === 'number' ? n.toLocaleString(intl.locale) : null);
 
   let body;
-  if (isLoading) {
+  // A skipped query (no company or farm yet) is not a failure: it reports no data and no error
+  // with `isUninitialized`, and until 2026-11-05 fell through to "Unable to load" (review of #284).
+  if (isLoading || isUninitialized) {
     body = (
       <Flex justify="center" align="center" minH="200px">
         <Spinner color="gray.400" />
@@ -129,12 +132,16 @@ const SmartUsageCard = ({ companyId, farmId, buyerPagePath }) => {
                 layout="inline"
                 dense
                 label={intl.formatMessage({ id: 'dashboard.consumerReach' })}
-                value={
-                  count(metrics.consumer_reach) ??
-                  intl.formatMessage({ id: 'dashboard.recordsCard.notRecorded' })
-                }
+                value={count(metrics.consumer_reach)}
               />
             </FieldList>
+            {/* An unknown count is said in words, under the rows, not squeezed into the value
+                slot: at 1366 each column is ~160px and "Not recorded" broke as "Not record / ed". */}
+            {metrics.consumer_reach == null && (
+              <Text fontSize="xs" color={mutedColor} pt={1} data-testid="visitors-not-recorded">
+                {intl.formatMessage({ id: 'dashboard.recordsCard.visitorsNotRecorded' })}
+              </Text>
+            )}
           </Box>
         </SimpleGrid>
         <Box>

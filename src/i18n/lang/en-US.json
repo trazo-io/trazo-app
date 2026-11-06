@@ -3171,7 +3171,7 @@
   "dashboard.recordsCard.seasonsUnderway": "Seasons underway",
   "dashboard.recordsCard.buyerPage": "Buyer page, last 30 days",
   "dashboard.recordsCard.qrScans": "QR scans",
-  "dashboard.recordsCard.notRecorded": "Not recorded",
+  "dashboard.recordsCard.visitorsNotRecorded": "Unique visitors: not recorded for these scans",
   "dashboard.recordsCard.share": "Share your QR codes",
   "dashboard.kgCO2e": "{value} kg CO₂e",
   "dashboard.loadingDashboardMetrics": "Loading Dashboard Metrics",
