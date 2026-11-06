@@ -296,7 +296,12 @@ export default function AdminNavbar(props: AdminNavbarProps) {
                 below md the trail keeps its last two levels; desktop shows all of it. */}
             <BreadcrumbItem
               color={mainText}
-              display={{ base: farmIsLink ? 'none' : 'inline-flex', md: 'inline-flex' }}>
+              // A company-level page (Field notes, Subscription...) has no farm crumb, so Home
+              // and the section are its two levels and Home stays.
+              display={{
+                base: currentEstablishment && farmIsLink ? 'none' : 'inline-flex',
+                md: 'inline-flex'
+              }}>
               <BreadcrumbLink
                 href="/admin/dashboard/"
                 onClick={handleHomeClick}
@@ -410,7 +415,7 @@ export default function AdminNavbar(props: AdminNavbarProps) {
             )}
 
             {/* The section this page is (2026-11-06): the last crumb, the current page. */}
-            {sectionId && currentEstablishment && (
+            {sectionId && (currentEstablishment || !farmId) && (
               <BreadcrumbItem color={mainText}>
                 <BreadcrumbLink
                   aria-current="page"

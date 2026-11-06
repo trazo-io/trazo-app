@@ -303,10 +303,21 @@ const FieldNotesInbox = () => {
   const [discardFor, setDiscardFor] = useState<string | null>(null);
   const [discardReason, setDiscardReason] = useState('');
 
-  /** The farm to preselect: the one the note names, and only if the caller can see it. */
+  /**
+   * The farm to preselect: the one the note names, if the caller can see it; otherwise the only
+   * farm, when there is just one. Same rule as the parcel below: prefilled only when there is
+   * nothing to choose. A one-farm account had to pick "Choose the farm" on every note before
+   * "Log this" enabled (screen audit 2026-11-06).
+   */
   const defaultFarmFor = (note: FieldNote) => {
-    if (!note.establishment) return undefined;
-    return farms.some((f) => f.id === note.establishment) ? String(note.establishment) : undefined;
+    // A note that names a farm this person cannot see stays unselected: it is not theirs to
+    // file under the one farm they do see.
+    if (note.establishment) {
+      return farms.some((f) => f.id === note.establishment)
+        ? String(note.establishment)
+        : undefined;
+    }
+    return farms.length === 1 ? String(farms[0].id) : undefined;
   };
 
   const farmIdFor = (note: FieldNote) => choice[note.public_id]?.farmId ?? defaultFarmFor(note);

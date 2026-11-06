@@ -414,7 +414,11 @@ function UnifiedSubscriptionDashboard() {
       name: 'app.establishments',
       used: Math.max(0, activeCompany?.establishments?.length || 0),
       limit: formatLimit(features?.max_establishments ?? 0),
-      colorScheme: 'green'
+      colorScheme: 'green',
+      // One farm on a one-farm plan is the plan's shape, not a warning: it painted a solid red
+      // bar and icon on every Compliance and pilot account (screen audit 2026-11-06). Over the
+      // limit (a downgrade that kept its farms) still reads red.
+      atLimitIsNormal: true
     },
     {
       icon: FaMapMarkedAlt,
@@ -1091,22 +1095,30 @@ function UnifiedSubscriptionDashboard() {
                                 {intl.formatMessage({ id: 'app.currentPeriod' })}
                               </Text>
                               <Text fontWeight="medium">
-                                {formatDate(subscription?.current_period_start)} -{' '}
-                                {formatDate(subscription?.current_period_end)}
+                                {/* A comped pilot can carry no end date: print the start alone,
+                                    never "8/21/2026 - -" (screen audit 2026-11-06). */}
+                                {formatDate(subscription?.current_period_start)}
+                                {subscription?.current_period_end
+                                  ? ` – ${formatDate(subscription.current_period_end)}`
+                                  : ''}
                               </Text>
                             </Box>
-                            <Box>
-                              <Text color="gray.500" fontSize="sm">
-                                {/* For a pilot, current_period_end is the certifier renewal
+                            {subscription?.current_period_end ? (
+                              <Box>
+                                <Text color="gray.500" fontSize="sm">
+                                  {/* For a pilot, current_period_end is the certifier renewal
                                     anchor set by provision_pilot — recorded, never billed. */}
-                                {intl.formatMessage({
-                                  id: isPilot ? 'subscription.pilotThrough' : 'app.nextBillingDate'
-                                })}
-                              </Text>
-                              <Text fontWeight="medium">
-                                {formatDate(subscription?.current_period_end)}
-                              </Text>
-                            </Box>
+                                  {intl.formatMessage({
+                                    id: isPilot
+                                      ? 'subscription.pilotThrough'
+                                      : 'app.nextBillingDate'
+                                  })}
+                                </Text>
+                                <Text fontWeight="medium">
+                                  {formatDate(subscription?.current_period_end)}
+                                </Text>
+                              </Box>
+                            ) : null}
                           </SimpleGrid>
                         )}
                       </StandardCard>
@@ -1181,6 +1193,9 @@ function UnifiedSubscriptionDashboard() {
                           // the fallback for the unlimited case.
                           const usageScheme = isUnlimited
                             ? metric.colorScheme
+                            : (metric as { atLimitIsNormal?: boolean }).atLimitIsNormal &&
+                              metric.used === metric.limit
+                            ? 'gray'
                             : percentage >= 100
                             ? 'red'
                             : percentage >= 80

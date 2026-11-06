@@ -298,6 +298,21 @@ describe('the field notes inbox', () => {
     expect(screen.getByRole('button', { name: /Log this/i }).hasAttribute('disabled')).toBe(true);
   });
 
+  it('preselects the only farm when the note names none', async () => {
+    // Screen audit 2026-11-06: a one-farm account had to pick "Choose the farm" on every note.
+    // One farm is nothing to choose, the same rule the parcel select already follows.
+    mocks.notes = [{ ...NOTE, establishment: null }];
+    renderInbox(ONE_PARCEL);
+    const logThis = screen.getByRole('button', { name: /Log this/i });
+    await waitFor(() => expect(logThis.hasAttribute('disabled')).toBe(false));
+  });
+
+  it('leaves the farm unselected when the note names none and there are two', () => {
+    mocks.notes = [{ ...NOTE, establishment: null }];
+    renderInbox([...ONE_PARCEL, { id: 8, name: 'River Ranch', parcels: [{ id: 50, name: 'A' }] }]);
+    expect(screen.getByRole('button', { name: /Log this/i }).hasAttribute('disabled')).toBe(true);
+  });
+
   it('says that discarding keeps the note', () => {
     renderInbox(ONE_PARCEL);
     fireEvent.click(screen.getByRole('button', { name: /^Discard$/i }));

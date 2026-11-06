@@ -29,7 +29,12 @@ const CASES: Array<[string, string | null]> = [
   [`${P}/production/9`, 'breadcrumb.season'],
   [`${P}/production/9/finish`, 'farmHome.seasons.finish'],
   [`${P}/event/add`, 'parcelPage.logActivity'],
-  [`${P}/event/12/change`, 'app.edit']
+  [`${P}/event/12/change`, 'app.edit'],
+  ['/admin/dashboard/field-notes', 'fieldNotes.title'],
+  ['/admin/dashboard/subscription', 'app.subscription'],
+  ['/admin/dashboard/settings', 'app.companySettings'],
+  ['/admin/dashboard/settings/change-password', null],
+  ['/admin/dashboard', null]
 ];
 
 describe('breadcrumb section', () => {

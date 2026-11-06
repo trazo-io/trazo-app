@@ -421,7 +421,9 @@ export default function SettingsView() {
                             label={intl.formatMessage({ id: 'app.newMemberEmail' })}
                             required>
                             <StandardInput
-                              placeholder="ejemplo@empresa.com"
+                              placeholder={intl.formatMessage({
+                                id: 'settings.inviteEmailPlaceholder'
+                              })}
                               value={inviteEmail}
                               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                                 setInviteEmail(e.target.value)
@@ -481,21 +483,20 @@ export default function SettingsView() {
                   <Box py={3}>
                     <VStack spacing={4} align="stretch">
                       {/* Company Info Display */}
+                      {/* Stacked at every width: the card is half the page, and as a row the
+                          200px code column squeezed the company name to one word per line
+                          (screen audit 2026-11-06). */}
                       <Flex
-                        direction={{ base: 'column', md: 'row' }}
+                        direction="column"
                         gap={4}
-                        align={{ base: 'stretch', md: 'center' }}
+                        align="stretch"
                         p={4}
                         bg="green.50"
                         borderRadius="lg"
                         border="1px solid"
                         borderColor="green.200">
                         {/* Company Icon */}
-                        <Flex
-                          align="center"
-                          justify="center"
-                          w={{ base: 'full', md: 'auto' }}
-                          mb={{ base: 4, md: 0 }}>
+                        <Flex align="center" justify="center" w="full">
                           <Box
                             bg="green.700"
                             p={4}
@@ -508,15 +509,11 @@ export default function SettingsView() {
                         </Flex>
 
                         {/* Company Details */}
-                        <VStack align={{ base: 'center', md: 'start' }} spacing={2} flex={1}>
+                        <VStack align="center" spacing={2} flex={1}>
                           <Text fontSize="md" fontWeight="semibold" color="gray.700">
                             {currentCompany?.name || intl.formatMessage({ id: 'app.yourCompany' })}
                           </Text>
-                          <Text
-                            fontSize="xs"
-                            color="gray.500"
-                            textAlign={{ base: 'center', md: 'left' }}
-                            lineHeight="1.4">
+                          <Text fontSize="xs" color="gray.500" textAlign="center" lineHeight="1.4">
                             {intl.formatMessage({ id: 'app.membersCanJoinWithCode' })}
                           </Text>
                         </VStack>
@@ -526,7 +523,7 @@ export default function SettingsView() {
                         {!currentCompany ? (
                           <StandardSpinner label={intl.formatMessage({ id: 'app.loading' })} />
                         ) : currentCompany.invitation_code ? (
-                          <VStack spacing={3} align="center" minW={{ base: 'full', md: '200px' }}>
+                          <VStack spacing={3} align="center" w="full">
                             {/* Code Badge */}
                             <Badge
                               colorScheme="green"

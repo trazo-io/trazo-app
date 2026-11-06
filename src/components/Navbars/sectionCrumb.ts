@@ -27,7 +27,12 @@ const RULES: Array<[RegExp, string]> = [
   [new RegExp(`^${FARM}/traceback/?$`), 'documents.runTraceback'],
   [new RegExp(`^${FARM}/buyer/?$`), 'app.buyer'],
   [new RegExp(`^${FARM}/profile/?$`), 'farmHome.profileLink'],
-  [new RegExp(`^${FARM}/change/?$`), 'app.edit']
+  [new RegExp(`^${FARM}/change/?$`), 'app.edit'],
+  // Company-level pages, with no farm in the path (screen audit 2026-11-06: they showed "Home"
+  // alone, so the bar did not say where the farmer was).
+  [/^\/admin\/dashboard\/field-notes\/?$/, 'fieldNotes.title'],
+  [/^\/admin\/dashboard\/subscription\/?$/, 'app.subscription'],
+  [/^\/admin\/dashboard\/settings\/?$/, 'app.companySettings']
 ];
 
 export const sectionCrumbId = (pathname: string): string | null => {
