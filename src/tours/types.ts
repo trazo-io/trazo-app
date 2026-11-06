@@ -108,6 +108,9 @@ export interface TourStoreState {
   /** Set once every checklist item was observed complete, so the two requests that feed the
       checklist (`productions-flat`, `osps`) stop firing on every admin page load (2026-09-06). */
   checklistCompleted: boolean;
+  /** A pilot's activity count when its setup steps were first seen complete (2026-11-06). The
+      "These setup steps are complete" panel hides once the farm logs one more. null = not yet. */
+  checklistActivityBaseline: number | null;
 
   // Milestone celebration tracking
   celebratedMilestones: Record<string, string>; // milestoneId -> celebratedAt ISO
@@ -129,6 +132,7 @@ export interface TourStoreState {
   setStepIndex: (index: number) => void;
   dismissChecklist: () => void;
   markChecklistCompleted: () => void;
+  setChecklistActivityBaseline: (count: number) => void;
   celebrateMilestone: (milestoneId: string) => void;
   trackPageVisit: (pageKey: string) => void;
   clearRestartFlag: () => void;

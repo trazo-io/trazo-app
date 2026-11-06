@@ -21,7 +21,8 @@ const es = esCatalogue as Record<string, string>;
 import {
   WRITER_ITEMS,
   resolveOspSectionDetail,
-  resolveWriterCompletion
+  resolveWriterCompletion,
+  completedPilotPanelAction
 } from '../useOnboardingChecklist';
 
 const FARM = '148';
@@ -192,5 +193,42 @@ describe('resolveWriterCompletion — certifier prerequisites', () => {
     expect(done['file-osp']).toBe(false);
     expect(done['upload-ofpp']).toBe(false);
     expect(done['add-parcel']).toBe(false);
+  });
+});
+
+describe('completed pilot panel: hides after the first activity logged after setup', () => {
+  const base = { pilotStepsComplete: true, dismissed: false, loaded: true };
+
+  it('notes the activity count the first time setup is seen complete', () => {
+    expect(completedPilotPanelAction({ ...base, baseline: null, activityCount: 12 })).toBe(
+      'set-baseline'
+    );
+  });
+
+  it('stays while no new activity has been logged', () => {
+    // Logging records is a required pilot step, so a completed pilot always has some: the
+    // existing ones must not hide the panel, or "These setup steps are complete" never shows.
+    expect(completedPilotPanelAction({ ...base, baseline: 12, activityCount: 12 })).toBeNull();
+  });
+
+  it('dismisses once one more activity exists', () => {
+    expect(completedPilotPanelAction({ ...base, baseline: 12, activityCount: 13 })).toBe('dismiss');
+  });
+
+  it('does nothing before setup is complete, after a dismissal, or while loading', () => {
+    expect(
+      completedPilotPanelAction({
+        ...base,
+        pilotStepsComplete: false,
+        baseline: 1,
+        activityCount: 9
+      })
+    ).toBeNull();
+    expect(
+      completedPilotPanelAction({ ...base, dismissed: true, baseline: 1, activityCount: 9 })
+    ).toBeNull();
+    expect(
+      completedPilotPanelAction({ ...base, loaded: false, baseline: null, activityCount: 0 })
+    ).toBeNull();
   });
 });
