@@ -80,4 +80,26 @@ describe('season timeline', () => {
     fireEvent.click(screen.getAllByTestId('season-activity-row')[0]);
     expect(onOpen).toHaveBeenCalledWith(expect.objectContaining({ id: 2 }));
   });
+
+  it('keeps two activities that share an id but not a type', () => {
+    // Each event model numbers its own rows; keyed on id alone, React drops one of these.
+    const clash = [
+      ev(1, '2026-08-02T07:00:00Z', 0, 'Rain'),
+      ev(1, '2026-08-03T07:00:00Z', 5, 'Soil')
+    ];
+    const errors: string[] = [];
+    const spy = vi.spyOn(console, 'error').mockImplementation((m) => errors.push(String(m)));
+    render(
+      <ChakraProvider>
+        <IntlProvider locale="en-US" messages={enUS as Record<string, string>}>
+          <MemoryRouter>
+            <SeasonActivityList events={clash} onOpen={vi.fn()} allActivitiesPath="/a" />
+          </MemoryRouter>
+        </IntlProvider>
+      </ChakraProvider>
+    );
+    spy.mockRestore();
+    expect(screen.getAllByTestId('season-activity-row')).toHaveLength(2);
+    expect(errors.filter((m) => /same key/i.test(m))).toEqual([]);
+  });
 });

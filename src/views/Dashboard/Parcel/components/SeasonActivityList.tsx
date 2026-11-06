@@ -86,7 +86,9 @@ export default function SeasonActivityList({
     const category = intl.formatMessage({ id: `activities.type.${e.event_type}` });
     return (
       <Flex
-        key={e.id}
+        // Type AND id: each of the eight event models numbers its own rows, so a weather and a
+        // soil event can share an id in one month (review of #291; Activities keys the same way).
+        key={`${e.event_type}-${e.id}`}
         as="button"
         type="button"
         onClick={() => onOpen(e)}
