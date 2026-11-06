@@ -16,7 +16,7 @@ import {
   Center,
   Tooltip
 } from '@chakra-ui/react';
-import { StandardNotice } from 'components/Design/StandardComponents';
+import { PAGE_MAX_W, StandardNotice } from 'components/Design/StandardComponents';
 import { useSelector } from 'react-redux';
 import { useMemo } from 'react';
 // Custom icons
@@ -502,9 +502,9 @@ export default function DashboardView() {
       */
       px={{ base: 3, md: 6 }}
       pb={{ base: 8, md: 8 }}
-      // Same cap as StandardPage (PAGE_MAX_W, 8xl = 1440px). Uncapped, a 1,780px screen spread
-      // each row across ~1,550px and left a parcel's status a thousand pixels from its name.
-      maxW="8xl"
+      // The app's one page width (PAGE_MAX_W, shared with StandardPage's 41 pages). This page was
+      // the exception: uncapped, a 1,780px screen spread each row across ~1,550px.
+      maxW={PAGE_MAX_W}
       mx="auto"
       w="100%"
       minH="100vh">

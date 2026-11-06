@@ -124,7 +124,9 @@ interface StandardPageProps {
  * stop stretching. Override `contentMaxW` ONLY for a genuinely narrow page — a single-column
  * form or a reading column — never to "make this one wider".
  */
-const PAGE_MAX_W = '8xl';
+// Exported so a page that cannot use StandardPage (the farm home, the parcel page) takes the SAME
+// cap instead of restating '8xl': one width rule for the whole app, in one place.
+export const PAGE_MAX_W = '8xl';
 
 export const StandardPage = ({
   children,
