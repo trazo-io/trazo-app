@@ -17,7 +17,6 @@ import {
   Avatar,
   AvatarGroup,
   IconButton,
-  Divider,
   useBreakpointValue,
   Menu,
   MenuButton,
@@ -27,7 +26,6 @@ import {
 } from '@chakra-ui/react';
 import {
   FaSeedling,
-  FaChartLine,
   FaPlus,
   FaFilter,
   FaSortAmountDown,
@@ -37,8 +35,7 @@ import {
   FaEye,
   FaEdit,
   FaArchive,
-  FaEllipsisV,
-  FaClock
+  FaEllipsisV
 } from 'react-icons/fa';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -63,6 +60,7 @@ const HistoryCard = ({ amount }) => {
   const textColor = useColorModeValue('gray.700', 'white');
   const cardBgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
+  const mutedTextColor = useColorModeValue('gray.600', 'gray.400');
   // ⚠️ These two were called INSIDE the productions .map() below, so the number of hook calls
   // per render tracked the number of productions — a Rules of Hooks violation that throws
   // "Rendered more hooks than during the previous render" the moment the list length changes.
@@ -73,8 +71,8 @@ const HistoryCard = ({ amount }) => {
   //
   // Ongoing is AMBER, not blue: `.claude/rules/frontend.md` gives in-progress to `warning`
   // and leaves blue with no meaning outside `Alert status="info"`.
-  const completedHoverBg = useColorModeValue('green.50', 'green.900');
-  const ongoingHoverBg = useColorModeValue('green.50', 'green.900');
+  // Rows highlight on hover with a neutral wash; green belongs to the status, not the pointer.
+  const rowHoverBg = useColorModeValue('gray.50', 'gray.700');
   const navigate = useNavigate();
 
   // Mobile responsiveness
@@ -240,7 +238,7 @@ const HistoryCard = ({ amount }) => {
                   color={textColor}
                   fontWeight="600"
                   whiteSpace="nowrap">
-                  {intl.formatMessage({ id: 'app.productions' })}
+                  {intl.formatMessage({ id: 'parcelPage.seasons' })}
                 </Text>
               </Flex>
 
@@ -423,12 +421,10 @@ const HistoryCard = ({ amount }) => {
                 }>
                 {isMobile
                   ? intl.formatMessage({ id: 'app.new' })
-                  : intl.formatMessage({ id: 'parcel.newProduction' })}
+                  : intl.formatMessage({ id: 'parcelPage.newSeason' })}
               </Button>
             )}
           </Flex>
-
-          <Divider borderColor={borderColor} />
 
           {/* Streamlined Statistics — counts only.
               The fourth stat here was "avg score" (the transparency score). It was removed
@@ -438,67 +434,19 @@ const HistoryCard = ({ amount }) => {
               is not a headline a grower is shown. Do not reintroduce a score, grade, tier or
               letter here — see `.claude/rules/transparency-first.md`. If this row grows a fourth
               stat again, it should be a RECORDS/READINESS count, not a verdict. */}
+          {/* Counts in one muted line (2026-11-06), the farm home's header pattern: three
+              stat tiles under a rule said the same three numbers with three times the space. */}
           {productionStats && (
-            <Flex
-              direction="row"
-              spacing={0}
-              justify="space-between"
-              pt={4}
-              gap={{ base: 1, smd: 4 }}>
-              {/* All three numbers are NEUTRAL, and that is the rule, not a preference.
-                  `.claude/rules/frontend.md`: "Status colour = meaning, never decoration… a
-                  plain fact or count → neutral." None of these three is a status — they are
-                  counts, and the label under each already says which. Colouring them by metric
-                  identity broke down immediately: "ongoing" rendered `orange.800`, so a farm
-                  with nothing in progress showed a dark red-brown 0 that reads as an error
-                  when it is neutral (often good), while "completed" stayed green even at 0,
-                  where green would be exactly wrong. `orange.*` is also not a Trazo token at
-                  all — the theme defines `amber`; `orange.800` silently resolved to CHAKRA's
-                  #7B341E, a different accent. */}
-              <VStack spacing={1} flex="1" minW={0}>
-                <Text fontSize={{ base: 'lg', md: 'xl' }} fontWeight="bold" color="gray.700">
-                  {productionStats.completed}
-                </Text>
-                <Text
-                  fontSize="xs"
-                  color="gray.500"
-                  fontWeight="medium"
-                  textAlign="center"
-                  whiteSpace="nowrap">
-                  {intl.formatMessage({ id: 'parcel.completed' })}
-                </Text>
-              </VStack>
-
-              <VStack spacing={1} flex="1" minW={0}>
-                <Text fontSize={{ base: 'lg', md: 'xl' }} fontWeight="bold" color="gray.700">
-                  {productionStats.ongoing}
-                </Text>
-                <Text
-                  fontSize="xs"
-                  color="gray.500"
-                  fontWeight="medium"
-                  textAlign="center"
-                  whiteSpace="nowrap">
-                  {intl.formatMessage({ id: 'parcel.ongoing' })}
-                </Text>
-              </VStack>
-
-              <VStack spacing={1} flex="1" minW={0}>
-                <Text fontSize={{ base: 'lg', md: 'xl' }} fontWeight="bold" color="gray.700">
-                  {productionStats.totalDocumentedEvents}
-                </Text>
-                <Text
-                  fontSize="xs"
-                  color="gray.500"
-                  fontWeight="medium"
-                  textAlign="center"
-                  whiteSpace="nowrap">
-                  {isMobile
-                    ? intl.formatMessage({ id: 'parcel.eventsLabel' })
-                    : intl.formatMessage({ id: 'parcel.eventsDocumented' })}
-                </Text>
-              </VStack>
-            </Flex>
+            <Text fontSize="sm" color={mutedTextColor} data-testid="parcel-seasons-summary">
+              {intl.formatMessage(
+                { id: 'parcelPage.seasonsSummary' },
+                {
+                  finished: productionStats.completed,
+                  underway: productionStats.ongoing,
+                  activities: productionStats.totalDocumentedEvents
+                }
+              )}
+            </Text>
           )}
         </Flex>
       </CardHeader>
@@ -515,68 +463,21 @@ const HistoryCard = ({ amount }) => {
         <CardBody p="0px" pb={4}>
           {data && data.length > 0 ? (
             filteredAndSortedProductions.length > 0 ? (
-              <Box
-                maxH={{ base: '400px', md: '450px' }}
-                overflowY="auto"
-                /*
-                  MEASURED 2026-08-23 at 430px: the cards inside this scroll region sat 35px
-                  from the card's left edge and 51px from its right — 16px off centre, which
-                  reads as a layout mistake rather than a margin.
-
-                  `pr` alone was reserving room for the scrollbar, so the pad landed on ONE
-                  side and the scrollbar's own 8px landed on the same side. `scrollbarGutter:
-                  'stable both-edges'` is the property built for this: it reserves the gutter
-                  symmetrically, so the content stays centred whether or not a scrollbar is
-                  showing — which also matters because a phone paints an OVERLAY scrollbar
-                  (0px) while this desktop browser paints a classic one (8px), so a hand-tuned
-                  one-sided offset can only ever be right on one of them.
-                */
-                px={{ base: '8px', md: '12px' }}
-                sx={{
-                  // Reserved symmetrically so the list stays centred; see the note above.
-                  scrollbarGutter: 'stable both-edges',
-                  '&::-webkit-scrollbar': {
-                    width: '8px'
-                  },
-                  '&::-webkit-scrollbar-track': {
-                    bg: 'gray.100',
-                    borderRadius: 'full'
-                  },
-                  // Neutral, not brand: a scrollbar says "there is more content", which is
-                  // not a brand statement, and green.500 on this track is 2.64:1 anyway.
-                  '&::-webkit-scrollbar-thumb': {
-                    bg: 'gray.500',
-                    borderRadius: 'full',
-                    _hover: {
-                      bg: 'gray.600'
-                    }
-                  }
-                }}>
-                <VStack spacing={4} align="stretch" w="100%" py={3} pb={6}>
+              // No inner scroll (2026-11-06): a parcel holds a handful of seasons, and a
+              // 450px scroll box inside the page is a second scrollbar for a short list. Rows
+              // split by a hairline, the farm home's pattern.
+              <Box px={{ base: 0, md: 1 }}>
+                <VStack
+                  spacing={0}
+                  align="stretch"
+                  w="100%"
+                  pt={1}
+                  sx={{ '& > * + *': { borderTopWidth: '1px', borderTopColor: borderColor } }}>
                   {(() => {
-                    // Group productions by status for separator logic
-                    const ongoingProductions = filteredAndSortedProductions.filter(
-                      (p) => !p.finish_date
-                    );
-                    const completedProductions = filteredAndSortedProductions.filter(
-                      (p) => p.finish_date
-                    );
-
                     return filteredAndSortedProductions.map((production, index) => {
-                      // Check if this is the first completed production (for separator)
-                      const isFirstCompleted =
-                        completedProductions.length > 0 &&
-                        production.id === completedProductions[0].id;
-                      const shouldShowSeparator = isFirstCompleted && ongoingProductions.length > 0;
-
                       return (
                         <React.Fragment key={production.id}>
                           {/* Add separator before first completed production if there are ongoing ones */}
-                          {shouldShowSeparator && (
-                            <Box py={4}>
-                              <Divider borderColor={borderColor} borderWidth="1px" />
-                            </Box>
-                          )}
                           {(() => {
                             // `extraData` (production.extra_data) was read here until 2026-08-11
                             // for the carbon-methodology and blockchain badges. Both rows are gone;
@@ -647,19 +548,19 @@ const HistoryCard = ({ amount }) => {
                                 return `${start} - ${end}`;
                               }
 
-                              return `${start} - ${intl.formatMessage({
-                                id: 'parcel.statusOngoing'
-                              })}`;
+                              // "since Jun 20, 26", not "Jun 20, 26 - Ongoing": the badge beside
+                              // it already says the season is underway.
+                              return intl.formatMessage(
+                                { id: 'parcelPage.since' },
+                                { date: start }
+                              );
                             };
 
                             return (
-                              <Card
+                              <Box
                                 key={production.id}
-                                bg={cardBgColor}
-                                borderRadius="xl"
-                                boxShadow="sm"
-                                border="1px solid"
-                                borderColor={borderColor}
+                                // A row, not a boxed card (2026-11-06): no border, shadow or lift. The
+                                // list draws the hairline between rows; a `border` here would cancel it.
                                 // Every production opens, ongoing included.
                                 //
                                 // This was `isCompleted ? 'pointer' : 'default'` with a
@@ -687,36 +588,13 @@ const HistoryCard = ({ amount }) => {
                                 }}
                                 transition="all 0.2s ease"
                                 position="relative"
-                                _hover={
-                                  isCompleted
-                                    ? {
-                                        bg: completedHoverBg,
-                                        transform: 'translateY(-2px)',
-                                        boxShadow: 'lg',
-                                        // green.500 is 2.78:1 — a hover border is a boundary
-                                        // and owes 3.0. green.600 (4.12) is the palette's
-                                        // documented BOUNDARY green.
-                                        borderColor: 'green.600'
-                                      }
-                                    : {
-                                        bg: ongoingHoverBg,
-                                        // green.600 is the palette's documented BOUNDARY green
-                                        // (4.12:1), same as the completed card's hover above.
-                                        borderColor: 'green.600',
-                                        transform: 'translateY(-1px)',
-                                        boxShadow: 'md'
-                                      }
-                                }
-                                // Ongoing cards used to have no press state, because they were
-                                // not clickable. They are now, so they press.
-                                _active={{ transform: 'translateY(0px)', boxShadow: 'sm' }}
+                                _hover={{ bg: rowHoverBg }}
                                 onClick={() =>
                                   navigate(
                                     `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/${production.public_id}`
                                   )
-                                }
-                                className="trazo-card">
-                                <CardBody py={4} px={{ base: 0, md: 4 }}>
+                                }>
+                                <Box py={4} px={{ base: 1, md: 3 }}>
                                   <VStack align="stretch" spacing={3}>
                                     {/* Header Row - Production Info and Status */}
                                     <Flex
@@ -725,31 +603,6 @@ const HistoryCard = ({ amount }) => {
                                       gap={2}
                                       wrap={{ base: 'wrap', smd: 'nowrap' }}>
                                       <HStack spacing={3} flex={1} minW={0}>
-                                        <Box
-                                          p={2}
-                                          bg={isCompleted ? 'gray.100' : 'green.50'}
-                                          borderRadius="lg"
-                                          border="1px solid"
-                                          borderColor={isCompleted ? 'gray.200' : 'green.200'}
-                                          flexShrink={0}>
-                                          {/* One hue per state — and as of 2026-08-28 the LIVE
-                                              season is the green one, not the amber one.
-
-                                              History: this was a `blue.50` tint with a
-                                              `blue.200` border around an `orange.800` glyph —
-                                              three hues for one status, two from palettes the
-                                              theme does not define. That became amber, which
-                                              cleared contrast (amber.900 = 3.79:1) but kept
-                                              saying the wrong thing; see the Badge below.
-                                              green.700 on green.50 is 4.97:1, gray.600 on
-                                              gray.100 is 5.74:1 — both clear the 3.0 a
-                                              non-text mark owes. */}
-                                          <Icon
-                                            as={isCompleted ? FaChartLine : FaClock}
-                                            color={isCompleted ? 'gray.600' : 'green.700'}
-                                            boxSize={4}
-                                          />
-                                        </Box>
                                         <VStack align="start" spacing={1} flex={1} minW={0}>
                                           <Text
                                             fontSize="sm"
@@ -792,23 +645,19 @@ const HistoryCard = ({ amount }) => {
                                                * carries its word, and the chip glyph differs
                                                * (clock vs chart).
                                                */
+                                              // Same meanings, quieter (2026-11-06): a green TINT for the
+                                              // live season, not solid green, and sentence case.
                                               {...(isCompleted
                                                 ? { variant: 'neutral' }
-                                                : { variant: 'brand' })}
-                                              borderRadius="full"
-                                              fontSize="xs"
-                                              fontWeight="600"
-                                              px={2}
-                                              py={1}
-                                              textTransform="uppercase"
-                                              letterSpacing="wide"
+                                                : { variant: 'subtle', colorScheme: 'green' })}
+                                              fontSize="11px"
                                               flexShrink={0}>
                                               {isCompleted
                                                 ? intl.formatMessage({
-                                                    id: 'parcel.statusComplete'
+                                                    id: 'parcelPage.status.finished'
                                                   })
                                                 : intl.formatMessage({
-                                                    id: 'parcel.statusOngoing'
+                                                    id: 'parcelPage.status.underway'
                                                   })}
                                             </Badge>
                                             <Text
@@ -1053,8 +902,8 @@ const HistoryCard = ({ amount }) => {
                                       carbon-score fallback under it until 2026-08-04. See the
                                       comment beside `isCompleted` above for why neither returns. */}
                                   </VStack>
-                                </CardBody>
-                              </Card>
+                                </Box>
+                              </Box>
                             );
                           })()}
                         </React.Fragment>

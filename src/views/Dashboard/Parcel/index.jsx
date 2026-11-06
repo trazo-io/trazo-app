@@ -2,12 +2,9 @@
 import {
   Flex,
   Grid,
-  Image,
   Text,
-  Tooltip,
   useColorModeValue,
   Box,
-  Button,
   Icon,
   IconButton,
   Menu,
@@ -20,14 +17,20 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody.tsx';
-import CardWithImage from 'components/Card/CardWithImage';
+import ParcelApplicationCard from './components/ParcelApplicationCard';
+import { PageHeaderMeta } from 'components/Design/ProfileField';
 import CardWithMap from 'components/Map/CardWithMap';
 import Shimmer from 'components/Shimmer/Shimmer';
 import HistoryCard from './components/HistoryCard';
 import TrackList from './components/TrackList';
 // assets
-import { FaClipboardCheck, FaDrawPolygon, FaEllipsisH } from 'react-icons/fa';
-import { StandardMenuItem } from 'components/Design/StandardComponents';
+import { FaArrowRight, FaDrawPolygon, FaEllipsisH } from 'react-icons/fa';
+import {
+  PAGE_MAX_W,
+  StandardButton,
+  StandardMenuItem,
+  TOUCH_TARGET
+} from 'components/Design/StandardComponents';
 import { useUserRole } from 'hooks/useUserRole';
 import { toLatLngPath } from 'utils/parcelPolygon';
 import imageMap from 'assets/img/imageMap.png';
@@ -37,7 +40,7 @@ import { useGetParcelQuery } from 'store/api/productApi';
 import { useGetParcelGeometryQuery } from 'store/api/parcelGeometryApi';
 import LocationDisclosurePrompt from 'components/Parcel/LocationDisclosurePrompt';
 import { useIntl } from 'react-intl';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useTour } from 'hooks/useTour';
 
 export default function ParcelView() {
@@ -130,7 +133,10 @@ export default function ParcelView() {
       */
       px={{ base: 3, md: '24px' }}
       w="100%"
-      maxW="100%"
+      // The app's one page width (PAGE_MAX_W, the same cap as StandardPage and the farm home).
+      // Uncapped, a 1,780px screen stretched the cards to 1,430px (2026-11-06).
+      maxW={PAGE_MAX_W}
+      mx="auto"
       overflow="hidden">
       {/* Mounted HERE, not on the parcel profile page. Profile is a drill-down at
           /parcel/:id/profile that a farmer reaches deliberately; this is the parcel dashboard
@@ -144,64 +150,63 @@ export default function ParcelView() {
         hasBoundary={Boolean(data?.polygon)}
       />
 
+      {/* Page header, the same shape as the farm home: the PARCEL's name (this page titled
+          itself with the farm's name until 2026-11-06, so every parcel page read "Calapooia Bend
+          Farm"), one muted line of facts, and the profile one click away. The Parcel Application
+          moved from a green status-in-the-label button here to its own card below. */}
       <Flex
         mb={{ base: '16px', md: '24px' }}
         justify="space-between"
-        align={{ base: 'stretch', smd: 'center' }}
-        direction={{ base: 'column', smd: 'row' }}
-        gap={3}>
-        <Text color={mainText} fontSize={{ base: 'xl', md: '2xl' }} fontWeight="bold">
-          {establishment?.name}
-        </Text>
-        {/* WS-5: THE entry to the per-parcel certifier record. Status text rides the
-            button so farmers see where they stand without opening it. */}
-        <Tooltip
-          isDisabled={!data?.application_missing?.length}
-          label={
-            data?.application_missing?.length
-              ? intl.formatMessage(
-                  { id: 'parcelApp.missingTooltip' },
-                  {
-                    items: data.application_missing
-                      .map((key) => intl.formatMessage({ id: `parcelApp.missing.${key}` }))
-                      .join(' · ')
-                  }
-                )
-              : undefined
-          }
-          hasArrow>
-          <Button
-            leftIcon={<Icon as={FaClipboardCheck} />}
-            colorScheme="green"
-            variant={data?.application_status === 'complete' ? 'outline' : 'solid'}
-            /*
-              The label is CONCATENATED — title + " · status" + " (n)" — so its length is not
-              knowable from the code. In es-419 it becomes "Solicitud de parcela · En progreso
-              (4)", and a Chakra Button is `white-space: nowrap`, so it simply overflowed; the
-              page wrapper carries `overflow="hidden"` (which is what keeps the page from
-              scrolling sideways), so the tail was CLIPPED — the farmer saw "…En progreso (4"
-              with the count cut in half.
-
-              Wrap on mobile, where the button is full-width anyway thanks to the parent's
-              `align="stretch"`; keep nowrap from `smd` up, where it sits in a row and wrapping
-              would shrink it into a narrow column. `h="auto"` lets it grow to two lines while
-              `minH` holds the 44px touch target.
-            */
-            whiteSpace={{ base: 'normal', smd: 'nowrap' }}
-            textAlign="left"
-            h="auto"
-            minH="44px"
-            py={2}
-            onClick={() =>
-              navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/application`)
-            }>
-            {intl.formatMessage({ id: 'parcelApp.title' })}
-            {data?.application_status
-              ? ` · ${intl.formatMessage({ id: `parcelApp.status.${data.application_status}` })}`
-              : ''}
-            {data?.application_missing?.length ? ` (${data.application_missing.length})` : ''}
-          </Button>
-        </Tooltip>
+        align="flex-start"
+        gap={3}
+        data-testid="parcel-page-header">
+        <Box minW={0}>
+          <Text
+            as="h1"
+            color={mainText}
+            fontSize={{ base: 'xl', md: '2xl' }}
+            fontWeight="bold"
+            lineHeight="1.2">
+            {data?.name || '\u00a0'}
+          </Text>
+          <PageHeaderMeta
+            items={[
+              establishment?.name,
+              [establishment?.city || establishment?.zone, establishment?.state]
+                .filter(Boolean)
+                .join(', '),
+              data?.area != null && data?.area !== '' && !Number.isNaN(Number(data.area))
+                ? intl.formatMessage(
+                    { id: 'parcel.card.acres' },
+                    { count: (Number(data.area) * 2.47105).toFixed(1) }
+                  )
+                : null,
+              data?.product || null
+            ]}
+          />
+          {/* Phone: a text link under the facts (the farm home's pattern). */}
+          <Box display={{ base: 'block', md: 'none' }} pt={1}>
+            <Text
+              as={RouterLink}
+              to={`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/profile`}
+              fontSize="sm"
+              fontWeight="semibold"
+              color="green.700"
+              {...TOUCH_TARGET}>
+              {intl.formatMessage({ id: 'parcelPage.profileLink' })}&nbsp;
+              <span aria-hidden="true">→</span>
+            </Text>
+          </Box>
+        </Box>
+        <Box flexShrink={0} display={{ base: 'none', md: 'block' }}>
+          <StandardButton
+            variant="outline"
+            size="sm"
+            rightIcon={<FaArrowRight aria-hidden />}
+            onClick={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/profile`)}>
+            {intl.formatMessage({ id: 'parcelPage.profileLink' })}
+          </StandardButton>
+        </Box>
       </Flex>
       <Grid
         templateColumns={{ md: '1fr', lg: '1.8fr 1.2fr' }}
@@ -210,37 +215,6 @@ export default function ParcelView() {
         gap={{ base: '16px', md: '24px' }}
         w="100%"
         maxW="100%">
-        {establishment && !isFetching ? (
-          <CardWithImage
-            title={`${establishment?.city || establishment?.zone || ''}, ${establishment?.state}`}
-            name={data?.name}
-            description={data?.description}
-            state={establishment?.state}
-            city={establishment?.city}
-            zone={establishment?.zone}
-            readMoreLink={`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/profile`}
-            image={
-              data?.image ? (
-                <Image
-                  src={data.image}
-                  alt={intl.formatMessage({ id: 'parcel.parcelImageAlt' })}
-                  objectFit={'cover'}
-                  minWidth={{ md: '300px', lg: 'auto' }}
-                  width="100%"
-                  borderRadius="15px"
-                  height="100%"
-                />
-              ) : undefined
-            }
-          />
-        ) : (
-          <Card maxH="290.5px" p="0px" bg={cardColor}>
-            <CardBody p="0px" w="100%" h={{ base: '200px', lg: '290px' }} borderRadius="15px">
-              <Shimmer height="100%" borderRadius="15px" />
-            </CardBody>
-          </Card>
-        )}
-
         <CardWithMap
           polygon={isFetching ? null : data?.polygon}
           center={isFetching ? null : data?.map_metadata?.center}
@@ -287,6 +261,22 @@ export default function ParcelView() {
             ) : null
           }
         />
+        {data && !isFetching ? (
+          <ParcelApplicationCard
+            farmId={farmId}
+            parcelId={parcelId}
+            status={data.application_status}
+            missing={data.application_missing}
+            evidenceStatus={data.evidence_status}
+            evidenceMissing={data.evidence_missing}
+          />
+        ) : (
+          <Card p="0px" bg={cardColor}>
+            <CardBody p="0px" w="100%" h={{ base: '200px', lg: '290px' }} borderRadius="15px">
+              <Shimmer height="100%" borderRadius="15px" />
+            </CardBody>
+          </Card>
+        )}
       </Grid>
       <Grid
         templateColumns={{ sm: '1fr', md: '1fr', lg: '1fr 1fr' }}

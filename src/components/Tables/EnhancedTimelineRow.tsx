@@ -1490,7 +1490,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                             py={0.5}
                             fontWeight="600"
                             borderRadius="4px"
-                            textTransform="uppercase"
+                            textTransform="none"
                             letterSpacing="0.05em"
                             cursor="help">
                             {intl.formatMessage({ id: 'carbon.badge.epaUsdaSourced' })}

@@ -86,7 +86,8 @@ describe('mobile horizontal rhythm', () => {
      * already had the page gutter, so title and cards sat on two grids 16px apart.
      */
     const code = codeOf('views/Dashboard/Parcel/index.jsx');
-    const i = code.indexOf('{establishment?.name}');
+    // The title is the PARCEL's name since 2026-11-06 (it showed the farm's name before).
+    const i = code.indexOf('{data?.name ||');
     expect(i, 'the parcel page title moved — this would pass vacuously').toBeGreaterThan(-1);
     const tagStart = code.lastIndexOf('<Text', i);
     const tag = openingTagAt(code, tagStart, 'Text');
@@ -103,10 +104,14 @@ describe('mobile horizontal rhythm', () => {
      * `pr={{ base: '8px', md: '12px' }}` — this repo's most common defect is a fix that lands
      * on one of a pair.
      */
-    for (const rel of [
-      'views/Dashboard/Parcel/components/HistoryCard.jsx',
-      'views/Dashboard/Parcel/components/TrackList.jsx'
-    ]) {
+    // HistoryCard lost its inner scroll on 2026-11-06 (a parcel holds a handful of seasons; a
+    // 450px scroll box inside the page was a second scrollbar for a short list). Assert that
+    // stays true, so the pair cannot silently diverge again; TrackList keeps its region.
+    expect(
+      codeOf('views/Dashboard/Parcel/components/HistoryCard.jsx'),
+      'HistoryCard regrew an inner scroll region: give it symmetric padding like TrackList'
+    ).not.toContain('overflowY="auto"');
+    for (const rel of ['views/Dashboard/Parcel/components/TrackList.jsx']) {
       const code = codeOf(rel);
       const i = code.indexOf('overflowY="auto"');
       expect(i, `${rel} no longer has a vertical scroll region`).toBeGreaterThan(-1);
