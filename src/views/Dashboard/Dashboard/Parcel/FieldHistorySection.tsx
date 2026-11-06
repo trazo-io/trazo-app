@@ -609,11 +609,15 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
                         color="gray.800">
                         {entry.year}
                       </Td>
-                      <Td fontSize={{ base: 'xs', md: 'sm' }} color="gray.700">
+                      {/* Wraps, with the cover crop on its own line. TableContainer sets
+                          nowrap on every cell, so "Carrots (Bolero) + cover: Cereal rye /
+                          hairy vetch / crimson clover (winter)" ran one 420px line and pushed
+                          Notes and the edit/delete buttons past the card's right edge
+                          (screen audit 2026-11-06). */}
+                      <Td fontSize={{ base: 'xs', md: 'sm' }} color="gray.700" whiteSpace="normal">
                         {entry.crop_grown}
                         {entry.cover_crop ? (
-                          <Text as="span" fontSize="xs" color="gray.500">
-                            {' '}
+                          <Text fontSize="xs" color="gray.500">
                             + cover: {entry.cover_crop}
                           </Text>
                         ) : null}
@@ -635,7 +639,7 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
                         fontSize="xs"
                         color="gray.600"
                         display={{ base: 'none', md: 'table-cell' }}
-                        maxW="180px"
+                        maxW="160px"
                         isTruncated>
                         {entry.substances_applied || '—'}
                       </Td>
@@ -643,7 +647,7 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
                         fontSize="xs"
                         color="gray.600"
                         display={{ base: 'none', lg: 'table-cell' }}
-                        maxW="200px"
+                        maxW="160px"
                         isTruncated>
                         {entry.notes || '—'}
                       </Td>

@@ -101,6 +101,17 @@ const PAGE_SIZE = 25;
  *  against a 500/hour user throttle — "walnut" cost six of them. */
 const SEARCH_DEBOUNCE_MS = 300;
 
+// The farmer's locale and a short month ("Oct 7, 2026"), not the browser default's
+// "10/7/2026", which reads day-first or month-first depending on who opens it.
+// created_at is a real instant, so it renders in the viewer's own zone (formatDateFromTimestamp
+// pins UTC for wall-clock event dates and would move a late-evening upload to the next day).
+const formatDocDate = (iso: string, locale: string): string => {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime())
+    ? ''
+    : d.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
 const formatSize = (bytes: number): string => {
   if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   if (bytes >= 1024) return `${Math.round(bytes / 1024)} KB`;
@@ -569,7 +580,7 @@ const DocumentsPage = () => {
             <Text aria-hidden="true">·</Text>
             <Text>{formatSize(doc.size_bytes)}</Text>
             <Text aria-hidden="true">·</Text>
-            <Text>{new Date(doc.created_at).toLocaleDateString()}</Text>
+            <Text>{formatDocDate(doc.created_at, intl.locale)}</Text>
           </HStack>
           <HStack spacing={1} flexShrink={0}>
             <StandardButton
@@ -670,14 +681,16 @@ const DocumentsPage = () => {
             {documentSourceLabel(doc, intl)}
           </Text>
         </Td>
+        {/* nowrap: at 1366px the title column took the slack and split "127 KB" and
+            "10/7/2026" across two lines (screen audit 2026-11-06). */}
         <Td>
-          <Text fontSize="xs" color="gray.600">
+          <Text fontSize="xs" color="gray.600" whiteSpace="nowrap">
             {formatSize(doc.size_bytes)}
           </Text>
         </Td>
         <Td>
-          <Text fontSize="xs" color="gray.600">
-            {new Date(doc.created_at).toLocaleDateString()}
+          <Text fontSize="xs" color="gray.600" whiteSpace="nowrap">
+            {formatDocDate(doc.created_at, intl.locale)}
           </Text>
         </Td>
         <Td>

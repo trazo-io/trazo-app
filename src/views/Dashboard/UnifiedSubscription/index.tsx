@@ -1091,22 +1091,30 @@ function UnifiedSubscriptionDashboard() {
                                 {intl.formatMessage({ id: 'app.currentPeriod' })}
                               </Text>
                               <Text fontWeight="medium">
-                                {formatDate(subscription?.current_period_start)} -{' '}
-                                {formatDate(subscription?.current_period_end)}
+                                {/* A comped pilot can carry no end date: print the start alone,
+                                    never "8/21/2026 - -" (screen audit 2026-11-06). */}
+                                {formatDate(subscription?.current_period_start)}
+                                {subscription?.current_period_end
+                                  ? ` – ${formatDate(subscription.current_period_end)}`
+                                  : ''}
                               </Text>
                             </Box>
-                            <Box>
-                              <Text color="gray.500" fontSize="sm">
-                                {/* For a pilot, current_period_end is the certifier renewal
+                            {subscription?.current_period_end ? (
+                              <Box>
+                                <Text color="gray.500" fontSize="sm">
+                                  {/* For a pilot, current_period_end is the certifier renewal
                                     anchor set by provision_pilot — recorded, never billed. */}
-                                {intl.formatMessage({
-                                  id: isPilot ? 'subscription.pilotThrough' : 'app.nextBillingDate'
-                                })}
-                              </Text>
-                              <Text fontWeight="medium">
-                                {formatDate(subscription?.current_period_end)}
-                              </Text>
-                            </Box>
+                                  {intl.formatMessage({
+                                    id: isPilot
+                                      ? 'subscription.pilotThrough'
+                                      : 'app.nextBillingDate'
+                                  })}
+                                </Text>
+                                <Text fontWeight="medium">
+                                  {formatDate(subscription?.current_period_end)}
+                                </Text>
+                              </Box>
+                            ) : null}
                           </SimpleGrid>
                         )}
                       </StandardCard>

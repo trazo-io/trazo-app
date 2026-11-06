@@ -30,6 +30,7 @@ import { SidebarContext } from 'contexts/SidebarContext';
 import { useIntl } from 'react-intl';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { sectionCrumbId } from './sectionCrumb';
+import { isConsumerSubdomain } from 'utils/subdomain';
 import { useSelector } from 'react-redux';
 import { FaClock } from 'react-icons/fa';
 
@@ -83,7 +84,7 @@ export default function AdminNavbar(props: AdminNavbarProps) {
   const { farmId, parcelId } = useParams<{ farmId: string; parcelId: string }>();
 
   // The page's own section, after farm / parcel (Activities, Documents, a season...).
-  const sectionId = sectionCrumbId(useLocation().pathname);
+  const sectionId = sectionCrumbId(useLocation().pathname, isConsumerSubdomain());
   // A crumb links back up whenever something more specific follows it.
   const farmIsLink = Boolean(parcelId || sectionId);
   const parcelIsLink = Boolean(sectionId);
@@ -296,7 +297,12 @@ export default function AdminNavbar(props: AdminNavbarProps) {
                 below md the trail keeps its last two levels; desktop shows all of it. */}
             <BreadcrumbItem
               color={mainText}
-              display={{ base: farmIsLink ? 'none' : 'inline-flex', md: 'inline-flex' }}>
+              // A company-level page (Field notes, Subscription...) has no farm crumb, so Home
+              // and the section are its two levels and Home stays.
+              display={{
+                base: currentEstablishment && farmIsLink ? 'none' : 'inline-flex',
+                md: 'inline-flex'
+              }}>
               <BreadcrumbLink
                 href="/admin/dashboard/"
                 onClick={handleHomeClick}
@@ -410,7 +416,7 @@ export default function AdminNavbar(props: AdminNavbarProps) {
             )}
 
             {/* The section this page is (2026-11-06): the last crumb, the current page. */}
-            {sectionId && currentEstablishment && (
+            {sectionId && (currentEstablishment || !farmId) && (
               <BreadcrumbItem color={mainText}>
                 <BreadcrumbLink
                   aria-current="page"
