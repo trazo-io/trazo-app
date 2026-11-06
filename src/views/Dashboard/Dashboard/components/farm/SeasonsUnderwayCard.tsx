@@ -53,7 +53,8 @@ export default function SeasonsUnderwayCard({ farmId, parcels = [] }: Props) {
   const intl = useIntl();
   const titleColor = useColorModeValue('gray.700', 'gray.200');
   const iconColor = useColorModeValue('gray.600', 'gray.400');
-  const muted = useColorModeValue('gray.500', 'gray.400');
+  // gray.600, not gray.500: the dates and counts are read on a phone outdoors, at 12px.
+  const muted = useColorModeValue('gray.600', 'gray.400');
   // A failed or not-yet-run query is never "no season underway": that empty state tells the
   // grower to start a season that may already exist (review of #286).
   const { data, isLoading, isUninitialized, isError } = useGetFarmProductionsQuery(farmId, {

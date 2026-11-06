@@ -15,7 +15,7 @@ import { IntlProvider } from 'react-intl';
 import { Provider } from 'react-redux';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
-import enUS from '../../../i18n/lang/en-US.json';
+import enUS from '../../../../../../i18n/lang/en-US.json';
 
 vi.mock('hooks/useBatchS3Images', () => ({
   useBatchS3Images: () => ({ presignedUrls: {}, isLoading: false })
@@ -24,7 +24,7 @@ vi.mock('store/api/productApi', () => ({
   useCreateParcelMutation: () => [vi.fn(), { isLoading: false }]
 }));
 
-import CarouselHorizontal from '../CarouselHorizontal';
+import FarmParcelsCard from '../FarmParcelsCard';
 
 function renderCard(maxParcels: number) {
   const store = configureStore({
@@ -50,9 +50,7 @@ function renderCard(maxParcels: number) {
             <Routes>
               <Route
                 path="/admin/dashboard/farm/:farmId"
-                element={
-                  <CarouselHorizontal title="Parcels" description="Farm Parcels" data={[]} />
-                }
+                element={<FarmParcelsCard farmId={21} parcels={[]} />}
               />
             </Routes>
           </MemoryRouter>

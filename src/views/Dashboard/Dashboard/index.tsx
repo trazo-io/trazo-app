@@ -16,7 +16,7 @@ import {
   Center,
   Tooltip
 } from '@chakra-ui/react';
-import { StandardNotice } from 'components/Design/StandardComponents';
+import { PAGE_MAX_W, StandardNotice } from 'components/Design/StandardComponents';
 import { useSelector } from 'react-redux';
 import { useMemo } from 'react';
 // Custom icons
@@ -49,7 +49,6 @@ import {
 import ActiveUsers from './components/ActiveUsers';
 import BarChart from 'components/Charts/BarChart';
 import Card from 'components/Card/Card';
-import CarouselHorizontal from 'components/Carousel/CarouselHorizontal';
 import { FaPlus, FaLeaf, FaWifi, FaLock } from 'react-icons/fa';
 import LineChart from 'components/Charts/LineChart';
 import MiniStatistics from './components/MiniStatistics';
@@ -62,6 +61,7 @@ import CertifierReadinessCard from './components/farm/CertifierReadinessCard';
 import CertifierDeadlinesStrip from './components/farm/CertifierDeadlinesStrip';
 import FarmHomeHeader from './components/farm/FarmHomeHeader';
 import SeasonsUnderwayCard from './components/farm/SeasonsUnderwayCard';
+import FarmParcelsCard from './components/farm/FarmParcelsCard';
 import { useTour } from 'hooks/useTour';
 import { useTourScenario } from 'hooks/useTourScenario';
 
@@ -502,6 +502,11 @@ export default function DashboardView() {
       */
       px={{ base: 3, md: 6 }}
       pb={{ base: 8, md: 8 }}
+      // The app's one page width (PAGE_MAX_W, shared with StandardPage's 41 pages). This page was
+      // the exception: uncapped, a 1,780px screen spread each row across ~1,550px.
+      maxW={PAGE_MAX_W}
+      mx="auto"
+      w="100%"
       minH="100vh">
       {/* TrialStatusBanner was mounted here until 2026-11-04 and is deleted. Trazo sells no trial
           (Starter is free forever) and its checkout never asks Stripe for one, so the banner was
@@ -852,13 +857,13 @@ export default function DashboardView() {
         </Box>
       )} */}
 
-      <Box data-tour="parcels-carousel">
-        <CarouselHorizontal
-          title={intl.formatMessage({ id: 'app.parcels' })}
-          description={intl.formatMessage({ id: 'app.establishmentParcels' })}
-          data={establishment?.parcels}
-        />
-      </Box>
+      {/* Parcels as rows (2026-11-06): every parcel visible, no image placeholders. The tour id
+          keeps its old name so the welcome tours keep their step. */}
+      {establishment?.id && (
+        <Box data-tour="parcels-carousel">
+          <FarmParcelsCard farmId={establishment.id} parcels={establishment.parcels} />
+        </Box>
+      )}
     </Flex>
   );
 }
