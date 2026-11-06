@@ -634,6 +634,8 @@
   "app.earlyAccess.title": "Early Access Program",
   "app.ecoFriendly": "Eco-Friendly",
   "app.edit": "Edit",
+  "breadcrumb.activity": "Activity",
+  "breadcrumb.season": "Season",
   "app.editEstablishment": "Edit the selected Farm",
   "app.editEstablishmentSubtitle": "Modify the form below to edit the selected farm.",
   "app.editEvent": "Edit the selected Event",
