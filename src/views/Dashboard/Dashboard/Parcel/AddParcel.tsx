@@ -145,7 +145,7 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
   // Parcel count comes from the Redux company state (same source UnifiedSubscription
   // uses), with the freshly-fetched farm data as a fallback.
   //
-  // Shares `utils/subscriptionLimits` with the "+ Add Parcel" tile in CarouselHorizontal. The two
+  // Shares `utils/subscriptionLimits` with "New parcel" on the farm home (FarmParcelsCard). The two
   // previously implemented this separately and disagreed: that guard read base plan features and
   // treated -1 (unlimited) as "no limit configured", so it hid the button on unlimited plans and
   // ignored purchased add-ons.

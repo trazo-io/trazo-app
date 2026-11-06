@@ -49,7 +49,6 @@ import {
 import ActiveUsers from './components/ActiveUsers';
 import BarChart from 'components/Charts/BarChart';
 import Card from 'components/Card/Card';
-import CarouselHorizontal from 'components/Carousel/CarouselHorizontal';
 import { FaPlus, FaLeaf, FaWifi, FaLock } from 'react-icons/fa';
 import LineChart from 'components/Charts/LineChart';
 import MiniStatistics from './components/MiniStatistics';
@@ -62,6 +61,7 @@ import CertifierReadinessCard from './components/farm/CertifierReadinessCard';
 import CertifierDeadlinesStrip from './components/farm/CertifierDeadlinesStrip';
 import FarmHomeHeader from './components/farm/FarmHomeHeader';
 import SeasonsUnderwayCard from './components/farm/SeasonsUnderwayCard';
+import FarmParcelsCard from './components/farm/FarmParcelsCard';
 import { useTour } from 'hooks/useTour';
 import { useTourScenario } from 'hooks/useTourScenario';
 
@@ -852,13 +852,13 @@ export default function DashboardView() {
         </Box>
       )} */}
 
-      <Box data-tour="parcels-carousel">
-        <CarouselHorizontal
-          title={intl.formatMessage({ id: 'app.parcels' })}
-          description={intl.formatMessage({ id: 'app.establishmentParcels' })}
-          data={establishment?.parcels}
-        />
-      </Box>
+      {/* Parcels as rows (2026-11-06): every parcel visible, no image placeholders. The tour id
+          keeps its old name so the welcome tours keep their step. */}
+      {establishment?.id && (
+        <Box data-tour="parcels-carousel">
+          <FarmParcelsCard farmId={establishment.id} parcels={establishment.parcels} />
+        </Box>
+      )}
     </Flex>
   );
 }
