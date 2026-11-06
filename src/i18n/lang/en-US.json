@@ -7265,7 +7265,7 @@
   "parcelApp.buffers.adjoiningUse": "Adjoining land use",
   "parcelApp.buffers.border": "Border",
   "parcelApp.buffers.cropGrown": "Crop grown in buffer",
-  "parcelApp.buffers.cropPlaceholder": "e.g., None / cover crop",
+  "parcelApp.buffers.cropPlaceholder": "e.g., clover cover crop",
   "parcelApp.buffers.dir.east": "East",
   "parcelApp.buffers.dir.north": "North",
   "parcelApp.buffers.dir.south": "South",
