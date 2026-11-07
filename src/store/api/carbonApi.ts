@@ -41,13 +41,6 @@ export interface CarbonSummary {
   }>;
 }
 
-export interface CarbonBenchmark {
-  cropType: string;
-  benchmarkValue: number; // kg CO2e/kg
-  source: string;
-  year: number;
-}
-
 export interface CarbonRecommendation {
   id: string;
   title: string;
@@ -475,15 +468,6 @@ export interface CropTemplateDetail {
     emission_factor: number;
     unit: string;
   }>;
-  benchmark?: {
-    crop_type: string;
-    region: string;
-    average_emissions: number;
-    percentile_25: number;
-    percentile_75: number;
-    usda_factors_used: boolean;
-  };
-  carbon_credit_potential: number;
   sustainability_opportunities: string[];
   efficiency_tips: string[];
   source?: string;
@@ -533,15 +517,6 @@ export const carbonApi = baseApi.injectEndpoints({
       providesTags: ['CarbonSummary']
     }),
 
-    getCarbonBenchmarks: builder.query<CarbonBenchmark[], void>({
-      query: () => ({
-        url: 'carbon/benchmarks/',
-        method: 'GET',
-        credentials: 'include'
-      }),
-      providesTags: ['CarbonBenchmarks']
-    }),
-
     getPublicCarbonSummary: builder.query<CarbonSummary, string>({
       query: (productionId) => ({
         url: `carbon/public/productions/${productionId}/summary/`,
@@ -558,26 +533,6 @@ export const carbonApi = baseApi.injectEndpoints({
         credentials: 'include'
       }),
       providesTags: ['CarbonSummary']
-    }),
-
-    // Offset endpoints
-    createOffset: builder.mutation<
-      { success: boolean; transactionId: string },
-      {
-        production: string; // Changed from productionId to production to match backend expectations
-        amount: number;
-        source_id: string;
-        type: string;
-        year: number;
-      }
-    >({
-      query: (data) => ({
-        url: 'carbon/offsets/',
-        method: 'POST',
-        body: data,
-        credentials: 'include'
-      }),
-      invalidatesTags: ['CarbonSummary']
     }),
 
     // Real-time event carbon calculation - High-performance endpoint
@@ -1090,10 +1045,8 @@ export const carbonApi = baseApi.injectEndpoints({
 export const {
   useGetFarmCarbonSummaryQuery,
   useGetProductionCarbonSummaryQuery,
-  useGetCarbonBenchmarksQuery,
   useGetPublicCarbonSummaryQuery,
   useGetProductionTimelineQuery,
-  useCreateOffsetMutation,
   useCalculateEventCarbonImpactMutation,
   // Phase 2 Optimization: Unified Complete Summary
   useGetCompleteSummaryQuery,

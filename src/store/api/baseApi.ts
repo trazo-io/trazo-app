@@ -27,10 +27,6 @@ export const baseApi = createApi({
     'Invoice',
     'CarbonSummary',
     'CarbonRecommendations',
-    // getCarbonBenchmarks has always declared providesTags: ['CarbonBenchmarks'] while the tag
-    // was never in this list, so RTK Query rejected it and tsc flagged it. Nothing invalidates
-    // it, so declaring it is inert at runtime and keeps the endpoint's stated intent.
-    'CarbonBenchmarks',
     'Education',
     'CropTemplate',
     'CropType',
