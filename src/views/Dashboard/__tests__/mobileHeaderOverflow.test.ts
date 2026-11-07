@@ -66,8 +66,12 @@ describe('mobile header overflow', () => {
     expect(code, 'title column needs minW={0} or it cannot wrap below its longest word').toMatch(
       /<VStack align="flex-start" gap=\{1\} minW=\{0\}>/
     );
-    expect(code, 'action Wrap needs flexShrink={0} so the buttons are not the thing squeezed')
-      .toMatch(/<Wrap[^>]*flexShrink=\{0\}/);
+    // The actions were a Wrap of four buttons; since 2026-11-06 they are one HStack of a primary,
+    // an optional Finish and a menu. Either container must refuse to shrink.
+    expect(
+      code,
+      'the actions row needs flexShrink={0} so the buttons are not the thing squeezed'
+    ).toMatch(/<(?:Wrap|HStack)[^>]*flexShrink=\{0\}/);
   });
 
   it('keeps the Parcel Application status out of a button label', () => {

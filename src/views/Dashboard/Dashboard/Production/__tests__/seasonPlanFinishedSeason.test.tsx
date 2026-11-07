@@ -9,7 +9,9 @@
  *  - finished + nothing fulfilled  -> the card does not render at all;
  *  - finished + partly fulfilled   -> collapsed retrospective ("N of M ... logged",
  *    opt-in row list), unfulfilled rows say "Not logged", never "Planned", no "Log this";
- *  - open season                   -> the checklist, unchanged ("Planned", "Log this").
+ *  - open season                   -> the checklist, with "Log this" on each pending row.
+ *    Since 2026-11-06 a pending row carries no "Planned" pill: "Log this" already says it,
+ *    and nine identical pills were noise.
  */
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -48,13 +50,7 @@ const renderSection = (props: Partial<React.ComponentProps<typeof SeasonPlanSect
   render(
     <ChakraProvider>
       <IntlProvider locale="en" messages={messages as any}>
-        <SeasonPlanSection
-          productionId="uuid-1"
-          farmId="167"
-          parcelId="303"
-          canWrite
-          {...props}
-        />
+        <SeasonPlanSection productionId="uuid-1" farmId="167" parcelId="303" canWrite {...props} />
       </IntlProvider>
     </ChakraProvider>
   );
@@ -95,7 +91,7 @@ describe('season plan on a finished season', () => {
     };
     renderSection({ isFinished: false });
     expect(screen.getByText('Practice 2')).toBeTruthy();
-    expect(screen.getByText('Planned')).toBeTruthy();
+    expect(screen.queryByText('Planned')).toBeNull();
     expect(screen.queryByText('Not logged')).toBeNull();
     expect(screen.getByText('Log this')).toBeTruthy();
     expect(screen.queryByText(/This season is closed/)).toBeNull();

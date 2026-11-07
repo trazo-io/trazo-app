@@ -21,13 +21,18 @@ import {
   Divider,
   HStack,
   Icon,
+  IconButton,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
   Stack,
   Text,
   VStack,
   useDisclosure,
   useToast
 } from '@chakra-ui/react';
-import { FaCheckCircle, FaClipboardList, FaPlus, FaUndo } from 'react-icons/fa';
+import { FaCheckCircle, FaClipboardList, FaEllipsisV, FaPlus } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import { useNavigate } from 'react-router-dom';
 
@@ -158,6 +163,30 @@ export const SeasonPlanSection: React.FC<SeasonPlanSectionProps> = ({
     );
   };
 
+  const logLabel = (item: SeasonPlanItem) =>
+    `${intl.formatMessage({ id: 'seasonPlan.logThis' })}: ${item.name}`;
+
+  const rowMenu = (item: SeasonPlanItem, labelId: string, onSelect: () => void) => (
+    <Menu placement="bottom-end" autoSelect={false}>
+      <MenuButton
+        as={IconButton}
+        variant="ghost"
+        size="sm"
+        minH={TOUCH_TARGET}
+        minW={TOUCH_TARGET}
+        isDisabled={pendingItemId === item.id}
+        aria-label={intl.formatMessage(
+          { id: 'seasonPlan.rowMenu', defaultMessage: 'More for {name}' },
+          { name: item.name }
+        )}
+        icon={<Icon as={FaEllipsisV} />}
+      />
+      <MenuList>
+        <MenuItem onClick={onSelect}>{intl.formatMessage({ id: labelId })}</MenuItem>
+      </MenuList>
+    </Menu>
+  );
+
   const askToSkip = (item: SeasonPlanItem) => {
     setSkipTarget(item);
     setSkipReason('');
@@ -277,16 +306,16 @@ export const SeasonPlanSection: React.FC<SeasonPlanSectionProps> = ({
               return (
                 <Box key={item.id}>
                   {index > 0 && <Divider />}
-                  {/* Stacks below 480px: "Not this season" + "Log this" side by side with the
-                      practice name does not fit a 375px screen. No row-level `opacity` — it
+                  {/* One row at every width: with one button and a menu beside it, the action
+                      fits beside the name on a 375px screen. No row-level `opacity`: it
                       pulls every label in the row under its measured contrast ratio, and the
                       set-aside state is already carried by the strike-through, the muted
                       title and the badge's own word. */}
                   <Stack
-                    direction={{ base: 'column', smd: 'row' }}
+                    direction="row"
                     py={3}
                     spacing={3}
-                    align={{ base: 'stretch', smd: 'flex-start' }}
+                    align="flex-start"
                     justify="space-between">
                     <HStack spacing={3} align="flex-start" minW={0}>
                       <Icon
@@ -303,14 +332,26 @@ export const SeasonPlanSection: React.FC<SeasonPlanSectionProps> = ({
                           textDecoration={isSkipped ? 'line-through' : undefined}>
                           {item.name}
                         </Text>
-                        {item.planned_window && (
-                          <Text fontSize="xs" color="gray.600">
-                            {intl.formatMessage(
+                        <Text fontSize="xs" color="gray.600">
+                          {/* The status, in words, when it is not "planned": the glyph shape
+                              and this word carry it, never the colour alone. */}
+                          {item.status !== 'pending' || isFinished ? (
+                            <>
+                              <Text
+                                as="span"
+                                fontWeight="semibold"
+                                color={isLogged ? 'green.700' : 'gray.600'}>
+                                {intl.formatMessage({ id: statusKey })}
+                              </Text>
+                              {item.planned_window ? ' · ' : ''}
+                            </>
+                          ) : null}
+                          {item.planned_window &&
+                            intl.formatMessage(
                               { id: 'seasonPlan.window' },
                               { window: item.planned_window }
                             )}
-                          </Text>
-                        )}
+                        </Text>
                         {isSkipped && item.skipped_reason && (
                           <Text fontSize="xs" color="gray.600" fontStyle="italic">
                             {item.skipped_reason}
@@ -319,15 +360,11 @@ export const SeasonPlanSection: React.FC<SeasonPlanSectionProps> = ({
                       </VStack>
                     </HStack>
 
-                    <VStack align={{ base: 'stretch', smd: 'end' }} spacing={2} flexShrink={0}>
-                      {/* Status is never signalled by colour alone — the pill carries the word. */}
-                      <Badge
-                        variant={isLogged ? 'subtle' : 'neutral'}
-                        colorScheme={isLogged ? 'green' : undefined}
-                        textTransform="none">
-                        {intl.formatMessage({ id: statusKey })}
-                      </Badge>
-
+                    {/* ONE visible action per row (2026-11-06). Every pending row carried a
+                        "Planned" pill and two buttons, so a nine-item plan was eighteen buttons
+                        and nine identical pills. "Planned" is what a row with "Log this" already
+                        means; "Not this season" is the rare answer and sits behind the row's menu. */}
+                    <HStack spacing={1} flexShrink={0} justify="flex-end">
                       {isLogged && item.fulfilled_by_id != null && (
                         <StandardButton
                           size="sm"
@@ -335,48 +372,49 @@ export const SeasonPlanSection: React.FC<SeasonPlanSectionProps> = ({
                           variant="ghost"
                           onClick={() => openRecord(item)}>
                           {intl.formatMessage({
-                            // "View record" pointed at an editor. On a filed season the
-                            // control opens the correction sheet, which lists the record's
-                            // current values — so it reads as well as corrects — and the
-                            // label now says which of the two the farmer is getting.
+                            // On a filed season the control opens the correction sheet, which
+                            // lists the record's current values, and the label says so.
                             id: isFinished ? 'seasonPlan.correctRecord' : 'seasonPlan.viewRecord'
                           })}
                         </StandardButton>
                       )}
 
                       {canWrite && !isFinished && item.status === 'pending' && (
-                        <HStack spacing={2} w={{ base: '100%', smd: 'auto' }}>
-                          <StandardButton
-                            size="sm"
-                            minH={TOUCH_TARGET}
-                            flex={{ base: 1, smd: 'none' }}
+                        <>
+                          {/* Phone: the "+" alone, so the practice name keeps the width (a
+                              labelled button beside a menu broke "Transplanting/Seeding"
+                              mid-word at 390px). The accessible name carries the practice. */}
+                          <IconButton
+                            display={{ base: 'inline-flex', smd: 'none' }}
                             variant="outline"
-                            onClick={() => askToSkip(item)}>
-                            {intl.formatMessage({ id: 'seasonPlan.notApplicable' })}
-                          </StandardButton>
-                          <StandardButton
+                            colorScheme="green"
                             size="sm"
                             minH={TOUCH_TARGET}
-                            flex={{ base: 1, smd: 'none' }}
+                            minW={TOUCH_TARGET}
+                            aria-label={logLabel(item)}
+                            icon={<Icon as={FaPlus} />}
+                            onClick={() => openLogForm(item)}
+                          />
+                          <StandardButton
+                            display={{ base: 'none', smd: 'inline-flex' }}
+                            size="sm"
+                            minH={TOUCH_TARGET}
+                            variant="outline"
                             leftIcon={<Icon as={FaPlus} />}
+                            aria-label={logLabel(item)}
                             onClick={() => openLogForm(item)}>
                             {intl.formatMessage({ id: 'seasonPlan.logThis' })}
                           </StandardButton>
-                        </HStack>
+                          {rowMenu(item, 'seasonPlan.notApplicable', () => askToSkip(item))}
+                        </>
                       )}
 
-                      {canWrite && !isFinished && isSkipped && (
-                        <StandardButton
-                          size="sm"
-                          minH={TOUCH_TARGET}
-                          variant="ghost"
-                          leftIcon={<Icon as={FaUndo} />}
-                          isLoading={pendingItemId === item.id}
-                          onClick={() => applyStatus(item, 'pending')}>
-                          {intl.formatMessage({ id: 'seasonPlan.putBack' })}
-                        </StandardButton>
-                      )}
-                    </VStack>
+                      {/* Putting a practice back is as rare as setting it aside: same menu. */}
+                      {canWrite &&
+                        !isFinished &&
+                        isSkipped &&
+                        rowMenu(item, 'seasonPlan.putBack', () => applyStatus(item, 'pending'))}
+                    </HStack>
                   </Stack>
                 </Box>
               );

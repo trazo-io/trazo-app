@@ -226,6 +226,8 @@ describe('F29 — the season page can finish ITSELF', () => {
     const idx = source.indexOf('/finish`');
     const preceding = source.slice(Math.max(0, idx - 700), idx);
     expect(preceding).toContain('canWrite');
-    expect(preceding).toContain('!historyData?.finish_date');
+    expect(preceding).toContain('!isFinished');
+    // ...and `isFinished` is the season's own finish date, not some other flag.
+    expect(source).toMatch(/const isFinished = Boolean\(historyData\?\.finish_date\)/);
   });
 });
