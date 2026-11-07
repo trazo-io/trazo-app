@@ -46,7 +46,27 @@ const CATEGORIES = [
   'pest_disease_weed',
   'production_aid',
   'post_harvest',
+  'facility_pest',
   'other'
+] as const;
+
+/**
+ * CCOF Materials Application §F asks facility pest control "by National List material type", §G any
+ * material outside those types (§ 205.271(c)-(d)). Mirrors PlanMaterialEntry.FACILITY_MATERIAL_TYPE_CHOICES.
+ */
+const FACILITY_TYPES = [
+  'ammonium_carbonate',
+  'boric_acid',
+  'botanical_pesticides',
+  'carbon_dioxide',
+  'diatomaceous_earth',
+  'nitrogen_gas',
+  'nonsynthetic_bait_lure_repellent',
+  'pheromones',
+  'pyrethrum_pyrethrins',
+  'sticky_traps',
+  'vitamin_d3',
+  'not_national_list'
 ] as const;
 
 /** The agent decisions that need the agent's list, letter or date behind them (the server says so too). */
@@ -312,6 +332,62 @@ const MaterialRowEditor: React.FC<{
           </>
         )}
       </Flex>
+
+      {row.category === 'facility_pest' && (
+        // CCOF §F/§G's three columns, asked of a facility pest row only (the server refuses them on any
+        // other). A select left on its blank option saves nothing.
+        <Flex wrap="wrap" gap={2} mt={2} align="center" data-testid="materials-facility-pest">
+          <StandardSelect
+            size="sm"
+            flex={{ base: '1 1 100%', md: '1 1 300px' }}
+            isDisabled={!isEditable}
+            value={row.facility_material_type}
+            aria-label={String(
+              intl.formatMessage({ id: 'osp.materialsList.facility.typeAria' }, { name: row.name })
+            )}
+            onChange={(e) => {
+              if (e.target.value) save(row, { facility_material_type: e.target.value });
+            }}>
+            {!row.facility_material_type && (
+              <option value="">{intl.formatMessage({ id: 'osp.materialsList.facility.typeUnset' })}</option>
+            )}
+            {FACILITY_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {intl.formatMessage({ id: `osp.materialsList.facility.type.${t}` })}
+              </option>
+            ))}
+          </StandardSelect>
+          <StandardInput
+            key={`where:${row.where_used}`}
+            size="sm"
+            flex={{ base: '1 1 100%', md: '1 1 220px' }}
+            isDisabled={!isEditable}
+            defaultValue={row.where_used}
+            placeholder={intl.formatMessage({ id: 'osp.materialsList.facility.wherePlaceholder' })}
+            aria-label={String(
+              intl.formatMessage({ id: 'osp.materialsList.facility.whereAria' }, { name: row.name })
+            )}
+            onBlur={(e) => {
+              if (e.target.value !== row.where_used) save(row, { where_used: e.target.value });
+            }}
+          />
+          <StandardSelect
+            size="sm"
+            flex={{ base: '1 1 100%', md: '1 1 260px' }}
+            isDisabled={!isEditable}
+            value={
+              row.applied_by_fumigation === null ? '' : row.applied_by_fumigation ? 'true' : 'false'
+            }
+            aria-label={String(
+              intl.formatMessage({ id: 'osp.materialsList.facility.fumigationAria' }, { name: row.name })
+            )}
+            onChange={(e) => save(row, { applied_by_fumigation: e.target.value })}>
+            <option value="">{intl.formatMessage({ id: 'osp.materialsList.facility.fumigationUnset' })}</option>
+            <option value="true">{intl.formatMessage({ id: 'osp.materialsList.facility.fumigationYes' })}</option>
+            <option value="false">{intl.formatMessage({ id: 'osp.materialsList.facility.fumigationNo' })}</option>
+          </StandardSelect>
+        </Flex>
+      )}
 
       {pendingReview && (
         <Text fontSize="xs" color={mutedColor} mt={1} data-testid="materials-review-needs-evidence">
