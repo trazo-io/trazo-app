@@ -498,7 +498,14 @@ export interface OSPMaterialListRow {
     | 'pest_disease_weed'
     | 'production_aid'
     | 'post_harvest'
+    | 'facility_pest'
     | 'other';
+  /** CCOF §F/§G, on a facility pest row: National List type ('not_national_list' for §G), '' unset. */
+  facility_material_type: string;
+  /** Where in the facility it is used; '' unset. */
+  where_used: string;
+  /** Applied by fumigation or fogging; null = not stated. */
+  applied_by_fumigation: boolean | null;
   /** The agent's review as the operator recorded it from the agent's own list; '' = not recorded. */
   agent_review: '' | 'requested' | 'approved' | 'not_approved' | 'review_incomplete';
   agent_review_date: string;
@@ -529,6 +536,10 @@ export interface OSPMaterialAnswer {
   agent_review_use?: string;
   /** A document id, or '' to remove the label. */
   label_document?: string;
+  facility_material_type?: string;
+  where_used?: string;
+  /** 'true' | 'false' | '' (not stated). */
+  applied_by_fumigation?: string;
 }
 
 /** One thing the operation's dated records did after the plan's newest answer. */
