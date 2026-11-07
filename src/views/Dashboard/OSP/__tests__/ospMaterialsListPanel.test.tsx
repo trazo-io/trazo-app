@@ -75,6 +75,29 @@ const MATERIALS = [
     label_document: null as number | null,
     label_document_title: '',
     needs_label: true
+  },
+  {
+    name: 'Terro ant bait',
+    manufacturer: 'Terro',
+    reason: 'Ants in the packing shed',
+    status: 'in_use',
+    in_use: true,
+    intended_for_use: false,
+    source: 'both',
+    listing: '',
+    entry_id: 9,
+    category: 'facility_pest',
+    agent_review: '',
+    agent_review_date: '',
+    agent_review_reference: '',
+    agent_review_use: '',
+    agent_review_statement: '',
+    label_document: null as number | null,
+    label_document_title: '',
+    needs_label: false,
+    facility_material_type: '',
+    where_used: '',
+    applied_by_fumigation: null as boolean | null
   }
 ];
 
@@ -335,5 +358,36 @@ describe('OSP Materials List editor', () => {
         "Your packet prints: on WSDA's approved materials list dated 2026-03-15 (WSDA approval email), as recorded by the operator."
       )
     ).toBeInTheDocument();
+  });
+
+  it("asks CCOF's three facility pest columns only on a facility pest row, and saves each", async () => {
+    renderPanel();
+    // One row is filed under facility pest control; only it carries the block.
+    expect(screen.getAllByTestId('materials-facility-pest')).toHaveLength(1);
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText('National List type of Terro ant bait'), {
+        target: { value: 'boric_acid' }
+      });
+    });
+    expect(answerMaterial.mock.calls[0][0].body).toEqual({
+      name: 'Terro ant bait',
+      facility_material_type: 'boric_acid'
+    });
+    await act(async () => {
+      fireEvent.change(
+        screen.getByLabelText('Whether Terro ant bait is applied by fumigation or fogging'),
+        { target: { value: 'false' } }
+      );
+    });
+    expect(answerMaterial.mock.calls[1][0].body).toEqual({
+      name: 'Terro ant bait',
+      applied_by_fumigation: 'false'
+    });
+    const where = screen.getByLabelText('Where Terro ant bait is used');
+    fireEvent.change(where, { target: { value: 'Packing shed' } });
+    await act(async () => {
+      fireEvent.blur(where);
+    });
+    expect(answerMaterial.mock.calls[2][0].body).toEqual({ name: 'Terro ant bait', where_used: 'Packing shed' });
   });
 });
