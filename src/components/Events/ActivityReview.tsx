@@ -7,12 +7,11 @@
  * 205.201(a)), it prints in the packet, and once its season is finished it changes only by a
  * correction with a reason, so the farmer reads it whole once before it is kept.
  *
- * The details are drawn by the same registry the saved record's detail view uses
- * (`useEventFields` + `RegistryFieldRenderer`), from the values just entered, so this list and
- * the record afterwards cannot disagree. The fields a shopper would get carry the same
- * buyer-page mark (`buyerVisibleFieldNames`, the consumer pipeline's own rules).
- *
- * Not a fourth step: it shares the photo step, so logging costs no extra tap.
+ * The details come from the same registry the saved record's detail view uses (`useEventFields`,
+ * the same fields, labels and formatted values), from the values just entered, so this list and
+ * the record afterwards cannot disagree. They are drawn as inline rows (`RegistryRows`), the
+ * product name first. The fields a shopper would get carry the buyer-page mark
+ * (`buyerVisibleFieldNames`, the consumer pipeline's own rules).
  */
 import React, { useMemo } from 'react';
 import { useIntl } from 'react-intl';
@@ -29,7 +28,7 @@ import {
 
 import { StandardButton } from 'components/Design/StandardComponents';
 import { FieldList, InfoRow } from 'components/Design/ProfileField';
-import { RegistryFieldRenderer } from 'components/Events/RegistryFieldRenderer';
+import { RegistryRows } from 'components/Events/RegistryFieldRenderer';
 import { useEventFields } from 'hooks/useEventFields';
 import { subtypeOf } from 'config/events/narrative';
 import { buyerVisibleFieldNames } from 'utils/buyerPageVisibility';
@@ -125,6 +124,18 @@ export default function ActivityReview({
       registryFields.details.length >
       0;
   const buyerPageLabel = intl.formatMessage({ id: 'producer.event.buyerPageBadge' });
+  // The main fields, product name included: the record's detail view shows the product as its
+  // title, so its renderer leaves `commercial_name` out, and the review has no title. A spray's
+  // review without the product named was the one thing the certifier reads first, missing.
+  const primaryRows = hasFields ? [...registryFields.hero, ...registryFields.immediate] : [];
+  const additionalTitle = intl.formatMessage({
+    id: 'eventDetails.additionalDetails',
+    defaultMessage: 'Additional Details'
+  });
+  const technicalTitle = intl.formatMessage({
+    id: 'eventDetails.technicalDetails',
+    defaultMessage: 'Technical Details'
+  });
 
   const change = (section: string) =>
     intl.formatMessage(
@@ -200,7 +211,11 @@ export default function ActivityReview({
             changeLabel={change(detailsTitle)}
             onChange={() => onChange(1)}
           />
-          {name || publicNote || privateNote ? (
+          {/* One list, one set of dividers: the name, the record's main fields (the product name
+              first for an input), then the notes. Rows, like every profile and record page since
+              the 2026-11 polish: the registry's grey boxes made a spray's review a stack of
+              cards under a row-built first section (Oscar, 2026-11-07). */}
+          {name || publicNote || privateNote || primaryRows.length > 0 ? (
             <FieldList>
               {name && (
                 <InfoRow
@@ -210,6 +225,7 @@ export default function ActivityReview({
                   value={name}
                 />
               )}
+              <RegistryRows fields={primaryRows} buyerVisibleFields={buyerVisible} />
               {publicNote && (
                 <InfoRow
                   icon={FaStickyNote}
@@ -230,16 +246,22 @@ export default function ActivityReview({
               )}
             </FieldList>
           ) : null}
-          {registryHasFields ? (
-            <Box mt={4}>
-              <RegistryFieldRenderer
-                fields={registryFields}
-                variant="modal"
-                cardBg="gray.50"
-                buyerVisibleFields={buyerVisible}
-              />
-            </Box>
-          ) : !name && !publicNote && !privateNote ? (
+          {[
+            { key: 'secondary', title: additionalTitle, rows: registryFields.secondary },
+            { key: 'details', title: technicalTitle, rows: registryFields.details }
+          ]
+            .filter((group) => group.rows.length > 0)
+            .map((group) => (
+              <Box key={group.key} mt={4}>
+                <Text fontSize="sm" fontWeight="semibold" color="gray.800" mb={1}>
+                  {group.title}
+                </Text>
+                <FieldList>
+                  <RegistryRows fields={group.rows} buyerVisibleFields={buyerVisible} />
+                </FieldList>
+              </Box>
+            ))}
+          {!registryHasFields && !name && !publicNote && !privateNote ? (
             <Text fontSize="sm" color="gray.600">
               {intl.formatMessage({
                 id: 'events.review.noDetails',

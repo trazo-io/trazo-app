@@ -209,6 +209,14 @@ export function getFieldsForSurface(
         ? ((event as Record<string, unknown>).test_results as Record<string, unknown>)
         : {};
     const rawValue = event[field.name] ?? extraData[field.name] ?? testResults[field.name];
+    // An emptied form input is '' (or spaces), not null, and every `v != null ? \`${v} m\` : null`
+    // formatter lets it through: the wizard's review printed "Buffer Zone: m" for a spray with
+    // no buffer entered (2026-11-07). An empty string is no value, whatever the formatter says.
+    // Except a group anchor: its formatter reads the companions too (lab N/P/K renders
+    // "— / 12 / 150" with N blank), and they were marked consumed above, so skipping the anchor
+    // would hide their real values. The check after formatting covers an all-empty group.
+    const anchorsGroup = Boolean(field.groupWith && field.groupWith.length > 0);
+    if (typeof rawValue === 'string' && rawValue.trim() === '' && !anchorsGroup) continue;
     let formattedValue: string | null;
 
     // For enum fields: use custom formatter if available, otherwise capitalize and humanize
