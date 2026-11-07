@@ -4,17 +4,11 @@ import {
   VStack,
   HStack,
   Text,
-  Avatar,
   SimpleGrid,
   Icon,
   Badge,
-  Image,
-  Link,
-  Wrap,
-  WrapItem,
   useDisclosure,
   useToast,
-  Button,
   Heading,
   Flex,
   Menu,
@@ -23,32 +17,9 @@ import {
   MenuItem,
   IconButton
 } from '@chakra-ui/react';
-import {
-  FaSeedling,
-  FaCalendarAlt,
-  FaEdit,
-  FaShare,
-  FaQrcode,
-  FaDownload,
-  FaUsers,
-  FaLeaf,
-  FaClipboardList,
-  FaFlag,
-  FaTractor,
-  FaBuilding,
-  FaMapMarkerAlt,
-  FaChartLine,
-  FaEye,
-  FaEyeSlash,
-  FaLink,
-  FaTag,
-  FaEllipsisV,
-  FaExchangeAlt,
-  FaLock
-} from 'react-icons/fa';
-import { MdTimeline, MdLocationOn } from 'react-icons/md';
+import { FaEdit, FaShare, FaLink, FaTag, FaEllipsisV, FaPlus } from 'react-icons/fa';
 import { FiDownload } from 'react-icons/fi';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useUserRole } from 'hooks/useUserRole';
 import { useIntl } from 'react-intl';
@@ -58,16 +29,24 @@ import {
   StandardButton,
   StandardPage,
   StandardPageLoading,
-  StandardSection,
+  StandardSectionTabs,
   PAGE_TITLE
 } from 'components/Design/StandardComponents';
-import { FieldList, InfoRow, PageHeaderMeta } from 'components/Design/ProfileField';
+import SeasonActivitiesCard, {
+  titleOf
+} from 'views/Dashboard/Dashboard/Production/SeasonActivitiesCard';
+import PublicPageCard from 'views/Dashboard/Dashboard/Production/PublicPageCard';
+import SeasonDetailsCard from 'views/Dashboard/Dashboard/Production/SeasonDetailsCard';
+import { PageHeaderMeta } from 'components/Design/ProfileField';
 import { CorrectRecordModal } from 'components/Modals/CorrectRecordModal';
 import { ActivityDetailModal } from 'views/Dashboard/Activities/ActivityDetailModal';
 import type { ActivityRow } from 'store/api/activityFeedApi';
 import { StandardImageGallery } from 'components/ImageGallery';
-import { useGetPublicHistoryQuery, useUpdateProductionMutation } from 'store/api/historyApi';
-import { TrazoImageUpload } from 'components/Upload';
+import {
+  useGetPublicHistoryQuery,
+  useGetSalesRecordsQuery,
+  useUpdateProductionMutation
+} from 'store/api/historyApi';
 import { useGetTransparencyDetailsQuery } from 'store/api/transparencyQrApi';
 import { useGetCompleteSummaryQuery } from 'store/api/carbonApi';
 import { config } from 'config/environment';
@@ -75,7 +54,6 @@ import { config } from 'config/environment';
 // Data normalization imports
 import { normalizeBackendEventData } from 'utils/eventDataNormalizer';
 import { StandardizedEvent } from 'types/standardizedEvents';
-import { UltraMobileProductionJourney } from 'views/Scan/ProductDetail/components';
 
 // Week 2 Voice & Mobile Components
 import { SalesDeliverySection } from 'views/Dashboard/Dashboard/Production/SalesDeliverySection';
@@ -112,6 +90,7 @@ function ProfileProduction() {
   );
   // Full field-by-field record view (with buyer-page visibility marked).
   const [viewTarget, setViewTarget] = useState<ActivityRow | null>(null);
+  const location = useLocation();
   const toast = useToast();
   const { canWrite } = useUserRole();
   const { farmId, productionId, parcelId } = useParams();
@@ -134,6 +113,14 @@ function ProfileProduction() {
   } = useGetPublicHistoryQuery(productionId || '', {
     skip: !productionId
   });
+
+  // Same argument as SalesRecordsSection, so RTK serves both from one request. Feeds the
+  // Sales tab's dot.
+  const salesProductionId = historyData?.public_id || productionId || '';
+  const { data: salesRecords = [], isSuccess: salesLoaded } = useGetSalesRecordsQuery(
+    { productionId: salesProductionId },
+    { skip: !salesProductionId }
+  );
 
   // Transparency API - uses public_id (UUID) as backend expects UUID, not numeric ID
   const {
@@ -530,1142 +517,394 @@ function ProfileProduction() {
     );
   }
 
-  /**
-   * Consumer-visibility markers, mirroring ProfileFarm.
-   *
-   * Ground truth (verified 2026-08-07):
-   *  PUBLISHED — product, start_date, finish_date, production_amount + unit, lot_id, type,
-   *    is_outdoor, parcel and the establishment name/city/state. `PublicHistorySerializer`
-   *    lists them and `transparency_views.py` ships harvestDetails{amount, unit, lot_number}.
-   *    Duration is marked public too: it is derived from two published dates.
-   *  WITHHELD — `operator` is stripped by `_OWNER_ONLY_FIELDS` (it carries the grower's
-   *    email and phone) and `earning` is not in the public serializer's field list at all.
-   *
-   * Those two are why this disclosure earns its space: a farmer can see at a glance that
-   * their revenue and their own contact details do NOT travel with the QR code.
-   */
-  const onPublicPageLabel = intl.formatMessage({
-    id: 'production.details.onPublicPage',
-    defaultMessage: 'On the lot\u2019s public page'
-  });
-  const offPublicPageLabel = intl.formatMessage({
-    id: 'production.details.offPublicPage',
-    defaultMessage: 'Not on the public page'
-  });
-
   const timelineEvents = getUnifiedTimelineEvents();
 
-  return (
-    <StandardPage
-      showBackButton
-      onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}>
-      <VStack spacing={{ base: 4, md: 8 }} w="100%">
-        {/* ── PAGE HEADER — not a card ─────────────────────────────────────────
-            Matches ProfileFarm and ProfileParcel. Was an elevated card wrapping an initials
-            Avatar (a green circle showing "O" for "Orange") plus a duplicated layout. The
-            actions stay exactly as they were — Export for audit is the wedge action on this
-            page and keeps its primary weight. */}
-        <Box w="100%">
-          {/*
-            Column on mobile, row from `md`.
-        
-            `direction` was hard-coded to "row". The title column already carried `minW={0}`
-            and the action Wrap already carried `flexShrink={0}`, which is the correct pairing
-            — but only if the row can actually fit. It cannot: Export + Finish + Copy link +
-            the overflow menu demand roughly 330px and refuse to shrink, so on a 430px screen
-            (~370px of content) the heading was left about 40px and rendered one word per
-            line, with the buttons sitting on top of it.
+  const isFinished = Boolean(historyData?.finish_date);
+  const parcelPath = `/admin/dashboard/farm/${farmId}/parcel/${parcelId}`;
+  const logActivity = () => navigate(`${parcelPath}/event/add?production=${productionId}`);
 
-            `flexShrink={0}` is kept: in a column it is inert, and from `md` up it is still
-            what stops the buttons collapsing.
-          */}
-          <Flex
-            direction={{ base: 'column', md: 'row' }}
-            justify="space-between"
-            align={{ base: 'stretch', md: 'flex-start' }}
-            gap={3}>
-            <VStack align="flex-start" gap={1} minW={0}>
-              <Heading as="h1" {...PAGE_TITLE}>
-                {historyData?.product?.name || historyData?.name}
-              </Heading>
-              {historyData?.lot_id && (
-                <Text fontSize="sm" color="gray.500">
-                  {intl.formatMessage(
-                    { id: 'production.lotIdLabel', defaultMessage: 'Lot ID: {id}' },
-                    { id: historyData.lot_id }
-                  )}
-                </Text>
-              )}
-              {/* Replaces the "Quick Stats" card. Event count was its only non-duplicated
-                  tile; environment and status are badges just below. */}
-              <PageHeaderMeta
-                items={[
-                  historyData?.parcel?.name || null,
-                  timelineEvents.length
-                    ? intl.formatMessage(
-                        {
-                          id: 'production.meta.events',
-                          defaultMessage: '{count, plural, one {# event} other {# events}}'
-                        },
-                        { count: timelineEvents.length }
-                      )
-                    : null,
-                  // formatDateFromTimestamp, not toLocaleDateString: `start_date` is a
-                  // DateTimeField holding a CALENDAR DATE, so it arrives as midnight UTC and a
-                  // local formatter prints the day before for every timezone west of UTC —
-                  // which is every US farm. The certifier packet renders the same value
-                  // server-side in UTC, so the dashboard and the packet were disagreeing by a
-                  // day about the same record.
-                  historyData?.start_date
-                    ? formatDateFromTimestamp(historyData.start_date, undefined, {
-                        dateStyle: 'medium'
-                      })
-                    : null
-                ]}
-              />
-              <Wrap spacing={1.5} pt={1}>
-                <WrapItem>
-                  <Badge
-                    variant={historyData?.finish_date ? 'neutral' : 'subtle'}
-                    borderRadius="full"
-                    fontSize="xs">
-                    {historyData?.finish_date
-                      ? intl.formatMessage({
-                          id: 'production.status.finished',
-                          defaultMessage: 'Finished'
-                        })
-                      : intl.formatMessage({
-                          id: 'production.status.active',
-                          defaultMessage: 'Active'
-                        })}
-                  </Badge>
-                </WrapItem>
-                {/* `neutral`, not colorScheme — every Badge variant in the theme hardcodes
-                    green and ignores colorScheme, so the old blue/purple chips all rendered
-                    the same green as the status badge. These are classifications. */}
-                {historyData?.is_outdoor !== undefined && (
-                  <WrapItem>
-                    <Badge variant="neutral" borderRadius="full" fontSize="xs">
-                      {historyData.is_outdoor
-                        ? intl.formatMessage({ id: 'production.outdoor' })
-                        : intl.formatMessage({ id: 'production.indoor' })}
-                    </Badge>
-                  </WrapItem>
-                )}
-                {historyData?.qr_code && (
-                  <WrapItem>
-                    <Badge variant="neutral" borderRadius="full" fontSize="xs">
-                      <HStack gap={1}>
-                        <Icon as={FaQrcode} boxSize={2.5} />
-                        <Text>
-                          {intl.formatMessage({
-                            id: 'production.badge.qrAvailable',
-                            defaultMessage: 'QR Available'
-                          })}
-                        </Text>
-                      </HStack>
-                    </Badge>
-                  </WrapItem>
-                )}
-                {historyData?.published && (
-                  <WrapItem>
-                    <Badge variant="neutral" borderRadius="full" fontSize="xs">
-                      {intl.formatMessage({
-                        id: 'production.badge.published',
-                        defaultMessage: 'Published'
-                      })}
-                    </Badge>
-                  </WrapItem>
-                )}
-              </Wrap>
-            </VStack>
-            {/* spacing={2} (8px), not 1. At 4px the three buttons abutted and read as a
-                segmented control — which promises "pick one of these". Export, copy-link and
-                the overflow menu are unrelated actions. */}
-            <Wrap spacing={2} justify={{ base: 'flex-start', md: 'flex-end' }} flexShrink={0}>
-              {/* Primary wedge action + the buyer handoff stay visible; secondary
-                  actions collapse into an overflow menu to reduce header clutter. */}
-              <WrapItem>
-                <StandardButton
-                  variant="primary"
-                  size="sm"
-                  leftIcon={<Icon as={FiDownload} />}
-                  onClick={onExportOpen}>
-                  {intl.formatMessage({ id: 'app.exportForAudit' })}
-                </StandardButton>
-              </WrapItem>
-              {/* 🔴 F29 (2026-08-21) — Finish, on the season's own page.
-                  The ONLY finish affordance in the app was a PARCEL-level button
-                  (`Parcel/components/TrackList.jsx`) that navigates with
-                  `currentHistory?.id` — whichever season on that parcel started LAST. So on
-                  the routine case the server-side comment describes, a perennial block
-                  carrying a 2025 and a 2026 cycle, the older season had no link at all and
-                  the farmer's only route was to type the URL. The parcel button stays as the
-                  shortcut for the common single-season case; this one names the season it is
-                  closing, which is the whole point. */}
-              {canWrite && !historyData?.finish_date && (
-                <WrapItem>
-                  <StandardButton
-                    variant="outline"
-                    size="sm"
-                    leftIcon={<Icon as={FaSeedling} />}
-                    onClick={() =>
-                      navigate(
-                        `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/${productionId}/finish`
-                      )
-                    }>
-                    {intl.formatMessage({ id: 'app.finishProduction' })}
-                  </StandardButton>
-                </WrapItem>
-              )}
-              <WrapItem>
-                <StandardButton
-                  variant="outline"
-                  size="sm"
-                  leftIcon={<Icon as={FaLink} />}
-                  onClick={handleCopyBuyerLink}>
-                  {intl.formatMessage({ id: 'production.copyBuyerLink.button' })}
-                </StandardButton>
-              </WrapItem>
-              <WrapItem>
-                <Menu placement="bottom-end" autoSelect={false}>
-                  <MenuButton
-                    as={IconButton}
-                    variant="outline"
-                    size="sm"
-                    /* 44px square, matching the buttons beside it. It was 24x32 — visually
-                       inset in the row, and under the 44px touch-target floor on the one
-                       control that hides four actions (including Edit) behind it. */
-                    minH="44px"
-                    minW="44px"
-                    aria-label={intl.formatMessage({
-                      id: 'production.moreActions',
-                      defaultMessage: 'More actions'
-                    })}
-                    icon={<Icon as={FaEllipsisV} />}
-                  />
-                  <MenuList>
-                    <MenuItem icon={<Icon as={FaEye} />} onClick={handleViewPublicPage}>
-                      {intl.formatMessage({ id: 'app.viewPublicPage' })}
-                    </MenuItem>
-                    <MenuItem icon={<Icon as={FaShare} />} onClick={handleShare}>
-                      {intl.formatMessage({ id: 'app.share' })}
-                    </MenuItem>
-                    <MenuItem
-                      icon={<Icon as={FaTag} />}
-                      onClick={handleDownloadLotTag}
-                      isDisabled={!historyData?.lot_id}>
-                      {intl.formatMessage({ id: 'production.lotTag.button' })}
-                    </MenuItem>
-                    {canWrite && !historyData?.finish_date && (
-                      <MenuItem
-                        icon={<Icon as={FaEdit} />}
-                        onClick={() =>
-                          navigate(
-                            `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/${productionId}/change`
-                          )
-                        }>
-                        {intl.formatMessage({ id: 'app.edit' })}
-                      </MenuItem>
-                    )}
-                  </MenuList>
-                </Menu>
-              </WrapItem>
-            </Wrap>
-          </Flex>
-          {historyData?.description && (
-            <Text mt={3} color="gray.600" fontSize="sm" lineHeight="1.7">
-              {historyData.description}
-            </Text>
-          )}
-        </Box>
+  // Opens the field-by-field detail modal: Edit on an open season, the correction sheet on a
+  // closed one (EventDetailsModal reads `production_finished`).
+  const openEvent = (event: any) =>
+    setViewTarget({
+      event_type: Number(event?.event_type),
+      event_id: Number(event?.record_id ?? event?.id),
+      subtype: (event?.production_type || event?.type || null) as string | null,
+      name: titleOf(event, intl) || null,
+      date: (event?.date as string) || null,
+      description: (event?.observation as string) || (event?.description as string) || '',
+      parcel_id: Number(parcelId) || 0,
+      parcel_name: historyData?.parcel?.name || '',
+      history_id: Number(historyData?.id) || 0,
+      production_finished: Boolean(historyData?.finish_date || historyData?.published),
+      performed_by: (event?.performed_by as string) || '',
+      detail: undefined
+    });
 
-        {/* SPACING (2026-11-04): every card on this page passes `mb={0}`. StandardCard defaults to
-            a 24px bottom margin, and each card here already sits in a stack or grid that sets
-            its own gap, so the margin stacked on top of the gap: the last card in a grid pushed
-            24px of dead space under its block, and the drift notice measured 40px above and
-            16px below. The page VStack owns the rhythm between blocks; nothing else adds to it. */}
-        {/* Photo Gallery Section */}
-        {historyData?.images && historyData.images.length > 0 && (
-          <StandardCard
-            title={intl.formatMessage({
-              id: 'production.section.photoGallery',
-              defaultMessage: 'Photo Gallery'
-            })}
-            mb={0}
-            variant="elevated"
-            padding={{ base: 0, md: 4 }}>
-            <StandardImageGallery
-              images={historyData.images}
-              title=""
-              variant="default"
-              enablePreview={true}
-              showImageCount={true}
-              height={{ base: '200px', sm: '250px', md: '280px' }}
-              showEmptyState={false}
-              maxDisplayImages={4}
-            />
-          </StandardCard>
-        )}
+  // The list reads the RAW season events: the normalizer rewrites `type` to the family name and
+  // drops the farmer's title on general activities ("Farm Activity" for every one of them).
+  const rawSeasonEvents: any[] =
+    (completeData?.timeline?.length ? completeData.timeline : null) ||
+    ((transparencyApiData as any)?.timeline_events?.length
+      ? (transparencyApiData as any).timeline_events
+      : null) ||
+    (completeData?.events?.length ? completeData.events : null) ||
+    [];
 
-        {/* ── YOUR PUBLIC PAGE ─────────────────────────────────────────────────
-            Cover photo and QR access side by side, because they configure the SAME artifact:
-            the cover IS the hero of the QR page, and this is the link to it. Splitting them
-            into two stacked full-width cards also left the cover card ~1,200px of dead space
-            beside a 420px column on desktop. */}
-        <StandardSection
-          title={intl.formatMessage({
-            id: 'production.section.publicPage',
-            defaultMessage: 'Your public page'
-          })}
-          description={intl.formatMessage({
-            id: 'production.section.publicPageHelp',
-            defaultMessage: 'What a shopper sees when they scan this lot.'
-          })}>
-          <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={{ base: 4, md: 6 }} alignItems="start">
-            {/* Cover Photo Section (consumer QR hero) — write access only */}
-            {canWrite && (
-              <StandardCard
-                title={intl.formatMessage({
-                  id: 'production.cover.title',
-                  defaultMessage: 'Cover Photo'
-                })}
-                mb={0}
-                variant="elevated"
-                padding={{ base: 0, md: 4 }}>
-                <VStack align="stretch" spacing={4}>
-                  <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
-                    {intl.formatMessage({
-                      id: 'production.cover.help',
-                      defaultMessage:
-                        'Shown as the hero image at the top of the public QR page. Upload a photo to set it; leave it empty to auto-pick the first timeline photo.'
-                    })}
-                  </Text>
-
-                  {/* The CURRENT COVER is the thing being configured, so it leads and it is
-                  large. Before, a 140px thumbnail sat beside a ~600px dropzone — the action
-                  dwarfed the state, and "Reset to auto-pick" floated below, detached from the
-                  image it resets. The uploader is now a compact strip underneath. */}
-                  <VStack align="stretch" spacing={3}>
-                    <Box>
-                      <Text fontSize="xs" color="gray.500" mb={2}>
-                        {intl.formatMessage({
-                          id: 'production.cover.current',
-                          defaultMessage: 'Current cover'
-                        })}
-                      </Text>
-                      {historyData?.cover_image_url ? (
-                        <Box position="relative" w="100%">
-                          <Image
-                            src={historyData.cover_image_url}
-                            alt={intl.formatMessage({
-                              id: 'production.cover.title',
-                              defaultMessage: 'Cover Photo'
-                            })}
-                            borderRadius="lg"
-                            objectFit="cover"
-                            w="100%"
-                            aspectRatio="16/9"
-                            border="1px solid"
-                            borderColor="gray.200"
-                          />
-                          {/* Attached to the image it acts on, not stranded below the card. */}
-                          <StandardButton
-                            variant="outline"
-                            size="xs"
-                            onClick={handleClearCover}
-                            isLoading={isSavingCover}
-                            position="absolute"
-                            top={2}
-                            right={2}
-                            bg="white">
-                            {intl.formatMessage({
-                              id: 'production.cover.reset',
-                              defaultMessage: 'Reset to auto-pick'
-                            })}
-                          </StandardButton>
-                        </Box>
-                      ) : (
-                        <Box
-                          w="100%"
-                          aspectRatio="16/9"
-                          borderRadius="lg"
-                          border="1px dashed"
-                          borderColor="gray.300"
-                          display="flex"
-                          alignItems="center"
-                          justifyContent="center"
-                          bg="gray.50">
-                          <Text fontSize="sm" color="gray.500" textAlign="center" px={3}>
-                            {intl.formatMessage({
-                              id: 'production.cover.auto',
-                              defaultMessage: 'Auto (first photo)'
-                            })}
-                          </Text>
-                        </Box>
-                      )}
-                    </Box>
-
-                    {/* Compact, and captioned for THIS job — the defaults read "Add your farm
-                    photos", which is not what a single hero image is. */}
-                    <Box w="100%">
-                      <TrazoImageUpload
-                        maxFiles={1}
-                        maxSize={5 * 1024 * 1024}
-                        existingImages={[]}
-                        onImagesChange={handleSetCover}
-                        isLoading={isSavingCover}
-                        compact
-                        title={intl.formatMessage({
-                          id: 'production.cover.uploadTitle',
-                          defaultMessage: 'Replace cover photo'
-                        })}
-                        subtitle={intl.formatMessage({
-                          id: 'production.cover.uploadSubtitle',
-                          defaultMessage: 'Sets the hero image on the public QR page'
-                        })}
-                      />
-                    </Box>
-                  </VStack>
-                </VStack>
-              </StandardCard>
-            )}
-            {/* QR Code & Consumer Access - Prominent position for packaging workflow */}
-            {historyData?.qr_code && (
-              <StandardCard
-                title={intl.formatMessage({
-                  id: 'production.section.qrAccess',
-                  defaultMessage: 'QR Code & Consumer Access'
-                })}
-                mb={0}
-                variant="elevated"
-                padding={{ base: 0, md: 4 }}>
-                <VStack spacing={{ base: 3, md: 5 }} align="center">
-                  {/* Live / not-live, stated. VERIFIED 2026-08-19 by scanning anonymously:
-                      an unpublished lot answers 404 on both `public_history` and the
-                      transparency endpoint, so this QR resolves for NOBODY but the owner —
-                      and `handleViewPublicPage` works for the owner, which is exactly how a
-                      farmer concludes it is live. The card said "Your QR code is ready.
-                      Consumers can scan it" in precisely this state and told them to print it.
-                      Printing a lot's labels off that is a real, expensive mistake.
-                      `HistoryViewSet.update` refuses `published=True` while `finish_date` is
-                      null ("Active productions cannot be made visible to consumers"), so the
-                      way out is to finish the season — say so rather than imply it is live. */}
-                  {historyData?.finish_date ? (
-                    <Box
-                      w="full"
-                      p={{ base: 2, md: 3 }}
-                      bg="green.50"
-                      borderRadius="lg"
-                      border="1px solid"
-                      borderColor="green.200"
-                      textAlign="center">
-                      <Text
-                        fontSize={{ base: 'xs', md: 'sm' }}
-                        fontWeight="semibold"
-                        color="green.700">
-                        {intl.formatMessage({
-                          id: 'production.qr.completeBanner',
-                          defaultMessage:
-                            'Your production is complete! Print this QR code and attach it to your packaging.'
-                        })}
-                      </Text>
-                    </Box>
-                  ) : (
-                    <Box
-                      w="full"
-                      p={{ base: 2, md: 3 }}
-                      bg="orange.50"
-                      borderRadius="lg"
-                      border="1px solid"
-                      borderColor="orange.200">
-                      <HStack spacing={2} align="flex-start" justify="center">
-                        <Icon as={FaLock} color="orange.800" boxSize={3} mt="2px" />
-                        <VStack spacing={1} align="center">
-                          <Text
-                            fontSize={{ base: 'xs', md: 'sm' }}
-                            fontWeight="semibold"
-                            color="orange.800"
-                            textAlign="center">
-                            {intl.formatMessage({ id: 'production.qr.notLiveTitle' })}
-                          </Text>
-                          <Text fontSize="xs" color="gray.700" textAlign="center">
-                            {intl.formatMessage({ id: 'production.qr.notLiveBody' })}
-                          </Text>
-                        </VStack>
-                      </HStack>
-                    </Box>
-                  )}
-
-                  {/* QR Image Preview */}
-                  <Box
-                    p={{ base: 3, md: 4 }}
-                    bg="gray.50"
-                    borderRadius="xl"
-                    border="1px solid"
-                    borderColor="gray.200">
-                    <Image
-                      src={historyData.qr_code}
-                      alt={`QR Code for ${historyData?.product?.name || 'production'}`}
-                      maxW={{ base: '180px', md: '280px' }}
-                      borderRadius="md"
-                      fallback={
-                        <VStack spacing={2} p={8}>
-                          <Icon as={FaQrcode} boxSize={12} color="gray.300" />
-                          <Text fontSize="sm" color="gray.500">
-                            {intl.formatMessage({
-                              id: 'production.qr.loading',
-                              defaultMessage: 'Loading QR...'
-                            })}
-                          </Text>
-                        </VStack>
-                      }
-                    />
-                  </Box>
-
-                  {/* Description */}
-                  <Text
-                    fontSize={{ base: 'xs', md: 'sm' }}
-                    color="gray.600"
-                    textAlign="center"
-                    maxW="400px">
-                    {historyData?.finish_date
-                      ? intl.formatMessage({
-                          id: 'production.qr.instruction',
-                          defaultMessage:
-                            "Print this QR and attach it to your packaging so consumers can see your production's transparency journey."
-                        })
-                      : intl.formatMessage({ id: 'production.qr.instructionActive' })}
-                  </Text>
-
-                  {/* Action buttons */}
-                  <HStack spacing={2} flexWrap="wrap" justify="center">
-                    <StandardButton
-                      variant="primary"
-                      size={{ base: 'xs', md: 'sm' }}
-                      leftIcon={<Icon as={FaDownload} />}
-                      onClick={downloadQRCode}>
-                      {intl.formatMessage({
-                        id: 'production.qr.download',
-                        defaultMessage: 'Download QR'
-                      })}
-                    </StandardButton>
-                    <StandardButton
-                      variant="outline"
-                      size={{ base: 'xs', md: 'sm' }}
-                      leftIcon={<Icon as={FaEye} />}
-                      onClick={handleViewPublicPage}>
-                      {/* Owner preview until the lot is PUBLISHED: an unpublished lot answers
-                          404 for everyone else, and a finished season is not necessarily
-                          published. Calling it "Public page" here is what convinces a farmer
-                          the lot is already live. */}
-                      {intl.formatMessage({
-                        id: historyData?.published
-                          ? 'app.viewPublicPage'
-                          : 'production.qr.previewPublicPage'
-                      })}
-                    </StandardButton>
-                  </HStack>
-
-                  {/* Print tip — only once the QR actually resolves for a shopper. Telling
-                      someone the right size to print a code that answers 404 is the worst
-                      possible moment to be helpful about print quality. */}
-                  {historyData?.finish_date && (
-                    <Box
-                      w="full"
-                      p={{ base: 2, md: 3 }}
-                      bg="blue.50"
-                      borderRadius="md"
-                      border="1px solid"
-                      borderColor="blue.100">
-                      <Text fontSize="xs" color="blue.700" textAlign="center">
-                        {intl.formatMessage({
-                          id: 'production.qr.tip',
-                          defaultMessage:
-                            'Tip: Print at minimum 2.5cm (1 inch) for best scanning results. Download the high-resolution PNG for print quality.'
-                        })}
-                      </Text>
-                    </Box>
-                  )}
-                </VStack>
-              </StandardCard>
-            )}
-          </SimpleGrid>
-        </StandardSection>
-
-        {/* Sprint 5.1 — OSP ↔ events drift summary (only renders if findings present).
-            Surfaced high (above Quick Stats) so any compliance action is seen first. */}
-        <DriftFindingsBanner events={timelineEvents as any[]} />
-
-        {/* Quick Stats Section */}
-        {/* "Quick Stats" DELETED 2026-08-07. Four tiles, three of them redundant:
-            - Transparency % — the October plan §10.4 names this exact tile as "the 4th
-              duplicate of one number". Cut from the farm home 2026-08-04 and from the parcel
-              profile 2026-08-07. This note used to add that "the score's home is /transparency
-              (Farm Records)" — that page was never routed and was deleted 2026-08-11, when the
-              score came off producer UI entirely. It is a backend KPI with no screen.
-            - Environment (indoor/outdoor) and Status (active/finished) — both already render
-              as badges in the header above.
-            Only the event count was unique, and it now sits in the header meta line. */}
-
-        {/* ── PRODUCTION RECORD ────────────────────────────────────────────────
-            A StandardSection heading, matching ProfileFarm and ProfileParcel. Those two
-            group their cards under h2 section headings; this page had none, so its cards
-            floated with no hierarchy above them.
-
-            The cards stay in a 2-col grid rather than merging into one like farm/parcel:
-            they are already short and the grid uses the horizontal space a merged column
-            would waste on desktop. */}
-        <StandardSection
-          title={intl.formatMessage({
-            id: 'production.section.record',
-            defaultMessage: 'Production record'
-          })}>
-          {/* TWO EXPLICIT COLUMNS, not a flat grid.
-              A flat `columns={2}` grid flows children in order, so three cards of very uneven
-              height produced [tall Production details | short Location] and then
-              [Recorded by | EMPTY] — a gap under Location and another beside Recorded by.
-              Pairing the tall card against a stack of the short ones fills the row, and it
-              still collapses to a single column below `lg`. */}
-          <SimpleGrid
-            columns={{ base: 1, lg: 2 }}
-            spacing={{ base: 4, md: 6 }}
-            w="100%"
-            alignItems="start">
-            <VStack align="stretch" spacing={{ base: 4, md: 6 }}>
-              {/* SEASON card (2026-11-04). Was titled "Production Details" directly under the
-                  "Production record" section heading: the same words twice, in two casings.
-                  "Season" names what the rows describe and sits beside "Location" and
-                  "Recorded by" as a peer. */}
-              <StandardCard
-                title={intl.formatMessage({
-                  id: 'production.section.season',
-                  defaultMessage: 'Season'
-                })}
-                mb={0}
-                variant="elevated"
-                padding={{ base: 0, md: 4 }}>
-                {/* Visibility is said ONCE per list, not with an eye on every row: every row in
-                    the first list is public, so five markers carried no information, and the
-                    legend paragraph that explained the markers goes with them. Revenue is the
-                    one field kept off the public page and gets its own list below. */}
-                <VStack align="stretch" gap={5}>
-                  <FieldList caption={onPublicPageLabel} captionIcon={FaEye}>
-                    <InfoRow
-                      layout="inline"
-                      icon={FaSeedling}
-                      label={intl.formatMessage({
-                        id: 'production.field.product',
-                        defaultMessage: 'Product'
-                      })}
-                      value={historyData?.product?.name}
-                    />
-                    <InfoRow
-                      layout="inline"
-                      icon={FaTractor}
-                      label={intl.formatMessage({
-                        id: 'production.field.type',
-                        defaultMessage: 'Type'
-                      })}
-                      value={
-                        historyData?.type === 'OR'
-                          ? intl.formatMessage({
-                              id: 'production.type.orchard',
-                              defaultMessage: 'Orchard'
-                            })
-                          : historyData?.type === 'GA'
-                          ? intl.formatMessage({
-                              id: 'production.type.garden',
-                              defaultMessage: 'Garden'
-                            })
-                          : historyData?.type
-                          ? historyData.type
-                          : intl.formatMessage({ id: 'production.agriculturalProduction' })
-                      }
-                    />
-                    <InfoRow
-                      layout="inline"
-                      icon={FaCalendarAlt}
-                      label={intl.formatMessage({
-                        id: 'production.field.startDate',
-                        defaultMessage: 'Start date'
-                      })}
-                      value={formatDate(historyData?.start_date)}
-                    />
-                    <InfoRow
-                      layout="inline"
-                      icon={FaCalendarAlt}
-                      label={intl.formatMessage({
-                        id: 'production.field.endDate',
-                        defaultMessage: 'End date'
-                      })}
-                      value={
-                        historyData?.finish_date
-                          ? formatDate(historyData.finish_date)
-                          : intl.formatMessage({
-                              id: 'production.status.inProgress',
-                              defaultMessage: 'In progress'
-                            })
-                      }
-                    />
-                    {historyData?.start_date && historyData?.finish_date && (
-                      <InfoRow
-                        layout="inline"
-                        icon={FaCalendarAlt}
-                        label={intl.formatMessage({
-                          id: 'production.field.duration',
-                          defaultMessage: 'Duration'
-                        })}
-                        value={intl.formatMessage(
-                          { id: 'production.field.durationDays', defaultMessage: '{days} days' },
-                          {
-                            days: Math.ceil(
-                              (new Date(historyData.finish_date).getTime() -
-                                new Date(historyData.start_date).getTime()) /
-                                (1000 * 60 * 60 * 24)
-                            )
-                          }
-                        )}
-                      />
-                    )}
-                    {/* `amount && <Row/>` printed a bare "0" under End Date on every open season
-                        whose amount is the number 0: React renders a falsy number. Test the value. */}
-                    {Number(historyData?.production_amount) > 0 && (
-                      <InfoRow
-                        layout="inline"
-                        icon={FaClipboardList}
-                        label={intl.formatMessage({
-                          id: 'production.field.amount',
-                          defaultMessage: 'Production amount'
-                        })}
-                        value={`${intl.formatNumber(Number(historyData.production_amount))} ${
-                          historyData.production_unit || 'units'
-                        }`}
-                      />
-                    )}
-                    <InfoRow
-                      layout="inline"
-                      icon={FaLeaf}
-                      label={intl.formatMessage({ id: 'production.environment' })}
-                      value={
-                        historyData?.is_outdoor
-                          ? intl.formatMessage({ id: 'production.outdoor' })
-                          : intl.formatMessage({ id: 'production.indoor' })
-                      }
-                    />
-                  </FieldList>
-                  {/* 🔴 F7 (2026-08-21) — the lot header is FROZEN once a season is
-                        finished, and until now that was the end of it: the API answers 423
-                        and there was no amendment path, so a farmer who finished with the
-                        wrong yield had no way to fix it and no way to explain it. The events
-                        underneath this header have had a correction sheet all along. */}
-                  {historyData?.finish_date && canWrite && (
-                    <StandardButton
-                      variant="ghost"
-                      size="sm"
-                      alignSelf="flex-start"
-                      leftIcon={<Icon as={FaExchangeAlt} />}
-                      onClick={() => setIsCorrectingHeader(true)}>
-                      {intl.formatMessage({ id: 'correct.season.action' })}
-                    </StandardButton>
-                  )}
-                  {Number(historyData?.earning) > 0 && (
-                    <FieldList caption={offPublicPageLabel} captionIcon={FaEyeSlash}>
-                      <InfoRow
-                        layout="inline"
-                        icon={FaChartLine}
-                        label={intl.formatMessage({
-                          id: 'production.field.revenue',
-                          defaultMessage: 'Revenue'
-                        })}
-                        value={`$${historyData.earning.toLocaleString()}`}
-                      />
-                    </FieldList>
-                  )}
-                </VStack>
-              </StandardCard>
-
-              {/* Agricultural Information Section */}
-              {(historyData?.age_of_plants ||
-                historyData?.number_of_plants ||
-                historyData?.soil_ph ||
-                historyData?.crop_type) && (
-                <StandardCard
-                  title={intl.formatMessage({
-                    id: 'production.section.agInfo',
-                    defaultMessage: 'Agricultural information'
-                  })}
-                  mb={0}
-                  variant="elevated"
-                  padding={{ base: 0, md: 4 }}>
-                  <FieldList>
-                    {historyData?.age_of_plants && (
-                      <InfoRow
-                        layout="inline"
-                        icon={FaSeedling}
-                        label={intl.formatMessage({
-                          id: 'production.field.plantAge',
-                          defaultMessage: 'Plant age'
-                        })}
-                        value={historyData.age_of_plants}
-                      />
-                    )}
-                    {historyData?.number_of_plants && (
-                      <InfoRow
-                        layout="inline"
-                        icon={FaSeedling}
-                        label={intl.formatMessage({
-                          id: 'production.field.plantCount',
-                          defaultMessage: 'Number of plants'
-                        })}
-                        value={historyData.number_of_plants.toLocaleString()}
-                      />
-                    )}
-                    {historyData?.soil_ph && (
-                      <InfoRow
-                        layout="inline"
-                        icon={FaLeaf}
-                        label={intl.formatMessage({
-                          id: 'production.field.soilPh',
-                          defaultMessage: 'Soil pH'
-                        })}
-                        value={historyData.soil_ph}
-                      />
-                    )}
-                    {historyData?.crop_type && (
-                      <InfoRow
-                        layout="inline"
-                        icon={FaSeedling}
-                        label={intl.formatMessage({
-                          id: 'production.field.cropType',
-                          defaultMessage: 'Crop type'
-                        })}
-                        value={historyData.crop_type}
-                      />
-                    )}
-                  </FieldList>
-                </StandardCard>
-              )}
-            </VStack>
-
-            <VStack align="stretch" spacing={{ base: 4, md: 6 }}>
-              {/* Location Section */}
-              <StandardCard
-                title={intl.formatMessage({
-                  id: 'production.section.location',
-                  defaultMessage: 'Location'
-                })}
-                mb={0}
-                variant="elevated"
-                padding={{ base: 0, md: 4 }}>
-                <FieldList caption={onPublicPageLabel} captionIcon={FaEye}>
-                  <InfoRow
-                    layout="inline"
-                    icon={FaBuilding}
-                    label={intl.formatMessage({
-                      // Key stays `…establishment` (the model name); the LABEL is "Farm".
-                      // Establishment is internal vocabulary — see app.establishment,
-                      // which has read "Farm" all along.
-                      id: 'production.field.establishment',
-                      defaultMessage: 'Farm'
-                    })}
-                    value={historyData?.parcel?.establishment?.name || 'Unknown'}
-                    onClick={() => navigate(`/admin/dashboard/farm/${farmId}`)}
-                  />
-                  <InfoRow
-                    layout="inline"
-                    icon={MdLocationOn}
-                    label={intl.formatMessage({
-                      id: 'production.field.parcel',
-                      defaultMessage: 'Parcel'
-                    })}
-                    value={historyData?.parcel?.name || 'Unknown'}
-                    onClick={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}
-                  />
-                  {historyData?.parcel?.establishment?.location && (
-                    <InfoRow
-                      layout="inline"
-                      icon={FaMapMarkerAlt}
-                      label={intl.formatMessage({
-                        id: 'production.field.address',
-                        defaultMessage: 'Address'
-                      })}
-                      value={historyData.parcel.establishment.location}
-                    />
-                  )}
-                </FieldList>
-              </StandardCard>
-
-              {/* The 5-star "Reputation Score" was removed here 2026-08-07.
-            `History.reputation` is the average of `self.reviews` — and consumer reviews went
-            away with the logged-in shopper product (TRAZO-OCTOBER-2026-PLAN §10.5). The
-            equivalent `renderStars` was deleted from the consumer farm surface on 2026-08-06
-            for exactly this reason: "a farm rating on this page would have no source behind
-            it". On demo data it renders a seeded number; on a real pilot farm it renders 0.0
-            forever. Same class as the transparency score — a KPI with no live input.
-            `History.operator` STAYS, retitled "Recorded by": it is set to `request.user` on
-            create (history/views.py:627), so it identifies the ACCOUNT that owns the record —
-            not whoever did the field work. Field workers are `performed_by` per event. It is
-            withheld from consumers by `_OWNER_ONLY_FIELDS` because it carries an email. */}
-              <StandardCard
-                title={intl.formatMessage({
-                  id: 'production.section.recordedBy',
-                  defaultMessage: 'Recorded by'
-                })}
-                mb={0}
-                variant="elevated"
-                padding={{ base: 0, md: 4 }}>
-                <VStack spacing={{ base: 3, md: 6 }} align="stretch">
-                  {historyData?.operator && (
-                    <Box p={{ base: 3, md: 4 }} bg="gray.50" borderRadius="lg">
-                      {/* The inner "Operator" label was removed 2026-08-08. The card is titled
-                        "Recorded by", so this printed the same idea twice — and the two used
-                        DIFFERENT i18n keys, which Spanish translated inconsistently:
-                        "Operario" (a manual labourer) as the card title and "Operador" as the
-                        field label. Neither was right: `History.operator` is set to
-                        `request.user` on create (history/views.py:627), so it is the ACCOUNT
-                        that owns the record, not whoever did the field work. Field workers are
-                        `performed_by` on each event. */}
-                      <HStack spacing={2}>
-                        <Avatar
-                          size="sm"
-                          name={historyData.operator.full_name || historyData.operator.email}
-                        />
-                        <VStack spacing={0} align="start" minW={0}>
-                          <Text
-                            fontWeight="medium"
-                            fontSize={{ base: 'sm', md: 'md' }}
-                            noOfLines={1}>
-                            {historyData.operator.full_name ||
-                              intl.formatMessage({
-                                id: 'production.reputation.unnamedOperator',
-                                defaultMessage: 'Unnamed Operator'
-                              })}
-                          </Text>
-                          <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.500" noOfLines={1}>
-                            {historyData.operator.email}
-                          </Text>
-                        </VStack>
-                      </HStack>
-                    </Box>
-                  )}
-                </VStack>
-              </StandardCard>
-            </VStack>
-          </SimpleGrid>
-        </StandardSection>
-
-        {/* Season plan BEFORE the timeline: the plan is what to do next, the timeline is what
-            happened. Same ordering as farm home (deadlines → readiness → records). Renders
-            nothing when the production was started without a crop template.
-            The wrapper HIDES ITSELF when empty (2026-11-04). It was a VStack with its own
-            margin, and when the section rendered nothing the empty wrapper still took a page
-            gap, doubling the space between "Production record" and the next block. A
-            display:none child is not a flex item, so it takes no gap. The wrapper stays for
-            `w="full"`: the page stack centres its children and StandardCard sets no width. */}
-        <Box w="full" sx={{ '&:empty': { display: 'none' } }}>
-          <SeasonPlanSection
-            productionId={historyData?.public_id || productionId || ''}
-            farmId={farmId}
-            parcelId={parcelId}
-            canWrite={canWrite}
-            isFinished={Boolean(historyData?.finish_date)}
-          />
-        </Box>
-
-        {/* Production Timeline Section */}
-
-        {/* The season's own door for a NEW record, whether or not it has any yet. Until
-            2026-08-23 this page offered "add activity" only in its empty state; a season with
-            records relied on the parcel page, which resolves the season from
-            `parcel.current_history` — and finishing NULLS that pointer. So a finished lot with
-            69 records had no entry point anywhere for the work that still belonged to it:
-            the third load from storage, winter cover, the irrigation summary. The server
-            accepts records dated after the finish and refuses ones dated inside the sealed
-            season, naming the correction path. `?production=` names THIS season. */}
-        {canWrite && timelineEvents.length > 0 && (
-          <VStack align="flex-start" spacing={1} w="full">
-            <StandardButton
-              variant="outline"
-              size="sm"
-              leftIcon={<Icon as={FaSeedling} />}
-              onClick={() =>
-                navigate(
-                  `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/event/add?production=${productionId}`
-                )
-              }>
-              {intl.formatMessage({
-                id: historyData?.finish_date
-                  ? 'production.addPostHarvestActivity'
-                  : 'production.addActivity'
-              })}
-            </StandardButton>
-            {historyData?.finish_date && (
-              <Text fontSize="xs" color="gray.600" maxW="72ch">
-                {intl.formatMessage(
-                  { id: 'production.finishedLoggingHint' },
-                  { date: formatDate(historyData.finish_date) }
-                )}
-              </Text>
-            )}
-          </VStack>
-        )}
-
-        {timelineEvents.length > 0 ? (
-          <UltraMobileProductionJourney
-            events={timelineEvents}
-            // Producer preview of the consumer journey. The buyer-facing CTAs
-            // ("Buyer or retailer? …", the doc-request form) are suppressed here:
-            // this route carries the production PUBLIC UUID, so the CTA's old
-            // UUID-shape guard did not exclude it and the farm was shown a form
-            // for requesting documentation from itself. The producer's path to a
-            // buyer is the "Copy buyer link" action above.
-            audience="producer"
-            // The farmer's door into their own record. A filed season opens the correction
-            // sheet (the original is kept beside the correction); an open season goes to the
-            // ordinary editor. Without this the page rendered every event and offered no way
-            // to act on any of them — season-plan rows had a control, an input logged outside
-            // the plan had none.
-            // "View full record": the field-by-field detail modal, with the fields a
-            // shopper sees marked. Before this, a finished production offered only the
-            // consumer-journey preview and the correction sheet; there was no way to
-            // read the complete stored record.
-            onViewEvent={(event) => {
-              setViewTarget({
-                event_type: Number(event?.event_type),
-                event_id: Number(event?.record_id),
-                subtype: (event?.production_type || event?.type || null) as string | null,
-                name: (event?.name as string) || null,
-                date: (event?.date as string) || null,
-                description: (event?.description as string) || '',
-                parcel_id: Number(parcelId) || 0,
-                parcel_name: historyData?.parcel?.name || '',
-                history_id: Number(historyData?.id) || 0,
-                production_finished: Boolean(historyData?.finish_date || historyData?.published),
-                performed_by: (event?.performed_by as string) || '',
-                detail: undefined
-              });
-            }}
-            onCorrectEvent={(recordId, eventType) => {
-              if (historyData?.finish_date || historyData?.published) {
-                setCorrectTarget({ id: recordId, eventType });
-                return;
-              }
-              navigate(
-                `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/event/${recordId}/change` +
-                  `?event_type=${eventType}`
-              );
-            }}
-            // This is the producer's preview of the CONSUMER journey, so it must be fed the
-            // same backend-computed organic classification the consumer page uses. Without
-            // it the "All inputs organic-approved" chip silently never renders here — and
-            // more importantly the producer would not see the claim their shoppers see.
-            organicSummary={(transparencyApiData as any)?.standard_view?.organic_summary}
-          />
-        ) : (
-          <VStack spacing={{ base: 2, md: 4 }} py={{ base: 4, md: 8 }}>
-            <Icon as={MdTimeline} boxSize={{ base: 10, md: 16 }} color="gray.400" />
-            <Text fontSize={{ base: 'md', md: 'lg' }} fontWeight="medium" color="gray.600">
-              {intl.formatMessage({
-                id: 'production.timeline.empty',
-                defaultMessage: 'No events recorded yet'
-              })}
-            </Text>
-            <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.500" textAlign="center">
-              {intl.formatMessage({
-                id: 'production.timeline.emptyHint',
-                defaultMessage: 'Events will appear here as the production progresses'
-              })}
-            </Text>
-            {/* A finished season still takes POST-HARVEST records — the third load of a storage
-                crop, winter cover, the irrigation summary — dated after its finish. Only the
-                sealed window (records dated on or before the finish) is refused, server-side,
-                with the correction path named. This button was hidden the moment a season
-                closed, and finishing also nulls `parcel.current_history`, so the lot had no
-                entry point at all for work that belonged to it. `?production=` is load-bearing
-                either way: it names THIS season. */}
-            {canWrite && (
-              <Button
-                leftIcon={<Icon as={FaSeedling} />}
-                colorScheme="green"
-                size="lg"
-                onClick={() =>
-                  navigate(
-                    `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/event/add?production=${productionId}`
-                  )
-                }
-                mt={4}>
-                {intl.formatMessage({
-                  id: historyData?.finish_date
-                    ? 'production.addPostHarvestActivity'
-                    : 'production.addFirstActivity'
-                })}
-              </Button>
-            )}
-            {historyData?.finish_date && (
-              <Text fontSize="sm" color="gray.500" mt={4} textAlign="center" maxW="64ch">
-                {intl.formatMessage(
-                  { id: 'production.finishedLoggingHint' },
-                  { date: formatDate(historyData.finish_date) }
-                )}
-              </Text>
-            )}
-          </VStack>
-        )}
-      </VStack>
-
-      {/* Off-farm handler — CCOF G6.1 / 7 CFR 205.272. Deliberately NOT gated on
-          finish_date: a lot goes to the huller during harvest, weeks before the season
-          closes, and that is exactly when the grower has the handler's certificate in hand. */}
-      <VStack spacing={{ base: 4, md: 6 }} align="stretch" w="100%" mt={{ base: 4, md: 6 }}>
-        <PostHarvestHandlerSection
-          productionId={historyData?.public_id || productionId || ''}
-          companyId={companyId}
-          farmId={farmId}
-          canWrite={canWrite}
-        />
-      </VStack>
-
-      {/* Sales & Buyer Handoff. The itemized Sales Records ledger is THE sales editor
-          (SalesRecord rows win in audit exports). SalesDeliverySection renders only as a
-          read-only summary of legacy single-sale data on pre-merge productions (export
-          fallback), and gates itself on finish_date.
-
-          NOT gated on finish_date. It was from 2026-06-15 to 2026-10-26, a pattern copied
-          from the legacy single-sale editor (2026-04-20, one buyer written onto the season
-          header); neither commit gave a reason, and the API never refused an open-season sale.
-          Berries, cherries and stone fruit are picked and sold all summer, so a grower could
-          log July's picks and not one of July's sales until the season closed. Open or
-          closed, a sale links to the picks already logged; closing only changes the
-          correction from Delete to Void (isFinished below). */}
-      {historyData && (
-        <VStack spacing={{ base: 4, md: 6 }} align="stretch" w="100%" mt={{ base: 4, md: 6 }}>
-          <Heading as="h2" size={{ base: 'sm', md: 'md' }} color="gray.700" px={1}>
-            {intl.formatMessage({
-              id: 'production.salesSection.title',
-              defaultMessage: 'Sales & Buyer Handoff'
-            })}
-          </Heading>
-          <SalesRecordsSection
-            productionId={historyData?.public_id || productionId || ''}
-            canWrite={canWrite}
-            establishmentId={farmId}
-            // Seeds the sale unit from the lot's own harvest unit. The audit export prints the
-            // mass-balance Balance line and the "sold exceeds harvest" review flag only when the
-            // two unit strings match, so a mismatched default silently deleted § 205.103(b)(2)
-            // reconciliation from the certifier packet.
-            harvestUnit={historyData?.production_unit}
-            // Once the season closes the server refuses a DELETE on a sale
-            // (7 CFR 205.103(b)(4)); the correction from then on is a void.
-            isFinished={Boolean(historyData?.finish_date)}
-            companyId={companyId}
-            historyId={Number(historyData?.id) || null}
-          />
-          <SalesDeliverySection historyData={historyData} />
-        </VStack>
+  // ── HEADER ACTIONS: one primary (2026-11-06) ─────────────────────────────────────
+  // An open season's job is logging, so Log activity leads; Finish season is the one other
+  // decision a farmer makes here. A closed season's job is the certifier, so Export leads.
+  // Everything else is one menu: the public-page actions also live on the public page card.
+  const primaryIsLog = canWrite && !isFinished;
+  const headerActions = (
+    <HStack spacing={2} flexShrink={0}>
+      {primaryIsLog ? (
+        <StandardButton
+          variant="primary"
+          size="sm"
+          leftIcon={<Icon as={FaPlus} />}
+          onClick={logActivity}>
+          {intl.formatMessage({ id: 'production.addActivity' })}
+        </StandardButton>
+      ) : (
+        <StandardButton
+          variant="primary"
+          size="sm"
+          leftIcon={<Icon as={FiDownload} />}
+          onClick={onExportOpen}>
+          {intl.formatMessage({ id: 'app.exportForAudit' })}
+        </StandardButton>
       )}
+      {canWrite && !isFinished && (
+        // F29: the season's own finish door. The parcel-level button finishes whichever season
+        // started last, so an older open season had no other route.
+        <StandardButton
+          variant="outline"
+          size="sm"
+          onClick={() => navigate(`${parcelPath}/production/${productionId}/finish`)}>
+          {intl.formatMessage({ id: 'season.finish', defaultMessage: 'Finish season' })}
+        </StandardButton>
+      )}
+      <Menu placement="bottom-end" autoSelect={false}>
+        <MenuButton
+          as={IconButton}
+          variant="outline"
+          size="sm"
+          minH="44px"
+          minW="44px"
+          aria-label={intl.formatMessage({
+            id: 'production.moreActions',
+            defaultMessage: 'More actions'
+          })}
+          icon={<Icon as={FaEllipsisV} />}
+        />
+        <MenuList>
+          {primaryIsLog && (
+            <MenuItem icon={<Icon as={FiDownload} />} onClick={onExportOpen}>
+              {intl.formatMessage({ id: 'app.exportForAudit' })}
+            </MenuItem>
+          )}
+          {canWrite && isFinished && (
+            <MenuItem icon={<Icon as={FaPlus} />} onClick={logActivity}>
+              {intl.formatMessage({ id: 'production.addPostHarvestActivity' })}
+            </MenuItem>
+          )}
+          <MenuItem icon={<Icon as={FaLink} />} onClick={handleCopyBuyerLink}>
+            {intl.formatMessage({ id: 'production.copyBuyerLink.button' })}
+          </MenuItem>
+          <MenuItem icon={<Icon as={FaShare} />} onClick={handleShare}>
+            {intl.formatMessage({ id: 'app.share' })}
+          </MenuItem>
+          <MenuItem
+            icon={<Icon as={FaTag} />}
+            onClick={handleDownloadLotTag}
+            isDisabled={!historyData?.lot_id}>
+            {intl.formatMessage({ id: 'production.lotTag.button' })}
+          </MenuItem>
+          {canWrite && !isFinished && (
+            <MenuItem
+              icon={<Icon as={FaEdit} />}
+              onClick={() => navigate(`${parcelPath}/production/${productionId}/change`)}>
+              {intl.formatMessage({ id: 'season.edit', defaultMessage: 'Edit season' })}
+            </MenuItem>
+          )}
+        </MenuList>
+      </Menu>
+    </HStack>
+  );
 
-      {/* Audit Export Modal */}
+  const header = (
+    <Box w="100%">
+      <Flex
+        direction={{ base: 'column', md: 'row' }}
+        justify="space-between"
+        align={{ base: 'stretch', md: 'flex-start' }}
+        gap={3}>
+        <VStack align="flex-start" gap={1} minW={0}>
+          <Heading as="h1" {...PAGE_TITLE}>
+            {historyData?.product?.name || historyData?.name}
+          </Heading>
+          <PageHeaderMeta
+            items={[
+              historyData?.parcel?.name || null,
+              historyData?.lot_id
+                ? intl.formatMessage(
+                    { id: 'season.meta.lot', defaultMessage: 'Lot {id}' },
+                    { id: historyData.lot_id }
+                  )
+                : null,
+              timelineEvents.length
+                ? intl.formatMessage(
+                    {
+                      id: 'season.activities.count',
+                      defaultMessage: '{count, plural, one {# activity} other {# activities}}'
+                    },
+                    { count: timelineEvents.length }
+                  )
+                : null,
+              // formatDateFromTimestamp: start_date is a calendar date stored as midnight UTC.
+              historyData?.start_date
+                ? isFinished
+                  ? `${formatDateFromTimestamp(historyData.start_date, undefined, {
+                      dateStyle: 'medium'
+                    })} – ${formatDateFromTimestamp(historyData.finish_date, undefined, {
+                      dateStyle: 'medium'
+                    })}`
+                  : intl.formatMessage(
+                      { id: 'season.meta.since', defaultMessage: 'since {date}' },
+                      {
+                        date: formatDateFromTimestamp(historyData.start_date, undefined, {
+                          dateStyle: 'medium'
+                        })
+                      }
+                    )
+                : null
+            ]}
+          />
+          <HStack spacing={1.5} pt={1}>
+            <Badge
+              variant={isFinished ? 'neutral' : 'subtle'}
+              borderRadius="full"
+              fontSize="xs"
+              textTransform="none">
+              {intl.formatMessage({
+                id: isFinished ? 'season.status.finished' : 'season.status.underway',
+                defaultMessage: isFinished ? 'Finished' : 'Underway'
+              })}
+            </Badge>
+            {historyData?.published && (
+              <Badge variant="neutral" borderRadius="full" fontSize="xs" textTransform="none">
+                {intl.formatMessage({
+                  id: 'production.badge.published',
+                  defaultMessage: 'Published'
+                })}
+              </Badge>
+            )}
+          </HStack>
+        </VStack>
+        {headerActions}
+      </Flex>
+      {historyData?.description && (
+        <Text mt={3} color="gray.600" fontSize="sm" lineHeight="1.7" maxW="100ch">
+          {historyData.description}
+        </Text>
+      )}
+    </Box>
+  );
+
+  const finishedHint = isFinished
+    ? intl.formatMessage(
+        { id: 'production.finishedLoggingHint' },
+        { date: formatDate(historyData.finish_date) }
+      )
+    : undefined;
+
+  // The wrapper hides itself when the plan renders nothing (no template, or a finished season
+  // with nothing logged against it), so it takes no gap.
+  const plan = (
+    <Box w="full" sx={{ '&:empty': { display: 'none' } }}>
+      <SeasonPlanSection
+        productionId={historyData?.public_id || productionId || ''}
+        farmId={farmId}
+        parcelId={parcelId}
+        canWrite={canWrite}
+        isFinished={isFinished}
+      />
+    </Box>
+  );
+
+  const activities = (
+    <SeasonActivitiesCard
+      events={rawSeasonEvents}
+      onOpen={openEvent}
+      onLog={canWrite ? logActivity : undefined}
+      isFinished={isFinished}
+      finishedHint={finishedHint}
+    />
+  );
+
+  const photos =
+    historyData?.images && historyData.images.length > 0 ? (
+      <StandardCard
+        mb={0}
+        title={intl.formatMessage({ id: 'season.photos.title', defaultMessage: 'Photos' })}>
+        <StandardImageGallery
+          images={historyData.images}
+          title=""
+          variant="default"
+          enablePreview={true}
+          showImageCount={true}
+          height={{ base: '200px', sm: '250px', md: '280px' }}
+          showEmptyState={false}
+          maxDisplayImages={4}
+        />
+      </StandardCard>
+    ) : null;
+
+  const publicPage = (narrow: boolean) =>
+    historyData?.qr_code ? (
+      <PublicPageCard
+        qrCode={historyData.qr_code}
+        coverImageUrl={historyData.cover_image_url}
+        isFinished={isFinished}
+        isPublished={Boolean(historyData.published)}
+        canWrite={canWrite}
+        isSavingCover={isSavingCover}
+        onDownloadQr={downloadQRCode}
+        onPreview={handleViewPublicPage}
+        onCopyBuyerLink={handleCopyBuyerLink}
+        onSetCover={handleSetCover}
+        onClearCover={handleClearCover}
+        narrow={narrow}
+      />
+    ) : null;
+
+  const details = (
+    <SeasonDetailsCard
+      history={historyData}
+      canWrite={canWrite}
+      onOpenFarm={() => navigate(`/admin/dashboard/farm/${farmId}`)}
+      onOpenParcel={() => navigate(parcelPath)}
+      onCorrectHeader={() => setIsCorrectingHeader(true)}
+    />
+  );
+
+  // Off-farm handler (CCOF G6.1 / 7 CFR 205.272): not gated on finish_date, a lot goes to the
+  // huller during harvest. Sales: not gated either, berries sell all summer (2026-10-26).
+  const handler = (
+    <PostHarvestHandlerSection
+      productionId={historyData?.public_id || productionId || ''}
+      companyId={companyId}
+      farmId={farmId}
+      canWrite={canWrite}
+    />
+  );
+  const sales = (
+    <VStack spacing={{ base: 4, md: 6 }} align="stretch" w="100%">
+      <SalesRecordsSection
+        productionId={historyData?.public_id || productionId || ''}
+        canWrite={canWrite}
+        establishmentId={farmId}
+        // Seeds the sale unit from the lot's harvest unit: the export's mass-balance line
+        // prints only when the two unit strings match.
+        harvestUnit={historyData?.production_unit}
+        // Closed season: the server refuses DELETE on a sale (205.103(b)(4)); void instead.
+        isFinished={isFinished}
+        companyId={companyId}
+        historyId={Number(historyData?.id) || null}
+      />
+      <SalesDeliverySection historyData={historyData} />
+    </VStack>
+  );
+
+  const drift = <DriftFindingsBanner events={timelineEvents as any[]} />;
+
+  // Three tabs (2026-11-06). The page held nine sections in one 8,259px column; the farmer comes
+  // here to log, to sell, or to hand over the QR, one at a time. Whatever must never hide stays
+  // above the tabs: the season's state, the primary action and any drift finding.
+  // The tab lives in the URL (?tab=sales) so a link can land on it and Back returns to it.
+  const TAB_KEYS = ['activities', 'sales', 'details'] as const;
+  const tabIndex = Math.max(
+    0,
+    TAB_KEYS.indexOf(new URLSearchParams(location.search).get('tab') as (typeof TAB_KEYS)[number])
+  );
+  const selectTab = (index: number) => {
+    const params = new URLSearchParams(location.search);
+    if (index === 0) params.delete('tab');
+    else params.set('tab', TAB_KEYS[index]);
+    const query = params.toString();
+    navigate({ search: query ? `?${query}` : '' }, { replace: true });
+  };
+
+  // One amber dot, on one fact: a finished lot with no sale on it. The certifier traces each lot
+  // to its buyer, and the export's mass-balance line needs the sale. An open season with no sale
+  // is normal, so it gets no dot. No green check on any tab, ever: a tick on "Activities" would
+  // read as "fully documented", the self-graded verdict the record never carries.
+  const activeSales = salesRecords.filter((r: { is_voided?: boolean }) => !r.is_voided).length;
+  const salesOutstanding = isFinished && salesLoaded && activeSales === 0;
+
+  const tabs = [
+    {
+      key: 'activities',
+      label: intl.formatMessage({ id: 'season.activities.title', defaultMessage: 'Activities' }),
+      status: 'none' as const
+    },
+    {
+      key: 'sales',
+      label: intl.formatMessage({ id: 'season.tab.sales', defaultMessage: 'Sales and handling' }),
+      status: salesOutstanding ? ('incomplete' as const) : ('none' as const),
+      statusLabel: salesOutstanding
+        ? intl.formatMessage({
+            id: 'season.tab.salesOutstanding',
+            defaultMessage: 'No sale recorded yet'
+          })
+        : undefined
+    },
+    {
+      key: 'details',
+      label: intl.formatMessage({ id: 'season.tab.details', defaultMessage: 'QR and details' }),
+      status: 'none' as const
+    }
+  ];
+
+  const body = (
+    <StandardSectionTabs
+      tabs={tabs}
+      activeIndex={tabIndex}
+      onChange={selectTab}
+      ariaLabel={intl.formatMessage({ id: 'season.tab.aria', defaultMessage: 'Season sections' })}>
+      <VStack spacing={{ base: 4, md: 6 }} align="stretch" w="100%" pt={2}>
+        {tabIndex === 0 && (
+          <>
+            {plan}
+            {activities}
+            {photos}
+          </>
+        )}
+        {tabIndex === 1 && (
+          <>
+            {sales}
+            {handler}
+          </>
+        )}
+        {tabIndex === 2 && (
+          <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={{ base: 4, md: 6 }} alignItems="start">
+            {publicPage(false)}
+            {details}
+          </SimpleGrid>
+        )}
+      </VStack>
+    </StandardSectionTabs>
+  );
+
+  return (
+    <StandardPage showBackButton onBack={() => navigate(parcelPath)}>
+      <VStack spacing={{ base: 4, md: 6 }} w="100%" align="stretch">
+        {header}
+        {drift}
+        {body}
+      </VStack>
+
       <AuditExportModal
         isOpen={isExportOpen}
         onClose={onExportClose}
@@ -1673,13 +912,13 @@ function ProfileProduction() {
         productionName={historyData?.product?.name || historyData?.name || ''}
       />
 
-      {/* Correction sheet for one filed record. Mounted only once a row asks for it. */}
+      {/* The field-by-field record, with the buyer-page marks; Edit or Correct from there. */}
       <ActivityDetailModal
         row={viewTarget}
         onClose={() => setViewTarget(null)}
         farmId={farmId || ''}
         // AC-15: this page holds the season, so the buyer-page hint can say "appears" when it
-        // is published. It is the only producer surface that opens records of a published season.
+        // is published.
         isSeasonPublished={!!historyData?.published}
       />
 
@@ -1691,9 +930,7 @@ function ProfileProduction() {
         onCorrected={() => setCorrectTarget(null)}
       />
 
-      {/* Same sheet, season-header mode (F7). Kept as a second mount rather than one piece
-          of state carrying both shapes: a header target has no event id, and collapsing the
-          two would mean encoding "not an event" as a null inside the event target. */}
+      {/* F7: season-header correction. A second mount: a header target has no event id. */}
       <CorrectRecordModal
         isOpen={isCorrectingHeader}
         onClose={() => setIsCorrectingHeader(false)}

@@ -119,7 +119,8 @@ describe('sales while the season is open', () => {
     // Server side (`assert_child_record_deletable`) the retention floor applies only once the
     // season is finished; the editor offers the matching control.
     const src = readFileSync(resolve(__dirname, '../ProfileProduction.tsx'), 'utf8');
-    expect(src).toMatch(/isFinished=\{Boolean\(historyData\?\.finish_date\)\}/);
+    expect(src).toMatch(/const isFinished = Boolean\(historyData\?\.finish_date\)/);
+    expect(src).toMatch(/<SalesRecordsSection[\s\S]*?isFinished=\{isFinished\}/);
   });
 
   it('a stored header unit off the dropdown still reads as differing, never as matching', () => {
