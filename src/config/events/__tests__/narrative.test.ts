@@ -118,14 +118,17 @@ describe('surfaces render the activity verb, not the retired family name', () =>
     'Other Farm Activity'
   ];
 
-  it('the timeline badge renders from activityLabel, not eventConfig.category', () => {
+  it('the activity timeline prints no retired family name', () => {
+    // Was a check on `EnhancedTimelineRow`, deleted 2026-11-07 (no screen rendered it). Its
+    // successor, the shared month timeline (parcel page, Activities, season page), takes the
+    // record's own title, so the rule it must keep is: none of these words in its source.
     const code = readFileSync(
-      join(__dirname, '../../../components/Tables/EnhancedTimelineRow.tsx'),
+      join(__dirname, '../../../components/Events/ActivityTimeline.tsx'),
       'utf8'
     );
-    expect(code).toMatch(/activityLabel\(\s*event\.event_type/);
-    // The literals may still exist inside getEventConfig (it feeds icons/rings); what must not
-    // happen is rendering one. `{eventConfig.category}` is the exact shape that did.
+    for (const word of RETIRED) {
+      expect(code, `"${word}" in the timeline`).not.toContain(`'${word}'`);
+    }
     expect(code, 'eventConfig.category must not be rendered').not.toMatch(
       /\{\s*eventConfig\.category\s*\}/
     );
@@ -149,10 +152,7 @@ describe('surfaces render the activity verb, not the retired family name', () =>
   });
 
   it('subtypeOf has ONE definition — no surface may grow its own copy', () => {
-    for (const rel of [
-      '../../../components/Tables/EnhancedTimelineRow.tsx',
-      '../../../components/Modals/EventDetailsModal.tsx'
-    ]) {
+    for (const rel of ['../../../components/Modals/EventDetailsModal.tsx']) {
       const code = readFileSync(join(__dirname, rel), 'utf8');
       // the inline `weather_type || production_type || …` chain is the shape that duplicated
       const copies = [...code.matchAll(/weather_type\s*\|\|[\s\S]{0,200}?business_event_type/g)];

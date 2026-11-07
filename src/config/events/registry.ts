@@ -3,7 +3,7 @@
  *
  * Single source of truth for which fields render on which UI surfaces for
  * each event type × subtype combination. Consumers: EventDetailsModal,
- * ConsumerEventCard, EventPreviewModal, EnhancedTimelineRow, forms.
+ * ConsumerEventCard, EventPreviewModal, EventDetailsModal, forms.
  *
  * Architecture:
  * - Layer A (API contract): auto-generated types in src/types/api.generated.ts

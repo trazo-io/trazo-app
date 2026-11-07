@@ -49,7 +49,6 @@ describe('reading a served carbon figure', () => {
 
 describe('every carbon surface uses the same rule', () => {
   it.each([
-    'components/Tables/EnhancedTimelineRow.tsx',
     'components/Modals/EventDetailsModal.tsx',
     'components/Events/EnhancedEventDetailModal.tsx',
     'components/Events/CarbonImpactPreview.tsx'
@@ -61,7 +60,6 @@ describe('every carbon surface uses the same rule', () => {
 
   it('no surface gates the badge on the bare flag any more', () => {
     for (const file of [
-      'components/Tables/EnhancedTimelineRow.tsx',
       'components/Modals/EventDetailsModal.tsx',
       'components/Events/EnhancedEventDetailModal.tsx'
     ]) {
@@ -95,18 +93,6 @@ describe('review of app #83', () => {
     expect(loader).toMatch(/consumer\.loader\.growerRecords/);
   });
 
-  it('the not-estimated sentence wraps on a phone instead of spilling past the card', () => {
-    const row = src('components/Tables/EnhancedTimelineRow.tsx');
-    const at = row.indexOf("'carbon.notEstimated'");
-    const open = row.lastIndexOf('<Text', at);
-    expect(at).toBeGreaterThan(-1);
-    expect(row.slice(open, at)).not.toMatch(/nowrap/);
-    // Manual 375px pass (2026-10-06): removing nowrap was not enough. Its row kept
-    // flexShrink={0}, so the sentence stayed on one line 120px past the card edge.
-    const stack = row.lastIndexOf('<HStack', at);
-    expect(stack).toBeGreaterThan(-1);
-    const stackOpen = row.slice(stack, row.indexOf('>', stack));
-    expect(stackOpen).not.toMatch(/flexShrink=\{0\}/);
-    expect(stackOpen).toMatch(/minW=\{0\}/);
-  });
+  // "The not-estimated sentence wraps on a phone" pinned `EnhancedTimelineRow`'s own layout; that
+  // row was deleted 2026-11-07, and the timeline that replaced it shows no carbon figure.
 });

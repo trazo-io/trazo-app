@@ -3,7 +3,7 @@
  *
  * The main API that display components use to query which fields to render.
  * All UI code (EventDetailsModal, ConsumerEventCard, EventPreviewModal,
- * EnhancedTimelineRow, forms) should go through these functions — never
+ * EventDetailsModal, forms) should go through these functions, never
  * reach directly into the registry data.
  *
  * Example usage:

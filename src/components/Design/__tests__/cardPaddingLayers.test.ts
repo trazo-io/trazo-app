@@ -154,7 +154,7 @@ describe('card padding layers', () => {
        *
        * The protected CSS selects on `.trazo-card` / `[data-component='Card']` — a CLASS, not a
        * component — so importing `components/Card/Card` is the common way in but not the only
-       * one. `components/Tables/EnhancedTimelineRow` renders CHAKRA's `<Card>` and hand-applies
+       * one. A file can render CHAKRA's `<Card>` and hand-apply (the deleted `EnhancedTimelineRow` did)
        * `className="trazo-card"`, which picks up the same `!important` padding while importing
        * no local Card at all. An import-only filter skipped that file entirely, so its
        * `CardBody` sat unguarded on top of a forced 14px inset.

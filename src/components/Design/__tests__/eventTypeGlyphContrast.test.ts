@@ -4,7 +4,6 @@
  * The same eight-entry map — `{ icon: Fa…, color: '<hue>.<step>' }`, keyed by event type — is
  * hand-copied across FOUR components, which is why one contrast defect had several lives:
  *
- *   components/Tables/EnhancedTimelineRow        getEventConfig     producer timeline
  *   components/Events/ConsumerEventCard          getEventTypeIcon   consumer QR card
  *   views/Scan/…/UltraMobileProductionJourney    getEventConfig x2  consumer QR journey
  *                                                (the first holds TWO map blocks — a switch
@@ -70,13 +69,12 @@ describe('event-type glyph colour', () => {
    *
    * ⚠️ Scoped deliberately. The first version of this assertion matched any `color:` sitting
    * near an `icon:` and reported SIXTY-FIVE offenders — almost all of them the
-   * `fields.push({ label, value, icon, color })` detail rows inside EnhancedTimelineRow, which
+   * `fields.push({ label, value, icon, color })` detail rows of the old timeline row, which
    * are small inline markers beside a label that already states the fact. Those are decorative
    * and governed elsewhere; folding them in here would have made the guard permanently red for
    * reasons unrelated to the bug, which is how a guard gets muted.
    */
   const MAP_FUNCTIONS = [
-    ['components/Tables/EnhancedTimelineRow.tsx', 'getEventConfig'],
     ['components/Events/ConsumerEventCard.tsx', 'getEventTypeIcon'],
     ['views/Scan/ProductDetail/components/UltraMobileProductionJourney.tsx', 'getEventConfig']
   ] as const;
@@ -110,10 +108,11 @@ describe('event-type glyph colour', () => {
       expect(bodies.length, `${fn} not found in ${rel}`).toBeGreaterThan(0);
       found += bodies.length;
     }
-    // 1 (timeline) + 1 (consumer card) + 2 (journey) at the time of writing. The journey's
-    // first function holds two map blocks, so block count (3) != function count (2) there.
+    // 1 (consumer card) + 2 (journey). The journey's first function holds two map blocks, so
+    // block count (2) != function count (1) there. The producer timeline's copy left with
+    // `EnhancedTimelineRow` (2026-11-07).
     expect(found, 'the maps moved — every assertion here would go vacuous').toBeGreaterThanOrEqual(
-      4
+      3
     );
   });
 
@@ -207,50 +206,10 @@ describe('event-type glyph colour', () => {
   });
 });
 
-/**
- * The producer timeline's category Badge must take its colour from the SHARED semantic map,
- * never from the event's decorative accent.
- *
- * The bug (MEASURED 2026-08-28, resolved through the real theme): the Badge derived a PALETTE
- * by string-splitting `eventConfig.color` — `colorScheme={eventConfig.color.split('.')[0]}` —
- * giving seven hues across eight categories, of which orange/yellow/teal/purple are not Trazo
- * scales at all (styles.js declares green/gray/amber/red/blue) and resolved to Chakra's
- * defaults. Contrast passed everywhere; the defect was MEANING. Pest Management rendered
- * #B71C1C on #FFCDD2 and Soil Management #744210 on #FEFCBF, so ordinary logged records read
- * as an error and a warning on a surface a certifier reads. It did not even separate what it
- * decorated: Weather and Equipment both split to `blue`, identical pixels.
- *
- * `config/events/eventTypeAppearance.ts` already owned this decision for the activity feed and
- * the event modal — semantic variants, never per-family hues. This asserts the timeline uses
- * the same one instead of inventing a fourth answer.
- */
-describe('timeline category badge renders from the shared semantic map', () => {
-  const code = readFileSync(join(SRC, 'components/Tables/EnhancedTimelineRow.tsx'), 'utf8');
-
-  it('imports TYPE_BADGE and drives the badge variant from it', () => {
-    expect(code).toMatch(
-      /import \{[^}]*TYPE_BADGE[^}]*\} from 'config\/events\/eventTypeAppearance'/
-    );
-    expect(code, 'the category Badge must read TYPE_BADGE').toMatch(
-      /variant=\{TYPE_BADGE\[[^\]]+\]\s*\?\?\s*'neutral'\}/
-    );
-  });
-
-  it('never derives a Badge palette from the decorative accent', () => {
-    // The exact shape of the bug. Any reappearance — here or on a new badge — fails.
-    expect(
-      codeOf(code),
-      'a Badge colorScheme must not be computed from eventConfig.color'
-    ).not.toMatch(/colorScheme=\{[^}]*eventConfig\.color/);
-  });
-
-  it('carries no banned status hue on a badge — blue and purple are struck by frontend.md', () => {
-    const banned = [
-      ...codeOf(code).matchAll(/colorScheme="(blue|purple|teal|yellow|orange)"/g)
-    ].map((m) => m[1]);
-    expect(banned, `found colorScheme literals: ${JSON.stringify(banned)}`).toEqual([]);
-  });
-});
+// The producer timeline's badge and ring checks pinned `EnhancedTimelineRow`, deleted 2026-11-07
+// (no screen rendered it). The shared month timeline that replaced it takes its hue from
+// `components/Events/categoryTone` (no badge), and consumerJourneyColourIsMeaning.test.ts keeps
+// every status hue out of that map: pest is teal, inputs purple.
 
 /**
  * Red and amber must stay spendable.
@@ -280,28 +239,6 @@ describe('status colour stays reserved for things a grower must act on', () => {
       []
     );
   });
-
-  it('the timeline ring drops red and amber for those two families too', () => {
-    // A neutral badge above a red ring would still read as an alert, so the ring is checked
-    // separately — EnhancedTimelineRow keeps its own getEventConfig map.
-    const code = codeOf(
-      readFileSync(join(SRC, 'components/Tables/EnhancedTimelineRow.tsx'), 'utf8')
-    );
-    for (const [glyph, family] of [
-      ['FaBug', 'pest'],
-      ['FaFlask', 'inputs']
-    ] as const) {
-      // Bounded by the entry's own `category:` key rather than a character count — `codeOf`
-      // blanks comments to spaces, so a documented entry can push `color:` far down the file.
-      const at = code.indexOf(`icon: ${glyph},`);
-      expect(at, `${glyph} entry not found — this would pass vacuously`).toBeGreaterThan(-1);
-      const end = code.indexOf('category:', at);
-      expect(end, `no category: after ${glyph}`).toBeGreaterThan(at);
-      const hue = /color: '([a-z]+)\.\d+'/.exec(code.slice(at, end))?.[1];
-      expect(hue, `no colour found between ${glyph} and its category`).toBeTruthy();
-      expect(['red', 'orange', 'amber'], `${family} ring is "${hue}"`).not.toContain(hue);
-    }
-  });
 });
 
 /**
@@ -310,14 +247,8 @@ describe('status colour stays reserved for things a grower must act on', () => {
  * to direct operational emissions rather than an LCA — so there is nothing to grade against.
  */
 describe('carbon figures are reported, not graded', () => {
-  it('the timeline does not interpolate the impact ramp into a colour', () => {
-    const code = codeOf(
-      readFileSync(join(SRC, 'components/Tables/EnhancedTimelineRow.tsx'), 'utf8')
-    );
-    expect(code, 'carbon colour must not come from getImpactLevel').not.toMatch(
-      /\$\{getImpactLevel\([^)]*\)\.color\}/
-    );
-  });
+  // The timeline half of this pinned `EnhancedTimelineRow` (deleted 2026-11-07); the shared month
+  // timeline shows no carbon figure. The detail modal is where one is still shown.
 
   it('the detail modal awards every band the same variant', () => {
     const code = codeOf(readFileSync(join(SRC, 'components/Modals/EventDetailsModal.tsx'), 'utf8'));
@@ -346,31 +277,8 @@ describe('one hue, both carriers', () => {
     ).toHaveLength(1);
   });
 
-  it('every timeline ring shares ONE colour token', () => {
-    const code = codeOf(
-      readFileSync(join(SRC, 'components/Tables/EnhancedTimelineRow.tsx'), 'utf8')
-    );
-    // Only the entries inside getEventConfig: `color: '<token>',` immediately before `category:`.
-    const rings = [...code.matchAll(/color: '([a-z]+\.\d+)',\s*\n\s*category:/g)].map((m) => m[1]);
-    expect(rings.length, 'the ring map moved — this would pass vacuously').toBeGreaterThanOrEqual(
-      8
-    );
-    expect([...new Set(rings)], `rings disagree: ${JSON.stringify(rings)}`).toHaveLength(1);
-  });
-
-  it('the badge and the ring belong to the SAME hue family', () => {
-    // A green chip over a blue ring is the exact defect this pair of rules exists to stop.
-    const code = codeOf(
-      readFileSync(join(SRC, 'components/Tables/EnhancedTimelineRow.tsx'), 'utf8')
-    );
-    const ringHue = /color: '([a-z]+)\.\d+',\s*\n\s*category:/.exec(code)?.[1];
-    expect(ringHue, 'no ring colour found').toBeTruthy();
-    // `subtle` and `brand` both resolve through badge.js defaultProps.colorScheme = green.
-    const GREEN_VARIANTS = ['subtle', 'brand'];
-    const variant = TYPE_BADGE[1];
-    expect(
-      GREEN_VARIANTS.includes(variant) ? 'green' : variant,
-      `badge variant "${variant}" and ring hue "${ringHue}" are different families`
-    ).toBe(ringHue);
-  });
+  // The ring checks that sat here pinned `EnhancedTimelineRow`'s own map (deleted 2026-11-07).
+  // The shared month timeline takes its hue from components/Events/categoryTone, a per-category
+  // wayfinding palette chosen from rendered options (2026-11-04), guarded by
+  // consumerJourneyColourIsMeaning.test.ts.
 });
