@@ -522,7 +522,6 @@ describe('the crew journey addresses the grower as tú, not usted (Run 8b)', () 
     'osp.approvedInputs.search.noMatch': "the catalogues' totality",
     'osp.approvedInputs.syncDiff.narrativeLongRegistryThin': "each input's entry",
     'osp.attachments.subtitle': "the certifier's own names",
-    'osp.cdfa.description': "producers' first organic sale",
     'osp.changeNotifications.nextStep.acreage_field_addition': "the parcel's application",
     'osp.changeNotifications.subtitle': "the operation's certification",
     'osp.empty.whatIsIt': "every certified operation's certifier",
