@@ -9641,5 +9641,6 @@
   "osp.ownFacilities.noLayout": "No layout attached",
   "osp.ownFacilities.save": "Save facility",
   "osp.ownFacilities.saveFailed": "The facility was not saved",
-  "osp.ownFacilities.saved": "Facility saved"
+  "osp.ownFacilities.saved": "Facility saved",
+  "osp.ownFacilities.layoutFailed": "The facility was saved, but the layout did not upload. Choose the file again and save."
 }

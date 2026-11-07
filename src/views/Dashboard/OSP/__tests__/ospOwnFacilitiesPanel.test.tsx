@@ -111,6 +111,27 @@ describe('OSPOwnFacilitiesPanel', () => {
     expect(upload.mock.calls[0][0]).toMatchObject({ facilityId: 42, file });
   });
 
+  it('a failed layout upload keeps the saved facility and a retry updates it, never adds another', async () => {
+    unwrapping(add, { id: 42 });
+    upload.mockImplementationOnce(() => ({ unwrap: () => Promise.reject(new Error('too big')) }));
+    unwrapping(update, { id: 42 });
+    renderPanel();
+    fireEvent.click(screen.getByText('Add a facility you run'));
+    fireEvent.change(screen.getByLabelText(/Facility name/), { target: { value: 'North cooler' } });
+    const file = new File(['%PDF'], 'layout.pdf', { type: 'application/pdf' });
+    fireEvent.change(screen.getByLabelText('Layout'), { target: { files: [file] } });
+    fireEvent.click(screen.getByText('Save facility'));
+    await waitFor(() =>
+      expect(screen.getByText(/The facility was saved, but the layout did not upload/)).toBeTruthy()
+    );
+    expect(screen.queryByText('The facility was not saved')).toBeNull();
+    unwrapping(upload, { id: 42 });
+    fireEvent.click(screen.getByText('Save facility'));
+    await waitFor(() => expect(update).toHaveBeenCalled());
+    expect(add).toHaveBeenCalledTimes(1);
+    expect(update.mock.calls[0][0].facilityId).toBe(42);
+  });
+
   it('formats the address from the parts recorded', () => {
     expect(fullAddress({ city: 'Tangent', state: 'OR' })).toBe('Tangent, OR');
     expect(fullAddress({})).toBe('');

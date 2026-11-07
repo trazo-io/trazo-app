@@ -152,8 +152,9 @@ const OSPOwnFacilitiesPanel: React.FC<Props> = ({ companyId, farmId, isReadOnly 
 
   const save = async () => {
     const payload = { ...draft, name: draft.name.trim(), operated_by: 'this_operation' as const };
+    let saved: PostHarvestFacility;
     try {
-      const saved =
+      saved =
         editing === 'new'
           ? await addFacility({ companyId, farmId, data: payload }).unwrap()
           : await updateFacility({
@@ -162,15 +163,6 @@ const OSPOwnFacilitiesPanel: React.FC<Props> = ({ companyId, farmId, isReadOnly 
               facilityId: editing as number,
               data: payload
             }).unwrap();
-      if (layout) {
-        await uploadLayout({ companyId, farmId, facilityId: saved.id, file: layout }).unwrap();
-      }
-      setEditing(null);
-      toast({
-        status: 'success',
-        title: intl.formatMessage({ id: 'osp.ownFacilities.saved' }),
-        duration: 3000
-      });
     } catch (error) {
       toast({
         status: 'error',
@@ -178,7 +170,30 @@ const OSPOwnFacilitiesPanel: React.FC<Props> = ({ companyId, farmId, isReadOnly 
         description: apiErrorMessage(error) ?? undefined,
         duration: 6000
       });
+      return;
     }
+    // The facility exists from here on. The form now edits it, so a retry after a failed layout
+    // upload updates this row instead of creating a second one (review of app #308).
+    setEditing(saved.id);
+    if (layout) {
+      try {
+        await uploadLayout({ companyId, farmId, facilityId: saved.id, file: layout }).unwrap();
+      } catch (error) {
+        toast({
+          status: 'error',
+          title: intl.formatMessage({ id: 'osp.ownFacilities.layoutFailed' }),
+          description: apiErrorMessage(error) ?? undefined,
+          duration: 6000
+        });
+        return;
+      }
+    }
+    setEditing(null);
+    toast({
+      status: 'success',
+      title: intl.formatMessage({ id: 'osp.ownFacilities.saved' }),
+      duration: 3000
+    });
   };
 
   const field = (key: keyof Draft) => ({

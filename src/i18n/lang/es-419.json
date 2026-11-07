@@ -9641,5 +9641,6 @@
   "osp.ownFacilities.noLayout": "Sin plano adjunto",
   "osp.ownFacilities.save": "Guardar instalación",
   "osp.ownFacilities.saveFailed": "La instalación no se guardó",
-  "osp.ownFacilities.saved": "Instalación guardada"
+  "osp.ownFacilities.saved": "Instalación guardada",
+  "osp.ownFacilities.layoutFailed": "La instalación se guardó, pero el plano no se subió. Elige el archivo de nuevo y guarda."
 }
