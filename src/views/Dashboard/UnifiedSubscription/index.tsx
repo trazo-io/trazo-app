@@ -2,13 +2,9 @@ import React, { useEffect, useCallback, useState } from 'react';
 import {
   Box,
   Flex,
-  Progress,
   Text,
   Tag,
   SimpleGrid,
-  Stat,
-  StatNumber,
-  StatHelpText,
   Icon,
   Button,
   useColorModeValue,
@@ -38,7 +34,6 @@ import {
   IconButton,
   Spinner,
   Container,
-  Tooltip,
   FormControl,
   FormLabel
 } from '@chakra-ui/react';
@@ -49,7 +44,8 @@ import {
   StandardCard,
   StandardPage,
   StandardNumberInput,
-  StandardInput
+  StandardInput,
+  STATUS_URGENCY_TOKENS
 } from 'components/Design/StandardComponents';
 import CancelSubscriptionModal from './CancelSubscriptionModal';
 import {
@@ -58,12 +54,10 @@ import {
   FaLeaf,
   FaQrcode,
   FaDatabase,
-  FaSync,
   FaChartBar,
   FaPlus,
   FaCreditCard,
   FaCog,
-  FaHeadset,
   FaCheckCircle,
   FaTimesCircle,
   FaArrowUp,
@@ -73,9 +67,7 @@ import {
   FaChevronDown,
   FaChevronUp,
   FaExternalLinkAlt,
-  FaCrown,
-  FaShieldAlt,
-  FaExclamationTriangle
+  FaCrown
 } from 'react-icons/fa';
 import { useSelector, useDispatch } from 'react-redux';
 import { useIntl } from 'react-intl';
@@ -170,6 +162,11 @@ const getTrialProgressPercentage = (subscription: any): number => {
   }
 };
 
+/** One rule between rows, keyed on an attribute so it holds whatever each row's own props. */
+const USAGE_ROW_RULE = {
+  '& > [data-usage-row] + [data-usage-row]': { borderTopWidth: '1px', borderTopColor: 'gray.100' }
+};
+
 function UnifiedSubscriptionDashboard() {
   const intl = useIntl();
   const navigate = useNavigate();
@@ -210,13 +207,10 @@ function UnifiedSubscriptionDashboard() {
   });
 
   // API Queries
-  const { refetch: refetchCompany, isLoading: isRefreshing } = useGetCompanyQuery(
-    activeCompany?.id?.toString() || '',
-    {
-      skip: !activeCompany?.id,
-      refetchOnMountOrArgChange: false
-    }
-  );
+  const { refetch: refetchCompany } = useGetCompanyQuery(activeCompany?.id?.toString() || '', {
+    skip: !activeCompany?.id,
+    refetchOnMountOrArgChange: false
+  });
 
   const {
     data: dashboardData = { subscription: [], addons: [], paymentMethods: [], invoices: [] },
@@ -359,53 +353,6 @@ function UnifiedSubscriptionDashboard() {
   // Helper to format limit display (handles -1 = unlimited)
   const formatLimit = (limit: number) => {
     return limit === -1 ? -1 : Math.max(0, limit);
-  };
-
-  // Helper to get per-establishment parcel distribution with status
-  const getEstablishmentParcelDistribution = () => {
-    if (!activeCompany?.establishments || !Array.isArray(activeCompany.establishments)) {
-      return [];
-    }
-
-    const maxParcelsPerEst = features?.max_parcels_per_establishment ?? 0;
-    const isUnlimitedPerEst = maxParcelsPerEst === -1;
-
-    return activeCompany.establishments.map((establishment) => {
-      const parcelCount = establishment.parcels?.length || 0;
-      const isAtLimit = !isUnlimitedPerEst && parcelCount >= maxParcelsPerEst;
-      const hasCapacity = isUnlimitedPerEst || parcelCount < maxParcelsPerEst;
-      const remainingSlots = isUnlimitedPerEst ? -1 : Math.max(0, maxParcelsPerEst - parcelCount);
-
-      return {
-        id: establishment.id,
-        name: establishment.name || `Establishment ${establishment.id}`,
-        parcelCount,
-        maxParcels: maxParcelsPerEst,
-        isAtLimit,
-        hasCapacity,
-        remainingSlots,
-        isUnlimited: isUnlimitedPerEst
-      };
-    });
-  };
-
-  // Check if any establishment has available capacity
-  const getAvailableCapacityInfo = () => {
-    const distribution = getEstablishmentParcelDistribution();
-    const establishmentsWithCapacity = distribution.filter((est) => est.hasCapacity);
-    const establishmentsAtLimit = distribution.filter((est) => est.isAtLimit);
-    const totalRemaining = distribution.reduce(
-      (sum, est) => sum + (est.isUnlimited ? 0 : est.remainingSlots),
-      0
-    );
-
-    return {
-      distribution,
-      establishmentsWithCapacity,
-      establishmentsAtLimit,
-      totalRemaining,
-      hasAnyCapacity: establishmentsWithCapacity.length > 0
-    };
   };
 
   const usageMetrics = [
@@ -686,14 +633,6 @@ function UnifiedSubscriptionDashboard() {
     }
   }, [activeCompany, billingForm, updateCompany, toast, intl, onBillingEditClose, refetchCompany]);
 
-  const isLoading =
-    isDashboardLoading ||
-    isRefreshing ||
-    isCancellingSubscription ||
-    isReactivatingSubscription ||
-    isAddingAddon ||
-    isCreatingCheckoutSession;
-
   // Return null while loading - this keeps the app-level loading visible
   // and prevents any intermediate states from flashing
   if (isLoadingCompany || isDashboardLoading || !activeCompany) {
@@ -730,23 +669,9 @@ function UnifiedSubscriptionDashboard() {
     <StandardPage
       title={intl.formatMessage({ id: 'app.subscription' })}
       description={intl.formatMessage({ id: 'app.manageYourSubscriptionAndTrackUsage' })}
-      // `headerAction` is StandardCard's prop — StandardPage takes `rightAction`, so this
-      // Refresh button was silently dropped and had never rendered on this page.
-      rightAction={
-        <Button
-          leftIcon={<FaSync />}
-          colorScheme="green"
-          variant="outline"
-          size="sm"
-          minH="44px"
-          isLoading={isLoading}
-          onClick={() => {
-            refetchDashboard();
-            handleRefreshData();
-          }}>
-          {intl.formatMessage({ id: 'app.refresh' })}
-        </Button>
-      }>
+      // No Refresh button (2026-11-07): after a purchase the page refreshes itself (now,
+      // +3s, +8s), and otherwise nothing on it changes without an action the user took here.
+    >
       <VStack spacing={6} align="stretch">
         {/* Trial Banner */}
         {isTrial && (
@@ -1173,276 +1098,17 @@ function UnifiedSubscriptionDashboard() {
                       </VStack>
                     )}
 
-                    {/* Usage Metrics */}
-                    <Box>
-                      <Text fontSize="lg" fontWeight="bold" mb={4}>
-                        {intl.formatMessage({ id: 'app.usageMetrics' })}
-                      </Text>
-                      <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
+                    {/* Usage as rows (2026-11-07). Were five cards in a grid: an empty progress
+                        bar under every unlimited count, "6/Unlimited total capacity" then
+                        "Unlimited" again, a Limit structure box, and a SOLID RED bar for a farm at
+                        1 of 1, which is the normal state of a one-farm plan. Now: a count, and
+                        "No limit" where there is none. Only storage keeps a bar: it is the one
+                        thing here that fills up, and photo uploads pause when it does. */}
+                    <StandardCard mb={0} title={intl.formatMessage({ id: 'app.usageMetrics' })}>
+                      <VStack align="stretch" spacing={0} sx={USAGE_ROW_RULE}>
                         {usageMetrics.map((metric) => {
                           const isUnlimited = metric.limit === -1;
-                          const percentage = isUnlimited
-                            ? 0
-                            : Math.round((metric.used / Math.max(metric.limit, 1)) * 100);
-                          // Utilisation, not identity: green until it matters, amber as the
-                          // limit approaches, red once it is reached. `metric.colorScheme` is
-                          // the fallback for the unlimited case.
-                          const usageScheme = isUnlimited
-                            ? metric.colorScheme
-                            : percentage >= 100
-                            ? 'red'
-                            : percentage >= 80
-                            ? 'orange'
-                            : 'green';
-
-                          // Enhanced Parcels card with hierarchical breakdown
-                          if (metric.name === 'app.parcels') {
-                            const capacityInfo = getAvailableCapacityInfo();
-                            const maxParcelsPerEst = features?.max_parcels_per_establishment ?? 0;
-                            const maxEstablishments = features?.max_establishments ?? 0;
-                            const isUnlimitedPerEst = maxParcelsPerEst === -1;
-                            const isUnlimitedEst = maxEstablishments === -1;
-                            const hasEstablishmentsAtLimit =
-                              capacityInfo.establishmentsAtLimit.length > 0;
-
-                            return (
-                              <Card
-                                key={metric.name}
-                                borderColor={hasEstablishmentsAtLimit ? 'orange.200' : borderColor}
-                                bg={cardBg}
-                                _hover={{ boxShadow: 'md' }}
-                                gridColumn={{ base: 'span 1', lg: 'span 2' }}>
-                                <CardBody>
-                                  <Flex align="center" mb={3}>
-                                    <Icon
-                                      as={metric.icon}
-                                      mr={3}
-                                      boxSize={5}
-                                      color={`${usageScheme}.700`}
-                                    />
-                                    <Text fontWeight="medium">
-                                      {intl.formatMessage({ id: metric.name })}
-                                    </Text>
-                                    {hasEstablishmentsAtLimit && (
-                                      <Tooltip
-                                        label={intl.formatMessage(
-                                          { id: 'app.someEstablishmentsAtLimit' },
-                                          {
-                                            count: capacityInfo.establishmentsAtLimit.length
-                                          }
-                                        )}
-                                        placement="top">
-                                        <Badge ml={2} colorScheme="orange" fontSize="xs">
-                                          <Icon as={FaExclamationTriangle} mr={1} />
-                                          {capacityInfo.establishmentsAtLimit.length}{' '}
-                                          {intl.formatMessage({ id: 'app.atLimit' })}
-                                        </Badge>
-                                      </Tooltip>
-                                    )}
-                                  </Flex>
-
-                                  {/* Total Capacity */}
-                                  <Stat mb={3}>
-                                    <StatNumber fontSize="xl">
-                                      {metric.used}
-                                      <Text as="span" fontSize="md" color="gray.500">
-                                        /
-                                        {isUnlimited
-                                          ? intl.formatMessage({ id: 'app.unlimited' })
-                                          : metric.limit}{' '}
-                                        {intl.formatMessage({ id: 'app.totalCapacity' })}
-                                      </Text>
-                                    </StatNumber>
-                                    <StatHelpText mb={0}>
-                                      {isUnlimited
-                                        ? intl.formatMessage({ id: 'app.unlimited' })
-                                        : `${percentage}% ${intl.formatMessage({
-                                            id: 'app.used'
-                                          })}`}
-                                    </StatHelpText>
-                                  </Stat>
-                                  <Progress
-                                    value={isUnlimited ? 0 : percentage}
-                                    size="sm"
-                                    colorScheme={usageScheme}
-                                    borderRadius="full"
-                                    mb={4}
-                                  />
-
-                                  {/* Limit Structure Explanation */}
-                                  <Box
-                                    bg="gray.50"
-                                    p={3}
-                                    borderRadius="lg"
-                                    mb={4}
-                                    borderWidth="1px"
-                                    borderColor="gray.200">
-                                    <Text
-                                      fontSize="sm"
-                                      fontWeight="semibold"
-                                      color="gray.700"
-                                      mb={2}>
-                                      {intl.formatMessage({ id: 'app.limitStructure' })}
-                                    </Text>
-                                    <VStack align="start" spacing={1}>
-                                      <HStack>
-                                        <Icon as={FaMapMarkedAlt} color="green.500" boxSize={3} />
-                                        <Text fontSize="sm" color="gray.600">
-                                          {isUnlimitedPerEst
-                                            ? intl.formatMessage({
-                                                id: 'app.unlimitedParcelsPerEst'
-                                              })
-                                            : intl.formatMessage(
-                                                { id: 'app.maxParcelsPerEstablishment' },
-                                                { count: maxParcelsPerEst }
-                                              )}
-                                        </Text>
-                                      </HStack>
-                                      <HStack>
-                                        <Icon as={FaBuilding} color="green.500" boxSize={3} />
-                                        <Text fontSize="sm" color="gray.600">
-                                          {isUnlimitedEst
-                                            ? intl.formatMessage({
-                                                id: 'app.unlimitedEstablishments'
-                                              })
-                                            : intl.formatMessage(
-                                                { id: 'app.maxEstablishments' },
-                                                { count: maxEstablishments }
-                                              )}
-                                        </Text>
-                                      </HStack>
-                                      {!isUnlimited && (
-                                        <HStack>
-                                          <Text fontSize="sm" color="gray.500">
-                                            = {metric.limit}{' '}
-                                            {intl.formatMessage({ id: 'app.totalParcelsCapacity' })}
-                                          </Text>
-                                        </HStack>
-                                      )}
-                                    </VStack>
-                                  </Box>
-
-                                  {/* Per-Establishment Distribution */}
-                                  {capacityInfo.distribution.length > 0 && (
-                                    <Box>
-                                      <Text
-                                        fontSize="sm"
-                                        fontWeight="semibold"
-                                        color="gray.700"
-                                        mb={2}>
-                                        {intl.formatMessage({ id: 'app.currentDistribution' })}
-                                      </Text>
-                                      <VStack align="stretch" spacing={2}>
-                                        {capacityInfo.distribution.map((est) => {
-                                          const estPercentage = est.isUnlimited
-                                            ? 0
-                                            : Math.round(
-                                                (est.parcelCount / Math.max(est.maxParcels, 1)) *
-                                                  100
-                                              );
-                                          return (
-                                            <Box
-                                              key={est.id}
-                                              p={2}
-                                              borderRadius="lg"
-                                              borderWidth="1px"
-                                              borderColor={
-                                                est.isAtLimit ? 'orange.200' : 'gray.200'
-                                              }
-                                              bg={est.isAtLimit ? 'orange.50' : 'white'}>
-                                              <Flex justify="space-between" align="center" mb={1}>
-                                                <HStack>
-                                                  <Icon
-                                                    as={
-                                                      est.isAtLimit
-                                                        ? FaExclamationTriangle
-                                                        : FaCheckCircle
-                                                    }
-                                                    color={
-                                                      est.isAtLimit ? 'orange.500' : 'green.500'
-                                                    }
-                                                    boxSize={3}
-                                                  />
-                                                  <Text fontSize="sm" fontWeight="medium">
-                                                    {est.name}
-                                                  </Text>
-                                                </HStack>
-                                                <HStack spacing={2}>
-                                                  <Text fontSize="sm" color="gray.600">
-                                                    {est.parcelCount}/
-                                                    {est.isUnlimited
-                                                      ? intl.formatMessage({ id: 'app.unlimited' })
-                                                      : est.maxParcels}
-                                                  </Text>
-                                                  {est.isAtLimit ? (
-                                                    <Badge colorScheme="orange" fontSize="xs">
-                                                      {intl.formatMessage({ id: 'app.atLimit' })}
-                                                    </Badge>
-                                                  ) : est.isUnlimited ? (
-                                                    <Badge colorScheme="green" fontSize="xs">
-                                                      {intl.formatMessage({ id: 'app.unlimited' })}
-                                                    </Badge>
-                                                  ) : (
-                                                    <Badge colorScheme="green" fontSize="xs">
-                                                      {est.remainingSlots}{' '}
-                                                      {intl.formatMessage({
-                                                        id: 'app.slotsAvailable'
-                                                      })}
-                                                    </Badge>
-                                                  )}
-                                                </HStack>
-                                              </Flex>
-                                              <Progress
-                                                value={est.isUnlimited ? 0 : estPercentage}
-                                                size="xs"
-                                                colorScheme={est.isAtLimit ? 'orange' : 'green'}
-                                                borderRadius="full"
-                                              />
-                                            </Box>
-                                          );
-                                        })}
-                                      </VStack>
-                                    </Box>
-                                  )}
-
-                                  {/* Helpful tip when some establishments are at limit */}
-                                  {hasEstablishmentsAtLimit && capacityInfo.hasAnyCapacity && (
-                                    <Alert status="info" mt={4} fontSize="sm">
-                                      <AlertIcon boxSize={4} />
-                                      <Box>
-                                        <AlertTitle fontSize="sm">
-                                          {intl.formatMessage({ id: 'app.parcelCapacityTip' })}
-                                        </AlertTitle>
-                                        <AlertDescription fontSize="xs">
-                                          {intl.formatMessage(
-                                            { id: 'app.parcelCapacityTipDescription' },
-                                            {
-                                              remaining: capacityInfo.totalRemaining,
-                                              establishments:
-                                                capacityInfo.establishmentsWithCapacity.length
-                                            }
-                                          )}
-                                        </AlertDescription>
-                                      </Box>
-                                    </Alert>
-                                  )}
-                                </CardBody>
-                              </Card>
-                            );
-                          }
-
-                          // Storage card — one bar, two segments.
-                          //
-                          // Storage is a single number to the quota and two different things
-                          // to the farmer: photos can be pruned, generated documents cannot
-                          // be deleted at all. Showing only the total made the bar
-                          // unactionable, and it was WRONG until the DMS started being
-                          // counted at all — the whole document shelf was invisible to it.
-                          //
-                          // Only the photo half is enforced. Saying that out loud matters
-                          // more than the split: a farmer who reads "18 of 25 GB" and assumes
-                          // their certificate upload is about to fail will stop uploading
-                          // certificates, which is the opposite of what the product needs.
+                          const label = intl.formatMessage({ id: metric.name });
                           if (metric.name === 'app.storage') {
                             const breakdown = subscription?.storage_breakdown;
                             const mediaBytes = Math.max(0, Number(breakdown?.media_bytes) || 0);
@@ -1450,280 +1116,193 @@ function UnifiedSubscriptionDashboard() {
                               0,
                               Number(breakdown?.documents_bytes) || 0
                             );
-                            // Percentages come from BYTES, not from the GB figures. Dividing
-                            // two already-rounded numbers rounds twice, and at this scale the
-                            // second rounding is the whole value.
                             const limitBytes = isUnlimited
                               ? 0
                               : Math.max(metric.limit, 0) * 1024 ** 3;
-                            // Utilisation is scored on the ENFORCED half. Turning the bar red
-                            // because of documents would warn about a wall that does not exist.
-                            const mediaPct =
-                              limitBytes <= 0
-                                ? 0
-                                : Math.min(100, Math.round((mediaBytes / limitBytes) * 100));
-                            const documentsPct =
-                              limitBytes <= 0
-                                ? 0
-                                : Math.min(
-                                    100 - mediaPct,
-                                    Math.round((documentsBytes / limitBytes) * 100)
-                                  );
-                            const mediaScheme = isUnlimited
-                              ? 'green'
-                              : mediaPct >= 100
-                              ? 'red'
-                              : mediaPct >= 80
-                              ? 'orange'
-                              : 'green';
-
-                            // Each legend line picks its OWN unit from raw bytes.
-                            //
-                            // The two categories live at different scales. MEASURED on Blue
-                            // Oak Orchards: 21 real certifier documents — audit dossier, PUR
-                            // export, two OSP packets, module PDFs, workbook, snapshot, lot
-                            // tags — weigh 0.95 MB in total. Printed as GB to 2dp that is
-                            // "Documents 0.00 GB" sitting beside a list of 21 files: correct,
-                            // and indistinguishable from a meter that is not working. Photos
-                            // meanwhile run to gigabytes and want GB.
+                            const pct = (bytes: number) =>
+                              limitBytes <= 0 ? 0 : Math.min(100, (bytes / limitBytes) * 100);
                             const fmtBytes = (bytes: number) => {
                               if (bytes >= 1024 ** 3) return `${(bytes / 1024 ** 3).toFixed(2)} GB`;
                               if (bytes >= 1024 ** 2) return `${(bytes / 1024 ** 2).toFixed(1)} MB`;
                               if (bytes >= 1024) return `${Math.round(bytes / 1024)} KB`;
                               return `${bytes} B`;
                             };
-
-                            // "0% used" beside a non-zero number is the same failure one line
-                            // up: true, and it reads as nothing being counted.
-                            const usedPct = mediaPct + documentsPct;
-                            const usedPctLabel =
-                              usedPct === 0 && mediaBytes + documentsBytes > 0
-                                ? '<1'
-                                : `${usedPct}`;
-
+                            // Photos are hard-limited (an upload is refused at the ceiling);
+                            // documents are counted but never refused, so the tone follows the
+                            // photos' share. The usage-meter rule (green, amber at 80%, red at
+                            // 100%) in the theme's fill shades: amber.900 and red.700 clear the
+                            // 3:1 a meaningful fill owes on the gray.100 track (progress.js),
+                            // amber.500 did not (review of #316).
+                            const photosPct = pct(mediaBytes);
+                            const photoTone =
+                              photosPct >= 100
+                                ? 'red.700'
+                                : photosPct >= 80
+                                ? 'amber.900'
+                                : 'green.700';
                             return (
-                              <StandardCard key={metric.name} variant="outline" mb={0}>
-                                <Flex align="center" mb={3}>
-                                  <Icon
-                                    as={metric.icon}
-                                    mr={3}
-                                    boxSize={5}
-                                    color={`${mediaScheme}.700`}
-                                  />
-                                  <Text fontWeight="medium">
-                                    {intl.formatMessage({ id: metric.name })}
+                              <Box key={metric.name} data-usage-row py={3}>
+                                <Flex justify="space-between" align="baseline" gap={3}>
+                                  <HStack spacing={3}>
+                                    <Icon as={metric.icon} boxSize={4} color="gray.600" />
+                                    <Text fontSize="sm" color="gray.800">
+                                      {label}
+                                    </Text>
+                                  </HStack>
+                                  <Text fontSize="sm" fontWeight="semibold" color="gray.800">
+                                    {isUnlimited
+                                      ? fmtBytes(mediaBytes + documentsBytes)
+                                      : intl.formatMessage(
+                                          { id: 'subscription.usage.ofLimit' },
+                                          {
+                                            used: fmtBytes(mediaBytes + documentsBytes),
+                                            limit: `${metric.limit} GB`
+                                          }
+                                        )}
                                   </Text>
                                 </Flex>
-                                <Stat mb={2}>
-                                  <StatNumber fontSize="xl">
-                                    {metric.used.toFixed(2)}
-                                    <Text as="span" fontSize="md" color="gray.500">
-                                      /
-                                      {isUnlimited
-                                        ? intl.formatMessage({ id: 'app.unlimited' })
-                                        : metric.limit}{' '}
-                                      {metric.unit}
-                                    </Text>
-                                  </StatNumber>
-                                  <StatHelpText mb={0}>
-                                    {isUnlimited
-                                      ? intl.formatMessage({ id: 'app.unlimited' })
-                                      : `${usedPctLabel}% ${intl.formatMessage({
-                                          id: 'app.used'
-                                        })}`}
-                                  </StatHelpText>
-                                </Stat>
-
-                                {/* Segmented track. Chakra's Progress renders one value, so
-                                    the two segments are laid out directly. */}
-                                <Flex
-                                  h="8px"
-                                  w="full"
-                                  bg="gray.100"
-                                  borderRadius="full"
-                                  overflow="hidden"
-                                  mb={3}
-                                  role="img"
-                                  aria-label={intl.formatMessage(
-                                    { id: 'app.storageBreakdownLabel' },
-                                    {
-                                      photos: fmtBytes(mediaBytes),
-                                      documents: fmtBytes(documentsBytes)
-                                    }
-                                  )}>
-                                  <Box w={`${mediaPct}%`} bg={`${mediaScheme}.500`} h="full" />
-                                  <Box w={`${documentsPct}%`} bg="gray.400" h="full" />
-                                </Flex>
-
-                                {/* Legend. Segment order matches the bar; the colour is never
-                                    the only carrier — each row is labelled. */}
-                                <VStack align="stretch" spacing={1} mb={3}>
-                                  <Flex align="center" justify="space-between">
-                                    <HStack spacing={2}>
-                                      <Box
-                                        w="8px"
-                                        h="8px"
-                                        borderRadius="full"
-                                        bg={`${mediaScheme}.500`}
-                                      />
-                                      <Text fontSize="sm" color="gray.700">
-                                        {intl.formatMessage({ id: 'app.storagePhotos' })}
-                                      </Text>
-                                    </HStack>
-                                    <Text fontSize="sm" color="gray.700">
-                                      {fmtBytes(mediaBytes)}
-                                    </Text>
+                                {!isUnlimited && (
+                                  <Flex
+                                    h="6px"
+                                    w="full"
+                                    bg="gray.100"
+                                    borderRadius="full"
+                                    overflow="hidden"
+                                    mt={2}
+                                    role="img"
+                                    aria-label={intl.formatMessage(
+                                      { id: 'app.storageBreakdownLabel' },
+                                      {
+                                        photos: fmtBytes(mediaBytes),
+                                        documents: fmtBytes(documentsBytes)
+                                      }
+                                    )}>
+                                    <Box w={`${photosPct}%`} bg={photoTone} h="full" />
+                                    <Box
+                                      w={`${Math.min(100 - photosPct, pct(documentsBytes))}%`}
+                                      bg="gray.400"
+                                      h="full"
+                                    />
                                   </Flex>
-                                  <Flex align="center" justify="space-between">
-                                    <HStack spacing={2}>
-                                      <Box w="8px" h="8px" borderRadius="full" bg="gray.400" />
-                                      <Text fontSize="sm" color="gray.700">
-                                        {intl.formatMessage({ id: 'app.storageDocuments' })}
-                                      </Text>
-                                    </HStack>
-                                    <Text fontSize="sm" color="gray.700">
-                                      {fmtBytes(documentsBytes)}
-                                    </Text>
-                                  </Flex>
-                                </VStack>
-
-                                <Text fontSize="xs" color="gray.600">
-                                  {intl.formatMessage({ id: 'app.storageDocumentsNeverBlocked' })}
+                                )}
+                                <Text fontSize="xs" color="gray.600" mt={2}>
+                                  {`${intl.formatMessage({ id: 'app.storagePhotos' })} ${fmtBytes(
+                                    mediaBytes
+                                  )} · ${intl.formatMessage({
+                                    id: 'app.storageDocuments'
+                                  })} ${fmtBytes(documentsBytes)}. ${intl.formatMessage({
+                                    id: 'app.storageDocumentsNeverBlocked'
+                                  })}`}
                                 </Text>
-                              </StandardCard>
+                              </Box>
                             );
                           }
-
-                          // Standard metric card for other metrics
+                          const atLimit = !isUnlimited && metric.used >= metric.limit;
+                          const over = !isUnlimited && metric.used > metric.limit;
                           return (
-                            <StandardCard key={metric.name} variant="outline" mb={0}>
-                              <Flex align="center" mb={3}>
-                                <Icon
-                                  as={metric.icon}
-                                  mr={3}
-                                  boxSize={5}
-                                  color={`${usageScheme}.700`}
-                                />
-                                <Text fontWeight="medium">
-                                  {intl.formatMessage({ id: metric.name })}
+                            <Flex
+                              key={metric.name}
+                              data-usage-row
+                              py={3}
+                              justify="space-between"
+                              align="baseline"
+                              gap={3}>
+                              <HStack spacing={3}>
+                                <Icon as={metric.icon} boxSize={4} color="gray.600" />
+                                <Text fontSize="sm" color="gray.800">
+                                  {label}
                                 </Text>
-                              </Flex>
-                              <Stat mb={2}>
-                                <StatNumber fontSize="xl">
-                                  {metric.used}
-                                  <Text as="span" fontSize="md" color="gray.500">
-                                    /
-                                    {isUnlimited
-                                      ? intl.formatMessage({ id: 'app.unlimited' })
-                                      : metric.limit}{' '}
-                                    {metric.unit}
-                                  </Text>
-                                </StatNumber>
-                                <StatHelpText mb={0}>
+                              </HStack>
+                              <Box textAlign="right">
+                                <Text fontSize="sm" fontWeight="semibold" color="gray.800">
                                   {isUnlimited
-                                    ? intl.formatMessage({ id: 'app.unlimited' })
-                                    : `${percentage}% ${intl.formatMessage({ id: 'app.used' })}`}
-                                </StatHelpText>
-                              </Stat>
-                              <Progress
-                                value={isUnlimited ? 0 : percentage}
-                                size="sm"
-                                colorScheme={usageScheme}
-                                borderRadius="full"
-                              />
-                            </StandardCard>
+                                    ? metric.used.toLocaleString(intl.locale)
+                                    : intl.formatMessage(
+                                        { id: 'subscription.usage.ofLimit' },
+                                        { used: metric.used, limit: metric.limit }
+                                      )}
+                                </Text>
+                                {/* No meter on these rows, so no meter colours: being AT the limit is the normal
+                                    state of a one-farm plan and stays neutral. Over it is said in the
+                                    critical text token; amber cannot letter (review of #316). */}
+                                <Text
+                                  fontSize="xs"
+                                  color={over ? STATUS_URGENCY_TOKENS.crit.text : 'gray.600'}>
+                                  {isUnlimited
+                                    ? intl.formatMessage({ id: 'subscription.usage.noLimit' })
+                                    : atLimit
+                                    ? intl.formatMessage({ id: 'subscription.usage.atLimit' })
+                                    : intl.formatMessage(
+                                        { id: 'subscription.usage.left' },
+                                        { count: metric.limit - metric.used }
+                                      )}
+                                </Text>
+                              </Box>
+                            </Flex>
                           );
                         })}
-                      </SimpleGrid>
-                    </Box>
+                      </VStack>
+                    </StandardCard>
 
-                    {/* Plan Features */}
-                    <Box>
-                      <Text fontSize="lg" fontWeight="bold" mb={4}>
-                        {intl.formatMessage({ id: 'app.planFeatures' })}
-                      </Text>
-                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                        {/* Was "Transparency Tracking ... documentation and verification" —
-                            pivot-era framing, and "verification" is the unsafe verb
-                            (verification-language rules). The plan's actual value is the
-                            recordkeeping artifacts. */}
-                        <Card borderWidth="1px" borderColor="green.200" bg="green.50">
-                          <CardBody>
-                            <Flex align="center" mb={3}>
-                              <Icon as={FaShieldAlt} mr={3} boxSize={5} color="green.500" />
-                              <Text fontWeight="bold" color="green.700">
-                                {intl.formatMessage({ id: 'subscription.featureRecordkeeping' })}
-                              </Text>
-                            </Flex>
-                            <Text
-                              fontSize="lg"
-                              fontWeight="bold"
-                              color="green.700"
-                              mb={1}
-                              textTransform="capitalize">
-                              {intl.formatMessage({ id: 'app.included' })}
-                            </Text>
-                            <Text fontSize="sm" color="gray.600">
-                              {intl.formatMessage({
-                                id: 'subscription.featureRecordkeepingDescription'
+                    {/* Plan features as a plain list (2026-11-07): three tinted cards, one of them
+                        orange for no reason but decoration. A check means included; a muted
+                        cross means not. */}
+                    <StandardCard mb={0} title={intl.formatMessage({ id: 'app.planFeatures' })}>
+                      <VStack align="stretch" spacing={0} sx={USAGE_ROW_RULE}>
+                        {[
+                          {
+                            key: 'recordkeeping',
+                            included: true,
+                            title: intl.formatMessage({ id: 'subscription.featureRecordkeeping' }),
+                            body: intl.formatMessage({
+                              id: 'subscription.featureRecordkeepingDescription'
+                            })
+                          },
+                          {
+                            key: 'response',
+                            included: true,
+                            title: intl.formatMessage(
+                              { id: 'subscription.feature.responseTime' },
+                              { hours: features?.support_response_time || 48 }
+                            ),
+                            body: intl.formatMessage({ id: 'app.supportResponseDescription' })
+                          },
+                          {
+                            key: 'priority',
+                            included: Boolean(features?.priority_support),
+                            title: intl.formatMessage({ id: 'app.prioritySupport' }),
+                            body: features?.priority_support
+                              ? intl.formatMessage({ id: 'app.prioritySupportDescription' })
+                              : intl.formatMessage({ id: 'app.upgradeForPrioritySupport' })
+                          }
+                        ].map((feature) => (
+                          <HStack
+                            key={feature.key}
+                            data-usage-row
+                            py={3}
+                            align="flex-start"
+                            spacing={3}>
+                            <Icon
+                              as={feature.included ? FaCheckCircle : FaTimesCircle}
+                              color={feature.included ? 'green.700' : 'gray.400'}
+                              boxSize={4}
+                              mt={0.5}
+                              aria-label={intl.formatMessage({
+                                id: feature.included ? 'app.included' : 'app.notIncluded'
                               })}
-                            </Text>
-                          </CardBody>
-                        </Card>
-
-                        <Card borderWidth="1px" borderColor="green.200" bg="green.50">
-                          <CardBody>
-                            <Flex align="center" mb={3}>
-                              <Icon as={FaHeadset} mr={3} boxSize={5} color="green.700" />
-                              <Text fontWeight="bold" color="green.800">
-                                {intl.formatMessage({ id: 'app.supportResponse' })}
+                            />
+                            <Box>
+                              <Text fontSize="sm" fontWeight="semibold" color="gray.800">
+                                {feature.title}
                               </Text>
-                            </Flex>
-                            <Text fontSize="2xl" fontWeight="bold" color="green.700" mb={1}>
-                              {features?.support_response_time || 48}h
-                            </Text>
-                            <Text fontSize="sm" color="gray.600">
-                              {intl.formatMessage({ id: 'app.supportResponseDescription' })}
-                            </Text>
-                          </CardBody>
-                        </Card>
-
-                        <Card
-                          borderWidth="1px"
-                          borderColor={features?.priority_support ? 'orange.200' : 'gray.200'}
-                          bg={features?.priority_support ? 'orange.50' : 'gray.50'}>
-                          <CardBody>
-                            <Flex align="center" mb={3}>
-                              <Icon
-                                as={features?.priority_support ? FaCheckCircle : FaTimesCircle}
-                                mr={3}
-                                boxSize={5}
-                                color={features?.priority_support ? 'orange.500' : 'gray.400'}
-                              />
-                              <Text
-                                fontWeight="bold"
-                                color={features?.priority_support ? 'orange.700' : 'gray.600'}>
-                                {intl.formatMessage({ id: 'app.prioritySupport' })}
+                              <Text fontSize="xs" color="gray.600">
+                                {feature.body}
                               </Text>
-                            </Flex>
-                            <Text
-                              fontSize="lg"
-                              fontWeight="bold"
-                              color={features?.priority_support ? 'orange.600' : 'gray.500'}
-                              mb={1}>
-                              {features?.priority_support
-                                ? intl.formatMessage({ id: 'app.included' })
-                                : intl.formatMessage({ id: 'app.notIncluded' })}
-                            </Text>
-                            <Text fontSize="sm" color="gray.600">
-                              {features?.priority_support
-                                ? intl.formatMessage({ id: 'app.prioritySupportDescription' })
-                                : intl.formatMessage({ id: 'app.upgradeForPrioritySupport' })}
-                            </Text>
-                          </CardBody>
-                        </Card>
-                      </SimpleGrid>
-                    </Box>
+                            </Box>
+                          </HStack>
+                        ))}
+                      </VStack>
+                    </StandardCard>
 
                     {/* Blockchain Verification card removed 2026-08-06.
                         The add-on was withdrawn 2026-08-03 and its AddOn row seeded

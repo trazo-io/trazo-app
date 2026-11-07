@@ -91,4 +91,41 @@ describe('Settings company join code', () => {
     expect(screen.queryByText('OLD111')).not.toBeInTheDocument();
     expect(store.getState().company.currentCompany.invitation_code).toBe('NEW234');
   });
+
+  it('offers Discard only once the invite form holds something (2026-11-07)', async () => {
+    renderWithCompany({
+      id: 7,
+      name: 'Loma Orchards',
+      invitation_code: 'OLD111',
+      establishments: []
+    });
+    expect(screen.queryByRole('button', { name: 'Discard changes' })).not.toBeInTheDocument();
+    await userEvent.setup().type(screen.getByPlaceholderText('name@yourfarm.com'), 'a@b.co');
+    expect(screen.getByRole('button', { name: 'Discard changes' })).toBeInTheDocument();
+  });
+
+  it('puts the code and its Copy button on one row, Copy named in words', () => {
+    renderWithCompany({
+      id: 7,
+      name: 'Loma Orchards',
+      invitation_code: 'OLD111',
+      establishments: []
+    });
+    expect(screen.getByRole('button', { name: /copy/i })).toHaveTextContent('Copy code');
+  });
+
+  it('puts the Team content inside its tab panel, where the tab points (review of #316)', () => {
+    renderWithCompany({
+      id: 7,
+      name: 'Loma Orchards',
+      invitation_code: 'OLD111',
+      establishments: []
+    });
+    const panel = screen.getByRole('tabpanel');
+    expect(panel).toHaveTextContent('OLD111');
+    expect(screen.getByRole('tab', { name: /Team/ })).toHaveAttribute(
+      'aria-controls',
+      panel.getAttribute('id')
+    );
+  });
 });

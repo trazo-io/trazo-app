@@ -1149,7 +1149,7 @@
   "app.plan": "Plan",
   "app.planChanged": "Plan cambiado",
   "app.planChangedDescription": "Tu plan de suscripción ha sido actualizado",
-  "app.planFeatures": "Características del plan",
+  "app.planFeatures": "Qué incluye tu plan",
   "app.planFeaturesDescription": "Tu plan actual incluye las siguientes características y limitaciones",
   "app.planUsage": "Uso del plan",
   "app.planUsageUpdated": "La información de uso de tu plan ha sido actualizada.",
@@ -1665,7 +1665,7 @@
   "app.usageMetric.productions": "Producciones este año",
   "app.usageMetric.scans": "Escaneos QR este mes",
   "app.usageMetric.storage": "Almacenamiento de fotos (GB)",
-  "app.usageMetrics": "Métricas de uso",
+  "app.usageMetrics": "Uso",
   "app.usageOfLimit": "{used} de {limit} usado.",
   "app.usagePercentUsed": "{percentage}% usado",
   "app.usageStatistics": "Estadísticas de uso",
@@ -8376,7 +8376,7 @@
   "subscription.toast.paymentMethodUpdated": "Método de pago actualizado",
   "subscription.updatedDescription": "Tu suscripción ha sido procesada exitosamente.",
   "subscription.updatedTitle": "Suscripción actualizada",
-  "subscription.usage.productionsThisYear": "Producciones este año",
+  "subscription.usage.productionsThisYear": "Temporadas este año",
   "subscription.verificationFailed": "No se pudo verificar la suscripción.",
   "tooltip.blockchainRecorded.definition": "Huella de integridad (paquete del certificador)",
   "tooltip.blockchainRecorded.example": "Ejemplo: la línea de integridad del paquete del certificador permite al revisor confirmar que el expediente coincide con lo cerrado",
@@ -9695,5 +9695,10 @@
   "parcel.fieldHistory.method.regenerative": "Regenerativo",
   "parcel.fieldHistory.method.fallow": "En barbecho",
   "parcel.section.energy": "Energía de riego",
-  "parcel.section.energyHint": "Se usa solo para estimar las emisiones del riego de esta parcela. Tu certificador no lo pide."
+  "parcel.section.energyHint": "Se usa solo para estimar las emisiones del riego de esta parcela. Tu certificador no lo pide.",
+  "subscription.usage.ofLimit": "{used} de {limit}",
+  "subscription.usage.noLimit": "Sin límite",
+  "subscription.usage.atLimit": "En el límite de tu plan",
+  "subscription.usage.left": "Quedan {count}",
+  "subscription.feature.responseTime": "El soporte responde en menos de {hours} horas"
 }
