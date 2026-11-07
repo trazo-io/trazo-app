@@ -82,6 +82,7 @@ import OSPSeedlingSuppliersPanel from './OSPSeedlingSuppliersPanel';
 import OSPMaterialIdentityPanel from './OSPMaterialIdentityPanel';
 import OSPMaterialRestrictionsPanel from './OSPMaterialRestrictionsPanel';
 import OSPHandlerFacilitiesPanel from './OSPHandlerFacilitiesPanel';
+import OSPOwnFacilitiesPanel from './OSPOwnFacilitiesPanel';
 import OSPRecordTypesPanel from './OSPRecordTypesPanel';
 import { selectWorkingOsp } from './selectWorkingOsp';
 import { holdsRetiredOption, offeredOptions, toggleCheckbox } from 'config/osp/optionChoices';
@@ -313,6 +314,8 @@ const QuestionField = ({
               />
             ) : question.embed === 'post_harvest_facilities' ? (
               <OSPHandlerFacilitiesPanel companyId={companyId} farmId={farmId} />
+            ) : question.embed === 'on_farm_facilities' ? (
+              <OSPOwnFacilitiesPanel companyId={companyId} farmId={farmId} isReadOnly={isReadOnly} />
             ) : question.embed === 'sourced_products' ? (
               <OSPSourcedProductsPanel
                 companyId={companyId}

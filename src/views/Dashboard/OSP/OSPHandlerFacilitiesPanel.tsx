@@ -54,10 +54,13 @@ const OSPHandlerFacilitiesPanel: React.FC<OSPHandlerFacilitiesPanelProps> = ({
   // below instead of falling through to the empty state.
   const scoped = Boolean(companyId && farmId);
   const {
-    data: facilities,
+    data: allFacilities,
     isLoading,
     isError
   } = useGetPostHarvestFacilitiesQuery({ companyId, farmId }, { skip: !scoped });
+  // The operation's own facilities have their own panel (OSPOwnFacilitiesPanel): listed here they
+  // would read "no organic certificate on file" for the farm's own cooler.
+  const facilities = allFacilities?.filter((f) => !f.is_own);
 
   if (isLoading) {
     return <Skeleton height="80px" borderRadius="md" />;
