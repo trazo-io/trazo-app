@@ -5991,7 +5991,7 @@
   "finishProduction.review.title": "Check before you finish",
   "finishProduction.review.titleEdit": "Check before you save",
   "finishProduction.review.body": "This is the lot record your certifier will read.",
-  "finishProduction.review.photoCount": "{count, plural, =0 {None added} one {# photo} other {# photos}}",
+  "finishProduction.review.photoCount": "{count, plural, =0 {None added. The lot page uses the first photo from your activities.} one {# photo added.} other {# photos added.}}",
   "finishProduction.review.whenYouFinish": "When you finish",
   "finishProduction.review.save": "Save changes",
   "finishProduction.stillNeeded": "Still needed: {fields}",

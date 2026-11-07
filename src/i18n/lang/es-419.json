@@ -5991,7 +5991,7 @@
   "finishProduction.review.title": "Revisa antes de cerrar",
   "finishProduction.review.titleEdit": "Revisa antes de guardar",
   "finishProduction.review.body": "Este es el registro del lote que leerá tu certificador.",
-  "finishProduction.review.photoCount": "{count, plural, =0 {Ninguna} one {# foto} other {# fotos}}",
+  "finishProduction.review.photoCount": "{count, plural, =0 {No agregaste fotos. La página del lote usa la primera foto de tus actividades.} one {# foto agregada.} other {# fotos agregadas.}}",
   "finishProduction.review.whenYouFinish": "Al cerrar la temporada",
   "finishProduction.review.save": "Guardar cambios",
   "finishProduction.stillNeeded": "Falta completar: {fields}",

@@ -19,7 +19,6 @@ import { Box, Checkbox, Flex, HStack, Icon, Text, VStack } from '@chakra-ui/reac
 import {
   FaBoxes,
   FaCalendarAlt,
-  FaCamera,
   FaClipboardCheck,
   FaLock,
   FaStickyNote,
@@ -153,17 +152,14 @@ export default function SeasonFinishReview({
             changeLabel={change(photosTitle)}
             onChange={() => onChange(1)}
           />
-          <FieldList>
-            <InfoRow
-              icon={FaCamera}
-              layout="inline"
-              label={photosTitle}
-              value={intl.formatMessage(
-                { id: 'finishProduction.review.photoCount' },
-                { count: photoCount }
-              )}
-            />
-          </FieldList>
+          {/* A sentence, not a row: a row labelled "Photos" under a heading "Photos" said it
+              twice. With none added it says what the lot page shows instead. */}
+          <Text fontSize="sm" color="gray.700">
+            {intl.formatMessage(
+              { id: 'finishProduction.review.photoCount' },
+              { count: photoCount }
+            )}
+          </Text>
         </Box>
 
         {!isEdit && (
