@@ -65,6 +65,7 @@ const FACILITY_TYPES: { value: PostHarvestFacilityType; labelId: string }[] = [
   { value: 'huller', labelId: 'handler.type.huller' },
   { value: 'dryer', labelId: 'handler.type.dryer' },
   { value: 'cold_storage', labelId: 'handler.type.coldStorage' },
+  { value: 'dry_storage', labelId: 'handler.type.dryStorage' },
   { value: 'packer', labelId: 'handler.type.packer' },
   { value: 'custom', labelId: 'handler.type.custom' }
 ];
@@ -195,6 +196,11 @@ export function PostHarvestHandlerSection({
   // Takes the handler explicitly: with a many-relation there is one badge PER handler, and a
   // component-level `detail` would have painted the first handler's verdict on all of them.
   const renderCertStatus = (handler: ProductionHandlerDetail) => {
+    // The operation's own facility is covered by its own certificate: no certificate state of its
+    // own, so never "date not stated" or "expired" (OTCO C7 7.7-2 OWN).
+    if (handler.is_own) {
+      return <Badge variant="neutral">{intl.formatMessage({ id: 'handler.ownFacility' })}</Badge>;
+    }
     // Tri-state, deliberately. See the file header.
     // A bare <Badge> is the solid Trazo-green pill; the theme has no `success` variant, and a
     // name it does not define would fall through to the brand tint and read as decoration.
@@ -256,7 +262,7 @@ export function PostHarvestHandlerSection({
                     </Text>
                   )}
                 </HStack>
-                {handler.cert_is_current !== true && (
+                {handler.cert_is_current !== true && !handler.is_own && (
                   // Neutral, not amber: the badge above already carries the status, and the
                   // theme's amber tops out at #E65100 — amber body text on white does not
                   // clear 4.5:1.

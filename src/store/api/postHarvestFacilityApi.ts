@@ -18,7 +18,20 @@ import {
 } from 'config';
 import baseApi from './baseApi';
 
-export type PostHarvestFacilityType = 'huller' | 'dryer' | 'cold_storage' | 'packer' | 'custom';
+export type PostHarvestFacilityType =
+  | 'huller'
+  | 'dryer'
+  | 'cold_storage'
+  | 'dry_storage'
+  | 'packer'
+  | 'custom';
+
+/**
+ * Who runs the facility. The operation's own shed or cooler is `this_operation`: covered by the
+ * operation's own certificate, so it has no certificate of its own and never shows a certificate
+ * state (OTCO C7 7.1, 7.2-1 and 7.7-2 OWN; CCOF G6.4 A1).
+ */
+export type PostHarvestFacilityOperatedBy = 'another_operation' | 'this_operation';
 
 /**
  * What the facility DOES for this operation — a different axis from what it IS. CCOF asks about
@@ -39,9 +52,15 @@ export interface PostHarvestFacility {
   facility_type_display: string;
   role: PostHarvestFacilityRole;
   role_display: string;
+  operated_by: PostHarvestFacilityOperatedBy;
+  is_own: boolean;
   address?: string | null;
   city?: string | null;
   state?: string | null;
+  postal_code?: string;
+  country?: string;
+  /** Signed URL of the layout of an own facility, or null. */
+  layout_document?: string | null;
   certification_number?: string | null;
   certifier_name?: string | null;
   effective_date?: string | null;
@@ -66,9 +85,12 @@ export type PostHarvestFacilityInput = Partial<
     | 'name'
     | 'facility_type'
     | 'role'
+    | 'operated_by'
     | 'address'
     | 'city'
     | 'state'
+    | 'postal_code'
+    | 'country'
     | 'certification_number'
     | 'certifier_name'
     | 'effective_date'
@@ -94,6 +116,8 @@ export interface ProductionHandlerDetail {
   expiry_date?: string | null;
   verification_status: string;
   cert_is_current: boolean | null;
+  /** The operation's own facility: no certificate of its own, so no certificate badge. */
+  is_own?: boolean;
 }
 
 /**
@@ -162,6 +186,25 @@ const postHarvestFacilityApi = baseApi.injectEndpoints({
       invalidatesTags: ['PostHarvestFacility', 'History']
     }),
 
+    // The layout of an own facility (OTCO C7 7.2-1). Multipart, so it is its own call: the JSON
+    // edits above stay JSON.
+    uploadFacilityLayout: build.mutation<
+      PostHarvestFacility,
+      Scope & { facilityId: number; file: File }
+    >({
+      query: ({ companyId, farmId, facilityId, file }) => {
+        const body = new FormData();
+        body.append('layout_document', file);
+        return {
+          url: POST_HARVEST_FACILITY_URL(companyId, farmId, facilityId),
+          method: 'PATCH',
+          body,
+          credentials: 'include'
+        };
+      },
+      invalidatesTags: ['PostHarvestFacility']
+    }),
+
     deletePostHarvestFacility: build.mutation<void, Scope & { facilityId: number }>({
       query: ({ companyId, farmId, facilityId }) => ({
         url: POST_HARVEST_FACILITY_URL(companyId, farmId, facilityId),
@@ -190,6 +233,7 @@ export const {
   useGetProductionHandlerQuery,
   useAddPostHarvestFacilityMutation,
   useUpdatePostHarvestFacilityMutation,
+  useUploadFacilityLayoutMutation,
   useDeletePostHarvestFacilityMutation,
   useVerifyPostHarvestFacilityMutation
 } = postHarvestFacilityApi;
