@@ -15,21 +15,21 @@ import {
   Box,
   Flex,
   HStack,
+  Icon,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
   SimpleGrid,
   Switch,
-  Table,
-  Tbody,
-  Td,
   Text,
-  Th,
-  Thead,
   Tooltip,
-  Tr,
   useToast,
   VStack
 } from '@chakra-ui/react';
-import { FaExternalLinkAlt, FaQrcode, FaTags } from 'react-icons/fa';
+import { FaChevronDown, FaExternalLinkAlt, FaPrint, FaQrcode, FaTags } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
+import type { IntlShape } from 'react-intl';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 
@@ -39,9 +39,9 @@ import {
   StandardPage,
   StandardPageLoading,
   StandardPagination,
-  StandardSection,
   StandardSelect
 } from 'components/Design/StandardComponents';
+import { formatDateFromTimestamp } from 'utils/dateOnly';
 import { config, env } from 'config/environment';
 import { useUserRole } from 'hooks/useUserRole';
 import {
@@ -114,6 +114,24 @@ const labelOf = (value: unknown): string => {
   const named = value as { name?: string };
   return named.name ?? '—';
 };
+
+/**
+ * A scan's time, in the reader's own clock and language ("Oct 8, 2026, 6:48 PM").
+ *
+ * The endpoint sends `"YYYY-MM-DD HH:MM:SS"` in UTC (TIME_ZONE = "UTC"). It printed as that raw
+ * string: an ISO timestamp three hours ahead of a farmer in Oregon. A scan is an instant, unlike
+ * an activity date, so it is shown in local time.
+ */
+const formatScanTime = (value: string | null | undefined, intl: IntlShape): string => {
+  if (!value) return '—';
+  const instant = new Date(`${value.replace(' ', 'T')}Z`);
+  return Number.isNaN(instant.getTime())
+    ? value
+    : intl.formatDate(instant, { dateStyle: 'medium', timeStyle: 'short' });
+};
+
+/** One rule between rows, none above the first. */
+const ROW_RULE = { '& + &': { borderTopWidth: '1px', borderTopColor: 'gray.100' } };
 
 const BuyerPage = () => {
   const intl = useIntl();
@@ -408,353 +426,316 @@ const BuyerPage = () => {
           <BuyerReviewLinkCard companyId={companyId} farmId={farmId || ''} canWrite={canWrite} />
         </Box>
 
+        {/* Seasons as rows (2026-11-07). The table carried three bordered buttons per season
+            (Preview, QR, Lot tags) beside the switch: thirty buttons for ten seasons, and on a
+            phone the switch and every button sat off the right edge behind a sideways scroll.
+            Now a row: the season, the switch that publishes it, Preview as a link, and the two
+            printables in one Print menu. The same row on every width. */}
         <Box data-tour="buyer-productions" w="full">
-          <StandardSection
+          <StandardCard
+            mb={0}
             title={intl.formatMessage({ id: 'buyer.productions' })}
-            description={intl.formatMessage({ id: 'buyer.productionsHint' })}>
-            <StandardCard>
-              {!productions?.length ? (
-                <Text py={6} textAlign="center" color="gray.500" fontSize="sm">
-                  {intl.formatMessage({ id: 'buyer.noProductions' })}
-                </Text>
-              ) : (
-                <Box overflowX="auto">
-                  {/* The table element already fills the card, but every column sized to its own
-                    content, so on a wide screen the four columns bunched against the left edge
-                    with a band of dead space to the right of "Lot tags". Giving the first column
-                    `width: 100%` makes it absorb the slack — the standard HTML-table idiom — and
-                    pinning the action columns to `1%`/`whiteSpace: nowrap` keeps them tight to
-                    their buttons instead of stretching. */}
-                  {/* `minW` is what makes the wrapper above actually scroll. Without it the
-                      table shrinks to the viewport instead, and `w="100%"` on the first column
-                      — which absorbs slack on a wide screen — leaves that column near zero on a
-                      phone, so both the header and the cell wrap one character per line
-                      ("PRODUCTION" rendered as a vertical P-R-O-D-U-C-T-I-O-N stack at 430px).
-                      The scans table below already had this right; this one did not. */}
-                  <Table size="sm" w="full" minW="640px" sx={{ tableLayout: 'auto' }}>
-                    <Thead>
-                      <Tr>
-                        {/* nowrap + a floor, so absorbing slack can never collapse the column. */}
-                        <Th whiteSpace="nowrap" w="100%" minW="240px">
-                          {intl.formatMessage({ id: 'buyer.col.production' })}
-                        </Th>
-                        <Th whiteSpace="nowrap">
-                          {intl.formatMessage({ id: 'buyer.col.parcel' })}
-                        </Th>
-                        <Th w="1%" whiteSpace="nowrap">
-                          {intl.formatMessage({ id: 'buyer.col.visible' })}
-                        </Th>
-                        <Th w="1%" whiteSpace="nowrap">
-                          {intl.formatMessage({ id: 'buyer.col.tools' })}
-                        </Th>
-                      </Tr>
-                    </Thead>
-                    <Tbody>
-                      {visibleProductions.map((row) => {
-                        const finished = Boolean(row.finish_date);
-                        const previewUrl = `${config.CONSUMER_BASE_URL}/production/${row.public_id}`;
-                        return (
-                          <Tr key={row.id}>
-                            <Td>
-                              <Text fontSize="sm" fontWeight="medium">
-                                {row.name || labelOf(row.product)}
-                              </Text>
-                              <Text fontSize="xs" color="gray.500">
-                                {row.start_date?.slice(0, 10)} →{' '}
-                                {row.finish_date?.slice(0, 10) ??
-                                  intl.formatMessage({ id: 'buyer.ongoing' })}
-                              </Text>
-                            </Td>
-                            {/* nowrap on the cell as well as the header — with the Production
-                              column absorbing the slack, "North Orchard" was breaking across two
-                              lines in an 84px column while a third of the row sat empty. */}
-                            <Td whiteSpace="nowrap">
-                              <Text fontSize="sm">{labelOf(row.parcel)}</Text>
-                            </Td>
-                            <Td>
-                              <Tooltip
-                                isDisabled={finished}
-                                label={intl.formatMessage({ id: 'buyer.finishFirst' })}>
-                                <Box>
-                                  <Switch
-                                    colorScheme="green"
-                                    isChecked={row.published}
-                                    isDisabled={
-                                      !canWrite || toggling || (!finished && !row.published)
-                                    }
-                                    onChange={(e) => handleToggle(row.id, e.target.checked)}
-                                  />
-                                </Box>
-                              </Tooltip>
-                            </Td>
-                            <Td>
-                              <HStack spacing={2}>
-                                <StandardButton
-                                  as="a"
-                                  href={previewUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  size="sm"
-                                  minH="44px"
-                                  variant="outline"
-                                  leftIcon={<FaExternalLinkAlt />}
-                                  isDisabled={!row.published}>
-                                  {intl.formatMessage({ id: 'buyer.preview' })}
-                                </StandardButton>
-                                <StandardButton
-                                  size="sm"
-                                  minH="44px"
-                                  variant="outline"
-                                  leftIcon={<FaQrcode />}
-                                  onClick={() => handleQrDownload(row.id)}>
-                                  {intl.formatMessage({ id: 'buyer.qr' })}
-                                </StandardButton>
-                                <StandardButton
-                                  as="a"
-                                  href={env.getApiUrl(`histories/${row.id}/lot-tag/`)}
-                                  size="sm"
-                                  minH="44px"
-                                  variant="outline"
-                                  leftIcon={<FaTags />}>
-                                  {intl.formatMessage({ id: 'buyer.lotTags' })}
-                                </StandardButton>
-                              </HStack>
-                            </Td>
-                          </Tr>
-                        );
-                      })}
-                    </Tbody>
-                  </Table>
-                  <StandardPagination
-                    page={safeProductionPage}
-                    total={productions.length}
-                    pageSize={PRODUCTION_PAGE_SIZE}
-                    onChange={setProductionPage}
-                    itemLabel={intl.formatMessage({ id: 'buyer.productionsItem' })}
-                  />
-                </Box>
-              )}
-            </StandardCard>
-          </StandardSection>
-        </Box>
-
-        <StandardSection
-          title={intl.formatMessage({ id: 'buyer.recentScans' })}
-          description={intl.formatMessage({ id: 'buyer.recentScansHint' })}>
-          <StandardCard>
-            {/* Filters sit ABOVE the empty/table branch on purpose: filter down to nothing and the
-                controls have to still be there to undo it. */}
-            {filterSelects.length ? (
-              <Flex
-                gap={3}
-                mb={4}
-                align={{ base: 'stretch', smd: 'flex-end' }}
-                direction={{ base: 'column', smd: 'row' }}
-                wrap="wrap">
-                {filterSelects.map((filter) => (
-                  <Box key={filter.key} minW={{ base: 'full', smd: '200px' }}>
-                    <Text fontSize="xs" color="gray.600" mb={1}>
-                      {intl.formatMessage({ id: filter.labelId })}
-                    </Text>
-                    <StandardSelect
-                      size="sm"
-                      value={scanFilters[filter.key]}
-                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                        setScanFilters((prev) => ({ ...prev, [filter.key]: e.target.value }))
-                      }
-                      aria-label={intl.formatMessage({ id: filter.labelId })}>
-                      <option value="">{intl.formatMessage({ id: 'buyer.filter.all' })}</option>
-                      {(filter.options ?? []).map((option) => (
-                        <option key={option.id} value={String(option.id)}>
-                          {option.name || `#${option.id}`}
-                        </option>
-                      ))}
-                    </StandardSelect>
-                  </Box>
-                ))}
-                {hasActiveScanFilter ? (
-                  <StandardButton
-                    size="sm"
-                    variant="outline"
-                    minH="44px"
-                    onClick={() => setScanFilters(EMPTY_SCAN_FILTERS)}>
-                    {intl.formatMessage({ id: 'buyer.filter.clear' })}
-                  </StandardButton>
-                ) : null}
-              </Flex>
-            ) : null}
-            {/* The match count IS the answer to "how many scans did this block get" — and
-                StandardPagination, correctly, hides itself when the result fits one page, taking
-                its "of N" with it. So the total is stated here whenever a filter is narrowing. */}
-            {hasActiveScanFilter && scanCount != null ? (
-              <Text fontSize="sm" color="gray.600" mb={3}>
-                {intl.formatMessage({ id: 'buyer.filter.matchCount' }, { count: scanCount })}
-              </Text>
-            ) : null}
-            {!(scanPage as { results?: unknown[] })?.results?.length ? (
+            subtitle={intl.formatMessage({ id: 'buyer.productionsHint' })}>
+            {!productions?.length ? (
               <Text py={6} textAlign="center" color="gray.500" fontSize="sm">
-                {intl.formatMessage({
-                  // "No scans yet" is wrong under an active filter — the farm HAS scans, this
-                  // slice of it does not, and the fix is to widen the filter, not to wait.
-                  id: hasActiveScanFilter ? 'buyer.noScansForFilter' : 'buyer.noScans'
-                })}
+                {intl.formatMessage({ id: 'buyer.noProductions' })}
               </Text>
             ) : (
-              // A TABLE, matching the Productions table above. Columns are chosen from the WRITE
-              // PATHS, not from row counts in the dev DB — that database is fixtures, so counting
-              // it tells you about the seeder.
-              //
-              // The shopper's path is: `views/Scan/ProductDetail` -> `useCreateScanMutation` ->
-              // POST `public_scans/`. (`public_history` also creates a scan, but only
-              // `ModernProductReview` and the producer's own `ProfileProduction` call it, and the
-              // latter is skipped by the `is_owner` guard.)
-              //
-              // LOCATION is real on that path. `PublicHistoryScanViewSet.create` spreads
-              // `PrivacyService.process_scan_consent(request)`, which resolves the client IP
-              // against the LOCAL GeoLite2 database (`history/services/geoip_service.py`) and
-              // stores the privacy-safe pair `country_code` + `region` — an ISO 3166-1 alpha-2
-              // code plus the state/province, never the city. The legacy `city`/`country`
-              // columns are deliberately nulled (GDPR data minimisation), and the payload's
-              // `location` is `get_location_display()`, which prefers that pair.
-              //
-              // 2026-08-16: this used to call ipapi.co, which answers 429/403 from the
-              // DigitalOcean egress and had been failing SILENTLY on every scan in production
-              // — the column was empty for every row. Do not reintroduce an HTTP geolocation
-              // call; `test_scan_geolocation.py` fails if a lookup touches the network.
-              //
-              // It is CONSENT-GATED: without the `trazo-analytics-consent` cookie the service
-              // returns country_code "XX" / region "Unknown", which `get_location_display()`
-              // maps to null. The scan itself is still recorded — the count is not gated, only
-              // what the row carries. Because the scan POSTs on mount and the banner renders
-              // after it, a first-time visitor's row is written anonymous and then UPGRADED in
-              // place by `public_scans/consent/` when they accept; there is never a second row.
-              // So an em dash here means "declined, ignored the banner, or the IP did not
-              // resolve" — never "the scan was not counted".
-              // Locally it is ALWAYS an em dash: a private/loopback IP has no location to find.
-              //
-              // COMMENT dropped. The endpoint accepts one, but NOTHING IN THE APP EVER SENDS ONE:
-              // `useCommentHistoryMutation` and `recordTransparencyScan` both have zero call
-              // sites, and no consumer surface has a comment input. An endpoint that accepts a
-              // field is not a writer. It also made the UI worse — `w="100%"` on a column whose
-              // every cell was an em dash left half the card blank.
-              //
-              // `scan_type` is not shown at all (badge removed 2026-09-02). `public_history`
-              // leaves it at the model default "qr" for every page view; the "review"/"feedback"
-              // values came only from the consumer reviews product retired 2026-08-06, and
-              // "transparency_api" from a legacy write path. Nothing writes a non-"qr" value
-              // today, so a "Review" badge on a live farm could only ever be seeded data.
-              <Box overflowX="auto">
-                {/* nowrap on the headers stops them stacking, but only `minW` makes the
-                    wrapper scroll rather than compress the row on a phone. */}
-                <Table size="sm" w="full" minW="640px">
-                  <Thead>
-                    <Tr>
-                      {/* Every header is nowrap: an uppercase, letter-spaced heading in a narrow
-                          column wraps to one character per line otherwise. Production absorbs the
-                          slack so the row has no dead band. */}
-                      <Th whiteSpace="nowrap">{intl.formatMessage({ id: 'buyer.col.date' })}</Th>
-                      <Th whiteSpace="nowrap" w="100%" minW="240px">
-                        {intl.formatMessage({ id: 'buyer.col.production' })}
-                      </Th>
-                      <Th whiteSpace="nowrap">
-                        {intl.formatMessage({ id: 'buyer.col.location' })}
-                      </Th>
-                      <Th whiteSpace="nowrap">{intl.formatMessage({ id: 'buyer.col.parcel' })}</Th>
-                    </Tr>
-                  </Thead>
-                  <Tbody>
-                    {(
-                      scanPage as {
-                        results: Array<{
-                          id: number;
-                          date: string | null;
-                          product: string | null;
-                          parcel: string | null;
-                          scan_type?: string | null;
-                          repeat_count?: number;
-                          production?: string | null;
-                          location?: string | null;
-                        }>;
-                      }
-                    ).results.map((scan) => (
-                      <Tr key={scan.id}>
-                        <Td whiteSpace="nowrap">
-                          <Text fontSize="sm">{scan.date?.slice(0, 16) ?? '—'}</Text>
-                          {/* Sits with the timestamp because it qualifies the EVENT — the whole
-                              signal is about timing.
-                              This row is a COUNTED visit; `repeat_count` is how many scans
-                              deduplication folded into it. It used to be `is_duplicate` on the
-                              repeat row itself, labelled "Repeat" — which asserts a PERSON came
-                              back, something the backend cannot know: the match is on
-                              sha256(user-agent + Accept-Language + Accept-Encoding + screen)
-                              inside a 15-minute window
-                              (`DeduplicationService.DEFAULT_TIMEFRAME_MINUTES`). That is a
-                              DEVICE-CLASS signature, not an identity — two shoppers on the same
-                              phone model with the same language produce the same hash, and the
-                              IP-hash fallback is coarser still (one shop's wifi is one hash).
-                              Now the list only ever shows counted scans, so the honest statement
-                              is how many were folded in, with the rule spelled out on hover. */}
-                          {(scan.repeat_count ?? 0) > 0 ? (
-                            <Tooltip
-                              hasArrow
-                              label={intl.formatMessage(
-                                { id: 'buyer.scanRepeatHint' },
-                                { count: scan.repeat_count }
-                              )}
-                              placement="top">
-                              {/* tabIndex makes the tooltip reachable without a mouse — hover-only
-                                  help is invisible on the phone this page is read on. */}
-                              <Badge variant="neutral" fontSize="11px" tabIndex={0} cursor="help">
-                                {intl.formatMessage(
-                                  { id: 'buyer.scanRepeat' },
-                                  { count: scan.repeat_count }
-                                )}
-                              </Badge>
-                            </Tooltip>
-                          ) : null}
-                        </Td>
-                        <Td>
-                          <Text fontSize="sm" fontWeight="medium">
-                            {scan.production || scan.product || '—'}
-                          </Text>
-                          {/* Product under the season name, not instead of it: the season
-                              identifies the page that was scanned. */}
-                          {scan.production && scan.product ? (
-                            <Text fontSize="xs" color="gray.500">
-                              {scan.product}
+              <VStack align="stretch" spacing={0}>
+                {visibleProductions.map((row) => {
+                  const finished = Boolean(row.finish_date);
+                  const previewUrl = `${config.CONSUMER_BASE_URL}/production/${row.public_id}`;
+                  const name = row.name || labelOf(row.product);
+                  const start = formatDateFromTimestamp(row.start_date, intl.locale);
+                  const end = formatDateFromTimestamp(row.finish_date, intl.locale);
+                  return (
+                    <Flex
+                      key={row.id}
+                      sx={ROW_RULE}
+                      py={3}
+                      gap={{ base: 2, md: 4 }}
+                      direction={{ base: 'column', md: 'row' }}
+                      align={{ base: 'stretch', md: 'center' }}>
+                      <Box flex="1" minW={0}>
+                        <Text fontSize="sm" fontWeight="semibold" color="gray.800">
+                          {name}
+                        </Text>
+                        <Text fontSize="xs" color="gray.600">
+                          {/* No start date is possible on legacy rows; then the range is
+                              left out rather than printing "null" (review of #307). */}
+                          {[
+                            labelOf(row.parcel),
+                            start && end
+                              ? `${start} – ${end}`
+                              : start
+                              ? intl.formatMessage({ id: 'buyer.since' }, { date: start })
+                              : end
+                          ]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </Text>
+                      </Box>
+                      <HStack spacing={2} flexShrink={0} justify="space-between">
+                        {/* The switch is labelled in words beside it: "Public" or "Not public".
+                            An unlabelled toggle in a table column only said so through the
+                            column header, which a phone never showed. */}
+                        <Tooltip
+                          isDisabled={finished}
+                          label={intl.formatMessage({ id: 'buyer.finishFirst' })}>
+                          <HStack as="label" spacing={2} minH="44px" cursor="pointer" pr={2}>
+                            <Switch
+                              colorScheme="green"
+                              isChecked={row.published}
+                              isDisabled={!canWrite || toggling || (!finished && !row.published)}
+                              onChange={(e) => handleToggle(row.id, e.target.checked)}
+                            />
+                            <Text fontSize="sm" color="gray.700" minW="80px">
+                              {intl.formatMessage({
+                                id: row.published ? 'buyer.isPublic' : 'buyer.isNotPublic'
+                              })}
                             </Text>
-                          ) : null}
-                        </Td>
-                        <Td whiteSpace="nowrap">
-                          {/* The serializer already substitutes a literal "-" for an absent
-                              location, so normalise it back rather than printing two different
-                              placeholder glyphs in one table. */}
-                          <Text
-                            fontSize="sm"
-                            color={locationOf(scan.location) ? undefined : 'gray.400'}>
-                            {locationOf(scan.location) ?? '—'}
-                          </Text>
-                        </Td>
-                        <Td whiteSpace="nowrap">
-                          <Text fontSize="sm" as="span">
-                            {scan.parcel || '—'}
-                          </Text>
-                        </Td>
-                      </Tr>
-                    ))}
-                  </Tbody>
-                </Table>
-              </Box>
+                          </HStack>
+                        </Tooltip>
+                        <HStack spacing={1}>
+                          {/* Only a published season has a page to open. The slot keeps its
+                              width when empty, so Print lines up down the list. */}
+                          <Box minW={{ base: 0, md: '128px' }} textAlign="right">
+                            {row.published && (
+                              <StandardButton
+                                as="a"
+                                href={previewUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                size="sm"
+                                variant="ghost"
+                                leftIcon={<Icon as={FaExternalLinkAlt} />}>
+                                {intl.formatMessage({ id: 'buyer.openPage' })}
+                              </StandardButton>
+                            )}
+                          </Box>
+                          <Menu placement="bottom-end" autoSelect={false}>
+                            <MenuButton
+                              as={StandardButton}
+                              size="sm"
+                              variant="outline"
+                              leftIcon={<Icon as={FaPrint} />}
+                              rightIcon={<Icon as={FaChevronDown} boxSize={3} />}
+                              aria-label={intl.formatMessage({ id: 'buyer.printFor' }, { name })}>
+                              {intl.formatMessage({ id: 'buyer.print' })}
+                            </MenuButton>
+                            <MenuList>
+                              <MenuItem
+                                icon={<Icon as={FaQrcode} />}
+                                onClick={() => handleQrDownload(row.id)}>
+                                {intl.formatMessage({ id: 'buyer.qr' })}
+                              </MenuItem>
+                              <MenuItem
+                                as="a"
+                                href={env.getApiUrl(`histories/${row.id}/lot-tag/`)}
+                                icon={<Icon as={FaTags} />}>
+                                {intl.formatMessage({ id: 'buyer.lotTags' })}
+                              </MenuItem>
+                            </MenuList>
+                          </Menu>
+                        </HStack>
+                      </HStack>
+                    </Flex>
+                  );
+                })}
+                <StandardPagination
+                  page={safeProductionPage}
+                  total={productions.length}
+                  pageSize={PRODUCTION_PAGE_SIZE}
+                  onChange={setProductionPage}
+                  itemLabel={intl.formatMessage({ id: 'buyer.productionsItem' })}
+                />
+              </VStack>
             )}
-            <StandardPagination
-              page={scanPageIndex}
-              total={scanCount ?? 0}
-              pageSize={SCAN_PAGE_SIZE}
-              onChange={setScanPageIndex}
-              itemLabel={intl.formatMessage({ id: 'buyer.scansItem' })}
-            />
           </StandardCard>
-        </StandardSection>
+        </Box>
+
+        <StandardCard
+          mb={0}
+          title={intl.formatMessage({ id: 'buyer.recentScans' })}
+          subtitle={intl.formatMessage({ id: 'buyer.recentScansHint' })}>
+          {/* Filters sit ABOVE the empty/table branch on purpose: filter down to nothing and the
+                controls have to still be there to undo it. */}
+          {filterSelects.length ? (
+            <Flex
+              gap={3}
+              mb={4}
+              align={{ base: 'stretch', smd: 'flex-end' }}
+              direction={{ base: 'column', smd: 'row' }}
+              wrap="wrap">
+              {filterSelects.map((filter) => (
+                <Box key={filter.key} minW={{ base: 'full', smd: '200px' }}>
+                  <Text fontSize="xs" color="gray.600" mb={1}>
+                    {intl.formatMessage({ id: filter.labelId })}
+                  </Text>
+                  <StandardSelect
+                    size="sm"
+                    value={scanFilters[filter.key]}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                      setScanFilters((prev) => ({ ...prev, [filter.key]: e.target.value }))
+                    }
+                    aria-label={intl.formatMessage({ id: filter.labelId })}>
+                    <option value="">{intl.formatMessage({ id: 'buyer.filter.all' })}</option>
+                    {(filter.options ?? []).map((option) => (
+                      <option key={option.id} value={String(option.id)}>
+                        {option.name || `#${option.id}`}
+                      </option>
+                    ))}
+                  </StandardSelect>
+                </Box>
+              ))}
+              {hasActiveScanFilter ? (
+                <StandardButton
+                  size="sm"
+                  variant="outline"
+                  minH="44px"
+                  onClick={() => setScanFilters(EMPTY_SCAN_FILTERS)}>
+                  {intl.formatMessage({ id: 'buyer.filter.clear' })}
+                </StandardButton>
+              ) : null}
+            </Flex>
+          ) : null}
+          {/* The match count IS the answer to "how many scans did this block get" — and
+                StandardPagination, correctly, hides itself when the result fits one page, taking
+                its "of N" with it. So the total is stated here whenever a filter is narrowing. */}
+          {hasActiveScanFilter && scanCount != null ? (
+            <Text fontSize="sm" color="gray.600" mb={3}>
+              {intl.formatMessage({ id: 'buyer.filter.matchCount' }, { count: scanCount })}
+            </Text>
+          ) : null}
+          {!(scanPage as { results?: unknown[] })?.results?.length ? (
+            <Text py={6} textAlign="center" color="gray.500" fontSize="sm">
+              {intl.formatMessage({
+                // "No scans yet" is wrong under an active filter — the farm HAS scans, this
+                // slice of it does not, and the fix is to widen the filter, not to wait.
+                id: hasActiveScanFilter ? 'buyer.noScansForFilter' : 'buyer.noScans'
+              })}
+            </Text>
+          ) : (
+            // A TABLE, matching the Productions table above. Columns are chosen from the WRITE
+            // PATHS, not from row counts in the dev DB — that database is fixtures, so counting
+            // it tells you about the seeder.
+            //
+            // The shopper's path is: `views/Scan/ProductDetail` -> `useCreateScanMutation` ->
+            // POST `public_scans/`. (`public_history` also creates a scan, but only
+            // `ModernProductReview` and the producer's own `ProfileProduction` call it, and the
+            // latter is skipped by the `is_owner` guard.)
+            //
+            // LOCATION is real on that path. `PublicHistoryScanViewSet.create` spreads
+            // `PrivacyService.process_scan_consent(request)`, which resolves the client IP
+            // against the LOCAL GeoLite2 database (`history/services/geoip_service.py`) and
+            // stores the privacy-safe pair `country_code` + `region` — an ISO 3166-1 alpha-2
+            // code plus the state/province, never the city. The legacy `city`/`country`
+            // columns are deliberately nulled (GDPR data minimisation), and the payload's
+            // `location` is `get_location_display()`, which prefers that pair.
+            //
+            // 2026-08-16: this used to call ipapi.co, which answers 429/403 from the
+            // DigitalOcean egress and had been failing SILENTLY on every scan in production
+            // — the column was empty for every row. Do not reintroduce an HTTP geolocation
+            // call; `test_scan_geolocation.py` fails if a lookup touches the network.
+            //
+            // It is CONSENT-GATED: without the `trazo-analytics-consent` cookie the service
+            // returns country_code "XX" / region "Unknown", which `get_location_display()`
+            // maps to null. The scan itself is still recorded — the count is not gated, only
+            // what the row carries. Because the scan POSTs on mount and the banner renders
+            // after it, a first-time visitor's row is written anonymous and then UPGRADED in
+            // place by `public_scans/consent/` when they accept; there is never a second row.
+            // So an em dash here means "declined, ignored the banner, or the IP did not
+            // resolve" — never "the scan was not counted".
+            // Locally it is ALWAYS an em dash: a private/loopback IP has no location to find.
+            //
+            // COMMENT dropped. The endpoint accepts one, but NOTHING IN THE APP EVER SENDS ONE:
+            // `useCommentHistoryMutation` and `recordTransparencyScan` both have zero call
+            // sites, and no consumer surface has a comment input. An endpoint that accepts a
+            // field is not a writer. It also made the UI worse — `w="100%"` on a column whose
+            // every cell was an em dash left half the card blank.
+            //
+            // `scan_type` is not shown at all (badge removed 2026-09-02). `public_history`
+            // leaves it at the model default "qr" for every page view; the "review"/"feedback"
+            // values came only from the consumer reviews product retired 2026-08-06, and
+            // "transparency_api" from a legacy write path. Nothing writes a non-"qr" value
+            // today, so a "Review" badge on a live farm could only ever be seeded data.
+            /* Rows, not a four-column table (2026-11-07): on a phone the table ran off the
+                 right edge, and its Location column read "—" on every row, because a location
+                 is only stored when the shopper consented to it. It shows where there is one. */
+            <VStack align="stretch" spacing={0}>
+              {(
+                scanPage as {
+                  results: Array<{
+                    id: number;
+                    date: string | null;
+                    product: string | null;
+                    parcel: string | null;
+                    scan_type?: string | null;
+                    repeat_count?: number;
+                    production?: string | null;
+                    location?: string | null;
+                  }>;
+                }
+              ).results.map((scan) => {
+                const place = locationOf(scan.location);
+                return (
+                  <Flex
+                    key={scan.id}
+                    sx={ROW_RULE}
+                    py={3}
+                    gap={{ base: 1, md: 4 }}
+                    direction={{ base: 'column', md: 'row' }}
+                    align={{ base: 'stretch', md: 'center' }}>
+                    <Box flex="1" minW={0}>
+                      <Text fontSize="sm" fontWeight="semibold" color="gray.800">
+                        {scan.production || scan.product || '—'}
+                      </Text>
+                      <Text fontSize="xs" color="gray.600">
+                        {/* Product under the season name, not instead of it: the season
+                              identifies the page that was scanned. */}
+                        {[scan.production ? scan.product : null, scan.parcel, place]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </Text>
+                    </Box>
+                    <HStack spacing={2} flexShrink={0}>
+                      <Text fontSize="sm" color="gray.700" whiteSpace="nowrap">
+                        {formatScanTime(scan.date, intl)}
+                      </Text>
+                      {/* A COUNTED visit; `repeat_count` is how many scans deduplication
+                            folded into it. The match is a device-class signature inside a
+                            15-minute window, not a person, so the rule is spelled out on hover
+                            and never called a "repeat" visitor. */}
+                      {(scan.repeat_count ?? 0) > 0 ? (
+                        <Tooltip
+                          hasArrow
+                          label={intl.formatMessage(
+                            { id: 'buyer.scanRepeatHint' },
+                            { count: scan.repeat_count }
+                          )}
+                          placement="top">
+                          <Badge variant="neutral" fontSize="11px" tabIndex={0} cursor="help">
+                            {intl.formatMessage(
+                              { id: 'buyer.scanRepeat' },
+                              { count: scan.repeat_count }
+                            )}
+                          </Badge>
+                        </Tooltip>
+                      ) : null}
+                    </HStack>
+                  </Flex>
+                );
+              })}
+            </VStack>
+          )}
+          <StandardPagination
+            page={scanPageIndex}
+            total={scanCount ?? 0}
+            pageSize={SCAN_PAGE_SIZE}
+            onChange={setScanPageIndex}
+            itemLabel={intl.formatMessage({ id: 'buyer.scansItem' })}
+          />
+        </StandardCard>
 
         {/* "Latest comments" REMOVED 2026-08-11.
             It read the `Review` model — the consumer-account/reviews product retired 2026-08-06
@@ -767,70 +748,67 @@ const BuyerPage = () => {
             Review model, its endpoint and the reviews app are left untouched for the November
             cut. */}
         <Box data-tour="buyer-requests" w="full">
-          <StandardSection
+          <StandardCard
+            mb={0}
             title={intl.formatMessage({ id: 'buyer.requests' })}
-            description={intl.formatMessage({ id: 'buyer.requestsHint' })}>
-            <StandardCard>
-              {!requests?.length ? (
-                <Text py={6} textAlign="center" color="gray.500" fontSize="sm">
-                  {intl.formatMessage({ id: 'buyer.noRequests' })}
-                </Text>
-              ) : (
-                <VStack align="stretch" spacing={3}>
-                  {requests.map((row) => (
-                    <Flex
-                      key={row.id}
-                      p={3}
-                      borderWidth="1px"
-                      borderColor="gray.200"
-                      borderRadius="md"
-                      justify="space-between"
-                      align={{ base: 'stretch', smd: 'center' }}
-                      direction={{ base: 'column', smd: 'row' }}
-                      gap={3}>
-                      <VStack align="flex-start" spacing={0} minW={0}>
-                        <HStack spacing={2}>
-                          <Text fontSize="sm" fontWeight="semibold">
-                            {row.requester_name}
-                          </Text>
-                          <Badge variant={REQUEST_BADGE[row.status]} fontSize="11px">
-                            {intl.formatMessage({ id: `buyer.requestStatus.${row.status}` })}
-                          </Badge>
-                        </HStack>
-                        <Text fontSize="xs" color="gray.600">
-                          {row.requester_email}
-                          {row.organization ? ` · ${row.organization}` : ''}
+            subtitle={intl.formatMessage({ id: 'buyer.requestsHint' })}>
+            {!requests?.length ? (
+              <Text py={6} textAlign="center" color="gray.500" fontSize="sm">
+                {intl.formatMessage({ id: 'buyer.noRequests' })}
+              </Text>
+            ) : (
+              <VStack align="stretch" spacing={0}>
+                {requests.map((row) => (
+                  <Flex
+                    key={row.id}
+                    sx={ROW_RULE}
+                    py={3}
+                    justify="space-between"
+                    align={{ base: 'stretch', smd: 'center' }}
+                    direction={{ base: 'column', smd: 'row' }}
+                    gap={3}>
+                    <VStack align="flex-start" spacing={0} minW={0}>
+                      <HStack spacing={2}>
+                        <Text fontSize="sm" fontWeight="semibold">
+                          {row.requester_name}
                         </Text>
-                        {row.message ? (
-                          <Text fontSize="xs" color="gray.500" noOfLines={2}>
-                            {row.message}
-                          </Text>
-                        ) : null}
-                      </VStack>
-                      {canWrite && (
-                        <StandardSelect
-                          value={row.status}
-                          maxW="180px"
-                          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                            handleRequestStatus(row, e.target.value as BuyerDocRequestRow['status'])
-                          }>
-                          <option value="new">
-                            {intl.formatMessage({ id: 'buyer.requestStatus.new' })}
-                          </option>
-                          <option value="contacted">
-                            {intl.formatMessage({ id: 'buyer.requestStatus.contacted' })}
-                          </option>
-                          <option value="closed">
-                            {intl.formatMessage({ id: 'buyer.requestStatus.closed' })}
-                          </option>
-                        </StandardSelect>
-                      )}
-                    </Flex>
-                  ))}
-                </VStack>
-              )}
-            </StandardCard>
-          </StandardSection>
+                        <Badge variant={REQUEST_BADGE[row.status]} fontSize="11px">
+                          {intl.formatMessage({ id: `buyer.requestStatus.${row.status}` })}
+                        </Badge>
+                      </HStack>
+                      <Text fontSize="xs" color="gray.600">
+                        {row.requester_email}
+                        {row.organization ? ` · ${row.organization}` : ''}
+                      </Text>
+                      {row.message ? (
+                        <Text fontSize="xs" color="gray.500" noOfLines={2}>
+                          {row.message}
+                        </Text>
+                      ) : null}
+                    </VStack>
+                    {canWrite && (
+                      <StandardSelect
+                        value={row.status}
+                        maxW="180px"
+                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                          handleRequestStatus(row, e.target.value as BuyerDocRequestRow['status'])
+                        }>
+                        <option value="new">
+                          {intl.formatMessage({ id: 'buyer.requestStatus.new' })}
+                        </option>
+                        <option value="contacted">
+                          {intl.formatMessage({ id: 'buyer.requestStatus.contacted' })}
+                        </option>
+                        <option value="closed">
+                          {intl.formatMessage({ id: 'buyer.requestStatus.closed' })}
+                        </option>
+                      </StandardSelect>
+                    )}
+                  </Flex>
+                ))}
+              </VStack>
+            )}
+          </StandardCard>
         </Box>
       </VStack>
     </StandardPage>
