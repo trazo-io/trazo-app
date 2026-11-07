@@ -15,6 +15,12 @@ import {
   Box,
   Flex,
   HStack,
+  Icon,
+  IconButton,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
   Modal,
   ModalBody,
   ModalCloseButton,
@@ -39,6 +45,7 @@ import {
   FaChevronDown,
   FaChevronUp,
   FaDownload,
+  FaEllipsisV,
   FaFileUpload,
   FaRoute,
   FaFolderOpen,
@@ -540,14 +547,14 @@ const DocumentsPage = () => {
   const renderCard = (doc: FarmDocument, group: DocGroup, isOlder: boolean) => {
     const isExpanded = expanded.has(group.key);
     return (
+      // A row inside one card, not a bordered card per document (2026-11-07): twelve boxes
+      // stacked on the page, each with a folder chip the filter above already states.
       <Box
         key={doc.id}
-        borderWidth="1px"
-        borderColor="gray.200"
-        borderRadius="lg"
-        bg={isOlder ? 'gray.50' : 'white'}
-        p={4}
-        ml={isOlder ? 4 : 0}>
+        py={3}
+        pl={isOlder ? 4 : 0}
+        bg={isOlder ? 'gray.50' : undefined}
+        sx={{ '& + &': { borderTopWidth: '1px', borderTopColor: 'gray.100' } }}>
         <Text
           fontSize="sm"
           fontWeight={isOlder ? 'normal' : 'semibold'}
@@ -555,16 +562,15 @@ const DocumentsPage = () => {
           {doc.title}
         </Text>
 
-        <HStack spacing={2} mt={2} flexWrap="wrap">
-          <Badge variant="subtle" fontSize="11px">
-            {doc.folder_display}
-          </Badge>
-          {doc.tags.map((t) => (
-            <Badge key={t} variant="neutral" fontSize="11px">
-              {t}
-            </Badge>
-          ))}
-        </HStack>
+        {doc.tags.length ? (
+          <HStack spacing={2} mt={2} flexWrap="wrap">
+            {doc.tags.map((t) => (
+              <Badge key={t} variant="neutral" fontSize="11px">
+                {t}
+              </Badge>
+            ))}
+          </HStack>
+        ) : null}
 
         {/* Actions ride the END of the facts row instead of owning a row of their own.
             That row was `justify="space-between"` with an empty `<Box />` holding the left
@@ -574,7 +580,7 @@ const DocumentsPage = () => {
             The row is 44px tall either way because the touch targets are unchanged; it now
             carries the facts too. `wrap` so a long `source_display` drops the icons to their
             own line rather than crushing the date. */}
-        <Flex mt={3} align="center" justify="space-between" gap={2} wrap="wrap">
+        <Flex mt={1} align="center" justify="space-between" gap={2}>
           <HStack spacing={3} flexWrap="wrap" color="gray.600" fontSize="xs">
             <Text>{documentSourceLabel(doc, intl)}</Text>
             <Text aria-hidden="true">·</Text>
@@ -671,11 +677,8 @@ const DocumentsPage = () => {
             </StandardButton>
           ) : null}
         </Td>
-        <Td>
-          <Badge variant="subtle" fontSize="11px">
-            {doc.folder_display}
-          </Badge>
-        </Td>
+        {/* No Folder column (2026-11-07): a green chip repeated on every row beside a Source
+            column saying nearly the same thing, and the filter above already names the folder. */}
         <Td>
           <Text fontSize="xs" color="gray.600">
             {documentSourceLabel(doc, intl)}
@@ -726,54 +729,60 @@ const DocumentsPage = () => {
       title={intl.formatMessage({ id: 'documents.pageTitle' })}
       description={intl.formatMessage({ id: 'documents.pageDescription' })}
       rightAction={
-        <>
-          <input
-            ref={fileInput}
-            type="file"
-            hidden
-            // `accept` filters the OS picker so the wrong file is hard to choose; it is a
-            // convenience, never the gate — a determined pick still meets the checks in
-            // `handleUpload` and then the server's.
-            accept={UPLOAD_ACCEPT}
-            onChange={(e) => stageUpload(e.target.files?.[0])}
-          />
-          {/*
-            `w="full"` because this page is the only one that puts several actions in the header
-            slot, and StandardPage stretches them so their right edges meet the page margin.
-            The stretch lands on this `data-tour` Box; without it the Button inside stays
-            auto-width (MEASURED 94px against the export's 304px) and the column is ragged.
-          */}
-          <Box data-tour="documents-upload">
+        <HStack spacing={2} w={{ base: 'full', md: 'auto' }}>
+          {/* One row, one primary (2026-11-07). Three full-width buttons used to stack here,
+              Upload, Export and Trace a sale at equal weight. Upload is what a farmer comes to
+              do; Trace a sale is the inspector's drill; the raw CSV export is rare and sits in
+              the menu. */}
+          <Box data-tour="documents-upload" flex={{ base: 1, md: 'none' }}>
+            <input
+              ref={fileInput}
+              type="file"
+              hidden
+              // `accept` filters the OS picker so the wrong file is hard to choose; it is a
+              // convenience, never the gate — a determined pick still meets the checks in
+              // `handleUpload` and then the server's.
+              accept={UPLOAD_ACCEPT}
+              onChange={(e) => stageUpload(e.target.files?.[0])}
+            />
             <StandardButton
               w="full"
-              minH="44px"
               leftIcon={<FaFileUpload />}
               isLoading={uploading}
               onClick={() => fileInput.current?.click()}>
               {intl.formatMessage({ id: 'documents.upload' })}
             </StandardButton>
           </Box>
-          {/* Free raw export — every plan, always (record ownership; the endpoint is
-              deliberately ungated: history/tests/test_records_export.py). Plain anchor:
-              cookie auth rides along and the browser handles the download. */}
-          <StandardButton
-            as="a"
-            href={env.getApiUrl(RECORDS_EXPORT_URL(companyId, farmId || ''))}
-            minH="44px"
-            variant="outline"
-            leftIcon={<FaDownload />}>
-            {intl.formatMessage({ id: 'documents.exportAll' })}
-          </StandardButton>
           {/* The traceback drill: every sale's chain back to its picks, season and inputs, the
-              walk an inspector runs at every inspection. Lives here because the documents it
-              tests are the ones on this shelf; free on every plan (it shows, it files nothing). */}
+                walk an inspector runs at every inspection. Free on every plan. */}
           <StandardButton
             onClick={() => navigate(`/admin/dashboard/farm/${farmId}/traceback`)}
             variant="outline"
             leftIcon={<FaRoute />}>
             {intl.formatMessage({ id: 'documents.runTraceback' })}
           </StandardButton>
-        </>
+          <Menu placement="bottom-end" autoSelect={false}>
+            <MenuButton
+              as={IconButton}
+              variant="outline"
+              minH="44px"
+              minW="44px"
+              aria-label={intl.formatMessage({ id: 'documents.moreActions' })}
+              icon={<Icon as={FaEllipsisV} />}
+            />
+            <MenuList>
+              {/* Free raw export, every plan, always (record ownership; the endpoint is
+                    deliberately ungated: history/tests/test_records_export.py). A plain anchor:
+                    cookie auth rides along and the browser handles the download. */}
+              <MenuItem
+                as="a"
+                href={env.getApiUrl(RECORDS_EXPORT_URL(companyId, farmId || ''))}
+                icon={<Icon as={FaDownload} />}>
+                {intl.formatMessage({ id: 'documents.exportAll' })}
+              </MenuItem>
+            </MenuList>
+          </Menu>
+        </HStack>
       }>
       {/* `mt` CANCELS StandardPage's hero overlap (`StandardComponents.tsx` pulls the body up
           by 40px so a card floats over the hero's bottom edge). That overlap assumes the first
@@ -797,10 +806,16 @@ const DocumentsPage = () => {
               narrowing the list was previously conveyed by fill colour alone. Each also carries
               its count, so "where did my PUR export go?" is answerable without clicking through
               all six. */}
+          {/* One row that scrolls sideways when it runs out of room, never a second wrapped
+              row (2026-11-07: six pills wrapped to two rows at 1366px beside the search). */}
           <Wrap
             data-tour="documents-folders"
             spacing={2}
             role="group"
+            flex="1"
+            minW={0}
+            overflowX="auto"
+            sx={{ '& > ul': { flexWrap: 'nowrap' }, scrollbarWidth: 'none' }}
             aria-label={intl.formatMessage({ id: 'documents.folder.label' })}>
             <WrapItem>
               <StandardButton
@@ -827,13 +842,14 @@ const DocumentsPage = () => {
                    * wrapped row on a 375px screen — the row that then straddled the hero seam
                    * above.
                    *
-                   * Hidden BELOW `md` only: the desktop keeps the full map of where things
-                   * file, which is the chip group's other job. And the ACTIVE folder always
+                   * Hidden at every width since 2026-11-07: at 1366px the six chips beside the
+                   * search ran off the row ("Uploa"), and where things file is shown in the
+                   * upload dialog, which lists every folder. And the ACTIVE folder always
                    * renders even at zero — narrowing by search until the current folder is
                    * empty would otherwise delete the chip that is doing the narrowing and
                    * leave the farmer on a list with no visible way back to "All".
                    */
-                  display={count > 0 || folder === f ? 'flex' : { base: 'none', md: 'flex' }}>
+                  display={count > 0 || folder === f ? 'flex' : 'none'}>
                   <StandardButton
                     size="sm"
                     minH="44px"
@@ -868,9 +884,15 @@ const DocumentsPage = () => {
             A FACT, not a quota: documents count toward storage but are never refused. */}
         {!isLoading && !debouncedSearch && !!(documents ?? []).length && (
           <Text fontSize="sm" color="gray.600">
+            {/* Documents first, files second: "All 12" above "18 files stored" read as a
+                mismatch, because the chips count documents and this counted stored versions. */}
             {intl.formatMessage(
-              { id: 'documents.shelfSummary' },
-              { count: (documents ?? []).length, size: formatSize(shelfBytes) }
+              { id: 'documents.shelfSummaryDocs' },
+              {
+                docs: allGroups.length,
+                count: (documents ?? []).length,
+                size: formatSize(shelfBytes)
+              }
             )}
           </Text>
         )}
@@ -971,9 +993,13 @@ const DocumentsPage = () => {
                * too, so there is no double announcement.
                */}
               <VStack
-                spacing={3}
+                spacing={0}
                 align="stretch"
                 display={{ base: 'flex', md: 'none' }}
+                bg="white"
+                borderRadius="xl"
+                px={4}
+                py={1}
                 data-testid="documents-list-cards">
                 {visibleGroups.map((group) => (
                   <React.Fragment key={group.key}>
@@ -1002,10 +1028,13 @@ const DocumentsPage = () => {
                       <Thead>
                         <Tr>
                           <Th>{intl.formatMessage({ id: 'documents.col.title' })}</Th>
-                          <Th>{intl.formatMessage({ id: 'documents.col.folder' })}</Th>
                           <Th>{intl.formatMessage({ id: 'documents.col.source' })}</Th>
-                          <Th>{intl.formatMessage({ id: 'documents.col.size' })}</Th>
-                          <Th>{intl.formatMessage({ id: 'documents.col.date' })}</Th>
+                          <Th w="1%" whiteSpace="nowrap">
+                            {intl.formatMessage({ id: 'documents.col.size' })}
+                          </Th>
+                          <Th w="1%" whiteSpace="nowrap">
+                            {intl.formatMessage({ id: 'documents.col.date' })}
+                          </Th>
                           <Th />
                         </Tr>
                       </Thead>
