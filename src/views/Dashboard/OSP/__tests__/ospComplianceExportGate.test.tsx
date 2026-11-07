@@ -134,7 +134,7 @@ describe('OSP module list — the Starter/Compliance export boundary', () => {
     // Asserting the label is gone is not enough on its own — the whole failure was a LINK, so
     // assert no anchor points at the gated route either.
     expect(screen.queryByText(/Download packet/)).toBeNull();
-    expect(screen.queryByLabelText('Download PDF')).toBeNull();
+    expect(screen.queryByLabelText(/^Download the PDF of/)).toBeNull();
     const hrefs = Array.from(document.querySelectorAll('a')).map((a) => a.getAttribute('href'));
     expect(hrefs.some((h) => h?.includes('/packet/'))).toBe(false);
     expect(hrefs.some((h) => h?.includes('/module-pdf'))).toBe(false);
@@ -153,7 +153,9 @@ describe('OSP module list — the Starter/Compliance export boundary', () => {
     renderPage();
     // v2 is the only version here, so the control renders as the single named button.
     expect(screen.getByText('Download packet (v2)')).toBeInTheDocument();
-    expect(screen.getByLabelText('Download PDF')).toBeInTheDocument();
+    // Named for its module since the rows (2026-11-07): nineteen identical "Download PDF"
+    // labels told a screen reader nothing about which file.
+    expect(screen.getAllByLabelText(/^Download the PDF of/).length).toBeGreaterThan(0);
     expect(
       screen.queryByText(enUS['osp.packet.complianceOnly' as keyof typeof enUS] as string)
     ).toBeNull();
