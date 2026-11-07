@@ -72,7 +72,6 @@ export default function WizardActions({
             gridArea="preview"
             variant="ghost"
             size="md"
-            minH="44px"
             leftIcon={<Icon as={FaEye} />}
             onClick={onPreview}
             justifySelf={{ base: 'start', md: 'end' }}
@@ -85,7 +84,6 @@ export default function WizardActions({
             gridArea="back"
             variant="outline"
             size="lg"
-            minH="48px"
             leftIcon={<Icon as={FaChevronLeft} />}
             aria-label={backLabel}
             onClick={onBack}>
@@ -101,7 +99,6 @@ export default function WizardActions({
           gridArea="primary"
           variant="primary"
           size="lg"
-          minH="48px"
           type={onPrimary ? 'button' : 'submit'}
           onClick={onPrimary}
           isLoading={isLoading}
