@@ -42,7 +42,8 @@ describe('the crew screens speak Spanish', () => {
       expect(ES[key]).not.toBe(EN[key]);
     }
     expect(ES['events.section.badge.required']).toBe('Obligatorio');
-    expect(ES['events.wizard.preview']).toBe('Vista previa');
+    // "Shopper view" since 2026-11-07: the button opens the buyer's card, and "Preview" did not say whose view.
+    expect(ES['events.wizard.preview']).toBe('Vista del comprador');
   });
 
   it('the tabs route the words through intl instead of printing them', () => {

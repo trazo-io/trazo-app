@@ -56,12 +56,14 @@ describe('AlsoAppliedTo', () => {
     expect(origin).toHaveAttribute('readonly');
   });
 
-  it('refuses blocks the server would refuse, and says why beside them', () => {
+  it('refuses blocks the server would refuse, and names them once with the reason', () => {
+    // Since 2026-11-07 a refused block is not a greyed row repeating the same sentence: it is
+    // left out of the list and named, grouped by reason, under it.
     wrap(<Picker />);
-    expect(screen.getByRole('checkbox', { name: /Block C/ })).toBeDisabled();
-    expect(screen.getByRole('checkbox', { name: /Block D/ })).toBeDisabled();
-    expect(screen.getByText(/No open production on this parcel/)).toBeInTheDocument();
-    expect(screen.getByText(/two open productions/)).toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: /Block C/ })).toBeNull();
+    expect(screen.queryByRole('checkbox', { name: /Block D/ })).toBeNull();
+    expect(screen.getByText(/no season underway: Block C\./)).toBeInTheDocument();
+    expect(screen.getByText(/two seasons underway: Block D\./)).toBeInTheDocument();
     // Not counted is not "none": the server decides, so the block stays pickable.
     expect(screen.getByRole('checkbox', { name: /Block E/ })).not.toBeDisabled();
   });

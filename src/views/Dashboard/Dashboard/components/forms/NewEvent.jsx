@@ -9,7 +9,6 @@ import {
   VStack,
   HStack,
   Stack,
-  Badge,
   Progress,
   Alert,
   AlertIcon,
@@ -19,13 +18,9 @@ import {
 import { BsFillCloudLightningRainFill } from 'react-icons/bs';
 import {
   FaEdit,
-  FaChevronLeft,
-  FaChevronRight,
-  FaCheckCircle,
   FaSeedling,
   FaBusinessTime,
   FaBug,
-  FaEye,
   FaCalendarAlt,
   FaMicrophone,
   FaTasks,
@@ -52,6 +47,7 @@ import {
   StandardField,
   StandardInput,
   StandardStepper,
+  SectionBadgeStatedContext,
   StandardPage,
   SectionBox,
   SectionHeader, // D9 — both were built for this screen and had never been mounted anywhere.
@@ -102,6 +98,8 @@ import { EventPreviewModal } from 'components/Events/EventPreviewModal';
 import { PhotoRecommendationsBox } from 'components/Events/PhotoRecommendationsBox';
 import { ApplicationGroupNotice } from 'components/Events/ApplicationGroupNotice';
 import { AlsoAppliedTo, PerParcelCards } from 'components/Events/MultiParcel';
+import ActivityReview from 'components/Events/ActivityReview';
+import WizardActions from 'components/Events/WizardActions';
 import { eventTypeMayGoMulti, multiParcelRulesFor } from 'config/events/multiParcel';
 import { useDefaultUnits } from 'hooks/useMeasurementSystem';
 import { useGetParcelGeometryQuery } from 'store/api/parcelGeometryApi';
@@ -269,6 +267,8 @@ const useWizardSteps = (intl) =>
     () => [
       {
         title: intl.formatMessage({ id: 'events.wizard.step.basic' }),
+        // Four steps share a phone's width in the step bar; "Activity and date" would wrap.
+        shortTitle: intl.formatMessage({ id: 'events.wizard.step.basicShort' }),
         description: intl.formatMessage({ id: 'events.wizard.step.basicHint' })
       },
       {
@@ -278,6 +278,13 @@ const useWizardSteps = (intl) =>
       {
         title: intl.formatMessage({ id: 'events.wizard.step.photos' }),
         description: intl.formatMessage({ id: 'events.wizard.step.photosHint' })
+      },
+      {
+        // The read-through before Save (2026-11-07). The wizard used to end on the photo
+        // upload, so the last screen before a record went into the certifier file was a
+        // dropzone. Its own step, so the last screen holds only the record and Save.
+        title: intl.formatMessage({ id: 'events.wizard.step.review' }),
+        description: intl.formatMessage({ id: 'events.wizard.step.reviewHint' })
       }
     ],
     [intl]
@@ -368,7 +375,7 @@ const COMPLETENESS_GAP_LABELS = {
   }
 };
 
-function NewEvent({ isEdit = false, eventId = null }) {
+function NewEventForm({ isEdit = false, eventId = null }) {
   const intl = useIntl();
   const toast = useToast();
   const steps = useWizardSteps(intl);
@@ -427,9 +434,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
   const typePresetFromPlan = !isEdit && planItemIdFromUrl != null && eventTypeFromUrl != null;
 
   // Theme colors
-  const textColor = useColorModeValue('gray.700', 'white');
   const bgColor = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.600');
 
   // State management
   const [activeEventType, setActiveEventType] = useState(
@@ -3547,6 +3552,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
       basicMethods.handleSubmit(onSubmitBasic)();
     } else if (activeStep === 1) {
       continueFromDetails();
+    } else if (activeStep === 2) {
+      // Photos are optional, so nothing on that step can stop the farmer moving on.
+      setActiveStep(3);
     }
   };
 
@@ -3571,7 +3579,8 @@ function NewEvent({ isEdit = false, eventId = null }) {
         { id: 'activities.logTitle' },
         { verb: intl.formatMessage({ id: `activities.verb.${activeVerbKey}` }) }
       )
-    : intl.formatMessage({ id: 'app.createNewEvent' }) || 'Add Event';
+    : // Same words as the button that opened this page and the breadcrumb above it.
+      intl.formatMessage({ id: 'activities.log' });
 
   // The locked-record notice replaces the form entirely rather than sitting above it. Leaving
   // an editable form under a "this cannot be edited" banner invites the farmer to fill it in
@@ -3709,12 +3718,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
             : intl.formatMessage({ id: 'app.editEvent' })
           : createPageTitle
       }
-      description={
-        isEdit
-          ? intl.formatMessage({ id: 'activities.editDescription' })
-          : intl.formatMessage({ id: 'app.createNewEventDescription' }) ||
-            'Complete the form to add a new event to your parcel history'
-      }
+      // Create needs no description: the title says what the page does. "Complete the form
+      // below to add a new event to your parcel history" restated it in the backend's word.
+      description={isEdit ? intl.formatMessage({ id: 'activities.editDescription' }) : undefined}
       showBackButton
       // The sanctioned narrow-page override (see frontend.md): this is a single-column
       // form now, and a form field stretched across the full 8xl is harder to scan, not
@@ -3723,24 +3729,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
       // Net effect at 1440px: the form goes from 591px to 1024px.
       contentMaxW="5xl"
       onBack={handleBack}
-      backLabel={backToParcelLabel}
-      rightAction={
-        <Badge variant="neutral" px={3} py={1} borderRadius="full">
-          <HStack spacing={1}>
-            <Icon as={FaTasks} boxSize={3} />
-            <Text fontSize="sm">
-              {/* The key is `osp.*` only because the OSP wizard needed it first; it is a
-                  generic "Paso {current} de {total}" and both locales already have it.
-                  Left hardcoded, this badge stayed English beside a fully translated
-                  form. */}
-              {intl.formatMessage(
-                { id: 'osp.wizard.stepCount' },
-                { current: activeStep + 1, total: steps.length }
-              )}
-            </Text>
-          </HStack>
-        </Badge>
-      }>
+      backLabel={backToParcelLabel}>
       {isRepeat && existingEvent && (
         <StandardAlert
           status="info"
@@ -3802,7 +3791,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
       {/* Main Content - Show only when not loading or when creating */}
       {(!(isEdit || isRepeat) || !isLoadingEvent) && !eventError && (
-        <VStack spacing={{ base: 6, md: 8 }} align="stretch">
+        <VStack spacing={{ base: 5, md: 6 }} align="stretch">
           {/* D9 — offered only on step 0: restoring mid-wizard would replace the form under
                 the farmer's hands while they are typing in it. */}
           {activeStep === 0 && (
@@ -3825,20 +3814,41 @@ function NewEvent({ isEdit = false, eventId = null }) {
             />
           )}
 
-          {/* Progress Stepper - Using StandardStepper */}
-          <VStack spacing={2} align="stretch">
-            <StandardStepper
-              steps={steps}
-              currentStep={activeStep}
-              completedSteps={Array.from({ length: activeStep }, (_, i) => i)}
-              allowStepClick
-              furthestStep={furthestStep}
-              onStepClick={handleStepClick}
-            />
-            <Flex justify="flex-end">
-              <AutoSaveStatus lastSaved={draftLastSaved} isSaving={isSavingDraft} />
-            </Flex>
-          </VStack>
+          {/* Where am I, in one slim row (2026-11-07). The stepper used to be its own card
+              (~170px of numbered circles and descriptions) over every step, with a "Step 1 of
+              3" chip beside the title saying the same thing a second time. */}
+          <StandardStepper
+            variant="bar"
+            progressLabel={intl.formatMessage(
+              { id: 'osp.wizard.stepCount' },
+              { current: activeStep + 1, total: steps.length }
+            )}
+            steps={steps}
+            currentStep={activeStep}
+            completedSteps={Array.from({ length: activeStep }, (_, i) => i)}
+            allowStepClick
+            furthestStep={furthestStep}
+            onStepClick={handleStepClick}
+          />
+
+          {/* Stated once for the whole form, so the sections need not each repeat it; the
+              draft status shares its row instead of taking one of its own. */}
+          <Flex
+            direction={{ base: 'column', md: 'row' }}
+            justify="space-between"
+            align={{ base: 'flex-end', md: 'baseline' }}
+            gap={{ base: 1, md: 3 }}
+            mt={-2}>
+            <Text fontSize="sm" color="gray.600" alignSelf="stretch">
+              {activeStep < 2 &&
+                intl.formatMessage({
+                  id: 'events.wizard.recordLegend',
+                  defaultMessage:
+                    'Everything you log here goes on your certifier record. A section marked “buyer page” also shows on the lot’s public page.'
+                })}
+            </Text>
+            <AutoSaveStatus lastSaved={draftLastSaved} isSaving={isSavingDraft} />
+          </Flex>
 
           {/* Step Content */}
           {/* ONE column. The carbon sidebar that used to sit here took 42% of the content
@@ -3852,14 +3862,14 @@ function NewEvent({ isEdit = false, eventId = null }) {
           <Box>
             {activeStep === 0 && (
               <Card boxShadow="lg" bg={bgColor} borderRadius="xl">
-                <CardHeader pb={2} px={{ base: 0, md: 6 }}>
+                <CardHeader p={0}>
                   {/* `tabIndex={-1}` + ref: programmatic focus target for focusStepHeading. */}
                   <Text
                     ref={stepHeadingRef}
                     tabIndex={-1}
-                    fontSize="lg"
-                    fontWeight="semibold"
-                    color={textColor}>
+                    // The step bar above names the step; this stays as the focus target a
+                    // step change moves to, for screen readers, without a second visible title.
+                    srOnly>
                     {/* Not "Basic Event Info". This card carries the activity identity and
                         the date/operator pair; "event" is the backend model's word, and the
                         farmer chose an ACTIVITY to get here. */}
@@ -3902,7 +3912,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
                               {`\u201C${activeFieldNote.words}\u201D`}
                             </Text>
                             <Text fontSize="xs" color="gray.700" pt={2}>
-                              {intl.formatMessage({ id: 'events.fieldNote.theirWordsYourRecord' })}
+                              {intl.formatMessage({
+                                id: 'events.fieldNote.theirWordsYourRecord'
+                              })}
                             </Text>
                           </Box>
                         )}
@@ -4127,25 +4139,20 @@ function NewEvent({ isEdit = false, eventId = null }) {
                             icon={FaCalendarAlt}
                             title={intl.formatMessage({
                               id: 'events.wizard.timing',
-                              defaultMessage: 'Event Timing & Traceability'
+                              defaultMessage: 'When and who'
                             })}
                             badge={intl.formatMessage({
                               id: 'events.section.badge.certifierRecord'
                             })}
-                            description={intl.formatMessage({ id: 'events.wizard.timingHint' })}
                           />
                           <VStack spacing={4} align="stretch">
                             {/* Date Selection */}
                             <StandardField
-                              label={
-                                intl.formatMessage({ id: 'app.eventDateTime' }) ||
-                                'Event Date & Time'
-                              }
+                              label={intl.formatMessage({ id: 'app.eventDateTime' })}
                               required
                               helpText={intl.formatMessage({
                                 id: 'events.wizard.dateHelp',
-                                defaultMessage:
-                                  'Select the exact date and time when this activity was performed'
+                                defaultMessage: 'When the work was done, not when you log it.'
                               })}
                               error={basicMethods.formState.errors.date?.message}>
                               <StandardInput
@@ -4158,25 +4165,26 @@ function NewEvent({ isEdit = false, eventId = null }) {
                             <StandardField
                               label={intl.formatMessage({
                                 id: 'events.wizard.performedBy',
-                                defaultMessage: 'Performed By'
+                                defaultMessage: 'Done by'
                               })}
                               helpText={intl.formatMessage({
                                 id: 'events.wizard.performedByHelp',
-                                defaultMessage:
-                                  'Name of person who performed this activity (optional, helps with traceability)'
+                                defaultMessage: 'Optional. The person or crew who did the work.'
                               })}
                               required={false}
                               error={basicMethods.formState.errors.performed_by?.message}>
                               <StandardInput
                                 placeholder={
-                                  activeEventType === 0
+                                  // Weather only once weather is the pick: activeEventType starts at 0 before any
+                                  // choice, which put the weather hint on every new form.
+                                  (isEdit || typeChooserAnswered) && activeEventType === 0
                                     ? intl.formatMessage({
                                         id: 'events.wizard.performedByWeatherPlaceholder',
                                         defaultMessage: 'Optional for weather observations'
                                       })
                                     : intl.formatMessage({
                                         id: 'quickAdd.performedByPlaceholder',
-                                        defaultMessage: 'Enter operator/worker name'
+                                        defaultMessage: 'Name of a person or crew'
                                       })
                                 }
                                 {...basicMethods.register('performed_by')}
@@ -4186,17 +4194,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                         </SectionBox>
 
                         {/* Action Buttons */}
-                        <Box pt={4}>
-                          <HStack justify="flex-end">
-                            <StandardButton
-                              variant="primary"
-                              type="submit"
-                              rightIcon={<FaChevronRight />}
-                              size="lg">
-                              {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
-                            </StandardButton>
-                          </HStack>
-                        </Box>
+                        <WizardActions primaryLabel={intl.formatMessage({ id: 'app.continue' })} />
                       </VStack>
                     </form>
                   </FormProvider>
@@ -4206,13 +4204,13 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
             {activeStep === 1 && (
               <Card boxShadow="lg" bg={bgColor} borderRadius="xl">
-                <CardHeader pb={2} px={{ base: 0, md: 6 }}>
+                <CardHeader p={0}>
                   <Text
                     ref={stepHeadingRef}
                     tabIndex={-1}
-                    fontSize="lg"
-                    fontWeight="semibold"
-                    color={textColor}>
+                    // The step bar above names the step; this stays as the focus target a
+                    // step change moves to, for screen readers, without a second visible title.
+                    srOnly>
                     {/* The step-0 card names itself with its own step title; this one now
                         does the same. "Event Details" named the backend MODEL — the same
                         defect the stepper labels were fixed for, left standing on the card
@@ -4473,7 +4471,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
                               {voiceBanner.suggestion && (
                                 <VStack align="start" spacing={2} pt={1} w="full">
                                   <CrewNoteRow
-                                    label={intl.formatMessage({ id: 'events.voice.row.activity' })}>
+                                    label={intl.formatMessage({
+                                      id: 'events.voice.row.activity'
+                                    })}>
                                     <Text fontSize="xs" color="gray.700">
                                       {intl.formatMessage(
                                         { id: 'events.voice.typeMismatch' },
@@ -4937,60 +4937,28 @@ function NewEvent({ isEdit = false, eventId = null }) {
                   )}
 
                   {/* Preview button integrated with navigation */}
-                  <Box pt={6} mt={4} borderTop="1px" borderColor={borderColor}>
-                    <Flex
-                      direction={{ base: 'column', md: 'row' }}
-                      justify="space-between"
-                      align={{ base: 'stretch', md: 'center' }}
-                      gap={3}>
-                      <StandardButton
-                        variant="outline"
-                        onClick={goToPreviousStep}
-                        leftIcon={<FaChevronLeft />}
-                        size={{ base: 'md', md: 'lg' }}
-                        order={{ base: 3, md: 1 }}
-                        w={{ base: '100%', md: 'auto' }}>
-                        {intl.formatMessage({ id: 'common.previousStep' })}
-                      </StandardButton>
-                      <Flex
-                        direction={{ base: 'row', md: 'row' }}
-                        gap={3}
-                        order={{ base: 1, md: 2 }}
-                        w={{ base: '100%', md: 'auto' }}>
-                        <StandardButton
-                          variant="outline"
-                          onClick={handleOpenPreview}
-                          leftIcon={<FaEye />}
-                          size={{ base: 'md', md: 'lg' }}
-                          flex={{ base: 1, md: 'none' }}>
-                          {intl.formatMessage({ id: 'events.wizard.preview' })}
-                        </StandardButton>
-                        <StandardButton
-                          variant="primary"
-                          onClick={continueFromDetails}
-                          rightIcon={<FaChevronRight />}
-                          size={{ base: 'md', md: 'lg' }}
-                          flex={{ base: 1, md: 'none' }}>
-                          {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
-                        </StandardButton>
-                      </Flex>
-                    </Flex>
-                  </Box>
+                  <WizardActions
+                    onBack={goToPreviousStep}
+                    backLabel={intl.formatMessage({ id: 'common.previousStep' })}
+                    backShortLabel={intl.formatMessage({ id: 'app.previous' })}
+                    onPreview={handleOpenPreview}
+                    primaryLabel={intl.formatMessage({ id: 'app.continue' })}
+                    onPrimary={continueFromDetails}
+                  />
                 </CardBody>
               </Card>
             )}
 
             {activeStep === 2 && (
               <Card boxShadow="lg" bg={bgColor} borderRadius="xl">
-                <CardHeader pb={2} px={{ base: 0, md: 6 }}>
+                <CardHeader p={0}>
                   <Text
                     ref={stepHeadingRef}
                     tabIndex={-1}
-                    fontSize="lg"
-                    fontWeight="semibold"
-                    color={textColor}>
-                    {intl.formatMessage({ id: 'app.mediaAndDocumentation' }) ||
-                      'Media & Documentation'}
+                    // The step bar above names the step; this stays as the focus target a
+                    // step change moves to, for screen readers, without a second visible title.
+                    srOnly>
+                    {intl.formatMessage({ id: 'events.wizard.step.photos' })}
                   </Text>
                 </CardHeader>
                 <CardBody pt={4} pb={6} px={{ base: 0, md: 6 }}>
@@ -5002,12 +4970,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
                       subtype={activeEventType === 1 ? eventFormData.type : undefined}
                     />
 
-                    <StandardField
-                      label={intl.formatMessage({ id: 'events.wizard.step.photos' })}
-                      helpText={intl.formatMessage({
-                        id: 'events.wizard.photosHelp',
-                        defaultMessage: 'Upload photos documenting this agricultural event'
-                      })}>
+                    {/* The uploader states its own limits ("0 of 5", "Max 10MB"); the step title
+                        is the label. */}
+                    <Box>
                       <TrazoImageUpload
                         maxFiles={5}
                         maxSize={10 * 1024 * 1024} // 10MB
@@ -5048,55 +5013,79 @@ function NewEvent({ isEdit = false, eventId = null }) {
                           }));
                         }}
                       />
-                    </StandardField>
-
-                    <Box pt={6} mt={4} borderTop="1px" borderColor={borderColor}>
-                      <Flex
-                        direction={{ base: 'column', md: 'row' }}
-                        justify="space-between"
-                        align={{ base: 'stretch', md: 'center' }}
-                        gap={3}>
-                        <StandardButton
-                          variant="outline"
-                          onClick={goToPreviousStep}
-                          leftIcon={<FaChevronLeft />}
-                          size={{ base: 'md', md: 'lg' }}
-                          order={{ base: 3, md: 1 }}
-                          w={{ base: '100%', md: 'auto' }}>
-                          {intl.formatMessage({ id: 'common.previousStep' })}
-                        </StandardButton>
-                        <Flex
-                          direction={{ base: 'row', md: 'row' }}
-                          gap={3}
-                          order={{ base: 1, md: 2 }}
-                          w={{ base: '100%', md: 'auto' }}>
-                          <StandardButton
-                            variant="outline"
-                            onClick={handleOpenPreview}
-                            leftIcon={<FaEye />}
-                            size={{ base: 'md', md: 'lg' }}
-                            flex={{ base: 1, md: 'none' }}>
-                            {intl.formatMessage({ id: 'events.wizard.preview' })}
-                          </StandardButton>
-                          <StandardButton
-                            variant="primary"
-                            onClick={onSubmitMedia}
-                            isLoading={isEdit ? isUpdatingEvent : isCreatingEvent}
-                            loadingText={
-                              isEdit
-                                ? intl.formatMessage({ id: 'app.updating' }) || 'Updating...'
-                                : intl.formatMessage({ id: 'app.creating' }) || 'Creating...'
-                            }
-                            rightIcon={<FaCheckCircle />}
-                            size={{ base: 'md', md: 'lg' }}
-                            flex={{ base: 1, md: 'none' }}>
-                            {isEdit
-                              ? intl.formatMessage({ id: 'app.updateEvent' }) || 'Update'
-                              : intl.formatMessage({ id: 'app.createEvent' }) || 'Create'}
-                          </StandardButton>
-                        </Flex>
-                      </Flex>
                     </Box>
+
+                    <WizardActions
+                      onBack={goToPreviousStep}
+                      backLabel={intl.formatMessage({ id: 'common.previousStep' })}
+                      backShortLabel={intl.formatMessage({ id: 'app.previous' })}
+                      primaryLabel={intl.formatMessage({ id: 'app.continue' })}
+                      onPrimary={() => setActiveStep(3)}
+                    />
+                  </VStack>
+                </CardBody>
+              </Card>
+            )}
+            {activeStep === 3 && (
+              <Card boxShadow="lg" bg={bgColor} borderRadius="xl">
+                <CardHeader p={0}>
+                  <Text ref={stepHeadingRef} tabIndex={-1} srOnly>
+                    {intl.formatMessage({ id: 'events.wizard.step.review' })}
+                  </Text>
+                </CardHeader>
+                <CardBody pt={4} pb={6} px={{ base: 0, md: 6 }}>
+                  <VStack spacing={{ base: 5, md: 6 }} align="stretch">
+                    <Box>
+                      <ActivityReview
+                        eventType={activeEventType}
+                        record={eventFormData}
+                        activityLabel={
+                          activePlanItem?.name ||
+                          (activeVerbKey
+                            ? intl.formatMessage({ id: `activities.verb.${activeVerbKey}` })
+                            : editVerbLabel || '')
+                        }
+                        dateLabel={(() => {
+                          const value = basicMethods.getValues('date');
+                          const when = value ? new Date(value) : null;
+                          return when && !Number.isNaN(when.getTime())
+                            ? intl.formatDate(when, { dateStyle: 'medium', timeStyle: 'short' })
+                            : '';
+                        })()}
+                        doneBy={basicMethods.getValues('performed_by')}
+                        parcelsLabel={intl.formatList(
+                          [Number(parcelId), ...multiParcelIds].map(
+                            (id) =>
+                              farmParcels.find((p) => Number(p.id) === Number(id))?.name ||
+                              (Number(id) === Number(parcelId) && voiceParcel?.name) ||
+                              String(id)
+                          ),
+                          { type: 'conjunction' }
+                        )}
+                        photoCount={acceptedFiles.length}
+                        onChange={handleStepClick}
+                      />
+                    </Box>
+
+                    <WizardActions
+                      onBack={goToPreviousStep}
+                      backLabel={intl.formatMessage({ id: 'common.previousStep' })}
+                      backShortLabel={intl.formatMessage({ id: 'app.previous' })}
+                      onPreview={handleOpenPreview}
+                      primaryLabel={
+                        isEdit
+                          ? intl.formatMessage({ id: 'app.updateEvent' })
+                          : intl.formatMessage({ id: 'app.createEvent' })
+                      }
+                      onPrimary={onSubmitMedia}
+                      primaryLeadsOn={false}
+                      isLoading={isEdit ? isUpdatingEvent : isCreatingEvent}
+                      loadingText={
+                        isEdit
+                          ? intl.formatMessage({ id: 'app.updating' })
+                          : intl.formatMessage({ id: 'app.creating' })
+                      }
+                    />
                   </VStack>
                 </CardBody>
               </Card>
@@ -5139,6 +5128,28 @@ function NewEvent({ isEdit = false, eventId = null }) {
         </VStack>
       </ResponsiveModal>
     </StandardPage>
+  );
+}
+
+/**
+ * The form inside the badge context. "Certifier record" sat on nearly every section of every
+ * activity form, so it marked nothing; the wizard states it once under the step bar instead
+ * and SectionHeader leaves it off (2026-11-07). Provided here, around the whole form, so the
+ * form's own markup did not need re-indenting under a new wrapper.
+ */
+function NewEvent(props) {
+  const intl = useIntl();
+  const statedBadges = useMemo(
+    () => [
+      intl.formatMessage({ id: 'events.section.badge.certifierRecord' }),
+      intl.formatMessage({ id: 'events.section.badge.certifierRecordOnly' })
+    ],
+    [intl]
+  );
+  return (
+    <SectionBadgeStatedContext.Provider value={statedBadges}>
+      <NewEventForm {...props} />
+    </SectionBadgeStatedContext.Provider>
   );
 }
 

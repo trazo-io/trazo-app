@@ -276,6 +276,7 @@ describe('Multi-step forms: the two Backs never share a label', () => {
     const newEvent = read(WIZARDS[0].file);
     expect(newEvent).toMatch(/onStepClick=\{handleStepClick\}/);
     expect(newEvent).toMatch(/basicMethods\.handleSubmit\(onSubmitBasic\)\(\)/);
-    expect(newEvent).toMatch(/onClick=\{continueFromDetails\}/);
+    // `onPrimary` since the step footers became WizardActions (2026-11-07).
+    expect(newEvent).toMatch(/on(Click|Primary)=\{continueFromDetails\}/);
   });
 });
