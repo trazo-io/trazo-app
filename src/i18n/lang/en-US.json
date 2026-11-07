@@ -9599,5 +9599,6 @@
   "season.tab.sales": "Sales and handling",
   "season.tab.salesOutstanding": "No sale recorded yet",
   "season.tab.details": "QR and details",
-  "seasonPlan.rowMenu": "More for {name}"
+  "seasonPlan.rowMenu": "More for {name}",
+  "season.publicPage.unpublishedBody": "This season is not published, so a scan opens nothing. Only you can preview it. Publishing is on the Buyer Page."
 }

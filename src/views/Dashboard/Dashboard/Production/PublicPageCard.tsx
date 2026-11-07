@@ -41,8 +41,6 @@ interface Props {
   onCopyBuyerLink: () => void;
   onSetCover: (urls: string[]) => void;
   onClearCover: () => void;
-  /** Stack the QR above the actions (narrow side column) instead of beside them. */
-  narrow?: boolean;
 }
 
 export default function PublicPageCard({
@@ -56,8 +54,7 @@ export default function PublicPageCard({
   onPreview,
   onCopyBuyerLink,
   onSetCover,
-  onClearCover,
-  narrow = false
+  onClearCover
 }: Props) {
   const intl = useIntl();
   const cover = useDisclosure();
@@ -73,8 +70,10 @@ export default function PublicPageCard({
         })}>
         <VStack align="stretch" spacing={4}>
           {/* Live or not, in words. HistoryViewSet refuses `published=True` on an open season,
-              so the way to live is finishing it, and the row says so. */}
-          {isFinished ? (
+              so an open season is never live and the way there is finishing it. A finished
+              season is live only while published: the finish form's publish box can be
+              unticked, and the Buyer page can unpublish later (review of #299). */}
+          {isFinished && isPublished ? (
             <StatusRow
               tone="clear"
               icon={FaCheckCircle}
@@ -89,19 +88,25 @@ export default function PublicPageCard({
               icon={FaLock}
               title={intl.formatMessage({ id: 'production.qr.notLiveTitle' })}>
               <Text fontSize="xs" color="gray.600">
-                {intl.formatMessage({
-                  id: 'season.publicPage.notLiveBody',
-                  defaultMessage:
-                    'The page goes live when you finish the season. Until then only you can preview it.'
-                })}
+                {isFinished
+                  ? intl.formatMessage({
+                      id: 'season.publicPage.unpublishedBody',
+                      defaultMessage:
+                        'This season is not published, so a scan opens nothing. Only you can preview it. Publishing is on the Buyer Page.'
+                    })
+                  : intl.formatMessage({
+                      id: 'season.publicPage.notLiveBody',
+                      defaultMessage:
+                        'The page goes live when you finish the season. Until then only you can preview it.'
+                    })}
               </Text>
             </StatusRow>
           )}
 
           <Stack
-            direction={narrow ? 'column' : { base: 'column', sm: 'row' }}
+            direction={{ base: 'column', smd: 'row' }}
             spacing={4}
-            align={narrow ? 'stretch' : { base: 'stretch', sm: 'center' }}>
+            align={{ base: 'stretch', smd: 'center' }}>
             {qrCode && (
               <Box
                 p={2}
@@ -109,7 +114,7 @@ export default function PublicPageCard({
                 borderWidth="1px"
                 borderColor="gray.200"
                 borderRadius="md"
-                alignSelf={narrow ? 'center' : { base: 'center', sm: 'auto' }}
+                alignSelf={{ base: 'center', smd: 'auto' }}
                 flexShrink={0}>
                 <Image
                   src={qrCode}
@@ -117,15 +122,11 @@ export default function PublicPageCard({
                     id: 'season.publicPage.qrAlt',
                     defaultMessage: 'QR code for this lot'
                   })}
-                  boxSize={narrow ? '140px' : '112px'}
+                  boxSize="112px"
                   // The file sits on S3; until it answers, a QR glyph holds the space instead of a
                   // broken-image box with its alt text.
                   fallback={
-                    <Box
-                      boxSize={narrow ? '140px' : '112px'}
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="center">
+                    <Box boxSize="112px" display="flex" alignItems="center" justifyContent="center">
                       <Icon as={FaQrcode} boxSize={10} color="gray.300" aria-hidden />
                     </Box>
                   }
@@ -134,16 +135,18 @@ export default function PublicPageCard({
             )}
             <VStack align="stretch" spacing={2} flex={1} minW={0}>
               <HStack spacing={2} flexWrap="wrap">
-                <StandardButton
-                  size="sm"
-                  variant="outline"
-                  leftIcon={<Icon as={FaDownload} />}
-                  onClick={onDownloadQr}>
-                  {intl.formatMessage({
-                    id: 'production.qr.download',
-                    defaultMessage: 'Download QR'
-                  })}
-                </StandardButton>
+                {qrCode && (
+                  <StandardButton
+                    size="sm"
+                    variant="outline"
+                    leftIcon={<Icon as={FaDownload} />}
+                    onClick={onDownloadQr}>
+                    {intl.formatMessage({
+                      id: 'production.qr.download',
+                      defaultMessage: 'Download QR'
+                    })}
+                  </StandardButton>
+                )}
                 <StandardButton
                   size="sm"
                   variant="outline"
@@ -162,7 +165,7 @@ export default function PublicPageCard({
                   {intl.formatMessage({ id: 'production.copyBuyerLink.button' })}
                 </StandardButton>
               </HStack>
-              {isFinished && (
+              {isFinished && isPublished && qrCode && (
                 <Text fontSize="xs" color="gray.600">
                   {intl.formatMessage({
                     id: 'season.publicPage.printTip',

@@ -9599,5 +9599,6 @@
   "season.tab.sales": "Ventas y manejo",
   "season.tab.salesOutstanding": "Todavía no hay ventas registradas",
   "season.tab.details": "QR y detalles",
-  "seasonPlan.rowMenu": "Más opciones para {name}"
+  "seasonPlan.rowMenu": "Más opciones para {name}",
+  "season.publicPage.unpublishedBody": "Esta temporada no está publicada, así que al escanear no se abre nada. Solo tú puedes verla. Se publica desde la Página del comprador."
 }

@@ -549,6 +549,9 @@ function ProfileProduction() {
       ? (transparencyApiData as any).timeline_events
       : null) ||
     (completeData?.events?.length ? completeData.events : null) ||
+    // The same legacy fallback as getUnifiedTimelineEvents, so the header count and this list
+    // never disagree (review of #299).
+    (historyData?.events?.length ? historyData.events : null) ||
     [];
 
   // ── HEADER ACTIONS: one primary (2026-11-06) ─────────────────────────────────────
@@ -653,13 +656,13 @@ function ProfileProduction() {
                     { id: historyData.lot_id }
                   )
                 : null,
-              timelineEvents.length
+              rawSeasonEvents.length
                 ? intl.formatMessage(
                     {
                       id: 'season.activities.count',
                       defaultMessage: '{count, plural, one {# activity} other {# activities}}'
                     },
-                    { count: timelineEvents.length }
+                    { count: rawSeasonEvents.length }
                   )
                 : null,
               // formatDateFromTimestamp: start_date is a calendar date stored as midnight UTC.
@@ -761,23 +764,23 @@ function ProfileProduction() {
       </StandardCard>
     ) : null;
 
-  const publicPage = (narrow: boolean) =>
-    historyData?.qr_code ? (
-      <PublicPageCard
-        qrCode={historyData.qr_code}
-        coverImageUrl={historyData.cover_image_url}
-        isFinished={isFinished}
-        isPublished={Boolean(historyData.published)}
-        canWrite={canWrite}
-        isSavingCover={isSavingCover}
-        onDownloadQr={downloadQRCode}
-        onPreview={handleViewPublicPage}
-        onCopyBuyerLink={handleCopyBuyerLink}
-        onSetCover={handleSetCover}
-        onClearCover={handleClearCover}
-        narrow={narrow}
-      />
-    ) : null;
+  // Not gated on qr_code: the cover photo and the preview do not need one, and the card hides
+  // the QR and its download when there is none (review of #299).
+  const publicPage = (
+    <PublicPageCard
+      qrCode={historyData?.qr_code}
+      coverImageUrl={historyData.cover_image_url}
+      isFinished={isFinished}
+      isPublished={Boolean(historyData.published)}
+      canWrite={canWrite}
+      isSavingCover={isSavingCover}
+      onDownloadQr={downloadQRCode}
+      onPreview={handleViewPublicPage}
+      onCopyBuyerLink={handleCopyBuyerLink}
+      onSetCover={handleSetCover}
+      onClearCover={handleClearCover}
+    />
+  );
 
   const details = (
     <SeasonDetailsCard
@@ -889,7 +892,7 @@ function ProfileProduction() {
         )}
         {tabIndex === 2 && (
           <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={{ base: 4, md: 6 }} alignItems="start">
-            {publicPage(false)}
+            {publicPage}
             {details}
           </SimpleGrid>
         )}
