@@ -192,8 +192,9 @@ const CertifierDeadlinesStrip: React.FC<{
       detail: intl.formatMessage({ id: 'deadlines.ospAnnualUpdateNotFiled' }),
       // OUTSTANDING, not overdue (2026-11-07). There is no date on this row: the certifier sets
       // the schedule, as the strip's own disclaimer says. Red means a date we hold has passed;
-      // "not filed" with no due date is the warning tone. The row stays first (pushed first,
-      // and the sort below is stable).
+      // "not filed" with no due date is the warning tone. A row whose date HAS passed (an
+      // expired certificate, a lapsed state registration) now sorts above it; among the rest it
+      // stays first (pushed first, and the sort below is stable).
       urgency: 'soon',
       href: annualUpdateHref
     });
@@ -258,7 +259,8 @@ const CertifierDeadlinesStrip: React.FC<{
   // rather than a reassuring "all clear" banner that trains the farmer to skip this row.
   if (deadlines.length === 0) return null;
 
-  // Overdue first; ties keep insertion order, which puts the § 205.406 filing above the rest.
+  // A passed date first; ties keep insertion order, so the § 205.406 filing (pushed first) leads
+  // the rows that are not overdue.
   deadlines.sort((a, b) => Number(b.urgency === 'overdue') - Number(a.urgency === 'overdue'));
 
   return (
