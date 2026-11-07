@@ -16,7 +16,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { Badge, Box, HStack, Stack, Text, VStack, useToast } from '@chakra-ui/react';
+import { Badge, Box, Flex, HStack, Stack, Text, VStack, useToast } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -101,6 +101,11 @@ interface FarmOption {
   name: string;
   parcels: { id: number; name: string }[];
 }
+
+/** One rule between message rows, keyed on an attribute so it holds whatever each row's props. */
+const NOTE_ROW_RULE = {
+  '& > [data-note-row] + [data-note-row]': { borderTopWidth: '1px', borderTopColor: 'gray.100' }
+};
 
 const FieldNotesInbox = () => {
   const intl = useIntl();
@@ -526,68 +531,86 @@ const FieldNotesInbox = () => {
             </StandardCard>
           )}
 
-        {visibleNotes.map((note) => {
-          const farmId = farmIdFor(note);
-          const parcelId = parcelIdFor(note);
-          const farm = farms.find((f) => String(f.id) === farmId);
-          // The block choice AND the status. The query above asks for pending notes, so the status
-          // half is redundant today and is what holds if this list is ever widened: a "Log this"
-          // offered on a note already spent writes a second record for one message, and
-          // `_resolve_field_note` filters status=PENDING so the server declines the link silently.
-          const ready = Boolean(farmId && parcelId) && note.status === 'pending';
-          // A FARM WITH NO BLOCKS IS A DEAD END, not a pending choice. The block select is
-          // required and correctly so, but on a farm that has none it renders as an open select
-          // holding only its placeholder, under a line telling the supervisor to pick one. There
-          // is nothing to pick and no way to make one from here. MEASURED 2026-10-17 on the first
-          // real crew message, against a farm with zero parcels.
-          const farmHasNoBlocks = Boolean(farm) && (farm?.parcels ?? []).length === 0;
+        {/* ONE CARD, ROWS INSIDE (2026-11-07). Each message was its own card with two selects and
+            the same help sentence under it, ten times a page: 7,717px on a phone. The sentence is
+            said once, here; each row keeps a hidden copy for its disabled button. */}
+        {visibleNotes.length > 0 && (
+          <StandardCard
+            mb={0}
+            title={intl.formatMessage({ id: 'fieldNotes.queue.title' }, { count: notes.length })}
+            subtitle={intl.formatMessage({ id: 'fieldNotes.queue.help' })}>
+            <VStack align="stretch" spacing={0} sx={NOTE_ROW_RULE}>
+              {visibleNotes.map((note) => {
+                const farmId = farmIdFor(note);
+                const parcelId = parcelIdFor(note);
+                const farm = farms.find((f) => String(f.id) === farmId);
+                // The block choice AND the status. The query above asks for pending notes, so the status
+                // half is redundant today and is what holds if this list is ever widened: a "Log this"
+                // offered on a note already spent writes a second record for one message, and
+                // `_resolve_field_note` filters status=PENDING so the server declines the link silently.
+                const ready = Boolean(farmId && parcelId) && note.status === 'pending';
+                // A FARM WITH NO BLOCKS IS A DEAD END, not a pending choice. The block select is
+                // required and correctly so, but on a farm that has none it renders as an open select
+                // holding only its placeholder, under a line telling the supervisor to pick one. There
+                // is nothing to pick and no way to make one from here. MEASURED 2026-10-17 on the first
+                // real crew message, against a farm with zero parcels.
+                const farmHasNoBlocks = Boolean(farm) && (farm?.parcels ?? []).length === 0;
+                // Whether to ASK the farm, decided by the preset and never by the live choice: keyed on
+                // the choice, the select unmounted the instant someone used it, with focus dropped and
+                // no control left naming the farm they picked (review of #310).
+                const asksFarm = farms.length > 1 || !defaultFarmFor(note);
 
-          return (
-            <StandardCard key={note.public_id}>
-              <VStack align="stretch" spacing={3} p={2}>
-                <HStack justify="space-between" align="start" flexWrap="wrap" spacing={2}>
-                  <VStack align="start" spacing={0}>
-                    <Text fontSize="sm" fontWeight="semibold" color="green.700">
-                      {note.sender.display_name ||
-                        intl.formatMessage({ id: 'fieldNotes.unknownSender' })}
-                    </Text>
-                    <Text fontSize="xs" color="gray.600">
-                      {intl.formatMessage(
-                        { id: 'fieldNotes.sentBy' },
-                        {
-                          last4: note.sender.phone_last4,
-                          // The APP's locale, not the browser's. A grower running Trazo in
-                          // Spanish on an English-locale machine got an English timestamp
-                          // inside a Spanish sentence.
-                          when: receivedAtLabel(note.received_at, intl.locale)
-                        }
-                      )}
-                    </Text>
-                  </VStack>
-                  {/* Neutral, because this is a plain fact about the message and not a status. */}
-                  <Badge variant="neutral">
-                    {intl.formatMessage({ id: `fieldNotes.kind.${note.kind}` })}
-                  </Badge>
-                </HStack>
+                return (
+                  <Box key={note.public_id} data-note-row py={4}>
+                    <VStack align="stretch" spacing={3}>
+                      <HStack justify="space-between" align="start" flexWrap="wrap" spacing={2}>
+                        <VStack align="start" spacing={0}>
+                          <Text fontSize="sm" fontWeight="semibold" color="green.700">
+                            {note.sender.display_name ||
+                              intl.formatMessage({ id: 'fieldNotes.unknownSender' })}
+                          </Text>
+                          <Text fontSize="xs" color="gray.600">
+                            {intl.formatMessage(
+                              { id: 'fieldNotes.sentBy' },
+                              {
+                                last4: note.sender.phone_last4,
+                                // The APP's locale, not the browser's. A grower running Trazo in
+                                // Spanish on an English-locale machine got an English timestamp
+                                // inside a Spanish sentence.
+                                when: receivedAtLabel(note.received_at, intl.locale)
+                              }
+                            )}
+                          </Text>
+                        </VStack>
+                        {/* Neutral, because this is a plain fact about the message and not a status. */}
+                        <Badge variant="neutral">
+                          {intl.formatMessage({ id: `fieldNotes.kind.${note.kind}` })}
+                        </Badge>
+                      </HStack>
 
-                {/* Verbatim, quoted, and never an input. These are somebody else's words. */}
-                <Box bg="gray.50" borderWidth="1px" borderColor="gray.200" borderRadius="md" p={3}>
-                  {/*
+                      {/* Verbatim, quoted, and never an input. These are somebody else's words. */}
+                      <Box
+                        bg="gray.50"
+                        borderWidth="1px"
+                        borderColor="gray.200"
+                        borderRadius="md"
+                        p={3}>
+                        {/*
                     THE WORDS OUTRANK EVERYTHING BESIDE THEM. At `sm`/gray.800 they sat at the same
                     weight as the machine-transcript qualifier under them, which is a full sentence
                     and runs the whole width, so the disclaimer read as the louder of the two. The
                     qualifier still sits next to its claim; it is now visibly secondary to it.
                   */}
-                  <Text
-                    fontSize="md"
-                    fontWeight="medium"
-                    color="gray.900"
-                    whiteSpace="pre-wrap"
-                    lineHeight="tall">
-                    {`“${note.words}”`}
-                  </Text>
+                        <Text
+                          fontSize="md"
+                          fontWeight="medium"
+                          color="gray.900"
+                          whiteSpace="pre-wrap"
+                          lineHeight="tall">
+                          {`“${note.words}”`}
+                        </Text>
 
-                  {/*
+                        {/*
                     ONE NOTE BECOMES ONE RECORD, so a message holding two jobs loses one of them.
                     MEASURED 2026-10-19 over the labelled corpus: of six messages describing two
                     activities the extractor flagged none, returning the first at confidence 90
@@ -599,25 +622,25 @@ const FieldNotesInbox = () => {
                     beside the words it is about rather than once per page, which is this
                     project's rule for qualifiers.
                   */}
-                  {note.mentions_multiple_jobs && (
-                    <Badge variant="warning" data-testid="note-multiple-jobs">
-                      {intl.formatMessage({ id: 'fieldNotes.mentionsMultipleJobs' })}
-                    </Badge>
-                  )}
+                        {note.mentions_multiple_jobs && (
+                          <Badge variant="warning" data-testid="note-multiple-jobs">
+                            {intl.formatMessage({ id: 'fieldNotes.mentionsMultipleJobs' })}
+                          </Badge>
+                        )}
 
-                  {/*
+                        {/*
                     A VOICE NOTE'S WORDS ARE A MACHINE'S GUESS, and the surface says so beside them.
                     For typed text the sender wrote the words; here an ASR system did, and the
                     difference decides what the reader should trust. The qualifier sits next to the
                     claim rather than once per page, which is this project's rule for qualifiers.
                   */}
-                  {note.kind === 'voice' && (
-                    <VStack align="stretch" spacing={2} mt={3}>
-                      <Text fontSize="xs" color="gray.600">
-                        {intl.formatMessage({ id: 'fieldNotes.machineTranscript' })}
-                      </Text>
+                        {note.kind === 'voice' && (
+                          <VStack align="stretch" spacing={2} mt={3}>
+                            <Text fontSize="xs" color="gray.600">
+                              {intl.formatMessage({ id: 'fieldNotes.machineTranscript' })}
+                            </Text>
 
-                      {/*
+                            {/*
                         LISTENING IS THE POINT, not a nicety. ASR dropping a negation ("I applied
                         nothing in block 4") is undetectable by anyone who was not the speaker, and on
                         this channel the speaker is never the person confirming. The source is an
@@ -625,185 +648,226 @@ const FieldNotesInbox = () => {
                         Trazo's storage and is deleted at the provider once this note is logged or
                         discarded, which is why the deleted case renders a line instead of a player.
                       */}
-                      {playbackFailed.has(note.public_id) && (
-                        <Text fontSize="xs" color="red.600">
-                          {intl.formatMessage({ id: 'fieldNotes.audioFailed' })}
-                        </Text>
-                      )}
+                            {playbackFailed.has(note.public_id) && (
+                              <Text fontSize="xs" color="red.600">
+                                {intl.formatMessage({ id: 'fieldNotes.audioFailed' })}
+                              </Text>
+                            )}
 
-                      {note.audio_deleted_at ? (
-                        <Text fontSize="xs" color="gray.600">
-                          {intl.formatMessage({ id: 'fieldNotes.audioDeleted' })}
-                        </Text>
-                      ) : (
-                        <audio
-                          controls
-                          preload="none"
-                          src={fieldNoteAudioUrl(note.public_id)}
-                          style={{ width: '100%' }}
-                          /*
+                            {note.audio_deleted_at ? (
+                              <Text fontSize="xs" color="gray.600">
+                                {intl.formatMessage({ id: 'fieldNotes.audioDeleted' })}
+                              </Text>
+                            ) : (
+                              <audio
+                                controls
+                                preload="none"
+                                src={fieldNoteAudioUrl(note.public_id)}
+                                style={{ width: '100%' }}
+                                /*
                             A failed load is SAID, not left as a player that does nothing when
                             pressed. Everything that can go wrong here goes wrong invisibly: the
                             recording was deleted at the provider, the CSP blocks the origin, the
                             cookie did not travel. The element's fallback content only covers a
                             browser with no audio support, which is the one case that will not happen.
                           */
-                          onError={() =>
-                            setPlaybackFailed((prev) => new Set(prev).add(note.public_id))
-                          }>
-                          {intl.formatMessage({ id: 'fieldNotes.audioUnsupported' })}
-                        </audio>
-                      )}
-                    </VStack>
-                  )}
-                </Box>
+                                onError={() =>
+                                  setPlaybackFailed((prev) => new Set(prev).add(note.public_id))
+                                }>
+                                {intl.formatMessage({ id: 'fieldNotes.audioUnsupported' })}
+                              </audio>
+                            )}
+                          </VStack>
+                        )}
+                      </Box>
 
-                {/*
+                      {/*
                   LABELLED, not placeholder-labelled. Both selects carried their question only as
                   the empty option, so the moment a farm was chosen the row became two unlabelled
                   dropdowns reading "Calapooia Bend Farm" and "Choose the block", and which of the
                   two was still outstanding had to be inferred. `required` is honest here: the
                   server refuses the link without a parcel.
                 */}
-                <Stack direction={{ base: 'column', smd: 'row' }} spacing={3}>
-                  <StandardField
-                    label={intl.formatMessage({ id: 'fieldNotes.farmLabel' })}
-                    required
-                    flex="1"
-                    minW={0}>
-                    <StandardSelect
-                      placeholder={intl.formatMessage({ id: 'fieldNotes.chooseFarm' })}
-                      value={farmId ?? ''}
-                      onChange={(event) =>
-                        setChoice((prev) => ({
-                          ...prev,
-                          // The parcel is cleared with the farm: a lot from the previous farm would
-                          // be a record filed against a block on a different property.
-                          [note.public_id]: { farmId: event.target.value, parcelId: undefined }
-                        }))
-                      }>
-                      {farms.map((f) => (
-                        <option key={f.id} value={f.id}>
-                          {f.name}
-                        </option>
-                      ))}
-                    </StandardSelect>
-                  </StandardField>
+                      {!ready && (
+                        <VStack align="start" spacing={1}>
+                          <Text
+                            id={`why-${note.public_id}`}
+                            fontSize="xs"
+                            color="gray.700"
+                            // The general reason is said once at the top of the card; it stays here for
+                            // the button's aria-describedby. A farm with no blocks is specific: shown.
+                            srOnly={farmHasNoBlocks ? undefined : true}>
+                            {farmHasNoBlocks
+                              ? intl.formatMessage(
+                                  { id: 'fieldNotes.farmHasNoBlocks' },
+                                  { farm: farm?.name ?? '' }
+                                )
+                              : intl.formatMessage({ id: 'fieldNotes.pickTheBlockFirst' })}
+                          </Text>
+                          {farmHasNoBlocks && (
+                            <StandardButton
+                              size="sm"
+                              variant="ghost"
+                              onClick={() =>
+                                navigate(`/admin/dashboard/farm/${farmId}/parcel/add`)
+                              }>
+                              {intl.formatMessage({ id: 'fieldNotes.addABlock' })}
+                            </StandardButton>
+                          )}
+                        </VStack>
+                      )}
+                      {/* Parcel and actions on one line from `smd` up, aligned to the select's bottom edge:
+                          a message was four lines (label, select, then the buttons) before. */}
+                      <Flex
+                        direction={{ base: 'column', smd: 'row' }}
+                        align={{ base: 'stretch', smd: 'flex-end' }}
+                        gap={3}>
+                        <Stack
+                          direction={{ base: 'column', smd: 'row' }}
+                          spacing={3}
+                          // Two selects share the line; a lone parcel select keeps a readable width
+                          // with the buttons right beside it.
+                          flex={{
+                            base: 'none',
+                            smd: asksFarm ? '1' : '0 1 360px'
+                          }}
+                          minW={0}>
+                          {/* One farm, already chosen (farmIdFor): nothing to pick, so no select. It
+                        stays when the farm is NOT chosen, e.g. a note naming a farm this person
+                        cannot see, or nobody could pick one. */}
+                          {asksFarm && (
+                            <StandardField
+                              label={intl.formatMessage({ id: 'fieldNotes.farmLabel' })}
+                              required
+                              flex="1"
+                              minW={0}>
+                              <StandardSelect
+                                placeholder={intl.formatMessage({
+                                  id: 'fieldNotes.chooseFarm'
+                                })}
+                                value={farmId ?? ''}
+                                onChange={(event) =>
+                                  setChoice((prev) => ({
+                                    ...prev,
+                                    // The parcel is cleared with the farm: a lot from the previous farm would
+                                    // be a record filed against a block on a different property.
+                                    [note.public_id]: {
+                                      farmId: event.target.value,
+                                      parcelId: undefined
+                                    }
+                                  }))
+                                }>
+                                {farms.map((f) => (
+                                  <option key={f.id} value={f.id}>
+                                    {f.name}
+                                  </option>
+                                ))}
+                              </StandardSelect>
+                            </StandardField>
+                          )}
 
-                  <StandardField
-                    label={intl.formatMessage({ id: 'fieldNotes.parcelLabel' })}
-                    required
-                    flex="1"
-                    minW={0}>
-                    <StandardSelect
-                      placeholder={intl.formatMessage({ id: 'fieldNotes.chooseParcel' })}
-                      value={parcelId ?? ''}
-                      isDisabled={!farm || farmHasNoBlocks}
-                      onChange={(event) =>
-                        setChoice((prev) => ({
-                          ...prev,
-                          [note.public_id]: { farmId, parcelId: event.target.value }
-                        }))
-                      }>
-                      {(farm?.parcels ?? []).map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name}
-                        </option>
-                      ))}
-                    </StandardSelect>
-                  </StandardField>
-                </Stack>
+                          <StandardField
+                            label={intl.formatMessage({ id: 'fieldNotes.parcelLabel' })}
+                            required
+                            flex="1"
+                            minW={0}>
+                            <StandardSelect
+                              placeholder={intl.formatMessage({
+                                id: 'fieldNotes.chooseParcel'
+                              })}
+                              value={parcelId ?? ''}
+                              isDisabled={!farm || farmHasNoBlocks}
+                              onChange={(event) =>
+                                setChoice((prev) => ({
+                                  ...prev,
+                                  [note.public_id]: { farmId, parcelId: event.target.value }
+                                }))
+                              }>
+                              {(farm?.parcels ?? []).map((p) => (
+                                <option key={p.id} value={p.id}>
+                                  {p.name}
+                                </option>
+                              ))}
+                            </StandardSelect>
+                          </StandardField>
+                        </Stack>
 
-                {/*
-                  WHY THE BUTTON IS DEAD, BEFORE THE BUTTON. This line used to sit UNDER the two
-                  buttons, so the reading order was: a greyed "Log this", then hunt below it for the
-                  reason. It is the same sentence; it is now read before the control it explains and
-                  is named by `aria-describedby`, which is the only way a screen-reader user gets it
-                  at all (a disabled button announces no reason of its own).
-                */}
-                {!ready && (
-                  <VStack align="start" spacing={1}>
-                    <Text id={`why-${note.public_id}`} fontSize="xs" color="gray.700">
-                      {farmHasNoBlocks
-                        ? intl.formatMessage(
-                            { id: 'fieldNotes.farmHasNoBlocks' },
-                            { farm: farm?.name ?? '' }
-                          )
-                        : intl.formatMessage({ id: 'fieldNotes.pickTheBlockFirst' })}
-                    </Text>
-                    {farmHasNoBlocks && (
-                      <StandardButton
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/add`)}>
-                        {intl.formatMessage({ id: 'fieldNotes.addABlock' })}
-                      </StandardButton>
-                    )}
-                  </VStack>
-                )}
+                        {/*
+                    WHY THE BUTTON IS DEAD, BEFORE THE BUTTON. This line used to sit UNDER the two
+                    buttons, so the reading order was: a greyed "Log this", then hunt below it for the
+                    reason. It is the same sentence; it is now read before the control it explains and
+                    is named by `aria-describedby`, which is the only way a screen-reader user gets it
+                    at all (a disabled button announces no reason of its own).
+                  */}
+                        <Stack direction={{ base: 'column', smd: 'row' }} spacing={2}>
+                          {note.suggested_route === 'application' && (
+                            <StandardButton
+                              size="sm"
+                              isDisabled={!ready}
+                              aria-describedby={ready ? undefined : `why-${note.public_id}`}
+                              onClick={() => openWizard(note, true)}>
+                              {intl.formatMessage({ id: 'fieldNotes.logAsApplication' })}
+                            </StandardButton>
+                          )}
+                          <StandardButton
+                            size="sm"
+                            variant={note.suggested_route === 'application' ? 'outline' : undefined}
+                            isDisabled={!ready}
+                            aria-describedby={ready ? undefined : `why-${note.public_id}`}
+                            onClick={() => openWizard(note)}>
+                            {intl.formatMessage({ id: 'fieldNotes.logThis' })}
+                          </StandardButton>
+                          <StandardButton
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setDiscardFor(discardFor === note.public_id ? null : note.public_id);
+                              setDiscardReason('');
+                            }}>
+                            {intl.formatMessage({ id: 'fieldNotes.discard' })}
+                          </StandardButton>
+                        </Stack>
+                      </Flex>
 
-                <Stack direction={{ base: 'column', smd: 'row' }} spacing={2}>
-                  {note.suggested_route === 'application' && (
-                    <StandardButton
-                      size="sm"
-                      isDisabled={!ready}
-                      aria-describedby={ready ? undefined : `why-${note.public_id}`}
-                      onClick={() => openWizard(note, true)}>
-                      {intl.formatMessage({ id: 'fieldNotes.logAsApplication' })}
-                    </StandardButton>
-                  )}
-                  <StandardButton
-                    size="sm"
-                    variant={note.suggested_route === 'application' ? 'outline' : undefined}
-                    isDisabled={!ready}
-                    aria-describedby={ready ? undefined : `why-${note.public_id}`}
-                    onClick={() => openWizard(note)}>
-                    {intl.formatMessage({ id: 'fieldNotes.logThis' })}
-                  </StandardButton>
-                  <StandardButton
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      setDiscardFor(discardFor === note.public_id ? null : note.public_id);
-                      setDiscardReason('');
-                    }}>
-                    {intl.formatMessage({ id: 'fieldNotes.discard' })}
-                  </StandardButton>
-                </Stack>
-
-                {discardFor === note.public_id && (
-                  <VStack align="stretch" spacing={2}>
-                    <Text fontSize="xs" color="gray.700">
-                      {intl.formatMessage({ id: 'fieldNotes.discardKeepsIt' })}
-                    </Text>
-                    <StandardTextarea
-                      rows={2}
-                      // StandardTextarea defaults to 120px, which is a lot of box for one optional
-                      // line of reason inside an already-open panel.
-                      minH="80px"
-                      value={discardReason}
-                      placeholder={intl.formatMessage({ id: 'fieldNotes.discardReason' })}
-                      aria-label={intl.formatMessage({ id: 'fieldNotes.discardReason' })}
-                      onChange={(event) => setDiscardReason(event.target.value)}
-                    />
-                    <HStack spacing={2} flexWrap="wrap">
-                      <StandardButton
-                        size="xs"
-                        variant="outline"
-                        isLoading={isDiscarding}
-                        onClick={() => confirmDiscard(note)}>
-                        {intl.formatMessage({ id: 'fieldNotes.discardConfirm' })}
-                      </StandardButton>
-                      <StandardButton size="xs" variant="ghost" onClick={() => setDiscardFor(null)}>
-                        {intl.formatMessage({ id: 'app.cancel' })}
-                      </StandardButton>
-                    </HStack>
-                  </VStack>
-                )}
-              </VStack>
-            </StandardCard>
-          );
-        })}
+                      {discardFor === note.public_id && (
+                        <VStack align="stretch" spacing={2}>
+                          <Text fontSize="xs" color="gray.700">
+                            {intl.formatMessage({ id: 'fieldNotes.discardKeepsIt' })}
+                          </Text>
+                          <StandardTextarea
+                            rows={2}
+                            // StandardTextarea defaults to 120px, which is a lot of box for one optional
+                            // line of reason inside an already-open panel.
+                            minH="80px"
+                            value={discardReason}
+                            placeholder={intl.formatMessage({ id: 'fieldNotes.discardReason' })}
+                            aria-label={intl.formatMessage({ id: 'fieldNotes.discardReason' })}
+                            onChange={(event) => setDiscardReason(event.target.value)}
+                          />
+                          <HStack spacing={2} flexWrap="wrap">
+                            <StandardButton
+                              size="xs"
+                              variant="outline"
+                              isLoading={isDiscarding}
+                              onClick={() => confirmDiscard(note)}>
+                              {intl.formatMessage({ id: 'fieldNotes.discardConfirm' })}
+                            </StandardButton>
+                            <StandardButton
+                              size="xs"
+                              variant="ghost"
+                              onClick={() => setDiscardFor(null)}>
+                              {intl.formatMessage({ id: 'app.cancel' })}
+                            </StandardButton>
+                          </HStack>
+                        </VStack>
+                      )}
+                    </VStack>
+                  </Box>
+                );
+              })}
+            </VStack>
+          </StandardCard>
+        )}
 
         {/*
           OUTSIDE the cards, so it is not repeated per note, and it hides itself when the queue fits
@@ -863,12 +927,7 @@ const FieldNotesInbox = () => {
               </VStack>
 
               {visibleRefused.map((note) => (
-                <Box
-                  key={note.public_id}
-                  borderWidth="1px"
-                  borderColor="gray.200"
-                  borderRadius="md"
-                  p={3}>
+                <Box key={note.public_id} py={3} borderTopWidth="1px" borderTopColor="gray.100">
                   <VStack align="stretch" spacing={2}>
                     <HStack justify="space-between" align="start" flexWrap="wrap" spacing={2}>
                       <Text fontSize="xs" color="gray.600">

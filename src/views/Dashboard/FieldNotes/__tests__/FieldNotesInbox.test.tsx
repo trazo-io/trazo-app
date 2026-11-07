@@ -255,9 +255,30 @@ describe('the field notes inbox', () => {
   it('labels both selects, so which one is outstanding does not have to be inferred', () => {
     // The question used to live only in the empty option, so choosing a farm left two unlabelled
     // dropdowns: "Home Ranch" and "Choose the block".
-    renderInbox(TWO_PARCELS);
+    renderInbox([
+      ...TWO_PARCELS,
+      { id: 8, name: 'North Ranch', parcels: [{ id: 50, name: 'N1' }] }
+    ]);
     expect(screen.getByLabelText(/^Farm/)).toBeTruthy();
     expect(screen.getByLabelText(/^Parcel/)).toBeTruthy();
+  });
+
+  it('asks no farm on a one-farm account, where it is already chosen (2026-11-07)', () => {
+    renderInbox(TWO_PARCELS);
+    expect(screen.queryByLabelText(/^Farm/)).toBeNull();
+    expect(screen.getByLabelText(/^Parcel/)).toBeTruthy();
+  });
+
+  it('still asks the farm when the note names one this person cannot see', () => {
+    // The only farm is not preselected (defaultFarmFor), so hiding the select would strand it.
+    renderInbox([{ id: 99, name: 'Other Farm', parcels: [{ id: 1, name: 'A' }] }]);
+    expect(screen.getByLabelText(/^Farm/)).toBeTruthy();
+  });
+
+  it('keeps that Farm select after it is used (review of #310)', () => {
+    renderInbox([{ id: 99, name: 'Other Farm', parcels: [{ id: 1, name: 'A' }] }]);
+    fireEvent.change(screen.getByLabelText(/^Farm/), { target: { value: '99' } });
+    expect(screen.getByLabelText(/^Farm/)).toHaveValue('99');
   });
 
   it('stamps the arrival to the minute, not the second', () => {
@@ -281,8 +302,7 @@ describe('the field notes inbox', () => {
 
   it('becomes loggable once a block is chosen', async () => {
     renderInbox(TWO_PARCELS);
-    const selects = screen.getAllByRole('combobox');
-    fireEvent.change(selects[1], { target: { value: '43' } });
+    fireEvent.change(screen.getByLabelText(/^Parcel/), { target: { value: '43' } });
     const logThis = screen.getByRole('button', { name: /Log this/i });
     await waitFor(() => expect(logThis.hasAttribute('disabled')).toBe(false));
 
