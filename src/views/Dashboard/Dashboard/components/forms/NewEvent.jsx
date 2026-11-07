@@ -9,7 +9,6 @@ import {
   VStack,
   HStack,
   Stack,
-  Badge,
   Progress,
   Alert,
   AlertIcon,
@@ -21,7 +20,6 @@ import {
   FaEdit,
   FaChevronLeft,
   FaChevronRight,
-  FaCheckCircle,
   FaSeedling,
   FaBusinessTime,
   FaBug,
@@ -52,6 +50,7 @@ import {
   StandardField,
   StandardInput,
   StandardStepper,
+  SectionBadgeStatedContext,
   StandardPage,
   SectionBox,
   SectionHeader, // D9 — both were built for this screen and had never been mounted anywhere.
@@ -102,6 +101,7 @@ import { EventPreviewModal } from 'components/Events/EventPreviewModal';
 import { PhotoRecommendationsBox } from 'components/Events/PhotoRecommendationsBox';
 import { ApplicationGroupNotice } from 'components/Events/ApplicationGroupNotice';
 import { AlsoAppliedTo, PerParcelCards } from 'components/Events/MultiParcel';
+import ActivityReview from 'components/Events/ActivityReview';
 import { eventTypeMayGoMulti, multiParcelRulesFor } from 'config/events/multiParcel';
 import { useDefaultUnits } from 'hooks/useMeasurementSystem';
 import { useGetParcelGeometryQuery } from 'store/api/parcelGeometryApi';
@@ -269,6 +269,8 @@ const useWizardSteps = (intl) =>
     () => [
       {
         title: intl.formatMessage({ id: 'events.wizard.step.basic' }),
+        // Four steps share a phone's width in the step bar; "Activity and date" would wrap.
+        shortTitle: intl.formatMessage({ id: 'events.wizard.step.basicShort' }),
         description: intl.formatMessage({ id: 'events.wizard.step.basicHint' })
       },
       {
@@ -278,6 +280,13 @@ const useWizardSteps = (intl) =>
       {
         title: intl.formatMessage({ id: 'events.wizard.step.photos' }),
         description: intl.formatMessage({ id: 'events.wizard.step.photosHint' })
+      },
+      {
+        // The read-through before Save (2026-11-07). The wizard used to end on the photo
+        // upload, so the last screen before a record went into the certifier file was a
+        // dropzone. Its own step, so the last screen holds only the record and Save.
+        title: intl.formatMessage({ id: 'events.wizard.step.review' }),
+        description: intl.formatMessage({ id: 'events.wizard.step.reviewHint' })
       }
     ],
     [intl]
@@ -372,6 +381,14 @@ function NewEvent({ isEdit = false, eventId = null }) {
   const intl = useIntl();
   const toast = useToast();
   const steps = useWizardSteps(intl);
+  // The badge every section carried; stated once under the step bar instead.
+  const statedBadges = useMemo(
+    () => [
+      intl.formatMessage({ id: 'events.section.badge.certifierRecord' }),
+      intl.formatMessage({ id: 'events.section.badge.certifierRecordOnly' })
+    ],
+    [intl]
+  );
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -427,7 +444,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
   const typePresetFromPlan = !isEdit && planItemIdFromUrl != null && eventTypeFromUrl != null;
 
   // Theme colors
-  const textColor = useColorModeValue('gray.700', 'white');
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
 
@@ -3547,6 +3563,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
       basicMethods.handleSubmit(onSubmitBasic)();
     } else if (activeStep === 1) {
       continueFromDetails();
+    } else if (activeStep === 2) {
+      // Photos are optional, so nothing on that step can stop the farmer moving on.
+      setActiveStep(3);
     }
   };
 
@@ -3571,7 +3590,8 @@ function NewEvent({ isEdit = false, eventId = null }) {
         { id: 'activities.logTitle' },
         { verb: intl.formatMessage({ id: `activities.verb.${activeVerbKey}` }) }
       )
-    : intl.formatMessage({ id: 'app.createNewEvent' }) || 'Add Event';
+    : // Same words as the button that opened this page and the breadcrumb above it.
+      intl.formatMessage({ id: 'activities.log' });
 
   // The locked-record notice replaces the form entirely rather than sitting above it. Leaving
   // an editable form under a "this cannot be edited" banner invites the farmer to fill it in
@@ -3709,12 +3729,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
             : intl.formatMessage({ id: 'app.editEvent' })
           : createPageTitle
       }
-      description={
-        isEdit
-          ? intl.formatMessage({ id: 'activities.editDescription' })
-          : intl.formatMessage({ id: 'app.createNewEventDescription' }) ||
-            'Complete the form to add a new event to your parcel history'
-      }
+      // Create needs no description: the title says what the page does. "Complete the form
+      // below to add a new event to your parcel history" restated it in the backend's word.
+      description={isEdit ? intl.formatMessage({ id: 'activities.editDescription' }) : undefined}
       showBackButton
       // The sanctioned narrow-page override (see frontend.md): this is a single-column
       // form now, and a form field stretched across the full 8xl is harder to scan, not
@@ -3723,24 +3740,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
       // Net effect at 1440px: the form goes from 591px to 1024px.
       contentMaxW="5xl"
       onBack={handleBack}
-      backLabel={backToParcelLabel}
-      rightAction={
-        <Badge variant="neutral" px={3} py={1} borderRadius="full">
-          <HStack spacing={1}>
-            <Icon as={FaTasks} boxSize={3} />
-            <Text fontSize="sm">
-              {/* The key is `osp.*` only because the OSP wizard needed it first; it is a
-                  generic "Paso {current} de {total}" and both locales already have it.
-                  Left hardcoded, this badge stayed English beside a fully translated
-                  form. */}
-              {intl.formatMessage(
-                { id: 'osp.wizard.stepCount' },
-                { current: activeStep + 1, total: steps.length }
-              )}
-            </Text>
-          </HStack>
-        </Badge>
-      }>
+      backLabel={backToParcelLabel}>
       {isRepeat && existingEvent && (
         <StandardAlert
           status="info"
@@ -3802,32 +3802,39 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
       {/* Main Content - Show only when not loading or when creating */}
       {(!(isEdit || isRepeat) || !isLoadingEvent) && !eventError && (
-        <VStack spacing={{ base: 6, md: 8 }} align="stretch">
-          {/* D9 — offered only on step 0: restoring mid-wizard would replace the form under
+        <SectionBadgeStatedContext.Provider value={statedBadges}>
+          <VStack spacing={{ base: 5, md: 6 }} align="stretch">
+            {/* D9 — offered only on step 0: restoring mid-wizard would replace the form under
                 the farmer's hands while they are typing in it. */}
-          {activeStep === 0 && (
-            <DraftRestorationAlert
-              hasDraft={hasDraft}
-              lastSaved={draftSavedAt}
-              onRestore={handleRestoreDraft}
-              onDiscard={discardDraft}
-            />
-          )}
+            {activeStep === 0 && (
+              <DraftRestorationAlert
+                hasDraft={hasDraft}
+                lastSaved={draftSavedAt}
+                onRestore={handleRestoreDraft}
+                onDiscard={discardDraft}
+              />
+            )}
 
-          {/* Editing one record of an application logged on several parcels: the change is
+            {/* Editing one record of an application logged on several parcels: the change is
               this parcel's only, and the form says so before the first field. */}
-          {isEdit && (
-            <ApplicationGroupNotice
-              farmId={farmId}
-              eventId={eventId}
-              eventType={eventTypeFromUrl}
-              variant="edit"
-            />
-          )}
+            {isEdit && (
+              <ApplicationGroupNotice
+                farmId={farmId}
+                eventId={eventId}
+                eventType={eventTypeFromUrl}
+                variant="edit"
+              />
+            )}
 
-          {/* Progress Stepper - Using StandardStepper */}
-          <VStack spacing={2} align="stretch">
+            {/* Where am I, in one slim row (2026-11-07). The stepper used to be its own card
+              (~170px of numbered circles and descriptions) over every step, with a "Step 1 of
+              3" chip beside the title saying the same thing a second time. */}
             <StandardStepper
+              variant="bar"
+              progressLabel={intl.formatMessage(
+                { id: 'osp.wizard.stepCount' },
+                { current: activeStep + 1, total: steps.length }
+              )}
               steps={steps}
               currentStep={activeStep}
               completedSteps={Array.from({ length: activeStep }, (_, i) => i)}
@@ -3835,13 +3842,28 @@ function NewEvent({ isEdit = false, eventId = null }) {
               furthestStep={furthestStep}
               onStepClick={handleStepClick}
             />
-            <Flex justify="flex-end">
+
+            {/* Stated once for the whole form, so the sections need not each repeat it; the
+              draft status shares its row instead of taking one of its own. */}
+            <Flex
+              direction={{ base: 'column', md: 'row' }}
+              justify="space-between"
+              align={{ base: 'flex-end', md: 'baseline' }}
+              gap={{ base: 1, md: 3 }}
+              mt={-2}>
+              <Text fontSize="sm" color="gray.600" alignSelf="stretch">
+                {activeStep < 2 &&
+                  intl.formatMessage({
+                    id: 'events.wizard.recordLegend',
+                    defaultMessage:
+                      'Everything you log here goes on your certifier record. A section marked “buyer page” also shows on the lot’s public page.'
+                  })}
+              </Text>
               <AutoSaveStatus lastSaved={draftLastSaved} isSaving={isSavingDraft} />
             </Flex>
-          </VStack>
 
-          {/* Step Content */}
-          {/* ONE column. The carbon sidebar that used to sit here took 42% of the content
+            {/* Step Content */}
+            {/* ONE column. The carbon sidebar that used to sit here took 42% of the content
               row at 1440px (450px of 1073px, MEASURED), leaving the form 591px — and on
               step 0 it rendered an empty placeholder card reading "Enter event details to
               see carbon impact" beside the verb grid, which is the only control on that
@@ -3849,28 +3871,28 @@ function NewEvent({ isEdit = false, eventId = null }) {
               this one echoed what they had already typed. The carbon figure now appears
               where it is actionable — inline under the fuel fields that drive it — and at
               review, where EventPreviewModal and EventDetailsModal already showed it. */}
-          <Box>
-            {activeStep === 0 && (
-              <Card boxShadow="lg" bg={bgColor} borderRadius="xl">
-                <CardHeader pb={2} px={{ base: 0, md: 6 }}>
-                  {/* `tabIndex={-1}` + ref: programmatic focus target for focusStepHeading. */}
-                  <Text
-                    ref={stepHeadingRef}
-                    tabIndex={-1}
-                    fontSize="lg"
-                    fontWeight="semibold"
-                    color={textColor}>
-                    {/* Not "Basic Event Info". This card carries the activity identity and
+            <Box>
+              {activeStep === 0 && (
+                <Card boxShadow="lg" bg={bgColor} borderRadius="xl">
+                  <CardHeader p={0}>
+                    {/* `tabIndex={-1}` + ref: programmatic focus target for focusStepHeading. */}
+                    <Text
+                      ref={stepHeadingRef}
+                      tabIndex={-1}
+                      // The step bar above names the step; this stays as the focus target a
+                      // step change moves to, for screen readers, without a second visible title.
+                      srOnly>
+                      {/* Not "Basic Event Info". This card carries the activity identity and
                         the date/operator pair; "event" is the backend model's word, and the
                         farmer chose an ACTIVITY to get here. */}
-                    {intl.formatMessage({ id: 'events.wizard.step.basic' })}
-                  </Text>
-                </CardHeader>
-                <CardBody pt={4} pb={6} px={{ base: 0, md: 6 }}>
-                  <FormProvider {...basicMethods}>
-                    <form onSubmit={basicMethods.handleSubmit(onSubmitBasic)} noValidate>
-                      <VStack spacing={{ base: 5, md: 6 }} align="stretch">
-                        {/* WHICH MESSAGE THIS RECORD ANSWERS, on the step the operator lands on.
+                      {intl.formatMessage({ id: 'events.wizard.step.basic' })}
+                    </Text>
+                  </CardHeader>
+                  <CardBody pt={4} pb={6} px={{ base: 0, md: 6 }}>
+                    <FormProvider {...basicMethods}>
+                      <form onSubmit={basicMethods.handleSubmit(onSubmitBasic)} noValidate>
+                        <VStack spacing={{ base: 5, md: 6 }} align="stretch">
+                          {/* WHICH MESSAGE THIS RECORD ANSWERS, on the step the operator lands on.
                             MEASURED in a browser 2026-09-26: arriving from the inbox showed this
                             step with nothing about the note on it, because the panel that holds the
                             seeded text only mounts on the NEXT step. The supervisor had clicked
@@ -3878,87 +3900,89 @@ function NewEvent({ isEdit = false, eventId = null }) {
                             a date with no sign of which message, which is how somebody answers for
                             the wrong one. The words are quoted, never an input: they are a record of
                             what a person reported. */}
-                        {/* Neutral, like the voice banner below and for its reason: a PENDING note
+                          {/* Neutral, like the voice banner below and for its reason: a PENDING note
                             is what someone reported, not yet anyone's record, so it must not wear
                             the green of an applied state (2026-11-04). */}
-                        {activeFieldNote && activeFieldNote.status === 'pending' && (
-                          <Box
-                            bg="white"
-                            borderWidth="1px"
-                            borderColor="gray.300"
-                            borderRadius="md"
-                            p={3}>
-                            <Text fontSize="sm" fontWeight="semibold" color="gray.800">
-                              {intl.formatMessage(
-                                { id: 'events.fieldNote.loggingFrom' },
-                                {
-                                  who:
-                                    activeFieldNote.sender?.display_name ||
-                                    intl.formatMessage({ id: 'fieldNotes.unknownSender' })
-                                }
-                              )}
-                            </Text>
-                            <Text fontSize="sm" color="gray.800" whiteSpace="pre-wrap" pt={1}>
-                              {`\u201C${activeFieldNote.words}\u201D`}
-                            </Text>
-                            <Text fontSize="xs" color="gray.700" pt={2}>
-                              {intl.formatMessage({ id: 'events.fieldNote.theirWordsYourRecord' })}
-                            </Text>
-                          </Box>
-                        )}
-                        {/* Event Type Selection Section — hidden when the verb
+                          {activeFieldNote && activeFieldNote.status === 'pending' && (
+                            <Box
+                              bg="white"
+                              borderWidth="1px"
+                              borderColor="gray.300"
+                              borderRadius="md"
+                              p={3}>
+                              <Text fontSize="sm" fontWeight="semibold" color="gray.800">
+                                {intl.formatMessage(
+                                  { id: 'events.fieldNote.loggingFrom' },
+                                  {
+                                    who:
+                                      activeFieldNote.sender?.display_name ||
+                                      intl.formatMessage({ id: 'fieldNotes.unknownSender' })
+                                  }
+                                )}
+                              </Text>
+                              <Text fontSize="sm" color="gray.800" whiteSpace="pre-wrap" pt={1}>
+                                {`\u201C${activeFieldNote.words}\u201D`}
+                              </Text>
+                              <Text fontSize="xs" color="gray.700" pt={2}>
+                                {intl.formatMessage({
+                                  id: 'events.fieldNote.theirWordsYourRecord'
+                                })}
+                              </Text>
+                            </Box>
+                          )}
+                          {/* Event Type Selection Section — hidden when the verb
                               entry already answered it — a verb tile, or a season-plan
                               item, which names the practice more precisely than any tile. */}
-                        {!typeChooserAnswered && (
-                          <SectionBox>
-                            {/* Edit states the activity; create asks for it. The badge is
+                          {!typeChooserAnswered && (
+                            <SectionBox>
+                              {/* Edit states the activity; create asks for it. The badge is
                                   "Required" only on the ASK — a locked restatement has
                                   nothing to fill in, and a Required chip over a control the
                                   farmer cannot touch is the same broken promise as the
                                   "Select the type…" instruction that used to sit here. */}
-                            <SectionHeader
-                              icon={FaTasks}
-                              title={
-                                isEdit
-                                  ? intl.formatMessage({
-                                      id: 'activities.editActivityTitle',
-                                      defaultMessage: 'Activity'
-                                    })
-                                  : intl.formatMessage({
-                                      id: 'activities.pickVerb',
-                                      defaultMessage: 'What did you do?'
-                                    })
-                              }
-                              badge={
-                                isEdit
-                                  ? undefined
-                                  : intl.formatMessage({ id: 'events.section.badge.required' })
-                              }
-                              description={
-                                isEdit
-                                  ? intl.formatMessage({
-                                      id: 'activities.editActivityHint',
-                                      defaultMessage: 'What this record documents'
-                                    })
-                                  : intl.formatMessage({
-                                      id: 'activities.pickVerbHint',
-                                      defaultMessage: 'Pick the activity you want to log'
-                                    })
-                              }
-                            />
-                            {isEdit && (
-                              /* `info`, not `warning`. Nothing is wrong and there is nothing
+                              <SectionHeader
+                                icon={FaTasks}
+                                title={
+                                  isEdit
+                                    ? intl.formatMessage({
+                                        id: 'activities.editActivityTitle',
+                                        defaultMessage: 'Activity'
+                                      })
+                                    : intl.formatMessage({
+                                        id: 'activities.pickVerb',
+                                        defaultMessage: 'What did you do?'
+                                      })
+                                }
+                                badge={
+                                  isEdit
+                                    ? undefined
+                                    : intl.formatMessage({ id: 'events.section.badge.required' })
+                                }
+                                description={
+                                  isEdit
+                                    ? intl.formatMessage({
+                                        id: 'activities.editActivityHint',
+                                        defaultMessage: 'What this record documents'
+                                      })
+                                    : intl.formatMessage({
+                                        id: 'activities.pickVerbHint',
+                                        defaultMessage: 'Pick the activity you want to log'
+                                      })
+                                }
+                              />
+                              {isEdit && (
+                                /* `info`, not `warning`. Nothing is wrong and there is nothing
                                  to fix — this is the one Chakra convention blue still carries
                                  (frontend.md). A warning fill next to a control the farmer
                                  cannot act on reads as an error they caused. */
-                              <Alert status="info" mb={4}>
-                                <AlertIcon />
-                                <Text fontSize="sm">
-                                  {intl.formatMessage({ id: 'app.eventTypeCannotBeChanged' })}
-                                </Text>
-                              </Alert>
-                            )}
-                            {/* WS-4b: create mode shows the SHARED farmer-verb grid
+                                <Alert status="info" mb={4}>
+                                  <AlertIcon />
+                                  <Text fontSize="sm">
+                                    {intl.formatMessage({ id: 'app.eventTypeCannotBeChanged' })}
+                                  </Text>
+                                </Alert>
+                              )}
+                              {/* WS-4b: create mode shows the SHARED farmer-verb grid
                                   (components/Events/VerbPickerGrid — same tiles as the
                                   Activities page and parcel Add Event modal).
 
@@ -3970,436 +3994,432 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                   — "Production" / "Other Farm Activities" are backend
                                   categories, hardcoded in English in `eventTypeConfig`, and
                                   sixteen distinct practices share the first of them. */}
-                            {!isEdit ? (
-                              <VerbPickerGrid
-                                onSelect={handleVerbSelect}
-                                selectedKey={pickedVerbKey}
-                              />
-                            ) : (
-                              <HStack
-                                spacing={4}
-                                align="center"
-                                borderWidth="1px"
-                                borderColor="gray.200"
-                                borderRadius="lg"
-                                bg="gray.50"
-                                px={4}
-                                py={3}
-                                width="100%">
-                                {/* green.700, not green.500: a glyph is non-text and owes
-                                    3.0, and green.500 is 2.78 even for that (frontend.md). */}
-                                <Icon
-                                  as={editVerb?.icon || FaClipboardList}
-                                  boxSize={6}
-                                  color="green.700"
-                                  flexShrink={0}
-                                  aria-hidden="true"
+                              {!isEdit ? (
+                                <VerbPickerGrid
+                                  onSelect={handleVerbSelect}
+                                  selectedKey={pickedVerbKey}
                                 />
-                                <VStack align="start" spacing={0} minW={0}>
-                                  <Text fontWeight="semibold" color="gray.700">
-                                    {editVerbLabel}
-                                  </Text>
-                                  {editSubtypeLabel && (
-                                    <Text fontSize="sm" color="gray.600">
-                                      {editSubtypeLabel}
+                              ) : (
+                                <HStack
+                                  spacing={4}
+                                  align="center"
+                                  borderWidth="1px"
+                                  borderColor="gray.200"
+                                  borderRadius="lg"
+                                  bg="gray.50"
+                                  px={4}
+                                  py={3}
+                                  width="100%">
+                                  {/* green.700, not green.500: a glyph is non-text and owes
+                                    3.0, and green.500 is 2.78 even for that (frontend.md). */}
+                                  <Icon
+                                    as={editVerb?.icon || FaClipboardList}
+                                    boxSize={6}
+                                    color="green.700"
+                                    flexShrink={0}
+                                    aria-hidden="true"
+                                  />
+                                  <VStack align="start" spacing={0} minW={0}>
+                                    <Text fontWeight="semibold" color="gray.700">
+                                      {editVerbLabel}
                                     </Text>
-                                  )}
-                                </VStack>
-                              </HStack>
-                            )}
+                                    {editSubtypeLabel && (
+                                      <Text fontSize="sm" color="gray.600">
+                                        {editSubtypeLabel}
+                                      </Text>
+                                    )}
+                                  </VStack>
+                                </HStack>
+                              )}
 
-                            {/* Edit's correction affordance — HOISTED types only.
+                              {/* Edit's correction affordance — HOISTED types only.
                                   A type whose subtype is asked in step 0 has no in-tab control
                                   left to correct it with, so this link is the only way back to
                                   the question; a type that still owns its subtype as a single
                                   in-tab ask needs nothing here. Hidden while the chooser is
                                   open — the grid below IS the control. */}
-                            {isEdit &&
-                              HOISTED_SUBTYPE_EVENT_TYPES.includes(activeEventType) &&
-                              !correctingActivity &&
-                              editVerbLabel && (
-                                <Box mt={3}>
-                                  <StandardButton
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setCorrectingActivity(true)}>
-                                    {intl.formatMessage(
-                                      { id: 'activities.correctActivity' },
-                                      { verb: editVerbLabel }
-                                    )}
-                                  </StandardButton>
-                                </Box>
-                              )}
-                          </SectionBox>
-                        )}
+                              {isEdit &&
+                                HOISTED_SUBTYPE_EVENT_TYPES.includes(activeEventType) &&
+                                !correctingActivity &&
+                                editVerbLabel && (
+                                  <Box mt={3}>
+                                    <StandardButton
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => setCorrectingActivity(true)}>
+                                      {intl.formatMessage(
+                                        { id: 'activities.correctActivity' },
+                                        { verb: editVerbLabel }
+                                      )}
+                                    </StandardButton>
+                                  </Box>
+                                )}
+                            </SectionBox>
+                          )}
 
-                        {/* Second-level activity question — family verbs only.
+                          {/* Second-level activity question — family verbs only.
                               A tile that already pinned its subtype renders NOTHING here:
                               the page title carries the answer, and echoing it back as a
                               locked row is the same clutter the duplicate select was. */}
-                        {pendingSubtypeChoices.length > 0 && (
-                          <SectionBox>
-                            <SectionHeader
-                              icon={FaTasks}
-                              title={intl.formatMessage({ id: 'activities.subtype.title' })}
-                              /* Required on the ASK only, same rule as the verb grid above:
+                          {pendingSubtypeChoices.length > 0 && (
+                            <SectionBox>
+                              <SectionHeader
+                                icon={FaTasks}
+                                title={intl.formatMessage({ id: 'activities.subtype.title' })}
+                                /* Required on the ASK only, same rule as the verb grid above:
                                  edit RESTATES a saved answer and has nothing to fill in. */
-                              badge={
-                                isEdit
-                                  ? undefined
-                                  : intl.formatMessage({ id: 'events.section.badge.required' })
-                              }
-                              description={intl.formatMessage({ id: 'activities.subtype.hint' })}
-                            />
-                            {/* One chooser, two clearing contracts. Create wipes the fields
+                                badge={
+                                  isEdit
+                                    ? undefined
+                                    : intl.formatMessage({ id: 'events.section.badge.required' })
+                                }
+                                description={intl.formatMessage({ id: 'activities.subtype.hint' })}
+                              />
+                              {/* One chooser, two clearing contracts. Create wipes the fields
                                   the wrong subtype collected; edit must not, because they came
                                   from a saved record. See handleCorrectSubtype. */}
-                            <ActivitySubtypeChooser
-                              eventType={activeEventType}
-                              choices={pendingSubtypeChoices}
-                              value={eventFormData.type || null}
-                              onChange={isEdit ? handleCorrectSubtype : handleSubtypeSelect}
-                            />
-                            {/* Refused Continue. `role="alert"` because the message appears
+                              <ActivitySubtypeChooser
+                                eventType={activeEventType}
+                                choices={pendingSubtypeChoices}
+                                value={eventFormData.type || null}
+                                onChange={isEdit ? handleCorrectSubtype : handleSubtypeSelect}
+                              />
+                              {/* Refused Continue. `role="alert"` because the message appears
                                 after the press, above the button the farmer just used — with
                                 nothing announcing it, a screen-reader user gets silence and a
                                 page that simply did not move. MEASURED on SectionBox's white:
                                 red.700 #D32F2F is 4.98:1 ✓; red.600 is 4.23 and misses the
                                 4.5 text floor. */}
-                            {subtypeUnanswered && (
-                              <Text
-                                role="alert"
-                                mt={3}
-                                fontSize="sm"
-                                fontWeight="medium"
-                                color="red.700">
-                                {intl.formatMessage({ id: 'activities.subtype.required' })}
-                              </Text>
-                            )}
-                          </SectionBox>
-                        )}
-
-                        {/* Wrong tile? One quiet way back to the grid — see chooserReopened. */}
-                        {typeChooserAnswered && activeVerbKey && (
-                          <Box>
-                            <StandardButton
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                // Seed the grid's selection from the verb in force. Without
-                                // it the grid opens with NOTHING highlighted while the page
-                                // header still names a verb — the farmer cannot tell which
-                                // tile they are changing away from.
-                                setPickedVerbKey(activeVerbKey);
-                                setChooserReopened(true);
-                              }}>
-                              {intl.formatMessage(
-                                { id: 'activities.changeActivity' },
-                                {
-                                  verb: intl.formatMessage({
-                                    id: `activities.verb.${activeVerbKey}`
-                                  })
-                                }
+                              {subtypeUnanswered && (
+                                <Text
+                                  role="alert"
+                                  mt={3}
+                                  fontSize="sm"
+                                  fontWeight="medium"
+                                  color="red.700">
+                                  {intl.formatMessage({ id: 'activities.subtype.required' })}
+                                </Text>
                               )}
-                            </StandardButton>
-                          </Box>
-                        )}
+                            </SectionBox>
+                          )}
 
-                        {multiParcelEligible && (
-                          <AlsoAppliedTo
-                            parcels={farmParcels}
-                            geometry={farmGeometry}
-                            originParcelId={Number(parcelId)}
-                            selectedIds={multiParcelIds}
-                            onChange={setMultiParcelIds}
-                            areaUnit={eventFormData.area_unit || 'acres'}
-                          />
-                        )}
+                          {/* Wrong tile? One quiet way back to the grid — see chooserReopened. */}
+                          {typeChooserAnswered && activeVerbKey && (
+                            <Box>
+                              <StandardButton
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  // Seed the grid's selection from the verb in force. Without
+                                  // it the grid opens with NOTHING highlighted while the page
+                                  // header still names a verb — the farmer cannot tell which
+                                  // tile they are changing away from.
+                                  setPickedVerbKey(activeVerbKey);
+                                  setChooserReopened(true);
+                                }}>
+                                {intl.formatMessage(
+                                  { id: 'activities.changeActivity' },
+                                  {
+                                    verb: intl.formatMessage({
+                                      id: `activities.verb.${activeVerbKey}`
+                                    })
+                                  }
+                                )}
+                              </StandardButton>
+                            </Box>
+                          )}
 
-                        {/* Event Timing & Traceability Section */}
-                        <SectionBox>
-                          {/* Date and operator are the certifier record — § 205.103(b)(2)
+                          {multiParcelEligible && (
+                            <AlsoAppliedTo
+                              parcels={farmParcels}
+                              geometry={farmGeometry}
+                              originParcelId={Number(parcelId)}
+                              selectedIds={multiParcelIds}
+                              onChange={setMultiParcelIds}
+                              areaUnit={eventFormData.area_unit || 'acres'}
+                            />
+                          )}
+
+                          {/* Event Timing & Traceability Section */}
+                          <SectionBox>
+                            {/* Date and operator are the certifier record — § 205.103(b)(2)
                                 audit trail, and the "Responsible Party" column NOP form C21
                                 asks for. This badge said "USDA GAP", a separate voluntary
                                 food-safety audit scheme Trazo does not produce, on the two
                                 fields every organic record starts with. */}
-                          <SectionHeader
-                            icon={FaCalendarAlt}
-                            title={intl.formatMessage({
-                              id: 'events.wizard.timing',
-                              defaultMessage: 'Event Timing & Traceability'
-                            })}
-                            badge={intl.formatMessage({
-                              id: 'events.section.badge.certifierRecord'
-                            })}
-                            description={intl.formatMessage({ id: 'events.wizard.timingHint' })}
-                          />
-                          <VStack spacing={4} align="stretch">
-                            {/* Date Selection */}
-                            <StandardField
-                              label={
-                                intl.formatMessage({ id: 'app.eventDateTime' }) ||
-                                'Event Date & Time'
-                              }
-                              required
-                              helpText={intl.formatMessage({
-                                id: 'events.wizard.dateHelp',
-                                defaultMessage:
-                                  'Select the exact date and time when this activity was performed'
+                            <SectionHeader
+                              icon={FaCalendarAlt}
+                              title={intl.formatMessage({
+                                id: 'events.wizard.timing',
+                                defaultMessage: 'When and who'
                               })}
-                              error={basicMethods.formState.errors.date?.message}>
-                              <StandardInput
-                                type="datetime-local"
-                                {...basicMethods.register('date')}
-                              />
-                            </StandardField>
-
-                            {/* Sprint 1 Epic 1.4: USDA GAP Traceability - Who performed this activity */}
-                            <StandardField
-                              label={intl.formatMessage({
-                                id: 'events.wizard.performedBy',
-                                defaultMessage: 'Performed By'
+                              badge={intl.formatMessage({
+                                id: 'events.section.badge.certifierRecord'
                               })}
-                              helpText={intl.formatMessage({
-                                id: 'events.wizard.performedByHelp',
-                                defaultMessage:
-                                  'Name of person who performed this activity (optional, helps with traceability)'
-                              })}
-                              required={false}
-                              error={basicMethods.formState.errors.performed_by?.message}>
-                              <StandardInput
-                                placeholder={
-                                  activeEventType === 0
-                                    ? intl.formatMessage({
-                                        id: 'events.wizard.performedByWeatherPlaceholder',
-                                        defaultMessage: 'Optional for weather observations'
-                                      })
-                                    : intl.formatMessage({
-                                        id: 'quickAdd.performedByPlaceholder',
-                                        defaultMessage: 'Enter operator/worker name'
-                                      })
-                                }
-                                {...basicMethods.register('performed_by')}
-                              />
-                            </StandardField>
-                          </VStack>
-                        </SectionBox>
+                            />
+                            <VStack spacing={4} align="stretch">
+                              {/* Date Selection */}
+                              <StandardField
+                                label={intl.formatMessage({ id: 'app.eventDateTime' })}
+                                required
+                                helpText={intl.formatMessage({
+                                  id: 'events.wizard.dateHelp',
+                                  defaultMessage: 'When the work was done, not when you log it.'
+                                })}
+                                error={basicMethods.formState.errors.date?.message}>
+                                <StandardInput
+                                  type="datetime-local"
+                                  {...basicMethods.register('date')}
+                                />
+                              </StandardField>
 
-                        {/* Action Buttons */}
-                        <Box pt={4}>
-                          <HStack justify="flex-end">
-                            <StandardButton
-                              variant="primary"
-                              type="submit"
-                              rightIcon={<FaChevronRight />}
-                              size="lg">
-                              {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
-                            </StandardButton>
-                          </HStack>
-                        </Box>
-                      </VStack>
-                    </form>
-                  </FormProvider>
-                </CardBody>
-              </Card>
-            )}
+                              {/* Sprint 1 Epic 1.4: USDA GAP Traceability - Who performed this activity */}
+                              <StandardField
+                                label={intl.formatMessage({
+                                  id: 'events.wizard.performedBy',
+                                  defaultMessage: 'Done by'
+                                })}
+                                helpText={intl.formatMessage({
+                                  id: 'events.wizard.performedByHelp',
+                                  defaultMessage: 'Optional. The person or crew who did the work.'
+                                })}
+                                required={false}
+                                error={basicMethods.formState.errors.performed_by?.message}>
+                                <StandardInput
+                                  placeholder={
+                                    // Weather only once weather is the pick: activeEventType starts at 0 before any
+                                    // choice, which put the weather hint on every new form.
+                                    (isEdit || typeChooserAnswered) && activeEventType === 0
+                                      ? intl.formatMessage({
+                                          id: 'events.wizard.performedByWeatherPlaceholder',
+                                          defaultMessage: 'Optional for weather observations'
+                                        })
+                                      : intl.formatMessage({
+                                          id: 'quickAdd.performedByPlaceholder',
+                                          defaultMessage: 'Name of a person or crew'
+                                        })
+                                  }
+                                  {...basicMethods.register('performed_by')}
+                                />
+                              </StandardField>
+                            </VStack>
+                          </SectionBox>
 
-            {activeStep === 1 && (
-              <Card boxShadow="lg" bg={bgColor} borderRadius="xl">
-                <CardHeader pb={2} px={{ base: 0, md: 6 }}>
-                  <Text
-                    ref={stepHeadingRef}
-                    tabIndex={-1}
-                    fontSize="lg"
-                    fontWeight="semibold"
-                    color={textColor}>
-                    {/* The step-0 card names itself with its own step title; this one now
+                          {/* Action Buttons */}
+                          <Box pt={4}>
+                            <HStack justify="flex-end">
+                              <StandardButton
+                                variant="primary"
+                                type="submit"
+                                rightIcon={<FaChevronRight />}
+                                size="lg">
+                                {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
+                              </StandardButton>
+                            </HStack>
+                          </Box>
+                        </VStack>
+                      </form>
+                    </FormProvider>
+                  </CardBody>
+                </Card>
+              )}
+
+              {activeStep === 1 && (
+                <Card boxShadow="lg" bg={bgColor} borderRadius="xl">
+                  <CardHeader p={0}>
+                    <Text
+                      ref={stepHeadingRef}
+                      tabIndex={-1}
+                      // The step bar above names the step; this stays as the focus target a
+                      // step change moves to, for screen readers, without a second visible title.
+                      srOnly>
+                      {/* The step-0 card names itself with its own step title; this one now
                         does the same. "Event Details" named the backend MODEL — the same
                         defect the stepper labels were fixed for, left standing on the card
                         heading directly beneath them. `app.eventDetails` is retired: this
                         was its last call site apart from EventDetailsModal, which now
                         heads that block with what is actually under it. */}
-                    {intl.formatMessage({ id: 'events.wizard.step.details' })}
-                  </Text>
-                </CardHeader>
-                <CardBody pt={4} pb={6} px={{ base: 0, md: 6 }}>
-                  {/* WS-4c: voice accelerator — every entry path gets it, not just Quick */}
-                  {!isEdit && activeEventType !== 0 && (
-                    <Box mb={4}>
-                      {showVoiceCapture ? (
-                        <VoiceEventCapture
-                          onEventDetected={handleVoiceEventDetected}
-                          isActive={true}
-                          cropType={voiceCropType}
-                          /* The activity is already decided by the time this panel exists —
+                      {intl.formatMessage({ id: 'events.wizard.step.details' })}
+                    </Text>
+                  </CardHeader>
+                  <CardBody pt={4} pb={6} px={{ base: 0, md: 6 }}>
+                    {/* WS-4c: voice accelerator — every entry path gets it, not just Quick */}
+                    {!isEdit && activeEventType !== 0 && (
+                      <Box mb={4}>
+                        {showVoiceCapture ? (
+                          <VoiceEventCapture
+                            onEventDetected={handleVoiceEventDetected}
+                            isActive={true}
+                            cropType={voiceCropType}
+                            /* The activity is already decided by the time this panel exists —
                              its trigger sits in step 2, and step 1 is where the verb tile
                              and the production subtype are chosen. Passing it lets the
                              backend prompt extract FIELDS instead of guessing the activity. */
-                          knownActivity={voiceActivitySlug}
-                          /* Notes audience follows the record being saved: certifier-only
+                            knownActivity={voiceActivitySlug}
+                            /* Notes audience follows the record being saved: certifier-only
                              production subtypes never reach the buyer page. */
-                          notesOnBuyerPage={isEventOnBuyerPage({
-                            event_type: activeEventType,
-                            production_type: eventFormData.type
-                          })}
-                          fieldRequests={voiceFieldRequests}
-                          /* `autoStart` stays true for the spoken path; the panel itself
+                            notesOnBuyerPage={isEventOnBuyerPage({
+                              event_type: activeEventType,
+                              production_type: eventFormData.type
+                            })}
+                            fieldRequests={voiceFieldRequests}
+                            /* `autoStart` stays true for the spoken path; the panel itself
                              refuses to open a mic when a seed is present. */
-                          autoStart={true}
-                          seedTranscript={voiceSeedText || undefined}
-                          /* Parse the note in its own language, not the app's (audit T29). */
-                          seedLanguage={
-                            (voiceSeedIsCrewNote && activeFieldNote?.transcript_language) ||
-                            undefined
-                          }
-                          seedNoteId={
-                            (voiceSeedIsCrewNote && activeFieldNote?.public_id) || undefined
-                          }
-                          onClose={() => {
-                            setShowVoiceCapture(false);
-                            setVoiceSeedText('');
-                          }}
-                        />
-                      ) : (
-                        // `flexWrap` because this row is now THREE buttons, and Chakra's Button
-                        // label is nowrap: at 375px the labels crossed their own borders in
-                        // English and overlapped illegibly in es-419, which runs ~1.55x longer.
-                        // Spacing is applied as `gap`, so wrapped rows keep their gutter. Two
-                        // other rows in this file already wrap for the same reason.
-                        <HStack spacing={3} flexWrap="wrap">
-                          <Button
-                            leftIcon={<Icon as={FaMicrophone} />}
-                            variant="outline"
-                            colorScheme="green"
-                            size="sm"
-                            minH="44px"
-                            onClick={() => setShowVoiceCapture(true)}>
-                            {intl.formatMessage({ id: 'events.voice.fillByVoice' })}
-                          </Button>
-                          <Button
-                            leftIcon={<Icon as={FaPaste} />}
-                            variant="outline"
-                            colorScheme="green"
-                            size="sm"
-                            minH="44px"
-                            onClick={() => setPasteOpen((open) => !open)}>
-                            {intl.formatMessage({ id: 'events.voice.pasteNote' })}
-                          </Button>
-                          {compatibleTemplates.length > 0 && (
+                            autoStart={true}
+                            seedTranscript={voiceSeedText || undefined}
+                            /* Parse the note in its own language, not the app's (audit T29). */
+                            seedLanguage={
+                              (voiceSeedIsCrewNote && activeFieldNote?.transcript_language) ||
+                              undefined
+                            }
+                            seedNoteId={
+                              (voiceSeedIsCrewNote && activeFieldNote?.public_id) || undefined
+                            }
+                            onClose={() => {
+                              setShowVoiceCapture(false);
+                              setVoiceSeedText('');
+                            }}
+                          />
+                        ) : (
+                          // `flexWrap` because this row is now THREE buttons, and Chakra's Button
+                          // label is nowrap: at 375px the labels crossed their own borders in
+                          // English and overlapped illegibly in es-419, which runs ~1.55x longer.
+                          // Spacing is applied as `gap`, so wrapped rows keep their gutter. Two
+                          // other rows in this file already wrap for the same reason.
+                          <HStack spacing={3} flexWrap="wrap">
                             <Button
-                              leftIcon={<Icon as={FaClipboardList} />}
+                              leftIcon={<Icon as={FaMicrophone} />}
                               variant="outline"
                               colorScheme="green"
                               size="sm"
                               minH="44px"
-                              onClick={() => setShowTemplatePicker(true)}>
-                              {intl.formatMessage({ id: 'events.template.use' })}
+                              onClick={() => setShowVoiceCapture(true)}>
+                              {intl.formatMessage({ id: 'events.voice.fillByVoice' })}
                             </Button>
-                          )}
-                        </HStack>
-                      )}
-                      {/* The paste box. Its only job is to hand text to the SAME extraction the
+                            <Button
+                              leftIcon={<Icon as={FaPaste} />}
+                              variant="outline"
+                              colorScheme="green"
+                              size="sm"
+                              minH="44px"
+                              onClick={() => setPasteOpen((open) => !open)}>
+                              {intl.formatMessage({ id: 'events.voice.pasteNote' })}
+                            </Button>
+                            {compatibleTemplates.length > 0 && (
+                              <Button
+                                leftIcon={<Icon as={FaClipboardList} />}
+                                variant="outline"
+                                colorScheme="green"
+                                size="sm"
+                                minH="44px"
+                                onClick={() => setShowTemplatePicker(true)}>
+                                {intl.formatMessage({ id: 'events.template.use' })}
+                              </Button>
+                            )}
+                          </HStack>
+                        )}
+                        {/* The paste box. Its only job is to hand text to the SAME extraction the
                           mic uses; it writes nothing itself. Closed as soon as the text is
                           handed over, so there is never a stale note sitting under a form the
                           farmer has since edited. */}
-                      {pasteOpen && !showVoiceCapture && (
-                        <VStack align="stretch" spacing={2} mt={3}>
-                          <StandardTextarea
-                            value={pasteDraft}
-                            onChange={(e) => setPasteDraft(e.target.value)}
-                            placeholder={intl.formatMessage({
-                              id: 'events.voice.pasteNotePlaceholder'
-                            })}
-                            rows={3}
-                          />
-                          <Stack direction={{ base: 'column', smd: 'row' }} spacing={2}>
-                            <Button
-                              variant="outline"
-                              colorScheme="green"
-                              size="sm"
-                              minH="44px"
-                              isDisabled={!pasteDraft.trim()}
-                              onClick={() => {
-                                setVoiceSeedText(pasteDraft.trim());
-                                setVoiceSeedIsCrewNote(false);
-                                setPasteOpen(false);
-                                setPasteDraft('');
-                                setShowVoiceCapture(true);
-                              }}>
-                              {intl.formatMessage({ id: 'events.voice.pasteNoteRead' })}
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              minH="44px"
-                              onClick={() => {
-                                setPasteOpen(false);
-                                setPasteDraft('');
-                              }}>
-                              {intl.formatMessage({ id: 'events.voice.pastedNoteDiscard' })}
-                            </Button>
-                          </Stack>
-                        </VStack>
-                      )}
-                      {/* Arrived from "Log this" on the season plan. The banner says out
+                        {pasteOpen && !showVoiceCapture && (
+                          <VStack align="stretch" spacing={2} mt={3}>
+                            <StandardTextarea
+                              value={pasteDraft}
+                              onChange={(e) => setPasteDraft(e.target.value)}
+                              placeholder={intl.formatMessage({
+                                id: 'events.voice.pasteNotePlaceholder'
+                              })}
+                              rows={3}
+                            />
+                            <Stack direction={{ base: 'column', smd: 'row' }} spacing={2}>
+                              <Button
+                                variant="outline"
+                                colorScheme="green"
+                                size="sm"
+                                minH="44px"
+                                isDisabled={!pasteDraft.trim()}
+                                onClick={() => {
+                                  setVoiceSeedText(pasteDraft.trim());
+                                  setVoiceSeedIsCrewNote(false);
+                                  setPasteOpen(false);
+                                  setPasteDraft('');
+                                  setShowVoiceCapture(true);
+                                }}>
+                                {intl.formatMessage({ id: 'events.voice.pasteNoteRead' })}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                minH="44px"
+                                onClick={() => {
+                                  setPasteOpen(false);
+                                  setPasteDraft('');
+                                }}>
+                                {intl.formatMessage({ id: 'events.voice.pastedNoteDiscard' })}
+                              </Button>
+                            </Stack>
+                          </VStack>
+                        )}
+                        {/* Arrived from "Log this" on the season plan. The banner says out
                             loud that the values on screen are the CATALOGUE's, not the
                             farm's — the suggest→confirm red line the OSP § 11 panel and the
                             template accelerator both draw. The date is deliberately blank. */}
-                      {activePlanItem && !showVoiceCapture && (
-                        <Box
-                          mt={3}
-                          p={3}
-                          bg="white"
-                          borderWidth="1px"
-                          borderColor="gray.300"
-                          borderRadius="md">
-                          <Text fontSize="sm" fontWeight="semibold" color="gray.800" mb={1}>
-                            {activePlanItem.name}
-                          </Text>
-                          <Text fontSize="xs" color="gray.700">
-                            {intl.formatMessage({ id: 'seasonPlan.logFromPlanNote' })}
-                          </Text>
-                        </Box>
-                      )}
-                      {appliedTemplateKey && !showVoiceCapture && (
-                        <Box
-                          mt={3}
-                          p={3}
-                          bg="white"
-                          borderWidth="1px"
-                          borderColor="gray.300"
-                          borderRadius="md">
-                          <HStack justify="space-between">
-                            <Text fontSize="sm" fontWeight="semibold" color="gray.800">
-                              {intl.formatMessage(
-                                { id: 'events.template.applied' },
-                                { name: intl.formatMessage({ id: appliedTemplateKey }) }
-                              )}
+                        {activePlanItem && !showVoiceCapture && (
+                          <Box
+                            mt={3}
+                            p={3}
+                            bg="white"
+                            borderWidth="1px"
+                            borderColor="gray.300"
+                            borderRadius="md">
+                            <Text fontSize="sm" fontWeight="semibold" color="gray.800" mb={1}>
+                              {activePlanItem.name}
                             </Text>
-                            <Button
-                              size="xs"
-                              variant="ghost"
-                              onClick={() => setAppliedTemplateKey(null)}>
-                              ✕
-                            </Button>
-                          </HStack>
-                        </Box>
-                      )}
-                      {/* The live region is the HEADLINE, not the container below. `role="status"`
+                            <Text fontSize="xs" color="gray.700">
+                              {intl.formatMessage({ id: 'seasonPlan.logFromPlanNote' })}
+                            </Text>
+                          </Box>
+                        )}
+                        {appliedTemplateKey && !showVoiceCapture && (
+                          <Box
+                            mt={3}
+                            p={3}
+                            bg="white"
+                            borderWidth="1px"
+                            borderColor="gray.300"
+                            borderRadius="md">
+                            <HStack justify="space-between">
+                              <Text fontSize="sm" fontWeight="semibold" color="gray.800">
+                                {intl.formatMessage(
+                                  { id: 'events.template.applied' },
+                                  { name: intl.formatMessage({ id: appliedTemplateKey }) }
+                                )}
+                              </Text>
+                              <Button
+                                size="xs"
+                                variant="ghost"
+                                onClick={() => setAppliedTemplateKey(null)}>
+                                ✕
+                              </Button>
+                            </HStack>
+                          </Box>
+                        )}
+                        {/* The live region is the HEADLINE, not the container below. `role="status"`
                           is aria-atomic by default, so on the container every tap re-read the
                           entire banner (including the full quoted note, which `noOfLines` clips
                           visually but not for a screen reader) and focusing that same node
                           announced it a second time. The container is a named group instead, so
                           moving focus here says what it is and stops. */}
-                      {voiceBanner && !showVoiceCapture && (
-                        <Box
-                          ref={voiceOfferRef}
-                          tabIndex={-1}
-                          role="group"
-                          aria-label={voiceBannerHeadline}
-                          mt={3}
-                          p={3}
-                          /* GREEN ONLY ONCE IT IS DONE. Status colour carries meaning here, and an
+                        {voiceBanner && !showVoiceCapture && (
+                          <Box
+                            ref={voiceOfferRef}
+                            tabIndex={-1}
+                            role="group"
+                            aria-label={voiceBannerHeadline}
+                            mt={3}
+                            p={3}
+                            /* GREEN ONLY ONCE IT IS DONE. Status colour carries meaning here, and an
                              offer that still needs a tap is in progress, not a success: dressed in
                              the same green as the applied state it read as more final than it was,
                              on the one surface whose whole point is that a machine suggests and a
@@ -4411,52 +4431,52 @@ function NewEvent({ isEdit = false, eventId = null }) {
                              3.57:1, StandardComponents.tsx:1694), so an amber ground would trade a
                              semantics bug for a contrast one. The date question a few lines below
                              already answers this the same way: neutral ground, plain border. */
-                          bg={
-                            voiceBanner.seededPending || voiceBanner.manualReview
-                              ? 'white'
-                              : 'green.50'
-                          }
-                          borderWidth="1px"
-                          borderColor={
-                            voiceBanner.seededPending || voiceBanner.manualReview
-                              ? 'gray.300'
-                              : 'green.200'
-                          }
-                          borderRadius="md">
-                          <HStack justify="space-between" align="start">
-                            <VStack align="start" spacing={1} flex={1}>
-                              {/* Three states, not two. Provenance comes from `seeded` (durable);
+                            bg={
+                              voiceBanner.seededPending || voiceBanner.manualReview
+                                ? 'white'
+                                : 'green.50'
+                            }
+                            borderWidth="1px"
+                            borderColor={
+                              voiceBanner.seededPending || voiceBanner.manualReview
+                                ? 'gray.300'
+                                : 'green.200'
+                            }
+                            borderRadius="md">
+                            <HStack justify="space-between" align="start">
+                              <VStack align="start" spacing={1} flex={1}>
+                                {/* Three states, not two. Provenance comes from `seeded` (durable);
                                   whether anything is filled yet comes from `seededPending`
                                   (cleared on Apply). Keying both on seededPending relabelled a
                                   pasted note "Voice input applied" one tap later. */}
-                              <Text
-                                role="status"
-                                aria-live="polite"
-                                fontSize="sm"
-                                fontWeight="semibold"
-                                color={
-                                  voiceBanner.seededPending || voiceBanner.manualReview
-                                    ? 'gray.800'
-                                    : 'green.700'
-                                }>
-                                {voiceBannerHeadline}
-                              </Text>
-                              {/* The words first, then what was read from them. Below the buttons
+                                <Text
+                                  role="status"
+                                  aria-live="polite"
+                                  fontSize="sm"
+                                  fontWeight="semibold"
+                                  color={
+                                    voiceBanner.seededPending || voiceBanner.manualReview
+                                      ? 'gray.800'
+                                      : 'green.700'
+                                  }>
+                                  {voiceBannerHeadline}
+                                </Text>
+                                {/* The words first, then what was read from them. Below the buttons
                                   (where it sat until 2026-10-08) the quote split the field offer
                                   from the block offer, so the operator decided on values before
                                   seeing the sentence they came from. */}
-                              {voiceBanner.transcript ? (
-                                <Text fontSize="xs" color="gray.600" noOfLines={2}>
-                                  “{voiceBanner.transcript}”
-                                </Text>
-                              ) : null}
-                              {/* Name them. The count on its own is unverifiable: when the
+                                {voiceBanner.transcript ? (
+                                  <Text fontSize="xs" color="gray.600" noOfLines={2}>
+                                    “{voiceBanner.transcript}”
+                                  </Text>
+                                ) : null}
+                                {/* Name them. The count on its own is unverifiable: when the
                                   only field voice could keep is `observation`, the farmer
                                   reads "1 field filled", looks at the form, and sees nothing
                                   changed — the notes box is below the fold on every
                                   activity. Labels come from the display registry, so they
                                   are the same words the field itself carries. */}
-                              {/* THE WRONG ACTIVITY IS THE FIRST THING TO SAY.
+                                {/* THE WRONG ACTIVITY IS THE FIRST THING TO SAY.
                                   This sat LAST, under the offered values, the block suggestion,
                                   the date question and the dropped-value note. If the farmer is
                                   logging the wrong kind of activity then nothing below it
@@ -4470,241 +4490,243 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                   never closed and swallowed the date question, the manual-review
                                   text and the Fill/Discard controls. It rendered the same text,
                                   which is why reading the screen did not catch it. */}
-                              {voiceBanner.suggestion && (
-                                <VStack align="start" spacing={2} pt={1} w="full">
-                                  <CrewNoteRow
-                                    label={intl.formatMessage({ id: 'events.voice.row.activity' })}>
-                                    <Text fontSize="xs" color="gray.700">
-                                      {intl.formatMessage(
-                                        { id: 'events.voice.typeMismatch' },
-                                        {
-                                          heard: intl.formatMessage({
-                                            id: `activities.verb.${voiceBanner.suggestion.verbKey}`
-                                          })
-                                        }
-                                      )}
-                                    </Text>
-                                    <StandardButton
-                                      size="xs"
-                                      variant="outline"
-                                      mt={1}
-                                      onClick={handleVoiceSwitchType}>
-                                      {intl.formatMessage(
-                                        { id: 'events.voice.switchTo' },
-                                        {
-                                          heard: intl.formatMessage({
-                                            id: `activities.verb.${voiceBanner.suggestion.verbKey}`
-                                          })
-                                        }
-                                      )}
-                                    </StandardButton>
-                                  </CrewNoteRow>
-                                </VStack>
-                              )}
-                              {/* ALREADY ON THE FORM, while the offer is still waiting. The block
+                                {voiceBanner.suggestion && (
+                                  <VStack align="start" spacing={2} pt={1} w="full">
+                                    <CrewNoteRow
+                                      label={intl.formatMessage({
+                                        id: 'events.voice.row.activity'
+                                      })}>
+                                      <Text fontSize="xs" color="gray.700">
+                                        {intl.formatMessage(
+                                          { id: 'events.voice.typeMismatch' },
+                                          {
+                                            heard: intl.formatMessage({
+                                              id: `activities.verb.${voiceBanner.suggestion.verbKey}`
+                                            })
+                                          }
+                                        )}
+                                      </Text>
+                                      <StandardButton
+                                        size="xs"
+                                        variant="outline"
+                                        mt={1}
+                                        onClick={handleVoiceSwitchType}>
+                                        {intl.formatMessage(
+                                          { id: 'events.voice.switchTo' },
+                                          {
+                                            heard: intl.formatMessage({
+                                              id: `activities.verb.${voiceBanner.suggestion.verbKey}`
+                                            })
+                                          }
+                                        )}
+                                      </StandardButton>
+                                    </CrewNoteRow>
+                                  </VStack>
+                                )}
+                                {/* ALREADY ON THE FORM, while the offer is still waiting. The block
                                   tap writes immediately, so without this the banner either
                                   counted it as part of the offer (and then could not write it
                                   again) or never mentioned it at all. */}
-                              {voiceBanner.seededPending && voiceWrittenLabels.length > 0 && (
-                                <CrewNoteRow
-                                  label={intl.formatMessage({ id: 'events.voice.row.filled' })}>
-                                  <CrewNoteChips
-                                    testId="crew-note-written"
-                                    values={voiceWrittenLabels}
-                                  />
-                                  <Box as="span" srOnly>
-                                    {intl.formatMessage(
-                                      { id: 'events.voice.filledFields' },
-                                      { fields: voiceWrittenLabels.join(', ') }
-                                    )}
-                                  </Box>
-                                </CrewNoteRow>
-                              )}
-                              {voiceFilledLabels.length > 0 && (
-                                <CrewNoteRow
-                                  label={intl.formatMessage({
-                                    // "Would fill" only while the offer stands.
-                                    id: voiceBanner.seededPending
-                                      ? 'events.voice.row.wouldFill'
-                                      : 'events.voice.row.filled'
-                                  })}>
-                                  <CrewNoteChips
-                                    testId="crew-note-offered"
-                                    values={
-                                      voiceBanner.seededPending
-                                        ? voiceOfferedChips
-                                        : voiceAllFilledLabels
-                                    }
-                                  />
-                                  {/* THE SAME LIST, AS ONE SENTENCE, for a screen reader. Chips
+                                {voiceBanner.seededPending && voiceWrittenLabels.length > 0 && (
+                                  <CrewNoteRow
+                                    label={intl.formatMessage({ id: 'events.voice.row.filled' })}>
+                                    <CrewNoteChips
+                                      testId="crew-note-written"
+                                      values={voiceWrittenLabels}
+                                    />
+                                    <Box as="span" srOnly>
+                                      {intl.formatMessage(
+                                        { id: 'events.voice.filledFields' },
+                                        { fields: voiceWrittenLabels.join(', ') }
+                                      )}
+                                    </Box>
+                                  </CrewNoteRow>
+                                )}
+                                {voiceFilledLabels.length > 0 && (
+                                  <CrewNoteRow
+                                    label={intl.formatMessage({
+                                      // "Would fill" only while the offer stands.
+                                      id: voiceBanner.seededPending
+                                        ? 'events.voice.row.wouldFill'
+                                        : 'events.voice.row.filled'
+                                    })}>
+                                    <CrewNoteChips
+                                      testId="crew-note-offered"
+                                      values={
+                                        voiceBanner.seededPending
+                                          ? voiceOfferedChips
+                                          : voiceAllFilledLabels
+                                      }
+                                    />
+                                    {/* THE SAME LIST, AS ONE SENTENCE, for a screen reader. Chips
                                       read out as disconnected words, and the count is the part a
                                       farmer is being asked to trust. Built from the same array as
                                       the chips so the two cannot disagree. */}
-                                  <Box as="span" srOnly>
-                                    {intl.formatMessage(
-                                      {
-                                        id: voiceBanner.seededPending
-                                          ? 'events.voice.pastedNoteWouldFill'
-                                          : 'events.voice.filledFields'
-                                      },
-                                      {
-                                        fields: voiceBanner.seededPending
-                                          ? voiceOfferedSummary
-                                          : voiceAllFilledLabels.join(', ')
-                                      }
-                                    )}
-                                  </Box>
-                                </CrewNoteRow>
-                              )}
-                              {/* The block the farmer named, as an offer. A block is the lot a
+                                    <Box as="span" srOnly>
+                                      {intl.formatMessage(
+                                        {
+                                          id: voiceBanner.seededPending
+                                            ? 'events.voice.pastedNoteWouldFill'
+                                            : 'events.voice.filledFields'
+                                        },
+                                        {
+                                          fields: voiceBanner.seededPending
+                                            ? voiceOfferedSummary
+                                            : voiceAllFilledLabels.join(', ')
+                                        }
+                                      )}
+                                    </Box>
+                                  </CrewNoteRow>
+                                )}
+                                {/* The block the farmer named, as an offer. A block is the lot a
                                   record belongs to (CA PUR box 22), so voice never writes one
                                   it had to work out — the tap does. Sits with the other offered
                                   values, ahead of the date question and the Fill/Discard row, so
                                   everything read from the note is in one place. */}
-                              {voiceBanner.blockSuggestion && (
-                                <VStack align="start" spacing={2} pt={1} w="full">
-                                  <CrewNoteRow
-                                    label={intl.formatMessage({ id: 'events.voice.row.block' })}>
-                                    <Text fontSize="xs" color="gray.700">
-                                      {voiceBanner.blockSuggestion.kind === 'new'
-                                        ? intl.formatMessage(
-                                            { id: 'events.voice.blockNew' },
-                                            { block: voiceBanner.blockSuggestion.value }
-                                          )
-                                        : intl.formatMessage(
-                                            { id: 'events.voice.blockKnown' },
-                                            {
-                                              spoken: voiceBanner.blockSuggestion.spoken,
-                                              block: voiceBanner.blockSuggestion.value
-                                            }
-                                          )}
-                                    </Text>
-                                    <StandardButton
-                                      size="xs"
-                                      variant="outline"
-                                      mt={1}
-                                      onClick={handleVoiceBlockAccept}>
-                                      {intl.formatMessage(
-                                        {
-                                          id:
-                                            voiceBanner.blockSuggestion.kind === 'new'
-                                              ? 'events.voice.blockAddNew'
-                                              : 'events.voice.blockUseKnown'
-                                        },
-                                        { block: voiceBanner.blockSuggestion.value }
-                                      )}
-                                    </StandardButton>
-                                  </CrewNoteRow>
-                                </VStack>
-                              )}
-                              {/* WHICH DAY. Asked before the values, because it is the one fact a
+                                {voiceBanner.blockSuggestion && (
+                                  <VStack align="start" spacing={2} pt={1} w="full">
+                                    <CrewNoteRow
+                                      label={intl.formatMessage({ id: 'events.voice.row.block' })}>
+                                      <Text fontSize="xs" color="gray.700">
+                                        {voiceBanner.blockSuggestion.kind === 'new'
+                                          ? intl.formatMessage(
+                                              { id: 'events.voice.blockNew' },
+                                              { block: voiceBanner.blockSuggestion.value }
+                                            )
+                                          : intl.formatMessage(
+                                              { id: 'events.voice.blockKnown' },
+                                              {
+                                                spoken: voiceBanner.blockSuggestion.spoken,
+                                                block: voiceBanner.blockSuggestion.value
+                                              }
+                                            )}
+                                      </Text>
+                                      <StandardButton
+                                        size="xs"
+                                        variant="outline"
+                                        mt={1}
+                                        onClick={handleVoiceBlockAccept}>
+                                        {intl.formatMessage(
+                                          {
+                                            id:
+                                              voiceBanner.blockSuggestion.kind === 'new'
+                                                ? 'events.voice.blockAddNew'
+                                                : 'events.voice.blockUseKnown'
+                                          },
+                                          { block: voiceBanner.blockSuggestion.value }
+                                        )}
+                                      </StandardButton>
+                                    </CrewNoteRow>
+                                  </VStack>
+                                )}
+                                {/* WHICH DAY. Asked before the values, because it is the one fact a
                                   pasted note almost never carries and the wizard was happy to
                                   guess: step 0 seeds today before the paste box is reached. Today
                                   is offered back as a suggestion rather than left in the field, so
                                   the day on a § 205.103(b)(2) record is one the operator chose.
                                   Neutral ground and a plain border on purpose: this is a question,
                                   not an error, and status colour here would claim something. */}
-                              {seededDateUnanswered && (
-                                <Box
-                                  w="full"
-                                  mt={1}
-                                  p={2}
-                                  bg="white"
-                                  borderWidth="1px"
-                                  borderColor="gray.300"
-                                  borderRadius="md">
-                                  <Text fontSize="xs" fontWeight="semibold" color="gray.800">
-                                    {intl.formatMessage({ id: 'events.voice.pastedNoteDateAsk' })}
-                                  </Text>
-                                  <Text fontSize="xs" color="gray.700">
+                                {seededDateUnanswered && (
+                                  <Box
+                                    w="full"
+                                    mt={1}
+                                    p={2}
+                                    bg="white"
+                                    borderWidth="1px"
+                                    borderColor="gray.300"
+                                    borderRadius="md">
+                                    <Text fontSize="xs" fontWeight="semibold" color="gray.800">
+                                      {intl.formatMessage({ id: 'events.voice.pastedNoteDateAsk' })}
+                                    </Text>
+                                    <Text fontSize="xs" color="gray.700">
+                                      {intl.formatMessage({
+                                        id: seededFromCrewNote
+                                          ? 'events.voice.crewNoteDateWhy'
+                                          : 'events.voice.pastedNoteDateWhy'
+                                      })}
+                                    </Text>
+                                    <Stack
+                                      direction={{ base: 'column', smd: 'row' }}
+                                      spacing={2}
+                                      pt={2}
+                                      w={{ base: 'full', smd: 'auto' }}>
+                                      <StandardButton
+                                        size="xs"
+                                        variant="outline"
+                                        onClick={handleVoiceSeededUseToday}>
+                                        {intl.formatMessage(
+                                          { id: 'events.voice.pastedNoteDateUseToday' },
+                                          { date: localDateTimeLabel(nowLocalDateTimeInput()) }
+                                        )}
+                                      </StandardButton>
+                                      <StandardButton
+                                        size="xs"
+                                        variant="ghost"
+                                        onClick={handleVoiceSeededPickAnotherDay}>
+                                        {intl.formatMessage({
+                                          id: 'events.voice.pastedNoteDateAnother'
+                                        })}
+                                      </StandardButton>
+                                    </Stack>
+                                  </Box>
+                                )}
+                                {voiceBanner.manualReview && (
+                                  <Text
+                                    fontSize="xs"
+                                    color="gray.800"
+                                    data-testid="crew-note-manual-review">
                                     {intl.formatMessage({
-                                      id: seededFromCrewNote
-                                        ? 'events.voice.crewNoteDateWhy'
-                                        : 'events.voice.pastedNoteDateWhy'
+                                      id: `events.voice.crewNoteManualReview.${voiceBanner.manualReview}`
                                     })}
                                   </Text>
+                                )}
+                                {/* WHAT THE MESSAGE WAS NOT ALLOWED TO WRITE, named as chips with
+                                  the reason one tap away. Rendered only when something was held
+                                  back; see CrewNoteHeldBackRow for both rules. */}
+                                {voiceBanner.seeded &&
+                                  isApplicationRecord(activeEventType, eventFormData) && (
+                                    <CrewNoteHeldBackRow
+                                      labels={voiceWithheldLabels}
+                                      count={voiceWithheldCount}
+                                      open={showCrewNoteWhy}
+                                      onToggle={() => setShowCrewNoteWhy((open) => !open)}
+                                    />
+                                  )}
+                                {/* Answered. Say which day it will file under, because the farmer
+                                  chose it on another step and a date they cannot see is a date
+                                  they cannot check. */}
+                                {seededDateAnswered && (
+                                  <CrewNoteRow
+                                    label={intl.formatMessage({ id: 'events.voice.row.date' })}>
+                                    <Text fontSize="xs" color="gray.700" aria-hidden="true">
+                                      {localDateTimeLabel(eventFormData.date)}
+                                    </Text>
+                                    {/* The full sentence stays for a screen reader: "Will be
+                                      recorded on ..." says what the date MEANS, and a bare date
+                                      read out after a label does not. */}
+                                    <Box as="span" srOnly>
+                                      {intl.formatMessage(
+                                        { id: 'events.voice.pastedNoteDateSet' },
+                                        { date: localDateTimeLabel(eventFormData.date) }
+                                      )}
+                                    </Box>
+                                  </CrewNoteRow>
+                                )}
+                                {/* The tap that writes them. Nothing above this line has touched
+                                  the form: a pasted note is somebody else's words, so the person
+                                  who signs the record is the one who puts them on it. Same shape
+                                  as the block offer below and the OSP "Use suggestion" button. */}
+                                {voiceBanner.seededPending && voiceFilledLabels.length > 0 && (
                                   <Stack
                                     direction={{ base: 'column', smd: 'row' }}
                                     spacing={2}
-                                    pt={2}
+                                    pt={1}
                                     w={{ base: 'full', smd: 'auto' }}>
                                     <StandardButton
                                       size="xs"
                                       variant="outline"
-                                      onClick={handleVoiceSeededUseToday}>
-                                      {intl.formatMessage(
-                                        { id: 'events.voice.pastedNoteDateUseToday' },
-                                        { date: localDateTimeLabel(nowLocalDateTimeInput()) }
-                                      )}
-                                    </StandardButton>
-                                    <StandardButton
-                                      size="xs"
-                                      variant="ghost"
-                                      onClick={handleVoiceSeededPickAnotherDay}>
-                                      {intl.formatMessage({
-                                        id: 'events.voice.pastedNoteDateAnother'
-                                      })}
-                                    </StandardButton>
-                                  </Stack>
-                                </Box>
-                              )}
-                              {voiceBanner.manualReview && (
-                                <Text
-                                  fontSize="xs"
-                                  color="gray.800"
-                                  data-testid="crew-note-manual-review">
-                                  {intl.formatMessage({
-                                    id: `events.voice.crewNoteManualReview.${voiceBanner.manualReview}`
-                                  })}
-                                </Text>
-                              )}
-                              {/* WHAT THE MESSAGE WAS NOT ALLOWED TO WRITE, named as chips with
-                                  the reason one tap away. Rendered only when something was held
-                                  back; see CrewNoteHeldBackRow for both rules. */}
-                              {voiceBanner.seeded &&
-                                isApplicationRecord(activeEventType, eventFormData) && (
-                                  <CrewNoteHeldBackRow
-                                    labels={voiceWithheldLabels}
-                                    count={voiceWithheldCount}
-                                    open={showCrewNoteWhy}
-                                    onToggle={() => setShowCrewNoteWhy((open) => !open)}
-                                  />
-                                )}
-                              {/* Answered. Say which day it will file under, because the farmer
-                                  chose it on another step and a date they cannot see is a date
-                                  they cannot check. */}
-                              {seededDateAnswered && (
-                                <CrewNoteRow
-                                  label={intl.formatMessage({ id: 'events.voice.row.date' })}>
-                                  <Text fontSize="xs" color="gray.700" aria-hidden="true">
-                                    {localDateTimeLabel(eventFormData.date)}
-                                  </Text>
-                                  {/* The full sentence stays for a screen reader: "Will be
-                                      recorded on ..." says what the date MEANS, and a bare date
-                                      read out after a label does not. */}
-                                  <Box as="span" srOnly>
-                                    {intl.formatMessage(
-                                      { id: 'events.voice.pastedNoteDateSet' },
-                                      { date: localDateTimeLabel(eventFormData.date) }
-                                    )}
-                                  </Box>
-                                </CrewNoteRow>
-                              )}
-                              {/* The tap that writes them. Nothing above this line has touched
-                                  the form: a pasted note is somebody else's words, so the person
-                                  who signs the record is the one who puts them on it. Same shape
-                                  as the block offer below and the OSP "Use suggestion" button. */}
-                              {voiceBanner.seededPending && voiceFilledLabels.length > 0 && (
-                                <Stack
-                                  direction={{ base: 'column', smd: 'row' }}
-                                  spacing={2}
-                                  pt={1}
-                                  w={{ base: 'full', smd: 'auto' }}>
-                                  <StandardButton
-                                    size="xs"
-                                    variant="outline"
-                                    onClick={handleVoiceSeededApply}>
-                                    {/* NAME THE VALUE WHEN THERE IS ONE.
+                                      onClick={handleVoiceSeededApply}>
+                                      {/* NAME THE VALUE WHEN THERE IS ONE.
                                         "Fill in 1 value" says how many and not which, and the
                                         line that does name it sits above the application
                                         paragraph and the date question, so by the time a reader
@@ -4715,125 +4737,125 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                         full on the "Would fill" line, and repeating it would put
                                         the same number in two places that can disagree. Past one
                                         the count stays, because a button is not a list. */}
-                                    {voiceFilledLabels.length === 1
-                                      ? intl.formatMessage(
-                                          { id: 'events.voice.pastedNoteApplyNamed' },
-                                          { field: voiceFilledLabels[0] }
-                                        )
-                                      : intl.formatMessage(
-                                          { id: 'events.voice.pastedNoteApply' },
-                                          { count: voiceFilledLabels.length }
-                                        )}
-                                  </StandardButton>
-                                  <StandardButton
-                                    size="xs"
-                                    variant="ghost"
-                                    onClick={handleVoiceSeededDiscard}>
-                                    {intl.formatMessage({ id: 'events.voice.pastedNoteDiscard' })}
-                                  </StandardButton>
-                                </Stack>
-                              )}
-                              {/* Say out loud what was NOT written. A value the farmer spoke
+                                      {voiceFilledLabels.length === 1
+                                        ? intl.formatMessage(
+                                            { id: 'events.voice.pastedNoteApplyNamed' },
+                                            { field: voiceFilledLabels[0] }
+                                          )
+                                        : intl.formatMessage(
+                                            { id: 'events.voice.pastedNoteApply' },
+                                            { count: voiceFilledLabels.length }
+                                          )}
+                                    </StandardButton>
+                                    <StandardButton
+                                      size="xs"
+                                      variant="ghost"
+                                      onClick={handleVoiceSeededDiscard}>
+                                      {intl.formatMessage({ id: 'events.voice.pastedNoteDiscard' })}
+                                    </StandardButton>
+                                  </Stack>
+                                )}
+                                {/* Say out loud what was NOT written. A value the farmer spoke
                                   and cannot see on the form has to be accounted for, or the
                                   banner's own count becomes the misleading part. */}
-                              {voiceBanner.droppedCount > 0 && (
-                                <Text fontSize="xs" color="gray.700">
-                                  {intl.formatMessage(
-                                    { id: 'events.voice.notRecordedHere' },
-                                    { count: voiceBanner.droppedCount }
-                                  )}
-                                </Text>
-                              )}
-                            </VStack>
-                            {/* 24px and unlabelled until 2026-09-25: under the 44px touch floor
+                                {voiceBanner.droppedCount > 0 && (
+                                  <Text fontSize="xs" color="gray.700">
+                                    {intl.formatMessage(
+                                      { id: 'events.voice.notRecordedHere' },
+                                      { count: voiceBanner.droppedCount }
+                                    )}
+                                  </Text>
+                                )}
+                              </VStack>
+                              {/* 24px and unlabelled until 2026-09-25: under the 44px touch floor
                                 and announced as "button" with no name, on the control that
                                 discards a third party's words. */}
-                            <Button
-                              size="xs"
-                              variant="ghost"
-                              minW="44px"
-                              minH="44px"
-                              aria-label={intl.formatMessage({
-                                id: voiceBanner.seeded
-                                  ? seededFromCrewNote
-                                    ? 'events.voice.dismissCrewNote'
-                                    : 'events.voice.dismissPastedNote'
-                                  : 'events.voice.dismissVoiceInput'
+                              <Button
+                                size="xs"
+                                variant="ghost"
+                                minW="44px"
+                                minH="44px"
+                                aria-label={intl.formatMessage({
+                                  id: voiceBanner.seeded
+                                    ? seededFromCrewNote
+                                      ? 'events.voice.dismissCrewNote'
+                                      : 'events.voice.dismissPastedNote'
+                                    : 'events.voice.dismissVoiceInput'
+                                })}
+                                onClick={dismissVoiceBanner}>
+                                ✕
+                              </Button>
+                            </HStack>
+                          </Box>
+                        )}
+                        {voiceHeardPerParcel.length > 0 && !showVoiceCapture && (
+                          <Box mt={3}>
+                            <StandardAlert
+                              status="info"
+                              title={intl.formatMessage({
+                                id: 'events.multiParcel.voicePerParcelTitle'
                               })}
-                              onClick={dismissVoiceBanner}>
-                              ✕
-                            </Button>
-                          </HStack>
-                        </Box>
-                      )}
-                      {voiceHeardPerParcel.length > 0 && !showVoiceCapture && (
-                        <Box mt={3}>
-                          <StandardAlert
-                            status="info"
-                            title={intl.formatMessage({
-                              id: 'events.multiParcel.voicePerParcelTitle'
-                            })}
-                            description={intl.formatMessage(
-                              { id: 'events.multiParcel.voicePerParcelBody' },
-                              {
-                                fields: voiceHeardPerParcel.map((entry) => entry.label).join(', ')
-                              }
-                            )}
-                          />
-                        </Box>
-                      )}
-                    </Box>
-                  )}
-                  {activeEventType === 0 && (
-                    <WeatherTab
-                      key={`w-${voiceSeq}`}
-                      ref={weatherTabRef}
-                      onSubmitHandler={onSubmitMainInfo}
-                      onDataChange={onDataChange}
-                      onPrev={goToPreviousStep}
-                      initialValues={eventFormData}
-                      multiTarget={multiActive}
-                      hideActions={true}
-                    />
-                  )}
-                  {activeEventType === 1 && (
-                    <ProductionTab
-                      key={`p-${voiceSeq}`}
-                      ref={productionTabRef}
-                      onSubmitHandler={onSubmitMainInfo}
-                      onDataChange={onDataChange}
-                      onPrev={goToPreviousStep}
-                      initialValues={eventFormData}
-                      hideActions={true}
-                      /* Create mode has already asked: a verb tile pinned the subtype, a plan
+                              description={intl.formatMessage(
+                                { id: 'events.multiParcel.voicePerParcelBody' },
+                                {
+                                  fields: voiceHeardPerParcel.map((entry) => entry.label).join(', ')
+                                }
+                              )}
+                            />
+                          </Box>
+                        )}
+                      </Box>
+                    )}
+                    {activeEventType === 0 && (
+                      <WeatherTab
+                        key={`w-${voiceSeq}`}
+                        ref={weatherTabRef}
+                        onSubmitHandler={onSubmitMainInfo}
+                        onDataChange={onDataChange}
+                        onPrev={goToPreviousStep}
+                        initialValues={eventFormData}
+                        multiTarget={multiActive}
+                        hideActions={true}
+                      />
+                    )}
+                    {activeEventType === 1 && (
+                      <ProductionTab
+                        key={`p-${voiceSeq}`}
+                        ref={productionTabRef}
+                        onSubmitHandler={onSubmitMainInfo}
+                        onDataChange={onDataChange}
+                        onPrev={goToPreviousStep}
+                        initialValues={eventFormData}
+                        hideActions={true}
+                        /* Create mode has already asked: a verb tile pinned the subtype, a plan
                          item named it, or step 0's ActivitySubtypeChooser collected it. Asking
                          again here — in raw codes, against all sixteen, with the page title
                          locked to the verb — is the double-ask this replaced. Edit mode keeps
                          the select: there, changing it is a correction, not a second ask. */
-                      /* Unconditional now — it used to be gated on the edit flag. The wizard
+                        /* Unconditional now — it used to be gated on the edit flag. The wizard
                          owns the activity question on BOTH paths (create in the verb grid, edit
                          in step 0's chooser behind the "Not X?" link), so a `type` select down
                          here is a second surface for one fact whichever path renders it.
                          ⛔ Hiding the control must never unregister the field: `type` still has
                          to reach onSubmit, which is the half subtypeAskedOnce.test.tsx pins. */
-                      hideSubtypeSelect
-                      nameOrigin={nameOrigin}
-                      onNameEdited={() => setNameOrigin('operator')}
-                      carbonCalculation={carbonCalculation}
-                      multiTarget={multiActive}
-                      isCalculatingCarbon={isCalculatingCarbon || isCalculating}
-                    />
-                  )}
-                  {activeEventType === 2 && (
-                    <ChemicalTab
-                      key={`c-${voiceSeq}`}
-                      ref={chemicalTabRef}
-                      onSubmitHandler={onSubmitMainInfo}
-                      onDataChange={onDataChange}
-                      onPrev={goToPreviousStep}
-                      initialValues={eventFormData}
-                      hideActions={true}
-                      /* Same contract as ProductionTab's hideSubtypeSelect, and unconditional
+                        hideSubtypeSelect
+                        nameOrigin={nameOrigin}
+                        onNameEdited={() => setNameOrigin('operator')}
+                        carbonCalculation={carbonCalculation}
+                        multiTarget={multiActive}
+                        isCalculatingCarbon={isCalculatingCarbon || isCalculating}
+                      />
+                    )}
+                    {activeEventType === 2 && (
+                      <ChemicalTab
+                        key={`c-${voiceSeq}`}
+                        ref={chemicalTabRef}
+                        onSubmitHandler={onSubmitMainInfo}
+                        onDataChange={onDataChange}
+                        onPrev={goToPreviousStep}
+                        initialValues={eventFormData}
+                        hideActions={true}
+                        /* Same contract as ProductionTab's hideSubtypeSelect, and unconditional
                          for the same reason: the wizard owns the activity question on BOTH
                          paths — create in the verb grid + step 0's ActivitySubtypeChooser,
                          edit in that same chooser behind the "Not Fertilizer?" link — so a
@@ -4842,214 +4864,101 @@ function NewEvent({ isEdit = false, eventId = null }) {
                          ⛔ Hiding the control must never unregister the field: `type` still has
                          to reach onSubmit, and it gates the payload branches, the carbon
                          factor and what the PUR export asserts. */
-                      hideTypeSelect
-                      multiTarget={multiActive}
-                      carbonCalculation={carbonCalculation}
-                      isCalculatingCarbon={isCalculatingCarbon || isCalculating}
-                    />
-                  )}
-                  {activeEventType === 3 && (
-                    <GeneralTab
-                      key={`g-${voiceSeq}`}
-                      ref={generalTabRef}
-                      onSubmitHandler={onSubmitMainInfo}
-                      onDataChange={onDataChange}
-                      onPrev={goToPreviousStep}
-                      initialValues={eventFormData}
-                      multiTarget={multiActive}
-                      hideActions={true}
-                    />
-                  )}
-                  {/* Sprint 2 Epic 2.1: Equipment (activeEventType === 4) REMOVED - merged into Production */}
-                  {activeEventType === 5 && (
-                    <SoilManagementTab
-                      key={`s-${voiceSeq}`}
-                      ref={soilManagementTabRef}
-                      onSubmitHandler={onSubmitMainInfo}
-                      onDataChange={onDataChange}
-                      onPrev={goToPreviousStep}
-                      initialValues={eventFormData}
-                      multiTarget={multiActive}
-                      hideActions={true}
-                    />
-                  )}
-                  {activeEventType === 6 && (
-                    <PestManagementTab
-                      key={`pm-${voiceSeq}`}
-                      ref={pestManagementTabRef}
-                      onSubmitHandler={onSubmitMainInfo}
-                      onDataChange={onDataChange}
-                      onPrev={goToPreviousStep}
-                      initialValues={eventFormData}
-                      multiTarget={multiActive}
-                      hideActions={true}
-                      nameOrigin={nameOrigin}
-                      onNameEdited={() => setNameOrigin('operator')}
-                    />
-                  )}
-                  {activeEventType === 7 && (
-                    <BusinessTab
-                      key={`b-${voiceSeq}`}
-                      ref={businessTabRef}
-                      onSubmitHandler={onSubmitMainInfo}
-                      onDataChange={onDataChange}
-                      onPrev={goToPreviousStep}
-                      initialValues={eventFormData}
-                      hideActions={true}
-                    />
-                  )}
+                        hideTypeSelect
+                        multiTarget={multiActive}
+                        carbonCalculation={carbonCalculation}
+                        isCalculatingCarbon={isCalculatingCarbon || isCalculating}
+                      />
+                    )}
+                    {activeEventType === 3 && (
+                      <GeneralTab
+                        key={`g-${voiceSeq}`}
+                        ref={generalTabRef}
+                        onSubmitHandler={onSubmitMainInfo}
+                        onDataChange={onDataChange}
+                        onPrev={goToPreviousStep}
+                        initialValues={eventFormData}
+                        multiTarget={multiActive}
+                        hideActions={true}
+                      />
+                    )}
+                    {/* Sprint 2 Epic 2.1: Equipment (activeEventType === 4) REMOVED - merged into Production */}
+                    {activeEventType === 5 && (
+                      <SoilManagementTab
+                        key={`s-${voiceSeq}`}
+                        ref={soilManagementTabRef}
+                        onSubmitHandler={onSubmitMainInfo}
+                        onDataChange={onDataChange}
+                        onPrev={goToPreviousStep}
+                        initialValues={eventFormData}
+                        multiTarget={multiActive}
+                        hideActions={true}
+                      />
+                    )}
+                    {activeEventType === 6 && (
+                      <PestManagementTab
+                        key={`pm-${voiceSeq}`}
+                        ref={pestManagementTabRef}
+                        onSubmitHandler={onSubmitMainInfo}
+                        onDataChange={onDataChange}
+                        onPrev={goToPreviousStep}
+                        initialValues={eventFormData}
+                        multiTarget={multiActive}
+                        hideActions={true}
+                        nameOrigin={nameOrigin}
+                        onNameEdited={() => setNameOrigin('operator')}
+                      />
+                    )}
+                    {activeEventType === 7 && (
+                      <BusinessTab
+                        key={`b-${voiceSeq}`}
+                        ref={businessTabRef}
+                        onSubmitHandler={onSubmitMainInfo}
+                        onDataChange={onDataChange}
+                        onPrev={goToPreviousStep}
+                        initialValues={eventFormData}
+                        hideActions={true}
+                      />
+                    )}
 
-                  {/* After every tab: the per-parcel cards follow the form they complete. */}
-                  {multiActive &&
-                    cardRules &&
-                    // Weather asks nothing per parcel (the conditions are shared): no cards.
-                    (cardRules.areaKey ||
-                      cardRules.scope ||
-                      cardRules.sections ||
-                      cardRules.fields.length > 0) && (
+                    {/* After every tab: the per-parcel cards follow the form they complete. */}
+                    {multiActive &&
+                      cardRules &&
+                      // Weather asks nothing per parcel (the conditions are shared): no cards.
+                      (cardRules.areaKey ||
+                        cardRules.scope ||
+                        cardRules.sections ||
+                        cardRules.fields.length > 0) && (
+                        <Box mt={{ base: 5, md: 6 }}>
+                          <PerParcelCards
+                            targets={multiTargets}
+                            onChange={setMultiTargets}
+                            rules={cardRules}
+                            form={multiForm(eventFormData)}
+                            sectionsByParcel={sectionsByParcel}
+                            showIssues={showMultiIssues}
+                          />
+                        </Box>
+                      )}
+                    {multiParcelPaused && (
                       <Box mt={{ base: 5, md: 6 }}>
-                        <PerParcelCards
-                          targets={multiTargets}
-                          onChange={setMultiTargets}
-                          rules={cardRules}
-                          form={multiForm(eventFormData)}
-                          sectionsByParcel={sectionsByParcel}
-                          showIssues={showMultiIssues}
+                        <StandardAlert
+                          status="info"
+                          title={intl.formatMessage({ id: 'events.multiParcel.pausedTitle' })}
+                          description={intl.formatMessage(
+                            { id: 'events.multiParcel.pausedBody' },
+                            {
+                              name:
+                                farmParcels.find((p) => Number(p.id) === Number(parcelId))?.name ??
+                                '',
+                              count: multiParcelIds.length
+                            }
+                          )}
                         />
                       </Box>
                     )}
-                  {multiParcelPaused && (
-                    <Box mt={{ base: 5, md: 6 }}>
-                      <StandardAlert
-                        status="info"
-                        title={intl.formatMessage({ id: 'events.multiParcel.pausedTitle' })}
-                        description={intl.formatMessage(
-                          { id: 'events.multiParcel.pausedBody' },
-                          {
-                            name:
-                              farmParcels.find((p) => Number(p.id) === Number(parcelId))?.name ??
-                              '',
-                            count: multiParcelIds.length
-                          }
-                        )}
-                      />
-                    </Box>
-                  )}
 
-                  {/* Preview button integrated with navigation */}
-                  <Box pt={6} mt={4} borderTop="1px" borderColor={borderColor}>
-                    <Flex
-                      direction={{ base: 'column', md: 'row' }}
-                      justify="space-between"
-                      align={{ base: 'stretch', md: 'center' }}
-                      gap={3}>
-                      <StandardButton
-                        variant="outline"
-                        onClick={goToPreviousStep}
-                        leftIcon={<FaChevronLeft />}
-                        size={{ base: 'md', md: 'lg' }}
-                        order={{ base: 3, md: 1 }}
-                        w={{ base: '100%', md: 'auto' }}>
-                        {intl.formatMessage({ id: 'common.previousStep' })}
-                      </StandardButton>
-                      <Flex
-                        direction={{ base: 'row', md: 'row' }}
-                        gap={3}
-                        order={{ base: 1, md: 2 }}
-                        w={{ base: '100%', md: 'auto' }}>
-                        <StandardButton
-                          variant="outline"
-                          onClick={handleOpenPreview}
-                          leftIcon={<FaEye />}
-                          size={{ base: 'md', md: 'lg' }}
-                          flex={{ base: 1, md: 'none' }}>
-                          {intl.formatMessage({ id: 'events.wizard.preview' })}
-                        </StandardButton>
-                        <StandardButton
-                          variant="primary"
-                          onClick={continueFromDetails}
-                          rightIcon={<FaChevronRight />}
-                          size={{ base: 'md', md: 'lg' }}
-                          flex={{ base: 1, md: 'none' }}>
-                          {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
-                        </StandardButton>
-                      </Flex>
-                    </Flex>
-                  </Box>
-                </CardBody>
-              </Card>
-            )}
-
-            {activeStep === 2 && (
-              <Card boxShadow="lg" bg={bgColor} borderRadius="xl">
-                <CardHeader pb={2} px={{ base: 0, md: 6 }}>
-                  <Text
-                    ref={stepHeadingRef}
-                    tabIndex={-1}
-                    fontSize="lg"
-                    fontWeight="semibold"
-                    color={textColor}>
-                    {intl.formatMessage({ id: 'app.mediaAndDocumentation' }) ||
-                      'Media & Documentation'}
-                  </Text>
-                </CardHeader>
-                <CardBody pt={4} pb={6} px={{ base: 0, md: 6 }}>
-                  <VStack spacing={{ base: 5, md: 6 }} align="stretch">
-                    {/* Photo Recommendations - Event-Type & Subtype-Specific Guidance */}
-                    <PhotoRecommendationsBox
-                      activeEventType={activeEventType}
-                      photoCount={acceptedFiles?.length || 0}
-                      subtype={activeEventType === 1 ? eventFormData.type : undefined}
-                    />
-
-                    <StandardField
-                      label={intl.formatMessage({ id: 'events.wizard.step.photos' })}
-                      helpText={intl.formatMessage({
-                        id: 'events.wizard.photosHelp',
-                        defaultMessage: 'Upload photos documenting this agricultural event'
-                      })}>
-                      <TrazoImageUpload
-                        maxFiles={5}
-                        maxSize={10 * 1024 * 1024} // 10MB
-                        existingImages={acceptedFiles.map((f) => f.url).filter(Boolean)}
-                        onImagesChange={(urls) => {
-                          // 🚨 CRITICAL FIX: Track deleted images and preserve isExisting flag
-                          // This prevents duplicates AND enables proper deletion on edit
-
-                          // Find which existing images were removed (for deletion)
-                          const removedImages = acceptedFiles.filter((f) => {
-                            return f.isExisting && f.imageId && !urls.includes(f.url);
-                          });
-
-                          if (removedImages.length > 0) {
-                            const removedIds = removedImages.map((f) => f.imageId);
-                            setDeletedImageIds((prev) => [...prev, ...removedIds]);
-                          }
-
-                          // Build new accepted files array
-                          const newAcceptedFiles = urls.map((url) => {
-                            // Check if this URL was already in acceptedFiles with isExisting flag
-                            const existingEntry = acceptedFiles.find((f) => f.url === url);
-                            if (existingEntry && existingEntry.isExisting) {
-                              return {
-                                url,
-                                isExisting: true,
-                                imageId: existingEntry.imageId // Preserve the ID too
-                              };
-                            }
-                            return { url }; // New image - no flag
-                          });
-
-                          setAcceptedFiles(newAcceptedFiles);
-                          // Also update eventFormData to persist photos across steps
-                          setEventFormData((prevData) => ({
-                            ...prevData,
-                            acceptedFiles: newAcceptedFiles
-                          }));
-                        }}
-                      />
-                    </StandardField>
-
+                    {/* Preview button integrated with navigation */}
                     <Box pt={6} mt={4} borderTop="1px" borderColor={borderColor}>
                       <Flex
                         direction={{ base: 'column', md: 'row' }}
@@ -5080,29 +4989,209 @@ function NewEvent({ isEdit = false, eventId = null }) {
                           </StandardButton>
                           <StandardButton
                             variant="primary"
-                            onClick={onSubmitMedia}
-                            isLoading={isEdit ? isUpdatingEvent : isCreatingEvent}
-                            loadingText={
-                              isEdit
-                                ? intl.formatMessage({ id: 'app.updating' }) || 'Updating...'
-                                : intl.formatMessage({ id: 'app.creating' }) || 'Creating...'
-                            }
-                            rightIcon={<FaCheckCircle />}
+                            onClick={continueFromDetails}
+                            rightIcon={<FaChevronRight />}
                             size={{ base: 'md', md: 'lg' }}
                             flex={{ base: 1, md: 'none' }}>
-                            {isEdit
-                              ? intl.formatMessage({ id: 'app.updateEvent' }) || 'Update'
-                              : intl.formatMessage({ id: 'app.createEvent' }) || 'Create'}
+                            {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
                           </StandardButton>
                         </Flex>
                       </Flex>
                     </Box>
-                  </VStack>
-                </CardBody>
-              </Card>
-            )}
-          </Box>
-        </VStack>
+                  </CardBody>
+                </Card>
+              )}
+
+              {activeStep === 2 && (
+                <Card boxShadow="lg" bg={bgColor} borderRadius="xl">
+                  <CardHeader p={0}>
+                    <Text
+                      ref={stepHeadingRef}
+                      tabIndex={-1}
+                      // The step bar above names the step; this stays as the focus target a
+                      // step change moves to, for screen readers, without a second visible title.
+                      srOnly>
+                      {intl.formatMessage({ id: 'events.wizard.step.photos' })}
+                    </Text>
+                  </CardHeader>
+                  <CardBody pt={4} pb={6} px={{ base: 0, md: 6 }}>
+                    <VStack spacing={{ base: 5, md: 6 }} align="stretch">
+                      {/* Photo Recommendations - Event-Type & Subtype-Specific Guidance */}
+                      <PhotoRecommendationsBox
+                        activeEventType={activeEventType}
+                        photoCount={acceptedFiles?.length || 0}
+                        subtype={activeEventType === 1 ? eventFormData.type : undefined}
+                      />
+
+                      {/* The uploader states its own limits ("0 of 5", "Max 10MB"); the step title
+                        is the label. */}
+                      <Box>
+                        <TrazoImageUpload
+                          maxFiles={5}
+                          maxSize={10 * 1024 * 1024} // 10MB
+                          existingImages={acceptedFiles.map((f) => f.url).filter(Boolean)}
+                          onImagesChange={(urls) => {
+                            // 🚨 CRITICAL FIX: Track deleted images and preserve isExisting flag
+                            // This prevents duplicates AND enables proper deletion on edit
+
+                            // Find which existing images were removed (for deletion)
+                            const removedImages = acceptedFiles.filter((f) => {
+                              return f.isExisting && f.imageId && !urls.includes(f.url);
+                            });
+
+                            if (removedImages.length > 0) {
+                              const removedIds = removedImages.map((f) => f.imageId);
+                              setDeletedImageIds((prev) => [...prev, ...removedIds]);
+                            }
+
+                            // Build new accepted files array
+                            const newAcceptedFiles = urls.map((url) => {
+                              // Check if this URL was already in acceptedFiles with isExisting flag
+                              const existingEntry = acceptedFiles.find((f) => f.url === url);
+                              if (existingEntry && existingEntry.isExisting) {
+                                return {
+                                  url,
+                                  isExisting: true,
+                                  imageId: existingEntry.imageId // Preserve the ID too
+                                };
+                              }
+                              return { url }; // New image - no flag
+                            });
+
+                            setAcceptedFiles(newAcceptedFiles);
+                            // Also update eventFormData to persist photos across steps
+                            setEventFormData((prevData) => ({
+                              ...prevData,
+                              acceptedFiles: newAcceptedFiles
+                            }));
+                          }}
+                        />
+                      </Box>
+
+                      <Box pt={6} mt={4} borderTop="1px" borderColor={borderColor}>
+                        <Flex
+                          direction={{ base: 'column', md: 'row' }}
+                          justify="space-between"
+                          align={{ base: 'stretch', md: 'center' }}
+                          gap={3}>
+                          <StandardButton
+                            variant="outline"
+                            onClick={goToPreviousStep}
+                            leftIcon={<FaChevronLeft />}
+                            size={{ base: 'md', md: 'lg' }}
+                            order={{ base: 2, md: 1 }}
+                            w={{ base: '100%', md: 'auto' }}>
+                            {intl.formatMessage({ id: 'common.previousStep' })}
+                          </StandardButton>
+                          <StandardButton
+                            variant="primary"
+                            onClick={() => setActiveStep(3)}
+                            rightIcon={<FaChevronRight />}
+                            size={{ base: 'md', md: 'lg' }}
+                            order={{ base: 1, md: 2 }}
+                            w={{ base: '100%', md: 'auto' }}>
+                            {intl.formatMessage({ id: 'app.continue' })}
+                          </StandardButton>
+                        </Flex>
+                      </Box>
+                    </VStack>
+                  </CardBody>
+                </Card>
+              )}
+              {activeStep === 3 && (
+                <Card boxShadow="lg" bg={bgColor} borderRadius="xl">
+                  <CardHeader p={0}>
+                    <Text ref={stepHeadingRef} tabIndex={-1} srOnly>
+                      {intl.formatMessage({ id: 'events.wizard.step.review' })}
+                    </Text>
+                  </CardHeader>
+                  <CardBody pt={4} pb={6} px={{ base: 0, md: 6 }}>
+                    <VStack spacing={{ base: 5, md: 6 }} align="stretch">
+                      <Box>
+                        <ActivityReview
+                          eventType={activeEventType}
+                          record={eventFormData}
+                          activityLabel={
+                            activePlanItem?.name ||
+                            (activeVerbKey
+                              ? intl.formatMessage({ id: `activities.verb.${activeVerbKey}` })
+                              : editVerbLabel || '')
+                          }
+                          dateLabel={(() => {
+                            const value = basicMethods.getValues('date');
+                            const when = value ? new Date(value) : null;
+                            return when && !Number.isNaN(when.getTime())
+                              ? intl.formatDate(when, { dateStyle: 'medium', timeStyle: 'short' })
+                              : '';
+                          })()}
+                          doneBy={basicMethods.getValues('performed_by')}
+                          parcelsLabel={intl.formatList(
+                            [Number(parcelId), ...multiParcelIds].map(
+                              (id) =>
+                                farmParcels.find((p) => Number(p.id) === Number(id))?.name ||
+                                (Number(id) === Number(parcelId) && voiceParcel?.name) ||
+                                String(id)
+                            ),
+                            { type: 'conjunction' }
+                          )}
+                          photoCount={acceptedFiles.length}
+                          onChange={handleStepClick}
+                        />
+                      </Box>
+
+                      <Box pt={6} mt={4} borderTop="1px" borderColor={borderColor}>
+                        <Flex
+                          direction={{ base: 'column', md: 'row' }}
+                          justify="space-between"
+                          align={{ base: 'stretch', md: 'center' }}
+                          gap={3}>
+                          <StandardButton
+                            variant="outline"
+                            onClick={goToPreviousStep}
+                            leftIcon={<FaChevronLeft />}
+                            size={{ base: 'md', md: 'lg' }}
+                            order={{ base: 3, md: 1 }}
+                            w={{ base: '100%', md: 'auto' }}>
+                            {intl.formatMessage({ id: 'common.previousStep' })}
+                          </StandardButton>
+                          <Flex
+                            direction={{ base: 'row', md: 'row' }}
+                            gap={3}
+                            order={{ base: 1, md: 2 }}
+                            w={{ base: '100%', md: 'auto' }}>
+                            <StandardButton
+                              variant="outline"
+                              onClick={handleOpenPreview}
+                              leftIcon={<FaEye />}
+                              size={{ base: 'md', md: 'lg' }}
+                              flex={{ base: 1, md: 'none' }}>
+                              {intl.formatMessage({ id: 'events.wizard.preview' })}
+                            </StandardButton>
+                            <StandardButton
+                              variant="primary"
+                              onClick={onSubmitMedia}
+                              isLoading={isEdit ? isUpdatingEvent : isCreatingEvent}
+                              loadingText={
+                                isEdit
+                                  ? intl.formatMessage({ id: 'app.updating' }) || 'Updating...'
+                                  : intl.formatMessage({ id: 'app.creating' }) || 'Creating...'
+                              }
+                              size={{ base: 'md', md: 'lg' }}
+                              flex={{ base: 1, md: 'none' }}>
+                              {isEdit
+                                ? intl.formatMessage({ id: 'app.updateEvent' }) || 'Update'
+                                : intl.formatMessage({ id: 'app.createEvent' }) || 'Create'}
+                            </StandardButton>
+                          </Flex>
+                        </Flex>
+                      </Box>
+                    </VStack>
+                  </CardBody>
+                </Card>
+              )}
+            </Box>
+          </VStack>
+        </SectionBadgeStatedContext.Provider>
       )}
 
       {/* Event Preview Modal — data is pre-computed in handleOpenPreview (event handler) */}

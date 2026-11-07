@@ -589,20 +589,113 @@ interface StandardStepperProps {
    * step, and a step two ahead would skip the one in between, whose form is not mounted.
    */
   furthestStep?: number;
+  /**
+   * `card` (default): numbered circles with titles and descriptions, in their own card.
+   * `bar`: one thin segment per step with its title under it, no card. For a form the person
+   * fills often (the activity wizard), where the card cost ~170px above every step.
+   */
+  variant?: 'card' | 'bar';
+  /** Names the step list for screen readers in the `bar` variant, e.g. "Step 1 of 3". */
+  progressLabel?: string;
 }
 
-export const StandardStepper = ({
+/**
+ * The `bar` stepper: a segment per step, filled up to the current one, each titled under it.
+ * Same navigation rules as the card: a step behind is a link back, the next one is reachable
+ * only once visited, and forward goes through the caller's Continue.
+ */
+const StepperBar = ({
   steps,
   currentStep,
   completedSteps = [],
   onStepClick,
   allowStepClick = false,
-  furthestStep
-}: StandardStepperProps) => {
+  furthestStep,
+  progressLabel
+}: StandardStepperProps) => (
+  <Box as="nav" aria-label={progressLabel} w="100%">
+    <HStack as="ol" listStyleType="none" spacing={{ base: 2, md: 3 }} align="stretch" m={0}>
+      {steps.map((step, index) => {
+        const done = completedSteps.includes(index) || index < currentStep;
+        const current = index === currentStep;
+        const reachableAhead =
+          allowStepClick &&
+          !!onStepClick &&
+          furthestStep !== undefined &&
+          index === currentStep + 1 &&
+          index <= furthestStep;
+        const clickable =
+          (allowStepClick && !!onStepClick && index < currentStep) || reachableAhead;
+        return (
+          <Box as="li" key={index} flex="1" minW={0}>
+            <VStack
+              {...(clickable
+                ? {
+                    as: 'button' as const,
+                    type: 'button' as const,
+                    onClick: () => onStepClick?.(index)
+                  }
+                : {})}
+              aria-current={current ? 'step' : undefined}
+              align="stretch"
+              spacing={1.5}
+              w="100%"
+              textAlign="left"
+              minH="44px"
+              cursor={clickable ? 'pointer' : 'default'}
+              borderRadius="sm"
+              _hover={clickable ? { '& > span:last-of-type': { textDecoration: 'underline' } } : {}}
+              _focusVisible={clickable ? { outline: 'none', boxShadow: 'outline' } : {}}>
+              {/* green.700 for done and current: a non-text bar owes 3.0, and green.500 is 2.78. */}
+              <Box
+                as="span"
+                display="block"
+                h="4px"
+                borderRadius="full"
+                bg={done || current ? 'green.700' : reachableAhead ? 'green.200' : 'gray.200'}
+              />
+              <Text
+                as="span"
+                fontSize={{ base: 'xs', md: 'sm' }}
+                fontWeight={current ? 'semibold' : 'medium'}
+                color={current ? 'gray.800' : done || reachableAhead ? 'green.700' : 'gray.600'}
+                lineHeight="1.3">
+                {step.shortTitle ? (
+                  <>
+                    <Box as="span" display={{ base: 'inline', md: 'none' }}>
+                      {step.shortTitle}
+                    </Box>
+                    <Box as="span" display={{ base: 'none', md: 'inline' }}>
+                      {step.title}
+                    </Box>
+                  </>
+                ) : (
+                  step.title
+                )}
+              </Text>
+            </VStack>
+          </Box>
+        );
+      })}
+    </HStack>
+  </Box>
+);
+
+export const StandardStepper = (props: StandardStepperProps) => {
+  const {
+    steps,
+    currentStep,
+    completedSteps = [],
+    onStepClick,
+    allowStepClick = false,
+    furthestStep,
+    variant = 'card'
+  } = props;
   // Null safety for steps array
   if (!steps || !Array.isArray(steps)) {
     return null;
   }
+  if (variant === 'bar') return <StepperBar {...props} />;
 
   // Adjust spacing and sizing based on number of steps
   const manySteps = steps.length > 6;
@@ -2578,7 +2671,22 @@ const SectionBadge = ({
     </Badge>
   );
 
-export const SectionHeader = ({
+/**
+ * Badge texts a surface has already stated once for all its sections, so SectionHeader leaves
+ * them off. The activity wizard provides "Certifier record": it sat on nearly every section of
+ * every form, so it marked nothing, and the badges that DO differ ("+ buyer page", "carbon
+ * only") were lost among them. The wizard says once, under its step bar, that everything goes
+ * on the certifier record. Empty everywhere else, so every other form is unchanged.
+ */
+export const SectionBadgeStatedContext = React.createContext<string[]>([]);
+
+export const SectionHeader = (props: SectionHeaderProps) => {
+  const stated = React.useContext(SectionBadgeStatedContext);
+  const badge = props.badge && !stated.includes(props.badge) ? props.badge : undefined;
+  return <SectionHeaderView {...props} badge={badge} />;
+};
+
+const SectionHeaderView = ({
   icon,
   iconColor,
   title,
@@ -3432,42 +3540,36 @@ export const DraftRestorationAlert = ({
     return intl.formatRelativeTime(-Math.round(diffHours / 24), 'day', { numeric: 'auto' });
   };
 
+  // A StandardNotice, not a blue left-accent Alert (2026-11-07): the hand-built one used
+  // blue.500/600 on blue.50 and Chakra's blue buttons, the only blue controls on the form.
   return (
-    <Alert status="info" variant="left-accent" mb={4}>
-      <AlertIcon color="blue.500" />
-      <Flex
-        direction={{ base: 'column', md: 'row' }}
-        justify="space-between"
-        align={{ base: 'flex-start', md: 'center' }}
-        flex={1}
-        gap={3}>
-        <VStack align="flex-start" spacing={0}>
-          <Text fontWeight="semibold" fontSize="sm" color="blue.700">
-            {intl.formatMessage({
-              id: 'events.draft.available',
-              defaultMessage: 'Draft available'
-            })}
-          </Text>
-          <Text fontSize="xs" color="blue.600">
-            {intl.formatMessage(
-              {
-                id: 'events.draft.availableBody',
-                defaultMessage: 'You have an unsaved draft from {when}'
-              },
-              { when: formatTimeAgo(lastSaved) }
-            )}
-          </Text>
-        </VStack>
+    <StandardNotice
+      status="neutral"
+      mb={0}
+      title={intl.formatMessage({
+        id: 'events.draft.available',
+        defaultMessage: 'Draft available'
+      })}
+      action={
         <HStack spacing={2}>
-          <Button size="sm" colorScheme="blue" variant="solid" minH="44px" onClick={onRestore}>
+          <StandardButton size="sm" onClick={onRestore}>
             {intl.formatMessage({ id: 'events.draft.restore', defaultMessage: 'Restore draft' })}
-          </Button>
-          <Button size="sm" colorScheme="gray" variant="outline" minH="44px" onClick={onDiscard}>
+          </StandardButton>
+          <StandardButton size="sm" variant="outline" onClick={onDiscard}>
             {intl.formatMessage({ id: 'events.draft.discard', defaultMessage: 'Discard' })}
-          </Button>
+          </StandardButton>
         </HStack>
-      </Flex>
-    </Alert>
+      }>
+      <Text fontSize="sm" color="gray.700">
+        {intl.formatMessage(
+          {
+            id: 'events.draft.availableBody',
+            defaultMessage: 'You have an unsaved draft from {when}'
+          },
+          { when: formatTimeAgo(lastSaved) }
+        )}
+      </Text>
+    </StandardNotice>
   );
 };
 

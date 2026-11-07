@@ -1171,9 +1171,11 @@ const PestManagementTab = forwardRef(
                 />
 
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                  {/* Was hardcoded English ("Crop Growth Stage"), so the Spanish form showed it in
+                      English. The registry's own label key, like every other field here. */}
                   <StandardField
-                    label="Crop Growth Stage"
-                    helpText="Current crop development stage">
+                    label={intl.formatMessage({ id: 'events.common.fields.growthStage' })}
+                    helpText={intl.formatMessage({ id: 'events.pest.fields.cropGrowthStageHelp' })}>
                     <StandardSelect {...methods.register('crop_growth_stage')}>
                       <option value="">
                         {intl.formatMessage({ id: 'events.pest.options.selectGrowthStage' })}

@@ -127,6 +127,32 @@ export const ParcelPicker = ({
     };
   });
 
+  // The List shows only parcels that can be picked. The rest were each a greyed row with the
+  // same sentence under it (three rows of "No open production on this parcel..." on the demo
+  // farm, 2026-11-07); they are named once, grouped by reason, under the list. The Map still
+  // draws them greyed, because there the shape is the point.
+  const pickable = options.filter((option) => !disabledIds.has(Number(option.value)));
+  const unavailable = parcels.filter((parcel) => disabledIds.has(Number(parcel.id)));
+  const unavailableLines = (
+    [
+      ['events.multiParcel.unavailableNoSeason', (p: PickerParcel) => p.open_season_count === 0],
+      [
+        'events.multiParcel.unavailableTwoSeasons',
+        (p: PickerParcel) => (p.open_season_count ?? 0) > 1
+      ]
+    ] as const
+  )
+    .map(([id, test]) => {
+      const names = unavailable.filter(test).map((p) => p.name);
+      return names.length
+        ? intl.formatMessage(
+            { id },
+            { count: names.length, names: intl.formatList(names, { type: 'conjunction' }) }
+          )
+        : null;
+    })
+    .filter(Boolean) as string[];
+
   const toggle = useCallback(
     (parcelId: number) =>
       onChange(
@@ -164,7 +190,7 @@ export const ParcelPicker = ({
       {activeMode === 'list' ? (
         <StandardCheckboxList
           legend={legend}
-          options={options}
+          options={pickable}
           value={[
             ...(originParcelId != null ? [String(originParcelId)] : []),
             ...selectedIds.map(String)
@@ -200,6 +226,12 @@ export const ParcelPicker = ({
         </Box>
       )}
 
+      {activeMode === 'list' &&
+        unavailableLines.map((line) => (
+          <Text key={line} fontSize="sm" color="gray.600">
+            {line}
+          </Text>
+        ))}
       <Text fontSize="sm" color="gray.700" role="status" aria-live="polite">
         {intl.formatMessage({ id: 'picker.selected' }, { count: selectedCount })}
       </Text>
