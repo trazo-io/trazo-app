@@ -44,7 +44,8 @@ import {
   StandardCard,
   StandardPage,
   StandardNumberInput,
-  StandardInput
+  StandardInput,
+  STATUS_URGENCY_TOKENS
 } from 'components/Design/StandardComponents';
 import CancelSubscriptionModal from './CancelSubscriptionModal';
 import {
@@ -1127,10 +1128,18 @@ function UnifiedSubscriptionDashboard() {
                               return `${bytes} B`;
                             };
                             // Photos are hard-limited (an upload is refused at the ceiling);
-                            // documents are counted but never refused. Amber only when photos
-                            // near the limit, since that is the only thing that stops.
+                            // documents are counted but never refused, so the tone follows the
+                            // photos' share. The usage-meter rule (green, amber at 80%, red at
+                            // 100%) in the theme's fill shades: amber.900 and red.700 clear the
+                            // 3:1 a meaningful fill owes on the gray.100 track (progress.js),
+                            // amber.500 did not (review of #316).
                             const photosPct = pct(mediaBytes);
-                            const photoTone = photosPct >= 80 ? 'amber.500' : 'green.700';
+                            const photoTone =
+                              photosPct >= 100
+                                ? 'red.700'
+                                : photosPct >= 80
+                                ? 'amber.900'
+                                : 'green.700';
                             return (
                               <Box key={metric.name} data-usage-row py={3}>
                                 <Flex justify="space-between" align="baseline" gap={3}>
@@ -1213,7 +1222,12 @@ function UnifiedSubscriptionDashboard() {
                                         { used: metric.used, limit: metric.limit }
                                       )}
                                 </Text>
-                                <Text fontSize="xs" color={over ? 'amber.800' : 'gray.600'}>
+                                {/* No meter on these rows, so no meter colours: being AT the limit is the normal
+                                    state of a one-farm plan and stays neutral. Over it is said in the
+                                    critical text token; amber cannot letter (review of #316). */}
+                                <Text
+                                  fontSize="xs"
+                                  color={over ? STATUS_URGENCY_TOKENS.crit.text : 'gray.600'}>
                                   {isUnlimited
                                     ? intl.formatMessage({ id: 'subscription.usage.noLimit' })
                                     : atLimit

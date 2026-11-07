@@ -113,4 +113,19 @@ describe('Settings company join code', () => {
     });
     expect(screen.getByRole('button', { name: /copy/i })).toHaveTextContent('Copy code');
   });
+
+  it('puts the Team content inside its tab panel, where the tab points (review of #316)', () => {
+    renderWithCompany({
+      id: 7,
+      name: 'Loma Orchards',
+      invitation_code: 'OLD111',
+      establishments: []
+    });
+    const panel = screen.getByRole('tabpanel');
+    expect(panel).toHaveTextContent('OLD111');
+    expect(screen.getByRole('tab', { name: /Team/ })).toHaveAttribute(
+      'aria-controls',
+      panel.getAttribute('id')
+    );
+  });
 });

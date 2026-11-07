@@ -247,309 +247,319 @@ export default function SettingsView() {
               status: 'none'
             }
           ]}>
-          <Box pt={4} />
-        </StandardSectionTabs>
+          {/* The panels live INSIDE the tab widget (review of #316): as siblings below it, a
+              screen reader that activated "Team" landed in an empty panel, and the members
+              table was tied to no tab at all. */}
+          <Box pt={4}>
+            {/* Team Tab Panel */}
+            {settingsTab === 'team' && (
+              <VStack spacing={10} w="100%" pb={12}>
+                {/* Members Overview Section - Most Important First */}
+                <Box w="100%">
+                  <StandardCard
+                    title={
+                      intl.formatMessage({ id: 'app.membersInThisCompany' }) ||
+                      'Miembros de la Compañía'
+                    }
+                    subtitle={intl.formatMessage({ id: 'app.manageMembersSubtitle' })}
+                    variant="elevated">
+                    <Box py={4}>
+                      <VStack spacing={8} align="stretch">
+                        {/* Search Bar */}
+                        <Flex
+                          justify="space-between"
+                          align="center"
+                          w="100%"
+                          flexWrap="wrap"
+                          gap={4}>
+                          <StandardSearchInput
+                            placeholder={intl.formatMessage({ id: 'settings.searchMembers' })}
+                            value={searchTerm}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                              setSearchTerm(e.target.value)
+                            }
+                            maxW={{ base: 'full', smd: '360px' }}
+                          />
+                          <Badge
+                            px={4}
+                            py={2}
+                            borderRadius="full"
+                            bg="green.100"
+                            color="green.800"
+                            fontSize="sm"
+                            fontWeight="medium">
+                            {filteredMembers.length}{' '}
+                            {filteredMembers.length !== 1
+                              ? intl.formatMessage({ id: 'app.members' })
+                              : intl.formatMessage({ id: 'app.member' })}
+                          </Badge>
+                        </Flex>
 
-        {/* Team Tab Panel */}
-        {settingsTab === 'team' && (
-          <VStack spacing={10} w="100%" pb={12}>
-            {/* Members Overview Section - Most Important First */}
-            <Box w="100%">
-              <StandardCard
-                title={
-                  intl.formatMessage({ id: 'app.membersInThisCompany' }) ||
-                  'Miembros de la Compañía'
-                }
-                subtitle={intl.formatMessage({ id: 'app.manageMembersSubtitle' })}
-                variant="elevated">
-                <Box py={4}>
-                  <VStack spacing={8} align="stretch">
-                    {/* Search Bar */}
-                    <Flex justify="space-between" align="center" w="100%" flexWrap="wrap" gap={4}>
-                      <StandardSearchInput
-                        placeholder={intl.formatMessage({ id: 'settings.searchMembers' })}
-                        value={searchTerm}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          setSearchTerm(e.target.value)
-                        }
-                        maxW={{ base: 'full', smd: '360px' }}
-                      />
-                      <Badge
-                        px={4}
-                        py={2}
-                        borderRadius="full"
-                        bg="green.100"
-                        color="green.800"
-                        fontSize="sm"
-                        fontWeight="medium">
-                        {filteredMembers.length}{' '}
-                        {filteredMembers.length !== 1
-                          ? intl.formatMessage({ id: 'app.members' })
-                          : intl.formatMessage({ id: 'app.member' })}
-                      </Badge>
-                    </Flex>
-
-                    {/* Members Table - Responsive with horizontal scroll on mobile */}
-                    <Box
-                      overflowX="auto"
-                      overflowY="auto"
-                      w="100%"
-                      borderRadius={{ base: 'lg', md: '2xl' }}
-                      border="1px solid"
-                      borderColor="gray.100"
-                      bg="white"
-                      boxShadow="sm">
-                      <Table variant="simple" size={{ base: 'sm', md: 'lg' }}>
-                        <Thead
-                          bg="gray.50"
-                          borderBottom="2px solid"
+                        {/* Members Table - Responsive with horizontal scroll on mobile */}
+                        <Box
+                          overflowX="auto"
+                          overflowY="auto"
+                          w="100%"
+                          borderRadius={{ base: 'lg', md: '2xl' }}
+                          border="1px solid"
                           borderColor="gray.100"
-                          position="sticky"
-                          top={0}
-                          zIndex={1}>
-                          <Tr>
-                            <Th
-                              color="gray.700"
-                              fontWeight="bold"
-                              fontSize="xs"
-                              textTransform="uppercase"
-                              letterSpacing="wider"
-                              py={{ base: 3, md: 5 }}
-                              px={{ base: 3, md: 6 }}
-                              whiteSpace="nowrap">
-                              {intl.formatMessage({ id: 'app.name' }) || 'NOMBRE'}
-                            </Th>
-                            <Th
-                              color="gray.700"
-                              fontWeight="bold"
-                              fontSize="xs"
-                              textTransform="uppercase"
-                              letterSpacing="wider"
-                              py={{ base: 3, md: 5 }}
-                              px={{ base: 3, md: 6 }}
-                              whiteSpace="nowrap">
-                              {intl.formatMessage({ id: 'app.currentWorkingEstablishments' }) ||
-                                'ESTABLECIMIENTOS EN LOS QUE TRABAJA'}
-                            </Th>
-                            <Th
-                              color="gray.700"
-                              fontWeight="bold"
-                              fontSize="xs"
-                              textTransform="uppercase"
-                              letterSpacing="wider"
-                              py={{ base: 3, md: 5 }}
-                              px={{ base: 3, md: 6 }}
-                              whiteSpace="nowrap">
-                              {intl.formatMessage({ id: 'app.role' }) || 'ROL'}
-                            </Th>
-                            <Th
-                              color="gray.700"
-                              fontWeight="bold"
-                              fontSize="xs"
-                              textTransform="uppercase"
-                              letterSpacing="wider"
-                              py={{ base: 3, md: 5 }}
-                              px={{ base: 3, md: 6 }}
-                              whiteSpace="nowrap">
-                              {intl.formatMessage({ id: 'app.actions' }) || 'ACCIONES'}
-                            </Th>
-                          </Tr>
-                        </Thead>
-                        <Tbody>
-                          {filteredMembers.length > 0 ? (
-                            filteredMembers.map((member: any, index: number) => (
-                              <MemberRow
-                                key={index}
-                                name={member.user}
-                                establishments={member.establishments_in_charge.map(
-                                  (est: any) => est.name
-                                )}
-                                role={member.role}
-                              />
-                            ))
-                          ) : (
-                            <Tr>
-                              <Td colSpan={4} textAlign="center" py={16}>
-                                <VStack spacing={4}>
-                                  <Box
-                                    w="60px"
-                                    h="60px"
-                                    borderRadius="full"
-                                    bg="gray.100"
-                                    display="flex"
-                                    alignItems="center"
-                                    justifyContent="center"
-                                    mb={2}>
-                                    <Text fontSize="2xl">👥</Text>
-                                  </Box>
-                                  <Text color="gray.600" fontSize="lg" fontWeight="semibold">
-                                    {searchTerm
-                                      ? intl.formatMessage({ id: 'app.noMembersFound' })
-                                      : intl.formatMessage({ id: 'app.noMembersYet' })}
-                                  </Text>
-                                  <Text
-                                    color="gray.500"
-                                    fontSize="md"
-                                    maxW="300px"
-                                    textAlign="center">
-                                    {searchTerm
-                                      ? intl.formatMessage({ id: 'app.tryOtherSearch' })
-                                      : intl.formatMessage({ id: 'app.inviteFirstMember' })}
-                                  </Text>
-                                </VStack>
-                              </Td>
-                            </Tr>
-                          )}
-                        </Tbody>
-                      </Table>
-                    </Box>
-                  </VStack>
-                </Box>
-              </StandardCard>
-            </Box>
-
-            {/* Invite + Invitation Code: two halves of "add a person", so they sit side by
-                side once there is room rather than costing a screen of scroll each. */}
-            <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6} w="100%" alignItems="start">
-              <Box w="100%">
-                <StandardCard
-                  title={
-                    intl.formatMessage({ id: 'app.inviteNewMembers' }) || 'Invitar nuevos miembros'
-                  }
-                  variant="elevated">
-                  <Box py={4}>
-                    <VStack spacing={10} align="stretch">
-                      <VStack spacing={6} w="100%">
-                        <VStack spacing={6} w="100%">
-                          <StandardField
-                            label={intl.formatMessage({ id: 'app.newMemberEmail' })}
-                            required>
-                            <StandardInput
-                              placeholder={intl.formatMessage({
-                                id: 'settings.inviteEmailPlaceholder'
-                              })}
-                              value={inviteEmail}
-                              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                setInviteEmail(e.target.value)
-                              }
-                              type="email"
-                            />
-                          </StandardField>
-
-                          <StandardField
-                            label={intl.formatMessage({ id: 'app.roleAndPermissions' })}
-                            required>
-                            <StandardSelect
-                              placeholder={intl.formatMessage({ id: 'app.selectARole' })}
-                              value={selectedRole || ''}
-                              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                                setSelectedRole(e.target.value || null);
-                              }}>
-                              {roleOptions.map((role: RoleOption) => (
-                                <option key={role.id} value={role.id}>
-                                  {role.name}
-                                </option>
-                              ))}
-                            </StandardSelect>
-                          </StandardField>
-                        </VStack>
-
-                        {/* Standard size, and Discard only once there is something to discard
-                            (2026-11-07): two large buttons sat under an empty form. */}
-                        <HStack spacing={2} w="100%" justify="flex-end">
-                          {(inviteEmail || selectedRole) && (
-                            <StandardButton variant="ghost" onClick={handleDiscardChanges}>
-                              {intl.formatMessage({ id: 'app.discardChanges' })}
-                            </StandardButton>
-                          )}
-                          <StandardButton
-                            variant="primary"
-                            onClick={handleInviteSubmit}
-                            isLoading={isSendingInvitation}
-                            loadingText={intl.formatMessage({ id: 'app.sending' })}>
-                            {intl.formatMessage({ id: 'app.sendInvite' }) || 'Enviar invitación'}
-                          </StandardButton>
-                        </HStack>
+                          bg="white"
+                          boxShadow="sm">
+                          <Table variant="simple" size={{ base: 'sm', md: 'lg' }}>
+                            <Thead
+                              bg="gray.50"
+                              borderBottom="2px solid"
+                              borderColor="gray.100"
+                              position="sticky"
+                              top={0}
+                              zIndex={1}>
+                              <Tr>
+                                <Th
+                                  color="gray.700"
+                                  fontWeight="bold"
+                                  fontSize="xs"
+                                  textTransform="uppercase"
+                                  letterSpacing="wider"
+                                  py={{ base: 3, md: 5 }}
+                                  px={{ base: 3, md: 6 }}
+                                  whiteSpace="nowrap">
+                                  {intl.formatMessage({ id: 'app.name' }) || 'NOMBRE'}
+                                </Th>
+                                <Th
+                                  color="gray.700"
+                                  fontWeight="bold"
+                                  fontSize="xs"
+                                  textTransform="uppercase"
+                                  letterSpacing="wider"
+                                  py={{ base: 3, md: 5 }}
+                                  px={{ base: 3, md: 6 }}
+                                  whiteSpace="nowrap">
+                                  {intl.formatMessage({ id: 'app.currentWorkingEstablishments' }) ||
+                                    'ESTABLECIMIENTOS EN LOS QUE TRABAJA'}
+                                </Th>
+                                <Th
+                                  color="gray.700"
+                                  fontWeight="bold"
+                                  fontSize="xs"
+                                  textTransform="uppercase"
+                                  letterSpacing="wider"
+                                  py={{ base: 3, md: 5 }}
+                                  px={{ base: 3, md: 6 }}
+                                  whiteSpace="nowrap">
+                                  {intl.formatMessage({ id: 'app.role' }) || 'ROL'}
+                                </Th>
+                                <Th
+                                  color="gray.700"
+                                  fontWeight="bold"
+                                  fontSize="xs"
+                                  textTransform="uppercase"
+                                  letterSpacing="wider"
+                                  py={{ base: 3, md: 5 }}
+                                  px={{ base: 3, md: 6 }}
+                                  whiteSpace="nowrap">
+                                  {intl.formatMessage({ id: 'app.actions' }) || 'ACCIONES'}
+                                </Th>
+                              </Tr>
+                            </Thead>
+                            <Tbody>
+                              {filteredMembers.length > 0 ? (
+                                filteredMembers.map((member: any, index: number) => (
+                                  <MemberRow
+                                    key={index}
+                                    name={member.user}
+                                    establishments={member.establishments_in_charge.map(
+                                      (est: any) => est.name
+                                    )}
+                                    role={member.role}
+                                  />
+                                ))
+                              ) : (
+                                <Tr>
+                                  <Td colSpan={4} textAlign="center" py={16}>
+                                    <VStack spacing={4}>
+                                      <Box
+                                        w="60px"
+                                        h="60px"
+                                        borderRadius="full"
+                                        bg="gray.100"
+                                        display="flex"
+                                        alignItems="center"
+                                        justifyContent="center"
+                                        mb={2}>
+                                        <Text fontSize="2xl">👥</Text>
+                                      </Box>
+                                      <Text color="gray.600" fontSize="lg" fontWeight="semibold">
+                                        {searchTerm
+                                          ? intl.formatMessage({ id: 'app.noMembersFound' })
+                                          : intl.formatMessage({ id: 'app.noMembersYet' })}
+                                      </Text>
+                                      <Text
+                                        color="gray.500"
+                                        fontSize="md"
+                                        maxW="300px"
+                                        textAlign="center">
+                                        {searchTerm
+                                          ? intl.formatMessage({ id: 'app.tryOtherSearch' })
+                                          : intl.formatMessage({ id: 'app.inviteFirstMember' })}
+                                      </Text>
+                                    </VStack>
+                                  </Td>
+                                </Tr>
+                              )}
+                            </Tbody>
+                          </Table>
+                        </Box>
                       </VStack>
-                    </VStack>
-                  </Box>
-                </StandardCard>
-              </Box>
+                    </Box>
+                  </StandardCard>
+                </Box>
 
-              {/* Company Code Section - Secondary Tool */}
-              <Box w="100%">
-                <StandardCard
-                  title={intl.formatMessage({ id: 'app.invitationCode' })}
-                  subtitle={intl.formatMessage({ id: 'app.shareCodeSubtitle' })}
-                  variant="elevated">
-                  <Box py={3}>
-                    <VStack spacing={4} align="stretch">
-                      {/* One row: the code, Copy, and Generate new code (2026-11-07). Was a
+                {/* Invite + Invitation Code: two halves of "add a person", so they sit side by
+                side once there is room rather than costing a screen of scroll each. */}
+                <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6} w="100%" alignItems="start">
+                  <Box w="100%">
+                    <StandardCard
+                      title={
+                        intl.formatMessage({ id: 'app.inviteNewMembers' }) ||
+                        'Invitar nuevos miembros'
+                      }
+                      variant="elevated">
+                      <Box py={4}>
+                        <VStack spacing={10} align="stretch">
+                          <VStack spacing={6} w="100%">
+                            <VStack spacing={6} w="100%">
+                              <StandardField
+                                label={intl.formatMessage({ id: 'app.newMemberEmail' })}
+                                required>
+                                <StandardInput
+                                  placeholder={intl.formatMessage({
+                                    id: 'settings.inviteEmailPlaceholder'
+                                  })}
+                                  value={inviteEmail}
+                                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                    setInviteEmail(e.target.value)
+                                  }
+                                  type="email"
+                                />
+                              </StandardField>
+
+                              <StandardField
+                                label={intl.formatMessage({ id: 'app.roleAndPermissions' })}
+                                required>
+                                <StandardSelect
+                                  placeholder={intl.formatMessage({ id: 'app.selectARole' })}
+                                  value={selectedRole || ''}
+                                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                                    setSelectedRole(e.target.value || null);
+                                  }}>
+                                  {roleOptions.map((role: RoleOption) => (
+                                    <option key={role.id} value={role.id}>
+                                      {role.name}
+                                    </option>
+                                  ))}
+                                </StandardSelect>
+                              </StandardField>
+                            </VStack>
+
+                            {/* Standard size, and Discard only once there is something to discard
+                            (2026-11-07): two large buttons sat under an empty form. */}
+                            <HStack spacing={2} w="100%" justify="flex-end">
+                              {(inviteEmail || selectedRole) && (
+                                <StandardButton variant="ghost" onClick={handleDiscardChanges}>
+                                  {intl.formatMessage({ id: 'app.discardChanges' })}
+                                </StandardButton>
+                              )}
+                              <StandardButton
+                                variant="primary"
+                                onClick={handleInviteSubmit}
+                                isLoading={isSendingInvitation}
+                                loadingText={intl.formatMessage({ id: 'app.sending' })}>
+                                {intl.formatMessage({ id: 'app.sendInvite' }) ||
+                                  'Enviar invitación'}
+                              </StandardButton>
+                            </HStack>
+                          </VStack>
+                        </VStack>
+                      </Box>
+                    </StandardCard>
+                  </Box>
+
+                  {/* Company Code Section - Secondary Tool */}
+                  <Box w="100%">
+                    <StandardCard
+                      title={intl.formatMessage({ id: 'app.invitationCode' })}
+                      subtitle={intl.formatMessage({ id: 'app.shareCodeSubtitle' })}
+                      variant="elevated">
+                      <Box py={3}>
+                        <VStack spacing={4} align="stretch">
+                          {/* One row: the code, Copy, and Generate new code (2026-11-07). Was a
                           green box with a round icon, the company name the page already shows,
                           a solid green code pill, a lone round copy icon, and a second green box
                           for the instructions. */}
-                      {!currentCompany ? (
-                        <StandardSpinner label={intl.formatMessage({ id: 'app.loading' })} />
-                      ) : currentCompany.invitation_code ? (
-                        <HStack spacing={2} flexWrap="wrap">
-                          <Text
-                            fontFamily="mono"
-                            fontSize="xl"
-                            fontWeight="semibold"
-                            letterSpacing="wider"
-                            color="gray.800"
-                            bg="gray.50"
-                            borderWidth="1px"
-                            borderColor="gray.200"
-                            borderRadius="md"
-                            px={4}
-                            py={1.5}>
-                            {currentCompany.invitation_code}
-                          </Text>
-                          <StandardButton
-                            size="sm"
-                            variant="outline"
-                            leftIcon={codeCopied ? <CheckIcon /> : <CopyIcon />}
-                            aria-label={intl.formatMessage({ id: 'app.copyCompanyCode' })}
-                            onClick={handleCopyCode}>
-                            {codeCopied
-                              ? intl.formatMessage({ id: 'app.copied' })
-                              : intl.formatMessage({ id: 'app.copyCode' })}
-                          </StandardButton>
-                          <StandardButton
-                            size="sm"
-                            variant="ghost"
-                            onClick={handleRotateCode}
-                            isLoading={isRotatingCode}>
-                            {intl.formatMessage({ id: 'app.generateNewCompanyCode' })}
-                          </StandardButton>
-                        </HStack>
-                      ) : (
-                        <Text fontSize="sm" color="gray.600">
-                          {intl.formatMessage({ id: 'app.companyCodeAdminOnly' })}
-                        </Text>
-                      )}
+                          {!currentCompany ? (
+                            <StandardSpinner label={intl.formatMessage({ id: 'app.loading' })} />
+                          ) : currentCompany.invitation_code ? (
+                            <HStack spacing={2} flexWrap="wrap">
+                              <Text
+                                fontFamily="mono"
+                                fontSize="xl"
+                                fontWeight="semibold"
+                                letterSpacing="wider"
+                                color="gray.800"
+                                bg="gray.50"
+                                borderWidth="1px"
+                                borderColor="gray.200"
+                                borderRadius="md"
+                                px={4}
+                                py={1.5}>
+                                {currentCompany.invitation_code}
+                              </Text>
+                              <StandardButton
+                                size="sm"
+                                variant="outline"
+                                leftIcon={codeCopied ? <CheckIcon /> : <CopyIcon />}
+                                aria-label={intl.formatMessage({ id: 'app.copyCompanyCode' })}
+                                onClick={handleCopyCode}>
+                                {codeCopied
+                                  ? intl.formatMessage({ id: 'app.copied' })
+                                  : intl.formatMessage({ id: 'app.copyCode' })}
+                              </StandardButton>
+                              <StandardButton
+                                size="sm"
+                                variant="ghost"
+                                onClick={handleRotateCode}
+                                isLoading={isRotatingCode}>
+                                {intl.formatMessage({ id: 'app.generateNewCompanyCode' })}
+                              </StandardButton>
+                            </HStack>
+                          ) : (
+                            <Text fontSize="sm" color="gray.600">
+                              {intl.formatMessage({ id: 'app.companyCodeAdminOnly' })}
+                            </Text>
+                          )}
 
-                      <Box>
-                        <Text fontSize="xs" fontWeight="semibold" color="gray.700" mb={1}>
-                          {intl.formatMessage({ id: 'app.howToUseInvitationCode' })}
-                        </Text>
-                        <Box as="ol" pl={5} fontSize="xs" color="gray.600" lineHeight="1.6">
-                          <li>{intl.formatMessage({ id: 'app.shareCodeWithMembers' })}</li>
-                          <li>{intl.formatMessage({ id: 'app.chooseJoinExistingCompany' })}</li>
-                          <li>{intl.formatMessage({ id: 'app.enterCodeToJoinAsViewer' })}</li>
-                        </Box>
+                          <Box>
+                            <Text fontSize="xs" fontWeight="semibold" color="gray.700" mb={1}>
+                              {intl.formatMessage({ id: 'app.howToUseInvitationCode' })}
+                            </Text>
+                            <Box as="ol" pl={5} fontSize="xs" color="gray.600" lineHeight="1.6">
+                              <li>{intl.formatMessage({ id: 'app.shareCodeWithMembers' })}</li>
+                              <li>{intl.formatMessage({ id: 'app.chooseJoinExistingCompany' })}</li>
+                              <li>{intl.formatMessage({ id: 'app.enterCodeToJoinAsViewer' })}</li>
+                            </Box>
+                          </Box>
+                        </VStack>
                       </Box>
-                    </VStack>
+                    </StandardCard>
                   </Box>
-                </StandardCard>
-              </Box>
-            </SimpleGrid>
-          </VStack>
-        )}
+                </SimpleGrid>
+              </VStack>
+            )}
 
-        {/* Company Information Tab Panel */}
-        {settingsTab === 'company' && <CompanyInfoTab />}
+            {/* Company Information Tab Panel */}
+            {settingsTab === 'company' && <CompanyInfoTab />}
+          </Box>
+        </StandardSectionTabs>
       </VStack>
     </StandardPage>
   );
