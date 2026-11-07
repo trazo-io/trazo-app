@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.11.19",
+  "content_version": "2026.11.20",
   "registry": {
-    "content_version": "2026.11.19",
+    "content_version": "2026.11.20",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -12928,6 +12928,38 @@
                 "max_length": null
               },
               {
+                "key": "on_farm_storage_table",
+                "kind": "info",
+                "label": {
+                  "en": "Your own storage facilities",
+                  "es": "Tus propias instalaciones de almacenamiento"
+                },
+                "coaching": {
+                  "en": "Add each storage facility you run yourself with its name and full address, and attach its layout. Your own certificate covers it, so no certificate is asked.",
+                  "es": "Agrega cada instalación de almacenamiento que operas tú con su nombre y dirección completa, y adjunta su plano. Tu propio certificado la cubre, así que no se pide certificado."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "storage_locations",
+                    "op": "includes_any",
+                    "value": [
+                      "on_farm_cold",
+                      "on_farm_dry",
+                      "bins_silos"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.272(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": "on_farm_facilities",
+                "placeholder": null,
+                "max_length": null
+              },
+              {
                 "key": "off_farm_storage_table",
                 "kind": "info",
                 "label": {
@@ -13375,6 +13407,28 @@
                 "parcel_field": null,
                 "establishment_field": null,
                 "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "on_farm_facility_table",
+                "kind": "info",
+                "label": {
+                  "en": "Your own handling and storage facilities",
+                  "es": "Tus propias instalaciones de manejo y almacenamiento"
+                },
+                "coaching": {
+                  "en": "Add each facility you run yourself (packing shed, cooler, dry storage) with its name and full address, and attach a layout showing the areas used for organic handling and storage. Your own certificate covers them, so no certificate is asked.",
+                  "es": "Agrega cada instalación que operas tú (galpón de empaque, cámara fría, almacén seco) con su nombre y dirección completa, y adjunta un plano que muestre las áreas usadas para el manejo y almacenamiento orgánico. Tu propio certificado las cubre, así que no se pide certificado."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.270",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": "on_farm_facilities",
                 "placeholder": null,
                 "max_length": null
               }
@@ -20558,6 +20612,58 @@
       "missing_required_na": []
     },
     {
+      "module": "g6_2_storage",
+      "label": "on_farm_cold",
+      "answers": {
+        "storage_locations": [
+          "on_farm_cold"
+        ]
+      },
+      "visible_questions": [
+        "storage_locations",
+        "stored_in_sealed_packaging",
+        "storage_shared_with_nonorganic",
+        "on_farm_storage_table",
+        "storage_cleaned_before_organic",
+        "storage_pest_control_materials_used",
+        "lot_identity_maintained"
+      ],
+      "missing_required": [
+        "storage_shared_with_nonorganic",
+        "storage_cleaned_before_organic",
+        "storage_pest_control_materials_used",
+        "lot_identity_maintained"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g6_2_storage",
+      "label": "off_farm_only",
+      "answers": {
+        "storage_locations": [
+          "certified_handler"
+        ]
+      },
+      "visible_questions": [
+        "storage_locations",
+        "stored_in_sealed_packaging",
+        "storage_shared_with_nonorganic",
+        "third_party_storage_contracted",
+        "off_farm_storage_table",
+        "storage_cleaned_before_organic",
+        "storage_pest_control_materials_used",
+        "lot_identity_maintained"
+      ],
+      "missing_required": [
+        "storage_shared_with_nonorganic",
+        "third_party_storage_contracted",
+        "storage_cleaned_before_organic",
+        "storage_pest_control_materials_used",
+        "lot_identity_maintained"
+      ],
+      "missing_required_na": []
+    },
+    {
       "module": "g7_0_labeling",
       "label": "unanswered",
       "answers": {},
@@ -22293,6 +22399,7 @@
         "products_handled",
         "own_products_only",
         "handling_site",
+        "on_farm_facility_table",
         "process_flow",
         "food_contact_cleaning_methods",
         "uses_equipment_sanitizer_or_cleaner",
@@ -22329,6 +22436,7 @@
         "products_handled",
         "own_products_only",
         "handling_site",
+        "on_farm_facility_table",
         "process_flow",
         "food_contact_cleaning_methods",
         "uses_equipment_sanitizer_or_cleaner",
@@ -22363,6 +22471,7 @@
         "products_handled",
         "own_products_only",
         "handling_site",
+        "on_farm_facility_table",
         "process_flow",
         "food_contact_cleaning_methods",
         "uses_equipment_sanitizer_or_cleaner",
@@ -22397,6 +22506,7 @@
         "products_handled",
         "own_products_only",
         "handling_site",
+        "on_farm_facility_table",
         "process_flow",
         "food_contact_cleaning_methods",
         "uses_equipment_sanitizer_or_cleaner",
@@ -22432,6 +22542,7 @@
         "products_handled",
         "own_products_only",
         "handling_site",
+        "on_farm_facility_table",
         "process_flow",
         "food_contact_cleaning_methods",
         "uses_equipment_sanitizer_or_cleaner",
