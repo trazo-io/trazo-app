@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.11.18",
+  "content_version": "2026.11.19",
   "registry": {
-    "content_version": "2026.11.18",
+    "content_version": "2026.11.19",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -15225,6 +15225,36 @@
                 "max_length": null
               },
               {
+                "key": "certifier_statement_below_operation",
+                "kind": "boolean",
+                "label": {
+                  "en": "On every retail label, is the \"Certified organic by\" statement below the name of the operation that packed or distributed the product?",
+                  "es": "¿En todas las etiquetas para venta al por menor, la frase \"Certificado orgánico por\" va debajo del nombre de la operación que empacó o distribuyó el producto?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "product_leaves_as",
+                    "op": "includes",
+                    "value": "consumer_packaging"
+                  },
+                  {
+                    "question": "label_states_certifier",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.303(b)(2)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
                 "key": "label_has_usda_seal",
                 "kind": "boolean",
                 "label": {
@@ -15273,6 +15303,111 @@
                   }
                 ],
                 "nop_cite": "§ 205.303",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "retail_labels_certifier_review",
+                "kind": "radio",
+                "label": {
+                  "en": "Has your certifying agent reviewed and approved every current retail label making an organic claim, including labels for exported product?",
+                  "es": "¿Tu certificadora revisó y aprobó todas las etiquetas vigentes para venta al por menor con declaración orgánica, incluidas las de producto exportado?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "all_approved",
+                    "label": {
+                      "en": "Yes, every current label has been approved",
+                      "es": "Sí, todas las etiquetas vigentes fueron aprobadas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "new_or_updated_attached",
+                    "label": {
+                      "en": "No, new or updated labels are attached for review",
+                      "es": "No, las etiquetas nuevas o actualizadas se adjuntan para revisión"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "submitted_before_printing",
+                    "label": {
+                      "en": "No label is in use yet; each will be submitted for review before it is printed",
+                      "es": "Todavía no se usa ninguna etiqueta; cada una se enviará a revisión antes de imprimirse"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "not_submitted",
+                    "label": {
+                      "en": "Labels in use have not been submitted",
+                      "es": "Las etiquetas en uso no se enviaron"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "product_leaves_as",
+                    "op": "includes",
+                    "value": "consumer_packaging"
+                  }
+                ],
+                "nop_cite": "§ 205.303",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "unpackaged_retail_labels",
+                "kind": "boolean",
+                "label": {
+                  "en": "Do you put retail labels on unpackaged product (PLU stickers, tags, twist ties) that show the USDA seal, your certifier's name or seal, or an ingredient statement?",
+                  "es": "¿Pones etiquetas para venta al por menor en producto sin empacar (stickers PLU, etiquetas, amarres) que muestran el sello del USDA, el nombre o sello de tu certificadora o una lista de ingredientes?"
+                },
+                "coaching": {
+                  "en": "Attach each sticker or tag below. If it carries the USDA seal, attach it in color.",
+                  "es": "Adjunta abajo cada sticker o etiqueta. Si lleva el sello del USDA, adjúntala a color."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.300",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "unpackaged_label_upload",
+                "kind": "upload",
+                "label": {
+                  "en": "Attach each sticker, tag or twist tie label",
+                  "es": "Adjunta cada sticker, etiqueta o amarre"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "unpackaged_retail_labels",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.300",
                 "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
@@ -20429,6 +20564,7 @@
       "visible_questions": [
         "product_leaves_as",
         "organic_label_categories",
+        "unpackaged_retail_labels",
         "nonretail_container_types",
         "nonretail_organic_identification",
         "invoices_identify_lot",
@@ -20458,6 +20594,7 @@
         "product_leaves_as",
         "unlabeled_bulk_notice",
         "organic_label_categories",
+        "unpackaged_retail_labels",
         "nonretail_container_types",
         "nonretail_organic_identification",
         "invoices_identify_lot",
@@ -20467,6 +20604,133 @@
         "label_claim_review_process"
       ],
       "missing_required": [
+        "organic_label_categories",
+        "invoices_identify_lot",
+        "container_markings_tie_to_lot",
+        "label_claim_review_process"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g7_0_labeling",
+      "label": "retail_with_statement",
+      "answers": {
+        "product_leaves_as": [
+          "consumer_packaging"
+        ],
+        "label_states_certifier": true
+      },
+      "visible_questions": [
+        "product_leaves_as",
+        "organic_label_categories",
+        "label_states_certifier",
+        "certifier_statement_below_operation",
+        "label_has_usda_seal",
+        "label_files_upload",
+        "retail_labels_certifier_review",
+        "unpackaged_retail_labels",
+        "nonretail_container_types",
+        "nonretail_organic_identification",
+        "invoices_identify_lot",
+        "container_markings_tie_to_lot",
+        "container_lot_identifier_types",
+        "container_record_elements",
+        "label_claim_review_process"
+      ],
+      "missing_required": [
+        "organic_label_categories",
+        "label_has_usda_seal",
+        "invoices_identify_lot",
+        "container_markings_tie_to_lot",
+        "label_claim_review_process"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g7_0_labeling",
+      "label": "retail_no_statement_stale_placement",
+      "answers": {
+        "product_leaves_as": [
+          "consumer_packaging"
+        ],
+        "label_states_certifier": false,
+        "certifier_statement_below_operation": true
+      },
+      "visible_questions": [
+        "product_leaves_as",
+        "organic_label_categories",
+        "label_states_certifier",
+        "label_has_usda_seal",
+        "label_files_upload",
+        "retail_labels_certifier_review",
+        "unpackaged_retail_labels",
+        "nonretail_container_types",
+        "nonretail_organic_identification",
+        "invoices_identify_lot",
+        "container_markings_tie_to_lot",
+        "container_lot_identifier_types",
+        "container_record_elements",
+        "label_claim_review_process"
+      ],
+      "missing_required": [
+        "organic_label_categories",
+        "label_has_usda_seal",
+        "invoices_identify_lot",
+        "container_markings_tie_to_lot",
+        "label_claim_review_process"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g7_0_labeling",
+      "label": "bulk_only_stale_review",
+      "answers": {
+        "product_leaves_as": [
+          "bulk_bins_marked"
+        ],
+        "retail_labels_certifier_review": "all_approved"
+      },
+      "visible_questions": [
+        "product_leaves_as",
+        "organic_label_categories",
+        "unpackaged_retail_labels",
+        "nonretail_container_types",
+        "nonretail_organic_identification",
+        "invoices_identify_lot",
+        "container_markings_tie_to_lot",
+        "container_lot_identifier_types",
+        "container_record_elements",
+        "label_claim_review_process"
+      ],
+      "missing_required": [
+        "organic_label_categories",
+        "invoices_identify_lot",
+        "container_markings_tie_to_lot",
+        "label_claim_review_process"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g7_0_labeling",
+      "label": "plu_stickers",
+      "answers": {
+        "unpackaged_retail_labels": true
+      },
+      "visible_questions": [
+        "product_leaves_as",
+        "organic_label_categories",
+        "unpackaged_retail_labels",
+        "unpackaged_label_upload",
+        "nonretail_container_types",
+        "nonretail_organic_identification",
+        "invoices_identify_lot",
+        "container_markings_tie_to_lot",
+        "container_lot_identifier_types",
+        "container_record_elements",
+        "label_claim_review_process"
+      ],
+      "missing_required": [
+        "product_leaves_as",
         "organic_label_categories",
         "invoices_identify_lot",
         "container_markings_tie_to_lot",
@@ -20488,6 +20752,7 @@
       "visible_questions": [
         "product_leaves_as",
         "organic_label_categories",
+        "unpackaged_retail_labels",
         "nonretail_container_types",
         "nonretail_organic_identification",
         "invoices_identify_lot",
@@ -20519,6 +20784,7 @@
       "visible_questions": [
         "product_leaves_as",
         "organic_label_categories",
+        "unpackaged_retail_labels",
         "nonretail_container_types",
         "invoices_identify_lot",
         "container_markings_tie_to_lot",
@@ -20548,6 +20814,7 @@
       "visible_questions": [
         "product_leaves_as",
         "organic_label_categories",
+        "unpackaged_retail_labels",
         "nonretail_container_types",
         "nonretail_organic_identification",
         "nonretail_label_upload",
@@ -20575,6 +20842,7 @@
       "visible_questions": [
         "product_leaves_as",
         "organic_label_categories",
+        "unpackaged_retail_labels",
         "nonretail_container_types",
         "nonretail_organic_identification",
         "invoices_identify_lot",
@@ -20601,6 +20869,7 @@
       "visible_questions": [
         "product_leaves_as",
         "organic_label_categories",
+        "unpackaged_retail_labels",
         "nonretail_container_types",
         "nonretail_organic_identification",
         "invoices_identify_lot",
@@ -20628,6 +20897,7 @@
       "visible_questions": [
         "product_leaves_as",
         "organic_label_categories",
+        "unpackaged_retail_labels",
         "nonretail_container_types",
         "invoices_identify_lot",
         "container_markings_tie_to_lot",
@@ -20653,6 +20923,7 @@
       "visible_questions": [
         "product_leaves_as",
         "organic_label_categories",
+        "unpackaged_retail_labels",
         "nonretail_container_types",
         "nonretail_organic_identification",
         "invoices_identify_lot",
