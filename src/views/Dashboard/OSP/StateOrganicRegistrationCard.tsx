@@ -225,7 +225,7 @@ const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId, stat
               <option value="exempt">
                 {intl.formatMessage({
                   id: 'osp.cdfa.status.exempt',
-                  defaultMessage: 'Exempt (< $5,000 organic sales)'
+                  defaultMessage: 'Registered, exempt from certification (under $5,000 organic sales)'
                 })}
               </option>
             </StandardSelect>

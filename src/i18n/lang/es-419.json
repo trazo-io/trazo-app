@@ -6424,7 +6424,7 @@
   "osp.cdfa.renewalDate": "Fecha de renovación",
   "osp.cdfa.save": "Guardar registro",
   "osp.cdfa.status": "Estado",
-  "osp.cdfa.status.exempt": "Exento (< $5,000 en ventas orgánicas)",
+  "osp.cdfa.status.exempt": "Registrado, exento de certificación (menos de $5,000 en ventas orgánicas)",
   "osp.cdfa.status.expired": "Vencido",
   "osp.cdfa.status.pending": "Pendiente",
   "osp.cdfa.status.registered": "Registrado",

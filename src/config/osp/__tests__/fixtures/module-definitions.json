@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.11.16",
+  "content_version": "2026.11.17",
   "registry": {
-    "content_version": "2026.11.16",
+    "content_version": "2026.11.17",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -8744,6 +8744,105 @@
                 "prefill": null,
                 "parcel_field": null,
                 "establishment_field": "has_split_operation",
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "nonorganic_product_source",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Where does the non-organic product come from? Check all that apply.",
+                  "es": "¿De dónde viene el producto no orgánico? Marca todas las que correspondan."
+                },
+                "coaching": {
+                  "en": "Crop harvested from a buffer zone and sold as non-organic is non-organic product. If it is the only one, check only that box: the reviewer then reads that no parcel is under conventional management.",
+                  "es": "El cultivo cosechado en una zona de amortiguamiento y vendido como no orgánico es producto no orgánico. Si es el único, marca solo esa casilla: así quien revisa lee que ninguna parcela está bajo manejo convencional."
+                },
+                "options": [
+                  {
+                    "value": "buffer_zone_crop",
+                    "label": {
+                      "en": "Crop harvested from buffer zones, sold as non-organic",
+                      "es": "Cultivo cosechado en zonas de amortiguamiento, vendido como no orgánico"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "nonorganic_parcels",
+                    "label": {
+                      "en": "Crops grown on parcels that are not certified organic",
+                      "es": "Cultivos producidos en parcelas que no están certificadas orgánicas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "transitional_parcels",
+                    "label": {
+                      "en": "Crop from land in transition to organic",
+                      "es": "Cultivo de tierra en transición a orgánico"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "bought_in_nonorganic",
+                    "label": {
+                      "en": "Non-organic product bought from other operations and resold",
+                      "es": "Producto no orgánico comprado a otras operaciones y revendido"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otro"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "split_operation",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.2",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "nonorganic_product_source_other",
+                "kind": "text",
+                "label": {
+                  "en": "Other source of non-organic product",
+                  "es": "Otro origen del producto no orgánico"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "split_operation",
+                    "op": "truthy",
+                    "value": null
+                  },
+                  {
+                    "question": "nonorganic_product_source",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": "§ 205.2",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -19539,6 +19638,7 @@
       },
       "visible_questions": [
         "split_operation",
+        "nonorganic_product_source",
         "split_operation_separation",
         "harvest_transport_separation",
         "parallel_production",
@@ -19580,6 +19680,95 @@
       "label": "not_split",
       "answers": {
         "split_operation": false
+      },
+      "visible_questions": [
+        "split_operation",
+        "parallel_production",
+        "buffer_strategies",
+        "drift_risk_present",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "borders_public_road",
+        "prohibited_materials_on_site",
+        "treated_lumber_any",
+        "uses_production_equipment"
+      ],
+      "missing_required": [
+        "parallel_production",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ],
+      "missing_required_na": [
+        "parallel_production",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ]
+    },
+    {
+      "module": "g6_0_production",
+      "label": "split_source_other",
+      "answers": {
+        "split_operation": true,
+        "nonorganic_product_source": [
+          "buffer_zone_crop",
+          "other"
+        ]
+      },
+      "visible_questions": [
+        "split_operation",
+        "nonorganic_product_source",
+        "nonorganic_product_source_other",
+        "split_operation_separation",
+        "harvest_transport_separation",
+        "parallel_production",
+        "nonorganic_crops_products",
+        "nonorganic_system_materials",
+        "buffer_strategies",
+        "drift_risk_present",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "borders_public_road",
+        "prohibited_materials_on_site",
+        "treated_lumber_any",
+        "uses_production_equipment"
+      ],
+      "missing_required": [
+        "split_operation_separation",
+        "parallel_production",
+        "nonorganic_system_materials",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ],
+      "missing_required_na": [
+        "split_operation_separation",
+        "parallel_production",
+        "nonorganic_system_materials",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ]
+    },
+    {
+      "module": "g6_0_production",
+      "label": "not_split_stale_source",
+      "answers": {
+        "split_operation": false,
+        "nonorganic_product_source": [
+          "other"
+        ]
       },
       "visible_questions": [
         "split_operation",
