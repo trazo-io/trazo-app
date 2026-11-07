@@ -25,7 +25,6 @@ import { useIntl } from 'react-intl';
 import {
   STATUS_URGENCY_TOKENS,
   StandardButton,
-  StandardCard,
   StandardInput,
   StandardSelect,
   StandardSpinner
@@ -235,9 +234,11 @@ const CrewRoster = ({ companyId, farms }: Props) => {
     return intl.formatMessage({ id: 'fieldNotes.roster.blocked' });
   };
 
+  // No card of its own (2026-11-07): it renders inside the page's collapsible "Crew numbers"
+  // section, and its own StandardCard plus a bordered box per number made three nested frames.
   return (
-    <StandardCard>
-      <VStack align="stretch" spacing={3} p={2}>
+    <Box>
+      <VStack align="stretch" spacing={3}>
         <VStack align="start" spacing={1}>
           <Text fontSize="sm" fontWeight="semibold" color="gray.800">
             {intl.formatMessage({ id: 'fieldNotes.roster.heading' })}
@@ -268,10 +269,9 @@ const CrewRoster = ({ companyId, farms }: Props) => {
                * which row it was about. `data-testid` is already the convention here.
                */
               data-testid="crew-sender-row"
-              borderWidth="1px"
-              borderColor="gray.200"
-              borderRadius="md"
-              p={3}>
+              py={3}
+              borderTopWidth="1px"
+              borderTopColor="gray.100">
               <Stack
                 direction={{ base: 'column', smd: 'row' }}
                 justify="space-between"
@@ -443,7 +443,7 @@ const CrewRoster = ({ companyId, farms }: Props) => {
           </VStack>
         )}
       </VStack>
-    </StandardCard>
+    </Box>
   );
 };
 

@@ -9634,5 +9634,7 @@
   "osp.review.open": "Abrir",
   "osp.review.showAll": "Ver los {count}",
   "osp.review.showFewer": "Ver menos",
-  "osp.review.lastAnswered": "Última respuesta: {date}"
+  "osp.review.lastAnswered": "Última respuesta: {date}",
+  "fieldNotes.queue.title": "Mensajes por registrar · {count}",
+  "fieldNotes.queue.help": "Elige la parcela donde ocurrió cada mensaje y regístralo. No adivinamos la parcela: es lo que sigue un certificador."
 }

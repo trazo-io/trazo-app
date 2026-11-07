@@ -9634,5 +9634,7 @@
   "osp.review.open": "Open",
   "osp.review.showAll": "Show all {count}",
   "osp.review.showFewer": "Show fewer",
-  "osp.review.lastAnswered": "Last answered {date}"
+  "osp.review.lastAnswered": "Last answered {date}",
+  "fieldNotes.queue.title": "Messages to log · {count}",
+  "fieldNotes.queue.help": "Pick the parcel each message happened on, then log it. We do not guess the parcel: it is what a certifier follows."
 }
