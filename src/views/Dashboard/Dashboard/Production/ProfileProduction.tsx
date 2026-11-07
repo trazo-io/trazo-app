@@ -447,14 +447,15 @@ function ProfileProduction() {
     try {
       await navigator.share({
         title: intl.formatMessage(
-          { id: 'production.share.title', defaultMessage: '{name} — Trazo production record' },
-          { name: historyData?.product?.name || historyData?.name || 'Production' }
+          { id: 'production.share.title' },
+          {
+            name:
+              historyData?.product?.name ||
+              historyData?.name ||
+              intl.formatMessage({ id: 'farmHome.seasons.untitled' })
+          }
         ),
-        text: intl.formatMessage({
-          id: 'production.share.text',
-          defaultMessage:
-            'See the documented production journey for this lot on Trazo. #Trazo #Traceability'
-        }),
+        text: intl.formatMessage({ id: 'production.share.text' }),
         url: window.location.href
       });
     } catch (error) {
@@ -511,7 +512,7 @@ function ProfileProduction() {
         showBackButton
         onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}>
         <Box py={8} textAlign="center">
-          <Text color="red.700">Error loading production data. Please try again.</Text>
+          <Text color="red.700">{intl.formatMessage({ id: 'production.error.load' })}</Text>
         </Box>
       </StandardPage>
     );

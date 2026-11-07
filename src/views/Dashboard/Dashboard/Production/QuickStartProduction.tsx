@@ -61,7 +61,8 @@ const productionSchema = object({
   // 150 is History.name's max_length. It had no bound at all here, so an over-length name
   // reached the database and came back as a 500 rather than a field error. (Note the 30-char
   // cap inside generateProductionName is that helper's own formatting rule, not the column's.)
-  name: string().min(1, 'Production name is required').max(150, 'Production name is too long'),
+  // Messages are keys, rendered through intl at the field (as production_method below).
+  name: string().min(1, 'quickStart.field.name.required').max(150, 'quickStart.field.name.tooLong'),
   start_date: string().min(1, 'Start date is required'),
   expected_harvest: string().optional(),
   description: string().optional(),
@@ -70,7 +71,7 @@ const productionSchema = object({
   // came up Conventional. The farm's own farming_method still seeds it below; with nothing to
   // inherit, the grower chooses. The message is a key, rendered through intl at the field.
   production_method: string().min(1, 'quickStart.field.productionMethod.required'),
-  type: string().min(1, 'Production type is required'),
+  type: string().min(1, 'Choose perennial or annual'),
   crop_type_id: string().min(1, 'Crop type is required')
 }).superRefine((data, ctx) => {
   // A season cannot be expected to end before it starts. The backend accepts both dates
@@ -573,7 +574,10 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
   } = useForm<ProductionFormData>({
     resolver: zodResolver(productionSchema),
     defaultValues: {
-      name: `Production ${new Date().getFullYear()}`,
+      name: intl.formatMessage(
+        { id: 'quickStart.field.name.default' },
+        { year: new Date().getFullYear() }
+      ),
       start_date: new Date().toISOString().split('T')[0],
       type: 'OR',
       production_method: '',
@@ -678,7 +682,12 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
       const expectedHarvestDate = productionData.expected_harvest || '';
 
       reset({
-        name: productionData.name || `Production ${new Date().getFullYear()}`,
+        name:
+          productionData.name ||
+          intl.formatMessage(
+            { id: 'quickStart.field.name.default' },
+            { year: new Date().getFullYear() }
+          ),
         start_date: formatDate(productionData.start_date) || new Date().toISOString().split('T')[0],
         expected_harvest: formatDate(expectedHarvestDate),
         description: productionData.description || '',
@@ -1117,7 +1126,11 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
   // Show loading state for edit mode or template loading
   if (isLoadingTemplates || (isEdit && isLoadingProduction)) {
     return (
-      <StandardPage title={isEdit ? 'Edit Production' : 'Quick Start Production'} showBackButton>
+      <StandardPage
+        title={intl.formatMessage({
+          id: isEdit ? 'quickStart.page.titleEdit' : 'quickStart.page.title'
+        })}
+        showBackButton>
         <StandardPageLoading />
       </StandardPage>
     );
@@ -1471,7 +1484,11 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                     <StandardField
                       label={intl.formatMessage({ id: 'quickStart.field.name' })}
                       required
-                      error={errors.name?.message}>
+                      error={
+                        errors.name?.message
+                          ? intl.formatMessage({ id: errors.name.message })
+                          : undefined
+                      }>
                       <Controller
                         name="name"
                         control={control}

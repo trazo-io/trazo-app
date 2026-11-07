@@ -174,7 +174,7 @@ function FinishProduction() {
     } catch (error: any) {
       console.error('Error finishing production:', error);
 
-      let description = 'Failed to finish production. Please try again.';
+      let description = intl.formatMessage({ id: 'finishProduction.error.finishFailed' });
       if (error?.data) {
         if (typeof error.data.detail === 'string') {
           description = error.data.detail;
