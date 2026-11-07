@@ -9721,5 +9721,6 @@
   "subscription.usage.noLimit": "No limit",
   "subscription.usage.atLimit": "At your plan's limit",
   "subscription.usage.left": "{count} left",
-  "subscription.feature.responseTime": "Support answers within {hours} hours"
+  "subscription.feature.responseTime": "Support answers within {hours} hours",
+  "osp.wizard.retiredQuestion": "Earlier answer, kept as given. This question was replaced by newer questions in this module that ask it in more detail; answer those."
 }

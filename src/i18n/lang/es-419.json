@@ -9721,5 +9721,6 @@
   "subscription.usage.noLimit": "Sin límite",
   "subscription.usage.atLimit": "En el límite de tu plan",
   "subscription.usage.left": "Quedan {count}",
-  "subscription.feature.responseTime": "El soporte responde en menos de {hours} horas"
+  "subscription.feature.responseTime": "El soporte responde en menos de {hours} horas",
+  "osp.wizard.retiredQuestion": "Respuesta anterior, se conserva tal como se dio. Esta pregunta fue reemplazada por preguntas más nuevas de este módulo, que la preguntan con más detalle; responde esas."
 }

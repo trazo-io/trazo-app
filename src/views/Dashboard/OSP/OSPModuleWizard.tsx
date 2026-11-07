@@ -238,7 +238,7 @@ const QuestionField = ({
   value,
   locale,
   showMissing,
-  isReadOnly,
+  isReadOnly: planReadOnly,
   onChange,
   companyId,
   farmId,
@@ -273,9 +273,14 @@ const QuestionField = ({
   agentBlank?: string | null;
 }) => {
   const intl = useIntl();
+  // A retired question (backend `Question.retired`) is shown only because it holds an answer. It reads as
+  // given and cannot be changed here: clearing its last choice would hide it and drop the answer, and it
+  // is never asked anew, so it carries no asterisk (review of app #319).
+  const retired = Boolean(question.retired);
+  const isReadOnly = planReadOnly || retired;
   const label = pickText(question.label, locale);
   const coaching = question.coaching ? pickText(question.coaching, locale) : null;
-  const missing = showMissing && question.required;
+  const missing = showMissing && question.required && !retired;
 
   let control: React.ReactNode = null;
   switch (question.kind) {
@@ -470,7 +475,7 @@ const QuestionField = ({
       <HStack spacing={2} align="flex-start" mb={coaching ? 1 : 2}>
         <Text fontWeight="medium" fontSize="sm">
           {label}
-          {question.required && question.kind !== 'info' ? ' *' : ''}
+          {question.required && !retired && question.kind !== 'info' ? ' *' : ''}
         </Text>
         {question.nop_cite ? (
           <Badge variant="neutral" fontSize="11px" mt={0.5}>
@@ -493,6 +498,11 @@ const QuestionField = ({
         </Text>
       ) : null}
       {control}
+      {retired ? (
+        <Text fontSize="xs" color="gray.700" mt={1} data-testid={`osp-q-retired-${question.key}`}>
+          {intl.formatMessage({ id: 'osp.wizard.retiredQuestion' })}
+        </Text>
+      ) : null}
       {holdsRetiredOption(question, value) ? (
         <Text fontSize="xs" color="gray.700" mt={1}>
           {intl.formatMessage({ id: 'osp.wizard.retiredOption' })}
