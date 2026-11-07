@@ -284,47 +284,6 @@ const companyApi = baseApi.injectEndpoints({
         credentials: 'include'
       })
     }),
-    getCarbonReports: build.query<any[], { farmId: number; year?: number; reportType?: string }>({
-      query: ({ farmId, year, reportType }) => {
-        let url = `/carbon/reports/?establishment=${farmId}`;
-        if (year) url += `&year=${year}`;
-        if (reportType) url += `&report_type=${reportType}`;
-        return {
-          url: url,
-          method: 'GET',
-          credentials: 'include'
-        };
-      }
-    }),
-    generateCarbonReport: build.mutation<
-      any,
-      | FormData
-      | {
-          establishment: number;
-          year: number;
-          reportType: 'annual' | 'quarterly' | 'custom';
-          quarter?: number;
-          startDate?: string;
-          endDate?: string;
-          document?: File;
-        }
-    >({
-      query: (data) => {
-        // Check if data is FormData (for file uploads) or regular object
-        const isFormData = data instanceof FormData;
-
-        return {
-          url: '/carbon/reports/generate/',
-          method: 'POST',
-          body: data,
-          // Don't set content-type for FormData to let the browser set it with boundary
-          formData: isFormData,
-          credentials: 'include'
-        };
-      },
-      // Invalidate any queries that might have cached report data
-      invalidatesTags: ['CarbonSummary']
-    }),
     getProductionsByFarm: build.query({
       query: ({ farmId, _t }) => ({
         url: `/carbon/productions-flat/?establishment=${farmId}${_t ? `&_t=${_t}` : ''}`,
@@ -432,41 +391,6 @@ const companyApi = baseApi.injectEndpoints({
         credentials: 'include'
       }),
       providesTags: ['CropType']
-    }),
-    // Get certified carbon offset projects
-    getCertifiedProjects: build.query<
-      {
-        projects: Array<{
-          id: string;
-          name: string;
-          description: string;
-          project_type: string;
-          verification_standard: string;
-          verification_badge: {
-            color: string;
-            text: string;
-            icon: string;
-          };
-          country: string;
-          region: string;
-          developer: string;
-          price_per_credit: number;
-          available_credits: number;
-          vintage_year: number;
-          co_benefits: string[];
-          featured: boolean;
-          trazo_verified: boolean;
-          registry_url?: string;
-        }>;
-      },
-      void
-    >({
-      query: () => ({
-        url: '/carbon/offsets/certified_projects/',
-        method: 'GET',
-        credentials: 'include'
-      }),
-      providesTags: ['CarbonSummary']
     })
   }),
   overrideExisting: false
@@ -492,14 +416,11 @@ export const {
   useAddCarbonCertificationMutation,
   useUpdateCarbonCertificationMutation,
   useDeleteCarbonCertificationMutation,
-  useGetCarbonReportsQuery,
-  useGenerateCarbonReportMutation,
   useGetProductionsByFarmQuery,
   useGetCarbonEntriesQuery,
   useStartProductionMutation,
   useGetCropTypesQuery,
   useGetCropTypesDropdownQuery,
-  useGetCertifiedProjectsQuery,
   useCreateCarbonOffsetMutation
 } = companyApi;
 
