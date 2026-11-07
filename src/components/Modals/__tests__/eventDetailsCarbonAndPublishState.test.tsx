@@ -22,7 +22,6 @@ import theme from '../../../theme/theme';
 import enMessages from '../../../i18n/lang/en-US.json';
 import esMessages from '../../../i18n/lang/es-419.json';
 import { EventDetailsModal } from '../EventDetailsModal';
-import EnhancedTimelineRow from '../../Tables/EnhancedTimelineRow';
 
 // Same API-boundary mocks as eventDetailsModalSurface.test.tsx: this suite is about what the
 // carbon card and the visibility hint say, not about the modal's data hooks.
@@ -140,26 +139,6 @@ function renderModal({
   );
 }
 
-function renderRow(event: Record<string, unknown>) {
-  return render(
-    <ChakraProvider theme={theme}>
-      <IntlProvider locale="en-US" messages={en}>
-        <MemoryRouter>
-          <EnhancedTimelineRow
-            logo={null}
-            title="Activity"
-            date="2026-10-25"
-            color="gray"
-            url=""
-            event={event as never}
-            members={[]}
-          />
-        </MemoryRouter>
-      </IntlProvider>
-    </ChakraProvider>
-  );
-}
-
 beforeEach(() => {
   // ResponsiveModal reads matchMedia; desktop is enough here (layout has its own suite).
   Object.defineProperty(window, 'matchMedia', {
@@ -226,23 +205,9 @@ describe('AC-14: a record with no carbon calculation shows no figure', () => {
   });
 });
 
-describe('AC-14: the timeline row makes up no zero either', () => {
-  it.each([
-    ['general', GENERAL],
-    ['weather', WEATHER],
-    ['business', BUSINESS]
-  ])('%s: the caption, no "kg CO2e"', (_name, event) => {
-    renderRow(event);
-
-    expect(screen.getByText(en['event.recordValue.zeroEmissions'])).toBeInTheDocument();
-    expect(screen.queryByText(/kg CO₂e/)).toBeNull();
-  });
-
-  it('a computed zero still shows its figure', () => {
-    renderRow(PEST_COMPUTED_ZERO);
-    expect(screen.getByText(/^0 kg CO₂e$/)).toBeInTheDocument();
-  });
-});
+// "The timeline row makes up no zero either" pinned `EnhancedTimelineRow`, deleted 2026-11-07:
+// no screen rendered it, and the shared month timeline that replaced it shows no carbon figure.
+// The detail modal above is where a figure is still shown, and AC-14 holds there.
 
 describe('AC-15: the buyer-page hint follows the season publish state', () => {
   it('unpublished season: "will appear once the season is published"', () => {

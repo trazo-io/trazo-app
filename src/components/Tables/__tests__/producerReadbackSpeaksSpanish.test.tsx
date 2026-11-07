@@ -10,7 +10,7 @@
  */
 import React from 'react';
 import { ChakraProvider } from '@chakra-ui/react';
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { IntlProvider } from 'react-intl';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
@@ -23,13 +23,11 @@ const ES = es419 as unknown as Record<string, string>;
 const EN = enUS as unknown as Record<string, string>;
 
 let RegistryFieldRenderer: typeof import('../../Events/RegistryFieldRenderer').RegistryFieldRenderer;
-let EnhancedTimelineRow: typeof import('../EnhancedTimelineRow').default;
 
 beforeAll(async () => {
   // The timeline reads the flag at module load, so it has to be set before the import.
   vi.stubEnv('VITE_USE_FIELD_REGISTRY', 'true');
   ({ RegistryFieldRenderer } = await import('../../Events/RegistryFieldRenderer'));
-  EnhancedTimelineRow = (await import('../EnhancedTimelineRow')).default;
 });
 
 const wrap = (locale: 'en-US' | 'es-419', ui: React.ReactElement) => (
@@ -167,81 +165,6 @@ describe('canopy and cultivation detail under es-419', () => {
   });
 });
 
-describe('EnhancedTimelineRow card under es-419', () => {
-  const baseEvent = {
-    id: 1,
-    event_type: 7,
-    type: 'IN',
-    name: 'ASTRA business',
-    date: '2026-10-19T16:20:00Z',
-    description: 'ASTRA business test',
-    business_type: 'verification',
-    verification_status: 'in_progress',
-    extra_data: {}
-  };
-
-  const renderRow = (locale: 'en-US' | 'es-419', event: Record<string, unknown>) =>
-    render(
-      wrap(
-        locale,
-        <EnhancedTimelineRow
-          logo={null}
-          title="t"
-          date="2026-10-19"
-          color="green"
-          url="/"
-          event={event as never}
-          members={[]}
-        />
-      )
-    );
-
-  it('labels come from the authored message and values are localized', () => {
-    const { container } = renderRow('es-419', baseEvent);
-    const text = container.textContent ?? '';
-    expect(text, 'de-camelCased key leaked').not.toContain('Business Type');
-    expect(text).not.toContain('Verification In Progress');
-    expect(text).toContain(ES['events.business.fields.businessType']);
-    expect(text).toContain('Verificación en curso');
-  });
-
-  it('English stays English', () => {
-    const { container } = renderRow('en-US', baseEvent);
-    expect(container.textContent).toContain(EN['events.business.fields.businessType']);
-    expect(container.textContent).toContain('Verification In Progress');
-  });
-
-  it('a hail card reads minutes, a storm card hours, and units ride with the numbers', () => {
-    const hail = renderRow('es-419', {
-      id: 2,
-      event_type: 0,
-      type: 'HL',
-      weather_type: 'HL',
-      name: 'ASTRA hail',
-      date: '2026-10-19T16:20:00Z',
-      description: 'hail',
-      duration: '7',
-      extra_data: {}
-    });
-    expect(hail.container.textContent).toContain('7 minutos');
-    expect(hail.container.textContent).not.toMatch(/7 hours|7 horas/);
-    hail.unmount();
-
-    const storm = renderRow('es-419', {
-      id: 3,
-      event_type: 0,
-      type: 'TS',
-      weather_type: 'TS',
-      name: 'ASTRA storm',
-      date: '2026-10-19T16:20:00Z',
-      description: 'storm',
-      wind_speed: '60',
-      precipitation_amount: '20',
-      duration: '7',
-      extra_data: {}
-    });
-    const text = storm.container.textContent ?? '';
-    expect(text).toContain('60 km/h');
-    expect(text).toContain('20 mm');
-  });
-});
+// The "EnhancedTimelineRow card under es-419" cases were removed with that row (2026-11-07): no
+// screen rendered it. The same records (a business verification, a hailstorm, a storm) read
+// through the detail modal's renderer above, in both languages, which is where users see them.

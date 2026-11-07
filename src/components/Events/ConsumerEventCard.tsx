@@ -754,7 +754,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   // add-on is withdrawn, and `may_claim_blockchain` is the only thing entitled to that
   // decision. Removed rather than repaired.
 
-  // Unified event type icon/color (matches EnhancedTimelineRow, NewEvent, UltraMobileProductionJourney)
+  // Unified event type icon/color (matches NewEvent, UltraMobileProductionJourney)
   const getEventTypeIcon = (eventType?: number) => {
     switch (eventType) {
       case 0:

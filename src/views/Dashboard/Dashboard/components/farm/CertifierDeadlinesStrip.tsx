@@ -190,7 +190,12 @@ const CertifierDeadlinesStrip: React.FC<{
       key: 'osp-annual-update',
       label: intl.formatMessage({ id: 'deadlines.ospAnnualUpdate' }, { year: currentYear }),
       detail: intl.formatMessage({ id: 'deadlines.ospAnnualUpdateNotFiled' }),
-      urgency: 'overdue',
+      // OUTSTANDING, not overdue (2026-11-07). There is no date on this row: the certifier sets
+      // the schedule, as the strip's own disclaimer says. Red means a date we hold has passed;
+      // "not filed" with no due date is the warning tone. A row whose date HAS passed (an
+      // expired certificate, a lapsed state registration) now sorts above it; among the rest it
+      // stays first (pushed first, and the sort below is stable).
+      urgency: 'soon',
       href: annualUpdateHref
     });
   } else if (updateThisYear && !updateThisYear.submitted_at) {
@@ -254,7 +259,8 @@ const CertifierDeadlinesStrip: React.FC<{
   // rather than a reassuring "all clear" banner that trains the farmer to skip this row.
   if (deadlines.length === 0) return null;
 
-  // Overdue first; ties keep insertion order, which puts the § 205.406 filing above the rest.
+  // A passed date first; ties keep insertion order, so the § 205.406 filing (pushed first) leads
+  // the rows that are not overdue.
   deadlines.sort((a, b) => Number(b.urgency === 'overdue') - Number(a.urgency === 'overdue'));
 
   return (
@@ -339,15 +345,10 @@ const CertifierDeadlinesStrip: React.FC<{
                 textAlign="left"
                 w="100%"
                 minH="44px"
-                borderLeft="3px solid"
-                borderLeftColor={
-                  d.urgency === 'overdue'
-                    ? STATUS_URGENCY_TOKENS.crit.bar
-                    : STATUS_URGENCY_TOKENS.warn.bar
-                }
+                // No coloured left edge (2026-11-07): rows, not edged boxes. The detail text on
+                // the right already carries the urgency in words and in its tone.
                 borderBottom="1px solid"
                 borderBottomColor={borderColor}
-                pl={3}
                 pb={2}
                 _hover={{ bg: hoverBg }}>
                 <Text fontSize="sm" color={textColor} fontWeight="medium">

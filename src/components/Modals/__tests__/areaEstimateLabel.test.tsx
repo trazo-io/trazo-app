@@ -4,14 +4,14 @@
  * Resaving a pH or tillage record removed the false "From recorded inputs" badge, but the figure
  * (0.12 and 61 kg CO2e) came back with no word on where it comes from. The figure is a per-area
  * default (`verification_status: 'area_estimate'`), so the detail and the timeline now say so, in
- * neutral gray, and never beside the inputs badge. The timeline's "No CO2 data" was hardcoded
- * English under a Spanish UI and disagreed with the detail's "not estimated".
+ * neutral gray, and never beside the inputs badge. A hardcoded "No CO2 data" (once in the
+ * old timeline row) read English under a Spanish UI and disagreed with "not estimated".
  */
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readdirSync, readFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import { MemoryRouter } from 'react-router-dom';
 import { IntlProvider } from 'react-intl';
 import { ChakraProvider } from '@chakra-ui/react';
@@ -20,7 +20,6 @@ import theme from '../../../theme/theme';
 import enMessages from '../../../i18n/lang/en-US.json';
 import esMessages from '../../../i18n/lang/es-419.json';
 import { EventDetailsModal } from '../EventDetailsModal';
-import EnhancedTimelineRow from '../../Tables/EnhancedTimelineRow';
 import {
   isNotEstimated,
   showsAreaEstimateLabel,
@@ -88,7 +87,6 @@ const FROM_INPUTS = {
 };
 
 /** No carbon payload at all: the row used to print a hardcoded English "No CO2 data". */
-const NO_CARBON_PAYLOAD = { ...base, id: 52, type: 'WA', event_type: 5 };
 
 function renderModal(event: Record<string, unknown>, locale = 'en-US', messages = en) {
   return render(
@@ -102,26 +100,6 @@ function renderModal(event: Record<string, unknown>, locale = 'en-US', messages 
             members={[]}
             farmId="1"
             parcelId="2"
-          />
-        </MemoryRouter>
-      </IntlProvider>
-    </ChakraProvider>
-  );
-}
-
-function renderRow(event: Record<string, unknown>, locale = 'en-US', messages = en) {
-  return render(
-    <ChakraProvider theme={theme}>
-      <IntlProvider locale={locale} messages={messages}>
-        <MemoryRouter>
-          <EnhancedTimelineRow
-            logo={null}
-            title="Activity"
-            date="2026-10-25"
-            color="gray"
-            url=""
-            event={event as never}
-            members={[]}
           />
         </MemoryRouter>
       </IntlProvider>
@@ -206,34 +184,13 @@ describe('detail modal: an area estimate says where the figure comes from', () =
   });
 });
 
-describe('timeline row: an area estimate says where the figure comes from', () => {
-  it('en: the chip and the caption show, and the inputs badge does not', () => {
-    renderRow(TILLAGE_AREA_ESTIMATE);
-
-    expect(screen.getByText(en['carbon.badge.areaEstimate'])).toBeInTheDocument();
-    expect(screen.getByText(en['carbon.badge.areaEstimateCaption'])).toBeInTheDocument();
-    expect(screen.queryByText(en['carbon.badge.epaUsdaSourced'])).toBeNull();
-  });
-
-  it('es-419: the same, in Spanish', () => {
-    renderRow(TILLAGE_AREA_ESTIMATE, 'es-419', es);
-
-    expect(screen.getByText(es['carbon.badge.areaEstimate'])).toBeInTheDocument();
-    expect(screen.getByText(es['carbon.badge.areaEstimateCaption'])).toBeInTheDocument();
-    expect(screen.queryByText(es['carbon.badge.epaUsdaSourced'])).toBeNull();
-  });
-
-  it('a figure from recorded inputs gets the inputs badge and no area label', () => {
-    renderRow(FROM_INPUTS);
-
-    expect(screen.getByText(en['carbon.badge.epaUsdaSourced'])).toBeInTheDocument();
-    expect(screen.queryByText(en['carbon.badge.areaEstimate'])).toBeNull();
-    expect(screen.queryByText(en['carbon.badge.areaEstimateCaption'])).toBeNull();
-  });
-
-  it('the area chip is neutral, never a green or positive colour', () => {
+// The timeline row these cases also rendered (`EnhancedTimelineRow`) was deleted 2026-11-07: no
+// screen used it once the parcel page and Activities moved to the shared month timeline, whose
+// rows carry no carbon figure. Its two source guards still apply, so they read what remains.
+describe('the area chip and the missing figure, wherever a carbon figure is shown', () => {
+  it('the detail modal draws the area chip neutral, never green or a colour scheme', () => {
     const code = readFileSync(
-      resolve(process.cwd(), 'src/components/Tables/EnhancedTimelineRow.tsx'),
+      resolve(process.cwd(), 'src/components/Modals/EventDetailsModal.tsx'),
       'utf8'
     );
     const at = code.indexOf("'carbon.badge.areaEstimate'");
@@ -243,28 +200,17 @@ describe('timeline row: an area estimate says where the figure comes from', () =
     expect(tag).toMatch(/variant="neutral"/);
     expect(tag).not.toMatch(/green|colorScheme/);
   });
-});
 
-describe('timeline row: no hardcoded "No CO2 data"', () => {
-  it('es-419: a record with no carbon payload reads "sin estimar", not English', () => {
-    const { container } = renderRow(NO_CARBON_PAYLOAD, 'es-419', es);
-
-    expect(container.textContent).not.toMatch(/No CO₂ data/i);
-    expect(screen.getByText(es['carbon.notEstimated'])).toBeInTheDocument();
-  });
-
-  it('en: the same sentence the detail modal uses for a missing figure', () => {
-    const { container } = renderRow(NO_CARBON_PAYLOAD);
-
-    expect(container.textContent).not.toMatch(/No CO₂ data/i);
-    expect(screen.getByText(en['carbon.notEstimated'])).toBeInTheDocument();
-  });
-
-  it('the source holds no such literal', () => {
-    const code = readFileSync(
-      resolve(process.cwd(), 'src/components/Tables/EnhancedTimelineRow.tsx'),
-      'utf8'
+  it('no source file hardcodes "No CO2 data": a missing figure reads "not estimated"', () => {
+    const walk = (dir: string): string[] =>
+      readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+        const full = join(dir, entry.name);
+        if (entry.isDirectory()) return entry.name === '__tests__' ? [] : walk(full);
+        return /\.(tsx?|jsx?)$/.test(entry.name) ? [full] : [];
+      });
+    const offenders = walk(resolve(process.cwd(), 'src')).filter((file) =>
+      /No CO₂ data/.test(readFileSync(file, 'utf8'))
     );
-    expect(code).not.toMatch(/No CO₂ data/);
+    expect(offenders).toEqual([]);
   });
 });
