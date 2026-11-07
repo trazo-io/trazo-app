@@ -483,7 +483,18 @@ const OSPModuleListPage = () => {
               latestOsp.status === 'submitted' ||
               latestOsp.status === 'active') && (
               <Box mb={4}>
-                <OSPPlanReviewPanel companyId={companyId} farmId={farmId || ''} osp={latestOsp} />
+                <OSPPlanReviewPanel
+                  companyId={companyId}
+                  farmId={farmId || ''}
+                  osp={latestOsp}
+                  onOpenModule={(key) =>
+                    navigate(`/admin/dashboard/farm/${farmId}/osp/module/${key}`)
+                  }
+                  moduleName={(key) => {
+                    const definition = (definitions?.modules ?? []).find((m) => m.key === key);
+                    return definition ? pickText(definition.title, intl.locale) : undefined;
+                  }}
+                />
               </Box>
             )}
 

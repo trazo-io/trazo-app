@@ -9,7 +9,7 @@
  */
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 import { ChakraProvider } from '@chakra-ui/react';
 
@@ -71,10 +71,11 @@ describe('OSPPlanReviewPanel', () => {
   it('shows each finding with its count and details, the unnamed parcel, and the stale module', () => {
     renderPanel();
     // A date in words since 2026-11-07; it was printed as the raw ISO string.
-    expect(screen.getByText(/newest answer in this plan was written Aug 21, 2026/i)).toBeTruthy();
+    expect(screen.getByText(/since the plan was last answered, on Aug 21, 2026/i)).toBeTruthy();
     expect(screen.getByTestId('osp-review-new_ground')).toBeTruthy();
-    // details render as '• <text>' inside one list item
-    expect(screen.getByText(/Muddy Creek Lease — began 2027-01-15/)).toBeTruthy();
+    // A detail renders as its label, then the evidence on a quieter line (2026-11-07).
+    expect(screen.getAllByText('Muddy Creek Lease').length).toBeGreaterThan(0);
+    expect(screen.getByText('began 2027-01-15')).toBeTruthy();
     expect(screen.getByText(/Prohibited-substance application\/drift/)).toBeTruthy();
     expect(screen.getByTestId('osp-review-parcels-not-named').textContent).toContain(
       'Muddy Creek Lease'
@@ -88,11 +89,32 @@ describe('OSPPlanReviewPanel', () => {
     expect(screen.getByText('7 to confirm')).toBeTruthy();
   });
 
-  it('never phrases the list as a verdict — the word "wrong" appears only in the disclaimer', () => {
+  it('never phrases the list as a verdict, and says so in words', () => {
     renderPanel();
     const text = document.body.textContent || '';
-    expect(text).toContain('None of it is wrong by itself');
+    expect(text).toContain('not a problem by itself');
     expect(text).not.toMatch(/incorrect|invalid|must fix|blocked/i);
+  });
+
+  it('names the module that fixes a finding and opens it (2026-11-07: it was a dead end)', () => {
+    const onOpenModule = vi.fn();
+    render(
+      <ChakraProvider>
+        <IntlProvider locale="en" onError={() => {}}>
+          <OSPPlanReviewPanel
+            companyId="1"
+            farmId="2"
+            osp={osp}
+            onOpenModule={onOpenModule}
+            moduleName={(key) => (key === 'parcel_application' ? 'Parcel Application' : undefined)}
+          />
+        </IntlProvider>
+      </ChakraProvider>
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Open Parcel Application' }));
+    expect(onOpenModule).toHaveBeenCalledWith('parcel_application');
+    // A finding with no module gets no button rather than one that goes nowhere.
+    expect(screen.getAllByRole('button', { name: /^Open / })).toHaveLength(1);
   });
 
   it('says so when nothing changed after the answers', () => {
