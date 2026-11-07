@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.11.17",
+  "content_version": "2026.11.18",
   "registry": {
-    "content_version": "2026.11.17",
+    "content_version": "2026.11.18",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -15691,6 +15691,64 @@
                 "max_length": null
               },
               {
+                "key": "container_record_elements",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "What do your storage and shipping records show for each organic lot? Check all that apply.",
+                  "es": "¿Qué muestran tus registros de almacenamiento y envío para cada lote orgánico? Marca todas las que correspondan."
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "organic_status",
+                    "label": {
+                      "en": "That the crop is organic",
+                      "es": "Que el cultivo es orgánico"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "container_identifier",
+                    "label": {
+                      "en": "The identifier on the container",
+                      "es": "El identificador del envase"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "certified_business_name",
+                    "label": {
+                      "en": "Our certified business name",
+                      "es": "El nombre de nuestro negocio certificado"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "none_of_these",
+                    "label": {
+                      "en": "None of these",
+                      "es": "Ninguno de estos"
+                    },
+                    "exclusive": true
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "nonretail_container_types",
+                    "op": "not_includes",
+                    "value": "none"
+                  }
+                ],
+                "nop_cite": "§ 205.103(b)(2)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
                 "key": "label_claim_review_process",
                 "kind": "textarea",
                 "label": {
@@ -16308,6 +16366,127 @@
                   }
                 ],
                 "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "lot_code_key",
+                "kind": "textarea",
+                "label": {
+                  "en": "Break your lot number down: one part per line, the part, an equals sign, and what it means.",
+                  "es": "Desglosa tu número de lote: una parte por línea, la parte, un signo igual y lo que significa."
+                },
+                "coaching": {
+                  "en": "For example, for lot 26-HFE-07: 26 = harvest year, HFE = block (Home Field East), 07 = picking day. The packet prints it as a Code / Signifies table next to lot numbers from your records, so a reviewer can read one against the other.",
+                  "es": "Por ejemplo, para el lote 26-HFE-07: 26 = año de cosecha, HFE = bloque (Home Field East), 07 = día de cosecha. El paquete lo imprime como una tabla Código / Significado junto a números de lote de tus registros, para que quien revisa lea uno frente al otro."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "lot_numbering",
+                    "op": "eq",
+                    "value": "own_system"
+                  }
+                ],
+                "nop_cite": "§ 205.103(b)(2)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "trace_mechanisms",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Besides lot numbers, what on your records traces a sale back to the field it came from? Check all that apply.",
+                  "es": "Además de los números de lote, ¿qué en tus registros rastrea una venta hasta el campo de donde vino? Marca todas las que correspondan."
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "field_names",
+                    "label": {
+                      "en": "Field or block numbers or names",
+                      "es": "Números o nombres de campo o bloque"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "julian_date_codes",
+                    "label": {
+                      "en": "Julian date codes",
+                      "es": "Códigos de fecha juliana"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "farm_name_single_field",
+                    "label": {
+                      "en": "The farm name (the operation is all organic, with one field)",
+                      "es": "El nombre de la finca (la operación es toda orgánica, con un solo campo)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "harvest_invoice_dates",
+                    "label": {
+                      "en": "Harvest and invoice dates",
+                      "es": "Fechas de cosecha y de factura"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otro"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "lot_numbers_only",
+                    "label": {
+                      "en": "Nothing else: lot numbers only",
+                      "es": "Nada más: solo números de lote"
+                    },
+                    "exclusive": true
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.103(b)(2)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "trace_mechanisms_other",
+                "kind": "text",
+                "label": {
+                  "en": "Other way records trace a sale to the field",
+                  "es": "Otra forma en que los registros rastrean una venta hasta el campo"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "trace_mechanisms",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": "§ 205.103(b)(2)",
                 "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
@@ -20255,6 +20434,7 @@
         "invoices_identify_lot",
         "container_markings_tie_to_lot",
         "container_lot_identifier_types",
+        "container_record_elements",
         "label_claim_review_process"
       ],
       "missing_required": [
@@ -20283,9 +20463,69 @@
         "invoices_identify_lot",
         "container_markings_tie_to_lot",
         "container_lot_identifier_types",
+        "container_record_elements",
         "label_claim_review_process"
       ],
       "missing_required": [
+        "organic_label_categories",
+        "invoices_identify_lot",
+        "container_markings_tie_to_lot",
+        "label_claim_review_process"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g7_0_labeling",
+      "label": "record_elements",
+      "answers": {
+        "nonretail_container_types": [
+          "harvest_crates_bins"
+        ],
+        "container_record_elements": [
+          "organic_status"
+        ]
+      },
+      "visible_questions": [
+        "product_leaves_as",
+        "organic_label_categories",
+        "nonretail_container_types",
+        "nonretail_organic_identification",
+        "invoices_identify_lot",
+        "container_markings_tie_to_lot",
+        "container_lot_identifier_types",
+        "container_record_elements",
+        "label_claim_review_process"
+      ],
+      "missing_required": [
+        "product_leaves_as",
+        "organic_label_categories",
+        "invoices_identify_lot",
+        "container_markings_tie_to_lot",
+        "label_claim_review_process"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g7_0_labeling",
+      "label": "no_containers_stale_elements",
+      "answers": {
+        "nonretail_container_types": [
+          "none"
+        ],
+        "container_record_elements": [
+          "organic_status"
+        ]
+      },
+      "visible_questions": [
+        "product_leaves_as",
+        "organic_label_categories",
+        "nonretail_container_types",
+        "invoices_identify_lot",
+        "container_markings_tie_to_lot",
+        "label_claim_review_process"
+      ],
+      "missing_required": [
+        "product_leaves_as",
         "organic_label_categories",
         "invoices_identify_lot",
         "container_markings_tie_to_lot",
@@ -20314,6 +20554,7 @@
         "invoices_identify_lot",
         "container_markings_tie_to_lot",
         "container_lot_identifier_types",
+        "container_record_elements",
         "label_claim_review_process"
       ],
       "missing_required": [
@@ -20339,6 +20580,7 @@
         "invoices_identify_lot",
         "container_markings_tie_to_lot",
         "container_lot_identifier_types",
+        "container_record_elements",
         "label_claim_review_process"
       ],
       "missing_required": [
@@ -20364,6 +20606,7 @@
         "invoices_identify_lot",
         "container_markings_tie_to_lot",
         "container_lot_identifier_types",
+        "container_record_elements",
         "label_claim_review_process"
       ],
       "missing_required": [
@@ -20415,6 +20658,7 @@
         "invoices_identify_lot",
         "container_markings_tie_to_lot",
         "container_lot_identifier_types",
+        "container_record_elements",
         "label_claim_review_process"
       ],
       "missing_required": [
@@ -20437,6 +20681,7 @@
         "primary_contact_records_access",
         "records_maintained_as",
         "lot_numbering",
+        "trace_mechanisms",
         "audit_trail_exhibit",
         "import_export_activity"
       ],
@@ -20471,6 +20716,8 @@
         "records_maintained_as",
         "lot_numbering",
         "lot_numbering_description",
+        "lot_code_key",
+        "trace_mechanisms",
         "audit_trail_exhibit",
         "import_export_activity"
       ],
@@ -20493,6 +20740,151 @@
     },
     {
       "module": "g8_0_record_keeping",
+      "label": "own_lot_system_with_key",
+      "answers": {
+        "lot_numbering": "own_system",
+        "lot_code_key": "26 = harvest year"
+      },
+      "visible_questions": [
+        "s11_records",
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "lot_numbering_description",
+        "lot_code_key",
+        "trace_mechanisms",
+        "audit_trail_exhibit",
+        "import_export_activity"
+      ],
+      "missing_required": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering_description",
+        "import_export_activity"
+      ],
+      "missing_required_na": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering_description",
+        "import_export_activity"
+      ]
+    },
+    {
+      "module": "g8_0_record_keeping",
+      "label": "no_lots_stale_key",
+      "answers": {
+        "lot_numbering": "none",
+        "lot_code_key": "26 = harvest year"
+      },
+      "visible_questions": [
+        "s11_records",
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "trace_mechanisms",
+        "audit_trail_exhibit",
+        "import_export_activity"
+      ],
+      "missing_required": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "import_export_activity"
+      ],
+      "missing_required_na": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "import_export_activity"
+      ]
+    },
+    {
+      "module": "g8_0_record_keeping",
+      "label": "trace_other",
+      "answers": {
+        "trace_mechanisms": [
+          "field_names",
+          "other"
+        ]
+      },
+      "visible_questions": [
+        "s11_records",
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "trace_mechanisms",
+        "trace_mechanisms_other",
+        "audit_trail_exhibit",
+        "import_export_activity"
+      ],
+      "missing_required": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "import_export_activity"
+      ],
+      "missing_required_na": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "import_export_activity"
+      ]
+    },
+    {
+      "module": "g8_0_record_keeping",
+      "label": "trace_only_lots_stale_other",
+      "answers": {
+        "trace_mechanisms": [
+          "lot_numbers_only"
+        ],
+        "trace_mechanisms_other": "x"
+      },
+      "visible_questions": [
+        "s11_records",
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "trace_mechanisms",
+        "audit_trail_exhibit",
+        "import_export_activity"
+      ],
+      "missing_required": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "import_export_activity"
+      ],
+      "missing_required_na": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "import_export_activity"
+      ]
+    },
+    {
+      "module": "g8_0_record_keeping",
       "label": "trazo_lots",
       "answers": {
         "lot_numbering": "trazo_lots"
@@ -20504,6 +20896,7 @@
         "primary_contact_records_access",
         "records_maintained_as",
         "lot_numbering",
+        "trace_mechanisms",
         "audit_trail_exhibit",
         "import_export_activity"
       ],
@@ -20539,6 +20932,7 @@
         "primary_contact_records_access",
         "records_maintained_as",
         "lot_numbering",
+        "trace_mechanisms",
         "audit_trail_exhibit",
         "import_export_activity"
       ],
@@ -20574,6 +20968,7 @@
         "primary_contact_records_access",
         "records_maintained_as",
         "lot_numbering",
+        "trace_mechanisms",
         "audit_trail_exhibit",
         "import_export_activity",
         "export_destinations"
@@ -20610,6 +21005,7 @@
         "primary_contact_records_access",
         "records_maintained_as",
         "lot_numbering",
+        "trace_mechanisms",
         "audit_trail_exhibit",
         "import_export_activity"
       ],
@@ -21897,6 +22293,7 @@
         "primary_contact_records_access",
         "records_maintained_as",
         "lot_numbering",
+        "trace_mechanisms",
         "audit_trail_exhibit",
         "import_export_activity"
       ],
@@ -21933,6 +22330,7 @@
         "primary_contact_records_access",
         "records_maintained_as",
         "lot_numbering",
+        "trace_mechanisms",
         "audit_trail_exhibit",
         "import_export_activity"
       ],
