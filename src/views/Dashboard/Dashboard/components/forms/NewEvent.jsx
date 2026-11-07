@@ -18,12 +18,9 @@ import {
 import { BsFillCloudLightningRainFill } from 'react-icons/bs';
 import {
   FaEdit,
-  FaChevronLeft,
-  FaChevronRight,
   FaSeedling,
   FaBusinessTime,
   FaBug,
-  FaEye,
   FaCalendarAlt,
   FaMicrophone,
   FaTasks,
@@ -102,6 +99,7 @@ import { PhotoRecommendationsBox } from 'components/Events/PhotoRecommendationsB
 import { ApplicationGroupNotice } from 'components/Events/ApplicationGroupNotice';
 import { AlsoAppliedTo, PerParcelCards } from 'components/Events/MultiParcel';
 import ActivityReview from 'components/Events/ActivityReview';
+import WizardActions from 'components/Events/WizardActions';
 import { eventTypeMayGoMulti, multiParcelRulesFor } from 'config/events/multiParcel';
 import { useDefaultUnits } from 'hooks/useMeasurementSystem';
 import { useGetParcelGeometryQuery } from 'store/api/parcelGeometryApi';
@@ -437,7 +435,6 @@ function NewEventForm({ isEdit = false, eventId = null }) {
 
   // Theme colors
   const bgColor = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.600');
 
   // State management
   const [activeEventType, setActiveEventType] = useState(
@@ -4197,17 +4194,7 @@ function NewEventForm({ isEdit = false, eventId = null }) {
                         </SectionBox>
 
                         {/* Action Buttons */}
-                        <Box pt={4}>
-                          <HStack justify="flex-end">
-                            <StandardButton
-                              variant="primary"
-                              type="submit"
-                              rightIcon={<FaChevronRight />}
-                              size="lg">
-                              {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
-                            </StandardButton>
-                          </HStack>
-                        </Box>
+                        <WizardActions primaryLabel={intl.formatMessage({ id: 'app.continue' })} />
                       </VStack>
                     </form>
                   </FormProvider>
@@ -4950,45 +4937,14 @@ function NewEventForm({ isEdit = false, eventId = null }) {
                   )}
 
                   {/* Preview button integrated with navigation */}
-                  <Box pt={6} mt={4} borderTop="1px" borderColor={borderColor}>
-                    <Flex
-                      direction={{ base: 'column', md: 'row' }}
-                      justify="space-between"
-                      align={{ base: 'stretch', md: 'center' }}
-                      gap={3}>
-                      <StandardButton
-                        variant="outline"
-                        onClick={goToPreviousStep}
-                        leftIcon={<FaChevronLeft />}
-                        size={{ base: 'md', md: 'lg' }}
-                        order={{ base: 3, md: 1 }}
-                        w={{ base: '100%', md: 'auto' }}>
-                        {intl.formatMessage({ id: 'common.previousStep' })}
-                      </StandardButton>
-                      <Flex
-                        direction={{ base: 'row', md: 'row' }}
-                        gap={3}
-                        order={{ base: 1, md: 2 }}
-                        w={{ base: '100%', md: 'auto' }}>
-                        <StandardButton
-                          variant="outline"
-                          onClick={handleOpenPreview}
-                          leftIcon={<FaEye />}
-                          size={{ base: 'md', md: 'lg' }}
-                          flex={{ base: 1, md: 'none' }}>
-                          {intl.formatMessage({ id: 'events.wizard.preview' })}
-                        </StandardButton>
-                        <StandardButton
-                          variant="primary"
-                          onClick={continueFromDetails}
-                          rightIcon={<FaChevronRight />}
-                          size={{ base: 'md', md: 'lg' }}
-                          flex={{ base: 1, md: 'none' }}>
-                          {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
-                        </StandardButton>
-                      </Flex>
-                    </Flex>
-                  </Box>
+                  <WizardActions
+                    onBack={goToPreviousStep}
+                    backLabel={intl.formatMessage({ id: 'common.previousStep' })}
+                    backShortLabel={intl.formatMessage({ id: 'app.previous' })}
+                    onPreview={handleOpenPreview}
+                    primaryLabel={intl.formatMessage({ id: 'app.continue' })}
+                    onPrimary={continueFromDetails}
+                  />
                 </CardBody>
               </Card>
             )}
@@ -5059,32 +5015,13 @@ function NewEventForm({ isEdit = false, eventId = null }) {
                       />
                     </Box>
 
-                    <Box pt={6} mt={4} borderTop="1px" borderColor={borderColor}>
-                      <Flex
-                        direction={{ base: 'column', md: 'row' }}
-                        justify="space-between"
-                        align={{ base: 'stretch', md: 'center' }}
-                        gap={3}>
-                        <StandardButton
-                          variant="outline"
-                          onClick={goToPreviousStep}
-                          leftIcon={<FaChevronLeft />}
-                          size={{ base: 'md', md: 'lg' }}
-                          order={{ base: 2, md: 1 }}
-                          w={{ base: '100%', md: 'auto' }}>
-                          {intl.formatMessage({ id: 'common.previousStep' })}
-                        </StandardButton>
-                        <StandardButton
-                          variant="primary"
-                          onClick={() => setActiveStep(3)}
-                          rightIcon={<FaChevronRight />}
-                          size={{ base: 'md', md: 'lg' }}
-                          order={{ base: 1, md: 2 }}
-                          w={{ base: '100%', md: 'auto' }}>
-                          {intl.formatMessage({ id: 'app.continue' })}
-                        </StandardButton>
-                      </Flex>
-                    </Box>
+                    <WizardActions
+                      onBack={goToPreviousStep}
+                      backLabel={intl.formatMessage({ id: 'common.previousStep' })}
+                      backShortLabel={intl.formatMessage({ id: 'app.previous' })}
+                      primaryLabel={intl.formatMessage({ id: 'app.continue' })}
+                      onPrimary={() => setActiveStep(3)}
+                    />
                   </VStack>
                 </CardBody>
               </Card>
@@ -5130,52 +5067,25 @@ function NewEventForm({ isEdit = false, eventId = null }) {
                       />
                     </Box>
 
-                    <Box pt={6} mt={4} borderTop="1px" borderColor={borderColor}>
-                      <Flex
-                        direction={{ base: 'column', md: 'row' }}
-                        justify="space-between"
-                        align={{ base: 'stretch', md: 'center' }}
-                        gap={3}>
-                        <StandardButton
-                          variant="outline"
-                          onClick={goToPreviousStep}
-                          leftIcon={<FaChevronLeft />}
-                          size={{ base: 'md', md: 'lg' }}
-                          order={{ base: 3, md: 1 }}
-                          w={{ base: '100%', md: 'auto' }}>
-                          {intl.formatMessage({ id: 'common.previousStep' })}
-                        </StandardButton>
-                        <Flex
-                          direction={{ base: 'row', md: 'row' }}
-                          gap={3}
-                          order={{ base: 1, md: 2 }}
-                          w={{ base: '100%', md: 'auto' }}>
-                          <StandardButton
-                            variant="outline"
-                            onClick={handleOpenPreview}
-                            leftIcon={<FaEye />}
-                            size={{ base: 'md', md: 'lg' }}
-                            flex={{ base: 1, md: 'none' }}>
-                            {intl.formatMessage({ id: 'events.wizard.preview' })}
-                          </StandardButton>
-                          <StandardButton
-                            variant="primary"
-                            onClick={onSubmitMedia}
-                            isLoading={isEdit ? isUpdatingEvent : isCreatingEvent}
-                            loadingText={
-                              isEdit
-                                ? intl.formatMessage({ id: 'app.updating' }) || 'Updating...'
-                                : intl.formatMessage({ id: 'app.creating' }) || 'Creating...'
-                            }
-                            size={{ base: 'md', md: 'lg' }}
-                            flex={{ base: 1, md: 'none' }}>
-                            {isEdit
-                              ? intl.formatMessage({ id: 'app.updateEvent' }) || 'Update'
-                              : intl.formatMessage({ id: 'app.createEvent' }) || 'Create'}
-                          </StandardButton>
-                        </Flex>
-                      </Flex>
-                    </Box>
+                    <WizardActions
+                      onBack={goToPreviousStep}
+                      backLabel={intl.formatMessage({ id: 'common.previousStep' })}
+                      backShortLabel={intl.formatMessage({ id: 'app.previous' })}
+                      onPreview={handleOpenPreview}
+                      primaryLabel={
+                        isEdit
+                          ? intl.formatMessage({ id: 'app.updateEvent' })
+                          : intl.formatMessage({ id: 'app.createEvent' })
+                      }
+                      onPrimary={onSubmitMedia}
+                      primaryLeadsOn={false}
+                      isLoading={isEdit ? isUpdatingEvent : isCreatingEvent}
+                      loadingText={
+                        isEdit
+                          ? intl.formatMessage({ id: 'app.updating' })
+                          : intl.formatMessage({ id: 'app.creating' })
+                      }
+                    />
                   </VStack>
                 </CardBody>
               </Card>

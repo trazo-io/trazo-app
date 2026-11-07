@@ -5229,7 +5229,7 @@
   "events.customFields.error.valueInvalid": "Escribe un valor para este campo",
   "events.section.badge.caPesticideReport": "Reporte de plaguicidas de California",
   "events.section.badge.certifierRecord": "Registro para el certificador",
-  "events.wizard.preview": "Vista previa",
+  "events.wizard.preview": "Vista del comprador",
   "events.wizard.timingHint": "¿Cuándo ocurrió esta actividad y quién la realizó?",
   "events.section.badge.required": "Obligatorio",
   "events.section.badge.certifierRecordAndBuyer": "Registro para el certificador + página del comprador",

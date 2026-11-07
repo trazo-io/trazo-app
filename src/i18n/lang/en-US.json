@@ -5229,7 +5229,7 @@
   "events.customFields.error.valueInvalid": "Enter a value for this field",
   "events.section.badge.caPesticideReport": "CA pesticide report",
   "events.section.badge.certifierRecord": "Certifier record",
-  "events.wizard.preview": "Preview",
+  "events.wizard.preview": "Shopper view",
   "events.wizard.timingHint": "When did this activity occur and who performed it?",
   "events.section.badge.required": "Required",
   "events.section.badge.certifierRecordAndBuyer": "Certifier record + buyer page",
