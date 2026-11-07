@@ -275,6 +275,12 @@ describe('the field notes inbox', () => {
     expect(screen.getByLabelText(/^Farm/)).toBeTruthy();
   });
 
+  it('keeps that Farm select after it is used (review of #310)', () => {
+    renderInbox([{ id: 99, name: 'Other Farm', parcels: [{ id: 1, name: 'A' }] }]);
+    fireEvent.change(screen.getByLabelText(/^Farm/), { target: { value: '99' } });
+    expect(screen.getByLabelText(/^Farm/)).toHaveValue('99');
+  });
+
   it('stamps the arrival to the minute, not the second', () => {
     renderInbox(ONE_PARCEL);
     const line = screen.getByText(/From/);

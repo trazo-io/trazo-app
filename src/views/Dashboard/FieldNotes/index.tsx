@@ -555,6 +555,10 @@ const FieldNotesInbox = () => {
                 // is nothing to pick and no way to make one from here. MEASURED 2026-10-17 on the first
                 // real crew message, against a farm with zero parcels.
                 const farmHasNoBlocks = Boolean(farm) && (farm?.parcels ?? []).length === 0;
+                // Whether to ASK the farm, decided by the preset and never by the live choice: keyed on
+                // the choice, the select unmounted the instant someone used it, with focus dropped and
+                // no control left naming the farm they picked (review of #310).
+                const asksFarm = farms.length > 1 || !defaultFarmFor(note);
 
                 return (
                   <Box key={note.public_id} data-note-row py={4}>
@@ -725,13 +729,13 @@ const FieldNotesInbox = () => {
                           // with the buttons right beside it.
                           flex={{
                             base: 'none',
-                            smd: farms.length > 1 || !farmId ? '1' : '0 1 360px'
+                            smd: asksFarm ? '1' : '0 1 360px'
                           }}
                           minW={0}>
                           {/* One farm, already chosen (farmIdFor): nothing to pick, so no select. It
                         stays when the farm is NOT chosen, e.g. a note naming a farm this person
                         cannot see, or nobody could pick one. */}
-                          {(farms.length > 1 || !farmId) && (
+                          {asksFarm && (
                             <StandardField
                               label={intl.formatMessage({ id: 'fieldNotes.farmLabel' })}
                               required
