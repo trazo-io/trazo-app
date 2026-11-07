@@ -461,12 +461,18 @@ const BuyerPage = () => {
                           {name}
                         </Text>
                         <Text fontSize="xs" color="gray.600">
+                          {/* No start date is possible on legacy rows; then the range is
+                              left out rather than printing "null" (review of #307). */}
                           {[
                             labelOf(row.parcel),
-                            end
+                            start && end
                               ? `${start} – ${end}`
-                              : intl.formatMessage({ id: 'buyer.since' }, { date: start })
-                          ].join(' · ')}
+                              : start
+                              ? intl.formatMessage({ id: 'buyer.since' }, { date: start })
+                              : end
+                          ]
+                            .filter(Boolean)
+                            .join(' · ')}
                         </Text>
                       </Box>
                       <HStack spacing={2} flexShrink={0} justify="space-between">

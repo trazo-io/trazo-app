@@ -9624,6 +9624,7 @@
   "buyer.openPage": "Abrir página",
   "buyer.print": "Imprimir",
   "buyer.printFor": "Imprimir para {name}",
-  "documents.shelfSummaryDocs": "{docs, plural, one {# documento} other {# documentos}} · {count, plural, one {# archivo} other {# archivos}} con versiones anteriores · {size} en el archivo de esta finca",
-  "documents.moreActions": "Más acciones"
+  "documents.shelfSummaryDocs": "{docs, plural, one {# documento} other {# documentos}} · {count, plural, one {# archivo} other {# archivos}} incluyendo versiones anteriores · {size} en el archivo de esta finca",
+  "documents.moreActions": "Más acciones",
+  "documents.shelfSummaryDocsOnly": "{docs, plural, one {# documento} other {# documentos}} · {size} en el archivo de esta finca"
 }

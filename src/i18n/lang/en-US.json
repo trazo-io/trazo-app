@@ -9624,6 +9624,7 @@
   "buyer.openPage": "Open page",
   "buyer.print": "Print",
   "buyer.printFor": "Print for {name}",
-  "documents.shelfSummaryDocs": "{docs, plural, one {# document} other {# documents}} · {count, plural, one {# file} other {# files}} with earlier versions · {size} on this farm's shelf",
-  "documents.moreActions": "More actions"
+  "documents.shelfSummaryDocs": "{docs, plural, one {# document} other {# documents}} · {count, plural, one {# file} other {# files}} including earlier versions · {size} on this farm's shelf",
+  "documents.moreActions": "More actions",
+  "documents.shelfSummaryDocsOnly": "{docs, plural, one {# document} other {# documents}} · {size} on this farm's shelf"
 }

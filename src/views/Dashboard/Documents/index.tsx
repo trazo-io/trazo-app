@@ -554,7 +554,7 @@ const DocumentsPage = () => {
         py={3}
         pl={isOlder ? 4 : 0}
         bg={isOlder ? 'gray.50' : undefined}
-        sx={{ '& + &': { borderTopWidth: '1px', borderTopColor: 'gray.100' } }}>
+        data-doc-row>
         <Text
           fontSize="sm"
           fontWeight={isOlder ? 'normal' : 'semibold'}
@@ -886,8 +886,16 @@ const DocumentsPage = () => {
           <Text fontSize="sm" color="gray.600">
             {/* Documents first, files second: "All 12" above "18 files stored" read as a
                 mismatch, because the chips count documents and this counted stored versions. */}
+            {/* The file count is stated only when it differs: equal counts mean no document
+                has an earlier version, and "12 files including earlier versions" would claim
+                versions that do not exist (review of #307). */}
             {intl.formatMessage(
-              { id: 'documents.shelfSummaryDocs' },
+              {
+                id:
+                  (documents ?? []).length > allGroups.length
+                    ? 'documents.shelfSummaryDocs'
+                    : 'documents.shelfSummaryDocsOnly'
+              },
               {
                 docs: allGroups.length,
                 count: (documents ?? []).length,
@@ -1000,6 +1008,15 @@ const DocumentsPage = () => {
                 borderRadius="xl"
                 px={4}
                 py={1}
+                // The rule between rows lives here, on a stable attribute: `& + &` on the row
+                // compiled into a class per prop combination, so an older-version row (its own
+                // padding and fill) broke the match and lost its divider (review of #307).
+                sx={{
+                  '& > [data-doc-row] + [data-doc-row]': {
+                    borderTopWidth: '1px',
+                    borderTopColor: 'gray.100'
+                  }
+                }}
                 data-testid="documents-list-cards">
                 {visibleGroups.map((group) => (
                   <React.Fragment key={group.key}>

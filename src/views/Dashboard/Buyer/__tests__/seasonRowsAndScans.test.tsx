@@ -37,6 +37,17 @@ const SEASONS = [
     start_date: '2026-04-08T00:00:00Z',
     finish_date: null,
     published: false
+  },
+  {
+    // A legacy row with no start date (review of #307: it printed "null – Aug 13, 2025").
+    id: 3,
+    public_id: 'c',
+    name: 'Liberty 2025 — River Block',
+    product: { name: 'Blueberries' },
+    parcel: { name: 'River Block' },
+    start_date: null,
+    finish_date: '2025-08-13T00:00:00Z',
+    published: false
   }
 ];
 
@@ -101,9 +112,9 @@ describe('Buyer page rows', () => {
   it('every season row has its switch and one Print menu; no table', () => {
     const { container } = renderPage();
     expect(container.querySelector('table')).toBeNull();
-    expect(screen.getAllByRole('checkbox')).toHaveLength(2);
+    expect(screen.getAllByRole('checkbox')).toHaveLength(3);
     expect(screen.getByText('Public')).toBeInTheDocument();
-    expect(screen.getByText('Not public')).toBeInTheDocument();
+    expect(screen.getAllByText('Not public')).toHaveLength(2);
     expect(screen.getByRole('button', { name: 'Print for Duke 2026 — Home Field East' }));
     expect(screen.getByRole('button', { name: 'Print for Carrots 2026 — Bottom Ground B' }));
   });
@@ -118,6 +129,12 @@ describe('Buyer page rows', () => {
     expect(screen.getByText(/Mar 1, 2026 – Jul 12, 2026/)).toBeInTheDocument();
     expect(screen.getByText(/since Apr 8, 2026/)).toBeInTheDocument();
     expect(container.textContent).not.toMatch(/\d{4}-\d{2}-\d{2}/);
+  });
+
+  it('a season with no start date never prints "null"', () => {
+    const { container } = renderPage();
+    expect(container.textContent).not.toMatch(/null/);
+    expect(screen.getByText('River Block · Aug 13, 2025')).toBeInTheDocument();
   });
 
   it('names a place only where a scan has one', () => {
