@@ -31,7 +31,7 @@ import {
   VStack,
   useToast
 } from '@chakra-ui/react';
-import { FaPlus, FaTrash } from 'react-icons/fa';
+import { FaPlus, FaTrash, FaUserFriends } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
 import {
@@ -233,6 +233,7 @@ const AdjoiningLandSection: React.FC<Props> = ({ companyId, farmId, parcelId, ca
         // that), so the prop type is what is wrong — but StandardComponents.tsx is being
         // edited elsewhere right now, so this passes a string rather than widening it here.
         title={intl.formatMessage({ id: 'parcel.adjoining.title' })}
+        titleIcon={<Icon as={FaUserFriends} color="green.700" />}
         variant="elevated"
         padding={{ base: 0, md: 4 }}
         headerAction={

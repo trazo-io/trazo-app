@@ -14,6 +14,7 @@ import React, { useState } from 'react';
 import {
   Badge,
   Box,
+  Collapse,
   Checkbox,
   HStack,
   Icon,
@@ -23,6 +24,7 @@ import {
   Text,
   Tooltip,
   useToast,
+  useDisclosure,
   VStack
 } from '@chakra-ui/react';
 import { FaCopy, FaEye, FaLink } from 'react-icons/fa';
@@ -151,6 +153,8 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
   // honour the paywall and break the revocation path in the same stroke.
   const canMintLinks = useComplianceExports();
   const intl = useIntl();
+  // What the link exposes, folded behind its own toggle; a summary line stays visible.
+  const disclosure = useDisclosure();
   const toast = useToast();
   const [label, setLabel] = useState('');
   const [openLog, setOpenLog] = useState<number | null>(null);
@@ -399,45 +403,62 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
             reads. Each line is something the dossier prints (`audit_export_service.py`). */}
         {canWrite && canMintLinks && (
           <Box data-testid="certifier-link-disclosure" fontSize="sm" color="gray.600">
-            <Text fontWeight="semibold" color="gray.700">
+            {/* One sentence that names the sensitive parts, always visible, so the farmer knows
+                before creating a link; the full list behind the toggle (2026-11-07: two lists and
+                three paragraphs sat above the form). */}
+            <Text>
+              {intl.formatMessage({
+                id: 'certifierLink.disclosure.summary',
+                defaultMessage:
+                  'The link shows this farm’s full records for the period you pick, including private notes, supplier and sale details, and who changed what.'
+              })}
+            </Text>
+            <StandardButton
+              size="sm"
+              variant="ghost"
+              ml={-3}
+              aria-expanded={disclosure.isOpen}
+              onClick={disclosure.onToggle}>
               {intl.formatMessage({
                 id: 'certifierLink.disclosure.title',
                 defaultMessage: 'What your certifier will see'
               })}
-            </Text>
-            <Text>
-              {intl.formatMessage({
-                id: 'certifierLink.disclosure.intro',
-                defaultMessage:
-                  'The dossier holds this farm’s records for the period you choose, including:'
-              })}
-            </Text>
-            <Box as="ul" pl={5}>
-              {(
-                [
-                  ['unpublished', 'seasons you have not published on your buyer page'],
-                  ['privateNotes', 'your private notes'],
-                  ['commercial', 'supplier names, invoice numbers and sale amounts'],
-                  ['people', 'the names of the people recorded doing the work'],
-                  ['emails', 'the email address of each account that changed a record'],
+            </StandardButton>
+            <Collapse in={disclosure.isOpen} animateOpacity>
+              <Text>
+                {intl.formatMessage({
+                  id: 'certifierLink.disclosure.intro',
+                  defaultMessage:
+                    'The dossier holds this farm’s records for the period you choose, including:'
+                })}
+              </Text>
+              <Box as="ul" pl={5}>
+                {(
                   [
-                    'corrections',
-                    'the change history: who changed which fields, and for each correction the earlier value and the reason'
-                  ]
-                ] as const
-              ).map(([key, defaultMessage]) => (
-                <li key={key}>
-                  {intl.formatMessage({ id: `certifierLink.disclosure.${key}`, defaultMessage })}
-                </li>
-              ))}
-            </Box>
-            <Text>
-              {intl.formatMessage({
-                id: 'certifierLink.disclosure.documents',
-                defaultMessage:
-                  'Your documents are listed by title. The files themselves are shared only if you tick “Include source files” below, and a file your certifier downloads stays with them after you revoke the link.'
-              })}
-            </Text>
+                    ['unpublished', 'seasons you have not published on your buyer page'],
+                    ['privateNotes', 'your private notes'],
+                    ['commercial', 'supplier names, invoice numbers and sale amounts'],
+                    ['people', 'the names of the people recorded doing the work'],
+                    ['emails', 'the email address of each account that changed a record'],
+                    [
+                      'corrections',
+                      'the change history: who changed which fields, and for each correction the earlier value and the reason'
+                    ]
+                  ] as const
+                ).map(([key, defaultMessage]) => (
+                  <li key={key}>
+                    {intl.formatMessage({ id: `certifierLink.disclosure.${key}`, defaultMessage })}
+                  </li>
+                ))}
+              </Box>
+              <Text>
+                {intl.formatMessage({
+                  id: 'certifierLink.disclosure.documents',
+                  defaultMessage:
+                    'Your documents are listed by title. The files themselves are shared only if you tick “Include source files” below, and a file your certifier downloads stays with them after you revoke the link.'
+                })}
+              </Text>
+            </Collapse>
           </Box>
         )}
 

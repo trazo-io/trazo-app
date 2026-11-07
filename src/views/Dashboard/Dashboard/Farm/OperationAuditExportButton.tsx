@@ -26,7 +26,16 @@
  * what the certifier would.
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { Box, HStack, Icon, Progress, Text, useToast } from '@chakra-ui/react';
+import {
+  Box,
+  Collapse,
+  HStack,
+  Icon,
+  Progress,
+  Text,
+  useDisclosure,
+  useToast
+} from '@chakra-ui/react';
 import { FaDownload, FaExclamationTriangle, FaFilePdf, FaFolderOpen } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
@@ -69,6 +78,7 @@ const CERTIFICATION = 'organic';
 
 const OperationAuditExportButton: React.FC<Props> = ({ companyId, farmId }) => {
   const intl = useIntl();
+  const about = useDisclosure();
   const toast = useToast();
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -358,13 +368,28 @@ const OperationAuditExportButton: React.FC<Props> = ({ companyId, farmId }) => {
         to say so. Same strings as the modal on purpose: two copies of one explanation is how
         they come to disagree.
       */}
-      <Text fontSize="xs" color="gray.600" mt={3}>
-        {intl.formatMessage({ id: 'app.exportInfoOrganic' })}
-      </Text>
-      {/* Which of the three certifier artifacts this is, so it is not mistaken for the others. */}
-      <Text fontSize="xs" color="gray.600" mt={1}>
-        {intl.formatMessage({ id: 'operationAudit.scopeNote' })}
-      </Text>
+      {/* Folded (2026-11-07): what the standard covers and which certifier document this is
+          are reference, read once; they sat as two more paragraphs under the button. */}
+      <StandardButton
+        size="sm"
+        variant="ghost"
+        ml={-3}
+        mt={2}
+        alignSelf="flex-start"
+        display="flex"
+        aria-expanded={about.isOpen}
+        onClick={about.onToggle}>
+        {intl.formatMessage({ id: 'operationAudit.about' })}
+      </StandardButton>
+      <Collapse in={about.isOpen} animateOpacity>
+        <Text fontSize="xs" color="gray.600" mt={1}>
+          {intl.formatMessage({ id: 'app.exportInfoOrganic' })}
+        </Text>
+        {/* Which of the three certifier artifacts this is, so it is not mistaken for the others. */}
+        <Text fontSize="xs" color="gray.600" mt={1}>
+          {intl.formatMessage({ id: 'operationAudit.scopeNote' })}
+        </Text>
+      </Collapse>
     </StandardCard>
   );
 };

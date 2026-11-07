@@ -17,7 +17,7 @@ import {
   IconButton,
   useToast
 } from '@chakra-ui/react';
-import { FaHistory, FaPlus, FaTrash, FaInfoCircle, FaEdit } from 'react-icons/fa';
+import { FaHistory, FaPlus, FaTrash, FaEdit } from 'react-icons/fa';
 import {
   StandardCard,
   StandardButton,
@@ -267,34 +267,26 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
       variant="outline"
       leftIcon={<Icon as={FaPlus} />}
       onClick={openCreate}>
-      Add Year
+      {intl.formatMessage({ id: 'parcel.fieldHistory.addYear', defaultMessage: 'Add year' })}
     </StandardButton>
   ) : undefined;
 
   return (
     <Box data-tour="field-history" w="full">
       <StandardCard
-        title={
-          <HStack spacing={2}>
-            <Icon as={FaHistory} color="green.500" boxSize={4} />
-            <Text fontWeight="bold" fontSize={{ base: 'sm', md: 'md' }}>
-              Field History
-            </Text>
-            <Badge
-              colorScheme="orange"
-              variant="subtle"
-              px={2}
-              py={0.5}
-              borderRadius="full"
-              fontSize="xs"
-              display={{ base: 'none', smd: 'inline-flex' }}>
-              <HStack spacing={1}>
-                <Icon as={FaInfoCircle} boxSize={2.5} />
-                <Text>Required: 7 CFR 205.202</Text>
-              </HStack>
-            </Badge>
-          </HStack>
-        }
+        // A plain title and the citation in the subtitle (2026-11-07), like the other cards in
+        // this section. Was an icon, a bold line and an orange "Required: 7 CFR 205.202" pill,
+        // hardcoded in English.
+        titleIcon={<Icon as={FaHistory} color="green.700" boxSize={4} />}
+        title={intl.formatMessage({
+          id: 'parcel.fieldHistory.title',
+          defaultMessage: 'Field history'
+        })}
+        subtitle={intl.formatMessage({
+          id: 'parcel.fieldHistory.subtitle',
+          defaultMessage:
+            'What grew here each year and what was applied. Your certifier reads the three years before harvest (7 CFR 205.202).'
+        })}
         variant="elevated"
         padding={{ base: 0, md: 4 }}
         headerAction={headerAction}>
@@ -308,13 +300,24 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
               border="1px solid"
               borderColor="green.200">
               <Text fontSize="xs" fontWeight="bold" color="green.700" mb={2}>
-                {editingId ? 'EDITING ENTRY' : 'NEW ENTRY'}
+                {editingId
+                  ? intl.formatMessage({
+                      id: 'parcel.fieldHistory.editing',
+                      defaultMessage: 'EDITING ENTRY'
+                    })
+                  : intl.formatMessage({
+                      id: 'parcel.fieldHistory.newEntry',
+                      defaultMessage: 'NEW ENTRY'
+                    })}
               </Text>
               <VStack spacing={3} align="stretch">
                 <HStack spacing={3} flexWrap="wrap">
                   <Box minW="90px" flex="0 0 auto">
                     <Text fontSize="xs" color="gray.500" fontWeight="semibold" mb={1}>
-                      YEAR
+                      {intl.formatMessage({
+                        id: 'parcel.fieldHistory.label.year',
+                        defaultMessage: 'YEAR'
+                      })}
                     </Text>
                     <StandardNumberInput
                       min={1900}
@@ -327,20 +330,32 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
                   </Box>
                   <Box flex={1} minW="140px">
                     <Text fontSize="xs" color="gray.500" fontWeight="semibold" mb={1}>
-                      CROP GROWN
+                      {intl.formatMessage({
+                        id: 'parcel.fieldHistory.label.cropGrown',
+                        defaultMessage: 'CROP GROWN'
+                      })}
                     </Text>
                     <StandardInput
-                      placeholder="e.g. Avocado"
+                      placeholder={intl.formatMessage({
+                        id: 'parcel.fieldHistory.cropPlaceholder',
+                        defaultMessage: 'e.g. Avocado'
+                      })}
                       value={form.crop_grown}
                       onChange={(e) => setForm((f) => ({ ...f, crop_grown: e.target.value }))}
                     />
                   </Box>
                   <Box flex={1} minW="140px">
                     <Text fontSize="xs" color="gray.500" fontWeight="semibold" mb={1}>
-                      COVER CROP (OPTIONAL)
+                      {intl.formatMessage({
+                        id: 'parcel.fieldHistory.label.coverCrop',
+                        defaultMessage: 'COVER CROP (OPTIONAL)'
+                      })}
                     </Text>
                     <StandardInput
-                      placeholder="e.g. Bell beans + oats alley cover"
+                      placeholder={intl.formatMessage({
+                        id: 'parcel.fieldHistory.coverPlaceholder',
+                        defaultMessage: 'e.g. Bell beans + oats alley cover'
+                      })}
                       value={form.cover_crop}
                       onChange={(e) => setForm((f) => ({ ...f, cover_crop: e.target.value }))}
                     />
@@ -367,17 +382,26 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
                   </Box>
                   <Box flex={1} minW="140px">
                     <Text fontSize="xs" color="gray.500" fontWeight="semibold" mb={1}>
-                      METHOD
+                      {intl.formatMessage({
+                        id: 'parcel.fieldHistory.label.method',
+                        defaultMessage: 'METHOD'
+                      })}
                     </Text>
                     <StandardSelect
                       value={form.production_method}
                       onChange={(e) =>
                         setForm((f) => ({ ...f, production_method: e.target.value }))
                       }
-                      placeholder="Select method">
+                      placeholder={intl.formatMessage({
+                        id: 'parcel.fieldHistory.selectMethod',
+                        defaultMessage: 'Select method'
+                      })}>
                       {PRODUCTION_METHODS.map((m) => (
                         <option key={m.value} value={m.value}>
-                          {m.label}
+                          {intl.formatMessage({
+                            id: `parcel.fieldHistory.method.${m.value}`,
+                            defaultMessage: m.label
+                          })}
                         </option>
                       ))}
                     </StandardSelect>
@@ -385,11 +409,18 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
                 </HStack>
                 <Box>
                   <Text fontSize="xs" color="gray.500" fontWeight="semibold" mb={1}>
-                    SUBSTANCES APPLIED
+                    {intl.formatMessage({
+                      id: 'parcel.fieldHistory.label.substances',
+                      defaultMessage: 'SUBSTANCES APPLIED'
+                    })}
                   </Text>
                   <StandardTextarea
                     rows={2}
-                    placeholder="All inputs applied this year (fertilizers, pesticides, amendments, cover crops)"
+                    placeholder={intl.formatMessage({
+                      id: 'parcel.fieldHistory.substancesPlaceholder',
+                      defaultMessage:
+                        'All inputs applied this year (fertilizers, pesticides, amendments, cover crops)'
+                    })}
                     value={form.substances_applied}
                     onChange={(e) => setForm((f) => ({ ...f, substances_applied: e.target.value }))}
                   />
@@ -535,11 +566,17 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
 
                 <Box>
                   <Text fontSize="xs" color="gray.500" fontWeight="semibold" mb={1}>
-                    NOTES (optional)
+                    {intl.formatMessage({
+                      id: 'parcel.fieldHistory.label.notes',
+                      defaultMessage: 'NOTES (optional)'
+                    })}
                   </Text>
                   <StandardTextarea
                     rows={2}
-                    placeholder="Additional notes"
+                    placeholder={intl.formatMessage({
+                      id: 'parcel.fieldHistory.notesPlaceholder',
+                      defaultMessage: 'Additional notes'
+                    })}
                     value={form.notes}
                     onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
                   />
@@ -571,7 +608,10 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
               borderColor="gray.300">
               <Icon as={FaHistory} boxSize={8} color="gray.300" mb={2} />
               <Text fontSize="sm" color="gray.500">
-                No field history recorded. Add crop rotation data for your organic audit.
+                {intl.formatMessage({
+                  id: 'parcel.fieldHistory.empty',
+                  defaultMessage: 'No years recorded yet. Add what grew here and what was applied.'
+                })}
               </Text>
             </Box>
           ) : (
@@ -579,16 +619,35 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
               <Table size="sm" variant="simple">
                 <Thead>
                   <Tr>
-                    <Th fontSize="xs">Year</Th>
-                    <Th fontSize="xs">Crop</Th>
-                    <Th fontSize="xs" display={{ base: 'none', md: 'table-cell' }}>
-                      Method
+                    <Th fontSize="xs">
+                      {intl.formatMessage({
+                        id: 'parcel.fieldHistory.col.year',
+                        defaultMessage: 'Year'
+                      })}
+                    </Th>
+                    <Th fontSize="xs">
+                      {intl.formatMessage({
+                        id: 'parcel.fieldHistory.col.crop',
+                        defaultMessage: 'Crop'
+                      })}
                     </Th>
                     <Th fontSize="xs" display={{ base: 'none', md: 'table-cell' }}>
-                      Substances Applied
+                      {intl.formatMessage({
+                        id: 'parcel.fieldHistory.col.method',
+                        defaultMessage: 'Method'
+                      })}
+                    </Th>
+                    <Th fontSize="xs" display={{ base: 'none', md: 'table-cell' }}>
+                      {intl.formatMessage({
+                        id: 'parcel.fieldHistory.col.substances',
+                        defaultMessage: 'Substances applied'
+                      })}
                     </Th>
                     <Th fontSize="xs" display={{ base: 'none', lg: 'table-cell' }}>
-                      Notes
+                      {intl.formatMessage({
+                        id: 'parcel.fieldHistory.col.notes',
+                        defaultMessage: 'Notes'
+                      })}
                     </Th>
                     {canWrite && <Th />}
                   </Tr>
@@ -614,11 +673,21 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
                           hairy vetch / crimson clover (winter)" ran one 420px line and pushed
                           Notes and the edit/delete buttons past the card's right edge
                           (screen audit 2026-11-06). */}
-                      <Td fontSize={{ base: 'xs', md: 'sm' }} color="gray.700" whiteSpace="normal">
+                      <Td
+                        fontSize={{ base: 'xs', md: 'sm' }}
+                        color="gray.700"
+                        whiteSpace="normal"
+                        minW="140px">
                         {entry.crop_grown}
                         {entry.cover_crop ? (
                           <Text fontSize="xs" color="gray.500">
-                            + cover: {entry.cover_crop}
+                            {intl.formatMessage(
+                              {
+                                id: 'parcel.fieldHistory.coverLine',
+                                defaultMessage: '+ cover: {crop}'
+                              },
+                              { crop: entry.cover_crop }
+                            )}
                           </Text>
                         ) : null}
                       </Td>
@@ -631,24 +700,32 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
                           fontSize="xs"
                           px={2}
                           borderRadius="full">
-                          {PRODUCTION_METHODS.find((m) => m.value === entry.production_method)
-                            ?.label ?? entry.production_method}
+                          {intl.formatMessage({
+                            id: `parcel.fieldHistory.method.${entry.production_method}`,
+                            defaultMessage:
+                              PRODUCTION_METHODS.find((m) => m.value === entry.production_method)
+                                ?.label ?? entry.production_method
+                          })}
                         </Badge>
                       </Td>
                       <Td
                         fontSize="xs"
                         color="gray.600"
                         display={{ base: 'none', md: 'table-cell' }}
-                        maxW="160px"
-                        isTruncated>
+                        // Wraps (2026-11-07): truncated at 160px, "Rexius compost 4 t/ac pre…"
+                        // hid the very inputs a certifier reads this table for.
+                        minW="160px"
+                        whiteSpace="normal">
                         {entry.substances_applied || '—'}
                       </Td>
                       <Td
                         fontSize="xs"
                         color="gray.600"
                         display={{ base: 'none', lg: 'table-cell' }}
-                        maxW="160px"
-                        isTruncated>
+                        // Wraps (2026-11-07): truncated at 160px, "Rexius compost 4 t/ac pre…"
+                        // hid the very inputs a certifier reads this table for.
+                        minW="160px"
+                        whiteSpace="normal">
                         {entry.notes || '—'}
                       </Td>
                       {canWrite && (
@@ -657,7 +734,10 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
                             <StandardButton
                               size="xs"
                               variant="ghost"
-                              aria-label="Edit entry"
+                              aria-label={intl.formatMessage({
+                                id: 'parcel.fieldHistory.editEntry',
+                                defaultMessage: 'Edit entry'
+                              })}
                               onClick={(e: React.MouseEvent) => {
                                 e.stopPropagation();
                                 openEdit(entry);
@@ -669,7 +749,10 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
                               variant="ghost"
                               colorScheme="red"
                               isLoading={isDeleting}
-                              aria-label="Delete entry"
+                              aria-label={intl.formatMessage({
+                                id: 'parcel.fieldHistory.deleteEntry',
+                                defaultMessage: 'Delete entry'
+                              })}
                               onClick={(e: React.MouseEvent) => {
                                 e.stopPropagation();
                                 handleDelete(entry.id);
