@@ -21,7 +21,6 @@ import {
   VStack,
   HStack,
   SimpleGrid,
-  Switch,
   useToast,
   Text,
   Icon,
@@ -39,7 +38,6 @@ import {
   StandardTextarea,
   StandardSelect,
   StandardButton,
-  StandardAlert,
   StandardStepper
 } from '../Design';
 import { FormProvider, useForm, Controller } from 'react-hook-form';
@@ -47,29 +45,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { normalizeState } from 'utils/usStates';
 import { object, string, boolean, number, array } from 'zod';
 import { useIntl } from 'react-intl';
-import {
-  FaBuilding,
-  FaMapMarkedAlt,
-  FaCertificate,
-  FaLeaf,
-  FaUsers,
-  FaTractor,
-  FaCheckCircle,
-  FaChevronRight,
-  FaChevronLeft,
-  FaPlus,
-  FaArrowLeft,
-  FaArrowRight,
-  FaGlobe,
-  FaCloudUploadAlt,
-  FaTrash
-} from 'react-icons/fa';
-import { MdCheck, MdLocationOn, MdDescription, MdSettings, MdImage } from 'react-icons/md';
+import { FaBuilding, FaMapMarkedAlt, FaCertificate, FaTractor, FaPlus } from 'react-icons/fa';
+import { MdImage } from 'react-icons/md';
 import { TrazoImageUpload } from '../Upload';
 import { useLoadScript } from '@react-google-maps/api';
 import { googleMapsLoaderOptions } from 'components/Map/mapsLoaderOptions';
 import { MapPlaceSearch } from 'components/Map/MapPlaceSearch';
 import { StandardNumberInput, StandardDecimalInput } from 'components/Design/StandardComponents';
+import WizardActions from 'components/Design/WizardActions';
 
 // US States - 2-letter codes used for regional agricultural context
 // Must match EditCompanyModal.tsx for consistency
@@ -685,38 +668,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                   />
                 </StandardField>
 
-                {/* Mobile-First Navigation */}
-                <Box pt={4}>
-                  {/* Mobile Layout */}
-                  <VStack spacing={3} w="100%" display={{ base: 'flex', md: 'none' }}>
-                    <StandardButton
-                      onClick={nextStep}
-                      w="100%"
-                      size="lg"
-                      h="52px"
-                      fontSize="md"
-                      fontWeight="semibold"
-                      rightIcon={<FaChevronRight />}
-                      borderRadius="xl"
-                      _hover={{ transform: 'translateY(-1px)' }}>
-                      {t('farm.form.btn.continue')}
-                    </StandardButton>
-                  </VStack>
-
-                  {/* Desktop Layout */}
-                  <HStack spacing={3} justify="flex-end" display={{ base: 'none', md: 'flex' }}>
-                    <StandardButton variant="outline" onClick={onCancel} borderRadius="xl">
-                      {t('farm.form.btn.cancel')}
-                    </StandardButton>
-                    <StandardButton
-                      onClick={nextStep}
-                      rightIcon={<FaChevronRight />}
-                      borderRadius="xl"
-                      _hover={{ transform: 'translateY(-1px)' }}>
-                      {t('app.continue')}
-                    </StandardButton>
-                  </HStack>
-                </Box>
+                <WizardActions primaryLabel={t('app.continue')} onPrimary={nextStep} />
               </VStack>
             </StandardCard>
           )}
@@ -980,59 +932,13 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                   </SimpleGrid>
                 </Box>
 
-                {/* Mobile-First Navigation */}
-                <Box pt={4}>
-                  {/* Mobile Layout */}
-                  <HStack
-                    spacing={3}
-                    justify="space-between"
-                    w="100%"
-                    display={{ base: 'flex', md: 'none' }}>
-                    <StandardButton
-                      variant="outline"
-                      size="md"
-                      leftIcon={<FaChevronLeft />}
-                      onClick={previousStep}
-                      borderRadius="xl">
-                      {t('common.previousStep')}
-                    </StandardButton>
-                    <StandardButton
-                      onClick={nextStep}
-                      size="md"
-                      rightIcon={<FaChevronRight />}
-                      borderRadius="xl"
-                      _hover={{ transform: 'translateY(-1px)' }}>
-                      {t('farm.form.btn.continue')}
-                    </StandardButton>
-                  </HStack>
-
-                  {/* Desktop Layout */}
-                  <HStack
-                    spacing={3}
-                    justify="space-between"
-                    display={{ base: 'none', md: 'flex' }}>
-                    <StandardButton
-                      variant="outline"
-                      leftIcon={<FaChevronLeft />}
-                      onClick={previousStep}
-                      borderRadius="xl">
-                      {t('common.previousStep')}
-                    </StandardButton>
-
-                    <HStack spacing={3}>
-                      <StandardButton variant="outline" onClick={onCancel} borderRadius="xl">
-                        {t('farm.form.btn.cancel')}
-                      </StandardButton>
-                      <StandardButton
-                        onClick={nextStep}
-                        rightIcon={<FaChevronRight />}
-                        borderRadius="xl"
-                        _hover={{ transform: 'translateY(-1px)' }}>
-                        {intl.formatMessage({ id: 'app.continue' })}
-                      </StandardButton>
-                    </HStack>
-                  </HStack>
-                </Box>
+                <WizardActions
+                  onBack={previousStep}
+                  backLabel={t('common.previousStep')}
+                  backShortLabel={t('app.previous')}
+                  primaryLabel={t('app.continue')}
+                  onPrimary={nextStep}
+                />
               </VStack>
             </StandardCard>
           )}
@@ -1379,59 +1285,13 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                   />
                 </StandardField>
 
-                {/* Mobile-First Navigation */}
-                <Box pt={4}>
-                  {/* Mobile Layout */}
-                  <HStack
-                    spacing={3}
-                    justify="space-between"
-                    w="100%"
-                    display={{ base: 'flex', md: 'none' }}>
-                    <StandardButton
-                      variant="outline"
-                      size="md"
-                      leftIcon={<FaChevronLeft />}
-                      onClick={previousStep}
-                      borderRadius="xl">
-                      {t('common.previousStep')}
-                    </StandardButton>
-                    <StandardButton
-                      onClick={nextStep}
-                      size="md"
-                      rightIcon={<FaChevronRight />}
-                      borderRadius="xl"
-                      _hover={{ transform: 'translateY(-1px)' }}>
-                      {t('farm.form.btn.continue')}
-                    </StandardButton>
-                  </HStack>
-
-                  {/* Desktop Layout */}
-                  <HStack
-                    spacing={3}
-                    justify="space-between"
-                    display={{ base: 'none', md: 'flex' }}>
-                    <StandardButton
-                      variant="outline"
-                      leftIcon={<FaChevronLeft />}
-                      onClick={previousStep}
-                      borderRadius="xl">
-                      {t('common.previousStep')}
-                    </StandardButton>
-
-                    <HStack spacing={3}>
-                      <StandardButton variant="outline" onClick={onCancel} borderRadius="xl">
-                        {t('farm.form.btn.cancel')}
-                      </StandardButton>
-                      <StandardButton
-                        onClick={nextStep}
-                        rightIcon={<FaChevronRight />}
-                        borderRadius="xl"
-                        _hover={{ transform: 'translateY(-1px)' }}>
-                        {intl.formatMessage({ id: 'app.continue' })}
-                      </StandardButton>
-                    </HStack>
-                  </HStack>
-                </Box>
+                <WizardActions
+                  onBack={previousStep}
+                  backLabel={t('common.previousStep')}
+                  backShortLabel={t('app.previous')}
+                  primaryLabel={t('app.continue')}
+                  onPrimary={nextStep}
+                />
               </VStack>
             </StandardCard>
           )}
@@ -1455,65 +1315,17 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                   />
                 </StandardField>
 
-                {/* Mobile-First Navigation */}
-                <Box pt={4}>
-                  {/* Mobile Layout */}
-                  <HStack
-                    spacing={3}
-                    justify="space-between"
-                    w="100%"
-                    display={{ base: 'flex', md: 'none' }}>
-                    <StandardButton
-                      variant="outline"
-                      size="md"
-                      leftIcon={<FaChevronLeft />}
-                      onClick={previousStep}
-                      borderRadius="xl">
-                      {t('common.previousStep')}
-                    </StandardButton>
-                    <StandardButton
-                      type="submit"
-                      size="md"
-                      isLoading={isLoading}
-                      loadingText={
-                        isEdit ? t('farm.form.btn.updating') : t('farm.form.btn.creating')
-                      }
-                      leftIcon={<FaCheckCircle />}
-                      borderRadius="xl"
-                      _hover={{ transform: 'translateY(-1px)' }}>
-                      {isEdit ? t('farm.form.btn.update') : t('farm.form.btn.create')}
-                    </StandardButton>
-                  </HStack>
-
-                  {/* Desktop Layout */}
-                  <HStack
-                    spacing={3}
-                    justify="space-between"
-                    display={{ base: 'none', md: 'flex' }}>
-                    <StandardButton
-                      variant="outline"
-                      leftIcon={<FaChevronLeft />}
-                      onClick={previousStep}
-                      borderRadius="xl">
-                      {t('common.previousStep')}
-                    </StandardButton>
-
-                    <HStack spacing={3}>
-                      <StandardButton variant="outline" onClick={onCancel} borderRadius="xl">
-                        {t('farm.form.btn.cancel')}
-                      </StandardButton>
-                      <StandardButton
-                        type="submit"
-                        isLoading={isLoading}
-                        loadingText={isEdit ? 'Updating...' : 'Creating...'}
-                        leftIcon={<FaCheckCircle />}
-                        borderRadius="xl"
-                        _hover={{ transform: 'translateY(-1px)' }}>
-                        {isEdit ? t('farm.form.btn.updateFarm') : t('farm.form.btn.createFarm')}
-                      </StandardButton>
-                    </HStack>
-                  </HStack>
-                </Box>
+                <WizardActions
+                  onBack={previousStep}
+                  backLabel={t('common.previousStep')}
+                  backShortLabel={t('app.previous')}
+                  primaryLabel={
+                    isEdit ? t('farm.form.btn.updateFarm') : t('farm.form.btn.createFarm')
+                  }
+                  primaryLeadsOn={false}
+                  isLoading={isLoading}
+                  loadingText={isEdit ? t('farm.form.btn.updating') : t('farm.form.btn.creating')}
+                />
               </VStack>
             </StandardCard>
           )}

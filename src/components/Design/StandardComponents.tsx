@@ -44,7 +44,6 @@ import {
   ResponsiveValue,
   Progress,
   Tooltip,
-  Portal,
   IconButton,
   Image,
   CloseButton,
@@ -59,9 +58,8 @@ import {
 } from '@chakra-ui/react';
 import type { ButtonProps, FormControlProps } from '@chakra-ui/react';
 import { S3Image } from '../Media/S3Image';
-import { ReactNode, ReactElement, useState, useEffect, useCallback } from 'react';
+import { ReactNode, useState, useEffect, useCallback } from 'react';
 import {
-  FaLeaf,
   FaChevronLeft,
   FaChevronRight,
   FaChevronDown,
@@ -71,7 +69,6 @@ import {
   FaCamera,
   FaTimes,
   FaTrash,
-  FaEye,
   FaSearch
 } from 'react-icons/fa';
 import { ALERT_ACCENT_SHADE, ALERT_PALETTE } from 'theme/components/alert';
@@ -589,20 +586,14 @@ interface StandardStepperProps {
    * step, and a step two ahead would skip the one in between, whose form is not mounted.
    */
   furthestStep?: number;
-  /**
-   * `card` (default): numbered circles with titles and descriptions, in their own card.
-   * `bar`: one thin segment per step with its title under it, no card. For a form the person
-   * fills often (the activity wizard), where the card cost ~170px above every step.
-   */
-  variant?: 'card' | 'bar';
-  /** Names the step list for screen readers in the `bar` variant, e.g. "Step 1 of 3". */
+  /** Names the step list for screen readers. Defaults to "Step 1 of 3". */
   progressLabel?: string;
 }
 
 /**
- * The `bar` stepper: a segment per step, filled up to the current one, each titled under it.
- * Same navigation rules as the card: a step behind is a link back, the next one is reachable
- * only once visited, and forward goes through the caller's Continue.
+ * A segment per step, filled up to the current one, each titled under it. A step behind is a
+ * link back, the next one is reachable only once visited, and forward goes through the
+ * caller's Continue.
  */
 const StepperBar = ({
   steps,
@@ -681,189 +672,29 @@ const StepperBar = ({
   </Box>
 );
 
+/**
+ * The one stepper (2026-11-07): a thin segment per step, titled under it, "Step 2 of 4" for
+ * screen readers. The numbered-circle card it replaced cost ~170px above every step and was
+ * drawn on four forms while the activity wizard used this bar, so the same app had two ways of
+ * saying where you are. The `variant` prop went with the card.
+ */
 export const StandardStepper = (props: StandardStepperProps) => {
-  const {
-    steps,
-    currentStep,
-    completedSteps = [],
-    onStepClick,
-    allowStepClick = false,
-    furthestStep,
-    variant = 'card'
-  } = props;
-  // Null safety for steps array
+  const intl = useIntl();
+  const { steps, currentStep } = props;
   if (!steps || !Array.isArray(steps)) {
     return null;
   }
-  if (variant === 'bar') return <StepperBar {...props} />;
-
-  // Adjust spacing and sizing based on number of steps
-  const manySteps = steps.length > 6;
-  const spacing = manySteps ? { base: 2, md: 3 } : { base: 2, md: 6 };
-  const circleSize = manySteps ? { base: '32px', md: '40px' } : { base: '36px', md: '44px' };
-  const iconSize = manySteps ? '16px' : '18px';
-  // 'xs' (12px) is the floor — '2xs' is 10px and below the project's minimum text size.
-  const titleFontSize = manySteps ? 'xs' : { base: 'xs', md: 'sm' };
-
   return (
-    <StandardCard padding={{ base: 0, md: 6 }}>
-      <Box overflowX="auto" w="100%" py={2}>
-        <HStack
-          spacing={spacing}
-          justify="center"
-          align="flex-start"
-          w={manySteps ? 'max-content' : '100%'}
-          minW="100%"
-          maxW={manySteps ? 'none' : '800px'}
-          mx="auto"
-          px={{ base: 2, md: manySteps ? 4 : 0 }}>
-          {steps.map((step, index) => {
-            // Only a step already behind the farmer is a link back. The current step goes
-            // nowhere, and a later one would skip the validation that Continue runs.
-            // A real <button>, not a clickable div: a div is invisible to the keyboard and to
-            // a screen reader, so the shortcut existed for mouse users only.
-            // Only the NEXT step can be reached forward, so only it is drawn as reachable. A
-            // visited step two ahead that looked reachable and did nothing would be the same
-            // dead affordance this exists to remove.
-            const isReachableAhead =
-              allowStepClick &&
-              !!onStepClick &&
-              furthestStep !== undefined &&
-              index === currentStep + 1 &&
-              index <= furthestStep;
-            const isClickable =
-              (allowStepClick && !!onStepClick && index < currentStep) || isReachableAhead;
-            return (
-              <React.Fragment key={index}>
-                <VStack
-                  {...(isClickable
-                    ? {
-                        as: 'button' as const,
-                        type: 'button' as const,
-                        onClick: () => onStepClick?.(index)
-                      }
-                    : {})}
-                  aria-current={index === currentStep ? 'step' : undefined}
-                  spacing={2}
-                  align="center"
-                  flex={manySteps ? '0 0 auto' : '1'}
-                  minW={manySteps ? '80px' : 'auto'}
-                  borderRadius="lg"
-                  cursor={isClickable ? 'pointer' : 'default'}
-                  _hover={isClickable ? { opacity: 0.8 } : {}}
-                  _focusVisible={isClickable ? { outline: 'none', boxShadow: 'outline' } : {}}
-                  transition="all 0.3s ease">
-                  <Circle
-                    as="span"
-                    size={circleSize}
-                    /*
-                     * green.700 / green.800, not green.500 / green.400. The circle carries a
-                     * WHITE step number or check, and white on green.500 is 2.78:1 — on
-                     * green.400 it is worse. The current step is the DARKER of the two so
-                     * "where am I" is not signalled by hue alone.
-                     */
-                    // A step already visited but ahead of here is outlined, not filled: it is
-                    // reachable, but it has not been re-confirmed since the farmer came back.
-                    bg={
-                      completedSteps.includes(index) || index < currentStep
-                        ? 'green.700'
-                        : index === currentStep
-                        ? 'green.800'
-                        : isReachableAhead
-                        ? 'white'
-                        : 'gray.200'
-                    }
-                    border={isReachableAhead ? '2px solid' : undefined}
-                    // green.600: a non-text boundary (the colour table); the number stays green.700.
-                    borderColor={isReachableAhead ? 'green.600' : undefined}
-                    color={
-                      index <= currentStep ? 'white' : isReachableAhead ? 'green.700' : 'gray.600'
-                    }
-                    fontSize={{ base: 'sm', md: 'md' }}
-                    fontWeight="bold"
-                    boxShadow={index === currentStep ? 'lg' : 'md'}
-                    transition="all 0.3s">
-                    {completedSteps.includes(index) || index < currentStep ? (
-                      <Icon as={step.icon || FaCheckCircle} boxSize={iconSize} />
-                    ) : (
-                      <Text as="span">{index + 1}</Text>
-                    )}
-                  </Circle>
-                  <VStack as="span" spacing={1} align="center">
-                    {/* A step label is wayfinding, not user data — never ellipsis it.
-                      "Event Deta…" tells the farmer less than the step number does.
-                      Pass an explicit `shortTitle` when a step name is too long for a
-                      phone column; it applies BELOW `md` only, so the full name still
-                      shows wherever there is room for it. NOTE: `maxW: 'auto'` is invalid
-                      CSS (only min-width takes `auto`), so the old responsive object
-                      silently left the 80px smd cap in force on desktop. Swapping the two
-                      spans by `display` rather than a breakpoint hook keeps it flash-free,
-                      and a `display: none` span is not announced, so no double-read. */}
-                    <Text
-                      as="span"
-                      fontSize={titleFontSize}
-                      fontWeight="bold"
-                      color={index <= currentStep || isReachableAhead ? 'green.700' : 'gray.600'}
-                      textAlign="center"
-                      lineHeight="1.2"
-                      whiteSpace="normal"
-                      noOfLines={2}
-                      maxW={manySteps ? '80px' : { base: '84px', smd: '110px', md: 'none' }}>
-                      {step.shortTitle ? (
-                        <>
-                          <Box as="span" display={{ base: 'inline', md: 'none' }}>
-                            {step.shortTitle}
-                          </Box>
-                          <Box as="span" display={{ base: 'none', md: 'inline' }}>
-                            {step.title}
-                          </Box>
-                        </>
-                      ) : (
-                        step.title
-                      )}
-                    </Text>
-                    {step.description && !manySteps && (
-                      <Text
-                        as="span"
-                        fontSize="xs"
-                        color="gray.500"
-                        textAlign="center"
-                        display={{ base: 'none', md: 'block' }}
-                        lineHeight="1.2">
-                        {step.description}
-                      </Text>
-                    )}
-                  </VStack>
-                </VStack>
-                {index < steps.length - 1 && (
-                  // Columns align at the top (see HStack align) so a two-line label can't
-                  // shove its circle off the connector. The connector therefore carries the
-                  // circle's own height and centres its rule inside it — margin offsets do
-                  // not work here, Stack's `& > * ~ *` spacing rule outranks a child's mt.
-                  // It must NOT take an equal `flex: 1` share on a phone: with 4 steps that
-                  // gave the rules as much width as the labels and squeezed every column to
-                  // 36px. The connector earns its stretch only once there is room for it.
-                  <Flex
-                    flex={manySteps ? '0 0 40px' : { base: '0 1 16px', md: '1' }}
-                    w={manySteps ? '40px' : 'auto'}
-                    h={circleSize}
-                    align="center"
-                    mx={{ base: 0.5, md: 2 }}>
-                    <Box
-                      height="3px"
-                      w="100%"
-                      bg={index < currentStep ? 'green.700' : 'gray.200'}
-                      borderRadius="full"
-                      transition="all 0.3s"
-                    />
-                  </Flex>
-                )}
-              </React.Fragment>
-            );
-          })}
-        </HStack>
-      </Box>
-    </StandardCard>
+    <StepperBar
+      {...props}
+      progressLabel={
+        props.progressLabel ??
+        intl.formatMessage(
+          { id: 'osp.wizard.stepCount' },
+          { current: currentStep + 1, total: steps.length }
+        )
+      }
+    />
   );
 };
 

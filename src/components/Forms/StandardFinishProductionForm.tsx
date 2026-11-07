@@ -1,45 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useFurthestStep } from 'hooks/useFurthestStep';
-import {
-  VStack,
-  HStack,
-  Stack,
-  Box,
-  Text,
-  Icon,
-  Badge,
-  Checkbox,
-  useToast,
-  useDisclosure,
-  AlertDialog,
-  AlertDialogOverlay,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogBody,
-  AlertDialogFooter
-} from '@chakra-ui/react';
+import { VStack, Stack, Box, Text, useToast } from '@chakra-ui/react';
 import {
   StandardPage,
   StandardField,
   StandardInput,
   StandardSelect,
   StandardTextarea,
-  StandardButton,
   StandardAlert,
   StandardStepper,
   SectionBox,
   SectionHeader
 } from '../Design/StandardComponents';
 import { TrazoImageUpload } from '../Upload';
+import WizardActions from '../Design/WizardActions';
+import SeasonFinishReview from './SeasonFinishReview';
 import { HeroPreviewCard } from '../QR/HeroPreviewCard';
-import {
-  FaLeaf,
-  FaCamera,
-  FaBoxes,
-  FaClipboardCheck,
-  FaLock,
-  FaExclamationTriangle
-} from 'react-icons/fa';
+import { FaCamera, FaBoxes, FaClipboardCheck } from 'react-icons/fa';
 import { MdDescription, MdInventory } from 'react-icons/md';
 import { useForm, FormProvider, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -200,8 +177,6 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
   const defaultUnits = useDefaultUnits(establishmentId);
   const toast = useToast();
 
-  // Confirmation dialog for finishing production (immutability warning)
-  const { isOpen: isConfirmOpen, onOpen: onConfirmOpen, onClose: onConfirmClose } = useDisclosure();
   // Publishing the buyer page defaults ON — it is the point of the product — but it is
   // the one consequence of finishing that is REVERSIBLE (unpublish from the Buyer Page),
   // so it is offered as a choice here instead of being listed with the permanent locks.
@@ -213,8 +188,6 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
   // The crop this lot is. `productName` is what this form is given — a CropType name, a
   // product name — and `gradesForCrop` slugifies it before looking it up.
   const cropName = productName;
-  const confirmCancelRef = useRef<HTMLButtonElement>(null);
-  const [pendingFormData, setPendingFormData] = useState<FormStateData | null>(null);
 
   // Define steps for the finish production process
   const steps = [
@@ -227,6 +200,12 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
       title: intl.formatMessage({ id: 'finishProduction.step.media.title' }),
       description: intl.formatMessage({ id: 'finishProduction.step.media.description' }),
       icon: FaCamera
+    },
+    {
+      // The read-through before Finish (2026-11-07), as the activity wizard's. It replaced a
+      // confirm dialog that listed what finishing locks over a form the farmer could not see.
+      title: intl.formatMessage({ id: 'finishProduction.step.review.title' }),
+      description: intl.formatMessage({ id: 'finishProduction.step.review.description' })
     }
   ];
 
@@ -343,24 +322,20 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
     }
   };
 
-  // Manual submit function — validates then opens confirmation dialog
-  const handleManualSubmit = () => {
-    const currentValues = getValues();
+  // Finish (or save an edit), from the review step's button only. Validates the whole record
+  // first: the review is reachable from the stepper, and a value can be cleared on the way.
+  const handleFinish = () => {
     const allFormData = {
       ...savedFormData,
-      ...currentValues
+      ...getValues()
     };
 
     try {
       finishProductionSchema.parse(allFormData);
-      // Validation passed — show confirmation dialog before submitting
-      if (isEdit) {
-        // For edits, submit directly (production already finished)
-        onSubmitForm(allFormData);
-      } else {
-        setPendingFormData(allFormData);
-        onConfirmOpen();
-      }
+      // `published` is the review's checkbox and is sent ONLY when finishing. An edit of a
+      // finished season never renders it, and must not assert a choice its UI did not show
+      // (see onSubmitForm).
+      onSubmitForm(isEdit ? allFormData : { ...allFormData, published: publishBuyerPage });
     } catch (validationError) {
       console.error('❌ Data validation failed:', validationError);
       toast({
@@ -371,18 +346,6 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
         isClosable: true
       });
     }
-  };
-
-  // Confirmed finish — actually submit the form
-  const handleConfirmFinish = () => {
-    if (pendingFormData) {
-      // The checkbox lives on the dialog, not the form, so it is merged in here.
-      // Always sent explicitly — the backend defaults an ABSENT key to publish, so
-      // omitting it when unchecked would publish the page the farmer just declined.
-      onSubmitForm({ ...pendingFormData, published: publishBuyerPage });
-      setPendingFormData(null);
-    }
-    onConfirmClose();
   };
 
   // Step progression logic
@@ -445,6 +408,27 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
 
   const isStep0Valid = missingRequired.length === 0;
 
+  // What the review step reads: the values entered, with each select's own label, so the
+  // review says what the form showed ("Pounds", not "lb").
+  const reviewValues = React.useMemo(() => {
+    const v = { ...savedFormData, ...getValues() };
+    const unit = UNIT_OPTIONS.find((u) => u.value === v.production_unit);
+    const grade = harvestGradeOptions(cropName, v.quality_grade).find(
+      (o) => o.value === v.quality_grade
+    );
+    const method = HARVEST_METHOD_OPTIONS.find((o) => o.value && o.value === v.harvest_method);
+    return {
+      amount: String(v.production_amount ?? ''),
+      unitLabel: unit ? intl.formatMessage({ id: unit.labelId }) : v.production_unit || '',
+      lotId: v.lot_id || '',
+      finishDate: v.finish_date || '',
+      qualityGrade: grade?.label || v.quality_grade || '',
+      harvestMethod: method?.label || '',
+      observation: (v.observation || '').trim()
+    };
+    // currentStep: recomputed when the review step opens, after the earlier steps saved.
+  }, [savedFormData, currentStep, cropName, intl]);
+
   // Get completed steps
   const getCompletedSteps = () => {
     const completed = [];
@@ -477,30 +461,17 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
       }
       showBackButton
       onBack={onCancel}
-      backLabel={backLabel}
-      rightAction={
-        <Badge colorScheme="green" variant="subtle" px={3} py={1} borderRadius="full">
-          <HStack spacing={1}>
-            <Icon as={FaLeaf} boxSize={3} />
-            <Text fontSize="sm">
-              {intl.formatMessage({ id: 'finishProduction.badge.finalStep' })}
-            </Text>
-          </HStack>
-        </Badge>
-      }>
+      backLabel={backLabel}>
       <FormProvider {...methods}>
         {/*
-          Routed through handleManualSubmit, NOT straight to onSubmitForm. Every button
-          here is type="button", so the only way to reach a native submit is implicit
-          submission — Enter pressed on a step that renders a single field. That used to
-          call onSubmitForm directly, which finishes the production while skipping the
-          immutability confirmation entirely (and now the publish checkbox with it).
-          Finishing is irreversible; it must not be reachable by an Enter keypress.
+          A native submit does nothing. Every button here is type="button", so the only way to
+          reach one is implicit submission: Enter pressed in a field. That once finished the
+          season straight from the first step. Finishing locks every activity in the season;
+          it happens only from the review step's own button (handleFinish).
         */}
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            handleManualSubmit();
           }}>
           <VStack spacing={8} align="stretch">
             {/* Progress Stepper */}
@@ -793,16 +764,11 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                   </Text>
                 )}
 
-                {/* Step Navigation */}
-                <HStack spacing={4} justify="flex-end" pt={4}>
-                  <StandardButton variant="outline" onClick={onCancel} disabled={isLoading}>
-                    {intl.formatMessage({ id: 'app.cancel' })}
-                  </StandardButton>
-
-                  <StandardButton onClick={nextStep} disabled={!isStep0Valid}>
-                    {intl.formatMessage({ id: 'app.continue' })}
-                  </StandardButton>
-                </HStack>
+                <WizardActions
+                  primaryLabel={intl.formatMessage({ id: 'app.continue' })}
+                  onPrimary={nextStep}
+                  isDisabled={!isStep0Valid}
+                />
               </VStack>
             )}
 
@@ -869,151 +835,45 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                     />
                   )}
 
-                  {/* Step Navigation */}
-                  <HStack spacing={4} justify="space-between" pt={4}>
-                    <StandardButton variant="outline" onClick={previousStep}>
-                      {intl.formatMessage({ id: 'common.previousStep' })}
-                    </StandardButton>
-
-                    <StandardButton
-                      isLoading={isLoading}
-                      loadingText={intl.formatMessage({ id: 'finishProduction.loading' })}
-                      onClick={handleManualSubmit}
-                      size="lg">
-                      {intl.formatMessage({ id: 'app.finishProduction' })}
-                    </StandardButton>
-                  </HStack>
+                  <WizardActions
+                    onBack={previousStep}
+                    backLabel={intl.formatMessage({ id: 'common.previousStep' })}
+                    backShortLabel={intl.formatMessage({ id: 'app.previous' })}
+                    primaryLabel={intl.formatMessage({ id: 'app.continue' })}
+                    onPrimary={nextStep}
+                  />
                 </VStack>
+              </SectionBox>
+            )}
+
+            {/* Step 3: Review */}
+            {currentStep === 2 && (
+              <SectionBox>
+                <SeasonFinishReview
+                  values={reviewValues}
+                  photoCount={uploadedImageUrls.length}
+                  isEdit={isEdit}
+                  publish={publishBuyerPage}
+                  onPublishChange={setPublishBuyerPage}
+                  onChange={goToStep}
+                />
+                <WizardActions
+                  onBack={previousStep}
+                  backLabel={intl.formatMessage({ id: 'common.previousStep' })}
+                  backShortLabel={intl.formatMessage({ id: 'app.previous' })}
+                  primaryLabel={intl.formatMessage({
+                    id: isEdit ? 'finishProduction.review.save' : 'app.finishProduction'
+                  })}
+                  onPrimary={handleFinish}
+                  primaryLeadsOn={false}
+                  isLoading={isLoading}
+                  loadingText={intl.formatMessage({ id: 'finishProduction.loading' })}
+                />
               </SectionBox>
             )}
           </VStack>
         </form>
       </FormProvider>
-
-      {/* Immutability Confirmation Dialog */}
-      <AlertDialog
-        isOpen={isConfirmOpen}
-        leastDestructiveRef={confirmCancelRef}
-        onClose={onConfirmClose}
-        isCentered>
-        <AlertDialogOverlay bg="blackAlpha.300" backdropFilter="blur(10px)">
-          <AlertDialogContent borderRadius="xl" p={2} mx={4}>
-            <AlertDialogHeader fontSize="lg" fontWeight="bold" pb={4}>
-              <HStack spacing={3}>
-                <Box p={2} borderRadius="lg" bg="orange.50">
-                  <Icon as={FaExclamationTriangle} boxSize={5} color="orange.500" />
-                </Box>
-                <Text>{intl.formatMessage({ id: 'finishProduction.page.title' })}</Text>
-              </HStack>
-            </AlertDialogHeader>
-
-            <AlertDialogBody pb={6}>
-              <VStack align="start" spacing={3}>
-                <Text color="gray.600">
-                  {intl.formatMessage({ id: 'finishProduction.confirm.intro' })}
-                </Text>
-                <Box p={3} bg="orange.50" borderRadius="lg" w="full">
-                  <Text fontSize="sm" color="orange.700" fontWeight="medium">
-                    {intl.formatMessage({ id: 'finishProduction.confirm.heading' })}
-                  </Text>
-                  <VStack align="start" spacing={1} mt={2} fontSize="sm" color="orange.600">
-                    <HStack spacing={2}>
-                      <Icon as={FaLock} boxSize={3} />
-                      <Text>
-                        {intl.formatMessage({ id: 'finishProduction.confirm.lockEvents' })}
-                      </Text>
-                    </HStack>
-                    <HStack spacing={2}>
-                      <Icon as={FaLock} boxSize={3} />
-                      {/*
-                        This bullet advertised the blockchain add-on, which was WITHDRAWN
-                        2026-08-03 (`blockchain-verification` seeded is_active=False,
-                        BLOCKCHAIN_ENABLED False) — pitching something no farmer can buy, at
-                        the moment of commitment. It was then briefly reworded to say the
-                        finalization fingerprint appears in the certifier packet. That is
-                        ALSO untrue: `finalization_hash` is written by _store_finalization_hash
-                        and read back only by the (disabled) blockchain submission path and
-                        the verify_blockchain endpoint. No packet or export generator prints
-                        it, so nothing the farmer receives shows it.
-
-                        Replaced with the retention fact, which is the only claim in this
-                        dialog that organic certification actually imposes: 7 CFR 205.103(b)(4)
-                        requires records be kept at least 5 years, History.delete() enforces
-                        it against `retention_until`, and finish() is what stamps that date.
-                        ((b)(4), not (b)(3) — the Strengthening Organic Enforcement rule
-                        restructured 205.103(b) into five subsections and retention moved.)
-                      */}
-                      <Text>
-                        {intl.formatMessage({ id: 'finishProduction.confirm.retention' })}
-                      </Text>
-                    </HStack>
-                    {/*
-                      The other output. This dialog listed three consequences and all three
-                      were consumer- or blockchain-facing, on the screen that finalises the
-                      lot number, yield, grade and harvest method the certifier packet is
-                      built from — the half of "one entry, two outputs" that Compliance is
-                      actually sold on went unmentioned at the moment of commitment.
-                    */}
-                    <HStack spacing={2}>
-                      <Icon as={FaLock} boxSize={3} />
-                      <Text>
-                        {intl.formatMessage({ id: 'finishProduction.confirm.certifierPacket' })}
-                      </Text>
-                    </HStack>
-                  </VStack>
-                </Box>
-                {/*
-                  OUTSIDE the orange box on purpose. Everything in that box is permanent;
-                  this is the one thing the farmer can undo, and filing a reversible choice
-                  under a list of irreversible locks misrepresents both.
-                */}
-                <Box
-                  p={3}
-                  bg="gray.50"
-                  borderRadius="lg"
-                  w="full"
-                  borderWidth="1px"
-                  borderColor="gray.200">
-                  <Checkbox
-                    colorScheme="green"
-                    isChecked={publishBuyerPage}
-                    onChange={(e) => setPublishBuyerPage(e.target.checked)}
-                    minH="44px"
-                    alignItems="center">
-                    <Text fontSize="sm" fontWeight="medium" color="gray.700">
-                      {intl.formatMessage({ id: 'finishProduction.confirm.publishLabel' })}
-                    </Text>
-                  </Checkbox>
-                  <Text fontSize="xs" color="gray.500" mt={1} ml={6}>
-                    {intl.formatMessage({
-                      id: publishBuyerPage
-                        ? 'finishProduction.confirm.publishHelpOn'
-                        : 'finishProduction.confirm.publishHelpOff'
-                    })}
-                  </Text>
-                </Box>
-                <Text fontSize="xs" color="gray.500">
-                  {intl.formatMessage({ id: 'finishProduction.confirm.footnote' })}
-                </Text>
-              </VStack>
-            </AlertDialogBody>
-
-            <AlertDialogFooter pt={4}>
-              <HStack spacing={3} w="full" justify="flex-end">
-                <StandardButton ref={confirmCancelRef} variant="outline" onClick={onConfirmClose}>
-                  {intl.formatMessage({ id: 'finishProduction.confirm.review' })}
-                </StandardButton>
-                <StandardButton
-                  onClick={handleConfirmFinish}
-                  isLoading={isLoading}
-                  loadingText={intl.formatMessage({ id: 'finishProduction.confirm.loading' })}>
-                  {intl.formatMessage({ id: 'finishProduction.confirm.submit' })}
-                </StandardButton>
-              </HStack>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialogOverlay>
-      </AlertDialog>
     </StandardPage>
   );
 };
