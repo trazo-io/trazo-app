@@ -9,6 +9,8 @@
  * its own entry fell back to the planting-and-harvest list.
  */
 import React from 'react';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
@@ -101,5 +103,49 @@ describe('review before save', () => {
   it('says so when Done by was left empty, instead of a blank row', () => {
     wrap(<ActivityReview {...props} doneBy="" onChange={vi.fn()} />);
     expect(screen.getByText('Not given')).toBeInTheDocument();
+  });
+});
+
+describe('review of a spray (2026-11-07)', () => {
+  // The values the wizard holds for an input application, as the details step leaves them:
+  // an untouched optional input is '' (buffer_zone_meters here), not null.
+  const spray = {
+    eventType: 2,
+    record: {
+      type: 'PE',
+      chemical_subtype: 'biological_pesticide',
+      commercial_name: 'AgriPhage-Fire Blight',
+      target_pest_disease: 'Fire blight',
+      volume_numeric: '7',
+      volume_unit: 'gal',
+      area_numeric: '28.4',
+      area_unit: 'acres',
+      supplier_name: 'Sample Basin Ag Supply, Yakima WA',
+      buffer_zone_meters: ''
+    },
+    activityLabel: 'Input application',
+    dateLabel: 'Apr 22, 2026, 6:30 AM',
+    doneBy: '',
+    parcelsLabel: 'Ridge Block',
+    photoCount: 0
+  };
+
+  it('names the product: the first thing a certifier reads on a spray record', () => {
+    wrap(<ActivityReview {...spray} onChange={vi.fn()} />);
+    expect(screen.getByText('AgriPhage-Fire Blight')).toBeInTheDocument();
+    expect(screen.getByText('Fire blight')).toBeInTheDocument();
+  });
+
+  it('draws the details as rows, not the grey boxes of the detail view', () => {
+    // Read from source: an inline row and a box both hold label and value in one parent, so
+    // the DOM cannot tell them apart. The box layout is `<RegistryFieldRenderer>`.
+    const src = readFileSync(resolve(__dirname, '../ActivityReview.tsx'), 'utf8');
+    expect(src).not.toMatch(/<RegistryFieldRenderer/);
+    expect(src).toMatch(/<RegistryRows/);
+  });
+
+  it('an empty optional field prints nothing, not its bare unit', () => {
+    const { container } = wrap(<ActivityReview {...spray} onChange={vi.fn()} />);
+    expect(container.textContent).not.toMatch(/Buffer Zone/);
   });
 });

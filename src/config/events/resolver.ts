@@ -209,6 +209,10 @@ export function getFieldsForSurface(
         ? ((event as Record<string, unknown>).test_results as Record<string, unknown>)
         : {};
     const rawValue = event[field.name] ?? extraData[field.name] ?? testResults[field.name];
+    // An emptied form input is '' (or spaces), not null, and every `v != null ? \`${v} m\` : null`
+    // formatter lets it through: the wizard's review printed "Buffer Zone: m" for a spray with
+    // no buffer entered (2026-11-07). An empty string is no value, whatever the formatter says.
+    if (typeof rawValue === 'string' && rawValue.trim() === '') continue;
     let formattedValue: string | null;
 
     // For enum fields: use custom formatter if available, otherwise capitalize and humanize

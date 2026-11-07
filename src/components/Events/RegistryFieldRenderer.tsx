@@ -28,11 +28,12 @@ import {
   useDisclosure,
   VStack
 } from '@chakra-ui/react';
-import { FaChevronDown, FaChevronUp, FaExclamationTriangle, FaShieldAlt } from 'react-icons/fa';
+import { FaChevronDown, FaChevronUp, FaRegCircle, FaShieldAlt } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
-import type { PriorityTier, ResolvedField, ResolvedFieldSet } from 'src/config/events';
+import type { ResolvedField, ResolvedFieldSet } from 'src/config/events';
 import { localizeFieldValue } from 'src/utils/fieldDisplayUtils';
+import { InfoRow } from 'components/Design/ProfileField';
 
 // ============================================================================
 // Label resolution (converts i18n keys → human-readable labels)
@@ -149,6 +150,40 @@ const FieldItem: React.FC<FieldItemProps> = ({
         {localizeFieldValue(field.formattedValue, intl.locale)}
       </Text>
     </Box>
+  );
+};
+
+/**
+ * The same fields as inline label/value rows (`InfoRow layout="inline"`), for a surface built
+ * from rows: the activity wizard's review (2026-11-07). Returns bare rows so the caller puts them
+ * in its own `FieldList`, next to rows of its own, under one set of dividers.
+ *
+ * Same label resolution and value localization as `FieldItem`, and the buyer-page mark becomes
+ * the row's neutral eye. The Self-reported and CO₂ badges stay on the box layout: a review row
+ * reads what was entered, it does not classify it.
+ */
+export const RegistryRows: React.FC<{
+  fields: ResolvedField[];
+  buyerVisibleFields?: ReadonlySet<string>;
+}> = ({ fields, buyerVisibleFields }) => {
+  const resolveLabel = useLabelResolver();
+  const intl = useIntl();
+  const publicLabel = intl.formatMessage({ id: 'producer.event.fieldOnBuyerPageHelp' });
+  return (
+    <>
+      {fields.map((field) => (
+        <InfoRow
+          key={field.name}
+          // inline rows draw no icon; the prop is required by the stacked layout
+          icon={FaRegCircle}
+          layout="inline"
+          label={resolveLabel(field.labelKey)}
+          value={localizeFieldValue(field.formattedValue, intl.locale)}
+          isPublic={buyerVisibleFields?.has(field.name)}
+          publicLabel={publicLabel}
+        />
+      ))}
+    </>
   );
 };
 
