@@ -63,6 +63,13 @@ interface Props {
   parcelId: number | string;
   parcel?: ParcelLike;
   canWrite: boolean;
+  /**
+   * Which half to draw (2026-11-07). The irrigation pump test is an ENERGY input, read by the
+   * irrigation emission estimate; it sat at the bottom of "Organic Compliance Records", where a
+   * farmer reads it as something the certifier asks for. The profile now draws it in its own
+   * section. Default `compliance`.
+   */
+  part?: 'compliance' | 'pump';
 }
 
 const ParcelComplianceCard: React.FC<Props> = ({
@@ -70,7 +77,8 @@ const ParcelComplianceCard: React.FC<Props> = ({
   farmId,
   parcelId,
   parcel,
-  canWrite
+  canWrite,
+  part = 'compliance'
 }) => {
   const intl = useIntl();
   const toast = useToast();
@@ -229,26 +237,117 @@ const ParcelComplianceCard: React.FC<Props> = ({
     ]
   ];
 
-  return (
-    <StandardCard mb={4}>
-      <VStack align="stretch" spacing={4}>
-        <Box>
-          <Text fontWeight="bold" fontSize="lg">
-            <Icon as={FaShieldAlt} mr={2} color="green.500" />
-            {intl.formatMessage({
-              id: 'parcel.compliance.title',
-              defaultMessage: 'Organic Compliance Records (7 CFR 205.202)'
-            })}
-          </Text>
-          <Text fontSize="sm" color="gray.500">
-            {intl.formatMessage({
-              id: 'parcel.compliance.summarySubtitle',
-              defaultMessage:
-                'Identity, land history, and buffer records live in the Parcel Application — the same answers your certifier reviews.'
-            })}
-          </Text>
-        </Box>
+  if (part === 'pump') {
+    return (
+      <StandardCard
+        mb={0}
+        title={intl.formatMessage({
+          id: 'parcel.pump.title',
+          defaultMessage: 'Irrigation pump test'
+        })}
+        subtitle={intl.formatMessage({
+          id: 'parcel.pump.help',
+          defaultMessage:
+            'From your most recent pump test. Used to calculate irrigation energy for this parcel — leave empty to use a 70% efficiency and a pressure derived from your irrigation method.'
+        })}>
+        <VStack align="stretch" spacing={4}>
+          {/* Irrigation pumping plant (§E-6) — this card's one remaining editor.
+            Parcel-level because a pump test measures one plant once a year, and
+            every irrigation event that season is costed against it. */}
+          <Box>
+            <SimpleGrid columns={{ base: 1, smd: 2 }} spacing={4}>
+              <StandardField
+                label={intl.formatMessage({
+                  id: 'parcel.pump.efficiency',
+                  defaultMessage: 'Pump Efficiency (%)'
+                })}>
+                <StandardInput
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={pump.pump_efficiency_pct}
+                  isDisabled={!canWrite}
+                  onChange={(e) => setPumpField('pump_efficiency_pct', e.target.value)}
+                  placeholder="70"
+                />
+              </StandardField>
+              <StandardField
+                label={intl.formatMessage({
+                  id: 'parcel.pump.pressure',
+                  defaultMessage: 'System Pressure (PSI)'
+                })}>
+                <StandardInput
+                  type="number"
+                  min={0}
+                  value={pump.system_pressure_psi}
+                  isDisabled={!canWrite}
+                  onChange={(e) => setPumpField('system_pressure_psi', e.target.value)}
+                  placeholder="45"
+                />
+              </StandardField>
+              <StandardField
+                label={intl.formatMessage({
+                  id: 'parcel.pump.testDate',
+                  defaultMessage: 'Pump Test Date'
+                })}>
+                <StandardInput
+                  type="date"
+                  value={pump.pump_test_date}
+                  isDisabled={!canWrite}
+                  onChange={(e) => setPumpField('pump_test_date', e.target.value)}
+                />
+              </StandardField>
+              <StandardField
+                label={intl.formatMessage({
+                  id: 'parcel.pump.provider',
+                  defaultMessage: 'Test Provider'
+                })}>
+                <StandardInput
+                  value={pump.pump_test_provider}
+                  isDisabled={!canWrite}
+                  onChange={(e) => setPumpField('pump_test_provider', e.target.value)}
+                  placeholder={intl.formatMessage({
+                    id: 'parcel.pump.providerPlaceholder',
+                    defaultMessage: 'e.g., PG&E / mobile lab'
+                  })}
+                />
+              </StandardField>
+            </SimpleGrid>
+          </Box>
 
+          {canWrite && (
+            <StandardButton
+              alignSelf="flex-end"
+              size="sm"
+              onClick={handleSavePump}
+              isLoading={isLoading}>
+              {intl.formatMessage({
+                id: 'parcel.pump.save',
+                defaultMessage: 'Save Pump Test'
+              })}
+            </StandardButton>
+          )}
+        </VStack>
+      </StandardCard>
+    );
+  }
+
+  return (
+    // A standard card title (2026-11-07); the CFR citation moves to the subtitle, as on the
+    // other cards in this section. Was a bold `lg` line with an inline green.500 shield.
+    <StandardCard
+      mb={0}
+      titleIcon={<Icon as={FaShieldAlt} color="green.700" />}
+      title={intl.formatMessage({
+        id: 'parcel.compliance.title',
+        defaultMessage: 'Identity and land records'
+      })}
+      subtitle={intl.formatMessage({
+        id: 'parcel.compliance.summarySubtitle',
+        defaultMessage:
+          'Identity, land history, and buffer records live in the Parcel Application — the same answers your certifier reviews.'
+      })}>
+      <VStack align="stretch" spacing={4}>
         {/* Read summary — the Parcel Application wizard is the single editor. */}
         <VStack align="stretch" spacing={1.5}>
           {summaryRows.map(([label, value]) => (
@@ -363,98 +462,6 @@ const ParcelComplianceCard: React.FC<Props> = ({
               )}
             </Box>
           </>
-        )}
-
-        <Divider />
-
-        {/* Irrigation pumping plant (§E-6) — this card's one remaining editor.
-            Parcel-level because a pump test measures one plant once a year, and
-            every irrigation event that season is costed against it. */}
-        <Box>
-          <Text fontSize="md" fontWeight="semibold" color="gray.700" mb={1}>
-            {intl.formatMessage({
-              id: 'parcel.pump.title',
-              defaultMessage: 'Irrigation Pumping Plant'
-            })}
-          </Text>
-          <Text fontSize="sm" color="gray.600" mb={3}>
-            {intl.formatMessage({
-              id: 'parcel.pump.help',
-              defaultMessage:
-                'From your most recent pump test. Used to calculate irrigation energy for this parcel — leave empty to use a 70% efficiency and a pressure derived from your irrigation method.'
-            })}
-          </Text>
-          <SimpleGrid columns={{ base: 1, smd: 2 }} spacing={4}>
-            <StandardField
-              label={intl.formatMessage({
-                id: 'parcel.pump.efficiency',
-                defaultMessage: 'Pump Efficiency (%)'
-              })}>
-              <StandardInput
-                type="number"
-                min={0}
-                max={100}
-                value={pump.pump_efficiency_pct}
-                isDisabled={!canWrite}
-                onChange={(e) => setPumpField('pump_efficiency_pct', e.target.value)}
-                placeholder="70"
-              />
-            </StandardField>
-            <StandardField
-              label={intl.formatMessage({
-                id: 'parcel.pump.pressure',
-                defaultMessage: 'System Pressure (PSI)'
-              })}>
-              <StandardInput
-                type="number"
-                min={0}
-                value={pump.system_pressure_psi}
-                isDisabled={!canWrite}
-                onChange={(e) => setPumpField('system_pressure_psi', e.target.value)}
-                placeholder="45"
-              />
-            </StandardField>
-            <StandardField
-              label={intl.formatMessage({
-                id: 'parcel.pump.testDate',
-                defaultMessage: 'Pump Test Date'
-              })}>
-              <StandardInput
-                type="date"
-                value={pump.pump_test_date}
-                isDisabled={!canWrite}
-                onChange={(e) => setPumpField('pump_test_date', e.target.value)}
-              />
-            </StandardField>
-            <StandardField
-              label={intl.formatMessage({
-                id: 'parcel.pump.provider',
-                defaultMessage: 'Test Provider'
-              })}>
-              <StandardInput
-                value={pump.pump_test_provider}
-                isDisabled={!canWrite}
-                onChange={(e) => setPumpField('pump_test_provider', e.target.value)}
-                placeholder={intl.formatMessage({
-                  id: 'parcel.pump.providerPlaceholder',
-                  defaultMessage: 'e.g., PG&E / mobile lab'
-                })}
-              />
-            </StandardField>
-          </SimpleGrid>
-        </Box>
-
-        {canWrite && (
-          <StandardButton
-            alignSelf="flex-end"
-            size="sm"
-            onClick={handleSavePump}
-            isLoading={isLoading}>
-            {intl.formatMessage({
-              id: 'parcel.pump.save',
-              defaultMessage: 'Save Pump Test'
-            })}
-          </StandardButton>
         )}
       </VStack>
     </StandardCard>
