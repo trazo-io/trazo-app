@@ -70,7 +70,8 @@ const renderPanel = () =>
 describe('OSPPlanReviewPanel', () => {
   it('shows each finding with its count and details, the unnamed parcel, and the stale module', () => {
     renderPanel();
-    expect(screen.getByText(/newest answer in this plan was written 2026-08-21/i)).toBeTruthy();
+    // A date in words since 2026-11-07; it was printed as the raw ISO string.
+    expect(screen.getByText(/newest answer in this plan was written Aug 21, 2026/i)).toBeTruthy();
     expect(screen.getByTestId('osp-review-new_ground')).toBeTruthy();
     // details render as '• <text>' inside one list item
     expect(screen.getByText(/Muddy Creek Lease — began 2027-01-15/)).toBeTruthy();

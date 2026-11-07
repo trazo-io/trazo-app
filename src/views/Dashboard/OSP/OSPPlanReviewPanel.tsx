@@ -26,6 +26,7 @@ import { useIntl } from 'react-intl';
 
 import { StandardAlert, StandardCard } from 'components/Design/StandardComponents';
 import { useGetOSPReviewQuery } from 'store/api/ospApi';
+import { formatDateFromTimestamp } from 'utils/dateOnly';
 interface OSPPlanReviewPanelProps {
   companyId: string | number;
   farmId: string | number;
@@ -91,7 +92,11 @@ const OSPPlanReviewPanel: React.FC<OSPPlanReviewPanelProps> = ({ companyId, farm
                   defaultMessage:
                     'The newest answer in this plan was written {date}. Everything below happened in your records after that. None of it is wrong by itself — each item is something to confirm is still described correctly, or to add to the change summary.'
                 },
-                { date: data.answers_as_of }
+                // A calendar date, read in UTC so it never shifts a day; was printed raw ("2026-08-29").
+                {
+                  date:
+                    formatDateFromTimestamp(data.answers_as_of, intl.locale) ?? data.answers_as_of
+                }
               )
             : intl.formatMessage({
                 id: 'osp.review.noAnswers',
@@ -172,7 +177,10 @@ const OSPPlanReviewPanel: React.FC<OSPPlanReviewPanelProps> = ({ companyId, farm
                       id: 'osp.review.staleLine',
                       defaultMessage: '• {module} — last answered {date}'
                     },
-                    { module: m.module, date: m.answered_at }
+                    {
+                      module: m.module,
+                      date: formatDateFromTimestamp(m.answered_at, intl.locale) ?? m.answered_at
+                    }
                   )}
                 </ListItem>
               ))}

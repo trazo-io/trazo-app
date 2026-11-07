@@ -11,7 +11,7 @@
  */
 
 import React, { useMemo } from 'react';
-import { Badge, Box, Flex, HStack, SimpleGrid, Text, useToast, VStack } from '@chakra-ui/react';
+import { Badge, Box, Flex, HStack, Text, useToast, VStack } from '@chakra-ui/react';
 import { FaCheckCircle, FaFileAlt, FaMapMarkedAlt, FaRegCircle } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
@@ -50,19 +50,9 @@ import type { RootState } from 'store/index';
 import { useTour } from 'hooks/useTour';
 import { useFarmState } from 'hooks/useMeasurementSystem';
 
-// Theme badge variants are SEMANTIC, and that is why they are used here rather than a
-// colorScheme. NOTE: colorScheme is NOT inert — the `brand` variant reads `paletteOf(props)`
-// (src/theme/components/badge.js), so both work. The variants are preferred because they
-// carry MEANING; a colorScheme only names a hue.
-const STATUS_BADGE_VARIANT: Record<ModuleStatus, string> = {
-  not_started: 'neutral',
-  in_progress: 'warning',
-  completed: 'brand',
-  // `subtle` renders GREEN, which put "Not Applicable" in the same success palette as
-  // "Completed" while STATUS_ICON_COLOR below painted its icon blue — one status, two colours, and
-  // the green one claimed credit for work that was explicitly excluded. N/A is an attested
-  // exclusion, not an achievement: neutral.
-  not_applicable: 'neutral'
+/** One rule between rows, keyed on an attribute so it holds whatever each row's own props. */
+const MODULE_ROW_RULE = {
+  '& > [data-module-row] + [data-module-row]': { borderTopWidth: '1px', borderTopColor: 'gray.100' }
 };
 
 /** Parcels shown before the section collapses behind "Show all". Two orchards + slack. */
@@ -90,7 +80,15 @@ const STATUS_ICON_COLOR: Record<ModuleStatus, string> = {
   not_applicable: 'gray.500'
 };
 
-const ModuleCard = ({
+/**
+ * One module as a row (2026-11-07).
+ *
+ * Was a card in a three-column grid: a check icon, a status badge, three lines of § citations,
+ * a "Review / edit" button and a PDF button, nineteen times. The module to work on next sat
+ * fifth, mid-grid. Now a row: code and name, the answer count, and the actions. The citations
+ * live on the module page, under its title, where the questions they cite are.
+ */
+const ModuleRow = ({
   definition,
   row,
   locale,
@@ -107,122 +105,110 @@ const ModuleCard = ({
   locale: string;
   onOpen: () => void;
   downloadHref?: string;
-  /** The one module the grower should open next — see NEXT-MODULE note in the page below. */
+  /** The one module the grower should open next: the page's single filled button. */
   isNext?: boolean;
-  /** The plan has left draft, so opening a module reads it — it never edits it. */
+  /** The plan has left draft, so opening a module reads it; it never edits it. */
   isLocked?: boolean;
 }) => {
   const intl = useIntl();
   const status: ModuleStatus = row?.status ?? 'not_started';
   const progress = row?.progress ?? { answered: 0, required: 0, missing: [] };
   const blankAsked = row?.agent_asks_blank?.length ?? 0;
+  const settled = status === 'completed' || status === 'not_applicable';
 
   return (
-    // mb={0}: these cards sit in a SimpleGrid with spacing={4}, and StandardCard's default 24px
-    // bottom margin stacked on the grid's row gap: 40px between rows against 16px between
-    // columns (measured 2026-11-04). The grid owns the gap.
-    <StandardCard mb={0} data-testid={`osp-module-${definition.key}`}>
-      <Flex direction="column" gap={3} h="full">
-        {/* Label follows the button below it. "Start here" over a button reading "Review" is two
-            instructions for one click. */}
-        {isNext ? (
-          <Badge variant="brand" fontSize="11px" alignSelf="flex-start">
-            {intl.formatMessage({
-              id: status === 'not_started' ? 'osp.modules.startHere' : 'osp.modules.continueHere'
-            })}
-          </Badge>
-        ) : null}
-        <HStack justify="space-between" align="flex-start">
-          <HStack spacing={2} align="flex-start">
-            <Box
-              as={
-                status === 'completed' || status === 'not_applicable' ? FaCheckCircle : FaRegCircle
-              }
-              color={STATUS_ICON_COLOR[status]}
-              boxSize={5}
-              mt={0.5}
-            />
-            <VStack align="flex-start" spacing={0}>
-              {definition.code ? (
-                <Text fontSize="xs" fontWeight="bold" color="gray.500">
-                  {definition.code}
-                </Text>
-              ) : null}
-              <Text fontWeight="semibold" fontSize="md">
-                {pickText(definition.title, locale)}
+    <Flex
+      data-testid={`osp-module-${definition.key}`}
+      data-module-row
+      py={3}
+      gap={{ base: 2, md: 4 }}
+      direction={{ base: 'column', md: 'row' }}
+      align={{ base: 'stretch', md: 'center' }}>
+      <HStack spacing={3} align="flex-start" flex="1" minW={0}>
+        <Box
+          as={settled ? FaCheckCircle : FaRegCircle}
+          color={STATUS_ICON_COLOR[status]}
+          boxSize={4}
+          mt={1}
+          flexShrink={0}
+          aria-hidden
+        />
+        <Box minW={0}>
+          <HStack spacing={2} flexWrap="wrap">
+            {definition.code ? (
+              <Text fontSize="xs" fontWeight="semibold" color="gray.600">
+                {definition.code}
               </Text>
-              <Text fontSize="xs" color="gray.500">
-                {definition.nop_cites.join(' · ')}
-              </Text>
-            </VStack>
-          </HStack>
-          <Badge variant={STATUS_BADGE_VARIANT[status]} fontSize="11px">
-            {intl.formatMessage({ id: `osp.modules.status.${status}` })}
-          </Badge>
-        </HStack>
-
-        {status !== 'not_applicable' && progress.required > 0 ? (
-          <Box>
-            {/* Run 8 (R8-10): a count, not a progress bar. Answers given is descriptive only. */}
-            <Text fontSize="xs" color="gray.500">
-              {intl.formatMessage(
-                { id: 'osp.modules.progressCount' },
-                { answered: progress.answered, required: progress.required }
-              )}
+            ) : null}
+            <Text fontSize="sm" fontWeight="semibold" color="gray.800">
+              {pickText(definition.title, locale)}
             </Text>
-          </Box>
-        ) : null}
-
-        {/* Not counted into the line above: Trazo does not require these, the agent's form asks
-            them. Shown on a completed module too, since completing never waited on them. */}
-        {agent && status !== 'not_applicable' && blankAsked > 0 ? (
-          <Text
-            fontSize="xs"
-            color={STATUS_URGENCY_TOKENS.warn.text}
-            data-testid={`osp-module-agent-blank-${definition.key}`}>
-            {intl.formatMessage({ id: 'osp.modules.agentAsksBlank' }, { agent, count: blankAsked })}
-          </Text>
-        ) : null}
-
-        <Box mt="auto">
-          <HStack spacing={2}>
-            {/* Secondary unless this is the next module. 19 cards each carrying a solid green
-                primary made the page a wall of identical CTAs with no entry point — every action
-                shouting equally loudly is the same as none of them shouting. The card is already
-                the affordance; only the next module gets the filled button. */}
-            <StandardButton
-              size="sm"
-              minH="44px"
-              flex={1}
-              variant={isNext ? 'primary' : 'outline'}
-              onClick={onOpen}>
-              {/* The label used to key off the module's own progress and nothing else, so a
-                  plan the server refuses to write to still advertised "Review / edit" on all
-                  19 cards. The button promised an action the destination could not perform —
-                  which is the whole of what a locked module felt like from the outside. */}
-              {intl.formatMessage({
-                id: isLocked
-                  ? 'osp.modules.view'
-                  : status === 'not_started'
-                  ? 'osp.modules.open'
-                  : 'osp.modules.review'
-              })}
-            </StandardButton>
-            {downloadHref ? (
-              <StandardButton
-                as="a"
-                href={downloadHref}
-                size="sm"
-                minH="44px"
-                variant="outline"
-                aria-label={intl.formatMessage({ id: 'osp.modules.downloadPdf' })}>
-                <FaFileAlt />
-              </StandardButton>
+            {/* Label follows the button beside it. */}
+            {isNext ? (
+              <Badge variant="brand" fontSize="11px">
+                {intl.formatMessage({
+                  id:
+                    status === 'not_started' ? 'osp.modules.startHere' : 'osp.modules.continueHere'
+                })}
+              </Badge>
             ) : null}
           </HStack>
+          <Text fontSize="xs" color="gray.600">
+            {status === 'not_applicable'
+              ? intl.formatMessage({ id: 'osp.modules.status.not_applicable' })
+              : progress.required > 0
+              ? // Run 8 (R8-10): a count, not a progress bar. Answers given is descriptive only.
+                intl.formatMessage(
+                  { id: 'osp.modules.progressCount' },
+                  { answered: progress.answered, required: progress.required }
+                )
+              : intl.formatMessage({ id: `osp.modules.status.${status}` })}
+          </Text>
+          {/* Not counted into the line above: Trazo does not require these, the agent's form
+              asks them. Shown on an answered module too, since answering never waited on them. */}
+          {agent && status !== 'not_applicable' && blankAsked > 0 ? (
+            <Text
+              fontSize="xs"
+              color={STATUS_URGENCY_TOKENS.warn.text}
+              data-testid={`osp-module-agent-blank-${definition.key}`}>
+              {intl.formatMessage(
+                { id: 'osp.modules.agentAsksBlank' },
+                { agent, count: blankAsked }
+              )}
+            </Text>
+          ) : null}
         </Box>
-      </Flex>
-    </StandardCard>
+      </HStack>
+      <HStack spacing={1} flexShrink={0} pl={{ base: 7, md: 0 }}>
+        {/* Filled only for the next module: nineteen green buttons gave a grower no entry
+            point. The label never offers an edit the server would refuse on a locked plan. */}
+        <StandardButton
+          size="sm"
+          variant={isNext ? 'primary' : settled ? 'ghost' : 'outline'}
+          onClick={onOpen}>
+          {intl.formatMessage({
+            id: isLocked
+              ? 'osp.modules.view'
+              : status === 'not_started'
+              ? 'osp.modules.open'
+              : 'osp.modules.review'
+          })}
+        </StandardButton>
+        {downloadHref ? (
+          <StandardButton
+            as="a"
+            href={downloadHref}
+            size="sm"
+            variant="ghost"
+            aria-label={intl.formatMessage(
+              { id: 'osp.modules.downloadPdfFor' },
+              { name: pickText(definition.title, locale) }
+            )}>
+            <FaFileAlt />
+          </StandardButton>
+        ) : null}
+      </HStack>
+    </Flex>
   );
 };
 
@@ -303,6 +289,14 @@ const OSPModuleListPage = () => {
   }, [moduleRows]);
 
   const farmWide = (definitions?.modules ?? []).filter((m) => !m.repeat_per_parcel);
+  const isSettled = (m: ModuleDefinition) => {
+    const s = rowsByKey.get(m.key)?.status;
+    return s === 'completed' || s === 'not_applicable';
+  };
+  // Definition order (the § order a certifier reads) inside each group; the next module is the
+  // first open one, so it heads the list.
+  const openModules = farmWide.filter((m) => !isSettled(m));
+  const answeredModules = farmWide.filter(isSettled);
   const completedCount = farmWide.filter((m) => {
     const s = rowsByKey.get(m.key)?.status;
     return s === 'completed' || s === 'not_applicable';
@@ -493,40 +487,76 @@ const OSPModuleListPage = () => {
               </Box>
             )}
 
-          <Box data-tour="osp-modules-grid">
-            <Text fontWeight="semibold" mb={1}>
-              {intl.formatMessage({ id: 'osp.modules.farmWideTitle' })}
-            </Text>
-            <Text fontSize="sm" color="gray.600" mb={3}>
-              {intl.formatMessage({ id: 'osp.modules.farmWideHint' })}
-            </Text>
-            {defsLoading || rowsLoading ? (
-              <StandardPageLoading />
-            ) : (
-              <SimpleGrid columns={{ base: 1, smd: 2, lg: 3 }} spacing={4}>
-                {farmWide.map((definition) => (
-                  <ModuleCard
-                    key={definition.key}
-                    definition={definition}
-                    row={rowsByKey.get(definition.key)}
-                    agent={moduleRows?.agent}
-                    locale={intl.locale}
-                    onOpen={() =>
-                      navigate(`/admin/dashboard/farm/${farmId}/osp/module/${definition.key}`)
+          {/* Rows in two groups (2026-11-07): what is still to answer, in the order a
+              certifier reads it, with the next module on top; then the modules with every
+              required answer given (or attested not applicable), quiet. */}
+          <Box data-tour="osp-modules-grid" w="full">
+            <StandardCard
+              mb={0}
+              title={intl.formatMessage({ id: 'osp.modules.farmWideTitle' })}
+              subtitle={intl.formatMessage({ id: 'osp.modules.farmWideHint' })}>
+              {defsLoading || rowsLoading ? (
+                <StandardPageLoading />
+              ) : (
+                <VStack align="stretch" spacing={5}>
+                  {[
+                    { key: 'open', modules: openModules, labelId: 'osp.modules.groupOpen' },
+                    {
+                      key: 'answered',
+                      modules: answeredModules,
+                      labelId: 'osp.modules.groupAnswered'
                     }
-                    downloadHref={
-                      ospId != null && hasComplianceExports
-                        ? env.getApiUrl(
-                            OSP_MODULE_PDF_URL(companyId, farmId || '', ospId, definition.key)
-                          )
-                        : undefined
-                    }
-                    isNext={nextModuleKey != null && definition.key === nextModuleKey}
-                    isLocked={isLocked}
-                  />
-                ))}
-              </SimpleGrid>
-            )}
+                  ]
+                    .filter((group) => group.modules.length > 0)
+                    .map((group) => (
+                      <Box key={group.key}>
+                        <Text
+                          fontSize="xs"
+                          fontWeight="semibold"
+                          color="gray.600"
+                          textTransform="uppercase"
+                          letterSpacing="wide"
+                          mb={1}>
+                          {intl.formatMessage(
+                            { id: group.labelId },
+                            { count: group.modules.length }
+                          )}
+                        </Text>
+                        <VStack align="stretch" spacing={0} sx={MODULE_ROW_RULE}>
+                          {group.modules.map((definition) => (
+                            <ModuleRow
+                              key={definition.key}
+                              definition={definition}
+                              row={rowsByKey.get(definition.key)}
+                              agent={moduleRows?.agent}
+                              locale={intl.locale}
+                              onOpen={() =>
+                                navigate(
+                                  `/admin/dashboard/farm/${farmId}/osp/module/${definition.key}`
+                                )
+                              }
+                              downloadHref={
+                                ospId != null && hasComplianceExports
+                                  ? env.getApiUrl(
+                                      OSP_MODULE_PDF_URL(
+                                        companyId,
+                                        farmId || '',
+                                        ospId,
+                                        definition.key
+                                      )
+                                    )
+                                  : undefined
+                              }
+                              isNext={nextModuleKey != null && definition.key === nextModuleKey}
+                              isLocked={isLocked}
+                            />
+                          ))}
+                        </VStack>
+                      </Box>
+                    ))}
+                </VStack>
+              )}
+            </StandardCard>
           </Box>
 
           <Box data-tour="osp-parcel-applications" w="full">

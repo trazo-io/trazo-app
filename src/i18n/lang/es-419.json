@@ -9626,5 +9626,8 @@
   "buyer.printFor": "Imprimir para {name}",
   "documents.shelfSummaryDocs": "{docs, plural, one {# documento} other {# documentos}} · {count, plural, one {# archivo} other {# archivos}} incluyendo versiones anteriores · {size} en el archivo de esta finca",
   "documents.moreActions": "Más acciones",
-  "documents.shelfSummaryDocsOnly": "{docs, plural, one {# documento} other {# documentos}} · {size} en el archivo de esta finca"
+  "documents.shelfSummaryDocsOnly": "{docs, plural, one {# documento} other {# documentos}} · {size} en el archivo de esta finca",
+  "osp.modules.groupOpen": "Por responder · {count}",
+  "osp.modules.groupAnswered": "Con todas las respuestas requeridas · {count}",
+  "osp.modules.downloadPdfFor": "Descargar el PDF de {name}"
 }

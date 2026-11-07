@@ -9626,5 +9626,8 @@
   "buyer.printFor": "Print for {name}",
   "documents.shelfSummaryDocs": "{docs, plural, one {# document} other {# documents}} · {count, plural, one {# file} other {# files}} including earlier versions · {size} on this farm's shelf",
   "documents.moreActions": "More actions",
-  "documents.shelfSummaryDocsOnly": "{docs, plural, one {# document} other {# documents}} · {size} on this farm's shelf"
+  "documents.shelfSummaryDocsOnly": "{docs, plural, one {# document} other {# documents}} · {size} on this farm's shelf",
+  "osp.modules.groupOpen": "To answer · {count}",
+  "osp.modules.groupAnswered": "Every required answer given · {count}",
+  "osp.modules.downloadPdfFor": "Download the PDF of {name}"
 }
