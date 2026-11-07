@@ -28,4 +28,18 @@ describe('an empty string is no value', () => {
     const fields = names({ event_type: 2, type: 'PE', buffer_zone_meters: '8' });
     expect(fields.find(([n]) => n === 'buffer_zone_meters')).toEqual(['buffer_zone_meters', '8 m']);
   });
+
+  it('a blank group anchor still shows its companions (review comment on #312)', () => {
+    const set = getFieldsForSurface('soil_management', 'ST', 'modal', {
+      event_type: 5,
+      type: 'ST',
+      lab_nitrogen: '',
+      lab_phosphorus: '12',
+      lab_potassium: '150'
+    } as never);
+    const npk = [...set.hero, ...set.immediate, ...set.secondary, ...set.details].find(
+      (f) => f.name === 'lab_nitrogen'
+    );
+    expect(npk?.formattedValue).toBe('— / 12 / 150');
+  });
 });
