@@ -70,6 +70,24 @@ describe('season screens say season and activity', () => {
     expect(es['finishProduction.page.title']).toBe(es['farmHome.seasons.finish']);
   });
 
+  it('every validation message on the start form is a key in both locales', () => {
+    // A zod schema at module scope cannot call intl, so a literal there reaches a Spanish
+    // farmer in English. The field renders the key through intl.
+    const start = readFileSync(join(SRC, SCREENS[0]), 'utf8');
+    const schema = start.slice(
+      start.indexOf('const productionSchema'),
+      start.indexOf('interface ProductionFormData')
+    );
+    const messages = [...schema.matchAll(/(?:min|max)\(\d+, '([^']+)'\)|message: '([^']+)'/g)].map(
+      (m) => m[1] || m[2]
+    );
+    expect(messages.length).toBeGreaterThan(4);
+    for (const id of messages) {
+      expect(en[id], id).toBeTruthy();
+      expect(es[id], id).toBeTruthy();
+    }
+  });
+
   it('no hardcoded English title or default name on the start and finish screens', () => {
     const start = readFileSync(join(SRC, SCREENS[0]), 'utf8');
     const finish = readFileSync(join(SRC, SCREENS[5]), 'utf8');
