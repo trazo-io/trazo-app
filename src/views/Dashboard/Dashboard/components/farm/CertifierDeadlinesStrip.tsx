@@ -227,13 +227,10 @@ const CertifierDeadlinesStrip: React.FC<{
     });
   });
 
-  // CDFA State Organic Program registration renews annually (CA Food & Ag Code §§ 46000-46029).
+  // CDFA State Organic Program registration renews annually (CA Food & Ag Code § 46013.1(a): "Each
+  // registrant shall annually renew the registration"). An operation under $5,000 is exempt from
+  // certification only and still registers, so its renewal shows too. It used to be skipped here.
   (registrations || []).forEach((reg) => {
-    // An operation marked exempt sells under the $5,000 threshold and has nothing to renew
-    // (CA Food & Ag Code §§ 46000-46029). Nagging it about a renewal date left over from a
-    // previous year would be telling a grower to do something they are excused from.
-    if (reg.status === 'exempt') return;
-
     const days = daysUntil(reg.renewal_date);
     if (days === null || !isWorthShowing(days)) return;
     deadlines.push({
