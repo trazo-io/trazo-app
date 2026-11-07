@@ -13,13 +13,10 @@ import {
   Td,
   VStack,
   HStack,
-  useToast,
-  Icon,
-  IconButton,
-  Tooltip
+  useToast
 } from '@chakra-ui/react';
 import { CopyIcon, CheckIcon } from '@chakra-ui/icons';
-import { FaUsers, FaShare, FaBuilding } from 'react-icons/fa';
+import { FaUsers, FaBuilding } from 'react-icons/fa';
 import React, { useEffect, useState } from 'react';
 
 import {
@@ -30,7 +27,7 @@ import {
   StandardSelect,
   StandardPage,
   StandardSearchInput,
-  StandardSegmentedControl,
+  StandardSectionTabs,
   StandardSpinner
 } from 'components/Design/StandardComponents';
 import MemberRow from './memberRow';
@@ -230,21 +227,28 @@ export default function SettingsView() {
         'This screen is only visible to company admins'
       }>
       <VStack w="100%" align="stretch" spacing={6} className="main-content-area">
-        {/* Tab Navigation */}
-        <StandardSegmentedControl
+        {/* Left-aligned underline tabs, the app's tab style (2026-11-07). A centred segmented
+            control here was the only centred tab row in the app. */}
+        <StandardSectionTabs
           ariaLabel={intl.formatMessage({ id: 'app.companySettings' })}
-          value={settingsTab}
-          onChange={setSettingsTab}
-          stretchOnMobile={false}
-          options={[
-            { key: 'team', label: intl.formatMessage({ id: 'app.team' }), icon: FaUsers },
+          activeIndex={settingsTab === 'team' ? 0 : 1}
+          onChange={(index) => setSettingsTab(index === 0 ? 'team' : 'company')}
+          tabs={[
+            {
+              key: 'team',
+              label: intl.formatMessage({ id: 'app.team' }),
+              icon: FaUsers,
+              status: 'none'
+            },
             {
               key: 'company',
               label: intl.formatMessage({ id: 'app.companyInformation' }),
-              icon: FaBuilding
+              icon: FaBuilding,
+              status: 'none'
             }
-          ]}
-        />
+          ]}>
+          <Box pt={4} />
+        </StandardSectionTabs>
 
         {/* Team Tab Panel */}
         {settingsTab === 'team' && (
@@ -429,7 +433,6 @@ export default function SettingsView() {
                                 setInviteEmail(e.target.value)
                               }
                               type="email"
-                              size="lg"
                             />
                           </StandardField>
 
@@ -451,18 +454,17 @@ export default function SettingsView() {
                           </StandardField>
                         </VStack>
 
-                        <HStack spacing={4} w="100%" justify="flex-end">
-                          <StandardButton
-                            variant="outline"
-                            onClick={handleDiscardChanges}
-                            size="lg">
-                            {intl.formatMessage({ id: 'app.discardChanges' }) ||
-                              'Descartar cambios'}
-                          </StandardButton>
+                        {/* Standard size, and Discard only once there is something to discard
+                            (2026-11-07): two large buttons sat under an empty form. */}
+                        <HStack spacing={2} w="100%" justify="flex-end">
+                          {(inviteEmail || selectedRole) && (
+                            <StandardButton variant="ghost" onClick={handleDiscardChanges}>
+                              {intl.formatMessage({ id: 'app.discardChanges' })}
+                            </StandardButton>
+                          )}
                           <StandardButton
                             variant="primary"
                             onClick={handleInviteSubmit}
-                            size="lg"
                             isLoading={isSendingInvitation}
                             loadingText={intl.formatMessage({ id: 'app.sending' })}>
                             {intl.formatMessage({ id: 'app.sendInvite' }) || 'Enviar invitación'}
@@ -482,134 +484,61 @@ export default function SettingsView() {
                   variant="elevated">
                   <Box py={3}>
                     <VStack spacing={4} align="stretch">
-                      {/* Company Info Display */}
-                      {/* Stacked at every width: the card is half the page, and as a row the
-                          200px code column squeezed the company name to one word per line
-                          (screen audit 2026-11-06). */}
-                      <Flex
-                        direction="column"
-                        gap={4}
-                        align="stretch"
-                        p={4}
-                        bg="green.50"
-                        borderRadius="lg"
-                        border="1px solid"
-                        borderColor="green.200">
-                        {/* Company Icon */}
-                        <Flex align="center" justify="center" w="full">
-                          <Box
-                            bg="green.700"
-                            p={4}
-                            borderRadius="full"
-                            display="flex"
-                            alignItems="center"
-                            justifyContent="center">
-                            <Icon as={FaUsers} color="white" boxSize={6} />
-                          </Box>
-                        </Flex>
-
-                        {/* Company Details */}
-                        <VStack align="center" spacing={2} flex={1}>
-                          <Text fontSize="md" fontWeight="semibold" color="gray.700">
-                            {currentCompany?.name || intl.formatMessage({ id: 'app.yourCompany' })}
+                      {/* One row: the code, Copy, and Generate new code (2026-11-07). Was a
+                          green box with a round icon, the company name the page already shows,
+                          a solid green code pill, a lone round copy icon, and a second green box
+                          for the instructions. */}
+                      {!currentCompany ? (
+                        <StandardSpinner label={intl.formatMessage({ id: 'app.loading' })} />
+                      ) : currentCompany.invitation_code ? (
+                        <HStack spacing={2} flexWrap="wrap">
+                          <Text
+                            fontFamily="mono"
+                            fontSize="xl"
+                            fontWeight="semibold"
+                            letterSpacing="wider"
+                            color="gray.800"
+                            bg="gray.50"
+                            borderWidth="1px"
+                            borderColor="gray.200"
+                            borderRadius="md"
+                            px={4}
+                            py={1.5}>
+                            {currentCompany.invitation_code}
                           </Text>
-                          <Text fontSize="xs" color="gray.500" textAlign="center" lineHeight="1.4">
-                            {intl.formatMessage({ id: 'app.membersCanJoinWithCode' })}
-                          </Text>
-                        </VStack>
-
-                        {/* Code Display and Copy. The API sends the code to company admins only. */}
-                        {/* Three states: not loaded yet, admin (code sent), anyone else (null). */}
-                        {!currentCompany ? (
-                          <StandardSpinner label={intl.formatMessage({ id: 'app.loading' })} />
-                        ) : currentCompany.invitation_code ? (
-                          <VStack spacing={3} align="center" w="full">
-                            {/* Code Badge */}
-                            <Badge
-                              colorScheme="green"
-                              variant="solid"
-                              fontSize="lg"
-                              px={5}
-                              py={2}
-                              borderRadius="full"
-                              fontFamily="mono"
-                              letterSpacing="wide"
-                              minW="120px"
-                              textAlign="center">
-                              {currentCompany.invitation_code}
-                            </Badge>
-
-                            {/* Copy Button */}
-                            <Tooltip
-                              label={
-                                codeCopied
-                                  ? intl.formatMessage({ id: 'app.copied' })
-                                  : intl.formatMessage({ id: 'app.copyCode' })
-                              }
-                              placement="top"
-                              closeOnClick={false}
-                              fontSize="xs">
-                              <IconButton
-                                aria-label={intl.formatMessage({ id: 'app.copyCompanyCode' })}
-                                icon={codeCopied ? <CheckIcon /> : <CopyIcon />}
-                                colorScheme={codeCopied ? 'green' : 'green'}
-                                variant={codeCopied ? 'solid' : 'outline'}
-                                size="sm"
-                                borderRadius="full"
-                                onClick={handleCopyCode}
-                                _hover={{
-                                  transform: 'translateY(-1px)',
-                                  boxShadow: 'sm'
-                                }}
-                                transition="all 0.2s ease"
-                              />
-                            </Tooltip>
-                            <StandardButton
-                              variant="ghost"
-                              onClick={handleRotateCode}
-                              isLoading={isRotatingCode}>
-                              {intl.formatMessage({ id: 'app.generateNewCompanyCode' })}
-                            </StandardButton>
-                          </VStack>
-                        ) : (
-                          <Text fontSize="xs" color="gray.500" maxW={{ base: 'full', md: '200px' }}>
-                            {intl.formatMessage({ id: 'app.companyCodeAdminOnly' })}
-                          </Text>
-                        )}
-                      </Flex>
-
-                      {/* Instructions */}
-                      <Box
-                        p={3}
-                        bg="green.50"
-                        borderRadius="lg"
-                        border="1px solid"
-                        borderColor="green.200">
-                        <HStack spacing={2} align="start">
-                          <Icon
-                            as={FaShare}
-                            color="green.600"
-                            mt={0.5}
-                            flexShrink={0}
-                            boxSize={3}
-                          />
-                          <VStack align="start" spacing={1}>
-                            <Text fontSize="xs" fontWeight="medium" color="green.800">
-                              {intl.formatMessage({ id: 'app.howToUseInvitationCode' })}
-                            </Text>
-                            <VStack align="start" spacing={0.5} pl={1}>
-                              <Text fontSize="xs" color="green.700" lineHeight="1.3">
-                                • {intl.formatMessage({ id: 'app.shareCodeWithMembers' })}
-                              </Text>
-                              <Text fontSize="xs" color="green.700" lineHeight="1.3">
-                                • {intl.formatMessage({ id: 'app.chooseJoinExistingCompany' })}
-                              </Text>
-                              <Text fontSize="xs" color="green.700" lineHeight="1.3">
-                                • {intl.formatMessage({ id: 'app.enterCodeToJoinAsViewer' })}
-                              </Text>
-                            </VStack>
-                          </VStack>
+                          <StandardButton
+                            size="sm"
+                            variant="outline"
+                            leftIcon={codeCopied ? <CheckIcon /> : <CopyIcon />}
+                            aria-label={intl.formatMessage({ id: 'app.copyCompanyCode' })}
+                            onClick={handleCopyCode}>
+                            {codeCopied
+                              ? intl.formatMessage({ id: 'app.copied' })
+                              : intl.formatMessage({ id: 'app.copyCode' })}
+                          </StandardButton>
+                          <StandardButton
+                            size="sm"
+                            variant="ghost"
+                            onClick={handleRotateCode}
+                            isLoading={isRotatingCode}>
+                            {intl.formatMessage({ id: 'app.generateNewCompanyCode' })}
+                          </StandardButton>
                         </HStack>
+                      ) : (
+                        <Text fontSize="sm" color="gray.600">
+                          {intl.formatMessage({ id: 'app.companyCodeAdminOnly' })}
+                        </Text>
+                      )}
+
+                      <Box>
+                        <Text fontSize="xs" fontWeight="semibold" color="gray.700" mb={1}>
+                          {intl.formatMessage({ id: 'app.howToUseInvitationCode' })}
+                        </Text>
+                        <Box as="ol" pl={5} fontSize="xs" color="gray.600" lineHeight="1.6">
+                          <li>{intl.formatMessage({ id: 'app.shareCodeWithMembers' })}</li>
+                          <li>{intl.formatMessage({ id: 'app.chooseJoinExistingCompany' })}</li>
+                          <li>{intl.formatMessage({ id: 'app.enterCodeToJoinAsViewer' })}</li>
+                        </Box>
                       </Box>
                     </VStack>
                   </Box>

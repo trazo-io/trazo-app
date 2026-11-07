@@ -1149,7 +1149,7 @@
   "app.plan": "Plan",
   "app.planChanged": "Plan changed",
   "app.planChangedDescription": "Your subscription plan has been updated",
-  "app.planFeatures": "Plan Features",
+  "app.planFeatures": "What your plan includes",
   "app.planFeaturesDescription": "Your current plan includes the following features and limitations",
   "app.planUsage": "Plan Usage",
   "app.planUsageUpdated": "Your plan usage information has been updated.",
@@ -1665,7 +1665,7 @@
   "app.usageMetric.productions": "Productions this year",
   "app.usageMetric.scans": "QR scans this month",
   "app.usageMetric.storage": "Photo storage (GB)",
-  "app.usageMetrics": "Usage Metrics",
+  "app.usageMetrics": "Usage",
   "app.usageOfLimit": "{used} of {limit} used.",
   "app.usagePercentUsed": "{percentage}% used",
   "app.usageStatistics": "Usage Statistics",
@@ -8376,7 +8376,7 @@
   "subscription.toast.paymentMethodUpdated": "Payment method updated",
   "subscription.updatedDescription": "Your subscription has been processed successfully.",
   "subscription.updatedTitle": "Subscription updated",
-  "subscription.usage.productionsThisYear": "Productions this year",
+  "subscription.usage.productionsThisYear": "Seasons this year",
   "subscription.verificationFailed": "Subscription could not be verified.",
   "tooltip.blockchainRecorded.definition": "Integrity Hash (certifier packet)",
   "tooltip.blockchainRecorded.example": "Example: the certifier packet's integrity line lets a reviewer confirm the file matches what was finished",
@@ -9695,5 +9695,10 @@
   "parcel.fieldHistory.method.regenerative": "Regenerative",
   "parcel.fieldHistory.method.fallow": "Fallow",
   "parcel.section.energy": "Irrigation energy",
-  "parcel.section.energyHint": "Used only to estimate this parcel’s irrigation emissions. Your certifier does not ask for it."
+  "parcel.section.energyHint": "Used only to estimate this parcel’s irrigation emissions. Your certifier does not ask for it.",
+  "subscription.usage.ofLimit": "{used} of {limit}",
+  "subscription.usage.noLimit": "No limit",
+  "subscription.usage.atLimit": "At your plan's limit",
+  "subscription.usage.left": "{count} left",
+  "subscription.feature.responseTime": "Support answers within {hours} hours"
 }
