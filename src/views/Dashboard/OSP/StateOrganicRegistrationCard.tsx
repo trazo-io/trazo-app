@@ -152,7 +152,7 @@ const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId, stat
       subtitle={intl.formatMessage({
         id: 'osp.cdfa.description',
         defaultMessage:
-          'California producers selling more than $5,000/yr organic must register annually with the CDFA State Organic Program before their first organic sale (CA Food & Ag Code §§ 46000-46029). Distinct from CDFA OIM input-material registration.'
+          'Every California operation that produces or handles crops sold as organic registers with the CDFA State Organic Program before the first sale and renews each year (CA Food & Ag Code § 46013.1(a)). An operation under $5,000 is exempt from certification, not from registration. Distinct from CDFA OIM input-material registration.'
       })}
       headerAction={
         existing ? (
@@ -242,7 +242,7 @@ const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId, stat
               }
               placeholder={intl.formatMessage({
                 id: 'osp.cdfa.registrationNumberPlaceholder',
-                defaultMessage: 'e.g., TUL-2026-0042'
+                defaultMessage: 'e.g., 12-123456'
               })}
             />
           </StandardField>
