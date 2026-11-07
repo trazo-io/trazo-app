@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.11.20",
+  "content_version": "2026.11.21",
   "registry": {
-    "content_version": "2026.11.20",
+    "content_version": "2026.11.21",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -14406,6 +14406,224 @@
                 "max_length": null
               },
               {
+                "key": "applies_post_harvest_inputs",
+                "kind": "boolean",
+                "label": {
+                  "en": "Do you apply any input directly to crops after harvest, certified or not (a wax, a sanitizer wash, a ripening or anti-sprouting agent, a packaging gas)?",
+                  "es": "¿Aplicas algún insumo directamente a los cultivos después de la cosecha, certificados o no (una cera, un lavado sanitizante, un agente de maduración o antibrotación, un gas de empaque)?"
+                },
+                "coaching": {
+                  "en": "List each one on your materials list, under post-harvest materials, with its brand and manufacturer.",
+                  "es": "Anota cada uno en tu lista de materiales, en materiales de poscosecha, con su marca y fabricante."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.270",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "post_harvest_input_types",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Which types of input touch the crop after harvest? Check all that apply.",
+                  "es": "¿Qué tipos de insumo tocan el cultivo después de la cosecha? Marca todas las que correspondan."
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "anti_foaming",
+                    "label": {
+                      "en": "Anti-foaming agents",
+                      "es": "Agentes antiespumantes"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "anti_fungal",
+                    "label": {
+                      "en": "Anti-fungal agents",
+                      "es": "Agentes antifúngicos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "anti_microbial",
+                    "label": {
+                      "en": "Anti-microbial agents",
+                      "es": "Agentes antimicrobianos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "anti_ripening",
+                    "label": {
+                      "en": "Anti-ripening agents",
+                      "es": "Agentes antimaduración"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "antioxidants",
+                    "label": {
+                      "en": "Antioxidants",
+                      "es": "Antioxidantes"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "floatation",
+                    "label": {
+                      "en": "Floatation agents",
+                      "es": "Agentes de flotación"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "packaging_gases",
+                    "label": {
+                      "en": "Packaging gases",
+                      "es": "Gases de empaque"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "preservatives",
+                    "label": {
+                      "en": "Preservatives",
+                      "es": "Conservantes"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "release_agents",
+                    "label": {
+                      "en": "Release agents",
+                      "es": "Agentes desmoldantes"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "ripening",
+                    "label": {
+                      "en": "Ripening agents",
+                      "es": "Agentes de maduración"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "sanitizer_washes",
+                    "label": {
+                      "en": "Sanitizers or washes",
+                      "es": "Sanitizantes o lavados"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "sprouting_inhibitors",
+                    "label": {
+                      "en": "Sprouting inhibitors",
+                      "es": "Inhibidores de brotación"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "waxes_coatings",
+                    "label": {
+                      "en": "Waxes or coatings",
+                      "es": "Ceras o recubrimientos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otro"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "applies_post_harvest_inputs",
+                    "op": "eq",
+                    "value": true
+                  }
+                ],
+                "nop_cite": "§ 205.270",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "post_harvest_input_types_other",
+                "kind": "text",
+                "label": {
+                  "en": "Other type of input",
+                  "es": "Otro tipo de insumo"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "applies_post_harvest_inputs",
+                    "op": "eq",
+                    "value": true
+                  },
+                  {
+                    "question": "post_harvest_input_types",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": "§ 205.270",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "post_harvest_input_recording",
+                "kind": "textarea",
+                "label": {
+                  "en": "How do you record each application of those inputs, to certified and to non-certified product?",
+                  "es": "¿Cómo registras cada aplicación de esos insumos, al producto certificado y al no certificado?"
+                },
+                "coaching": {
+                  "en": "For example: the packing-line log names the wax, the lot and the date for every run, and conventional runs are logged on their own sheet.",
+                  "es": "Por ejemplo: el registro de la línea de empaque indica la cera, el lote y la fecha de cada corrida, y las corridas convencionales se anotan en su propia hoja."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "applies_post_harvest_inputs",
+                    "op": "eq",
+                    "value": true
+                  }
+                ],
+                "nop_cite": "§ 205.103(b)(2)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
                 "key": "noncertified_only_inputs_used",
                 "kind": "boolean",
                 "label": {
@@ -19963,6 +20181,92 @@
       ]
     },
     {
+      "module": "g6_4_handling",
+      "label": "inputs_other",
+      "answers": {
+        "handling_activities": [
+          "packing"
+        ],
+        "applies_post_harvest_inputs": true,
+        "post_harvest_input_types": [
+          "waxes_coatings",
+          "other"
+        ]
+      },
+      "visible_questions": [
+        "handling_activities",
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "on_farm_facility_table",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "uses_water",
+        "commingling_controls",
+        "applies_post_harvest_inputs",
+        "post_harvest_input_types",
+        "post_harvest_input_types_other",
+        "post_harvest_input_recording",
+        "noncertified_only_inputs_used",
+        "handling_records",
+        "facility_docs"
+      ],
+      "missing_required": [
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "uses_water",
+        "commingling_controls",
+        "handling_records"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g6_4_handling",
+      "label": "no_inputs_stale_types",
+      "answers": {
+        "handling_activities": [
+          "packing"
+        ],
+        "applies_post_harvest_inputs": false,
+        "post_harvest_input_types": [
+          "other"
+        ]
+      },
+      "visible_questions": [
+        "handling_activities",
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "on_farm_facility_table",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "uses_water",
+        "commingling_controls",
+        "applies_post_harvest_inputs",
+        "noncertified_only_inputs_used",
+        "handling_records",
+        "facility_docs"
+      ],
+      "missing_required": [
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "uses_water",
+        "commingling_controls",
+        "handling_records"
+      ],
+      "missing_required_na": []
+    },
+    {
       "module": "g6_0_production",
       "label": "unanswered",
       "answers": {},
@@ -22405,6 +22709,7 @@
         "uses_equipment_sanitizer_or_cleaner",
         "uses_water",
         "commingling_controls",
+        "applies_post_harvest_inputs",
         "noncertified_only_inputs_used",
         "handling_records",
         "facility_docs"
@@ -22442,6 +22747,7 @@
         "uses_equipment_sanitizer_or_cleaner",
         "uses_water",
         "commingling_controls",
+        "applies_post_harvest_inputs",
         "noncertified_only_inputs_used",
         "handling_records",
         "facility_docs"
@@ -22477,6 +22783,7 @@
         "uses_equipment_sanitizer_or_cleaner",
         "uses_water",
         "commingling_controls",
+        "applies_post_harvest_inputs",
         "noncertified_only_inputs_used",
         "handling_records",
         "facility_docs"
@@ -22512,6 +22819,7 @@
         "uses_equipment_sanitizer_or_cleaner",
         "uses_water",
         "commingling_controls",
+        "applies_post_harvest_inputs",
         "noncertified_only_inputs_used",
         "handling_records",
         "facility_docs"
@@ -22548,6 +22856,7 @@
         "uses_equipment_sanitizer_or_cleaner",
         "uses_water",
         "commingling_controls",
+        "applies_post_harvest_inputs",
         "noncertified_only_inputs_used",
         "handling_records",
         "facility_docs"
