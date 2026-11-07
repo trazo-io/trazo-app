@@ -949,39 +949,6 @@ export const carbonApi = baseApi.injectEndpoints({
       ]
     }),
 
-    // Enhanced Security Endpoints
-
-    validateFileUploadSecurity: builder.mutation<
-      { is_valid: boolean; validation_result: any; security_score: number },
-      { file_data: FormData; carbon_entry_id?: number }
-    >({
-      query: (data) => ({
-        url: 'carbon/secure/validate-file-upload/',
-        method: 'POST',
-        body: data.file_data,
-        credentials: 'include'
-      }),
-      invalidatesTags: ['SecurityStatus']
-    }),
-
-    getUserSecurityStatus: builder.query<
-      {
-        trust_metrics: any;
-        gaming_detection: any;
-        rate_limiting_status: any;
-        security_flags: any[];
-        overall_trust_score: number;
-      },
-      void
-    >({
-      query: () => ({
-        url: 'carbon/secure/user-security-status/',
-        method: 'GET',
-        credentials: 'include'
-      }),
-      providesTags: ['SecurityStatus']
-    }),
-
     // Enhanced Photo Evidence Endpoints
     uploadEvidencePhoto: builder.mutation<
       {
@@ -1148,9 +1115,6 @@ export const {
   useGetAIEventSuggestionsQuery,
   // Paginated Carbon Entries hook
   useGetFarmCarbonEntriesPaginatedQuery,
-  // Enhanced Security hooks
-  useValidateFileUploadSecurityMutation,
-  useGetUserSecurityStatusQuery,
   // Photo Evidence hooks
   useUploadEvidencePhotoMutation,
   useGetEvidencePhotosQuery,

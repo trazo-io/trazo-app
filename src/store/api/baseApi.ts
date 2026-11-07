@@ -36,7 +36,6 @@ export const baseApi = createApi({
     'CropType',
     'EventTemplate',
     'USDA',
-    'SecurityStatus',
     'EvidencePhotos',
     'ConsumerImpact',
     'ConsumerHistory',
