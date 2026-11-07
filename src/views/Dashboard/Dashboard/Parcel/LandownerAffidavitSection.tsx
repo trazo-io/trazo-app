@@ -246,15 +246,18 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
       mb={4}
       title={intl.formatMessage({
         id: 'parcel.affidavit.title',
-        defaultMessage: 'Landowner / Prior-Manager Affidavit (7 CFR 205.202(b))'
+        defaultMessage: "Prior manager's affidavit"
       })}
-      titleIcon={<Icon as={FaFileSignature} color="green.600" />}
+      // Same title treatment as the other cards in this section (2026-11-07): the citation is
+      // in the description, the icon green.700, and Add is outline like its neighbour's.
+      titleIcon={<Icon as={FaFileSignature} color="green.700" />}
       headerAction={
         <HStack spacing={2} flexShrink={0}>
           {affidavits.length > 0 && <Badge colorScheme="green">{affidavits.length}</Badge>}
           {canWrite && !showForm && (
             <StandardButton
               size="sm"
+              variant="outline"
               leftIcon={<FaPlus />}
               onClick={() => {
                 setEditingId(null);

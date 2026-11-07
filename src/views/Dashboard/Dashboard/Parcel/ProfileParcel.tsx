@@ -576,6 +576,32 @@ function ProfileParcel(): React.ReactElement {
           </VStack>
         </StandardSection>
 
+        {/* ── IRRIGATION ENERGY (2026-11-07) ───────────────────────────────────
+            The pump test is an energy input for the irrigation emission estimate, not a land
+            record. It sat at the foot of the compliance card, where it read as something the
+            certifier asks for. Its own section, after the compliance ones, says what it is. */}
+        {parcelId && currentCompany?.id && farmId && (
+          <StandardSection
+            title={intl.formatMessage({
+              id: 'parcel.section.energy',
+              defaultMessage: 'Irrigation energy'
+            })}
+            description={intl.formatMessage({
+              id: 'parcel.section.energyHint',
+              defaultMessage:
+                'Used only to estimate this parcel’s irrigation emissions. Your certifier does not ask for it.'
+            })}>
+            <ParcelComplianceCard
+              companyId={currentCompany.id}
+              farmId={farmId}
+              parcelId={parcelId}
+              parcel={parcel}
+              canWrite={canWrite}
+              part="pump"
+            />
+          </StandardSection>
+        )}
+
         {/* §2 ("Consumer story") DELETED 2026-08-07 — it was a duplicate, twice over.
             `get_transparency_description()` returns `self.description`, the exact string the
             page header already renders. `get_sustainability_practices()` falls back to

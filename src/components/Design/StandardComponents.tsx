@@ -2514,7 +2514,10 @@ export const StandardSection = ({ title, description, action, children }: Standa
             title using the usual `{base:'md'}` renders 20px — so every section heading came
             out LARGER than the h1 above it, inverting the hierarchy on the breakpoint that
             matters most. 20px mobile / 24px desktop keeps h1 > h2 at both. */}
-        <Heading as="h2" size={{ base: 'md', md: 'lg' }} color="gray.700">
+        {/* One section size, clearly under the page title (2026-11-07): `lg` rendered ~26px
+            against a 30px title, so "For your certifier" and "Organic compliance" read as a
+            second page title. 18px semibold, the weight of a card title, one step above it. */}
+        <Heading as="h2" fontSize={{ base: 'md', md: 'lg' }} fontWeight="semibold" color="gray.800">
           {title}
         </Heading>
         {description && (

@@ -274,9 +274,18 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
           {intl.formatMessage({ id: 'certification.manage.none' })}
         </Text>
       ) : (
-        <VStack spacing={3} align="stretch">
+        // Rows, not a bordered box per certificate inside the card (2026-11-07).
+        <VStack
+          spacing={0}
+          align="stretch"
+          sx={{
+            '& > [data-cert-row] + [data-cert-row]': {
+              borderTopWidth: '1px',
+              borderTopColor: 'gray.100'
+            }
+          }}>
           {certifications.map((cert) => (
-            <Box key={cert.id} p={3} border="1px solid" borderColor="gray.200" borderRadius="md">
+            <Box key={cert.id} data-cert-row py={3}>
               <HStack justify="space-between" align="start" gap={2}>
                 <VStack align="start" spacing={1} flex={1} minW={0}>
                   {/* flexWrap + minW=0: the badge would not shrink, so on a phone it squeezed
