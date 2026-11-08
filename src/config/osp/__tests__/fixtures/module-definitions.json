@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.11.24",
+  "content_version": "2026.11.25",
   "registry": {
-    "content_version": "2026.11.24",
+    "content_version": "2026.11.25",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -1397,7 +1397,8 @@
                 "es": "Disponibilidad comercial significa poder obtener semilla o material de plantación en la forma, calidad o cantidad apropiada para tu operación (§ 205.2). El precio no es un criterio permitido. Una variedad orgánica equivalente es una del mismo tipo o con las características agronómicas y de mercado que tu sitio requiere — días a cosecha, resistencia a enfermedades, adaptación regional, sabor, rendimiento."
               }
             ],
-            "visible_when": [
+            "visible_when": [],
+            "visible_when_any": [
               {
                 "question": "seeds_used",
                 "op": "includes_any",
@@ -1405,6 +1406,11 @@
                   "non_organic_untreated",
                   "non_organic_treated"
                 ]
+              },
+              {
+                "question": "planting_stock_used",
+                "op": "includes",
+                "value": "non_organic"
               }
             ],
             "questions": [
@@ -1426,13 +1432,22 @@
                       "en": "Not applicable — all seed and planting stock is organic",
                       "es": "No aplica — toda la semilla y el material son orgánicos"
                     },
-                    "exclusive": false
+                    "exclusive": false,
+                    "retired": true
                   },
                   {
                     "value": "documented_search",
                     "label": {
                       "en": "Yes — searches are documented (source names, dates, and the characteristics evaluated)",
                       "es": "Sí — las búsquedas se documentan (fuentes, fechas y las características evaluadas)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "no_documented_search",
+                    "label": {
+                      "en": "No, no search is documented yet",
+                      "es": "No, todavía no hay una búsqueda documentada"
                     },
                     "exclusive": false
                   }
@@ -1524,7 +1539,16 @@
                   }
                 ],
                 "required": false,
-                "visible_when": [],
+                "visible_when": [
+                  {
+                    "question": "seeds_used",
+                    "op": "includes_any",
+                    "value": [
+                      "non_organic_untreated",
+                      "non_organic_treated"
+                    ]
+                  }
+                ],
                 "nop_cite": "§ 205.204(a)(1)",
                 "prefill": null,
                 "parcel_field": null,
@@ -1593,7 +1617,16 @@
                   }
                 ],
                 "required": false,
-                "visible_when": [],
+                "visible_when": [
+                  {
+                    "question": "seeds_used",
+                    "op": "includes_any",
+                    "value": [
+                      "non_organic_untreated",
+                      "non_organic_treated"
+                    ]
+                  }
+                ],
                 "nop_cite": "§ 205.204(a)(1)",
                 "prefill": null,
                 "parcel_field": null,
@@ -1670,7 +1703,16 @@
                   }
                 ],
                 "required": false,
-                "visible_when": [],
+                "visible_when": [
+                  {
+                    "question": "seeds_used",
+                    "op": "includes_any",
+                    "value": [
+                      "non_organic_untreated",
+                      "non_organic_treated"
+                    ]
+                  }
+                ],
                 "nop_cite": "§ 205.103",
                 "prefill": null,
                 "parcel_field": null,
@@ -10215,6 +10257,14 @@
                     "exclusive": false
                   },
                   {
+                    "value": "routine_residue_testing",
+                    "label": {
+                      "en": "Third-party residue testing on a schedule, to monitor for drift",
+                      "es": "Análisis de residuos por un tercero de forma periódica, para vigilar la deriva"
+                    },
+                    "exclusive": false
+                  },
+                  {
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
@@ -10284,6 +10334,31 @@
                   "en": "e.g., DriftWatch",
                   "es": "p. ej., DriftWatch"
                 },
+                "max_length": null
+              },
+              {
+                "key": "drift_agreements_upload",
+                "kind": "upload",
+                "label": {
+                  "en": "Attach your written agreements with neighbors",
+                  "es": "Adjunta tus acuerdos escritos con los vecinos"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "drift_safeguards",
+                    "op": "includes",
+                    "value": "no_spray_agreements"
+                  }
+                ],
+                "nop_cite": "§ 205.202(c)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
                 "max_length": null
               },
               {
@@ -10483,6 +10558,36 @@
                   }
                 ],
                 "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "roadside_agreement_upload",
+                "kind": "upload",
+                "label": {
+                  "en": "Attach your written agreement with the roadside manager",
+                  "es": "Adjunta tu acuerdo escrito con quien maneja el borde del camino"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "borders_public_road",
+                    "op": "truthy",
+                    "value": null
+                  },
+                  {
+                    "question": "roadside_management_steps",
+                    "op": "includes",
+                    "value": "roadside_manager_agreement"
+                  }
+                ],
+                "nop_cite": "§ 205.202(c)",
                 "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
@@ -19614,6 +19719,98 @@
   "golden_cases": [
     {
       "module": "g3_0_seeds",
+      "label": "or_gate_stock_only",
+      "answers": {
+        "seeds_used": [
+          "organic_untreated"
+        ],
+        "planting_stock_used": [
+          "non_organic"
+        ]
+      },
+      "visible_questions": [
+        "seeds_used",
+        "seedlings_used",
+        "planting_stock_used",
+        "seed_source",
+        "seed_verification_method",
+        "untreated_seed_documentation",
+        "farm_grown_processing_contracted",
+        "ca_search_before_use",
+        "grafts_stock",
+        "seeds_additional_notes"
+      ],
+      "missing_required": [
+        "seedlings_used",
+        "ca_search_before_use",
+        "grafts_stock"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g3_0_seeds",
+      "label": "or_gate_seed_only",
+      "answers": {
+        "seeds_used": [
+          "non_organic_untreated"
+        ],
+        "planting_stock_used": [
+          "organic"
+        ]
+      },
+      "visible_questions": [
+        "seeds_used",
+        "seedlings_used",
+        "planting_stock_used",
+        "seed_source",
+        "untreated_seed_documentation",
+        "farm_grown_processing_contracted",
+        "ca_search_before_use",
+        "seed_required_characteristics",
+        "ca_search_method",
+        "seed_search_records",
+        "gmo_documentation",
+        "grafts_stock",
+        "seeds_additional_notes"
+      ],
+      "missing_required": [
+        "seedlings_used",
+        "ca_search_before_use",
+        "gmo_documentation",
+        "grafts_stock"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g3_0_seeds",
+      "label": "or_gate_neither",
+      "answers": {
+        "seeds_used": [
+          "organic_untreated"
+        ],
+        "planting_stock_used": [
+          "organic"
+        ]
+      },
+      "visible_questions": [
+        "seeds_used",
+        "seedlings_used",
+        "planting_stock_used",
+        "seed_source",
+        "seed_verification_method",
+        "untreated_seed_documentation",
+        "farm_grown_processing_contracted",
+        "grafts_stock",
+        "seeds_additional_notes"
+      ],
+      "missing_required": [
+        "seedlings_used",
+        "grafts_stock"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g3_0_seeds",
       "label": "unanswered",
       "answers": {},
       "visible_questions": [
@@ -22859,6 +23056,54 @@
       "answers": {
         "seed_source": [
           "contract_provided"
+        ],
+        "seeds_used": [
+          "__not_an_option__"
+        ]
+      },
+      "visible_questions": [
+        "seeds_used",
+        "seedlings_used",
+        "planting_stock_used",
+        "farm_grown_processing_contracted",
+        "seeds_additional_notes"
+      ],
+      "missing_required": [
+        "seedlings_used",
+        "planting_stock_used"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g3_0_seeds",
+      "label": "stale_chain:seed_required_characteristics_other:seeds_used:includes_any",
+      "answers": {
+        "seed_required_characteristics": [
+          "other"
+        ],
+        "seeds_used": [
+          "__not_an_option__"
+        ]
+      },
+      "visible_questions": [
+        "seeds_used",
+        "seedlings_used",
+        "planting_stock_used",
+        "farm_grown_processing_contracted",
+        "seeds_additional_notes"
+      ],
+      "missing_required": [
+        "seedlings_used",
+        "planting_stock_used"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g3_0_seeds",
+      "label": "stale_chain:ca_search_method_other:seeds_used:includes_any",
+      "answers": {
+        "ca_search_method": [
+          "other"
         ],
         "seeds_used": [
           "__not_an_option__"
