@@ -41,25 +41,40 @@ describe('carbon preview source', () => {
     .replace(/^\s*\/\/.*$/gm, '');
 
   it('renders no English sentence as a JSX text node', () => {
-    // A line that is only words, no code: JSX text. Values, units and symbols are allowed.
+    // A JSX text line is plain words: a capitalised label or sentence ("Emissions Sources:",
+    // "None (hand labor)"), a bullet, or a bare unit word ("gallons"). Code lines that look
+    // like words (`value:`, `return (`, `Boolean(`) start lowercase or end in a call.
+    // Values and units such as "kg CO₂e" or "kWh" are allowed. Review of app #324: the first
+    // version excluded ":" and so skipped every label.
     const body = CODE.slice(CODE.indexOf('export const CarbonImpactPreview'));
     const textLines = body
       .split('\n')
       .map((l) => l.trim())
-      .filter((l) => /^[A-Za-z•→][^{}<>=;()?:&|`'"]*$/.test(l) && /[a-z]{3,} [a-z]{2,}/i.test(l));
+      .filter((l) => /^[A-Za-z•→][A-Za-z0-9 •→:()²₂%/×+.,-]*$/.test(l))
+      .filter(
+        (l) =>
+          (/^[A-Z•→]/.test(l) && /[A-Za-z]{3,}/.test(l) && !/\($/.test(l)) ||
+          /^(gallons|hectares|acres|liters|hours|kilograms|(kg )?applied)$/.test(l)
+      );
     expect(textLines).toEqual([]);
   });
 
-  it('makes none of the claims compliance.md rules out', () => {
-    const copy = Object.entries(en)
-      .filter(([k]) => k.startsWith('carbonPreview.'))
-      .map(([, v]) => v)
+  it('makes none of the claims compliance.md rules out, in either language', () => {
+    // es-419 too: a phrase reintroduced only in Spanish must fail here (review of app #324).
+    const copy = Object.entries({ ...en })
+      .concat(Object.entries(es).map(([k, v]) => [`es:${k}`, v]))
+      .filter(([k]) => k.replace(/^es:/, '').startsWith('carbonPreview.'))
+      .map(([k, v]) => `${k}: ${v}`)
       .concat(CODE);
     for (const banned of [
       /direct operational emissions/i,
+      /emisiones operativas directas/i,
       /sequestration credit/i,
+      /cr[ée]dito/i,
       /carbon footprint/i,
-      /increase transparency/i
+      /huella de carbono/i,
+      /increase transparency/i,
+      /aumentar la transparencia/i
     ]) {
       expect(copy.filter((c) => banned.test(c)).map((c) => c.slice(0, 80))).toEqual([]);
     }
