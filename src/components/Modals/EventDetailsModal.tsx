@@ -1391,7 +1391,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                   2. It is a self-authored 0–100 grade on the grower's own record, rendered on
                      a producer record screen — the exact shape `noScoreOnProducerRecords`
                      exists to keep off these surfaces, threshold-derived colour ladder and
-                     all. See `[[producer-score-retired-2026-08-11]]`: backend KPI, zero UI.
+                     all. See `[[producer-score-retired-2026-08-11]]`: retired, zero UI.
                   3. It answers nothing a grower asked. The question these screens serve is
                      "am I ready for my renewal inspection".
 

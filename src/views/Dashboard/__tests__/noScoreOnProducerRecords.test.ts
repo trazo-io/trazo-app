@@ -25,7 +25,7 @@
  *
  * WHY NOT A COMPLIANCE ARGUMENT. ECGT 2024/825 and FTC 16 CFR 260.6 target CONSUMER claims;
  * `noScoreOnConsumer.test.ts` is the guard for that and it deliberately subtracts the producer
- * tree, on the correct reasoning that the score IS a producer KPI. This guard encodes a
+ * tree, because producer screens are this guard's job. This guard encodes a
  * different, product decision: under the October recordkeeping pivot a grower's screens answer
  * "am I ready for my renewal inspection", and a self-authored grade on their own season answers
  * nothing. If that decision is ever reversed, update this file deliberately — which is the whole
@@ -79,7 +79,7 @@ const BANNED = [
     name: 'rendered transparency-score label',
     pattern: /["'`][^"'`\n]*\bTransparency\s+Score\b/i,
     reason:
-      'the score is a backend KPI with no producer screen; a grower asks "am I ready for my ' +
+      'the score is retired and has no producer screen; a grower asks "am I ready for my ' +
       'inspection", which a self-authored grade does not answer'
   },
   {

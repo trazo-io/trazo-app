@@ -20,9 +20,9 @@
  * ring, shadow or icon identity. Compliance risk aside, an unlabelled visual tier is unreadable
  * — nothing on the page tells a shopper that a green ring outranks a grey one.
  *
- * Scope note: this is a lint over the CONSUMER components only. Producer dashboards may key
- * styling to these fields freely; the transparency score is a producer KPI and the whole point
- * is that it drives their behaviour there.
+ * Scope note: this is a lint over the CONSUMER components only. Producer screens have their own
+ * guard, `views/Dashboard/__tests__/noScoreOnProducerRecords.test.ts`; the transparency score is
+ * retired as a concept and exists on neither side.
  */
 import { describe, expect, it } from 'vitest';
 import { readFileSync, existsSync } from 'fs';

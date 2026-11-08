@@ -78,7 +78,7 @@ const ALWAYS_SCAN = [
  *
  * Reachability alone is too broad: a shared design-system component or a barrel export
  * (`components/Design/index.ts`) is imported by both trees, and score code inside a
- * producer component is legitimate — the score IS a producer KPI. So subtract everything
+ * producer component is noScoreOnProducerRecords' job, not this one's. So subtract everything
  * the dashboard can also reach, leaving the files that exist solely to render public pages.
  * Both of the live leaks this guard was rewritten for (PublicFarmProfile's <CarbonScore>
  * and ConsumerSustainabilityInfo's verdict ladder) sat in consumer-exclusive files.
@@ -158,7 +158,7 @@ const BANNED = [
     // "Transparency Score" was absent from this list for as long as the guard only saw
     // ANONYMOUS pages, where the label never appears. Once the authenticated consumer
     // dashboards came into scope it turned out ImpactDashboard renders it as a hero metric.
-    // The score is a producer KPI; naming it to a shopper is the label ECGT 2024/825 bans.
+    // The score is retired everywhere; naming it to a shopper is the label ECGT 2024/825 bans.
     name: 'rendered transparency-score label',
     pattern: /["'`][^"'`\n]*\bTransparency\s+Score\b/i,
     reason:

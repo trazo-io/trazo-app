@@ -429,8 +429,8 @@ const HistoryCard = ({ amount }) => {
               The fourth stat here was "avg score" (the transparency score). It was removed
               2026-08-11: this card was the last producer surface still rendering that number,
               and it survived the 2026-08-04 demotion only because that pass swept the farm home
-              and missed the parcel view. The score is a backend KPI (nudge gates, analytics); it
-              is not a headline a grower is shown. Do not reintroduce a score, grade, tier or
+              and missed the parcel view. The score is retired as a concept and its column is
+              gone; it is not a headline a grower is shown. Do not reintroduce a score, grade, tier or
               letter here — see `.claude/rules/transparency-first.md`. If this row grows a fourth
               stat again, it should be a RECORDS/READINESS count, not a verdict. */}
           {/* Counts in one muted line (2026-11-06), the farm home's header pattern: three

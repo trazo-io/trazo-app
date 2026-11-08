@@ -203,8 +203,8 @@ export default function ImpactDashboard() {
                         </HStack>
 
                         {/* Compact Badges Row — documented FACTS only. The transparency-score
-                            percentage badge that used to lead this row was a producer KPI shown
-                            to a shopper; the event count below says something verifiable
+                            percentage badge that used to lead this row was a self-assigned grade
+                            shown to a shopper; the event count below says something verifiable
                             instead. */}
                         <HStack spacing={2} flexWrap="wrap">
                           {scan.events_viewed > 0 && (
