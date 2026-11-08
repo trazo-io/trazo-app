@@ -91,10 +91,15 @@ const visibility = (
   const shown = new Map<string, boolean>();
   const passes = (conds: ModuleCondition[]) =>
     conds.every((c) => shown.get(c.question) !== false && evaluate(c, answers));
+  // The page's OR gate: empty or absent means none; otherwise one condition must pass on a shown trigger.
+  const anyPasses = (conds: ModuleCondition[] | undefined) =>
+    !conds ||
+    conds.length === 0 ||
+    conds.some((c) => shown.get(c.question) !== false && evaluate(c, answers));
   const pages: ModulePage[] = [];
   const questions: Array<{ page: ModulePage; question: ModuleQuestion }> = [];
   for (const page of module.pages) {
-    const pageShown = passes(page.visible_when);
+    const pageShown = passes(page.visible_when) && anyPasses(page.visible_when_any);
     if (pageShown) pages.push(page);
     for (const question of page.questions) {
       // A retired question shows only while it still holds an answer (backend `Question.retired`).

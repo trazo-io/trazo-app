@@ -74,6 +74,11 @@ export interface ModulePage {
   title: TextMap | null;
   education: TextMap[];
   visible_when: ModuleCondition[];
+  /**
+   * At least one must pass, on top of `visible_when` (backend `ModulePage.visible_when_any`, 2026.11.25):
+   * G3.0 page B opens on non-organic seed OR non-organic planting stock. Absent where there is no OR gate.
+   */
+  visible_when_any?: ModuleCondition[];
   questions: ModuleQuestion[];
 }
 
