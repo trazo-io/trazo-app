@@ -9935,8 +9935,8 @@
   "subscription.usage.left": "Quedan {count}",
   "subscription.feature.responseTime": "El soporte responde en menos de {hours} horas",
   "osp.wizard.retiredQuestion": "Respuesta anterior, se conserva tal como se dio. Esta pregunta fue reemplazada por preguntas más nuevas de este módulo, que la preguntan con más detalle; responde esas.",
-  "documents.deleteBlocked.inspectionReport": "Este archivo es el informe de una inspección registrada. Primero quítalo de la inspección en la página del Plan de Sistema Orgánico.",
-  "documents.deleteBlocked.certifierNotice": "Este archivo pertenece a un aviso de tu agencia certificadora. Primero quítalo de ese aviso en la página del Plan de Sistema Orgánico.",
+  "documents.deleteBlocked.inspectionReport": "Este archivo es el informe de una inspección registrada. Primero quítalo de la inspección en la página del Plan del Sistema Orgánico.",
+  "documents.deleteBlocked.certifierNotice": "Este archivo pertenece a un aviso de tu agencia certificadora. Primero quítalo de ese aviso en la página del Plan del Sistema Orgánico.",
   "osp.inspections.title": "Inspecciones y avisos de la certificadora",
   "osp.inspections.subtitle": "Tu propia copia de cada inspección y de cada aviso que te envía tu agencia certificadora, con tu respuesta. Un aviso de incumplimiento fija una fecha para refutarlo o corregirlo y enviar documentos de respaldo (7 CFR 205.662(a)); luego la agencia envía una resolución por escrito (205.662(b)).",
   "osp.inspections.section.inspections": "Inspecciones",
@@ -10006,5 +10006,6 @@
   "osp.inspections.upload.report": "Informe de inspección",
   "osp.inspections.upload.letter": "Carta de la certificadora",
   "osp.inspections.upload.response": "Respuesta a la certificadora",
-  "osp.inspections.upload.resolution": "Notificación de resolución de la certificadora"
+  "osp.inspections.upload.resolution": "Notificación de resolución de la certificadora",
+  "osp.inspections.unresolvedHint": "{count, plural, one {# aviso} other {# avisos}} de tu agencia certificadora no {count, plural, one {tiene} other {tienen}} notificación de resolución adjunta. Están en Inspecciones y avisos de la certificadora, en esta página."
 }

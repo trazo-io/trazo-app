@@ -86,7 +86,9 @@ import OSPAnnualUpdateCard, { OSPRenewalSummary } from './OSPAnnualUpdateCard';
 import { selectPlanOnFile } from './selectPlanOnFile';
 import { selectWorkingOsp } from './selectWorkingOsp';
 import AgentFormCopySheet from './AgentFormCopySheet';
-import CertifierInspectionsCard from './CertifierInspectionsCard';
+import CertifierInspectionsCard, {
+  UnresolvedCertifierNoticesLine
+} from './CertifierInspectionsCard';
 import { useComplianceExports } from 'components/Guards/ComplianceExportsGuard';
 import { FIRST_SECTION_WITHOUT_TEXT } from './ospLinks';
 import { useFarm, useFarmState } from 'hooks/useMeasurementSystem';
@@ -1280,6 +1282,9 @@ const OSPView: React.FC = () => {
           currentYear={new Date().getFullYear()}
           signer={{ responsiblePerson: farmContactPerson, account: accountName }}
           isSetupOperator={isSetupOperator}
+          agentRequestedHint={
+            <UnresolvedCertifierNoticesLine companyId={companyId} farmId={farmId} />
+          }
         />
       )}
 

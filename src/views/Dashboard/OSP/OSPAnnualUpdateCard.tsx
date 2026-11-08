@@ -75,6 +75,10 @@ interface Props {
   signer?: { responsiblePerson?: string; account?: string };
   /** The pilot setup account: it cannot sign (the server refuses), so Sign is replaced by a note. */
   isSetupOperator?: boolean;
+  /** Shown above "(a)(4) other information your certifying agent asked for": the page passes the
+   * count of the agent's items with no resolution notice attached. A slot, so this card does not
+   * depend on the inspection record. */
+  agentRequestedHint?: React.ReactNode;
 }
 
 const linesToList = (text: string): string[] =>
@@ -411,7 +415,8 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
   producesDraft,
   currentYear,
   signer,
-  isSetupOperator = false
+  isSetupOperator = false,
+  agentRequestedHint
 }) => {
   const ospId = planOnFile?.id ?? null;
   const intl = useIntl();
@@ -1546,6 +1551,7 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
                     ref={(el: HTMLDivElement | null) => {
                       fieldRefs.current.agent_requested_info = el;
                     }}>
+                    {agentRequestedHint}
                     <StandardField
                       label={intl.formatMessage({
                         id: 'osp.annual.agentRequestedInfo',

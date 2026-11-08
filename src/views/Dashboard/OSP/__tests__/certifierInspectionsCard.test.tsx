@@ -15,7 +15,8 @@ import { ChakraProvider } from '@chakra-ui/react';
 import enUS from '../../../../i18n/lang/en-US.json';
 import CertifierInspectionsCard, {
   inspectionDraft,
-  noticeDraft
+  noticeDraft,
+  UnresolvedCertifierNoticesLine
 } from '../CertifierInspectionsCard';
 
 let inspections: Record<string, unknown> = {};
@@ -221,5 +222,37 @@ describe('CertifierInspectionsCard', () => {
     expect(sent.data.response_document_ids).toEqual([]);
     expect(sent.data.notice_document).toBe(32);
     expect(Object.keys(sent.data)).not.toContain('status');
+  });
+});
+
+describe('UnresolvedCertifierNoticesLine', () => {
+  const renderLine = () =>
+    render(
+      <ChakraProvider>
+        <IntlProvider locale="en-US" messages={enUS as Record<string, string>}>
+          <UnresolvedCertifierNoticesLine companyId="3" farmId="1" />
+        </IntlProvider>
+      </ChakraProvider>
+    );
+
+  it('counts the items with no resolution notice attached', () => {
+    notices = loaded([
+      noticeRow(),
+      noticeRow({ id: 10, status: 'resolution_stated_no_copy' }),
+      noticeRow({ id: 11, status: 'resolved' })
+    ]);
+    renderLine();
+    expect(
+      screen.getByText(/2 items from your certifying agent have no resolution notice attached/)
+    ).toBeTruthy();
+  });
+
+  it('says nothing when every item is resolved or the list failed to load', () => {
+    notices = loaded([noticeRow({ status: 'resolved' })]);
+    const { container, unmount } = renderLine();
+    expect(container.textContent).toBe('');
+    unmount();
+    notices = { data: undefined, isLoading: false, isError: true, error: { status: 403 } };
+    expect(renderLine().container.textContent).toBe('');
   });
 });

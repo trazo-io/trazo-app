@@ -10006,5 +10006,6 @@
   "osp.inspections.upload.report": "Inspection report",
   "osp.inspections.upload.letter": "Certifier letter",
   "osp.inspections.upload.response": "Response to certifier",
-  "osp.inspections.upload.resolution": "Certifier resolution notice"
+  "osp.inspections.upload.resolution": "Certifier resolution notice",
+  "osp.inspections.unresolvedHint": "{count, plural, one {# item} other {# items}} from your certifying agent {count, plural, one {has} other {have}} no resolution notice attached. They are listed under Certifier inspections and notices on this page."
 }

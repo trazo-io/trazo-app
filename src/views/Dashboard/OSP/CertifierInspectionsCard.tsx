@@ -32,6 +32,7 @@ import {
   StandardField,
   StandardInput,
   StandardSelect,
+  StandardAlert,
   StandardTextarea,
   STATUS_URGENCY_TOKENS
 } from 'components/Design/StandardComponents';
@@ -722,6 +723,32 @@ const CertifierInspectionsCard: React.FC<Props> = ({ companyId, farmId, state })
         {t('osp.inspections.ownRecords')}
       </Text>
     </VStack>
+  );
+};
+
+/**
+ * Beside the annual update's "(a)(4) other information your certifying agent asked for": how many
+ * items from the agent have no resolution notice attached, pointing at the card that holds them.
+ * A hint, not a record: nothing on a failed or forbidden load, and nothing when every item is resolved.
+ */
+export const UnresolvedCertifierNoticesLine: React.FC<{ companyId: string; farmId: string }> = ({
+  companyId,
+  farmId
+}) => {
+  const intl = useIntl();
+  const { data, isError } = useGetCertifierNoticesQuery(
+    { companyId, farmId },
+    { skip: !(companyId && farmId) }
+  );
+  if (isError || !data) return null;
+  const count = data.filter((n) => n.status !== 'resolved').length;
+  if (!count) return null;
+  return (
+    <StandardAlert
+      status="info"
+      mb={2}
+      description={intl.formatMessage({ id: 'osp.inspections.unresolvedHint' }, { count })}
+    />
   );
 };
 
