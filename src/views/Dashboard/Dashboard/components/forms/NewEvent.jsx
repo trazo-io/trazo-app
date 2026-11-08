@@ -99,7 +99,7 @@ import { PhotoRecommendationsBox } from 'components/Events/PhotoRecommendationsB
 import { ApplicationGroupNotice } from 'components/Events/ApplicationGroupNotice';
 import { AlsoAppliedTo, PerParcelCards } from 'components/Events/MultiParcel';
 import ActivityReview from 'components/Events/ActivityReview';
-import WizardActions from 'components/Events/WizardActions';
+import WizardActions from 'components/Design/WizardActions';
 import { eventTypeMayGoMulti, multiParcelRulesFor } from 'config/events/multiParcel';
 import { useDefaultUnits } from 'hooks/useMeasurementSystem';
 import { useGetParcelGeometryQuery } from 'store/api/parcelGeometryApi';
@@ -3818,11 +3818,6 @@ function NewEventForm({ isEdit = false, eventId = null }) {
               (~170px of numbered circles and descriptions) over every step, with a "Step 1 of
               3" chip beside the title saying the same thing a second time. */}
           <StandardStepper
-            variant="bar"
-            progressLabel={intl.formatMessage(
-              { id: 'osp.wizard.stepCount' },
-              { current: activeStep + 1, total: steps.length }
-            )}
             steps={steps}
             currentStep={activeStep}
             completedSteps={Array.from({ length: activeStep }, (_, i) => i)}

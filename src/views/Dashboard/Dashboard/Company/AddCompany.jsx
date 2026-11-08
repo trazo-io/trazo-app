@@ -4,37 +4,18 @@ import { useIntl } from 'react-intl';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 // NOTE: Crop selection removed - belongs at Establishment/Parcel level, not Company level
-import {
-  Box,
-  VStack,
-  HStack,
-  Text,
-  Icon,
-  SimpleGrid,
-  useToast,
-  useBreakpointValue
-} from '@chakra-ui/react';
-import {
-  FaRocket,
-  FaCheckCircle,
-  FaBuilding,
-  FaMapMarkerAlt,
-  FaPhone,
-  FaEnvelope,
-  FaChevronRight,
-  FaChevronLeft,
-  FaStore
-} from 'react-icons/fa';
+import { VStack, Icon, SimpleGrid, useToast } from '@chakra-ui/react';
+import { FaBuilding, FaMapMarkerAlt, FaPhone, FaEnvelope, FaStore } from 'react-icons/fa';
 import {
   StandardPage,
   StandardCard,
   StandardField,
   StandardInput,
   StandardSelect,
-  StandardButton,
   StandardAlert,
   StandardStepper
 } from '../../../../components/Design';
+import WizardActions from 'components/Design/WizardActions';
 import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { object, string, literal } from 'zod';
@@ -203,8 +184,6 @@ function AddCompany({ isEdit = false }) {
   const furthestStep = useFurthestStep(currentStep);
   const toast = useToast();
 
-  const isMobile = useBreakpointValue({ base: true, smd: false });
-
   console.log('🏢 AddCompany: Component rendered', { isEdit, currentUser: currentUser?.id });
 
   // @ts-ignore: Mutation hook
@@ -370,10 +349,6 @@ function AddCompany({ isEdit = false }) {
       navigate(`/admin/dashboard/farm/add`);
     }
   }, [isSuccessCompany, dataCompany, dispatch, navigate]);
-
-  // Only show cancel if user already has a company (not first-time onboarding)
-  const userCompanies = useSelector((state) => state.userState.user?.companies || []);
-  const hasExistingCompany = userCompanies.length > 0;
 
   const handleCancel = () => {
     console.log('🏢 AddCompany: handleCancel called');
@@ -543,24 +518,10 @@ function AddCompany({ isEdit = false }) {
                   description={intl.formatMessage({ id: 'company.form.alert.quickSetup.body' })}
                 />
 
-                {/* Navigation */}
-                <HStack spacing={3} justify="flex-end" pt={4}>
-                  {!isMobile && hasExistingCompany && (
-                    <StandardButton variant="outline" onClick={handleCancel}>
-                      {intl.formatMessage({ id: 'app.cancel' })}
-                    </StandardButton>
-                  )}
-                  {/* Deliberately always enabled: nextStep() validates and shows
-                      what is wrong. A disabled button gave the farmer a dead
-                      control with no stated reason. */}
-                  <StandardButton onClick={nextStep} rightIcon={<FaChevronRight />}>
-                    {intl.formatMessage({
-                      id: isMobile
-                        ? 'company.form.btn.continue'
-                        : 'company.form.btn.continueToLocation'
-                    })}
-                  </StandardButton>
-                </HStack>
+                <WizardActions
+                  primaryLabel={intl.formatMessage({ id: 'app.continue' })}
+                  onPrimary={nextStep}
+                />
               </VStack>
             </StandardCard>
           )}
@@ -633,38 +594,15 @@ function AddCompany({ isEdit = false }) {
                   description={intl.formatMessage({ id: 'company.form.alert.location.body' })}
                 />
 
-                {/* Navigation */}
-                <HStack spacing={3} justify="space-between" pt={4}>
-                  <StandardButton
-                    variant="outline"
-                    leftIcon={<FaChevronLeft />}
-                    onClick={previousStep}>
-                    {intl.formatMessage({
-                      id: isMobile ? 'common.previousStep' : 'company.form.btn.backToIdentity'
-                    })}
-                  </StandardButton>
-
-                  <HStack spacing={3}>
-                    {!isMobile && (
-                      <StandardButton variant="outline" onClick={handleCancel}>
-                        {intl.formatMessage({ id: 'app.cancel' })}
-                      </StandardButton>
-                    )}
-                    <StandardButton
-                      type="submit"
-                      isLoading={isLoading}
-                      loadingText={intl.formatMessage({
-                        id: isMobile
-                          ? 'company.form.btn.creating'
-                          : 'company.form.btn.creatingCompany'
-                      })}
-                      leftIcon={<FaRocket />}>
-                      {intl.formatMessage({
-                        id: isMobile ? 'company.form.btn.create' : 'company.form.btn.createCompany'
-                      })}
-                    </StandardButton>
-                  </HStack>
-                </HStack>
+                <WizardActions
+                  onBack={previousStep}
+                  backLabel={intl.formatMessage({ id: 'common.previousStep' })}
+                  backShortLabel={intl.formatMessage({ id: 'app.previous' })}
+                  primaryLabel={intl.formatMessage({ id: 'company.form.btn.createCompany' })}
+                  primaryLeadsOn={false}
+                  isLoading={isLoading}
+                  loadingText={intl.formatMessage({ id: 'company.form.btn.creatingCompany' })}
+                />
               </VStack>
             </StandardCard>
           )}

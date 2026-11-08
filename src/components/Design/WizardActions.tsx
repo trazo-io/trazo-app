@@ -1,5 +1,7 @@
 /**
- * The action row at the foot of each activity wizard step (2026-11-07).
+ * The action row at the foot of every wizard step: the activity wizard (2026-11-07), then the
+ * farm, parcel, company and finish-season forms (2026-11-07, one footer app-wide). No Cancel:
+ * the page header's Back already names where it goes ("Back to Bottom Ground A").
  *
  * One primary action per step. On a phone it fills the row beside Previous step, at the bottom
  * where the thumb is, both 48px tall. The old footer stacked three equal buttons there: Preview
@@ -34,6 +36,8 @@ interface Props {
   primaryLeadsOn?: boolean;
   isLoading?: boolean;
   loadingText?: string;
+  /** Only with a stated reason on screen (finish season names the missing fields above it). */
+  isDisabled?: boolean;
   onPreview?: () => void;
 }
 
@@ -46,6 +50,7 @@ export default function WizardActions({
   primaryLeadsOn = true,
   isLoading,
   loadingText,
+  isDisabled,
   onPreview
 }: Props) {
   const intl = useIntl();
@@ -103,6 +108,7 @@ export default function WizardActions({
           onClick={onPrimary}
           isLoading={isLoading}
           loadingText={loadingText}
+          isDisabled={isDisabled}
           rightIcon={primaryLeadsOn ? <Icon as={FaChevronRight} /> : undefined}>
           {primaryLabel}
         </StandardButton>

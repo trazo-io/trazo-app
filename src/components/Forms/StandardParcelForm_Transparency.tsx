@@ -36,9 +36,6 @@ import { TrazoImageUpload } from '../Upload';
 import {
   FaMapMarkedAlt,
   FaBuilding,
-  FaCheckCircle,
-  FaChevronRight,
-  FaChevronLeft,
   FaTrash,
   FaCamera,
   FaExpand,
@@ -50,6 +47,7 @@ import {
   StandardTextarea,
   StandardDecimalInput
 } from 'components/Design/StandardComponents';
+import WizardActions from 'components/Design/WizardActions';
 
 // A zod schema at MODULE SCOPE is untranslatable by construction — its messages are frozen
 // at import, before any locale exists, and they surface twice: under the field via
@@ -863,14 +861,10 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                   description={intl.formatMessage({ id: 'parcel.step.identity.whyBody' })}
                 />
 
-                <HStack spacing={3} justify="flex-end" pt={4}>
-                  <StandardButton variant="outline" onClick={onCancel}>
-                    {intl.formatMessage({ id: 'app.cancel' })}
-                  </StandardButton>
-                  <StandardButton onClick={nextStep} rightIcon={<FaChevronRight />}>
-                    {intl.formatMessage({ id: 'app.continue' })}
-                  </StandardButton>
-                </HStack>
+                <WizardActions
+                  primaryLabel={intl.formatMessage({ id: 'app.continue' })}
+                  onPrimary={nextStep}
+                />
               </VStack>
             </StandardCard>
           )}
@@ -1015,33 +1009,17 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
 
                 {renderBoundaryStatus()}
 
-                {/* Wraps on a phone: three buttons do not fit one row at 393px, and the
-                    squeezed "Previous step" pushed its chevron outside its own border. */}
-                <Flex gap={3} justify="space-between" flexWrap="wrap" pt={4}>
-                  <StandardButton
-                    variant="outline"
-                    leftIcon={<FaChevronLeft />}
-                    onClick={previousStep}>
-                    {intl.formatMessage({ id: 'common.previousStep' })}
-                  </StandardButton>
-
-                  <HStack spacing={3} ml="auto">
-                    <StandardButton variant="outline" onClick={onCancel}>
-                      {intl.formatMessage({ id: 'app.cancel' })}
-                    </StandardButton>
-                    {saveFromBoundary ? (
-                      <StandardButton
-                        isLoading={isLoading}
-                        onClick={() => onSubmitForm(methods.getValues())}>
-                        {intl.formatMessage({ id: 'parcel.boundary.saveOutline' })}
-                      </StandardButton>
-                    ) : (
-                      <StandardButton onClick={nextStep} rightIcon={<FaChevronRight />}>
-                        {intl.formatMessage({ id: 'app.continue' })}
-                      </StandardButton>
-                    )}
-                  </HStack>
-                </Flex>
+                <WizardActions
+                  onBack={previousStep}
+                  backLabel={intl.formatMessage({ id: 'common.previousStep' })}
+                  backShortLabel={intl.formatMessage({ id: 'app.previous' })}
+                  primaryLabel={intl.formatMessage({
+                    id: saveFromBoundary ? 'parcel.boundary.saveOutline' : 'app.continue'
+                  })}
+                  onPrimary={saveFromBoundary ? () => onSubmitForm(methods.getValues()) : nextStep}
+                  primaryLeadsOn={!saveFromBoundary}
+                  isLoading={saveFromBoundary ? isLoading : undefined}
+                />
               </VStack>
             </StandardCard>
           )}
@@ -1106,23 +1084,13 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                   description={intl.formatMessage({ id: 'parcel.step.description.whereBody' })}
                 />
 
-                <Flex gap={3} justify="space-between" flexWrap="wrap" pt={4}>
-                  <StandardButton
-                    variant="outline"
-                    leftIcon={<FaChevronLeft />}
-                    onClick={previousStep}>
-                    {intl.formatMessage({ id: 'common.previousStep' })}
-                  </StandardButton>
-
-                  <HStack spacing={3} ml="auto">
-                    <StandardButton variant="outline" onClick={onCancel}>
-                      {intl.formatMessage({ id: 'app.cancel' })}
-                    </StandardButton>
-                    <StandardButton onClick={nextStep} rightIcon={<FaChevronRight />}>
-                      {intl.formatMessage({ id: 'app.continue' })}
-                    </StandardButton>
-                  </HStack>
-                </Flex>
+                <WizardActions
+                  onBack={previousStep}
+                  backLabel={intl.formatMessage({ id: 'common.previousStep' })}
+                  backShortLabel={intl.formatMessage({ id: 'app.previous' })}
+                  primaryLabel={intl.formatMessage({ id: 'app.continue' })}
+                  onPrimary={nextStep}
+                />
               </VStack>
             </StandardCard>
           )}
@@ -1159,31 +1127,17 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                   description={intl.formatMessage({ id: 'parcel.step.photos.whereBody' })}
                 />
 
-                <Flex gap={3} justify="space-between" flexWrap="wrap" pt={4}>
-                  <StandardButton
-                    variant="outline"
-                    leftIcon={<FaChevronLeft />}
-                    onClick={previousStep}>
-                    {intl.formatMessage({ id: 'common.previousStep' })}
-                  </StandardButton>
-
-                  <HStack spacing={3} ml="auto">
-                    <StandardButton variant="outline" onClick={onCancel}>
-                      {intl.formatMessage({ id: 'app.cancel' })}
-                    </StandardButton>
-                    <StandardButton
-                      type="submit"
-                      isLoading={isLoading}
-                      loadingText={intl.formatMessage({
-                        id: isEdit ? 'app.updating' : 'app.creating'
-                      })}
-                      leftIcon={<FaCheckCircle />}>
-                      {intl.formatMessage({
-                        id: isEdit ? 'parcel.submit.update' : 'parcel.submit.create'
-                      })}
-                    </StandardButton>
-                  </HStack>
-                </Flex>
+                <WizardActions
+                  onBack={previousStep}
+                  backLabel={intl.formatMessage({ id: 'common.previousStep' })}
+                  backShortLabel={intl.formatMessage({ id: 'app.previous' })}
+                  primaryLabel={intl.formatMessage({
+                    id: isEdit ? 'parcel.submit.update' : 'parcel.submit.create'
+                  })}
+                  primaryLeadsOn={false}
+                  isLoading={isLoading}
+                  loadingText={intl.formatMessage({ id: isEdit ? 'app.updating' : 'app.creating' })}
+                />
               </VStack>
             </StandardCard>
           )}
