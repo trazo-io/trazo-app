@@ -46,6 +46,17 @@ describe('guide source', () => {
     ).toBe(true);
   });
 
+  it('lays out sections as text and rows, not boxes and tiles', () => {
+    // Each guide's steps sat in bordered boxes (87 of them), its activity and factor lists in
+    // two- and three-column tile grids, and the grids in horizontal-scroll wrappers so the
+    // tiles would not squash on a phone (2026-11-08). Sections now follow their heading, and
+    // lists are one column of rows split by a thin divider.
+    expect(DETAIL).not.toMatch(/border="1px solid"|borderRadius="(lg|md)"/);
+    expect(DETAIL).not.toMatch(/<Grid\b|overflowX=/);
+    expect(DETAIL).not.toMatch(/<Box bg="white"/);
+    expect(DETAIL.match(/divider=\{<StackDivider/g)?.length).toBeGreaterThanOrEqual(10);
+  });
+
   it('puts no card or icon column around the guide', () => {
     const page = DETAIL.slice(DETAIL.lastIndexOf('return ('));
     expect(page).not.toMatch(/<Card\b|topic\.icon/);
