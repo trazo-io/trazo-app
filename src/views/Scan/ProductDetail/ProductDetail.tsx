@@ -1613,7 +1613,7 @@ function ProductDetail() {
                       images={productionPhotos}
                       title={intl.formatMessage({
                         id: 'consumer.detail.productionPhotos',
-                        defaultMessage: 'Production Photos'
+                        defaultMessage: 'Photos from the season'
                       })}
                       variant="consumer"
                       enablePreview={true}
@@ -1844,7 +1844,7 @@ function ProductDetail() {
                           <Heading as="h4" size="md" color="gray.600">
                             {intl.formatMessage({
                               id: 'app.noTimelineData',
-                              defaultMessage: 'No events documented yet'
+                              defaultMessage: 'No practices documented yet'
                             })}
                           </Heading>
                           <Text fontSize="sm" color="gray.400" textAlign="center">

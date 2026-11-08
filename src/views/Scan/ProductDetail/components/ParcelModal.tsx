@@ -202,7 +202,7 @@ export const ParcelModal: React.FC<ParcelModalProps> = ({ isOpen, onClose, parce
                 <StatLabel color="gray.500">
                   {intl.formatMessage({
                     id: 'consumer.modal.completedProductions',
-                    defaultMessage: 'Completed Productions'
+                    defaultMessage: 'Finished seasons'
                   })}
                 </StatLabel>
                 <StatNumber color={accentColor}>{parcelData.productions_completed}</StatNumber>
@@ -213,7 +213,7 @@ export const ParcelModal: React.FC<ParcelModalProps> = ({ isOpen, onClose, parce
                 <StatLabel color="gray.500">
                   {intl.formatMessage({
                     id: 'consumer.modal.totalProductions',
-                    defaultMessage: 'Total Productions'
+                    defaultMessage: 'Total seasons'
                   })}
                 </StatLabel>
                 <StatNumber color={accentColor}>{parcelData.total_productions}</StatNumber>
@@ -293,7 +293,7 @@ export const ParcelModal: React.FC<ParcelModalProps> = ({ isOpen, onClose, parce
               <Heading size="md" color="gray.800">
                 {intl.formatMessage({
                   id: 'consumer.modal.currentProduction',
-                  defaultMessage: 'Current Production'
+                  defaultMessage: 'Current season'
                 })}
               </Heading>
             </HStack>
@@ -391,7 +391,7 @@ export const ParcelModal: React.FC<ParcelModalProps> = ({ isOpen, onClose, parce
                 <Text>
                   {intl.formatMessage({
                     id: 'consumer.modal.productionHistory',
-                    defaultMessage: 'Production History'
+                    defaultMessage: 'Season history'
                   })}
                 </Text>
               </HStack>
@@ -401,7 +401,7 @@ export const ParcelModal: React.FC<ParcelModalProps> = ({ isOpen, onClose, parce
                 <Text color="gray.500">
                   {intl.formatMessage({
                     id: 'consumer.modal.completedProductionsThisYear',
-                    defaultMessage: 'Completed Productions This Year:'
+                    defaultMessage: 'Seasons finished this year:'
                   })}
                 </Text>
                 <Badge variant="neutral" px={3} py={1}>
@@ -413,7 +413,7 @@ export const ParcelModal: React.FC<ParcelModalProps> = ({ isOpen, onClose, parce
                   <Text color="gray.500">
                     {intl.formatMessage({
                       id: 'consumer.modal.totalProductionsColon',
-                      defaultMessage: 'Total Productions:'
+                      defaultMessage: 'Total seasons:'
                     })}
                   </Text>
                   <Badge variant="neutral" px={3} py={1}>

@@ -1193,7 +1193,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                       <Heading size={{ base: 'sm', smd: 'md', lg: 'lg' }} color={textColor}>
                         {intl.formatMessage({
                           id: 'consumer.journey.productionJourney',
-                          defaultMessage: 'Production Journey'
+                          defaultMessage: 'How it was grown'
                         })}
                       </Heading>
                       <Text fontSize="sm" color={mutedColor}>
@@ -1219,7 +1219,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                       {intl.formatMessage(
                         {
                           id: 'consumer.journey.eventCount',
-                          defaultMessage: '{count, plural, one {# Event} other {# Events}}'
+                          defaultMessage: '{count, plural, one {# practice} other {# practices}}'
                         },
                         { count: filteredEvents.length }
                       )}
@@ -1254,7 +1254,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                     {
                       id: 'consumer.journey.eventsDocumentedAria',
                       defaultMessage:
-                        '{count, plural, one {# event documented} other {# events documented}}'
+                        '{count, plural, one {# practice documented} other {# practices documented}}'
                     },
                     { count: filteredEvents.length }
                   )}>
@@ -1267,7 +1267,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                   <Text fontSize="xs" color={mutedColor} fontWeight="500" lineHeight="1.2">
                     {intl.formatMessage({
                       id: 'consumer.journey.eventsLabel',
-                      defaultMessage: 'Events'
+                      defaultMessage: 'Practices'
                     })}
                   </Text>
                 </VStack>
@@ -1287,11 +1287,11 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                       (e.albums && e.albums.length > 0) ||
                       e.extra_data?.photo_count > 0
                   );
-                  const photoPercent =
-                    filteredEvents.length > 0
-                      ? Math.round((documentedEvents.length / filteredEvents.length) * 100)
-                      : 0;
-                  if (photoPercent === 0) return null;
+                  // A count, not a percentage (2026-11-08). compliance.md: documentation is
+                  // stated as counts ("12 practices documented, 8 with photos"); a percentage
+                  // of a farm's records is the self-graded completeness measure it rules out.
+                  const withPhotos = documentedEvents.length;
+                  if (withPhotos === 0) return null;
                   return (
                     <VStack
                       spacing={0.5}
@@ -1300,17 +1300,14 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                       minW={0}
                       role="group"
                       aria-label={intl.formatMessage(
-                        {
-                          id: 'consumer.journey.photoCoverageAria',
-                          defaultMessage: '{percent}% of events with photos'
-                        },
-                        { percent: photoPercent }
+                        { id: 'consumer.journey.photoCoverageAria' },
+                        { count: withPhotos }
                       )}>
                       <Text
                         fontSize={{ base: 'md', smd: 'lg', lg: 'xl' }}
                         fontWeight="bold"
                         color={textColor}>
-                        {photoPercent}%
+                        {intl.formatNumber(withPhotos)}
                       </Text>
                       <PhotoDocumentationTooltip>
                         <Text
@@ -1493,7 +1490,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                                   {
                                     id: 'consumer.journey.chapterEventCount',
                                     defaultMessage:
-                                      '— {count, plural, one {# event} other {# events}}'
+                                      '· {count, plural, one {# practice} other {# practices}}'
                                   },
                                   { count: ch.events.length }
                                 )}
@@ -1621,7 +1618,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                   {
                     id: 'consumer.journey.viewFullRecord',
                     defaultMessage:
-                      'View the full record — all {count} events{operational, plural, =0 {} other { (incl. # operational)}}'
+                      'View the full record: all {count} practices{operational, plural, =0 {} one { (incl. # operational)} other { (incl. # operational)}}'
                   },
                   { count: sortedEvents.length, operational: proofOnlyCount }
                 )}
@@ -1668,7 +1665,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                     {intl.formatMessage(
                       {
                         id: 'consumer.journey.viewAllEvents',
-                        defaultMessage: 'View all {count} events →'
+                        defaultMessage: 'View all {count} practices →'
                       },
                       { count: sortedEvents.length }
                     )}
@@ -1687,7 +1684,8 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                     {intl.formatMessage(
                       {
                         id: 'consumer.journey.proofChapterHeader',
-                        defaultMessage: '{title} — {count, plural, one {# event} other {# events}}'
+                        defaultMessage:
+                          '{title} · {count, plural, one {# practice} other {# practices}}'
                       },
                       { title: proofChapter.title, count: proofChapter.events.length }
                     )}
@@ -1754,7 +1752,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                                       {
                                         id: 'consumer.journey.groupEventCount',
                                         defaultMessage:
-                                          '{count, plural, one {# {category} Event} other {# {category} Events}}'
+                                          '{count, plural, one {# {category} practice} other {# {category} practices}}'
                                       },
                                       { count: totalEvents, category: item.category }
                                     )}
@@ -1818,7 +1816,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                                 : intl.formatMessage(
                                     {
                                       id: 'consumer.journey.clickToSeeAll',
-                                      defaultMessage: 'Click to see all {count} events'
+                                      defaultMessage: 'Click to see all {count} practices'
                                     },
                                     { count: totalEvents }
                                   )}
@@ -1899,7 +1897,8 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                   : intl.formatMessage(
                       {
                         id: 'consumer.journey.showAllEvents',
-                        defaultMessage: 'Show All {count, plural, one {# Event} other {# Events}}'
+                        defaultMessage:
+                          'Show all {count, plural, one {# practice} other {# practices}}'
                       },
                       { count: filteredEvents.length }
                     )}

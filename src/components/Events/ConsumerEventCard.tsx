@@ -72,14 +72,19 @@ import { nationalListCitation } from './nationalListCitations';
 import { eventTypeTone } from './categoryTone';
 
 /** Sub-types that have a dedicated `consumer.eventCard.summaryNoun.*` i18n key. */
-const SUMMARY_NOUN_SUBTYPES = ['FE', 'FU', 'PE', 'SC'];
+// A summary record stands for many passes; the badge names them ("34 Irrigations"), not as
+// "practices", which is the word for the records themselves (2026-11-08).
+const SUMMARY_NOUN_SUBTYPES = ['FE', 'FU', 'PE', 'SC', 'IR', 'HA', 'PR'];
 
 /** English fallbacks for the summary badge noun, used when the i18n key is missing. */
 const SUMMARY_NOUN_DEFAULTS: Record<string, string> = {
   FE: 'Fertilizer Apps',
   FU: 'Fungicide Apps',
   PE: 'Pesticide Apps',
-  SC: 'Scouting Trips'
+  SC: 'Scouting Trips',
+  IR: 'Irrigations',
+  HA: 'Harvest picks',
+  PR: 'Pruning passes'
 };
 
 /** Sub-types with a `consumer.eventCard.agg.noun.*` key (the aggregate block's header). */
@@ -991,7 +996,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                             eventSubtype && SUMMARY_NOUN_SUBTYPES.includes(eventSubtype)
                               ? `consumer.eventCard.summaryNoun.${eventSubtype}`
                               : 'consumer.eventCard.summaryNoun.default',
-                          defaultMessage: SUMMARY_NOUN_DEFAULTS[eventSubtype ?? ''] ?? 'Events'
+                          defaultMessage: SUMMARY_NOUN_DEFAULTS[eventSubtype ?? ''] ?? 'Passes'
                         })}
                       </Text>
                     </Badge>
