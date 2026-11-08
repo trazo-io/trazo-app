@@ -112,7 +112,8 @@ const finishProductionSchema = z.object({
   production_amount: z
     .union([z.string(), z.number()])
     .transform((val) => Number(val))
-    .refine((val) => !isNaN(val) && val > 0, 'Production amount must be a number greater than 0'),
+    // A key, rendered through intl at the field.
+    .refine((val) => !isNaN(val) && val > 0, 'finishProduction.amount.invalid'),
   production_unit: z.string().min(1, 'Unit is required'),
   lot_id: z.string().min(1, 'Lot number is required').max(50, 'Lot number is too long'),
   finish_date: z.string().min(1, 'Finish date is required'),
@@ -458,9 +459,22 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
       title={intl.formatMessage({
         id: isEdit ? 'finishProduction.page.titleEdit' : 'finishProduction.page.title'
       })}
-      description={`${isEdit ? 'Update' : 'Complete'} the production cycle${
-        productName ? ` for ${productName}` : ''
-      }${parcelName ? ` in ${parcelName}` : ''}`}
+      description={
+        productName && parcelName
+          ? intl.formatMessage(
+              {
+                id: isEdit
+                  ? 'finishProduction.page.descriptionEdit'
+                  : 'finishProduction.page.description'
+              },
+              { crop: productName, parcel: parcelName }
+            )
+          : intl.formatMessage({
+              id: isEdit
+                ? 'finishProduction.page.descriptionGenericEdit'
+                : 'finishProduction.page.descriptionGeneric'
+            })
+      }
       showBackButton
       onBack={onCancel}
       backLabel={backLabel}
@@ -535,7 +549,11 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                           <Box flex={2} w="full">
                             <StandardField
                               label={intl.formatMessage({ id: 'app.productionAmount' })}
-                              error={errors.production_amount?.message}
+                              error={
+                                errors.production_amount?.message
+                                  ? intl.formatMessage({ id: errors.production_amount.message })
+                                  : undefined
+                              }
                               helpText={intl.formatMessage({ id: 'finishProduction.amount.help' })}
                               required>
                               <StandardInput
