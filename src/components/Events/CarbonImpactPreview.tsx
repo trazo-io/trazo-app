@@ -291,19 +291,20 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                 <Icon as={FaLeaf} color="orange.500" boxSize={5} />
                 <VStack spacing={1} align="start" flex={1}>
                   <Text fontSize="sm" fontWeight="semibold" color="orange.700">
-                    {calculation.message || 'Carbon calculation temporarily unavailable'}
+                    {calculation.message ||
+                      intl.formatMessage({ id: 'carbonPreview.unavailable.title' })}
                   </Text>
                   <Text fontSize="xs" color="orange.600">
                     {calculation.transparency_note ||
-                      'Event will still be documented for transparency tracking'}
+                      intl.formatMessage({ id: 'carbonPreview.unavailable.note' })}
                   </Text>
                 </VStack>
               </HStack>
 
               <StandardAlert
                 status="info"
-                title="Transparency Focus"
-                description="This event becomes part of the record your certifier reviews at renewal. A carbon estimate is added once there is enough detail to compute one."
+                title={intl.formatMessage({ id: 'carbonPreview.unavailable.alertTitle' })}
+                description={intl.formatMessage({ id: 'carbonPreview.unavailable.alertBody' })}
               />
             </VStack>
           </CardBody>
@@ -385,22 +386,25 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
       const isBusiness = method.includes('business');
       const isGeneral = method.includes('general');
 
-      const transparencyMessage = isPollination
+      const transparencyReason = isPollination
         ? // Every one of these named the transparency SCORE, which was retired as a producer
           // surface, and several also promised "the consumer story" — on a panel that renders
           // beside the certifier record on every form. Each now says what the record is FOR.
-          'Pollination is a biological service: no fuel burned, so there are no emissions to estimate. Hive counts and placement dates evidence the § 205.200 biodiversity practices your OSP describes.'
+          'pollination'
         : isScouting
-        ? 'Scouting is observational, so there are no emissions to estimate. It is also the record § 205.206(e) rests on: a National List substance is permitted only where prevention proved insufficient.'
+        ? 'scouting'
         : isIPM
-        ? 'Biological control and beneficial releases have no emissions to estimate. They are the § 205.206(a)–(d) practices a certifier expects to see tried before any substance is applied.'
+        ? 'ipm'
         : isBusiness
-        ? 'Certifications, inspections and audits have no emissions to estimate. Their dates and certificate numbers are what your certifier asks for at renewal.'
+        ? 'business'
         : isGeneral
-        ? 'General farm work has no emissions to estimate. It still belongs in the record — § 205.103(b)(1) asks for records adapted to the particular business you run.'
+        ? 'general'
         : isWeather
-        ? 'Weather events produce no emissions. They explain the gaps in a season when your certifier reads back through the record.'
-        : 'This event has no emissions to estimate. It still forms part of the record your certifier reviews at renewal.';
+        ? 'weather'
+        : 'default';
+      const transparencyMessage = intl.formatMessage({
+        id: `carbonPreview.noEmissions.${transparencyReason}`
+      });
 
       return (
         <Card size="sm" bg={bgColor} borderRadius="md" borderWidth="1px" borderColor={borderColor}>
@@ -452,11 +456,11 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
               */}
               <StandardAlert
                 status="info"
-                title={
-                  isPollination
-                    ? 'Zero-Emission Biological Service'
-                    : 'Why this is still worth logging'
-                }
+                title={intl.formatMessage({
+                  id: isPollination
+                    ? 'carbonPreview.noEmissions.pollinationTitle'
+                    : 'carbonPreview.noEmissions.title'
+                })}
                 description={transparencyMessage}
               />
             </VStack>
@@ -539,7 +543,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                   return (
                     <StandardAlert
                       status="info"
-                      description="Fertigation mode — application fuel excluded from carbon calculation to avoid double-counting with your irrigation events."
+                      description={intl.formatMessage({ id: 'app.fertigationCarbonNote' })}
                     />
                   );
                 }

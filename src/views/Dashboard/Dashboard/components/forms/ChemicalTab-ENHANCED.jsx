@@ -3412,7 +3412,7 @@ const ChemicalTab = forwardRef(
                                 {intl.formatMessage({
                                   id: 'app.fertigationCarbonNote',
                                   defaultMessage:
-                                    'When enabled, application fuel is excluded from carbon calculations to avoid double-counting with irrigation events.'
+                                    'When on, the fuel for the application is left out of the carbon estimate, so it is not counted twice with your irrigation records.'
                                 })}
                               </Text>
                             </VStack>
@@ -3453,7 +3453,7 @@ const ChemicalTab = forwardRef(
                             helpText={intl.formatMessage({
                               id: 'events.chemical.fields.micronutrientTypeHelp',
                               defaultMessage:
-                                'Permitted under 7 CFR 205.601(j)(6) only when a soil test or lab analysis documents the deficiency. Log that analysis as a Soil event.'
+                                'Permitted under 7 CFR 205.601(j)(7) only when a soil or tissue test documents the deficiency, or another verifiable method your certifier approves. Log that analysis as a Soil & amendments activity.'
                             })}
                             flex={2}>
                             <Controller

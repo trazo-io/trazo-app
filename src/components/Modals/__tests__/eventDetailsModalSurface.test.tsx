@@ -237,7 +237,7 @@ describe('EventDetailsModal — mobile gets the bottom sheet, not a full-screen 
     renderModal();
 
     const del = screen.getByRole('button', { name: /^Delete$/i });
-    const edit = screen.getByRole('button', { name: /Edit Event/i });
+    const edit = screen.getByRole('button', { name: /Edit activity/i });
 
     // DOCUMENT_POSITION_FOLLOWING === 4. On a bottom sheet the primary owns the bottom edge;
     // the first stack order shipped `column-reverse`, which left DELETE as the bottom-most
@@ -279,7 +279,7 @@ describe('EventDetailsModal — action colours are semantic, not decorative', ()
 
   it('paints the primary action in brand green, never blue', () => {
     renderModal();
-    const edit = screen.getByRole('button', { name: /Edit Event/i });
+    const edit = screen.getByRole('button', { name: /Edit activity/i });
 
     expect(token(cssDecl(edit, 'background'))).toBe('green.700');
     // White label on green.700 is 5.13:1. On green.500 it is 2.78:1, and on Chakra's stock
@@ -331,7 +331,7 @@ describe('EventDetailsModal — every string goes through intl', () => {
       'Carbon Impact',
       'Close',
       'Delete',
-      'Edit Event'
+      'Edit activity'
     ]) {
       expect(
         screen.queryByText(english, { exact: true }),
@@ -340,7 +340,7 @@ describe('EventDetailsModal — every string goes through intl', () => {
     }
 
     expect(screen.getByText('Impacto de carbono')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Editar evento' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Editar actividad' })).toBeInTheDocument();
   });
 
   it('names the event category with the same words the activity feed uses', () => {

@@ -246,8 +246,13 @@ describe('pest: form gate and display gate agree', () => {
   const UNIVERSAL_PEST_FIELDS = ['ipm_strategy', 'threshold_rationale'];
 
   it('the form still declares these universal', () => {
+    // The sentence lives in the locale since 2026-11-07; the tab renders it by key.
+    const en = JSON.parse(readFileSync(join(process.cwd(), 'src/i18n/lang/en-US.json'), 'utf8'));
     expect(
-      pestTabSrc.includes('on every pest event, whatever its type'),
+      pestTabSrc.includes("'events.section.pest.ipmDescription'") &&
+        en['events.section.pest.ipmDescription'].includes(
+          'on every pest activity, whatever its kind'
+        ),
       'PestManagementTab no longer states that these two are asked on every pest event — if the ' +
         'form narrowed, narrow the registry with it rather than deleting this test'
     ).toBe(true);

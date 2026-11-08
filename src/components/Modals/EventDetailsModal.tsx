@@ -375,8 +375,8 @@ const getEventDisplayName = (event: Event, intl: any): string => {
       intl.formatMessage({ id: 'event.chemical.insecticide' }) || 'Insecticide Application',
 
     // Weather events
-    'event.weather.frost': intl.formatMessage({ id: 'event.weather.frost' }) || 'Frost Event',
-    'event.weather.drought': intl.formatMessage({ id: 'event.weather.drought' }) || 'Drought Event',
+    'event.weather.frost': intl.formatMessage({ id: 'event.weather.frost' }),
+    'event.weather.drought': intl.formatMessage({ id: 'event.weather.drought' }),
     'event.weather.hailstorm': intl.formatMessage({ id: 'event.weather.hailstorm' }) || 'Hailstorm',
     'event.weather.high_temperature':
       intl.formatMessage({ id: 'event.weather.high_temperature' }) || 'High Temperature',

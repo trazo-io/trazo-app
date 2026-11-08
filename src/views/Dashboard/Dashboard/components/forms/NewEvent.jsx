@@ -167,7 +167,7 @@ import {
 // Enhanced form schemas with better validation
 // Sprint 1 Epic 1.4: Added performed_by for USDA GAP traceability compliance
 const formSchemaBasic = object({
-  date: string().min(1, 'Date is required'),
+  date: string().min(1, 'events.validation.dateRequired'),
   performed_by: string().optional() // Optional — helps with traceability but not required
 });
 
@@ -178,7 +178,8 @@ const DRAFT_PRESET_KEYS = [
 ];
 
 const formSchemaMainInfo = object({
-  type: string().min(1, 'Event type is required')
+  // A message KEY, rendered through intl at the field: a schema at module scope cannot call intl.
+  type: string().min(1, 'events.validation.activityRequired')
 });
 
 // Removed formSchemaDescription - observations are now handled in individual event tabs
@@ -194,16 +195,14 @@ const eventTypeConfig = [
     name: 'weather',
     label: 'Weather',
     icon: FaCloudRain,
-    color: 'blue',
-    description: 'Weather events affecting your crops'
+    color: 'blue'
   },
   {
     id: 1,
     name: 'production',
     label: 'Production',
     icon: FaSeedling,
-    color: 'green',
-    description: 'Agricultural production activities' // Now includes Equipment Maintenance
+    color: 'green'
   },
   {
     id: 2,
@@ -3417,10 +3416,8 @@ function NewEventForm({ isEdit = false, eventId = null }) {
                 id: draftKept ? 'app.errorSavingOffline' : 'app.errorSavingOfflineNoDraft'
               })
             : isEdit
-            ? intl.formatMessage({ id: 'app.errorUpdatingEvent' }) ||
-              'Failed to update event. Please try again.'
-            : intl.formatMessage({ id: 'app.errorCreatingEvent' }) ||
-              'Failed to create event. Please try again.');
+            ? intl.formatMessage({ id: 'app.errorUpdatingEvent' })
+            : intl.formatMessage({ id: 'app.errorCreatingEvent' }));
 
       // Offline is not an error of the farmer's making: the title says what happened to the
       // record (recordkeeping review S8, F-24: the toast was titled "Error").
@@ -4149,7 +4146,12 @@ function NewEventForm({ isEdit = false, eventId = null }) {
                                 id: 'events.wizard.dateHelp',
                                 defaultMessage: 'When the work was done, not when you log it.'
                               })}
-                              error={basicMethods.formState.errors.date?.message}>
+                              error={
+                                basicMethods.formState.errors.date?.message &&
+                                intl.formatMessage({
+                                  id: basicMethods.formState.errors.date.message
+                                })
+                              }>
                               <StandardInput
                                 type="datetime-local"
                                 {...basicMethods.register('date')}

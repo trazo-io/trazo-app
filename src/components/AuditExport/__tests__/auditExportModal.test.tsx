@@ -87,7 +87,7 @@ describe('AuditExportModal', () => {
 
   it('says which of the three certifier exports this one is', () => {
     renderModal();
-    expect(screen.getByText(/Covers this production only/i)).toBeTruthy();
+    expect(screen.getByText(/Covers this season only/i)).toBeTruthy();
   });
 
   it('does not call the output an audit Trazo performed', () => {
