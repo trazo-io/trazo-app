@@ -204,6 +204,32 @@ describe('the help center says season, activity and tú', () => {
     );
   });
 
+  it('names carbon sources per input, never as a blanket, and claims no "direct" scope', () => {
+    // compliance.md and carbon-methodology.md: provenance is per input class (P2O5 and K2O are
+    // Trazo estimates, pesticides academic LCA), and the estimate includes the manufacturing of
+    // what the farm buys, so "direct operational emissions" is wrong as well as unsafe. The
+    // carbon guides said "All emission factors in Trazo are sourced from official EPA and USDA
+    // publications" until 2026-11-08.
+    const BLANKET =
+      /EPA (and|&|y el|y) USDA|EPA\/USDA|all (emission )?factors|todos los factores|direct operational|(operacional(es)?|operativas?) directa?s?|government-sourced|fuentes gubernamentales/i;
+    const claims = keys
+      .filter((k) => BLANKET.test(en[k]) || BLANKET.test(es[k] ?? ''))
+      .map((k) => `${k}: ${en[k].slice(0, 80)}`);
+    expect(claims).toEqual([]);
+  });
+
+  it('labels the factors that are Trazo estimates where they are shown', () => {
+    // The guide says phosphorus and potassium are Trazo estimates "and are labelled that way";
+    // the rows said only "Manufacturing emissions", under a footnote naming the EPA for all
+    // three nutrients (review of app #334).
+    const M = 'education.detail.carbonMethodology.';
+    for (const lang of [en, es]) {
+      expect(lang[`${M}phosphorusBreakdown`]).toMatch(/Trazo/);
+      expect(lang[`${M}potassiumBreakdown`]).toMatch(/Trazo/);
+      expect(lang[`${M}fertilizerSource`]).toMatch(/^(Nitrogen source|Fuente del nitrógeno)/);
+    }
+  });
+
   it('promises no pricing outcome', () => {
     const premium = keys.filter((k) =>
       /premium|precio superior|sobreprecio/i.test(`${en[k]} ${es[k]}`)
