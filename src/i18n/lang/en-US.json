@@ -917,7 +917,6 @@
   "carbonPreview.chem.activeIngredientAmount": "Active ingredient amount:",
   "carbonPreview.chem.factor": "Emission factor:",
   "carbonPreview.chem.fertilizerType": "Fertilizer type:",
-  "carbonPreview.chem.slowRelease": "Slow release",
   "carbonPreview.chem.manufacturing": "Manufacturing:",
   "carbonPreview.chem.equipment": "Application equipment:",
   "carbonPreview.chem.galLine": "• {gal} gal × {factor} kg CO₂e/gal (EPA factor)",

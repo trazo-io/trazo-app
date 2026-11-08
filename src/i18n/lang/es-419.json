@@ -917,7 +917,6 @@
   "carbonPreview.chem.activeIngredientAmount": "Cantidad de ingrediente activo:",
   "carbonPreview.chem.factor": "Factor de emisión:",
   "carbonPreview.chem.fertilizerType": "Tipo de fertilizante:",
-  "carbonPreview.chem.slowRelease": "Liberación lenta",
   "carbonPreview.chem.manufacturing": "Fabricación:",
   "carbonPreview.chem.equipment": "Equipo de aplicación:",
   "carbonPreview.chem.galLine": "• {gal} gal × {factor} kg CO₂e/gal (factor de la EPA)",

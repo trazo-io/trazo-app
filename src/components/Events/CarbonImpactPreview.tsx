@@ -28,6 +28,15 @@ import {
   getImpactLevel as getImpactLevelUtil
 } from '../../utils/carbonDisplayUtils';
 import { isNotEstimated } from 'utils/carbonStatus';
+import {
+  APPLICATION_METHODS,
+  APPLICATION_METHODS_BY_CHEMICAL_TYPE,
+  CHEMICAL_SUBTYPES_BY_MAIN_TYPE,
+  FUEL_TYPES,
+  WATER_SOURCES,
+  type EnumOption
+} from 'config/events/enums';
+import { productionEventRegistry } from 'config/events/productionEvent';
 
 interface CarbonCalculation {
   co2e?: number;
@@ -221,6 +230,26 @@ interface CarbonImpactPreviewProps {
 
 // The impact LEVELS the backend sends with a recommendation. "Transparency" is also sent, as a
 // category rather than a level, and is not shown as one.
+/*
+ * The response names things by code ("mowing_floor_management", "ground_spray",
+ * "synthetic_pesticide"), and the panel printed the code with the underscores swapped for
+ * spaces: English on a Spanish screen, and not the words the form itself uses (2026-11-08).
+ * Each code now resolves to the same label the form's own select shows.
+ */
+const ALL_APPLICATION_METHODS: readonly EnumOption[] = [
+  ...APPLICATION_METHODS,
+  ...Object.values(APPLICATION_METHODS_BY_CHEMICAL_TYPE).flat()
+];
+const ALL_CHEMICAL_SUBTYPES: readonly EnumOption[] = Object.values(
+  CHEMICAL_SUBTYPES_BY_MAIN_TYPE
+).flat();
+// The fertilizer calculator reports its short form; the form's options carry the suffix.
+const FERTILIZER_SUBTYPE_OPTION: Record<string, string> = {
+  organic: 'organic_fertilizer',
+  synthetic: 'synthetic_fertilizer',
+  slow_release: 'slow_release_fertilizer'
+};
+
 // The area units the activity form offers, as hectares.
 const HECTARES_PER_UNIT: Record<string, number> = {
   ha: 1,
@@ -270,6 +299,19 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
       if (unit === 'km2') return `${v} km²`;
       return `${v} ${unit}`;
     };
+    // A code's label in the reader's language, or the code as words when no option knows it.
+    const asText = (code?: string | null) =>
+      code ? code.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase()) : '';
+    const optionLabel = (options: readonly EnumOption[], code?: string | null) => {
+      const option = code ? options.find((o) => o.value === code) : undefined;
+      return option ? intl.formatMessage({ id: option.labelKey }) : asText(code);
+    };
+    // On the production form the activity is the subtype the farmer picked, so its name is the
+    // one the form shows; the response's `production_activity` is only the fallback.
+    const productionSubtypeKey =
+      eventType === 'Production'
+        ? productionEventRegistry.subtypes.find((st) => st.code === formData?.type)?.labelKey
+        : undefined;
     const bgColor = useColorModeValue('gray.50', 'gray.700');
     const borderColor = useColorModeValue('gray.200', 'gray.600');
     const textColor = useColorModeValue('gray.800', 'white');
@@ -759,11 +801,10 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                   </Text>
                                   <HStack justify="space-between" fontSize="xs">
                                     <Text color="blue.600">{t('label.activity')}</Text>
-                                    <Text color="blue.800" textTransform="capitalize">
-                                      {calculation.breakdown.production_activity?.replace(
-                                        /_/g,
-                                        ' '
-                                      )}
+                                    <Text color="blue.800">
+                                      {productionSubtypeKey
+                                        ? intl.formatMessage({ id: productionSubtypeKey })
+                                        : asText(calculation.breakdown.production_activity)}
                                     </Text>
                                   </HStack>
                                   {/* Manual operations: show method instead of fuel (no fuel was used) */}
@@ -978,7 +1019,14 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                   <HStack justify="space-between" fontSize="xs">
                                     <Text color="blue.600">{t('label.waterSource')}</Text>
                                     <Text color="blue.800">
-                                      {calculation.breakdown.water_source_label}
+                                      {WATER_SOURCES.some(
+                                        (o) => o.value === calculation.breakdown?.water_source
+                                      )
+                                        ? optionLabel(
+                                            WATER_SOURCES,
+                                            calculation.breakdown.water_source
+                                          )
+                                        : calculation.breakdown.water_source_label}
                                     </Text>
                                   </HStack>
                                 )}
@@ -1193,9 +1241,12 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                   <HStack justify="space-between" fontSize="xs">
                                     <Text color="blue.600">{t('label.applicationMethod')}</Text>
                                     <Text color="blue.800">
-                                      {(calculation.breakdown.application_method || 'standard')
-                                        .replace(/_/g, ' ')
-                                        .replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                                      {calculation.breakdown.application_method
+                                        ? optionLabel(
+                                            ALL_APPLICATION_METHODS,
+                                            calculation.breakdown.application_method
+                                          )
+                                        : t('na')}
                                     </Text>
                                   </HStack>
                                   {/* Display fuel consumption if provided */}
@@ -1226,8 +1277,11 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                       </HStack>
                                       <HStack justify="space-between" fontSize="xs">
                                         <Text color="blue.600">{t('label.fuelType')}</Text>
-                                        <Text color="blue.800" textTransform="capitalize">
-                                          {calculation.breakdown.application_fuel_type || 'diesel'}
+                                        <Text color="blue.800">
+                                          {optionLabel(
+                                            FUEL_TYPES,
+                                            calculation.breakdown.application_fuel_type || 'diesel'
+                                          )}
                                         </Text>
                                       </HStack>
                                     </>
@@ -1496,7 +1550,16 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                           )
                                       })}
                                       {calculation.breakdown.water_source_label &&
-                                        ` (${calculation.breakdown.water_source_label})`}
+                                        ` (${
+                                          WATER_SOURCES.some(
+                                            (o) => o.value === calculation.breakdown?.water_source
+                                          )
+                                            ? optionLabel(
+                                                WATER_SOURCES,
+                                                calculation.breakdown.water_source
+                                              )
+                                            : calculation.breakdown.water_source_label
+                                        })`}
                                     </Text>
                                   )}
                                   {Boolean(calculation.breakdown.actual_kwh_consumed) && (
@@ -1725,9 +1788,10 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                                 <Text color="orange.600">{t('chem.type')}</Text>
                                                 <Text
                                                   color={isEcoFriendly ? 'green.600' : 'orange.800'}
-                                                  fontWeight={isEcoFriendly ? 'semibold' : 'normal'}
-                                                  textTransform="capitalize">
-                                                  {subtype.replace('_', ' ')}
+                                                  fontWeight={
+                                                    isEcoFriendly ? 'semibold' : 'normal'
+                                                  }>
+                                                  {optionLabel(ALL_CHEMICAL_SUBTYPES, subtype)}
                                                   {isOrganic && ''}
                                                   {isBiological && ''}
                                                 </Text>
@@ -1801,12 +1865,17 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                               calculation.breakdown.fertilizer_subtype === 'organic'
                                                 ? 'semibold'
                                                 : 'normal'
-                                            }
-                                            textTransform="capitalize">
-                                            {calculation.breakdown.fertilizer_subtype ===
-                                            'slow_release'
-                                              ? t('chem.slowRelease')
-                                              : calculation.breakdown.fertilizer_subtype}
+                                            }>
+                                            {FERTILIZER_SUBTYPE_OPTION[
+                                              calculation.breakdown.fertilizer_subtype
+                                            ]
+                                              ? optionLabel(
+                                                  CHEMICAL_SUBTYPES_BY_MAIN_TYPE.FE,
+                                                  FERTILIZER_SUBTYPE_OPTION[
+                                                    calculation.breakdown.fertilizer_subtype
+                                                  ]
+                                                )
+                                              : asText(calculation.breakdown.fertilizer_subtype)}
                                             {calculation.breakdown.fertilizer_subtype ===
                                               'organic' && ''}
                                           </Text>
