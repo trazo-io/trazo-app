@@ -198,12 +198,11 @@ export const EventPreviewModal: React.FC<EventPreviewModalProps> = ({
                   first pass — the section icon below was fixed and this one was not. */}
               <Icon as={MdPreview} color="green.700" boxSize={6} />
               <Text fontSize="lg" fontWeight="bold" color={textColor}>
-                {intl.formatMessage({ id: 'app.eventPreview' }) || 'Event Preview'}
+                {intl.formatMessage({ id: 'app.eventPreview' })}
               </Text>
             </HStack>
             <Text fontSize="sm" color={mutedColor}>
-              {intl.formatMessage({ id: 'app.eventPreviewDescription' }) ||
-                'See how your event will appear in the Production Journey'}
+              {intl.formatMessage({ id: 'app.eventPreviewDescription' })}
             </Text>
           </VStack>
         </ModalHeader>
@@ -388,7 +387,7 @@ export const EventPreviewModal: React.FC<EventPreviewModalProps> = ({
                 </Text>
                 <VStack spacing={2} align="stretch">
                   <HStack justify="space-between" fontSize="sm">
-                    <Text color={mutedColor}>Event Type:</Text>
+                    <Text color={mutedColor}>{intl.formatMessage({ id: 'app.eventPreviewTypeLabel' })}</Text>
                     <Text color={textColor} fontWeight="medium">
                       {eventTypeName}
                     </Text>

@@ -96,7 +96,8 @@ const OTHER_FARM_ACTIVITY_TYPES = [
 ];
 
 const formSchemaMainInfo = object({
-  name: string().min(1, 'Event name is required'),
+  // A message KEY, rendered through intl at the field: a schema at module scope cannot call intl.
+  name: string().min(1, 'events.validation.nameRequired'),
   type: string().min(1, 'Activity type is required'),
   duration_hours: string().optional(),
   participants: string().optional(),
@@ -446,7 +447,9 @@ const GeneralTab = forwardRef(
                         defaultMessage: 'Activity Name'
                       })}
                       required
-                      error={errors.name?.message}
+                      error={
+                        errors.name?.message && intl.formatMessage({ id: errors.name.message })
+                      }
                       helpText={intl.formatMessage({
                         id: 'events.general.help.briefDescriptiveNameForThisActivity',
                         defaultMessage: 'Brief descriptive name for this activity'

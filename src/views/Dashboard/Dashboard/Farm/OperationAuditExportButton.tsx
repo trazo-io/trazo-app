@@ -160,7 +160,7 @@ const OperationAuditExportButton: React.FC<Props> = ({ companyId, farmId }) => {
       return intl.formatMessage(
         {
           id: 'operationAudit.progressLayout',
-          defaultMessage: 'Laying out the pages for {total} productions…'
+          defaultMessage: 'Laying out the pages for {total} seasons…'
         },
         { total: progress.total }
       );
@@ -169,7 +169,7 @@ const OperationAuditExportButton: React.FC<Props> = ({ companyId, farmId }) => {
       return intl.formatMessage(
         {
           id: 'operationAudit.progressProduction',
-          defaultMessage: 'Production {current} of {total}: {label}'
+          defaultMessage: 'Season {current} of {total}: {label}'
         },
         { current: progress.current, total: progress.total, label: progress.label }
       );
@@ -200,7 +200,7 @@ const OperationAuditExportButton: React.FC<Props> = ({ companyId, farmId }) => {
       subtitle={intl.formatMessage({
         id: 'operationAudit.subtitle',
         defaultMessage:
-          'One combined NOP records PDF across every parcel and production — for your annual inspection.'
+          'One PDF of your NOP records across every parcel and season, for your annual inspection.'
       })}>
       {blockers.length > 0 && (
         <HStack

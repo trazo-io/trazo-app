@@ -152,7 +152,7 @@ describe('a blank required field blocks the step visibly', () => {
     expect(document.activeElement, 'the blank field was not focused').toBe(input);
     expect(input.getAttribute('aria-invalid')).toBe('true');
     expect(revealed!.label).toBe(EN['app.eventName']);
-    expect(screen.getByText('Event name is required')).toBeTruthy();
+    expect(screen.getByText(EN['events.validation.nameRequired'])).toBeTruthy();
   });
 });
 

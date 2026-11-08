@@ -83,8 +83,9 @@ const FUEL_TYPES = [
 ];
 
 const pestSchema = object({
-  type: string().min(1, 'Pest management event type is required'),
-  name: string().min(1, 'Event name is required'),
+  // Message KEYS, rendered through intl at the field: a schema at module scope cannot call intl.
+  type: string().min(1, 'events.pest.validation.typeRequired'),
+  name: string().min(1, 'events.validation.nameRequired'),
   // Sprint 5: Aggregate Pest Scouting Support - log multiple scouting trips as one summary
   is_summary: string().optional(), // "true" or "false" as string for form compatibility
   date_start: string().optional(), // Period start date for aggregate events
@@ -620,12 +621,9 @@ const PestManagementTab = forwardRef(
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                   {/* FIRST: Event Type (standardized order - matches other forms) */}
                   <StandardField
-                    label={
-                      intl.formatMessage({ id: 'app.pestManagementEventType' }) ||
-                      'Pest Management Event Type'
-                    }
+                    label={intl.formatMessage({ id: 'app.pestManagementEventType' })}
                     required
-                    error={errors.type?.message}>
+                    error={errors.type?.message && intl.formatMessage({ id: errors.type.message })}>
                     <StandardSelect {...methods.register('type')}>
                       <option value="SC">
                         {intl.formatMessage({ id: 'app.scouting' }) || 'Scouting'}
@@ -661,9 +659,9 @@ const PestManagementTab = forwardRef(
 
                   {/* SECOND: Event Name (standardized order - matches other forms) */}
                   <StandardField
-                    label={intl.formatMessage({ id: 'app.eventName' }) || 'Event Name'}
+                    label={intl.formatMessage({ id: 'app.eventName' })}
                     required
-                    error={errors.name?.message}>
+                    error={errors.name?.message && intl.formatMessage({ id: errors.name.message })}>
                     <StandardInput
                       {...nameField}
                       onChange={(event) => {
@@ -1141,8 +1139,10 @@ const PestManagementTab = forwardRef(
 
                     {/* Production Efficiency */}
                     <StandardField
-                      label="Production Efficiency"
-                      helpText="Optional. Your own read on how the operation went — used only in the carbon estimate, never in your certifier record.">
+                      label={intl.formatMessage({
+                        id: 'events.common.fields.productionEfficiency'
+                      })}
+                      helpText={intl.formatMessage({ id: 'app.operationEfficiencyHelp' })}>
                       <StandardSelect {...methods.register('production_efficiency')}>
                         <option value="">
                           {intl.formatMessage({ id: 'events.production.help.efficiencyUnset' })}
@@ -1591,13 +1591,13 @@ const PestManagementTab = forwardRef(
                   icon={FaCheckCircle}
                   title={intl.formatMessage({ id: 'events.section.pest.ipm' })}
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
-                  description="The certifier export checks these two records on every pest event, whatever its type."
+                  description={intl.formatMessage({ id: 'events.section.pest.ipmDescription' })}
                 />
                 <StandardField
                   label={
                     intl.formatMessage({ id: 'app.impStrategy' }) || 'IPM Strategy Description'
                   }
-                  helpText="Describe the comprehensive integrated pest management approach implemented (NOP 7 CFR 205.206(a) — required on every pest event in the certifier export)">
+                  helpText={intl.formatMessage({ id: 'events.pest.fields.ipmStrategyHelp' })}>
                   <StandardTextarea
                     {...methods.register('ipm_strategy')}
                     placeholder={

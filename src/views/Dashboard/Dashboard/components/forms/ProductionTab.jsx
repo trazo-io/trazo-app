@@ -204,7 +204,8 @@ const normalizeSeedSearchRows = (rows) =>
 // Sprint 2: Event name is now auto-generated from production type (removes farmer burden)
 // CRITICAL FIX (2025-01-21): Changed EQ → EM to match backend Production event model
 const formSchemaMainInfo = object({
-  type: string().min(1, 'Production type is required'),
+  // A message KEY, rendered through intl at the field: a schema at module scope cannot call intl.
+  type: string().min(1, 'events.production.validation.typeRequired'),
   name: string().optional(), // Auto-generated from production type - no manual input needed
   // Sprint 2 Epic 2.1: Area is optional for Equipment Maintenance (EM) type
   area_covered: string()
@@ -2006,8 +2007,12 @@ const ProductionTab = forwardRef(
                     <StandardField
                       label={intl.formatMessage({ id: 'production.field.productionType' })}
                       required
-                      error={errors.type?.message}
-                      helpText="Production type determines carbon calculation method">
+                      error={
+                        errors.type?.message && intl.formatMessage({ id: errors.type.message })
+                      }
+                      helpText={intl.formatMessage({
+                        id: 'events.production.fields.activityTypeHelp'
+                      })}>
                       <Controller
                         name="type"
                         control={methods.control}
@@ -2558,19 +2563,19 @@ const ProductionTab = forwardRef(
                       <StandardField
                         label={intl.formatMessage({
                           id: 'events.production.fields.equipmentCleaningEvent',
-                          defaultMessage: 'Cleaning Event Covering This Operation'
+                          defaultMessage: 'Cleanout that covers this pass'
                         })}
                         helpText={
                           cleaningEventOptions.length
                             ? intl.formatMessage({
                                 id: 'events.production.fields.equipmentCleaningEventHelp',
                                 defaultMessage:
-                                  'Select the Equipment Maintenance cleaning logged before this pass. It must be dated on or before this event.'
+                                  'Pick the equipment cleanout logged before this pass. It must be dated on or before this activity.'
                               })
                             : intl.formatMessage({
                                 id: 'events.production.fields.equipmentCleaningEventEmpty',
                                 defaultMessage:
-                                  'No Equipment Maintenance cleaning events logged on this production yet. Add one to link it here.'
+                                  'No equipment cleanout logged in this season yet. Log an Equipment cleanout to link it here.'
                               })
                         }>
                         <Controller
@@ -3753,7 +3758,7 @@ const ProductionTab = forwardRef(
                     icon={FaSeedling}
                     title={intl.formatMessage({ id: 'production.pollination.title' })}
                     badge={intl.formatMessage({ id: 'production.pollination.badge' })}
-                    description="Document pollinator placement and management for full production transparency."
+                    description={intl.formatMessage({ id: 'production.pollination.description' })}
                   />
                   <VStack spacing={4} align="stretch">
                     <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
@@ -4770,7 +4775,7 @@ const ProductionTab = forwardRef(
                           id: 'events.common.fields.productionEfficiency'
                         })}
                         error={errors.production_efficiency?.message}
-                        helpText="Optional. Your own read on how the operation went — used only in the carbon estimate, never in your certifier record.">
+                        helpText={intl.formatMessage({ id: 'app.operationEfficiencyHelp' })}>
                         <Controller
                           name="production_efficiency"
                           control={methods.control}
@@ -5318,7 +5323,9 @@ const ProductionTab = forwardRef(
 
                             <StandardField
                               label={intl.formatMessage({ id: 'production.field.irrigationCount' })}
-                              helpText="How many irrigation events occurred during this period?"
+                              helpText={intl.formatMessage({
+                                id: 'production.field.irrigationCountHelp'
+                              })}
                               required>
                               <Controller
                                 name="event_count"
@@ -5341,7 +5348,9 @@ const ProductionTab = forwardRef(
                               label={intl.formatMessage({
                                 id: 'production.field.totalWaterVolume'
                               })}
-                              helpText="Combined water used across all irrigation events"
+                              helpText={intl.formatMessage({
+                                id: 'production.field.totalWaterVolumeHelp'
+                              })}
                               required>
                               <HStack spacing={2}>
                                 <Controller

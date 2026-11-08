@@ -74,7 +74,8 @@ const FUEL_TYPES = [
 ];
 
 const formSchemaSoilManagement = object({
-  type: string().min(1, 'Soil management type is required'),
+  // A message KEY, rendered through intl at the field: a schema at module scope cannot call intl.
+  type: string().min(1, 'events.soil.validation.typeRequired'),
   // Area is required and > 0 for most soil practices, but NOT for habitat structures (NS) — nesting
   // boxes / perches have no meaningful area. Habitat development (HD) area is optional. Enforced
   // per-subtype in the superRefine below so the base field stays optional.
@@ -1157,11 +1158,9 @@ const SoilManagementTab = forwardRef(
 
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                   <StandardField
-                    label={`${
-                      intl.formatMessage({ id: 'app.soilManagementType' }) || 'Soil Management Type'
-                    }`}
+                    label={intl.formatMessage({ id: 'app.soilManagementType' })}
                     required
-                    error={errors.type?.message}>
+                    error={errors.type?.message && intl.formatMessage({ id: errors.type.message })}>
                     <StandardSelect
                       placeholder={intl.formatMessage({
                         id: 'events.soil.placeholders.soilManagementType'
@@ -1208,8 +1207,8 @@ const SoilManagementTab = forwardRef(
                   </StandardField>
 
                   <StandardField
-                    label="Event Name"
-                    helpText="Descriptive name for this soil management operation">
+                    label={intl.formatMessage({ id: 'app.eventName' })}
+                    helpText={intl.formatMessage({ id: 'events.soil.fields.nameHelp' })}>
                     <StandardInput
                       type="text"
                       placeholder="e.g., Spring Tillage - North Field"
@@ -1387,8 +1386,10 @@ const SoilManagementTab = forwardRef(
                     )}
 
                     <StandardField
-                      label="Production Efficiency"
-                      helpText="Optional. Your own read on how the operation went — used only in the carbon estimate, never in your certifier record.">
+                      label={intl.formatMessage({
+                        id: 'events.common.fields.productionEfficiency'
+                      })}
+                      helpText={intl.formatMessage({ id: 'app.operationEfficiencyHelp' })}>
                       <StandardSelect {...register('production_efficiency')}>
                         <option value="">
                           {intl.formatMessage({ id: 'events.production.help.efficiencyUnset' })}

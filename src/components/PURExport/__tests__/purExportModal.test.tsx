@@ -132,7 +132,7 @@ describe('PURExportModal', () => {
 
   it('opens the event the row is about and closes the dialog', async () => {
     const { onClose } = renderModal('en-US');
-    const [openFirst] = await screen.findAllByRole('button', { name: /Open event/ });
+    const [openFirst] = await screen.findAllByRole('button', { name: /Open activity/ });
     fireEvent.click(openFirst);
     expect(navigateMock).toHaveBeenCalledWith(
       '/admin/dashboard/farm/160/parcel/5/event/42/change?event_type=2'
@@ -160,7 +160,7 @@ describe('PURExportModal', () => {
     expect(screen.getByText('Metam CLR')).toBeTruthy();
     expect(screen.getByText(/Applied by Valley Ag Spray Inc\./)).toBeTruthy();
     expect(screen.getByText(/3 CCR 6626\(b\)/)).toBeTruthy();
-    const buttons = screen.getAllByRole('button', { name: /Open event/ });
+    const buttons = screen.getAllByRole('button', { name: /Open activity/ });
     fireEvent.click(buttons[buttons.length - 1]);
     expect(navigateMock).toHaveBeenCalledWith(
       '/admin/dashboard/farm/160/parcel/5/event/77/change?event_type=2'
