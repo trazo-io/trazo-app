@@ -58,7 +58,8 @@ export const blankAskedKeys = (
   if (!asked.size || (notApplicable && definition.allows_not_applicable)) return [];
   const readsAsNo = new Set<string>();
   for (const page of definition.pages) {
-    for (const cond of page.visible_when) if (cond.op === 'falsy') readsAsNo.add(cond.question);
+    for (const cond of [...page.visible_when, ...(page.visible_when_any ?? [])])
+      if (cond.op === 'falsy') readsAsNo.add(cond.question);
     for (const q of page.questions) {
       for (const cond of q.visible_when) if (cond.op === 'falsy') readsAsNo.add(cond.question);
     }
