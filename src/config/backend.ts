@@ -110,6 +110,24 @@ export const POST_HARVEST_FACILITY_URL = (
   facilityId != null
     ? `${ROOT_URL}companies/${companyId}/establishments/${farmId}/post-harvest-facilities/${facilityId}/`
     : `${ROOT_URL}companies/${companyId}/establishments/${farmId}/post-harvest-facilities/`;
+// The farm's own record of its certifier's inspections and the items the agent sent
+// (7 CFR 205.662 notices), with the operation's responses and the agent's resolutions.
+export const CERTIFIER_INSPECTION_URL = (
+  companyId: string,
+  farmId: string,
+  inspectionId?: string | number
+) =>
+  inspectionId != null
+    ? `${ROOT_URL}companies/${companyId}/establishments/${farmId}/certifier-inspections/${inspectionId}/`
+    : `${ROOT_URL}companies/${companyId}/establishments/${farmId}/certifier-inspections/`;
+export const CERTIFIER_NOTICE_URL = (
+  companyId: string,
+  farmId: string,
+  noticeId?: string | number
+) =>
+  noticeId != null
+    ? `${ROOT_URL}companies/${companyId}/establishments/${farmId}/certifier-notices/${noticeId}/`
+    : `${ROOT_URL}companies/${companyId}/establishments/${farmId}/certifier-notices/`;
 export const POST_HARVEST_FACILITY_VERIFY_URL = (
   companyId: string,
   farmId: string,
