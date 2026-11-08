@@ -177,9 +177,9 @@ const CertifierInspectionsCard: React.FC<Props> = ({ companyId, farmId, state })
       mb={4}
       titleIcon={<Icon as={FaClipboardCheck} color="green.700" />}
       title={t('osp.inspections.title')}
-      subtitle={t('osp.inspections.subtitle')}
-      data-testid="certifier-inspections-card">
-      {body}
+      subtitle={t('osp.inspections.subtitle')}>
+      {/* On a wrapper: StandardCard does not spread unknown props, so a test id on it is dropped. */}
+      <Box data-testid="certifier-inspections-card">{body}</Box>
     </StandardCard>
   );
 
