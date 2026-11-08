@@ -54,7 +54,17 @@ describe('guide source', () => {
     expect(DETAIL).not.toMatch(/border="1px solid"|borderRadius="(lg|md)"/);
     expect(DETAIL).not.toMatch(/<Grid\b|overflowX=/);
     expect(DETAIL).not.toMatch(/<Box bg="white"/);
-    expect(DETAIL.match(/divider=\{<StackDivider/g)?.length).toBeGreaterThanOrEqual(10);
+    expect(DETAIL.match(/divider=\{<Divider\b/g)?.length).toBeGreaterThanOrEqual(10);
+  });
+
+  it('divides rows with the one divider the theme leaves its margins on', () => {
+    // theme/styles.js zeroes the margin of every stack child except `.chakra-divider`, and a
+    // divided Chakra stack has no gap, only the divider's margins. StackDivider renders
+    // `chakra-stack__divider`, so its margins were zeroed and the rows sat flush against the
+    // line (review of app #334). Divider renders `chakra-divider` and keeps them.
+    const styles = readFileSync(join(process.cwd(), 'src/theme/styles.js'), 'utf8');
+    expect(styles).toContain("'& > *:not(.chakra-divider)'");
+    expect(DETAIL).not.toMatch(/StackDivider/);
   });
 
   it('puts no card or icon column around the guide', () => {

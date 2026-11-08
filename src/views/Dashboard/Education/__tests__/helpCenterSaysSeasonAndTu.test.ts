@@ -218,6 +218,18 @@ describe('the help center says season, activity and tú', () => {
     expect(claims).toEqual([]);
   });
 
+  it('labels the factors that are Trazo estimates where they are shown', () => {
+    // The guide says phosphorus and potassium are Trazo estimates "and are labelled that way";
+    // the rows said only "Manufacturing emissions", under a footnote naming the EPA for all
+    // three nutrients (review of app #334).
+    const M = 'education.detail.carbonMethodology.';
+    for (const lang of [en, es]) {
+      expect(lang[`${M}phosphorusBreakdown`]).toMatch(/Trazo/);
+      expect(lang[`${M}potassiumBreakdown`]).toMatch(/Trazo/);
+      expect(lang[`${M}fertilizerSource`]).toMatch(/^(Nitrogen source|Fuente del nitrógeno)/);
+    }
+  });
+
   it('promises no pricing outcome', () => {
     const premium = keys.filter((k) =>
       /premium|precio superior|sobreprecio/i.test(`${en[k]} ${es[k]}`)

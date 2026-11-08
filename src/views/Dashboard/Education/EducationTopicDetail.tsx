@@ -10,7 +10,7 @@ import {
   Icon,
   UnorderedList,
   ListItem,
-  StackDivider,
+  Divider,
   Link
 } from '@chakra-ui/react';
 import {
@@ -193,7 +193,7 @@ const EducationTopicDetail: React.FC = () => {
               <Heading size="sm" color="gray.700" mb={3}>
                 {intl.formatMessage({ id: 'education.detail.farmEvents.groupGrowing' })}
               </Heading>
-              <VStack align="stretch" spacing={6} divider={<StackDivider borderColor="gray.200" />}>
+              <VStack align="stretch" spacing={3} divider={<Divider borderColor="gray.200" />}>
                 <Box>
                   <HStack align="start" spacing={3}>
                     <Icon as={FaSeedling} color="green.700" mt={1} />
@@ -296,7 +296,7 @@ const EducationTopicDetail: React.FC = () => {
               <Heading size="sm" color="gray.700" mb={3}>
                 {intl.formatMessage({ id: 'education.detail.farmEvents.groupInputs' })}
               </Heading>
-              <VStack align="stretch" spacing={6} divider={<StackDivider borderColor="gray.200" />}>
+              <VStack align="stretch" spacing={3} divider={<Divider borderColor="gray.200" />}>
                 <Box>
                   <HStack align="start" spacing={3}>
                     <Icon as={FaFlask} color="green.700" mt={1} />
@@ -347,7 +347,7 @@ const EducationTopicDetail: React.FC = () => {
               <Heading size="sm" color="gray.700" mb={3}>
                 {intl.formatMessage({ id: 'education.detail.farmEvents.groupSeparation' })}
               </Heading>
-              <VStack align="stretch" spacing={6} divider={<StackDivider borderColor="gray.200" />}>
+              <VStack align="stretch" spacing={3} divider={<Divider borderColor="gray.200" />}>
                 <Box>
                   <HStack align="start" spacing={3}>
                     <Icon as={FaTruck} color="green.700" mt={1} />
@@ -394,7 +394,7 @@ const EducationTopicDetail: React.FC = () => {
               <Heading size="sm" color="gray.700" mb={3}>
                 {intl.formatMessage({ id: 'education.detail.farmEvents.groupPaperwork' })}
               </Heading>
-              <VStack align="stretch" spacing={6} divider={<StackDivider borderColor="gray.200" />}>
+              <VStack align="stretch" spacing={3} divider={<Divider borderColor="gray.200" />}>
                 <Box>
                   <HStack align="start" spacing={3}>
                     <Icon as={FaSearch} color="green.700" mt={1} />
@@ -621,7 +621,7 @@ const EducationTopicDetail: React.FC = () => {
               {intl.formatMessage({ id: 'education.detail.carbonData.stillMattersTitle' })}
             </Heading>
             <Box w="full">
-              <VStack align="stretch" spacing={6} divider={<StackDivider borderColor="gray.200" />}>
+              <VStack align="stretch" spacing={3} divider={<Divider borderColor="gray.200" />}>
                 <Box>
                   <Heading size="sm" color="gray.700" mb={2}>
                     {intl.formatMessage({ id: 'education.detail.carbonData.b2bTitle' })}
@@ -1016,10 +1016,7 @@ const EducationTopicDetail: React.FC = () => {
             <Box>
               <VStack spacing={3} align="stretch">
                 <Box w="full">
-                  <VStack
-                    align="stretch"
-                    spacing={4}
-                    divider={<StackDivider borderColor="gray.200" />}>
+                  <VStack align="stretch" spacing={4} divider={<Divider borderColor="gray.200" />}>
                     <Box>
                       <Text fontWeight="bold" color="gray.700">
                         {intl.formatMessage({
@@ -1097,10 +1094,7 @@ const EducationTopicDetail: React.FC = () => {
                   })}
                 </Text>
                 <Box w="full">
-                  <VStack
-                    align="stretch"
-                    spacing={4}
-                    divider={<StackDivider borderColor="gray.200" />}>
+                  <VStack align="stretch" spacing={4} divider={<Divider borderColor="gray.200" />}>
                     <Box>
                       <Text fontSize="sm" fontWeight="bold" color="gray.700">
                         {intl.formatMessage({
@@ -1175,10 +1169,7 @@ const EducationTopicDetail: React.FC = () => {
                   {intl.formatMessage({ id: 'education.detail.carbonMethodology.fungicides' })}
                 </Text>
                 <Box w="full">
-                  <VStack
-                    align="stretch"
-                    spacing={4}
-                    divider={<StackDivider borderColor="gray.200" />}>
+                  <VStack align="stretch" spacing={4} divider={<Divider borderColor="gray.200" />}>
                     <Box>
                       <Text fontSize="sm" fontWeight="bold" color="gray.700">
                         {intl.formatMessage({
@@ -1447,7 +1438,7 @@ const EducationTopicDetail: React.FC = () => {
               {intl.formatMessage({ id: 'education.detail.firstProduction.step3Title' })}
             </Heading>
             <Box w="full">
-              <VStack align="stretch" spacing={6} divider={<StackDivider borderColor="gray.200" />}>
+              <VStack align="stretch" spacing={3} divider={<Divider borderColor="gray.200" />}>
                 <Box>
                   <Heading size="sm" color="gray.700" mb={2}>
                     {intl.formatMessage({ id: 'education.detail.firstProduction.startWithTitle' })}
@@ -1523,7 +1514,7 @@ const EducationTopicDetail: React.FC = () => {
               {intl.formatMessage({ id: 'education.detail.eventMastery.realTimeVsBatchTitle' })}
             </Heading>
             <Box w="full">
-              <VStack align="stretch" spacing={6} divider={<StackDivider borderColor="gray.200" />}>
+              <VStack align="stretch" spacing={3} divider={<Divider borderColor="gray.200" />}>
                 <Box>
                   <Heading size="sm" color="green.700" mb={2}>
                     {intl.formatMessage({ id: 'education.detail.eventMastery.realTimeTitle' })}
@@ -1655,7 +1646,7 @@ const EducationTopicDetail: React.FC = () => {
               {intl.formatMessage({ id: 'education.detail.eventMastery.seasonalTitle' })}
             </Heading>
             <Box w="full">
-              <VStack align="stretch" spacing={6} divider={<StackDivider borderColor="gray.200" />}>
+              <VStack align="stretch" spacing={3} divider={<Divider borderColor="gray.200" />}>
                 <Box>
                   <Heading size="sm" color="green.700" mb={2}>
                     {intl.formatMessage({
@@ -1768,7 +1759,7 @@ const EducationTopicDetail: React.FC = () => {
               {intl.formatMessage({ id: 'education.detail.scoreOptimization.strategyTitle' })}
             </Heading>
             <Box w="full">
-              <VStack align="stretch" spacing={6} divider={<StackDivider borderColor="gray.200" />}>
+              <VStack align="stretch" spacing={3} divider={<Divider borderColor="gray.200" />}>
                 <Box>
                   <Heading size="sm" color="gray.700" mb={2}>
                     {intl.formatMessage({ id: 'education.detail.scoreOptimization.mustHaveTitle' })}
@@ -1855,7 +1846,7 @@ const EducationTopicDetail: React.FC = () => {
               {intl.formatMessage({ id: 'education.detail.scoreOptimization.cropTypesTitle' })}
             </Heading>
             <Box w="full">
-              <VStack align="stretch" spacing={6} divider={<StackDivider borderColor="gray.200" />}>
+              <VStack align="stretch" spacing={3} divider={<Divider borderColor="gray.200" />}>
                 <Box>
                   <Heading size="sm" color="gray.700" mb={2}>
                     {intl.formatMessage({
@@ -1953,7 +1944,7 @@ const EducationTopicDetail: React.FC = () => {
               {intl.formatMessage({ id: 'education.detail.consumerEngagement.qrPlacementTitle' })}
             </Heading>
             <Box w="full">
-              <VStack align="stretch" spacing={6} divider={<StackDivider borderColor="gray.200" />}>
+              <VStack align="stretch" spacing={3} divider={<Divider borderColor="gray.200" />}>
                 <Box>
                   <Heading size="sm" color="gray.700" mb={2}>
                     {intl.formatMessage({
@@ -2124,7 +2115,7 @@ const EducationTopicDetail: React.FC = () => {
               {intl.formatMessage({ id: 'education.detail.consumerEngagement.perfTitle' })}
             </Heading>
             <Box w="full">
-              <VStack align="stretch" spacing={6} divider={<StackDivider borderColor="gray.200" />}>
+              <VStack align="stretch" spacing={3} divider={<Divider borderColor="gray.200" />}>
                 <Box>
                   <Heading size="sm" color="gray.700" mb={2}>
                     {intl.formatMessage({ id: 'education.detail.consumerEngagement.speedTitle' })}
@@ -2410,7 +2401,7 @@ const EducationTopicDetail: React.FC = () => {
             </ArticleLead>
 
             <Box w="full">
-              <VStack align="stretch" spacing={6} divider={<StackDivider borderColor="gray.200" />}>
+              <VStack align="stretch" spacing={3} divider={<Divider borderColor="gray.200" />}>
                 <Box>
                   <VStack spacing={2} align="stretch">
                     <Heading size="sm" color="gray.700">
