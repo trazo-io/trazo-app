@@ -29,6 +29,7 @@ import {
 import { useUserRole } from 'hooks/useUserRole';
 import { useEditFarmMutation, useUpdateCompanyMutation } from 'store/api/companyApi';
 import { AgentFormSheetRow, useGetAgentFormSheetQuery } from 'store/api/ospApi';
+import { activityMessageId } from 'config/facilityActivities';
 
 interface Props {
   companyId: string;
@@ -186,8 +187,42 @@ const ITEM_LABELS: Record<string, Msg> = {
   acreage_removed: {
     id: 'osp.agentSheet.item.acreage_removed',
     defaultMessage: 'Acreage leaving organic production'
+  },
+  // WSDA: Additional Facilities and Third-Parties (AGR 2519), one per facility.
+  facilities_2519_when: {
+    id: 'osp.agentSheet.item.facilities_2519_when',
+    defaultMessage: 'When to file it'
+  },
+  facilities_2519: {
+    id: 'osp.agentSheet.item.facilities_2519',
+    defaultMessage: 'Facilities and third parties'
+  },
+  facilities_2519_comments: {
+    id: 'osp.agentSheet.item.facilities_2519_comments',
+    defaultMessage: 'Additional comments'
+  },
+  facilities_2519_exempt_note: {
+    id: 'osp.agentSheet.item.facilities_2519_exempt_note',
+    defaultMessage: 'Who must be certified'
   }
 };
+
+/** One facility's AGR 2519 as the copy sheet sends it (`agent_form_sheet._facility_2519`). */
+interface Facility2519 {
+  facility_id: number;
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  postal_code: string;
+  activities: string[];
+  products_detail: string;
+  crops: { crop: string; years: number[] }[];
+  responsibility: 'certified_third_party' | 'uncertified_third_party';
+  certificate: { number: string; certifier: string; copy_on_file: boolean } | null;
+  exemption_basis: string;
+  missing: string[];
+}
 
 /**
  * Where an agent's form names a shared row differently, the row carries the form's own word. WSDA's
@@ -216,6 +251,10 @@ const STEP_TITLES: Record<string, Msg> = {
   '2516': {
     id: 'osp.agentSheet.step.2516',
     defaultMessage: 'Site Update Information (AGR 2516), only if a site changes'
+  },
+  '2519': {
+    id: 'osp.agentSheet.step.2519',
+    defaultMessage: 'Additional Facilities and Third-Parties (AGR 2519), one per facility'
   }
 };
 
@@ -1027,6 +1066,200 @@ const AgentFormCopySheet: React.FC<Props> = ({ companyId, farmId, ospId }) => {
           </VStack>
         );
       }
+      case 'facilities_2519_when':
+        return intl.formatMessage({
+          id: 'osp.agentSheet.detail.facilities_2519_when',
+          defaultMessage:
+            'File one for each facility or third party at a different address from your primary certified location: where another operation takes the crop before the buyer, stores it or custom handles it (AGR 2121 J 13, K 1, L 1). It is not for fields.'
+        });
+      case 'facilities_2519': {
+        const own = (e.own_facilities as string[] | undefined) || [];
+        const ownLine = own.length ? (
+          <Text>
+            {intl.formatMessage(
+              {
+                id: 'osp.agentSheet.detail.facilities_2519_own',
+                defaultMessage:
+                  'Your own facilities ({names}) need this form only if they are at a different address from your primary certified location. Trazo does not know which are.'
+              },
+              { names: own.join(', ') }
+            )}
+          </Text>
+        ) : null;
+        if (row.kind !== 'value')
+          return (
+            <VStack align="stretch" spacing={1}>
+              <Text>
+                {intl.formatMessage({
+                  id: 'osp.agentSheet.detail.facilities_2519_none',
+                  defaultMessage: 'No facility run by another operation is on file.'
+                })}
+              </Text>
+              {ownLine}
+            </VStack>
+          );
+        const facilities = (row.value as Facility2519[]) || [];
+        const field = (key: string) =>
+          intl.formatMessage({ id: `osp.agentSheet.detail.facilities_2519_field.${key}` });
+        return (
+          <VStack align="stretch" spacing={3}>
+            <Text>
+              {intl.formatMessage(
+                {
+                  id: 'osp.agentSheet.detail.facilities_2519_header',
+                  defaultMessage:
+                    'From your facility records. Business name: {business}. Cert No: {cert}.'
+                },
+                {
+                  business: String(e.business_name || ''),
+                  cert:
+                    String(e.cert_no || '') ||
+                    intl.formatMessage({
+                      id: 'osp.agentSheet.detail.facilities_2519_cert_missing',
+                      defaultMessage: 'not recorded'
+                    })
+                }
+              )}
+            </Text>
+            {facilities.map((f) => {
+              const address = [f.address, f.city, f.state, f.postal_code]
+                .filter(Boolean)
+                .join(', ');
+              const crops = f.crops
+                .map((c) => (c.years.length ? `${c.crop} (${c.years.join(', ')})` : c.crop))
+                .join('; ');
+              return (
+                <Box
+                  key={f.facility_id}
+                  pl={3}
+                  borderLeftWidth="2px"
+                  borderColor="gray.200"
+                  data-testid={`sheet-2519-${f.facility_id}`}>
+                  <Text fontWeight="semibold">{f.name}</Text>
+                  {address ? (
+                    <Text>
+                      {intl.formatMessage(
+                        {
+                          id: 'osp.agentSheet.detail.facilities_2519_address',
+                          defaultMessage: 'Address: {address}'
+                        },
+                        { address }
+                      )}
+                    </Text>
+                  ) : null}
+                  {f.activities.length ? (
+                    <Text>
+                      {intl.formatMessage(
+                        {
+                          id: 'osp.agentSheet.detail.facilities_2519_activities',
+                          defaultMessage: 'Activities: {activities}'
+                        },
+                        {
+                          activities: f.activities
+                            .map((key) => intl.formatMessage({ id: activityMessageId(key) }))
+                            .join('; ')
+                        }
+                      )}
+                    </Text>
+                  ) : null}
+                  {f.products_detail ? (
+                    <Text>
+                      {intl.formatMessage(
+                        {
+                          id: 'osp.agentSheet.detail.facilities_2519_products',
+                          defaultMessage: 'Products: {products}'
+                        },
+                        { products: f.products_detail }
+                      )}
+                    </Text>
+                  ) : null}
+                  {crops ? (
+                    <Text>
+                      {intl.formatMessage(
+                        {
+                          id: 'osp.agentSheet.detail.facilities_2519_crops',
+                          defaultMessage: 'Crops on the records linked to it: {crops}'
+                        },
+                        { crops }
+                      )}
+                    </Text>
+                  ) : null}
+                  {f.certificate ? (
+                    <Text>
+                      {intl.formatMessage(
+                        {
+                          id: 'osp.agentSheet.detail.facilities_2519_certified',
+                          defaultMessage:
+                            'Your record shows certificate {number}: the statement for a certified third party fits. Attach its organic certificate and addendum.'
+                        },
+                        { number: f.certificate.number }
+                      )}{' '}
+                      {f.certificate.copy_on_file
+                        ? intl.formatMessage({
+                            id: 'osp.agentSheet.detail.facilities_2519_copy_on_file',
+                            defaultMessage: 'A copy of the certificate is on file in Trazo.'
+                          })
+                        : intl.formatMessage({
+                            id: 'osp.agentSheet.detail.facilities_2519_no_copy',
+                            defaultMessage: 'No copy of the certificate is on file in Trazo.'
+                          })}
+                    </Text>
+                  ) : (
+                    <Text>
+                      {intl.formatMessage({
+                        id: 'osp.agentSheet.detail.facilities_2519_uncertified',
+                        defaultMessage:
+                          'Your record shows no certificate number: the statement for a third party that is not certified fits, with how it is exempt.'
+                      })}
+                    </Text>
+                  )}
+                  {f.exemption_basis ? (
+                    <Text>
+                      {intl.formatMessage(
+                        {
+                          id: 'osp.agentSheet.detail.facilities_2519_exemption',
+                          defaultMessage: 'Exemption, as you stated it: {basis}'
+                        },
+                        { basis: f.exemption_basis }
+                      )}
+                    </Text>
+                  ) : null}
+                  {f.missing.length ? (
+                    <Text color="orange.800">
+                      {intl.formatMessage(
+                        {
+                          id: 'osp.agentSheet.detail.facilities_2519_missing',
+                          defaultMessage:
+                            'Not recorded: {fields}. Fill it in on the facility, under Off-Farm Handlers.'
+                        },
+                        { fields: f.missing.map(field).join(', ') }
+                      )}
+                    </Text>
+                  ) : null}
+                </Box>
+              );
+            })}
+            <Text>
+              {intl.formatMessage({
+                id: 'osp.agentSheet.detail.facilities_2519_tick',
+                defaultMessage: 'You tick the responsibility statement on the form; Trazo does not.'
+              })}
+            </Text>
+            {ownLine}
+          </VStack>
+        );
+      }
+      case 'facilities_2519_comments':
+        return intl.formatMessage({
+          id: 'osp.agentSheet.detail.facilities_2519_comments',
+          defaultMessage: 'Optional, in your own words.'
+        });
+      case 'facilities_2519_exempt_note':
+        return intl.formatMessage({
+          id: 'osp.agentSheet.detail.facilities_2519_exempt_note',
+          defaultMessage:
+            'Any business in the organic supply chain must be certified, apart from narrow exemptions for retail establishments and some handlers of tamper-evident packaged products (§ 205.101). WSDA must be able to verify the exemption.'
+        });
       case 'wsda_due':
         return intl.formatMessage(
           {
