@@ -231,6 +231,9 @@ const IMPACT_LEVEL_KEYS: Record<string, string> = {
 export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
   ({ eventType, formData, calculation, isCalculating = false, onEnterActualFuel }) => {
     const intl = useIntl();
+    // Every string on this panel is under `carbonPreview.` (2026-11-08: it was English only).
+    const t = (id: string, values?: Record<string, string | number | null | undefined>) =>
+      intl.formatMessage({ id: `carbonPreview.${id}` }, values);
     const bgColor = useColorModeValue('gray.50', 'gray.700');
     const borderColor = useColorModeValue('gray.200', 'gray.600');
     const textColor = useColorModeValue('gray.800', 'white');
@@ -319,7 +322,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
             <HStack spacing={3}>
               <Icon as={FaLeaf} color="gray.400" boxSize={5} />
               <Text fontSize="sm" color="gray.500">
-                Enter event details to see carbon impact
+                {t('empty')}
               </Text>
             </HStack>
           </CardBody>
@@ -334,7 +337,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
             <HStack spacing={3}>
               <Spinner size="sm" color="green.700" thickness="3px" />
               <Text fontSize="sm" color={textColor}>
-                Calculating carbon impact...
+                {t('calculating')}
               </Text>
             </HStack>
           </CardBody>
@@ -412,7 +415,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
             <HStack spacing={2}>
               <Icon as={FaLeaf} color="green.500" boxSize={4} />
               <Heading size="sm" color={textColor}>
-                Carbon Impact Preview
+                {t('title')}
               </Heading>
             </HStack>
           </CardHeader>
@@ -428,11 +431,11 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                       kg CO₂e
                     </Text>
                     <Badge colorScheme="gray" size="sm">
-                      None
+                      {t('zero.badge')}
                     </Badge>
                   </HStack>
                   <Text fontSize="xs" color="gray.500">
-                    No emissions estimated
+                    {t('zero.subtitle')}
                   </Text>
                 </VStack>
                 {/* "Efficiency Score 100/100" stood here. It was a grade Trazo assigned to
@@ -472,11 +475,13 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
     return (
       <Card size="sm" bg={bgColor} borderRadius="md" borderWidth="1px" borderColor={borderColor}>
         <CardHeader pb={2}>
-          <HStack justify="space-between">
-            <HStack spacing={2}>
+          {/* Wraps: "Estimación de carbono" beside the source badge broke mid-word on a phone
+              (2026-11-08). The title keeps its line; the badge drops below it. */}
+          <Flex justify="space-between" align="center" wrap="wrap" gap={2}>
+            <HStack spacing={2} flexShrink={0}>
               <Icon as={FaLeaf} color="green.500" boxSize={4} />
               <Heading size="sm" color={textColor}>
-                Carbon Impact Preview
+                {t('title')}
               </Heading>
             </HStack>
             {/* The badge answers "is this number yours or ours?", and it has to have two
@@ -507,7 +512,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                   </Badge>
                 </Tooltip>
               ))}
-          </HStack>
+          </Flex>
         </CardHeader>
 
         <CardBody pt={0}>
@@ -524,9 +529,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                     // the green off the OSP education blocks.
                     <StandardAlert
                       status="info"
-                      description={`${
-                        elecSrc === 'solar' ? 'Solar' : 'Wind'
-                      }-powered pump — near-zero pump emissions. Only water delivery carbon is counted.`}
+                      description={t('renewablePump', { source: elecSrc })}
                     />
                   );
                 }
@@ -563,10 +566,11 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                     {intl.formatMessage({ id: impactLevel.level })}
                   </Badge>
                 </HStack>
-                {/* "Carbon footprint estimate" implied a full LCA. This is Scope 1 only —
-                    direct operational emissions the farmer controls (carbon-methodology.md). */}
+                {/* "Carbon footprint estimate" implied a full LCA. "Direct operational emissions"
+                    replaced it and was wrong too: an input's figure includes making it, and
+                    compliance.md lists "direct on-farm emissions only" as unsafe (2026-11-08). */}
                 <Text fontSize="xs" color="gray.500">
-                  Direct operational emissions
+                  {t('subtitle')}
                 </Text>
               </VStack>
               {/* Efficiency Score /100 removed here too — see the zero-emission variant above. */}
@@ -584,7 +588,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                         ${calculation.cost_analysis.estimated_cost.toFixed(2)}
                       </Text>
                       <Text fontSize="xs" color="gray.500">
-                        Estimated cost
+                        {t('cost.estimated')}
                       </Text>
                     </VStack>
                   </HStack>
@@ -595,7 +599,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                         ${calculation.cost_analysis.cost_per_co2e.toFixed(2)}
                       </Text>
                       <Text fontSize="xs" color="gray.500">
-                        per kg CO₂e
+                        {t('cost.perKg')}
                       </Text>
                     </VStack>
                   )}
@@ -611,7 +615,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                   <HStack spacing={2}>
                     <Icon as={FaLightbulb} color="yellow.500" boxSize={4} />
                     <Text fontSize="sm" fontWeight="semibold" color={textColor}>
-                      Ways to Increase Transparency ({calculation.recommendations.length})
+                      {t('recs.title', { count: calculation.recommendations.length })}
                     </Text>
                   </HStack>
 
@@ -623,8 +627,10 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                           USDA, and "USDA" when there was none (2026-11-05). */}
                       {rec.potential_savings && rec.carbon_reduction ? (
                         <Text fontSize="sm">
-                          Save ${rec.potential_savings} • Reduce {rec.carbon_reduction.toFixed(1)}{' '}
-                          kg CO₂e
+                          {t('recs.saveReduce', {
+                            savings: rec.potential_savings,
+                            kg: rec.carbon_reduction.toFixed(1)
+                          })}
                         </Text>
                       ) : (
                         <>
@@ -651,7 +657,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
 
                   {calculation.recommendations.length > 2 && (
                     <Text fontSize="xs" color="gray.500" textAlign="center">
-                      +{calculation.recommendations.length - 2} more suggestions
+                      {t('recs.more', { count: calculation.recommendations.length - 2 })}
                     </Text>
                   )}
                 </VStack>
@@ -690,7 +696,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                           {/* Farmer-Friendly Breakdown */}
                           <VStack spacing={2} align="stretch">
                             <Text fontSize="xs" fontWeight="semibold" color="gray.700">
-                              How we calculated {formattedCO2e} kg CO₂e:
+                              {t('howCalculated', { value: formattedCO2e })}
                             </Text>
 
                             {/* Input Summary - Production Events */}
@@ -713,10 +719,10 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                       Anything we substituted now lives in its own block
                                       below, headed "We assumed". */}
                                   <Text fontSize="xs" fontWeight="semibold" color="blue.700" mb={1}>
-                                    You told us:
+                                    {t('youToldUs')}
                                   </Text>
                                   <HStack justify="space-between" fontSize="xs">
-                                    <Text color="blue.600">Activity:</Text>
+                                    <Text color="blue.600">{t('label.activity')}</Text>
                                     <Text color="blue.800" textTransform="capitalize">
                                       {calculation.breakdown.production_activity?.replace(
                                         /_/g,
@@ -728,16 +734,16 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                   {calculation.breakdown.manual_operation_detected ? (
                                     <>
                                       <HStack justify="space-between" fontSize="xs">
-                                        <Text color="blue.600">Method:</Text>
+                                        <Text color="blue.600">{t('label.method')}</Text>
                                         <Text color="blue.800" fontWeight="medium">
                                           {calculation.breakdown.method_documented ||
-                                            'Manual labor'}
+                                            t('value.manualLabor')}
                                         </Text>
                                       </HStack>
                                       <HStack justify="space-between" fontSize="xs">
-                                        <Text color="blue.600">Fuel/Equipment:</Text>
+                                        <Text color="blue.600">{t('label.fuelEquipment')}</Text>
                                         <Text color="blue.800" fontStyle="italic">
-                                          None (hand labor)
+                                          {t('value.noneHandLabor')}
                                         </Text>
                                       </HStack>
                                     </>
@@ -769,8 +775,8 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                       <HStack justify="space-between" fontSize="xs">
                                         <Text color="blue.600">
                                           {calculation.breakdown.fuel_type === 'electric'
-                                            ? 'Energy used:'
-                                            : 'Fuel used:'}
+                                            ? t('label.energyUsed')
+                                            : t('label.fuelUsed')}
                                         </Text>
                                         <Text color="blue.800">
                                           {calculation.breakdown.fuel_type === 'electric'
@@ -780,10 +786,12 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                                 calculation.breakdown.actual_fuel_consumed_kWh ??
                                                 0
                                               ).toFixed(1)} kWh`
-                                            : `${(
-                                                (calculation.breakdown
-                                                  .actual_fuel_consumed_gallons || 0) * 3.78541
-                                              ).toFixed(1)} liters`}
+                                            : t('unit.liters', {
+                                                value: (
+                                                  (calculation.breakdown
+                                                    .actual_fuel_consumed_gallons || 0) * 3.78541
+                                                ).toFixed(1)
+                                              })}
                                         </Text>
                                       </HStack>
                                     )
@@ -795,27 +803,35 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                       calculation.breakdown.area_covered > 0)) && (
                                     <>
                                       <HStack justify="space-between" fontSize="xs">
-                                        <Text color="blue.600">Area Input:</Text>
+                                        <Text color="blue.600">{t('label.areaInput')}</Text>
                                         <Text color="blue.800">
-                                          {calculation.original_area_treated?.toFixed(1) ||
-                                            calculation.breakdown.area_covered_acres?.toFixed(1) ||
-                                            calculation.breakdown.area_covered?.toFixed?.(1) ||
-                                            'N/A'}{' '}
-                                          {calculation.original_area_unit === 'ha'
-                                            ? 'hectares'
-                                            : calculation.original_area_unit === 'm2'
-                                            ? 'm²'
-                                            : 'acres'}
+                                          {(() => {
+                                            const value =
+                                              calculation.original_area_treated?.toFixed(1) ||
+                                              calculation.breakdown.area_covered_acres?.toFixed(
+                                                1
+                                              ) ||
+                                              calculation.breakdown.area_covered?.toFixed?.(1) ||
+                                              t('na');
+                                            return calculation.original_area_unit === 'ha'
+                                              ? t('unit.hectares', { value })
+                                              : calculation.original_area_unit === 'm2'
+                                              ? `${value} m²`
+                                              : t('unit.acres', { value });
+                                          })()}
                                         </Text>
                                       </HStack>
                                       {calculation.original_area_unit !== 'ha' && (
                                         <HStack justify="space-between" fontSize="xs">
                                           <Text color="blue.500" fontStyle="italic">
-                                            → Converted:
+                                            {t('label.converted')}
                                           </Text>
                                           <Text color="blue.700" fontStyle="italic">
-                                            {derivedHectares ? derivedHectares.toFixed(1) : 'N/A'}{' '}
-                                            hectares
+                                            {t('unit.hectares', {
+                                              value: derivedHectares
+                                                ? derivedHectares.toFixed(1)
+                                                : t('na')
+                                            })}
                                           </Text>
                                         </HStack>
                                       )}
@@ -823,9 +839,11 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                   )}
                                   {calculation.breakdown.equipment_hours > 0 && (
                                     <HStack justify="space-between" fontSize="xs">
-                                      <Text color="blue.600">Equipment Hours:</Text>
+                                      <Text color="blue.600">{t('label.equipmentHours')}</Text>
                                       <Text color="blue.800">
-                                        {calculation.breakdown.equipment_hours} hours
+                                        {t('unit.hours', {
+                                          value: calculation.breakdown.equipment_hours
+                                        })}
                                       </Text>
                                     </HStack>
                                   )}
@@ -884,26 +902,30 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                 borderWidth="1px"
                                 borderColor="blue.200">
                                 <Text fontSize="xs" fontWeight="semibold" color="blue.700" mb={1}>
-                                  Your Irrigation Activity:
+                                  {t('irrigation.title')}
                                 </Text>
                                 <HStack justify="space-between" fontSize="xs">
-                                  <Text color="blue.600">Activity:</Text>
+                                  <Text color="blue.600">{t('label.activity')}</Text>
                                   <Text color="blue.800">
-                                    Irrigation -{' '}
-                                    {calculation.breakdown.fuel_type === 'electric'
-                                      ? 'Electric pump'
-                                      : 'Water application'}
+                                    {t('irrigation.activity', {
+                                      kind:
+                                        calculation.breakdown.fuel_type === 'electric'
+                                          ? 'electric'
+                                          : 'other'
+                                    })}
                                   </Text>
                                 </HStack>
                                 <HStack justify="space-between" fontSize="xs">
-                                  <Text color="blue.600">Water Applied:</Text>
+                                  <Text color="blue.600">{t('label.waterApplied')}</Text>
                                   <Text color="blue.800">
-                                    {calculation.breakdown.water_volume_gallons.toLocaleString()}{' '}
-                                    gallons
+                                    {t('unit.gallons', {
+                                      value:
+                                        calculation.breakdown.water_volume_gallons.toLocaleString()
+                                    })}
                                   </Text>
                                 </HStack>
                                 <HStack justify="space-between" fontSize="xs">
-                                  <Text color="blue.600">Energy Consumed:</Text>
+                                  <Text color="blue.600">{t('label.energyConsumed')}</Text>
                                   <Text color="blue.800">
                                     {(
                                       calculation.breakdown.actual_kwh_consumed ||
@@ -914,7 +936,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                 </HStack>
                                 {calculation.breakdown.water_source_label && (
                                   <HStack justify="space-between" fontSize="xs">
-                                    <Text color="blue.600">Water Source:</Text>
+                                    <Text color="blue.600">{t('label.waterSource')}</Text>
                                     <Text color="blue.800">
                                       {calculation.breakdown.water_source_label}
                                     </Text>
@@ -932,24 +954,24 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                 borderWidth="1px"
                                 borderColor="blue.200">
                                 <Text fontSize="xs" fontWeight="semibold" color="blue.700" mb={1}>
-                                  Your Soil Management Activity:
+                                  {t('soil.title')}
                                 </Text>
                                 <HStack justify="space-between" fontSize="xs">
-                                  <Text color="blue.600">Activity:</Text>
+                                  <Text color="blue.600">{t('label.activity')}</Text>
                                   <Text color="blue.800" textTransform="capitalize">
                                     {calculation.breakdown.soil_activity}
                                   </Text>
                                 </HStack>
                                 <HStack justify="space-between" fontSize="xs">
-                                  <Text color="blue.600">Area Managed:</Text>
+                                  <Text color="blue.600">{t('label.areaManaged')}</Text>
                                   <Text color="blue.800">
-                                    {calculation.breakdown.area_managed?.toFixed(1) || 'N/A'}{' '}
+                                    {calculation.breakdown.area_managed?.toFixed(1) || t('na')}{' '}
                                     {calculation.breakdown.area_unit || 'acres'}
                                   </Text>
                                 </HStack>
                                 {calculation.breakdown.fuel_consumed > 0 && (
                                   <HStack justify="space-between" fontSize="xs">
-                                    <Text color="blue.600">Fuel Consumed:</Text>
+                                    <Text color="blue.600">{t('label.fuelConsumed')}</Text>
                                     <Text color="blue.800">
                                       {calculation.breakdown.fuel_consumed}{' '}
                                       {calculation.breakdown.fuel_unit || 'L'}
@@ -958,9 +980,11 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                 )}
                                 {calculation.breakdown.equipment_hours > 0 && (
                                   <HStack justify="space-between" fontSize="xs">
-                                    <Text color="blue.600">Equipment Hours:</Text>
+                                    <Text color="blue.600">{t('label.equipmentHours')}</Text>
                                     <Text color="blue.800">
-                                      {calculation.breakdown.equipment_hours} hours
+                                      {t('unit.hours', {
+                                        value: calculation.breakdown.equipment_hours
+                                      })}
                                     </Text>
                                   </HStack>
                                 )}
@@ -976,10 +1000,10 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                 borderWidth="1px"
                                 borderColor="blue.200">
                                 <Text fontSize="xs" fontWeight="semibold" color="blue.700" mb={1}>
-                                  Your Pest Management Activity:
+                                  {t('pest.title')}
                                 </Text>
                                 <HStack justify="space-between" fontSize="xs">
-                                  <Text color="blue.600">Activity:</Text>
+                                  <Text color="blue.600">{t('label.activity')}</Text>
                                   <Text color="blue.800" textTransform="capitalize">
                                     {calculation.breakdown.pest_activity?.replace(/_/g, ' ')}
                                   </Text>
@@ -987,7 +1011,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                 {/* Management Type removed — redundant with Activity (both show same subtype) */}
                                 {calculation.breakdown.area_covered > 0 && (
                                   <HStack justify="space-between" fontSize="xs">
-                                    <Text color="blue.600">Area Covered:</Text>
+                                    <Text color="blue.600">{t('label.areaCovered')}</Text>
                                     <Text color="blue.800">
                                       {calculation.breakdown.area_covered}{' '}
                                       {calculation.breakdown.area_unit || 'acres'}
@@ -998,8 +1022,8 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                   <HStack justify="space-between" fontSize="xs">
                                     <Text color="blue.600">
                                       {calculation.breakdown.fuel_type === 'electric'
-                                        ? 'Energy Used:'
-                                        : 'Fuel Consumed:'}
+                                        ? t('label.energyUsed')
+                                        : t('label.fuelConsumed')}
                                     </Text>
                                     <Text color="blue.800">
                                       {calculation.breakdown.fuel_consumed}{' '}
@@ -1009,29 +1033,31 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                 )}
                                 {calculation.breakdown.fuel_type && (
                                   <HStack justify="space-between" fontSize="xs">
-                                    <Text color="blue.600">Fuel Type:</Text>
+                                    <Text color="blue.600">{t('label.fuelType')}</Text>
                                     <Text color="blue.800" textTransform="capitalize">
                                       {calculation.breakdown.fuel_type === 'electric'
-                                        ? 'Electric'
+                                        ? t('fuel.electric')
                                         : calculation.breakdown.fuel_type === 'diesel'
-                                        ? 'Diesel'
+                                        ? t('fuel.diesel')
                                         : calculation.breakdown.fuel_type === 'gasoline'
-                                        ? 'Gasoline'
+                                        ? t('fuel.gasoline')
                                         : calculation.breakdown.fuel_type}
                                     </Text>
                                   </HStack>
                                 )}
                                 {calculation.breakdown.equipment_hours > 0 && (
                                   <HStack justify="space-between" fontSize="xs">
-                                    <Text color="blue.600">Equipment Hours:</Text>
+                                    <Text color="blue.600">{t('label.equipmentHours')}</Text>
                                     <Text color="blue.800">
-                                      {calculation.breakdown.equipment_hours} hours
+                                      {t('unit.hours', {
+                                        value: calculation.breakdown.equipment_hours
+                                      })}
                                     </Text>
                                   </HStack>
                                 )}
                                 {calculation.breakdown.production_efficiency && (
                                   <HStack justify="space-between" fontSize="xs">
-                                    <Text color="blue.600">Efficiency:</Text>
+                                    <Text color="blue.600">{t('label.efficiency')}</Text>
                                     <Text
                                       color={
                                         calculation.breakdown.production_efficiency === 'high'
@@ -1046,10 +1072,16 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                           : 'normal'
                                       }>
                                       {calculation.breakdown.production_efficiency === 'high'
-                                        ? 'High Efficiency'
+                                        ? intl.formatMessage({
+                                            id: 'events.productionEfficiency.high'
+                                          })
                                         : calculation.breakdown.production_efficiency === 'low'
-                                        ? 'Low Efficiency'
-                                        : 'Normal Efficiency'}
+                                        ? intl.formatMessage({
+                                            id: 'events.productionEfficiency.low'
+                                          })
+                                        : intl.formatMessage({
+                                            id: 'events.productionEfficiency.normal'
+                                          })}
                                     </Text>
                                   </HStack>
                                 )}
@@ -1069,50 +1101,57 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                   borderWidth="1px"
                                   borderColor="blue.200">
                                   <Text fontSize="xs" fontWeight="semibold" color="blue.700" mb={1}>
-                                    Your Application:
+                                    {t('application.title')}
                                   </Text>
                                   <HStack justify="space-between" fontSize="xs">
                                     <Text color="blue.600">
                                       {['kg', 'lbs', 'oz'].includes(
                                         calculation.original_volume_unit || ''
                                       )
-                                        ? 'Amount Applied:'
-                                        : 'Volume Applied:'}
+                                        ? t('label.amountApplied')
+                                        : t('label.volumeApplied')}
                                     </Text>
                                     <Text color="blue.800">
                                       {calculation.original_volume_applied &&
                                       calculation.original_volume_unit
-                                        ? `${calculation.original_volume_applied} ${
-                                            calculation.original_volume_unit === 'kg'
-                                              ? 'kilograms'
-                                              : calculation.original_volume_unit === 'L'
-                                              ? 'liters'
-                                              : calculation.original_volume_unit
-                                          }`
-                                        : `${
-                                            calculation.breakdown?.volume_applied_liters || 'N/A'
-                                          } liters`}
+                                        ? calculation.original_volume_unit === 'kg'
+                                          ? t('unit.kilograms', {
+                                              value: calculation.original_volume_applied
+                                            })
+                                          : calculation.original_volume_unit === 'L'
+                                          ? t('unit.liters', {
+                                              value: calculation.original_volume_applied
+                                            })
+                                          : `${calculation.original_volume_applied} ${calculation.original_volume_unit}`
+                                        : t('unit.liters', {
+                                            value:
+                                              calculation.breakdown?.volume_applied_liters ||
+                                              t('na')
+                                          })}
                                     </Text>
                                   </HStack>
                                   <HStack justify="space-between" fontSize="xs">
-                                    <Text color="blue.600">Area Treated:</Text>
+                                    <Text color="blue.600">{t('label.areaTreated')}</Text>
                                     <Text color="blue.800">
                                       {calculation.original_area_treated &&
                                       calculation.original_area_unit
-                                        ? `${calculation.original_area_treated} ${
-                                            calculation.original_area_unit === 'ha'
-                                              ? 'hectares'
-                                              : calculation.original_area_unit === 'acres'
-                                              ? 'acres'
-                                              : calculation.original_area_unit
-                                          }`
-                                        : `${
-                                            calculation.breakdown.area_treated_hectares || 'N/A'
-                                          } hectares`}
+                                        ? calculation.original_area_unit === 'ha'
+                                          ? t('unit.hectares', {
+                                              value: calculation.original_area_treated
+                                            })
+                                          : calculation.original_area_unit === 'acres'
+                                          ? t('unit.acres', {
+                                              value: calculation.original_area_treated
+                                            })
+                                          : `${calculation.original_area_treated} ${calculation.original_area_unit}`
+                                        : t('unit.hectares', {
+                                            value:
+                                              calculation.breakdown.area_treated_hectares || t('na')
+                                          })}
                                     </Text>
                                   </HStack>
                                   <HStack justify="space-between" fontSize="xs">
-                                    <Text color="blue.600">Application Method:</Text>
+                                    <Text color="blue.600">{t('label.applicationMethod')}</Text>
                                     <Text color="blue.800">
                                       {(calculation.breakdown.application_method || 'standard')
                                         .replace(/_/g, ' ')
@@ -1123,12 +1162,14 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                   {calculation.breakdown.application_fuel_gallons > 0 && (
                                     <>
                                       <HStack justify="space-between" fontSize="xs" mt={1}>
-                                        <Text color="blue.600">Application Fuel:</Text>
+                                        <Text color="blue.600">{t('label.applicationFuel')}</Text>
                                         <Text color="blue.800">
-                                          {calculation.breakdown.application_fuel_gallons.toFixed(
-                                            1
-                                          )}{' '}
-                                          gallons
+                                          {t('unit.gallons', {
+                                            value:
+                                              calculation.breakdown.application_fuel_gallons.toFixed(
+                                                1
+                                              )
+                                          })}
                                           {Boolean(
                                             calculation.breakdown.application_fuel_liters
                                           ) && (
@@ -1144,7 +1185,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                         </Text>
                                       </HStack>
                                       <HStack justify="space-between" fontSize="xs">
-                                        <Text color="blue.600">Fuel Type:</Text>
+                                        <Text color="blue.600">{t('label.fuelType')}</Text>
                                         <Text color="blue.800" textTransform="capitalize">
                                           {calculation.breakdown.application_fuel_type || 'diesel'}
                                         </Text>
@@ -1171,32 +1212,40 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                     fontWeight="semibold"
                                     color="green.700"
                                     mb={1}>
-                                    Nutrient Content:
+                                    {t('nutrients.title')}
                                   </Text>
                                   {calculation.breakdown.npk_content.N > 0 && (
                                     <HStack justify="space-between" fontSize="xs">
-                                      <Text color="green.700">Nitrogen (N):</Text>
+                                      <Text color="green.700">{t('nutrients.N')}</Text>
                                       <Text color="green.800">
-                                        {calculation.breakdown.nitrogen_kg?.toFixed(1) || 'N/A'} kg
-                                        applied
+                                        {t('nutrients.applied', {
+                                          kg:
+                                            calculation.breakdown.nitrogen_kg?.toFixed(1) || t('na')
+                                        })}
                                       </Text>
                                     </HStack>
                                   )}
                                   {calculation.breakdown.npk_content.P > 0 && (
                                     <HStack justify="space-between" fontSize="xs">
-                                      <Text color="green.700">Phosphorus (P):</Text>
+                                      <Text color="green.700">{t('nutrients.P')}</Text>
                                       <Text color="green.800">
-                                        {calculation.breakdown.phosphorus_kg?.toFixed(1) || 'N/A'}{' '}
-                                        kg applied
+                                        {t('nutrients.applied', {
+                                          kg:
+                                            calculation.breakdown.phosphorus_kg?.toFixed(1) ||
+                                            t('na')
+                                        })}
                                       </Text>
                                     </HStack>
                                   )}
                                   {calculation.breakdown.npk_content.K > 0 && (
                                     <HStack justify="space-between" fontSize="xs">
-                                      <Text color="green.700">Potassium (K):</Text>
+                                      <Text color="green.700">{t('nutrients.K')}</Text>
                                       <Text color="green.800">
-                                        {calculation.breakdown.potassium_kg?.toFixed(1) || 'N/A'} kg
-                                        applied
+                                        {t('nutrients.applied', {
+                                          kg:
+                                            calculation.breakdown.potassium_kg?.toFixed(1) ||
+                                            t('na')
+                                        })}
                                       </Text>
                                     </HStack>
                                   )}
@@ -1211,7 +1260,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                               borderWidth="1px"
                               borderColor="orange.200">
                               <Text fontSize="xs" fontWeight="semibold" color="orange.700" mb={1}>
-                                Emissions Sources:
+                                {t('sources.title')}
                               </Text>
 
                               {/* Production Event Emissions */}
@@ -1229,33 +1278,36 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                             event must not be labelled "Electric Energy
                                             Emissions" over a line reading "1.7L × 2.70". */}
                                         {calculation.breakdown?.manual_operation_detected
-                                          ? 'Manual Labor Estimate:'
+                                          ? t('sources.manual')
                                           : calculation.breakdown?.fuel_type === 'electric' &&
                                             !fuelBasis?.assumed_fuel_is_diesel
-                                          ? 'Electric Energy Emissions:'
-                                          : 'Direct Fuel Combustion:'}
+                                          ? t('sources.electric')
+                                          : t('sources.combustion')}
                                       </Text>
                                       <Text color="orange.800">{formattedCO2e} kg CO₂e</Text>
                                     </HStack>
                                     {calculation.breakdown?.manual_operation_detected ? (
                                       <>
                                         <Text fontSize="xs" color="orange.600" pl={2}>
-                                          • Method:{' '}
-                                          {calculation.breakdown.method_documented ||
-                                            'Manual operation'}
+                                          {t('manual.method', {
+                                            method:
+                                              calculation.breakdown.method_documented ||
+                                              t('value.manualLabor')
+                                          })}
                                         </Text>
                                         <Text fontSize="xs" color="orange.600" pl={2}>
-                                          •{' '}
-                                          {calculation.breakdown.area_covered_acres?.toFixed(1) ||
-                                            'N/A'}{' '}
-                                          acres × 0.1 kg CO₂e/acre (hand-tool wear + worker
-                                          logistics)
+                                          {t('manual.perAcre', {
+                                            acres:
+                                              calculation.breakdown.area_covered_acres?.toFixed(
+                                                1
+                                              ) || t('na')
+                                          })}
                                         </Text>
                                         <Text fontSize="xs" color="orange.600" pl={2}>
-                                          • No fuel combustion, no powered equipment
+                                          {t('manual.noFuel')}
                                         </Text>
                                         <Text fontSize="xs" color="orange.600" pl={2}>
-                                          • Basis: Trazo Direct Operational Emissions (manual labor)
+                                          {t('manual.basis')}
                                         </Text>
                                       </>
                                     ) : /* `!assumed_fuel_is_diesel`: an electric machine with
@@ -1280,11 +1332,12 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                           kg CO₂e/kWh
                                         </Text>
                                         <Text fontSize="xs" color="orange.600" pl={2}>
-                                          • EPA factor:{' '}
-                                          {calculation.breakdown.electricity_emission_factor_kg_per_kwh?.toFixed(
-                                            2
-                                          ) || '0.39'}{' '}
-                                          kg CO₂e/kWh (EPA eGRID 2023)
+                                          {t('epa.kwhLine', {
+                                            value:
+                                              calculation.breakdown.electricity_emission_factor_kg_per_kwh?.toFixed(
+                                                2
+                                              ) || '0.39'
+                                          })}
                                         </Text>
                                         {/* `calculation_basis` title-cased was rendered here
                                             as "Source:". It is an internal enum, not a
@@ -1332,15 +1385,15 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                             title-cased into something that reads like a
                                             reference and resolves to nothing. */}
                                         <Text fontSize="xs" color="orange.600" pl={2}>
-                                          • EPA factor:{' '}
-                                          {(
-                                            fuelBasis?.emission_factor?.value ??
-                                            calculation.breakdown
-                                              .diesel_emission_factor_kg_per_gallon
-                                          )?.toFixed(2)}{' '}
-                                          kg CO₂e/gallon
+                                          {t('epa.gallonLine', {
+                                            value: (
+                                              fuelBasis?.emission_factor?.value ??
+                                              calculation.breakdown
+                                                .diesel_emission_factor_kg_per_gallon
+                                            )?.toFixed(2)
+                                          })}
                                           {fuelBasis?.emission_factor?.provenance === 'published'
-                                            ? ` — ${fuelBasis.emission_factor.source}`
+                                            ? ` (${fuelBasis.emission_factor.source})`
                                             : ''}
                                         </Text>
                                       </>
@@ -1367,7 +1420,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                       kwh * elecFactor;
                                     return (
                                       <HStack justify="space-between" fontSize="xs">
-                                        <Text color="orange.600">Electricity for Pumping:</Text>
+                                        <Text color="orange.600">{t('irrigation.pumping')}</Text>
                                         <Text color="orange.800">
                                           {pumpKg.toLocaleString(undefined, {
                                             maximumFractionDigits: 1
@@ -1390,31 +1443,35 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                     kg CO₂e/kWh
                                   </Text>
                                   <Text fontSize="xs" color="orange.600" pl={2}>
-                                    • Water pumped:{' '}
-                                    {calculation.breakdown.water_volume_gallons.toLocaleString()}{' '}
-                                    gallons
+                                    {t('irrigation.waterPumped', {
+                                      gallons:
+                                        calculation.breakdown.water_volume_gallons.toLocaleString()
+                                    })}
                                   </Text>
                                   {calculation.breakdown.pump_efficiency_kwh_per_1000_gallons && (
                                     <Text fontSize="xs" color="orange.600" pl={2}>
-                                      • Pump efficiency:{' '}
-                                      {calculation.breakdown.pump_efficiency_kwh_per_1000_gallons.toFixed(
-                                        2
-                                      )}{' '}
-                                      kWh/1000 gallons
+                                      {t('irrigation.pumpEfficiency', {
+                                        value:
+                                          calculation.breakdown.pump_efficiency_kwh_per_1000_gallons.toFixed(
+                                            2
+                                          )
+                                      })}
                                       {calculation.breakdown.water_source_label &&
                                         ` (${calculation.breakdown.water_source_label})`}
                                     </Text>
                                   )}
                                   {Boolean(calculation.breakdown.actual_kwh_consumed) && (
                                     <Text fontSize="xs" color="orange.600" pl={2}>
-                                      • Basis: Actual farmer-reported electricity consumption
+                                      {t('irrigation.basisReported')}
                                     </Text>
                                   )}
                                   <Text fontSize="xs" color="orange.600" pl={2}>
-                                    • Source: EPA eGRID electricity emission factors
-                                    {calculation.breakdown.pump_efficiency_kwh_per_1000_gallons
-                                      ? ' + USDA NRCS pump efficiency'
-                                      : ''}
+                                    {t('irrigation.source', {
+                                      nrcs: calculation.breakdown
+                                        .pump_efficiency_kwh_per_1000_gallons
+                                        ? 'yes'
+                                        : 'no'
+                                    })}
                                   </Text>
 
                                   {/* Auxiliary diesel (service vehicle, generator, tractor)
@@ -1423,7 +1480,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                     calculation.breakdown.auxiliary_diesel_emissions_kg > 0 && (
                                       <>
                                         <HStack justify="space-between" fontSize="xs" pt={1}>
-                                          <Text color="orange.600">Auxiliary Diesel Fuel:</Text>
+                                          <Text color="orange.600">{t('aux.title')}</Text>
                                           <Text color="orange.800">
                                             {calculation.breakdown.auxiliary_diesel_emissions_kg.toLocaleString(
                                               undefined,
@@ -1445,8 +1502,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                           kg CO₂e/gal (EPA)
                                         </Text>
                                         <Text fontSize="xs" color="orange.600" pl={2}>
-                                          • Reported alongside electric pump — counted as auxiliary
-                                          equipment (service vehicle, generator, or tractor).
+                                          {t('aux.note')}
                                         </Text>
                                       </>
                                     )}
@@ -1459,14 +1515,16 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                   {calculation.breakdown.fuel_emissions > 0 && (
                                     <>
                                       <HStack justify="space-between" fontSize="xs">
-                                        <Text color="orange.600">Fuel Combustion:</Text>
+                                        <Text color="orange.600">{t('sources.combustion')}</Text>
                                         <Text color="orange.800">
                                           {calculation.breakdown.fuel_emissions.toFixed(2)} kg CO₂e
                                         </Text>
                                       </HStack>
                                       <Text fontSize="xs" color="orange.600" pl={2}>
-                                        • {calculation.breakdown.fuel_consumed}{' '}
-                                        {calculation.breakdown.fuel_unit} × EPA diesel factor
+                                        {t('soil.fuelLine', {
+                                          amount: calculation.breakdown.fuel_consumed,
+                                          unit: calculation.breakdown.fuel_unit
+                                        })}
                                       </Text>
                                     </>
                                   )}
@@ -1480,8 +1538,8 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                               : 'orange.600'
                                           }>
                                           {calculation.breakdown.area_emissions < 0
-                                            ? 'Carbon Sequestration Credit:'
-                                            : 'Area-Based Emissions:'}
+                                            ? t('soil.stored')
+                                            : t('soil.areaBased')}
                                         </Text>
                                         <Text
                                           color={
@@ -1505,13 +1563,14 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                         {calculation.breakdown.emission_factor?.toFixed(2)} kg CO₂e/
                                         {calculation.breakdown.area_unit || 'acre'}
                                         {calculation.breakdown.area_emissions < 0 &&
-                                          ' (composting sequesters carbon)'}
+                                          t('soil.composting')}
                                       </Text>
                                     </>
                                   )}
                                   <Text fontSize="xs" color="orange.600" pl={2}>
-                                    • Total: {calculation.breakdown.total_impact?.toFixed(2)} kg
-                                    CO₂e
+                                    {t('soil.total', {
+                                      value: calculation.breakdown.total_impact?.toFixed(2)
+                                    })}
                                   </Text>
                                 </VStack>
                               )}
@@ -1524,8 +1583,8 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                       <HStack justify="space-between" fontSize="xs">
                                         <Text color="orange.600">
                                           {calculation.breakdown.fuel_type === 'electric'
-                                            ? 'Electricity Emissions:'
-                                            : 'Fuel Combustion:'}
+                                            ? t('sources.electricity')
+                                            : t('sources.combustion')}
                                         </Text>
                                         <Text color="orange.800">
                                           {calculation.breakdown.fuel_emissions?.toFixed(1) ||
@@ -1534,45 +1593,54 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                         </Text>
                                       </HStack>
                                       <Text fontSize="xs" color="orange.600" pl={2}>
-                                        • {calculation.breakdown.fuel_consumed}{' '}
-                                        {calculation.breakdown.fuel_unit || 'L'} ×{' '}
-                                        {calculation.breakdown.fuel_type === 'electric'
-                                          ? 'EPA eGRID factor'
-                                          : 'EPA diesel factor'}
+                                        {t('pest.factorLine', {
+                                          amount: calculation.breakdown.fuel_consumed,
+                                          unit: calculation.breakdown.fuel_unit || 'L',
+                                          factor:
+                                            calculation.breakdown.fuel_type === 'electric'
+                                              ? 'electric'
+                                              : 'other'
+                                        })}
                                       </Text>
                                       {calculation.breakdown.fuel_type && (
                                         <Text fontSize="xs" color="orange.600" pl={2}>
-                                          • Fuel type:{' '}
-                                          {calculation.breakdown.fuel_type === 'electric'
-                                            ? 'Electric (0.365 kg CO₂e/kWh)'
-                                            : calculation.breakdown.fuel_type === 'diesel'
-                                            ? 'Diesel (2.70 kg CO₂e/L)'
-                                            : calculation.breakdown.fuel_type === 'gasoline'
-                                            ? 'Gasoline (2.32 kg CO₂e/L)'
-                                            : calculation.breakdown.fuel_type === 'natural_gas'
-                                            ? 'Natural Gas (1.92 kg CO₂e/m³)'
-                                            : calculation.breakdown.fuel_type === 'propane'
-                                            ? 'LPG / Propane (1.51 kg CO₂e/L)'
-                                            : calculation.breakdown.fuel_type === 'biodiesel'
-                                            ? 'Biodiesel (2.31 kg CO₂e/L)'
-                                            : calculation.breakdown.fuel_type}
+                                          {t('pest.fuelTypeLine', {
+                                            fuel:
+                                              calculation.breakdown.fuel_type === 'electric'
+                                                ? `${t('fuel.electric')} (0.365 kg CO₂e/kWh)`
+                                                : calculation.breakdown.fuel_type === 'diesel'
+                                                ? `${t('fuel.diesel')} (2.70 kg CO₂e/L)`
+                                                : calculation.breakdown.fuel_type === 'gasoline'
+                                                ? `${t('fuel.gasoline')} (2.32 kg CO₂e/L)`
+                                                : calculation.breakdown.fuel_type === 'natural_gas'
+                                                ? `${t('fuel.naturalGas')} (1.92 kg CO₂e/m³)`
+                                                : calculation.breakdown.fuel_type === 'propane'
+                                                ? `${t('fuel.propane')} (1.51 kg CO₂e/L)`
+                                                : calculation.breakdown.fuel_type === 'biodiesel'
+                                                ? `${t('fuel.biodiesel')} (2.31 kg CO₂e/L)`
+                                                : calculation.breakdown.fuel_type
+                                          })}
                                         </Text>
                                       )}
                                     </>
                                   )}
                                   {calculation.breakdown.area_covered > 0 && (
                                     <Text fontSize="xs" color="orange.600" pl={2}>
-                                      • Area covered: {calculation.breakdown.area_covered}{' '}
-                                      {calculation.breakdown.area_unit || 'acres'}
+                                      {t('pest.areaLine', {
+                                        value: calculation.breakdown.area_covered,
+                                        unit: calculation.breakdown.area_unit || 'acres'
+                                      })}
                                     </Text>
                                   )}
                                   {calculation.breakdown.equipment_hours > 0 && (
                                     <Text fontSize="xs" color="orange.600" pl={2}>
-                                      • Equipment hours: {calculation.breakdown.equipment_hours}h
+                                      {t('pest.hoursLine', {
+                                        value: calculation.breakdown.equipment_hours
+                                      })}
                                     </Text>
                                   )}
                                   <Text fontSize="xs" color="orange.600" pl={2}>
-                                    • Source: EPA GHG Emission Factors Hub
+                                    {t('pest.source')}
                                   </Text>
                                   {calculation.breakdown.production_efficiency === 'high' && (
                                     <Text
@@ -1580,7 +1648,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                       color="green.700"
                                       pl={2}
                                       fontWeight="semibold">
-                                      High efficiency operation reduces emissions
+                                      {t('pest.highEfficiency')}
                                     </Text>
                                   )}
                                 </VStack>
@@ -1615,7 +1683,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                           return (
                                             <>
                                               <HStack justify="space-between" fontSize="xs">
-                                                <Text color="orange.600">Chemical Type:</Text>
+                                                <Text color="orange.600">{t('chem.type')}</Text>
                                                 <Text
                                                   color={isEcoFriendly ? 'green.600' : 'orange.800'}
                                                   fontWeight={isEcoFriendly ? 'semibold' : 'normal'}
@@ -1638,14 +1706,15 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                           );
                                         })()}
                                         <HStack justify="space-between" fontSize="xs">
-                                          <Text color="orange.600">Active Ingredient:</Text>
+                                          <Text color="orange.600">
+                                            {t('chem.activeIngredient')}
+                                          </Text>
                                           <Text color="orange.800">
                                             {calculation.breakdown.active_ingredient_percentage}%
                                             {calculation.breakdown.concentration_source ===
                                               'default' && (
                                               <Text as="span" color="orange.500" fontStyle="italic">
-                                                {' '}
-                                                (default)
+                                                {t('chem.default')}
                                               </Text>
                                             )}
                                           </Text>
@@ -1653,7 +1722,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                         {calculation.breakdown.active_ingredient_kg != null && (
                                           <HStack justify="space-between" fontSize="xs">
                                             <Text color="orange.600">
-                                              Active Ingredient Amount:
+                                              {t('chem.activeIngredientAmount')}
                                             </Text>
                                             <Text color="orange.800">
                                               {calculation.breakdown.active_ingredient_kg.toFixed(
@@ -1666,7 +1735,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                         {calculation.breakdown.emission_factor_kg_co2_per_kg !=
                                           null && (
                                           <HStack justify="space-between" fontSize="xs">
-                                            <Text color="orange.600">Emission Factor:</Text>
+                                            <Text color="orange.600">{t('chem.factor')}</Text>
                                             <Text color="orange.800">
                                               {calculation.breakdown.emission_factor_kg_co2_per_kg.toFixed(
                                                 2
@@ -1682,7 +1751,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                     {calculation.breakdown?.fertilizer_subtype && (
                                       <>
                                         <HStack justify="space-between" fontSize="xs">
-                                          <Text color="orange.600">Fertilizer Type:</Text>
+                                          <Text color="orange.600">{t('chem.fertilizerType')}</Text>
                                           <Text
                                             color={
                                               calculation.breakdown.fertilizer_subtype === 'organic'
@@ -1697,7 +1766,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                             textTransform="capitalize">
                                             {calculation.breakdown.fertilizer_subtype ===
                                             'slow_release'
-                                              ? 'Slow Release'
+                                              ? t('chem.slowRelease')
                                               : calculation.breakdown.fertilizer_subtype}
                                             {calculation.breakdown.fertilizer_subtype ===
                                               'organic' && ''}
@@ -1706,7 +1775,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                         {calculation.breakdown.emission_factor_kg_co2_per_kg !=
                                           null && (
                                           <HStack justify="space-between" fontSize="xs">
-                                            <Text color="orange.600">Emission Factor:</Text>
+                                            <Text color="orange.600">{t('chem.factor')}</Text>
                                             <Text color="orange.800">
                                               {calculation.breakdown.emission_factor_kg_co2_per_kg.toFixed(
                                                 2
@@ -1730,7 +1799,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                     {(calculation.breakdown?.manufacturing_emissions_kg_co2e ?? 0) >
                                       0 && (
                                       <HStack justify="space-between" fontSize="xs">
-                                        <Text color="orange.600">Manufacturing:</Text>
+                                        <Text color="orange.600">{t('chem.manufacturing')}</Text>
                                         <Text color="orange.800">
                                           {calculation.breakdown.manufacturing_emissions_kg_co2e.toFixed(
                                             1
@@ -1743,7 +1812,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                       0 && (
                                       <>
                                         <HStack justify="space-between" fontSize="xs">
-                                          <Text color="orange.600">Application Equipment:</Text>
+                                          <Text color="orange.600">{t('chem.equipment')}</Text>
                                           <Text color="orange.800">
                                             {calculation.breakdown.application_emissions_kg_co2e.toFixed(
                                               1
@@ -1764,28 +1833,27 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                             calculation.breakdown.epa_fuel_factor_unit ===
                                               'gal') && (
                                             <Text fontSize="xs" color="orange.600" pl={2}>
-                                              •{' '}
-                                              {calculation.breakdown.application_fuel_gallons.toFixed(
-                                                1
-                                              )}{' '}
-                                              gal ×{' '}
-                                              {(() => {
-                                                const factor =
-                                                  calculation.breakdown
-                                                    .epa_fuel_factor_kg_co2_per_unit ??
-                                                  calculation.breakdown
-                                                    .epa_diesel_factor_kg_co2_per_gallon;
-                                                if (factor != null) return factor.toFixed(2);
-                                                const gallons =
-                                                  calculation.breakdown.application_fuel_gallons;
-                                                const emissions =
-                                                  calculation.breakdown
-                                                    .application_emissions_kg_co2e ?? 0;
-                                                return gallons > 0
-                                                  ? (emissions / gallons).toFixed(2)
-                                                  : '';
-                                              })()}{' '}
-                                              kg CO₂e/gal (EPA factor)
+                                              {t('chem.galLine', {
+                                                gal: calculation.breakdown.application_fuel_gallons.toFixed(
+                                                  1
+                                                ),
+                                                factor: (() => {
+                                                  const factor =
+                                                    calculation.breakdown
+                                                      .epa_fuel_factor_kg_co2_per_unit ??
+                                                    calculation.breakdown
+                                                      .epa_diesel_factor_kg_co2_per_gallon;
+                                                  if (factor != null) return factor.toFixed(2);
+                                                  const gallons =
+                                                    calculation.breakdown.application_fuel_gallons;
+                                                  const emissions =
+                                                    calculation.breakdown
+                                                      .application_emissions_kg_co2e ?? 0;
+                                                  return gallons > 0
+                                                    ? (emissions / gallons).toFixed(2)
+                                                    : '';
+                                                })()
+                                              })}
                                             </Text>
                                           )}
                                       </>
