@@ -65,6 +65,8 @@ export const baseApi = createApi({
     'OSPReview',
     'OSPRecordTypes',
     'PostHarvestFacility',
+    'CertifierInspection',
+    'CertifierNotice',
     'Supplier',
     'BrandOwner',
     'ProductionEquipment',

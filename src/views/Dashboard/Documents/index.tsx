@@ -527,6 +527,10 @@ const DocumentsPage = () => {
             ? intl.formatMessage({ id: 'documents.deleteBlocked.annualUpdate' })
             : (err as { data?: { code?: unknown } })?.data?.code === 'material_label_in_use'
             ? intl.formatMessage({ id: 'documents.deleteBlocked.materialLabel' })
+            : (err as { data?: { code?: unknown } })?.data?.code === 'inspection_document_in_use'
+            ? intl.formatMessage({ id: 'documents.deleteBlocked.inspectionReport' })
+            : (err as { data?: { code?: unknown } })?.data?.code === 'notice_document_in_use'
+            ? intl.formatMessage({ id: 'documents.deleteBlocked.certifierNotice' })
             : apiErrorMessage(err) ?? undefined,
         status: 'error',
         duration: 5000

@@ -86,6 +86,9 @@ import OSPAnnualUpdateCard, { OSPRenewalSummary } from './OSPAnnualUpdateCard';
 import { selectPlanOnFile } from './selectPlanOnFile';
 import { selectWorkingOsp } from './selectWorkingOsp';
 import AgentFormCopySheet from './AgentFormCopySheet';
+import CertifierInspectionsCard, {
+  UnresolvedCertifierNoticesLine
+} from './CertifierInspectionsCard';
 import { useComplianceExports } from 'components/Guards/ComplianceExportsGuard';
 import { FIRST_SECTION_WITHOUT_TEXT } from './ospLinks';
 import { useFarm, useFarmState } from 'hooks/useMeasurementSystem';
@@ -1279,6 +1282,20 @@ const OSPView: React.FC = () => {
           currentYear={new Date().getFullYear()}
           signer={{ responsiblePerson: farmContactPerson, account: accountName }}
           isSetupOperator={isSetupOperator}
+          agentRequestedHint={
+            <UnresolvedCertifierNoticesLine companyId={companyId} farmId={farmId} />
+          }
+        />
+      )}
+
+      {/* The farm's own record of its certifier's inspections and the items the agent sent
+          (7 CFR 205.662), with its responses. On every plan: recording is free; what the packet
+          prints from it is what Compliance buys. */}
+      {companyId && farmId && (
+        <CertifierInspectionsCard
+          companyId={companyId}
+          farmId={farmId}
+          state={farmState ?? undefined}
         />
       )}
 
