@@ -221,6 +221,14 @@ interface CarbonImpactPreviewProps {
 
 // The impact LEVELS the backend sends with a recommendation. "Transparency" is also sent, as a
 // category rather than a level, and is not shown as one.
+// The area units the activity form offers, as hectares.
+const HECTARES_PER_UNIT: Record<string, number> = {
+  ha: 1,
+  acres: 0.404686,
+  m2: 0.0001,
+  km2: 100
+};
+
 const IMPACT_LEVEL_KEYS: Record<string, string> = {
   High: 'carbon.recommendation.impactHigh',
   Medium: 'carbon.recommendation.impactMedium',
@@ -233,6 +241,35 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
     // Every string on this panel is under `carbonPreview.` (2026-11-08: it was English only).
     const t = (id: string, values?: Record<string, string | number | null | undefined>) =>
       intl.formatMessage({ id: `carbonPreview.${id}` }, values);
+    /*
+     * An area keeps its significant digits. `toFixed(1)` printed 123 m² (0.03 acres, 0.012 ha)
+     * as "0.0 acres → 0.0 hectares" under "You told us" (2026-11-08): a reading the farmer
+     * never gave, and a zero.
+     */
+    const formatArea = (n: number) =>
+      intl.formatNumber(
+        n,
+        Math.abs(n) >= 1 ? { maximumFractionDigits: 1 } : { maximumSignificantDigits: 2 }
+      );
+    /*
+     * "You told us" shows the area the way it was told: the form's own value and unit. The
+     * production response carries only its acre conversion, so this reads the form when the
+     * tab passes `area_covered` / `area_unit`, and falls back to the response when not.
+     */
+    const enteredAreaValue = Number(formData?.area_covered);
+    const enteredAreaUnit: string | undefined = formData?.area_unit;
+    const enteredArea =
+      enteredAreaValue > 0 && enteredAreaUnit && enteredAreaUnit in HECTARES_PER_UNIT
+        ? { value: enteredAreaValue, unit: enteredAreaUnit }
+        : null;
+    const areaLabel = (value: number, unit: string) => {
+      const v = formatArea(value);
+      if (unit === 'ha') return t('unit.hectares', { value: v });
+      if (unit === 'acres') return t('unit.acres', { value: v });
+      if (unit === 'm2') return `${v} m²`;
+      if (unit === 'km2') return `${v} km²`;
+      return `${v} ${unit}`;
+    };
     const bgColor = useColorModeValue('gray.50', 'gray.700');
     const borderColor = useColorModeValue('gray.200', 'gray.600');
     const textColor = useColorModeValue('gray.800', 'white');
@@ -796,46 +833,50 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                     )
                                   )}
                                   {/* Hide area lines for EM/PO events where area is not applicable */}
-                                  {(calculation.original_area_treated > 0 ||
+                                  {(enteredArea ||
+                                    calculation.original_area_treated > 0 ||
                                     calculation.breakdown.area_covered_acres > 0 ||
                                     (typeof calculation.breakdown.area_covered === 'number' &&
-                                      calculation.breakdown.area_covered > 0)) && (
-                                    <>
-                                      <HStack justify="space-between" fontSize="xs">
-                                        <Text color="blue.600">{t('label.areaInput')}</Text>
-                                        <Text color="blue.800">
-                                          {(() => {
-                                            const value =
-                                              calculation.original_area_treated?.toFixed(1) ||
-                                              calculation.breakdown.area_covered_acres?.toFixed(
-                                                1
-                                              ) ||
-                                              calculation.breakdown.area_covered?.toFixed?.(1) ||
-                                              t('na');
-                                            return calculation.original_area_unit === 'ha'
-                                              ? t('unit.hectares', { value })
-                                              : calculation.original_area_unit === 'm2'
-                                              ? `${value} m²`
-                                              : t('unit.acres', { value });
-                                          })()}
-                                        </Text>
-                                      </HStack>
-                                      {calculation.original_area_unit !== 'ha' && (
-                                        <HStack justify="space-between" fontSize="xs">
-                                          <Text color="blue.500" fontStyle="italic">
-                                            {t('label.converted')}
-                                          </Text>
-                                          <Text color="blue.700" fontStyle="italic">
-                                            {t('unit.hectares', {
-                                              value: derivedHectares
-                                                ? derivedHectares.toFixed(1)
-                                                : t('na')
-                                            })}
-                                          </Text>
-                                        </HStack>
-                                      )}
-                                    </>
-                                  )}
+                                      calculation.breakdown.area_covered > 0)) &&
+                                    (() => {
+                                      const told = enteredArea || {
+                                        value:
+                                          calculation.original_area_treated ||
+                                          calculation.breakdown.area_covered_acres ||
+                                          calculation.breakdown.area_covered ||
+                                          0,
+                                        unit:
+                                          calculation.original_area_unit === 'ha' ||
+                                          calculation.original_area_unit === 'm2'
+                                            ? calculation.original_area_unit
+                                            : 'acres'
+                                      };
+                                      const hectares = enteredArea
+                                        ? enteredArea.value * HECTARES_PER_UNIT[enteredArea.unit]
+                                        : derivedHectares;
+                                      return (
+                                        <>
+                                          <HStack justify="space-between" fontSize="xs">
+                                            <Text color="blue.600">{t('label.areaInput')}</Text>
+                                            <Text color="blue.800">
+                                              {told.value > 0
+                                                ? areaLabel(told.value, told.unit)
+                                                : t('na')}
+                                            </Text>
+                                          </HStack>
+                                          {told.unit !== 'ha' && (
+                                            <HStack justify="space-between" fontSize="xs">
+                                              <Text color="blue.500" fontStyle="italic">
+                                                {t('label.converted')}
+                                              </Text>
+                                              <Text color="blue.700" fontStyle="italic">
+                                                {hectares > 0 ? areaLabel(hectares, 'ha') : t('na')}
+                                              </Text>
+                                            </HStack>
+                                          )}
+                                        </>
+                                      );
+                                    })()}
                                   {calculation.breakdown.equipment_hours > 0 && (
                                     <HStack justify="space-between" fontSize="xs">
                                       <Text color="blue.600">{t('label.equipmentHours')}</Text>
@@ -1296,10 +1337,9 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                         </Text>
                                         <Text fontSize="xs" color="orange.600" pl={2}>
                                           {t('manual.perAcre', {
-                                            acres:
-                                              calculation.breakdown.area_covered_acres?.toFixed(
-                                                1
-                                              ) || t('na')
+                                            acres: calculation.breakdown.area_covered_acres
+                                              ? formatArea(calculation.breakdown.area_covered_acres)
+                                              : t('na')
                                           })}
                                         </Text>
                                         <Text fontSize="xs" color="orange.600" pl={2}>
@@ -1938,7 +1978,9 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
       prevProps.formData?.type === nextProps.formData?.type &&
       prevProps.formData?.production_type === nextProps.formData?.production_type &&
       prevProps.formData?.electricity_source === nextProps.formData?.electricity_source &&
-      prevProps.formData?.is_fertigation === nextProps.formData?.is_fertigation;
+      prevProps.formData?.is_fertigation === nextProps.formData?.is_fertigation &&
+      prevProps.formData?.area_covered === nextProps.formData?.area_covered &&
+      prevProps.formData?.area_unit === nextProps.formData?.area_unit;
 
     return (
       prevProps.isCalculating === nextProps.isCalculating &&

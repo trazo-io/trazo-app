@@ -4695,7 +4695,14 @@ const ProductionTab = forwardRef(
                         formData={{
                           ...initialValues,
                           type: productionType,
-                          electricity_source: watch('electricity_source')
+                          electricity_source: watch('electricity_source'),
+                          // "You told us" repeats the area as entered, unit included, and
+                          // only while the form shows the field: a value typed on another
+                          // subtype stays in the form after a switch to one with no area
+                          // (EM/PO/TP/BU/SS), or in multi-parcel mode (review of app #325).
+                          ...(AREA_SUBTYPES.includes(productionType) && !multiTarget
+                            ? { area_covered: watch('area_covered'), area_unit: watch('area_unit') }
+                            : { area_covered: undefined, area_unit: undefined })
                         }}
                         calculation={carbonCalculation}
                         isCalculating={isCalculatingCarbon}
