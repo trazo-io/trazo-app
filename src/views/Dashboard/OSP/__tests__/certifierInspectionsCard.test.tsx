@@ -197,6 +197,9 @@ describe('CertifierInspectionsCard', () => {
 
     // The save failed; the retry links the same file instead of uploading a second copy.
     resolving(addInspection, inspectionRow({ id: 5 }));
+    await waitFor(() =>
+      expect(screen.getByTestId('inspection-form').querySelector('fieldset')?.disabled).toBe(false)
+    );
     fireEvent.click(
       within(screen.getByTestId('inspection-form')).getByText(en['osp.inspections.save'])
     );
@@ -254,5 +257,76 @@ describe('UnresolvedCertifierNoticesLine', () => {
     unmount();
     notices = { data: undefined, isLoading: false, isError: true, error: { status: 403 } };
     expect(renderLine().container.textContent).toBe('');
+  });
+});
+
+describe('saving a notice with several files (review of app #333)', () => {
+  beforeEach(() => {
+    inspections = loaded([]);
+    notices = loaded([]);
+    [addInspection, updateInspection, addNotice, updateNotice, upload].forEach((f) =>
+      f.mockReset()
+    );
+  });
+
+  const pickFile = (form: HTMLElement, label: RegExp, files: File[]) =>
+    fireEvent.change(within(form).getByLabelText(label) as HTMLInputElement, {
+      target: { files }
+    });
+
+  it('a failed later upload re-sends nothing that already uploaded', async () => {
+    const letter = new File(['%PDF'], 'letter.pdf', { type: 'application/pdf' });
+    const sent = new File(['%PDF'], 'sent.pdf', { type: 'application/pdf' });
+    let call = 0;
+    upload.mockImplementation(({ file }: { file: File }) => {
+      call += 1;
+      // The response file fails the first time it is tried, and succeeds on the retry.
+      if (file === sent && call === 2) return { unwrap: () => Promise.reject({ status: 500 }) };
+      return { unwrap: () => Promise.resolve({ id: file === letter ? 51 : 52 }) };
+    });
+    resolving(addNotice, noticeRow({ id: 20 }));
+    renderCard();
+    fireEvent.click(screen.getByText(en['osp.inspections.addNotice']));
+    const form = screen.getByTestId('notice-form');
+    fireEvent.change(within(form).getByLabelText(/^The item/), {
+      target: { value: 'Buffer records missing' }
+    });
+    pickFile(form, /^The agent's letter/, [letter]);
+    pickFile(form, /^Files you sent with it/, [sent]);
+    fireEvent.click(within(form).getByText(en['osp.inspections.save']));
+    await waitFor(() => expect(upload).toHaveBeenCalledTimes(2));
+    expect(addNotice).not.toHaveBeenCalled();
+    await waitFor(() =>
+      expect(screen.getByTestId('notice-form').querySelector('fieldset')?.disabled).toBe(false)
+    );
+
+    fireEvent.click(
+      within(screen.getByTestId('notice-form')).getByText(en['osp.inspections.save'])
+    );
+    await waitFor(() => expect(addNotice).toHaveBeenCalledTimes(1));
+    // The letter was uploaded once; only the failed response file was tried again.
+    expect(upload.mock.calls.map((c) => c[0].file)).toEqual([letter, sent, sent]);
+    expect(addNotice.mock.calls[0][0].data).toMatchObject({
+      notice_document: 51,
+      response_document_ids: [52]
+    });
+  });
+
+  it('the form cannot be edited while its files upload', async () => {
+    let finish: (v: unknown) => void = () => undefined;
+    upload.mockImplementation(() => ({
+      unwrap: () => new Promise((resolve) => (finish = resolve))
+    }));
+    resolving(addNotice, noticeRow({ id: 21 }));
+    renderCard();
+    fireEvent.click(screen.getByText(en['osp.inspections.addNotice']));
+    const form = screen.getByTestId('notice-form');
+    fireEvent.change(within(form).getByLabelText(/^The item/), { target: { value: 'x' } });
+    pickFile(form, /^The agent's letter/, [new File(['%PDF'], 'l.pdf')]);
+    fireEvent.click(within(form).getByText(en['osp.inspections.save']));
+    await waitFor(() => expect(upload).toHaveBeenCalledTimes(1));
+    expect(form.querySelector('fieldset')?.disabled).toBe(true);
+    finish({ id: 60 });
+    await waitFor(() => expect(addNotice).toHaveBeenCalledTimes(1));
   });
 });

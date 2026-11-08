@@ -164,6 +164,9 @@ const CertifierInspectionsCard: React.FC<Props> = ({ companyId, farmId, state })
   const [notice, setNotice] = useState<CertifierNoticeInput>(EMPTY_NOTICE);
   // Files picked but not yet uploaded, by the field they will fill.
   const [files, setFiles] = useState<Record<string, File[]>>({});
+  // True for the whole save, uploads and record together. The RTK flags alone drop to false in the
+  // gap between one request finishing and the next starting, which re-enabled the form mid-save.
+  const [saving, setSaving] = useState(false);
 
   const t = (id: string, values?: Record<string, React.ReactNode>) =>
     intl.formatMessage({ id }, values as Record<string, string>);
@@ -205,7 +208,7 @@ const CertifierInspectionsCard: React.FC<Props> = ({ companyId, farmId, state })
   const inspections = inspectionsQuery.data ?? [];
   const notices = noticesQuery.data ?? [];
   const busy =
-    addingInspection || updatingInspection || addingNotice || updatingNotice || uploading;
+    saving || addingInspection || updatingInspection || addingNotice || updatingNotice || uploading;
   const formOpen = inspectionEditing !== null || noticeEditing !== null;
 
   const pick =
@@ -223,8 +226,17 @@ const CertifierInspectionsCard: React.FC<Props> = ({ companyId, farmId, state })
       duration: 6000
     });
 
-  /** Upload each picked file for `key` to Documents; the ids, in pick order. Throws on a failure. */
-  const uploadPicked = async (key: string, title: string): Promise<number[]> => {
+  /**
+   * Upload each picked file for `key` to Documents, in pick order, and hand each id to `link` the
+   * moment it exists. Each file leaves the pending list as soon as it is uploaded, so when a later
+   * upload fails, a retry sends only what is still pending and links nothing twice (review of
+   * app #333: ids were committed only after every upload succeeded). Throws on a failure.
+   */
+  const uploadPicked = async (
+    key: string,
+    title: string,
+    link: (id: number) => void
+  ): Promise<number[]> => {
     const ids: number[] = [];
     for (const file of files[key] ?? []) {
       const doc = await upload({
@@ -235,6 +247,8 @@ const CertifierInspectionsCard: React.FC<Props> = ({ companyId, farmId, state })
         title: `${title} - ${file.name}`
       }).unwrap();
       ids.push(doc.id);
+      link(doc.id);
+      setFiles((f) => ({ ...f, [key]: (f[key] ?? []).filter((x) => x !== file) }));
     }
     return ids;
   };
@@ -258,15 +272,23 @@ const CertifierInspectionsCard: React.FC<Props> = ({ companyId, farmId, state })
   };
 
   const saveInspection = async () => {
+    setSaving(true);
+    try {
+      await saveInspectionNow();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveInspectionNow = async () => {
+    // The form is disabled while saving, so this snapshot is what the user sees until it is sent.
     const data = { ...inspection };
     try {
-      const [report] = await uploadPicked('report', t('osp.inspections.upload.report'));
-      if (report != null) {
-        data.report_document = report;
-        // Kept in the draft: a retry after a failed save links this file, not a second copy.
-        setInspection((d) => ({ ...d, report_document: report }));
-        setFiles((f) => ({ ...f, report: [] }));
-      }
+      // Kept in the draft: a retry after a failed save links this file, not a second copy.
+      const [report] = await uploadPicked('report', t('osp.inspections.upload.report'), (id) =>
+        setInspection((d) => ({ ...d, report_document: id }))
+      );
+      if (report != null) data.report_document = report;
     } catch (error) {
       fail('osp.inspections.uploadFailed', error);
       return;
@@ -291,16 +313,34 @@ const CertifierInspectionsCard: React.FC<Props> = ({ companyId, farmId, state })
   };
 
   const saveNotice = async () => {
+    setSaving(true);
+    try {
+      await saveNoticeNow();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveNoticeNow = async () => {
+    // The form is disabled while saving, so this snapshot is what the user sees until it is sent.
     const data = { ...notice, description: notice.description.trim() };
     try {
-      const [letter] = await uploadPicked('letter', t('osp.inspections.upload.letter'));
-      const sent = await uploadPicked('response', t('osp.inspections.upload.response'));
-      const [resolution] = await uploadPicked('resolution', t('osp.inspections.upload.resolution'));
+      // Each id goes into the draft the moment its upload succeeds (functional updates, so
+      // nothing else in the draft is overwritten); a retry after any failure re-sends nothing.
+      const [letter] = await uploadPicked('letter', t('osp.inspections.upload.letter'), (id) =>
+        setNotice((d) => ({ ...d, notice_document: id }))
+      );
       if (letter != null) data.notice_document = letter;
-      if (resolution != null) data.resolution_document = resolution;
+      const sent = await uploadPicked('response', t('osp.inspections.upload.response'), (id) =>
+        setNotice((d) => ({ ...d, response_document_ids: [...d.response_document_ids, id] }))
+      );
       data.response_document_ids = [...data.response_document_ids, ...sent];
-      setNotice(data);
-      setFiles({});
+      const [resolution] = await uploadPicked(
+        'resolution',
+        t('osp.inspections.upload.resolution'),
+        (id) => setNotice((d) => ({ ...d, resolution_document: id }))
+      );
+      if (resolution != null) data.resolution_document = resolution;
     } catch (error) {
       fail('osp.inspections.uploadFailed', error);
       return;
@@ -361,71 +401,74 @@ const CertifierInspectionsCard: React.FC<Props> = ({ companyId, farmId, state })
 
   const inspectionForm = (
     <Box p={3} borderWidth="1px" borderRadius="md" data-testid="inspection-form">
-      <VStack align="stretch" spacing={3}>
-        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
-          <StandardField label={t('osp.inspections.field.date')} required>
+      {/* Disabled while saving: an edit made during the upload would not be in what is sent. */}
+      <Box as="fieldset" disabled={busy} border="none" m={0} p={0} minW={0}>
+        <VStack align="stretch" spacing={3}>
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+            <StandardField label={t('osp.inspections.field.date')} required>
+              <StandardInput
+                type="date"
+                value={inspection.inspected_on}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setInspection((d) => ({ ...d, inspected_on: e.target.value }))
+                }
+              />
+            </StandardField>
+            <StandardField label={t('osp.inspections.field.kind')}>
+              <StandardSelect
+                value={inspection.inspection_kind}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                  setInspection((d) => ({
+                    ...d,
+                    inspection_kind: e.target.value as CertifierInspectionInput['inspection_kind']
+                  }))
+                }>
+                {INSPECTION_KINDS.map((k) => (
+                  <option key={k} value={k}>
+                    {t(INSPECTION_KIND_ID[k])}
+                  </option>
+                ))}
+              </StandardSelect>
+            </StandardField>
+          </SimpleGrid>
+          <StandardField label={t('osp.inspections.field.agent')}>
+            <CertifyingAgentPicker
+              value={inspection.certifying_agent}
+              onChange={(name) => setInspection((d) => ({ ...d, certifying_agent: name }))}
+              state={state}
+            />
+          </StandardField>
+          <StandardField label={t('osp.inspections.field.inspector')}>
             <StandardInput
-              type="date"
-              value={inspection.inspected_on}
+              value={inspection.inspector_name}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setInspection((d) => ({ ...d, inspected_on: e.target.value }))
+                setInspection((d) => ({ ...d, inspector_name: e.target.value }))
               }
             />
           </StandardField>
-          <StandardField label={t('osp.inspections.field.kind')}>
-            <StandardSelect
-              value={inspection.inspection_kind}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                setInspection((d) => ({
-                  ...d,
-                  inspection_kind: e.target.value as CertifierInspectionInput['inspection_kind']
-                }))
-              }>
-              {INSPECTION_KINDS.map((k) => (
-                <option key={k} value={k}>
-                  {t(INSPECTION_KIND_ID[k])}
-                </option>
-              ))}
-            </StandardSelect>
+          <StandardField
+            label={t('osp.inspections.field.report')}
+            helpText={t('osp.inspections.field.reportHelp')}>
+            {inspection.report_document != null &&
+              attached(inspection.report_document, () =>
+                setInspection((d) => ({ ...d, report_document: null }))
+              )}
+            <StandardInput type="file" accept={UPLOAD_ACCEPT} onChange={pick('report')} p={1} />
           </StandardField>
-        </SimpleGrid>
-        <StandardField label={t('osp.inspections.field.agent')}>
-          <CertifyingAgentPicker
-            value={inspection.certifying_agent}
-            onChange={(name) => setInspection((d) => ({ ...d, certifying_agent: name }))}
-            state={state}
-          />
-        </StandardField>
-        <StandardField label={t('osp.inspections.field.inspector')}>
-          <StandardInput
-            value={inspection.inspector_name}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setInspection((d) => ({ ...d, inspector_name: e.target.value }))
-            }
-          />
-        </StandardField>
-        <StandardField
-          label={t('osp.inspections.field.report')}
-          helpText={t('osp.inspections.field.reportHelp')}>
-          {inspection.report_document != null &&
-            attached(inspection.report_document, () =>
-              setInspection((d) => ({ ...d, report_document: null }))
-            )}
-          <StandardInput type="file" accept={UPLOAD_ACCEPT} onChange={pick('report')} p={1} />
-        </StandardField>
-        <HStack spacing={2} justify="flex-end">
-          <StandardButton variant="ghost" size="sm" onClick={closeForms}>
-            {t('osp.inspections.cancel')}
-          </StandardButton>
-          <StandardButton
-            size="sm"
-            onClick={saveInspection}
-            isDisabled={!inspection.inspected_on}
-            isLoading={busy}>
-            {t('osp.inspections.save')}
-          </StandardButton>
-        </HStack>
-      </VStack>
+          <HStack spacing={2} justify="flex-end">
+            <StandardButton variant="ghost" size="sm" onClick={closeForms}>
+              {t('osp.inspections.cancel')}
+            </StandardButton>
+            <StandardButton
+              size="sm"
+              onClick={saveInspection}
+              isDisabled={!inspection.inspected_on}
+              isLoading={busy}>
+              {t('osp.inspections.save')}
+            </StandardButton>
+          </HStack>
+        </VStack>
+      </Box>
     </Box>
   );
 
@@ -443,159 +486,161 @@ const CertifierInspectionsCard: React.FC<Props> = ({ companyId, farmId, state })
 
   const noticeForm = (
     <Box p={3} borderWidth="1px" borderRadius="md" data-testid="notice-form">
-      <VStack align="stretch" spacing={3}>
-        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
-          <StandardField label={t('osp.inspections.field.noticeKind')} required>
-            <StandardSelect
-              value={notice.kind}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                setNotice((d) => ({ ...d, kind: e.target.value as CertifierNoticeInput['kind'] }))
-              }>
-              {NOTICE_KINDS.map((k) => (
-                <option key={k} value={k}>
-                  {t(NOTICE_KIND_ID[k])}
-                </option>
-              ))}
-            </StandardSelect>
-          </StandardField>
-          <StandardField label={t('osp.inspections.field.fromInspection')}>
-            <StandardSelect
-              value={notice.inspection ?? ''}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                setNotice((d) => ({
-                  ...d,
-                  inspection: e.target.value ? Number(e.target.value) : null
-                }))
-              }>
-              <option value="">{t('osp.inspections.field.noInspection')}</option>
-              {inspections.map((i) => (
-                <option key={i.id} value={i.id}>
-                  {inspectionLabel(i.id)}
-                </option>
-              ))}
-            </StandardSelect>
-          </StandardField>
-        </SimpleGrid>
-        {notice.kind === 'other_item' && (
+      <Box as="fieldset" disabled={busy} border="none" m={0} p={0} minW={0}>
+        <VStack align="stretch" spacing={3}>
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+            <StandardField label={t('osp.inspections.field.noticeKind')} required>
+              <StandardSelect
+                value={notice.kind}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                  setNotice((d) => ({ ...d, kind: e.target.value as CertifierNoticeInput['kind'] }))
+                }>
+                {NOTICE_KINDS.map((k) => (
+                  <option key={k} value={k}>
+                    {t(NOTICE_KIND_ID[k])}
+                  </option>
+                ))}
+              </StandardSelect>
+            </StandardField>
+            <StandardField label={t('osp.inspections.field.fromInspection')}>
+              <StandardSelect
+                value={notice.inspection ?? ''}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                  setNotice((d) => ({
+                    ...d,
+                    inspection: e.target.value ? Number(e.target.value) : null
+                  }))
+                }>
+                <option value="">{t('osp.inspections.field.noInspection')}</option>
+                {inspections.map((i) => (
+                  <option key={i.id} value={i.id}>
+                    {inspectionLabel(i.id)}
+                  </option>
+                ))}
+              </StandardSelect>
+            </StandardField>
+          </SimpleGrid>
+          {notice.kind === 'other_item' && (
+            <StandardField
+              label={t('osp.inspections.field.agentLabel')}
+              helpText={t('osp.inspections.field.agentLabelHelp')}
+              required>
+              <StandardInput
+                value={notice.agent_label}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setNotice((d) => ({ ...d, agent_label: e.target.value }))
+                }
+              />
+            </StandardField>
+          )}
           <StandardField
-            label={t('osp.inspections.field.agentLabel')}
-            helpText={t('osp.inspections.field.agentLabelHelp')}
+            label={t('osp.inspections.field.description')}
+            helpText={t('osp.inspections.field.descriptionHelp')}
             required>
-            <StandardInput
-              value={notice.agent_label}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setNotice((d) => ({ ...d, agent_label: e.target.value }))
+            <StandardTextarea
+              value={notice.description}
+              rows={3}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                setNotice((d) => ({ ...d, description: e.target.value }))
               }
             />
           </StandardField>
-        )}
-        <StandardField
-          label={t('osp.inspections.field.description')}
-          helpText={t('osp.inspections.field.descriptionHelp')}
-          required>
-          <StandardTextarea
-            value={notice.description}
-            rows={3}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-              setNotice((d) => ({ ...d, description: e.target.value }))
-            }
-          />
-        </StandardField>
-        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
-          {dateField('osp.inspections.field.receivedOn', 'received_on')}
-          {dateField('osp.inspections.field.respondBy', 'respond_by')}
-        </SimpleGrid>
-        <StandardField
-          label={t('osp.inspections.field.letter')}
-          helpText={t('osp.inspections.field.letterHelp')}>
-          {notice.notice_document != null &&
-            attached(notice.notice_document, () =>
-              setNotice((d) => ({ ...d, notice_document: null }))
-            )}
-          <StandardInput type="file" accept={UPLOAD_ACCEPT} onChange={pick('letter')} p={1} />
-        </StandardField>
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+            {dateField('osp.inspections.field.receivedOn', 'received_on')}
+            {dateField('osp.inspections.field.respondBy', 'respond_by')}
+          </SimpleGrid>
+          <StandardField
+            label={t('osp.inspections.field.letter')}
+            helpText={t('osp.inspections.field.letterHelp')}>
+            {notice.notice_document != null &&
+              attached(notice.notice_document, () =>
+                setNotice((d) => ({ ...d, notice_document: null }))
+              )}
+            <StandardInput type="file" accept={UPLOAD_ACCEPT} onChange={pick('letter')} p={1} />
+          </StandardField>
 
-        <Text fontSize="sm" fontWeight="semibold" pt={2}>
-          {t('osp.inspections.section.response')}
-        </Text>
-        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
-          <StandardField label={t('osp.inspections.field.responseKind')}>
-            <StandardSelect
-              value={notice.response_kind}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+          <Text fontSize="sm" fontWeight="semibold" pt={2}>
+            {t('osp.inspections.section.response')}
+          </Text>
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+            <StandardField label={t('osp.inspections.field.responseKind')}>
+              <StandardSelect
+                value={notice.response_kind}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                  setNotice((d) => ({
+                    ...d,
+                    response_kind: e.target.value as CertifierNoticeInput['response_kind']
+                  }))
+                }>
+                {NOTICE_RESPONSE_KINDS.map((k) => (
+                  <option key={k} value={k}>
+                    {t(RESPONSE_KIND_ID[k])}
+                  </option>
+                ))}
+              </StandardSelect>
+            </StandardField>
+            {dateField('osp.inspections.field.responseSentOn', 'response_sent_on')}
+          </SimpleGrid>
+          <StandardField label={t('osp.inspections.field.responseText')}>
+            <StandardTextarea
+              value={notice.response_text}
+              rows={3}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                setNotice((d) => ({ ...d, response_text: e.target.value }))
+              }
+            />
+          </StandardField>
+          <StandardField
+            label={t('osp.inspections.field.responseFiles')}
+            helpText={t('osp.inspections.field.responseFilesHelp')}>
+            {notice.response_document_ids.map((id) =>
+              attached(id, () =>
                 setNotice((d) => ({
                   ...d,
-                  response_kind: e.target.value as CertifierNoticeInput['response_kind']
+                  response_document_ids: d.response_document_ids.filter((x) => x !== id)
                 }))
-              }>
-              {NOTICE_RESPONSE_KINDS.map((k) => (
-                <option key={k} value={k}>
-                  {t(RESPONSE_KIND_ID[k])}
-                </option>
-              ))}
-            </StandardSelect>
-          </StandardField>
-          {dateField('osp.inspections.field.responseSentOn', 'response_sent_on')}
-        </SimpleGrid>
-        <StandardField label={t('osp.inspections.field.responseText')}>
-          <StandardTextarea
-            value={notice.response_text}
-            rows={3}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-              setNotice((d) => ({ ...d, response_text: e.target.value }))
-            }
-          />
-        </StandardField>
-        <StandardField
-          label={t('osp.inspections.field.responseFiles')}
-          helpText={t('osp.inspections.field.responseFilesHelp')}>
-          {notice.response_document_ids.map((id) =>
-            attached(id, () =>
-              setNotice((d) => ({
-                ...d,
-                response_document_ids: d.response_document_ids.filter((x) => x !== id)
-              }))
-            )
-          )}
-          <StandardInput
-            type="file"
-            multiple
-            accept={UPLOAD_ACCEPT}
-            onChange={pick('response', true)}
-            p={1}
-          />
-        </StandardField>
-
-        <Text fontSize="sm" fontWeight="semibold" pt={2}>
-          {t('osp.inspections.section.resolution')}
-        </Text>
-        {dateField('osp.inspections.field.resolutionOn', 'resolution_received_on')}
-        <StandardField
-          label={t('osp.inspections.field.resolution')}
-          helpText={t('osp.inspections.field.resolutionHelp')}>
-          {notice.resolution_document != null &&
-            attached(notice.resolution_document, () =>
-              setNotice((d) => ({ ...d, resolution_document: null }))
+              )
             )}
-          <StandardInput type="file" accept={UPLOAD_ACCEPT} onChange={pick('resolution')} p={1} />
-        </StandardField>
+            <StandardInput
+              type="file"
+              multiple
+              accept={UPLOAD_ACCEPT}
+              onChange={pick('response', true)}
+              p={1}
+            />
+          </StandardField>
 
-        <HStack spacing={2} justify="flex-end">
-          <StandardButton variant="ghost" size="sm" onClick={closeForms}>
-            {t('osp.inspections.cancel')}
-          </StandardButton>
-          <StandardButton
-            size="sm"
-            onClick={saveNotice}
-            isDisabled={
-              !notice.description.trim() ||
-              (notice.kind === 'other_item' && !notice.agent_label.trim())
-            }
-            isLoading={busy}>
-            {t('osp.inspections.save')}
-          </StandardButton>
-        </HStack>
-      </VStack>
+          <Text fontSize="sm" fontWeight="semibold" pt={2}>
+            {t('osp.inspections.section.resolution')}
+          </Text>
+          {dateField('osp.inspections.field.resolutionOn', 'resolution_received_on')}
+          <StandardField
+            label={t('osp.inspections.field.resolution')}
+            helpText={t('osp.inspections.field.resolutionHelp')}>
+            {notice.resolution_document != null &&
+              attached(notice.resolution_document, () =>
+                setNotice((d) => ({ ...d, resolution_document: null }))
+              )}
+            <StandardInput type="file" accept={UPLOAD_ACCEPT} onChange={pick('resolution')} p={1} />
+          </StandardField>
+
+          <HStack spacing={2} justify="flex-end">
+            <StandardButton variant="ghost" size="sm" onClick={closeForms}>
+              {t('osp.inspections.cancel')}
+            </StandardButton>
+            <StandardButton
+              size="sm"
+              onClick={saveNotice}
+              isDisabled={
+                !notice.description.trim() ||
+                (notice.kind === 'other_item' && !notice.agent_label.trim())
+              }
+              isLoading={busy}>
+              {t('osp.inspections.save')}
+            </StandardButton>
+          </HStack>
+        </VStack>
+      </Box>
     </Box>
   );
 

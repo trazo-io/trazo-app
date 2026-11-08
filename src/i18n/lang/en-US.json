@@ -9748,7 +9748,7 @@
   "osp.inspections.save": "Save",
   "osp.inspections.saved": "Saved",
   "osp.inspections.saveFailed": "Could not save",
-  "osp.inspections.uploadFailed": "The file could not be uploaded. Nothing was saved.",
+  "osp.inspections.uploadFailed": "A file could not be uploaded, so the record was not saved. Files that did upload stay linked in the form; save again to send the rest.",
   "osp.inspections.loadFailed": "The inspection record could not be loaded. Reload the page to try again.",
   "osp.inspections.forbidden": "Only company admins and farm managers can see the inspection record.",
   "osp.inspections.ownRecords": "These are your own records. Trazo does not receive anything from your certifying agent.",

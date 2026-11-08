@@ -9748,7 +9748,7 @@
   "osp.inspections.save": "Guardar",
   "osp.inspections.saved": "Guardado",
   "osp.inspections.saveFailed": "No se pudo guardar",
-  "osp.inspections.uploadFailed": "No se pudo subir el archivo. No se guardó nada.",
+  "osp.inspections.uploadFailed": "No se pudo subir un archivo, así que el registro no se guardó. Los archivos que sí se subieron siguen vinculados en el formulario; guarda de nuevo para enviar el resto.",
   "osp.inspections.loadFailed": "No se pudo cargar el registro de inspecciones. Vuelve a cargar la página para intentarlo de nuevo.",
   "osp.inspections.forbidden": "Solo los administradores de la empresa y los gerentes de la finca pueden ver el registro de inspecciones.",
   "osp.inspections.ownRecords": "Estos son tus propios registros. Trazo no recibe nada de tu agencia certificadora.",
