@@ -65,6 +65,15 @@ describe('Parcel Application: a retired radio option', () => {
     renderField(null);
     expect(screen.queryByLabelText(KEPT_ONLY)).toBeNull();
     expect(screen.getAllByRole('radio')).toHaveLength(2);
+    expect(screen.queryByTestId('parcel-q-retired-livestock_present')).toBeNull();
+  });
+
+  it('says why the section stays open while the retired answer is stored', () => {
+    renderField('no');
+    expect(screen.queryByTestId('parcel-q-retired-livestock_present')).not.toBeNull();
+    expect(screen.getByTestId('parcel-q-retired-livestock_present')).toHaveTextContent(
+      'Earlier answer. This question now asks more'
+    );
   });
 
   it('still reads as given where it is the stored answer, and cannot be picked again', () => {
@@ -81,6 +90,7 @@ describe('Parcel Application: a retired radio option', () => {
 
   it('names the livestock check in both languages', () => {
     expect((enUS as Record<string, string>)['parcelApp.missing.livestock']).toMatch(/pastured/);
-    expect((esLA as Record<string, string>)['parcelApp.missing.livestock']).toMatch(/pastorea/);
+    expect((esLA as Record<string, string>)['parcelApp.missing.livestock']).toMatch(/apacienta/);
+    expect((esLA as Record<string, string>)['parcelApp.missing.livestock']).not.toMatch(/alimenta/);
   });
 });

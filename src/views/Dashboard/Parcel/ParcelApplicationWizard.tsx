@@ -57,7 +57,7 @@ import type { SectionTabStatus } from 'components/Design/StandardComponents';
 import CardWithMap from 'components/Map/CardWithMap';
 import FieldHistorySection from 'views/Dashboard/Dashboard/Parcel/FieldHistorySection';
 import { answerValue, visiblePages, visibleQuestions } from 'config/osp/conditionEval';
-import { offeredOptions, toggleCheckbox } from 'config/osp/optionChoices';
+import { holdsRetiredOption, offeredOptions, toggleCheckbox } from 'config/osp/optionChoices';
 import { pickText } from 'config/osp/types';
 import type { AnswerValue, ModuleAnswers, ModuleQuestion } from 'config/osp/types';
 import {
@@ -560,6 +560,17 @@ export const QuestionField = ({
         </Text>
       ) : null}
       {control}
+      {/* Why a question that looks answered keeps its section open: the stored answer is a
+          retired option (review of app #326; same hint as the module wizard). */}
+      {holdsRetiredOption(question, value) ? (
+        <Text
+          fontSize="xs"
+          color="gray.700"
+          mt={1}
+          data-testid={`parcel-q-retired-${question.key}`}>
+          {intl.formatMessage({ id: 'osp.wizard.retiredOption' })}
+        </Text>
+      ) : null}
     </Box>
   );
 };
