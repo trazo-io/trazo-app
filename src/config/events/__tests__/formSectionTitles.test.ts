@@ -263,9 +263,10 @@ describe('activity form section titles', () => {
    * The catalogue-wide rule, and the only one of these assertions that can catch the NEXT
    * surface instead of the last one.
    *
-   * The retired family vocabulary has exactly two homes:
+   * The retired family vocabulary has one home:
    *   `events.types.*`      — the registry's own labels. This is where the words are DEFINED.
-   *   `transparency.*`      — the score breakdown's category names.
+   * (`transparency.*`, the score breakdown's category names, was the second until 2026-11-08,
+   * when the orphaned transparency copy was deleted: nothing rendered it.)
    * Everywhere else, a value naming a family is naming a RECORD, and the record is an
    * activity the farmer chose. That is a rule with a named home, not a list of past
    * incidents — the distinction that makes it worth having.
@@ -282,7 +283,7 @@ describe('activity form section titles', () => {
    *     exception list bolted onto it and stops meaning anything.
    */
   it('keeps the retired family vocabulary to its two defined homes', () => {
-    const HOMES = /^(events\.types\.|transparency\.)/;
+    const HOMES = /^events\.types\./;
     const offenders: string[] = [];
     for (const [key, value] of Object.entries(EN)) {
       if (typeof value !== 'string' || HOMES.test(key)) continue;
@@ -294,19 +295,20 @@ describe('activity form section titles', () => {
     }
     expect(
       offenders,
-      `these strings name a retired event family outside events.types.* / transparency.*:\n  ${offenders.join(
+      `these strings name a retired event family outside events.types.*:\n  ${offenders.join(
         '\n  '
       )}`
     ).toEqual([]);
   });
 
-  it('is not vacuous — the two homes still hold the vocabulary', () => {
+  it('is not vacuous: the home still holds the vocabulary', () => {
     // If the family labels were ever renamed or removed, the assertion above would pass
     // trivially and stop meaning anything. Prove the words are still somewhere.
     const homed = Object.entries(EN).filter(
-      ([k, v]) => /^(events\.types\.|transparency\.)/.test(k) && RETIRED.includes(v as string)
+      ([k, v]) => /^events\.types\./.test(k) && RETIRED.includes(v as string)
     );
-    expect(homed.length, 'no family label found in either home').toBeGreaterThanOrEqual(4);
+    // Chemical Application, Soil Management, Pest Management.
+    expect(homed.length, 'no family label found in events.types.*').toBeGreaterThanOrEqual(3);
   });
 
   it('checks the Spanish a grower actually reads, not just the key', () => {
