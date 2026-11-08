@@ -59,6 +59,7 @@ import {
 import { useUpdateProductionMutation } from 'store/api/historyApi';
 import { apiErrorMessage } from 'utils/apiErrorMessage';
 import FacilityProductsEditor from './FacilityProductsEditor';
+import FacilityAgr2519Editor from './FacilityAgr2519Editor';
 
 /** Mirrors PostHarvestFacility.FACILITY_TYPE_CHOICES in certifications/models.py. */
 const FACILITY_TYPES: { value: PostHarvestFacilityType; labelId: string }[] = [
@@ -345,6 +346,27 @@ export function PostHarvestHandlerSection({
                       farmId={scope.farmId}
                     />
                   ))}
+                </VStack>
+              </StandardField>
+            )}
+
+            {/* WSDA AGR 2519, one per facility another operation runs (AGR 2121 J 13, K 1, L 1): the
+                street address, zip and activities the copy sheet fills the form from. */}
+            {facilities.some((f) => !f.is_own) && (
+              <StandardField
+                label={intl.formatMessage({ id: 'handler.agr2519.title' })}
+                helpText={intl.formatMessage({ id: 'handler.agr2519.help' })}>
+                <VStack align="stretch" spacing={5}>
+                  {facilities
+                    .filter((f) => !f.is_own)
+                    .map((facility) => (
+                      <FacilityAgr2519Editor
+                        key={facility.id}
+                        facility={facility}
+                        companyId={scope.companyId}
+                        farmId={scope.farmId}
+                      />
+                    ))}
                 </VStack>
               </StandardField>
             )}

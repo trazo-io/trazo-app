@@ -77,6 +77,10 @@ export interface PostHarvestFacility {
   products_detail?: string;
   /** The crops on the production records linked to this facility, by season year; read-only. */
   crops_recorded?: { crop: string; years: number[] }[];
+  /** WSDA AGR 2519's activities at this facility, by key (`config/facilityActivities`). */
+  activities?: string[];
+  /** How an uncertified third party is exempt from certification (§ 205.101); another operation's only. */
+  exemption_basis?: string;
 }
 
 export type PostHarvestFacilityInput = Partial<
@@ -97,6 +101,8 @@ export type PostHarvestFacilityInput = Partial<
     | 'expiry_date'
     | 'notes'
     | 'products_detail'
+    | 'activities'
+    | 'exemption_basis'
   >
 >;
 
