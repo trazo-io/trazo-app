@@ -70,8 +70,8 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
   // Self-graded transparency score removed from the consumer surface (2026-06 claim-safety):
   // a self-assigned "% documented / Fully Documented" verdict shown to shoppers is the
   // self-created sustainability-label class banned by EU ECGT 2024/825 (live 2026-09-27)
-  // and an FTC 16 CFR 260.4 general-benefit risk. The score stays on the FARMER dashboard
-  // as the engagement KPI; consumers see the factual evidence instead (hero practices count,
+  // and an FTC 16 CFR 260.4 general-benefit risk. The score has since been retired as a
+  // concept everywhere; consumers see the factual evidence instead (hero practices count,
   // photos, third-party certs, timeline). This card now shows carbon facts only.
   const hasPerKgData = consumerContext?.has_per_kg_data && consumerContext.kg_per_kg > 0;
 

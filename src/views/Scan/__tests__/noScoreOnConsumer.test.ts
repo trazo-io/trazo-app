@@ -1,7 +1,7 @@
 /**
  * Compliance guard — no self-assigned sustainability grade on any consumer surface.
  *
- * The transparency/carbon score is a PRODUCER-dashboard KPI. Rendering it, or any verdict,
+ * The transparency/carbon score is retired as a concept. Rendering it, or any verdict,
  * badge, letter grade or colour scale derived from it, on a public page is the self-created
  * sustainability-label class banned by EU ECGT Directive 2024/825 (live 2026-09-27) and an
  * FTC 16 CFR 260.4 general-benefit risk. See .claude/rules/transparency-first.md and
@@ -77,9 +77,12 @@ const ALWAYS_SCAN = [
  * Files that render ONLY on a consumer surface.
  *
  * Reachability alone is too broad: a shared design-system component or a barrel export
- * (`components/Design/index.ts`) is imported by both trees, and score code inside a
- * producer component is noScoreOnProducerRecords' job, not this one's. So subtract everything
- * the dashboard can also reach, leaving the files that exist solely to render public pages.
+ * (`components/Design/index.ts`) is imported by both trees, and scanning every shared file
+ * would bury real leaks under matches that are harmless off a public page. So subtract
+ * everything the dashboard can also reach, leaving the files that exist solely to render public
+ * pages. NOTE: the files BOTH trees reach are then outside this guard, and outside
+ * noScoreOnProducerRecords too (it disclaims every consumer-reachable file): they are covered
+ * only where hand-listed in ALWAYS_SCAN above. Do not prune ALWAYS_SCAN as redundant.
  * Both of the live leaks this guard was rewritten for (PublicFarmProfile's <CarbonScore>
  * and ConsumerSustainabilityInfo's verdict ladder) sat in consumer-exclusive files.
  */
@@ -162,7 +165,7 @@ const BANNED = [
     name: 'rendered transparency-score label',
     pattern: /["'`][^"'`\n]*\bTransparency\s+Score\b/i,
     reason:
-      'the transparency score is a PRODUCER-dashboard KPI — showing a shopper a number Trazo ' +
+      'the transparency score is retired as a concept — showing a shopper a number Trazo ' +
       'assigned to a farm is a self-created sustainability label (ECGT 2024/825)'
   },
   {
