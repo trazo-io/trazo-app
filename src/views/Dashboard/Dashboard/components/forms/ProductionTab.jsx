@@ -4695,7 +4695,10 @@ const ProductionTab = forwardRef(
                         formData={{
                           ...initialValues,
                           type: productionType,
-                          electricity_source: watch('electricity_source')
+                          electricity_source: watch('electricity_source'),
+                          // "You told us" repeats the area as entered, unit included.
+                          area_covered: watch('area_covered'),
+                          area_unit: watch('area_unit')
                         }}
                         calculation={carbonCalculation}
                         isCalculating={isCalculatingCarbon}
