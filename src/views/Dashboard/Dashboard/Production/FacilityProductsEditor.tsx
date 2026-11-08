@@ -18,6 +18,7 @@ import {
   type PostHarvestFacility
 } from 'store/api/postHarvestFacilityApi';
 import { apiErrorMessage } from 'utils/apiErrorMessage';
+import FacilityProductRows from './FacilityProductRows';
 
 export const cropsLine = (facility: PostHarvestFacility): string =>
   (facility.crops_recorded ?? [])
@@ -110,6 +111,7 @@ const FacilityProductsEditor = ({
           {intl.formatMessage({ id: 'handler.products.save' })}
         </StandardButton>
       </HStack>
+      <FacilityProductRows facility={facility} companyId={companyId} farmId={farmId} />
     </VStack>
   );
 };

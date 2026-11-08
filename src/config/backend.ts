@@ -110,6 +110,15 @@ export const POST_HARVEST_FACILITY_URL = (
   facilityId != null
     ? `${ROOT_URL}companies/${companyId}/establishments/${farmId}/post-harvest-facilities/${facilityId}/`
     : `${ROOT_URL}companies/${companyId}/establishments/${farmId}/post-harvest-facilities/`;
+// The product rows of the farm's facilities (CCOF G6.1 C2, OTCO C7 7.10-2).
+export const FACILITY_PRODUCT_URL = (
+  companyId: string,
+  farmId: string,
+  productId?: string | number
+) =>
+  productId != null
+    ? `${ROOT_URL}companies/${companyId}/establishments/${farmId}/facility-products/${productId}/`
+    : `${ROOT_URL}companies/${companyId}/establishments/${farmId}/facility-products/`;
 // The farm's own record of its certifier's inspections and the items the agent sent
 // (7 CFR 205.662 notices), with the operation's responses and the agent's resolutions.
 export const CERTIFIER_INSPECTION_URL = (
