@@ -1384,9 +1384,10 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                   would be enough:
 
                   1. The number was frequently FABRICATED HERE, not measured. The effect
-                     above hardcodes `efficiency_score: 100` for event types 0/3/7 and `50.0`
-                     for the no-carbon-data fallback. A season-planning note was being awarded
-                     a perfect 100/100 by a frontend constant.
+                     above hardcoded `efficiency_score: 100` for event types 0/3/7 and `50.0`
+                     for the no-carbon-data fallback (both literals deleted, the last on
+                     2026-11-08). A season-planning note was being awarded a perfect 100/100
+                     by a frontend constant.
                   2. It is a self-authored 0–100 grade on the grower's own record, rendered on
                      a producer record screen — the exact shape `noScoreOnProducerRecords`
                      exists to keep off these surfaces, threshold-derived colour ladder and
