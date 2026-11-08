@@ -148,8 +148,7 @@ const HistoryCard = ({ amount }) => {
     // transparency score (see the header comment on the statistics row below). It averaged the
     // stored `History.transparency_score` column, while the farm dashboard recomputed the same
     // number live via `TransparencyCalculator` — two sources, one label, free to disagree.
-    // `transparency_score` still ships in this payload and is still maintained backend-side; it
-    // is simply not a number this card puts in front of a grower any more.
+    // The column itself is gone since history 0237/0238 (2026-10): nothing ships or stores it.
 
     const totalEmissions = data.reduce((sum, p) => {
       const extraData = p.extra_data || {};
@@ -511,15 +510,11 @@ const HistoryCard = ({ amount }) => {
                             // removed 2026-08-11 along with the aggregate above. Successive passes
                             // had already stripped its A-F letters (2026-08-02), its tier badges and
                             // carbon fallback (2026-08-04) and its "/100" — each time leaving the
-                            // grade itself in place under quieter typography. The number is a
-                            // backend KPI, not a verdict to show the grower whose season it grades.
+                            // grade itself in place under quieter typography. The number was a
+                            // self-assigned grade, retired as a concept; nothing computes it now.
                             //
-                            // `production.transparency_score` is still in this payload. It is
-                            // deliberately not read here. Reintroducing it would also revive the
-                            // source conflict: this column is stale-until-`update_trust_metrics()`,
-                            // while the farm dashboard recomputes the same number live
-                            // (`carbon/productions-flat/` stopped shipping it on 2026-09-05 — it
-                            // cost the full calculator per production on every page load).
+                            // `production.transparency_score` no longer exists: the column went in
+                            // history 0237/0238 and the calculator counts only (2026-11-08).
 
                             // CRITICAL: No hardcoded fallbacks - show only real backend data
 

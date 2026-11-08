@@ -982,7 +982,6 @@ export const carbonApi = baseApi.injectEndpoints({
       {
         establishment_id: string;
         transparency_metrics: {
-          overall_score: number;
           event_count: number;
           verification_percentage: number;
           trust_indicators: {

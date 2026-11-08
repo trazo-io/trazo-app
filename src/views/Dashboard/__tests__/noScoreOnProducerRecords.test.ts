@@ -14,14 +14,14 @@
  * a live dead-end button ("View Transparency Details") shipped in the middle of it. The page and
  * its component were deleted 2026-08-11.
  *
- * WHAT IS AND IS NOT BANNED. `transparency_score` is still a legitimate backend field: it ships
- * in the parcel-histories payload and `TransparencyCalculator` still stores it on every event
- * write. (Until 2026-09-05 `SmartUsageCard.getSmartInsights()` also read it as a GATE on
- * engagement nudges; the farm-metrics payload no longer carries a score at all.) None of that
- * is a claim. What is banned is RENDERING it — a number, a percentage, a grade, a tier, a
- * threshold-derived colour — on the producer record screens. Banning the identifier outright
- * would fight a field the product still maintains, and a guard that fights its own codebase gets
- * deleted.
+ * WHAT IS AND IS NOT BANNED. `transparency_score` no longer exists backend-side: the column
+ * went in history 0237/0238 and `TransparencyCalculator` counts only (2026-11-08). (Until
+ * 2026-09-05 `SmartUsageCard.getSmartInsights()` also read it as a GATE on engagement nudges.)
+ * What is banned is RENDERING a score: a number, a percentage, a grade, a tier, a
+ * threshold-derived colour, on the producer record screens. The guard matches those shapes
+ * rather than the identifier, because the identifier still appears in comments and in fixtures
+ * that prove a hook ignores it (useOnboardingChecklist), and a guard that fights its own codebase
+ * gets deleted.
  *
  * WHY NOT A COMPLIANCE ARGUMENT. ECGT 2024/825 and FTC 16 CFR 260.6 target CONSUMER claims;
  * `noScoreOnConsumer.test.ts` is the guard for that and it deliberately subtracts the producer
