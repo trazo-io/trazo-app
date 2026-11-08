@@ -131,7 +131,6 @@ interface ParcelData {
   unique_code?: string;
   carbon_calculation_enabled?: boolean;
   usda_compliance_eligible?: boolean;
-  transparency_score?: number;
   transparency_description?: string;
   sustainability_practices?: string;
   contact_person?: string;

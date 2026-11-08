@@ -16,7 +16,6 @@ export interface FarmInfo {
 }
 
 export interface TransparencyMetrics {
-  overall_transparency_score: number;
   total_productions: number;
   transparency_breakdown: {
     [category: string]: {
@@ -43,7 +42,8 @@ export interface ComprehensiveData {
   // Corrected 2026-08-04 to match `company/views.py::_calculate_comprehensive_metrics()`, the
   // function that actually builds this object. It was missing 4 fields the establishment
   // dashboard reads off this exact interface (`total_events`, `active_productions`,
-  // `completed_productions`, `transparency_percentage`) — TypeScript had nothing to check
+  // `completed_productions`; `transparency_percentage` was a fourth until the score was retired,
+  // and nothing reads it now) — TypeScript had nothing to check
   // those call sites against, so a backend rename here would have failed silently at runtime
   // (reading `undefined`, coerced to 0/[]) with zero compile-time warning.
   active_productions: number;
@@ -52,7 +52,6 @@ export interface ComprehensiveData {
   total_verified_events: number;
   total_photos: number;
   total_events: number;
-  transparency_percentage: number;
   activity_breakdown: Record<string, number>;
   verification_status: {
     usda_factors_used: number;
@@ -67,7 +66,6 @@ export interface ComprehensiveData {
     potential_improvement: string;
   }>;
   seasonal_patterns: Record<string, unknown>;
-  data_completeness: number;
   carbon_intensity_per_hectare: number;
   trust_indicators_count: number;
 }
@@ -150,7 +148,6 @@ export interface ComprehensiveDashboardResponse {
   optimization_metadata?: {
     query_count: number;
     load_time_ms: number;
-    data_completeness_percentage: number;
     cache_enabled: boolean;
     indexes_used: string[];
   };
