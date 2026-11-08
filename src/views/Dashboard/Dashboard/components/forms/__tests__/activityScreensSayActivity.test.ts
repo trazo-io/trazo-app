@@ -105,10 +105,36 @@ describe('activity screens say activity and season', () => {
     const fallbacks = [...code.matchAll(/\|\|\s*\n?\s*'([^']*)'/g)].filter((m) =>
       EN_WORDS.test(m[1])
     );
-    const zod = [...code.matchAll(/\.min\(1, '([^']+)'\)/g)].filter(
-      (m) => !(m[1] in en) && EN_WORDS.test(m[1])
-    );
-    expect([...props, ...fallbacks, ...zod].map((m) => m[0])).toEqual([]);
+    expect([...props, ...fallbacks].map((m) => m[0])).toEqual([]);
+  });
+
+  it.each(SCREENS)('%s: every validation message is a key in both locales', (file) => {
+    // A zod schema at module scope cannot call intl, so its message is a KEY and the field
+    // renders it through intl. Any literal here reaches a Spanish farmer in English, whatever
+    // its words (review of app #321 caught "Activity type is required" on the General tab).
+    // `req(path, message)` in the summary-mode refinements is not rendered by any field, so it
+    // is not checked here.
+    const code = read(file);
+    const messages = [
+      ...code.matchAll(/\.(?:min|max)\(\d+, '([^']+)'\)|\bmessage: '([^']+)'/g)
+    ].map((m) => m[1] || m[2]);
+    const literal = messages.filter((id) => !(id in en) || !(id in es));
+    expect(literal).toEqual([]);
+  });
+
+  it('a field that shows a key-valued error renders it through intl', () => {
+    // The other half of the rule: a key handed straight to `error=` prints the key itself.
+    for (const file of SCREENS.filter((f) => f.startsWith(FORMS))) {
+      const code = read(file);
+      const keyed = [...code.matchAll(/(\w+): string\(\)[^\n]*\.min\(1, '([a-z]+\.[^']+)'\)/g)]
+        .map((m) => m[1])
+        .concat([...code.matchAll(/path: \['(\w+)'\],[^}]*message: '[a-z]+\./g)].map((m) => m[1]));
+      for (const field of keyed) {
+        expect(code, `${file}: errors.${field} shown without intl`).not.toMatch(
+          new RegExp(`error=\\{\\s*[\\w.]*errors\\.${field}\\?\\.message\\s*\\}`)
+        );
+      }
+    }
   });
 
   it('the parcel tour names what the parcel page shows', () => {

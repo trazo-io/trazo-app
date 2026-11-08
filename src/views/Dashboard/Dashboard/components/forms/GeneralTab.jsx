@@ -98,7 +98,7 @@ const OTHER_FARM_ACTIVITY_TYPES = [
 const formSchemaMainInfo = object({
   // A message KEY, rendered through intl at the field: a schema at module scope cannot call intl.
   name: string().min(1, 'events.validation.nameRequired'),
-  type: string().min(1, 'Activity type is required'),
+  type: string().min(1, 'events.general.validation.typeRequired'),
   duration_hours: string().optional(),
   participants: string().optional(),
   observation: string().optional(),
@@ -136,7 +136,7 @@ const formSchemaMainInfo = object({
     ctx.addIssue({
       code: 'custom',
       path: ['contamination_source'],
-      message: 'Contamination source is required when logging an incident'
+      message: 'events.general.validation.contaminationSourceRequired'
     });
   }
 });
@@ -416,7 +416,9 @@ const GeneralTab = forwardRef(
                         defaultMessage: 'Activity Type'
                       })}
                       required
-                      error={errors.type?.message}
+                      error={
+                        errors.type?.message && intl.formatMessage({ id: errors.type.message })
+                      }
                       helpText={intl.formatMessage({
                         id: 'events.general.help.whatTypeOfFarmActivity',
                         defaultMessage: 'What type of farm activity?'
@@ -642,7 +644,10 @@ const GeneralTab = forwardRef(
                             defaultMessage: 'Contamination Source'
                           })}
                           required
-                          error={errors.contamination_source?.message}
+                          error={
+                            errors.contamination_source?.message &&
+                            intl.formatMessage({ id: errors.contamination_source.message })
+                          }
                           helpText={intl.formatMessage({
                             id: 'events.general.help.originOfTheProhibitedSubstanceContact',
                             defaultMessage: 'Origin of the prohibited-substance contact'

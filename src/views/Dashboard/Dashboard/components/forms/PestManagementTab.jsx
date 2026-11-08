@@ -169,7 +169,7 @@ const pestSchema = object({
     ctx.addIssue({
       path: ['cultural_practice'],
       code: 'custom',
-      message: 'Select the preventive practice performed'
+      message: 'events.pest.validation.culturalPracticeRequired'
     });
   }
   // A scouting summary's period asterisks were decorative — enforced by nothing, so a
@@ -700,7 +700,10 @@ const PestManagementTab = forwardRef(
                       defaultMessage: 'Practice Performed'
                     })}
                     required
-                    error={errors.cultural_practice?.message}
+                    error={
+                      errors.cultural_practice?.message &&
+                      intl.formatMessage({ id: errors.cultural_practice.message })
+                    }
                     helpText={intl.formatMessage({
                       id: 'events.pest.fields.culturalPracticeHelp',
                       defaultMessage:

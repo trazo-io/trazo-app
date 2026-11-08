@@ -167,7 +167,7 @@ import {
 // Enhanced form schemas with better validation
 // Sprint 1 Epic 1.4: Added performed_by for USDA GAP traceability compliance
 const formSchemaBasic = object({
-  date: string().min(1, 'Date is required'),
+  date: string().min(1, 'events.validation.dateRequired'),
   performed_by: string().optional() // Optional — helps with traceability but not required
 });
 
@@ -4146,7 +4146,12 @@ function NewEventForm({ isEdit = false, eventId = null }) {
                                 id: 'events.wizard.dateHelp',
                                 defaultMessage: 'When the work was done, not when you log it.'
                               })}
-                              error={basicMethods.formState.errors.date?.message}>
+                              error={
+                                basicMethods.formState.errors.date?.message &&
+                                intl.formatMessage({
+                                  id: basicMethods.formState.errors.date.message
+                                })
+                              }>
                               <StandardInput
                                 type="datetime-local"
                                 {...basicMethods.register('date')}

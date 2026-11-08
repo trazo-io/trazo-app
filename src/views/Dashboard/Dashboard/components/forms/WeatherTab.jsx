@@ -76,7 +76,7 @@ const formSchemaMainInfo = object({
         // and Fahrenheit (-58°F ≈ -50°C). Unit is validated separately below.
         return !isNaN(num) && num >= -58 && num <= 122;
       },
-      { message: 'Lower temperature out of range (-58 to 122)' }
+      { message: 'events.weather.validation.lowerTemperatureRange' }
     )
     .transform((val) => (val ? Number(val) : undefined)),
   way_of_protection: string().optional(),
@@ -88,7 +88,7 @@ const formSchemaMainInfo = object({
         const num = parseFloat(val);
         return !isNaN(num) && num >= 0 && num <= 500;
       },
-      { message: 'Water deficit must be between 0 and 500 mm' }
+      { message: 'events.weather.validation.waterDeficitRange' }
     )
     .transform((val) => (val ? Number(val) : undefined)),
   // Sprint 2 Epic 2.1.3: Removed weight and diameter fields (excessive detail)
@@ -103,7 +103,7 @@ const formSchemaMainInfo = object({
         // variants cap at 720 — the old ceiling of 168 rejected values the widgets accept.
         return !isNaN(num) && num >= 0 && num <= 1440;
       },
-      { message: 'Duration must be a positive number' }
+      { message: 'events.weather.validation.durationRange' }
     )
     .transform((val) => (val ? Number(val) : undefined)),
   highest_temperature: string()
@@ -115,7 +115,7 @@ const formSchemaMainInfo = object({
         // Bounds accept both Celsius (up to 60°C) and Fahrenheit (up to 140°F).
         return !isNaN(num) && num >= -20 && num <= 140;
       },
-      { message: 'Highest temperature out of range (-20 to 140)' }
+      { message: 'events.weather.validation.highestTemperatureRange' }
     )
     .transform((val) => (val ? Number(val) : undefined)),
   start_date: string().optional(),
@@ -129,7 +129,7 @@ const formSchemaMainInfo = object({
         const num = parseFloat(val);
         return !isNaN(num) && num >= 0 && num <= 400; // Max 400 km/h (category 5+ hurricane)
       },
-      { message: 'Wind speed must be between 0 and 400 km/h' }
+      { message: 'events.weather.validation.windSpeedRange' }
     )
     .transform((val) => (val ? Number(val) : undefined)),
   precipitation_amount: string()
@@ -140,7 +140,7 @@ const formSchemaMainInfo = object({
         const num = parseFloat(val);
         return !isNaN(num) && num >= 0 && num <= 1000; // Max 1000mm (extreme rainfall)
       },
-      { message: 'Precipitation must be between 0 and 1000 mm' }
+      { message: 'events.weather.validation.precipitationRange' }
     )
     .transform((val) => (val ? Number(val) : undefined)),
   damage_assessment: string().optional(),
@@ -155,7 +155,7 @@ const formSchemaMainInfo = object({
         const num = parseFloat(val);
         return !isNaN(num) && num >= 0 && num <= 100;
       },
-      { message: 'Humidity level must be between 0% and 100%' }
+      { message: 'events.weather.validation.humidityRange' }
     )
     .transform((val) => (val ? Number(val) : undefined)),
   crop_impact: string().optional(),
@@ -691,7 +691,10 @@ const WeatherTab = forwardRef(
                           id: 'events.weather.help.minimumTemperatureRecordedDuringFrostEvent',
                           defaultMessage: 'Minimum temperature recorded during frost event'
                         })}
-                        error={errors.lower_temperature?.message}>
+                        error={
+                          errors.lower_temperature?.message &&
+                          intl.formatMessage({ id: errors.lower_temperature.message })
+                        }>
                         <HStack spacing={2} align="stretch">
                           <Box flex="1">
                             <StandardInput
@@ -748,7 +751,10 @@ const WeatherTab = forwardRef(
                           id: 'events.weather.help.accumulatedWaterDeficitDuringDroughtPeriod',
                           defaultMessage: 'Accumulated water deficit during drought period'
                         })}
-                        error={errors.water_deficit?.message}>
+                        error={
+                          errors.water_deficit?.message &&
+                          intl.formatMessage({ id: errors.water_deficit.message })
+                        }>
                         <StandardInput
                           type="number"
                           step="1"
@@ -771,7 +777,10 @@ const WeatherTab = forwardRef(
                           id: 'events.weather.help.howLongTheHailstormLasted',
                           defaultMessage: 'How long the hailstorm lasted'
                         })}
-                        error={errors.duration?.message}>
+                        error={
+                          errors.duration?.message &&
+                          intl.formatMessage({ id: errors.duration.message })
+                        }>
                         <StandardInput
                           type="number"
                           step="1"
@@ -808,7 +817,10 @@ const WeatherTab = forwardRef(
                           id: 'events.weather.help.peakTemperatureDuringHeatEvent',
                           defaultMessage: 'Peak temperature during heat event'
                         })}
-                        error={errors.highest_temperature?.message}>
+                        error={
+                          errors.highest_temperature?.message &&
+                          intl.formatMessage({ id: errors.highest_temperature.message })
+                        }>
                         <HStack spacing={2} align="stretch">
                           <Box flex="1">
                             <StandardInput
@@ -872,7 +884,10 @@ const WeatherTab = forwardRef(
                           id: 'events.weather.help.maximumWindSpeedRecorded',
                           defaultMessage: 'Maximum wind speed recorded'
                         })}
-                        error={errors.wind_speed?.message}>
+                        error={
+                          errors.wind_speed?.message &&
+                          intl.formatMessage({ id: errors.wind_speed.message })
+                        }>
                         <StandardInput
                           type="number"
                           step="1"
@@ -891,7 +906,10 @@ const WeatherTab = forwardRef(
                           id: 'events.weather.help.totalRainfallDuringStorm',
                           defaultMessage: 'Total rainfall during storm'
                         })}
-                        error={errors.precipitation_amount?.message}>
+                        error={
+                          errors.precipitation_amount?.message &&
+                          intl.formatMessage({ id: errors.precipitation_amount.message })
+                        }>
                         <StandardInput
                           type="number"
                           step="0.1"
@@ -910,7 +928,10 @@ const WeatherTab = forwardRef(
                           id: 'events.weather.help.stormDurationInHours',
                           defaultMessage: 'Storm duration in hours'
                         })}
-                        error={errors.duration?.message}>
+                        error={
+                          errors.duration?.message &&
+                          intl.formatMessage({ id: errors.duration.message })
+                        }>
                         <StandardInput
                           type="number"
                           step="0.5"
@@ -953,7 +974,10 @@ const WeatherTab = forwardRef(
                           id: 'events.weather.help.maximumWindSpeedRecorded',
                           defaultMessage: 'Maximum wind speed recorded'
                         })}
-                        error={errors.wind_speed?.message}>
+                        error={
+                          errors.wind_speed?.message &&
+                          intl.formatMessage({ id: errors.wind_speed.message })
+                        }>
                         <StandardInput
                           type="number"
                           step="1"
@@ -972,7 +996,10 @@ const WeatherTab = forwardRef(
                           id: 'events.weather.help.highWindPeriodDuration',
                           defaultMessage: 'High wind period duration'
                         })}
-                        error={errors.duration?.message}>
+                        error={
+                          errors.duration?.message &&
+                          intl.formatMessage({ id: errors.duration.message })
+                        }>
                         <StandardInput
                           type="number"
                           step="0.5"
@@ -1009,7 +1036,10 @@ const WeatherTab = forwardRef(
                           id: 'events.weather.help.humidityPercentageRecorded0100',
                           defaultMessage: 'Humidity percentage recorded (0-100%)'
                         })}
-                        error={errors.humidity_level?.message}>
+                        error={
+                          errors.humidity_level?.message &&
+                          intl.formatMessage({ id: errors.humidity_level.message })
+                        }>
                         <StandardInput
                           type="number"
                           step="1"
@@ -1028,7 +1058,10 @@ const WeatherTab = forwardRef(
                           id: 'events.weather.help.howLongUnusualHumidityLasted',
                           defaultMessage: 'How long unusual humidity lasted'
                         })}
-                        error={errors.duration?.message}>
+                        error={
+                          errors.duration?.message &&
+                          intl.formatMessage({ id: errors.duration.message })
+                        }>
                         <StandardInput
                           type="number"
                           step="0.5"
