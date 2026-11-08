@@ -63,6 +63,15 @@ describe('the area under "You told us"', () => {
     expect(screen.getByText('0.2 hectares')).toBeInTheDocument();
   });
 
+  it('shows no area row when the form gives none and the response has none', () => {
+    // A transport or pollination record: the tab passes area_covered undefined.
+    show(
+      { type: 'TP', area_covered: undefined, area_unit: undefined },
+      { ...fieldWork, breakdown: { ...fieldWork.breakdown, area_covered_acres: 0 } }
+    );
+    expect(screen.queryByText(en['carbonPreview.label.areaInput'])).toBeNull();
+  });
+
   it('hectares need no conversion row', () => {
     show({ type: 'FM', area_covered: '2', area_unit: 'ha' });
     expect(screen.getByText('2 hectares')).toBeInTheDocument();
@@ -88,5 +97,10 @@ describe('the production form hands the box what was entered', () => {
     );
     expect(props).toContain("area_covered: watch('area_covered')");
     expect(props).toContain("area_unit: watch('area_unit')");
+    // Only while the field is on screen. A value typed on a field-work subtype outlives a
+    // switch to transport or pollination, which have no area (review of app #325), and the
+    // record's own area can arrive in `initialValues`: the else branch clears both.
+    expect(props).toMatch(/AREA_SUBTYPES\.includes\(productionType\) && !multiTarget\s*\?/);
+    expect(props).toContain('area_covered: undefined, area_unit: undefined');
   });
 });
