@@ -57,6 +57,7 @@ import type { SectionTabStatus } from 'components/Design/StandardComponents';
 import CardWithMap from 'components/Map/CardWithMap';
 import FieldHistorySection from 'views/Dashboard/Dashboard/Parcel/FieldHistorySection';
 import { answerValue, visiblePages, visibleQuestions } from 'config/osp/conditionEval';
+import { offeredOptions, toggleCheckbox } from 'config/osp/optionChoices';
 import { pickText } from 'config/osp/types';
 import type { AnswerValue, ModuleAnswers, ModuleQuestion } from 'config/osp/types';
 import {
@@ -429,7 +430,7 @@ export const BufferEditor = ({
   );
 };
 
-const QuestionField = ({
+export const QuestionField = ({
   question,
   value,
   locale,
@@ -480,6 +481,30 @@ const QuestionField = ({
         </RadioGroup>
       );
       break;
+    case 'checkbox_group': {
+      // Same choice rules as the module wizard (`optionChoices`): exclusive options, and a
+      // retired option shown only while it is the stored answer.
+      const current = Array.isArray(value) ? (value as string[]) : [];
+      control = (
+        <Stack spacing={2} data-testid={`parcel-q-${question.key}`}>
+          {offeredOptions(question, current).map((option) => (
+            <Checkbox
+              key={option.value}
+              isChecked={current.includes(option.value)}
+              onChange={() => {
+                const next = toggleCheckbox(question, current, option.value);
+                onChange(next.length ? next : null);
+              }}
+              isDisabled={!canWrite || option.retired}
+              minH="44px"
+              alignItems="flex-start">
+              <Text fontSize="sm">{pickText(option.label, locale)}</Text>
+            </Checkbox>
+          ))}
+        </Stack>
+      );
+      break;
+    }
     case 'date':
       control = (
         <StandardInput
