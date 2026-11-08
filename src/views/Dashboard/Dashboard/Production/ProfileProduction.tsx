@@ -265,7 +265,6 @@ function ProfileProduction() {
           carbon_data: {
             co2e: averageCO2ePerEvent,
             usda_factors_used: completeData?.isUsdaVerified || false,
-            efficiency_score: completeData?.carbonScore || 0,
             total_emissions: totalCO2e,
             total_offsets: completeData?.totalOffsets || 0,
             net_footprint: transparencyApiData?.carbon_impact?.net_impact || 0,

@@ -15,8 +15,7 @@ import {
   FaInfoCircle,
   FaGlobeAmericas,
   FaFlask,
-  FaShieldAlt,
-  FaBalanceScale
+  FaShieldAlt
 } from 'react-icons/fa';
 import { MdVerified, MdSecurity } from 'react-icons/md';
 import { useIntl } from 'react-intl';
@@ -56,11 +55,6 @@ const tooltipConfig: Record<
     i18nPrefix: 'tooltip.blockchainRecorded',
     icon: MdSecurity,
     color: 'purple'
-  },
-  carbon_score: {
-    i18nPrefix: 'tooltip.carbonScore',
-    icon: FaBalanceScale,
-    color: 'orange'
   },
   photo_documentation: {
     i18nPrefix: 'tooltip.photoDocumentation',
@@ -236,9 +230,6 @@ export const USDATooltip: React.FC<{ children: React.ReactNode }> = ({ children 
   <EducationalTooltip term="usda_factors_used">{children}</EducationalTooltip>
 );
 
-export const CarbonScoreTooltip: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <EducationalTooltip term="carbon_score">{children}</EducationalTooltip>
-);
 
 export const BlockchainTooltip: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <EducationalTooltip term="blockchain_verified">{children}</EducationalTooltip>

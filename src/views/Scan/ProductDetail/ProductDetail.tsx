@@ -1811,7 +1811,6 @@ function ProductDetail() {
                             // per-event figure — 2026-06 audit P2-2). 0 = not separately known.
                             co2e: (event as any).extra_data?.carbon_calculation?.co2e || 0,
                             usda_factors_used: completeData?.isUsdaVerified || false,
-                            efficiency_score: completeData?.carbonScore || 0,
                             total_emissions: completeData?.totalEmissions || 0,
                             total_offsets: completeData?.totalOffsets || 0,
                             // Carries GROSS emissions despite the legacy key name.
