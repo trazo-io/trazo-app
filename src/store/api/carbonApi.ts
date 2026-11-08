@@ -31,7 +31,6 @@ export interface CarbonSummary {
   totalEmissions?: number;
   totalOffsets?: number;
   netFootprint?: number;
-  carbonScore?: number;
   badges?: Array<{
     id: string;
     name: string;
@@ -78,7 +77,6 @@ export interface EventRejection {
 
 export interface CarbonCalculationResult {
   co2e: number;
-  efficiency_score: number;
   usda_factors_used: boolean;
   calculation_method: string;
   event_type:
@@ -196,7 +194,6 @@ export interface CompleteSummary {
   };
 
   // Carbon metrics
-  carbonScore: number;
   totalEmissions: number;
   totalOffsets: number;
   netFootprint: number;

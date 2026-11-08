@@ -120,7 +120,6 @@ interface Album {
 
 interface CarbonCalculation {
   co2e: number;
-  efficiency_score: number;
   usda_factors_used: boolean;
   calculation_method?: string;
   verification_confidence?: 'high' | 'medium' | 'low';

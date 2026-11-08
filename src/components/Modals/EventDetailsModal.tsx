@@ -242,7 +242,6 @@ interface Event {
 interface CarbonCalculationResult {
   /** Null when nothing was estimated (see `utils/carbonStatus`). Unknown is not zero. */
   co2e: number | null;
-  efficiency_score?: number;
   not_estimated?: boolean;
   usda_factors_based?: boolean;
   verification_status?: string;
@@ -787,7 +786,6 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
         // Fallback for events without embedded carbon data
         setCarbonData({
           co2e: 0,
-          efficiency_score: 50.0,
           usda_factors_based: false,
           verification_status: 'estimated',
           data_source: 'Unknown',
@@ -1386,9 +1384,10 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                   would be enough:
 
                   1. The number was frequently FABRICATED HERE, not measured. The effect
-                     above hardcodes `efficiency_score: 100` for event types 0/3/7 and `50.0`
-                     for the no-carbon-data fallback. A season-planning note was being awarded
-                     a perfect 100/100 by a frontend constant.
+                     above hardcoded `efficiency_score: 100` for event types 0/3/7 and `50.0`
+                     for the no-carbon-data fallback (both literals deleted, the last on
+                     2026-11-08). A season-planning note was being awarded a perfect 100/100
+                     by a frontend constant.
                   2. It is a self-authored 0–100 grade on the grower's own record, rendered on
                      a producer record screen — the exact shape `noScoreOnProducerRecords`
                      exists to keep off these surfaces, threshold-derived colour ladder and
@@ -1403,9 +1402,9 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                   What stays is the FACT — kg CO₂e and its impact level. Those are measured,
                   and neither is a verdict on the season.
 
-                  ⚠️ Still live in `components/Events/CarbonImpactPreview.tsx` and
-                  `components/Events/EnhancedEventDetailModal.tsx`, both as hardcoded English,
-                  both therefore invisible to the guard. */}
+                  2026-11-08: gone from CarbonImpactPreview and EnhancedEventDetailModal too,
+                  and the backend no longer serves `efficiency_score` on any carbon payload
+                  (trazo-back carbon/tests/test_no_score_in_any_carbon_payload.py). */}
               {isNotEstimated(carbonData) || typeof carbonData.co2e !== 'number' ? (
                 // Run 8 (R8-04): no figure, and why, instead of a 0. A type with no
                 // calculation says so; anything else names what was missing (AC-14). A figure
