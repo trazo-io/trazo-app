@@ -41,11 +41,132 @@ const KEEP: Record<string, string> = {
 const EN_WORDS = /\b(productions?|events?)\b/i;
 const ES_WORDS = /\b(producci(ó|o)n|producciones|eventos?)\b/i;
 /**
- * Usted addressed to the reader. Third-person forms ("el inspector quiere", "el plan debe",
- * "su propio registro") are ordinary Spanish and stay out of this list on purpose.
+ * Usted, by ALLOWLIST (review of app #329: a list of the usted words this change happened to
+ * fix only re-detects those words, and "Encabece", "Corrija", "Arme" slipped past it).
+ *
+ * A guide gives instructions at the start of a sentence or a list item, and that is where an
+ * imperative sits. So every capitalised word there that ends the way an imperative can ("-a",
+ * "-e", or an enclitic "-lo/-la/-le") must be on the list below: a reviewed tú imperative, or
+ * a word that is not a command at all. A verb nobody anticipated fails until someone decides,
+ * the same approach `spanishRegister.test.ts` takes for voseo. Usted in the middle of a
+ * sentence shows up as "usted" itself or an usted pronoun on the verb ("dele", "dígale").
  */
-const USTED =
-  /(?<![\wáéíóúñ])(usted|ustedes|le acompaña|registre|agregue|fotografíe|vea|edite|inicie|contraste|diga|incruste|mande|ordénelo|asegúrese|creerle|decirle)(?![\wáéíóúñ])/i;
+const OPENING = /(?:^|[.:;•]\s+|\d+\.\s+|\n\s*|[¿¡"“(]\s*)([A-ZÁÉÍÓÚÑ][a-záéíóúñ]{3,})(?=[\s,:])/g;
+const TU_IMPERATIVES = [
+  'Abre',
+  'Adjunta',
+  'Agrega',
+  'Aprende',
+  'Arma',
+  'Captura',
+  'Carga',
+  'Cierra',
+  'Comparte',
+  'Completa',
+  'Conserva',
+  'Considera',
+  'Contrasta',
+  'Corre',
+  'Corrige',
+  'Define',
+  'Descarga',
+  'Dicta',
+  'Documenta',
+  'Elige',
+  'Empieza',
+  'Encabeza',
+  'Escanea',
+  'Escribe',
+  'Espera',
+  'Fotografía',
+  'Guarda',
+  'Incluye',
+  'Intenta',
+  'Llama',
+  'Llega',
+  'Lleva',
+  'Léelo',
+  'Mira',
+  'Monitorea',
+  'Muestra',
+  'Piensa',
+  'Presenta',
+  'Prueba',
+  'Registra',
+  'Regístralo',
+  'Selecciona',
+  'Señala',
+  'Sigue',
+  'Sube',
+  'Supervisa',
+  'Toma'
+];
+// Not commands. "Empaque" and "Enfoque" spell the usted imperatives of empacar / enfocar too;
+// in the guides they are the nouns ("Empaque del producto", "Enfoque agrícola").
+const NOT_COMMANDS = [
+  'Agua',
+  'Aparece',
+  'Base',
+  'Boca',
+  'Búsqueda',
+  'Cada',
+  'Cadena',
+  'Clima',
+  'Combustible',
+  'Confianza',
+  'Cosecha',
+  'Desde',
+  'Dónde',
+  'Ejemplo',
+  'Empaque',
+  'Energía',
+  'Enfoque',
+  'Esta',
+  'Este',
+  'Estrategia',
+  'Experiencia',
+  'Fecha',
+  'Finca',
+  'Fuente',
+  'Guía',
+  'Helada',
+  'Herbicida',
+  'Historia',
+  'Legible',
+  'Lenguaje',
+  'Limpieza',
+  'Línea',
+  'Meta',
+  'Metodología',
+  'Nada',
+  'Nombre',
+  'Nuestra',
+  'Nunca',
+  'Otra',
+  'Para',
+  'Pennsylvania',
+  'Pesticida',
+  'Poda',
+  'Propuesta',
+  'Reembolsa',
+  'Semilla',
+  'Siembra',
+  'Siempre',
+  'Solo',
+  'Suelo',
+  'Tema',
+  'Temporada',
+  'Tienda',
+  'Todavía',
+  'Usaste',
+  'Venta',
+  'Ventana',
+  'Vista',
+  'Última'
+];
+const REVIEWED = new Set([...TU_IMPERATIVES, ...NOT_COMMANDS]);
+const USTED_ANYWHERE =
+  /(?<![\wáéíóúñ])(usted|ustedes|dele|dígale|pídale|envíele|muéstrele|avísele|mándele|cuéntele|pregúntele|creerle|decirle|le acompaña)(?![\wáéíóúñ])/i;
 
 describe('the help center says season, activity and tú', () => {
   it('reads the keys the help center renders', () => {
@@ -63,10 +184,24 @@ describe('the help center says season, activity and tú', () => {
   });
 
   it('addresses the farmer as tú in Spanish', () => {
-    const usted = keys
-      .filter((k) => USTED.test(es[k] ?? ''))
-      .map((k) => `${k}: ${es[k].slice(0, 80)}`);
+    const unreviewed = keys.flatMap((k) =>
+      [...(es[k] ?? '').matchAll(OPENING)]
+        .map((m) => m[1])
+        .filter((w) => /([ae]|l[oae])$/.test(w) && !REVIEWED.has(w))
+        .map((w) => `${w} (${k})`)
+    );
+    expect(unreviewed, 'an imperative-position word nobody has reviewed').toEqual([]);
+    const usted = keys.filter((k) => USTED_ANYWHERE.test(es[k] ?? ''));
     expect(usted).toEqual([]);
+  });
+
+  it('names the finish button the way both pages that show it do', () => {
+    // The season page said "Terminar temporada" and the parcel page "Cerrar temporada", and
+    // the guide quoted one of them (review of app #329).
+    expect(es['season.finish']).toBe(es['farmHome.seasons.finish']);
+    expect(es['education.detail.seasonLifecycle.whereDesc']).toContain(
+      es['farmHome.seasons.finish']
+    );
   });
 
   it('promises no pricing outcome', () => {
