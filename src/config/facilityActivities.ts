@@ -1,8 +1,8 @@
 /**
  * What an off-farm facility does for the operation, in the words of WSDA's Additional Facilities and
  * Third-Parties form (AGR 2519, R 01/24, "Activity Information"). Keys mirror the backend's
- * `certifications/facility_activities.py`; the English labels are the form's, verbatim, and
- * `facilityActivities.test.ts` holds the two lists to each other through the backend file.
+ * `certifications/facility_activities.py`; the English labels are the form's, verbatim.
+ * `facilityActivitiesParity.test.ts` reads the backend file and holds the two lists to each other.
  */
 export const ACTIVITY_GROUPS: { group: string; keys: string[] }[] = [
   {

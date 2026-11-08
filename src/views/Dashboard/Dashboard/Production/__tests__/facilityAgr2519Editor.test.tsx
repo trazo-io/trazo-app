@@ -64,6 +64,8 @@ describe('FacilityAgr2519Editor', () => {
     await waitFor(() => expect(update).toHaveBeenCalled());
     expect(update.mock.calls[0][0].data).toEqual({
       address: '',
+      city: '',
+      state: '',
       postal_code: '98801',
       activities: ['presizing_sorting_hydrocooling', 'bulk_storage'],
       exemption_basis: ''
@@ -96,5 +98,22 @@ describe('FacilityAgr2519Editor', () => {
     ]) {
       expect(screen.getByText(legend)).toBeInTheDocument();
     }
+  });
+
+  it('keeps an activity key this bundle does not know when another field is saved', async () => {
+    renderEditor(facility({ activities: ['bulk_storage', 'a_newer_activity'] }));
+    fireEvent.change(screen.getByLabelText('Zip code'), { target: { value: '98801' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(update).toHaveBeenCalled());
+    expect(update.mock.calls[0][0].data.activities).toEqual(['bulk_storage', 'a_newer_activity']);
+  });
+
+  it('edits city and state, which the copy sheet may name as not recorded', async () => {
+    renderEditor();
+    fireEvent.change(screen.getByLabelText('City'), { target: { value: 'Wenatchee' } });
+    fireEvent.change(screen.getByLabelText('State'), { target: { value: 'WA' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(update).toHaveBeenCalled());
+    expect(update.mock.calls[0][0].data).toMatchObject({ city: 'Wenatchee', state: 'WA' });
   });
 });

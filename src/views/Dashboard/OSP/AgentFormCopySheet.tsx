@@ -1192,7 +1192,11 @@ const AgentFormCopySheet: React.FC<Props> = ({ companyId, farmId, ospId }) => {
                           defaultMessage:
                             'Your record shows certificate {number}: the statement for a certified third party fits. Attach its organic certificate and addendum.'
                         },
-                        { number: f.certificate.number }
+                        {
+                          number: [f.certificate.certifier, f.certificate.number]
+                            .filter(Boolean)
+                            .join(' ')
+                        }
                       )}{' '}
                       {f.certificate.copy_on_file
                         ? intl.formatMessage({
@@ -1225,7 +1229,7 @@ const AgentFormCopySheet: React.FC<Props> = ({ companyId, farmId, ospId }) => {
                     </Text>
                   ) : null}
                   {f.missing.length ? (
-                    <Text color="orange.800">
+                    <Text color="amber.800">
                       {intl.formatMessage(
                         {
                           id: 'osp.agentSheet.detail.facilities_2519_missing',

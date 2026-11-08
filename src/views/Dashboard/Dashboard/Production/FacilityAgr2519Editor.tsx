@@ -30,6 +30,8 @@ import { apiErrorMessage } from 'utils/apiErrorMessage';
 
 interface Draft {
   address: string;
+  city: string;
+  state: string;
   postal_code: string;
   activities: string[];
   exemption_basis: string;
@@ -37,6 +39,8 @@ interface Draft {
 
 const fromFacility = (facility: PostHarvestFacility): Draft => ({
   address: facility.address ?? '',
+  city: facility.city ?? '',
+  state: facility.state ?? '',
   postal_code: facility.postal_code ?? '',
   activities: facility.activities ?? [],
   exemption_basis: facility.exemption_basis ?? ''
@@ -44,6 +48,8 @@ const fromFacility = (facility: PostHarvestFacility): Draft => ({
 
 const sameDraft = (a: Draft, b: Draft) =>
   a.address === b.address &&
+  a.city === b.city &&
+  a.state === b.state &&
   a.postal_code === b.postal_code &&
   a.exemption_basis === b.exemption_basis &&
   [...a.activities].sort().join() === [...b.activities].sort().join();
@@ -80,9 +86,15 @@ const FacilityAgr2519Editor = ({
         facilityId: facility.id,
         data: {
           address: draft.address,
+          city: draft.city,
+          state: draft.state,
           postal_code: draft.postal_code,
-          // The form's order, whatever order they were ticked in.
-          activities: ACTIVITY_KEYS.filter((key) => draft.activities.includes(key)),
+          // The form's order, whatever order they were ticked in. A key this bundle does not know (a
+          // newer server) is kept as it was, never dropped by a save of another field (review of #328).
+          activities: [
+            ...ACTIVITY_KEYS.filter((key) => draft.activities.includes(key)),
+            ...draft.activities.filter((key) => !ACTIVITY_KEYS.includes(key))
+          ],
           ...(uncertified ? { exemption_basis: draft.exemption_basis } : {})
         }
       }).unwrap();
@@ -106,6 +118,23 @@ const FacilityAgr2519Editor = ({
             value={draft.address}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setDraft({ ...draft, address: e.target.value })
+            }
+          />
+        </StandardField>
+        <StandardField label={intl.formatMessage({ id: 'handler.field.city' })}>
+          <StandardInput
+            value={draft.city}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setDraft({ ...draft, city: e.target.value })
+            }
+          />
+        </StandardField>
+        <StandardField label={intl.formatMessage({ id: 'handler.field.state' })}>
+          <StandardInput
+            maxW="120px"
+            value={draft.state}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setDraft({ ...draft, state: e.target.value })
             }
           />
         </StandardField>
