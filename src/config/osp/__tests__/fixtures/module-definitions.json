@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.11.21",
+  "content_version": "2026.11.22",
   "registry": {
-    "content_version": "2026.11.21",
+    "content_version": "2026.11.22",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -7467,6 +7467,722 @@
             "visible_when": [],
             "questions": [
               {
+                "key": "practices_weeds",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Which practices does your operation use against weeds? Check all that apply.",
+                  "es": "¿Qué prácticas usa tu operación contra las malezas? Marca todas las que correspondan."
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "crop_rotation",
+                    "label": {
+                      "en": "Crop rotation",
+                      "es": "Rotación de cultivos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "cover_cropping",
+                    "label": {
+                      "en": "Cover crops",
+                      "es": "Cultivos de cobertura"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "interplanting_mixed_species",
+                    "label": {
+                      "en": "Strip cropping, interplanting or mixed species",
+                      "es": "Cultivo en franjas, intercalado o especies mixtas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "crop_spacing",
+                    "label": {
+                      "en": "Crop or plant spacing",
+                      "es": "Distanciamiento entre plantas o cultivos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "timing_of_planting",
+                    "label": {
+                      "en": "Timing of planting or cultivating",
+                      "es": "Calendario de siembra o de labores"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "field_preparation",
+                    "label": {
+                      "en": "Field preparation",
+                      "es": "Preparación del terreno"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "stale_seed_bed",
+                    "label": {
+                      "en": "Stale seed bed",
+                      "es": "Falsa siembra"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "mechanical_cultivation",
+                    "label": {
+                      "en": "Mechanical cultivation",
+                      "es": "Cultivo mecánico"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "hand_weeding",
+                    "label": {
+                      "en": "Hand weeding",
+                      "es": "Deshierbe manual"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "mowing_grazing",
+                    "label": {
+                      "en": "Mowing or grazing",
+                      "es": "Corte o pastoreo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "biodegradable_mulch",
+                    "label": {
+                      "en": "Natural or biodegradable mulch",
+                      "es": "Acolchado natural o biodegradable"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "synthetic_mulch_solarization",
+                    "label": {
+                      "en": "Non-PVC plastic or synthetic mulch, or solarization",
+                      "es": "Acolchado plástico o sintético sin PVC, o solarización"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "flaming",
+                    "label": {
+                      "en": "Flame weeding",
+                      "es": "Deshierbe con llama"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "burning_crop_residue",
+                    "label": {
+                      "en": "Burning crop residue",
+                      "es": "Quema de residuos de cultivo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other_physical",
+                    "label": {
+                      "en": "Other physical or mechanical means",
+                      "es": "Otros medios físicos o mecánicos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otra (describe abajo)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "none",
+                    "label": {
+                      "en": "No practice is used against weeds",
+                      "es": "Ninguna práctica se usa contra malezas"
+                    },
+                    "exclusive": true
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.206(a), (c)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "practices_weeds_other",
+                "kind": "text",
+                "label": {
+                  "en": "Describe the other practice against weeds",
+                  "es": "Describe la otra práctica contra malezas"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "practices_weeds",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": "§ 205.206(a), (c)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "practices_insects",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Which practices does your operation use against insects and other invertebrates (mites, slugs, snails)? Check all that apply.",
+                  "es": "¿Qué prácticas usa tu operación contra insectos y otros invertebrados (ácaros, babosas, caracoles)? Marca todas las que correspondan."
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "crop_rotation",
+                    "label": {
+                      "en": "Crop rotation",
+                      "es": "Rotación de cultivos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "cover_cropping",
+                    "label": {
+                      "en": "Cover crops",
+                      "es": "Cultivos de cobertura"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "interplanting_mixed_species",
+                    "label": {
+                      "en": "Strip cropping, interplanting or mixed species",
+                      "es": "Cultivo en franjas, intercalado o especies mixtas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "trap_crops",
+                    "label": {
+                      "en": "Trap crops",
+                      "es": "Cultivos trampa"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "companion_planting",
+                    "label": {
+                      "en": "Companion planting",
+                      "es": "Plantas acompañantes"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "nutrient_management",
+                    "label": {
+                      "en": "Crop nutrient management",
+                      "es": "Manejo de nutrientes del cultivo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "sanitation",
+                    "label": {
+                      "en": "Sanitation: cleaning up debris, nesting areas and weed seed sources",
+                      "es": "Saneamiento: limpieza de residuos, sitios de anidación y fuentes de semillas de malezas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "growing_location",
+                    "label": {
+                      "en": "Growing location",
+                      "es": "Ubicación del cultivo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "timing_of_planting",
+                    "label": {
+                      "en": "Timing of planting or cultivating",
+                      "es": "Calendario de siembra o de labores"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "resistant_varieties",
+                    "label": {
+                      "en": "Resistant varieties or rootstock",
+                      "es": "Variedades o portainjertos resistentes"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "mating_disruption",
+                    "label": {
+                      "en": "Mating disruption",
+                      "es": "Confusión sexual"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "beneficial_habitat",
+                    "label": {
+                      "en": "Beneficial habitat areas",
+                      "es": "Áreas de hábitat para benéficos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "predator_habitat",
+                    "label": {
+                      "en": "Predator habitat or structures for wildlife (owl boxes, raptor perches)",
+                      "es": "Hábitat para depredadores o estructuras para fauna (cajas para lechuzas, perchas para rapaces)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "beneficial_release",
+                    "label": {
+                      "en": "Release of beneficial organisms",
+                      "es": "Liberación de organismos benéficos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "physical_barriers",
+                    "label": {
+                      "en": "Physical barriers",
+                      "es": "Barreras físicas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "traps",
+                    "label": {
+                      "en": "Traps",
+                      "es": "Trampas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "physical_removal",
+                    "label": {
+                      "en": "Removing pests by hand",
+                      "es": "Retiro manual de plagas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "irrigation_management",
+                    "label": {
+                      "en": "Irrigation method or water management",
+                      "es": "Método de riego o manejo del agua"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other_physical",
+                    "label": {
+                      "en": "Other physical or mechanical means",
+                      "es": "Otros medios físicos o mecánicos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otra (describe abajo)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "none",
+                    "label": {
+                      "en": "No practice is used against insects or other invertebrates",
+                      "es": "Ninguna práctica se usa contra insectos u otros invertebrados"
+                    },
+                    "exclusive": true
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.206(a), (b)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "practices_insects_other",
+                "kind": "text",
+                "label": {
+                  "en": "Describe the other practice against insects and other invertebrates",
+                  "es": "Describe la otra práctica contra insectos y otros invertebrados"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "practices_insects",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": "§ 205.206(a), (b)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "practices_diseases",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Which practices does your operation use against diseases and nematodes? Check all that apply.",
+                  "es": "¿Qué prácticas usa tu operación contra enfermedades y nematodos? Marca todas las que correspondan."
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "crop_rotation",
+                    "label": {
+                      "en": "Crop rotation",
+                      "es": "Rotación de cultivos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "cover_cropping",
+                    "label": {
+                      "en": "Cover crops",
+                      "es": "Cultivos de cobertura"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "interplanting_mixed_species",
+                    "label": {
+                      "en": "Strip cropping, interplanting or mixed species",
+                      "es": "Cultivo en franjas, intercalado o especies mixtas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "resistant_varieties",
+                    "label": {
+                      "en": "Resistant varieties or rootstock",
+                      "es": "Variedades o portainjertos resistentes"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "crop_spacing",
+                    "label": {
+                      "en": "Crop or plant spacing",
+                      "es": "Distanciamiento entre plantas o cultivos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "companion_planting",
+                    "label": {
+                      "en": "Companion planting",
+                      "es": "Plantas acompañantes"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "vector_management",
+                    "label": {
+                      "en": "Vector management",
+                      "es": "Manejo de vectores"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "microbial_products",
+                    "label": {
+                      "en": "Microbial products",
+                      "es": "Productos microbianos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "compost",
+                    "label": {
+                      "en": "Compost",
+                      "es": "Compost"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "compost_tea",
+                    "label": {
+                      "en": "Compost tea",
+                      "es": "Té de compost"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "field_sanitation",
+                    "label": {
+                      "en": "Field sanitation: removing diseased plants, debris and disease vectors",
+                      "es": "Saneamiento del campo: retiro de plantas enfermas, residuos y vectores de enfermedad"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "timing_of_planting",
+                    "label": {
+                      "en": "Timing of planting or cultivating",
+                      "es": "Calendario de siembra o de labores"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "soil_solarization",
+                    "label": {
+                      "en": "Soil solarization",
+                      "es": "Solarización del suelo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "irrigation_management",
+                    "label": {
+                      "en": "Irrigation method or water management",
+                      "es": "Método de riego o manejo del agua"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "nutrient_management",
+                    "label": {
+                      "en": "Crop nutrient management",
+                      "es": "Manejo de nutrientes del cultivo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "pruning_canopy",
+                    "label": {
+                      "en": "Pruning and canopy management for airflow",
+                      "es": "Poda y manejo del dosel para la circulación de aire"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "growing_location",
+                    "label": {
+                      "en": "Growing location",
+                      "es": "Ubicación del cultivo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "biodegradable_mulch",
+                    "label": {
+                      "en": "Natural or biodegradable mulch",
+                      "es": "Acolchado natural o biodegradable"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "burning_crop_residue",
+                    "label": {
+                      "en": "Burning crop residue",
+                      "es": "Quema de residuos de cultivo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otra (describe abajo)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "none",
+                    "label": {
+                      "en": "No practice is used against diseases or nematodes",
+                      "es": "Ninguna práctica se usa contra enfermedades o nematodos"
+                    },
+                    "exclusive": true
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.206(a), (d)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "practices_diseases_other",
+                "kind": "text",
+                "label": {
+                  "en": "Describe the other practice against diseases and nematodes",
+                  "es": "Describe la otra práctica contra enfermedades y nematodos"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "practices_diseases",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": "§ 205.206(a), (d)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "practices_vertebrates",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Which practices does your operation use against vertebrate pests (rodents, birds, deer)? Check all that apply.",
+                  "es": "¿Qué prácticas usa tu operación contra vertebrados plaga (roedores, aves, ciervos)? Marca todas las que correspondan."
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "exclusion_barriers",
+                    "label": {
+                      "en": "Exclusion barriers: fencing, netting or tree guards",
+                      "es": "Barreras de exclusión: cercas, mallas o protectores de tronco"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "traps",
+                    "label": {
+                      "en": "Traps",
+                      "es": "Trampas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "predator_habitat",
+                    "label": {
+                      "en": "Predator habitat or structures for wildlife (owl boxes, raptor perches)",
+                      "es": "Hábitat para depredadores o estructuras para fauna (cajas para lechuzas, perchas para rapaces)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "sanitation",
+                    "label": {
+                      "en": "Sanitation: cleaning up debris, nesting areas and weed seed sources",
+                      "es": "Saneamiento: limpieza de residuos, sitios de anidación y fuentes de semillas de malezas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "mowing_grazing",
+                    "label": {
+                      "en": "Mowing or grazing",
+                      "es": "Corte o pastoreo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other_physical",
+                    "label": {
+                      "en": "Other physical or mechanical means",
+                      "es": "Otros medios físicos o mecánicos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otra (describe abajo)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "none",
+                    "label": {
+                      "en": "No practice is used against vertebrate pests",
+                      "es": "Ninguna práctica se usa contra vertebrados plaga"
+                    },
+                    "exclusive": true
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.206(a), (b)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "practices_vertebrates_other",
+                "kind": "text",
+                "label": {
+                  "en": "Describe the other practice against vertebrate pests",
+                  "es": "Describe la otra práctica contra vertebrados plaga"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "practices_vertebrates",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": "§ 205.206(a), (b)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
                 "key": "prevention_practices",
                 "kind": "checkbox_group",
                 "label": {
@@ -7663,7 +8379,8 @@
                 "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
-                "max_length": null
+                "max_length": null,
+                "retired": true
               },
               {
                 "key": "prevention_practices_other",
@@ -7957,7 +8674,8 @@
                 "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
-                "max_length": null
+                "max_length": null,
+                "retired": true
               },
               {
                 "key": "weed_management_other",
@@ -19482,7 +20200,47 @@
       "label": "unanswered",
       "answers": {},
       "visible_questions": [
+        "practices_weeds",
+        "practices_insects",
+        "practices_diseases",
+        "practices_vertebrates",
+        "burns_crop_residue",
+        "plastic_mulch_used",
+        "applies_pest_weed_disease_inputs",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_methods",
+        "monitoring_records"
+      ],
+      "missing_required": [
+        "burns_crop_residue",
+        "plastic_mulch_used",
+        "applies_pest_weed_disease_inputs",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_records"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g5_0_pest",
+      "label": "retired_lists_answered",
+      "answers": {
+        "prevention_practices": [
+          "crop_rotation",
+          "other"
+        ],
+        "weed_management_practices": [
+          "mowing"
+        ]
+      },
+      "visible_questions": [
+        "practices_weeds",
+        "practices_insects",
+        "practices_diseases",
+        "practices_vertebrates",
         "prevention_practices",
+        "prevention_practices_other",
         "burns_crop_residue",
         "weed_management_practices",
         "plastic_mulch_used",
@@ -19493,9 +20251,44 @@
         "monitoring_records"
       ],
       "missing_required": [
-        "prevention_practices",
+        "prevention_practices_other",
         "burns_crop_residue",
-        "weed_management_practices",
+        "plastic_mulch_used",
+        "applies_pest_weed_disease_inputs",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_records"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g5_0_pest",
+      "label": "typed_lists_with_other",
+      "answers": {
+        "practices_weeds": [
+          "mowing_grazing",
+          "other"
+        ],
+        "practices_vertebrates": [
+          "none"
+        ]
+      },
+      "visible_questions": [
+        "practices_weeds",
+        "practices_weeds_other",
+        "practices_insects",
+        "practices_diseases",
+        "practices_vertebrates",
+        "burns_crop_residue",
+        "plastic_mulch_used",
+        "applies_pest_weed_disease_inputs",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_methods",
+        "monitoring_records"
+      ],
+      "missing_required": [
+        "burns_crop_residue",
         "plastic_mulch_used",
         "applies_pest_weed_disease_inputs",
         "monitoring_scope",
@@ -19515,9 +20308,11 @@
         ]
       },
       "visible_questions": [
-        "prevention_practices",
+        "practices_weeds",
+        "practices_insects",
+        "practices_diseases",
+        "practices_vertebrates",
         "burns_crop_residue",
-        "weed_management_practices",
         "plastic_mulch_used",
         "applies_pest_weed_disease_inputs",
         "monitoring_scope",
@@ -19526,9 +20321,7 @@
         "monitoring_records"
       ],
       "missing_required": [
-        "prevention_practices",
         "burns_crop_residue",
-        "weed_management_practices",
         "plastic_mulch_used",
         "monitoring_scope",
         "monitoring_frequency",
@@ -19547,9 +20340,11 @@
         ]
       },
       "visible_questions": [
-        "prevention_practices",
+        "practices_weeds",
+        "practices_insects",
+        "practices_diseases",
+        "practices_vertebrates",
         "burns_crop_residue",
-        "weed_management_practices",
         "plastic_mulch_used",
         "applies_pest_weed_disease_inputs",
         "input_use_triggers",
@@ -19563,9 +20358,7 @@
         "monitoring_records"
       ],
       "missing_required": [
-        "prevention_practices",
         "burns_crop_residue",
-        "weed_management_practices",
         "plastic_mulch_used",
         "input_use_conditions",
         "monitoring_scope",
@@ -22312,9 +23105,11 @@
         "burns_crop_residue": false
       },
       "visible_questions": [
-        "prevention_practices",
+        "practices_weeds",
+        "practices_insects",
+        "practices_diseases",
+        "practices_vertebrates",
         "burns_crop_residue",
-        "weed_management_practices",
         "plastic_mulch_used",
         "applies_pest_weed_disease_inputs",
         "monitoring_scope",
@@ -22323,8 +23118,6 @@
         "monitoring_records"
       ],
       "missing_required": [
-        "prevention_practices",
-        "weed_management_practices",
         "plastic_mulch_used",
         "applies_pest_weed_disease_inputs",
         "monitoring_scope",
@@ -22341,9 +23134,11 @@
         "applies_pest_weed_disease_inputs": false
       },
       "visible_questions": [
-        "prevention_practices",
+        "practices_weeds",
+        "practices_insects",
+        "practices_diseases",
+        "practices_vertebrates",
         "burns_crop_residue",
-        "weed_management_practices",
         "plastic_mulch_used",
         "applies_pest_weed_disease_inputs",
         "monitoring_scope",
@@ -22352,9 +23147,7 @@
         "monitoring_records"
       ],
       "missing_required": [
-        "prevention_practices",
         "burns_crop_residue",
-        "weed_management_practices",
         "plastic_mulch_used",
         "monitoring_scope",
         "monitoring_frequency",
@@ -22372,9 +23165,11 @@
         "applies_copper_materials": false
       },
       "visible_questions": [
-        "prevention_practices",
+        "practices_weeds",
+        "practices_insects",
+        "practices_diseases",
+        "practices_vertebrates",
         "burns_crop_residue",
-        "weed_management_practices",
         "plastic_mulch_used",
         "applies_pest_weed_disease_inputs",
         "monitoring_scope",
@@ -22383,9 +23178,7 @@
         "monitoring_records"
       ],
       "missing_required": [
-        "prevention_practices",
         "burns_crop_residue",
-        "weed_management_practices",
         "plastic_mulch_used",
         "applies_pest_weed_disease_inputs",
         "monitoring_scope",

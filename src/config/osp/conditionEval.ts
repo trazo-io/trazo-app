@@ -97,7 +97,9 @@ const visibility = (
     const pageShown = passes(page.visible_when);
     if (pageShown) pages.push(page);
     for (const question of page.questions) {
-      const questionShown = pageShown && passes(question.visible_when);
+      // A retired question shows only while it still holds an answer (backend `Question.retired`).
+      const held = !question.retired || isAnswered(question, answerValue(answers, question.key));
+      const questionShown = pageShown && passes(question.visible_when) && held;
       shown.set(question.key, questionShown);
       if (questionShown) questions.push({ page, question });
     }

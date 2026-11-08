@@ -62,6 +62,11 @@ export interface ModuleQuestion {
   embed: string | null;
   placeholder: TextMap | null;
   max_length: number | null;
+  /**
+   * Replaced by questions that ask more (backend `Question.retired`): shown only while it still
+   * holds an answer, never asked anew. Absent on every question never retired.
+   */
+  retired?: boolean;
 }
 
 export interface ModulePage {
