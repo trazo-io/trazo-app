@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.11.23",
+  "content_version": "2026.11.24",
   "registry": {
-    "content_version": "2026.11.23",
+    "content_version": "2026.11.24",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -304,6 +304,59 @@
                   }
                 ],
                 "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "residue_screening_method",
+                "kind": "text",
+                "label": {
+                  "en": "What screening or analysis is performed (for example, the laboratory and the residue panel)?",
+                  "es": "¿Qué análisis o tamizaje se realiza (por ejemplo, el laboratorio y el panel de residuos)?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "fraud_mitigation_practices",
+                    "op": "includes",
+                    "value": "product_testing"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "residue_detection_response",
+                "kind": "textarea",
+                "label": {
+                  "en": "What do you do when a pesticide residue is detected?",
+                  "es": "¿Qué haces cuando se detecta un residuo de plaguicida?"
+                },
+                "coaching": {
+                  "en": "How you find the source of the contamination and decide whether the product keeps its organic status, who is notified and involved (your certifier among them), and how the response is documented.",
+                  "es": "Cómo encuentras el origen de la contaminación y decides si el producto mantiene su condición orgánica, a quién se notifica y quién participa (tu certificador entre ellos), y cómo se documenta la respuesta."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "fraud_mitigation_practices",
+                    "op": "includes",
+                    "value": "product_testing"
+                  }
+                ],
+                "nop_cite": "§ 205.671",
                 "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
@@ -5390,6 +5443,15 @@
                       "on_farm_compost",
                       "vermicompost"
                     ]
+                  },
+                  {
+                    "question": "compost_method",
+                    "op": "one_of",
+                    "value": [
+                      "windrow",
+                      "static_aerated",
+                      "in_vessel"
+                    ]
                   }
                 ],
                 "nop_cite": "§ 205.203(c)(2)",
@@ -5995,6 +6057,28 @@
             ],
             "visible_when": [],
             "questions": [
+              {
+                "key": "natural_resources_description",
+                "kind": "textarea",
+                "label": {
+                  "en": "Describe the natural resources and biodiversity of your operation and the land around it",
+                  "es": "Describe los recursos naturales y la biodiversidad de tu operación y de la tierra que la rodea"
+                },
+                "coaching": {
+                  "en": "Soil type and condition, bodies of water, nearby wetlands and woodlands, wildlife, windbreaks, hedgerows, native habitat and beneficial plantings. Include problem areas such as erosion or invasive species.",
+                  "es": "Tipo y estado del suelo, cuerpos de agua, humedales y bosques cercanos, fauna silvestre, cortavientos, setos, hábitat nativo y plantaciones benéficas. Incluye las áreas con problemas, como erosión o especies invasoras."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.200",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
               {
                 "key": "soil_water_practices",
                 "kind": "checkbox_group",
@@ -7375,6 +7459,30 @@
                     "label": {
                       "en": "Farm logs or journals",
                       "es": "Bitácoras o diarios de la finca"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "cost_trends",
+                    "label": {
+                      "en": "Fertility and pest control cost trends",
+                      "es": "Tendencias de costos de fertilidad y control de plagas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "water_use_trends",
+                    "label": {
+                      "en": "Water use trends",
+                      "es": "Tendencias del uso de agua"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "water_testing",
+                    "label": {
+                      "en": "Water testing",
+                      "es": "Análisis de agua"
                     },
                     "exclusive": false
                   },
@@ -19667,10 +19775,220 @@
       "missing_required_na": []
     },
     {
+      "module": "g4_1_compost_manure",
+      "label": "unanswered",
+      "answers": {},
+      "visible_questions": [
+        "materials_applied",
+        "soil_fertility_additional_notes"
+      ],
+      "missing_required": [
+        "materials_applied"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g4_1_compost_manure",
+      "label": "windrow",
+      "answers": {
+        "materials_applied": [
+          "on_farm_compost"
+        ],
+        "compost_method": "windrow"
+      },
+      "visible_questions": [
+        "materials_applied",
+        "compost_method",
+        "compost_initial_cn_ratio",
+        "compost_temp_and_days",
+        "compost_turnings",
+        "compost_temp_logs_kept",
+        "compost_contains_manure",
+        "compost_feedstocks",
+        "compost_feedstocks_detail",
+        "compost_logs_kept",
+        "compost_logs_location",
+        "compost_applied_inside_interval",
+        "soil_fertility_additional_notes"
+      ],
+      "missing_required": [
+        "compost_initial_cn_ratio",
+        "compost_temp_and_days",
+        "compost_turnings",
+        "compost_temp_logs_kept"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g4_1_compost_manure",
+      "label": "vermicompost",
+      "answers": {
+        "materials_applied": [
+          "vermicompost"
+        ],
+        "compost_method": "vermicompost"
+      },
+      "visible_questions": [
+        "materials_applied",
+        "compost_method",
+        "compost_initial_cn_ratio",
+        "vermicompost_moisture",
+        "compost_temp_logs_kept",
+        "vermicompost_made_on_farm",
+        "compost_feedstocks",
+        "compost_feedstocks_detail",
+        "compost_logs_kept",
+        "compost_logs_location",
+        "vermicompost_conditions_met",
+        "vermicompost_applied_inside_interval",
+        "soil_fertility_additional_notes"
+      ],
+      "missing_required": [
+        "compost_initial_cn_ratio",
+        "compost_temp_logs_kept"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g4_1_compost_manure",
+      "label": "method_unanswered",
+      "answers": {
+        "materials_applied": [
+          "on_farm_compost"
+        ]
+      },
+      "visible_questions": [
+        "materials_applied",
+        "compost_method",
+        "compost_initial_cn_ratio",
+        "compost_temp_logs_kept",
+        "compost_contains_manure",
+        "compost_feedstocks",
+        "compost_feedstocks_detail",
+        "compost_logs_kept",
+        "compost_logs_location",
+        "compost_applied_inside_interval",
+        "soil_fertility_additional_notes"
+      ],
+      "missing_required": [
+        "compost_method",
+        "compost_initial_cn_ratio",
+        "compost_temp_logs_kept"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g2_0_fraud_prevention",
+      "label": "unanswered",
+      "answers": {},
+      "visible_questions": [
+        "fraud_risk_areas",
+        "fraud_mitigation_practices",
+        "supplier_approval_controls",
+        "supplier_approval_procedure_upload",
+        "fraud_review_process",
+        "fraud_plan_upload",
+        "osp_review_frequency",
+        "osp_accuracy_process",
+        "osp_implementation_monitoring"
+      ],
+      "missing_required": [
+        "fraud_risk_areas",
+        "fraud_mitigation_practices",
+        "fraud_review_process",
+        "osp_review_frequency",
+        "osp_accuracy_process",
+        "osp_implementation_monitoring"
+      ],
+      "missing_required_na": [
+        "fraud_risk_areas",
+        "fraud_mitigation_practices",
+        "fraud_review_process",
+        "osp_review_frequency",
+        "osp_accuracy_process",
+        "osp_implementation_monitoring"
+      ]
+    },
+    {
+      "module": "g2_0_fraud_prevention",
+      "label": "product_testing",
+      "answers": {
+        "fraud_mitigation_practices": [
+          "product_testing"
+        ]
+      },
+      "visible_questions": [
+        "fraud_risk_areas",
+        "fraud_mitigation_practices",
+        "product_testing_detail",
+        "residue_screening_method",
+        "residue_detection_response",
+        "supplier_approval_controls",
+        "supplier_approval_procedure_upload",
+        "fraud_review_process",
+        "fraud_plan_upload",
+        "osp_review_frequency",
+        "osp_accuracy_process",
+        "osp_implementation_monitoring"
+      ],
+      "missing_required": [
+        "fraud_risk_areas",
+        "product_testing_detail",
+        "fraud_review_process",
+        "osp_review_frequency",
+        "osp_accuracy_process",
+        "osp_implementation_monitoring"
+      ],
+      "missing_required_na": [
+        "fraud_risk_areas",
+        "product_testing_detail",
+        "fraud_review_process",
+        "osp_review_frequency",
+        "osp_accuracy_process",
+        "osp_implementation_monitoring"
+      ]
+    },
+    {
+      "module": "g2_0_fraud_prevention",
+      "label": "no_testing",
+      "answers": {
+        "fraud_mitigation_practices": [
+          "verify_certificates"
+        ]
+      },
+      "visible_questions": [
+        "fraud_risk_areas",
+        "fraud_mitigation_practices",
+        "supplier_certificate_review_frequency",
+        "supplier_approval_controls",
+        "supplier_approval_procedure_upload",
+        "fraud_review_process",
+        "fraud_plan_upload",
+        "osp_review_frequency",
+        "osp_accuracy_process",
+        "osp_implementation_monitoring"
+      ],
+      "missing_required": [
+        "fraud_risk_areas",
+        "fraud_review_process",
+        "osp_review_frequency",
+        "osp_accuracy_process",
+        "osp_implementation_monitoring"
+      ],
+      "missing_required_na": [
+        "fraud_risk_areas",
+        "fraud_review_process",
+        "osp_review_frequency",
+        "osp_accuracy_process",
+        "osp_implementation_monitoring"
+      ]
+    },
+    {
       "module": "g4_2_natural_resources",
       "label": "unanswered",
       "answers": {},
       "visible_questions": [
+        "natural_resources_description",
         "soil_water_practices",
         "irrigation_efficiency_monitoring",
         "streams_or_channels_adjacent",
@@ -19717,6 +20035,7 @@
         ]
       },
       "visible_questions": [
+        "natural_resources_description",
         "soil_water_practices",
         "irrigation_efficiency_monitoring",
         "streams_or_channels_adjacent",
@@ -19755,6 +20074,7 @@
         "shared_irrigation_with_prohibited": true
       },
       "visible_questions": [
+        "natural_resources_description",
         "soil_water_practices",
         "irrigation_efficiency_monitoring",
         "streams_or_channels_adjacent",
@@ -23060,6 +23380,7 @@
         ]
       },
       "visible_questions": [
+        "natural_resources_description",
         "soil_water_practices",
         "irrigation_efficiency_monitoring",
         "streams_or_channels_adjacent",

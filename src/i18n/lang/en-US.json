@@ -7465,6 +7465,7 @@
   "parcelApp.missing.certification_status": "Whether the parcel is currently certified organic",
   "parcelApp.missing.identity": "Parcel identity (APN or Section-Township-Range)",
   "parcelApp.missing.land_history": "3 years of land history (or a landowner affidavit)",
+  "parcelApp.missing.livestock": "Whether livestock is kept, pastured or grazed on this parcel",
   "parcelApp.missing.map": "Field map",
   "parcelApp.missing.transition": "Date you began managing this land",
   "parcelApp.missingTooltip": "Still needed: {items}",

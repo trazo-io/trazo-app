@@ -57,7 +57,7 @@ import type { SectionTabStatus } from 'components/Design/StandardComponents';
 import CardWithMap from 'components/Map/CardWithMap';
 import FieldHistorySection from 'views/Dashboard/Dashboard/Parcel/FieldHistorySection';
 import { answerValue, visiblePages, visibleQuestions } from 'config/osp/conditionEval';
-import { offeredOptions, toggleCheckbox } from 'config/osp/optionChoices';
+import { holdsRetiredOption, offeredOptions, toggleCheckbox } from 'config/osp/optionChoices';
 import { pickText } from 'config/osp/types';
 import type { AnswerValue, ModuleAnswers, ModuleQuestion } from 'config/osp/types';
 import {
@@ -95,11 +95,13 @@ const STATUS_BADGE: Record<string, string> = {
  * `certifications/osp_modules/parcel_application.py`; right side = the missing-keys emitted
  * by `product/services/parcel_application_status.py`. Add a row here when a check is added
  * there, or the new gap shows in the header badge with no section pointing at it.
- * `c_livestock` owns no check on purpose — it has no live-model evidence to read.
+ * `c_livestock` owns the livestock answer since 2026.11.24 (CCOF ORGB49 §C: the parcel is either "not used
+ * for organic livestock" or the section is completed).
  */
 const PAGE_STATUS_CHECK: Record<string, string[]> = {
   a_location: ['identity'],
   b_transition: ['transition'],
+  c_livestock: ['livestock'],
   d_buffers: ['buffers'],
   e_map: ['map'],
   // Two checks since 2026-09-09: the 36-month history AND the "currently certified organic?"
@@ -466,14 +468,16 @@ export const QuestionField = ({
       );
       break;
     case 'radio':
+      // A retired option (backend `Option.retired`) shows only while it is the stored answer, and
+      // cannot be picked again: livestock's kept-only "No" (2026.11.24).
       control = (
         <RadioGroup
           value={(value as string) ?? ''}
           onChange={(v) => onChange(v)}
           isDisabled={!canWrite}>
           <Stack spacing={2}>
-            {question.options.map((option) => (
-              <Radio key={option.value} value={option.value}>
+            {offeredOptions(question, value).map((option) => (
+              <Radio key={option.value} value={option.value} isDisabled={option.retired}>
                 <Text fontSize="sm">{pickText(option.label, locale)}</Text>
               </Radio>
             ))}
@@ -556,6 +560,17 @@ export const QuestionField = ({
         </Text>
       ) : null}
       {control}
+      {/* Why a question that looks answered keeps its section open: the stored answer is a
+          retired option (review of app #326; same hint as the module wizard). */}
+      {holdsRetiredOption(question, value) ? (
+        <Text
+          fontSize="xs"
+          color="gray.700"
+          mt={1}
+          data-testid={`parcel-q-retired-${question.key}`}>
+          {intl.formatMessage({ id: 'osp.wizard.retiredOption' })}
+        </Text>
+      ) : null}
     </Box>
   );
 };

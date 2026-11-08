@@ -7465,6 +7465,7 @@
   "parcelApp.missing.certification_status": "Si la parcela está actualmente certificada como orgánica",
   "parcelApp.missing.identity": "Identidad de la parcela (APN o Sección-Municipio-Rango)",
   "parcelApp.missing.land_history": "3 años de historial del terreno (o declaración jurada del propietario)",
+  "parcelApp.missing.livestock": "Si se mantiene, se apacienta o se pastorea ganado en esta parcela",
   "parcelApp.missing.map": "Mapa del campo",
   "parcelApp.missing.transition": "Fecha en que comenzó a manejar esta tierra",
   "parcelApp.missingTooltip": "Aún falta: {items}",
