@@ -301,7 +301,7 @@ describe('activity form section titles', () => {
     ).toEqual([]);
   });
 
-  it('is not vacuous — the home still holds the vocabulary', () => {
+  it('is not vacuous: the home still holds the vocabulary', () => {
     // If the family labels were ever renamed or removed, the assertion above would pass
     // trivially and stop meaning anything. Prove the words are still somewhere.
     const homed = Object.entries(EN).filter(
