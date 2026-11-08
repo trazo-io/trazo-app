@@ -64,6 +64,7 @@ import React, {
   useImperativeHandle
 } from 'react';
 import { CarbonImpactPreview } from 'components/Events/CarbonImpactPreview';
+import { CHEMICAL_FUEL_TYPES } from 'config/events/chemicalFormOptions';
 import { ReceiptDocumentSelect } from 'components/Forms/ReceiptDocumentSelect';
 import InputVerifyHelper from 'components/Compliance/InputVerifyHelper';
 import { object, string, array, number } from 'zod';
@@ -125,23 +126,8 @@ const firstFilled = (...candidates) => {
  * picker stayed English on a fully translated form. `factor` stays a literal: it is notation
  * (kg CO₂e/L), and an emission factor is not a translator's to edit.
  */
-const FUEL_TYPES = [
-  { value: 'diesel', labelKey: 'events.chemical.fuelTypes.diesel', factor: '2.70 kg CO₂e/L' },
-  { value: 'gasoline', labelKey: 'events.chemical.fuelTypes.gasoline', factor: '2.32 kg CO₂e/L' },
-  {
-    value: 'natural_gas',
-    labelKey: 'events.chemical.fuelTypes.naturalGas',
-    factor: '1.92 kg CO₂e/m³'
-  },
-  { value: 'propane', labelKey: 'events.chemical.fuelTypes.propane', factor: '1.51 kg CO₂e/L' },
-  {
-    value: 'electric',
-    labelKey: 'events.chemical.fuelTypes.electric',
-    factor: '0.365 kg CO₂e/kWh'
-  },
-  { value: 'biodiesel', labelKey: 'events.chemical.fuelTypes.biodiesel', factor: '2.31 kg CO₂e/L' },
-  { value: 'none', labelKey: 'events.chemical.fuelTypes.none', factor: '0 kg CO₂e' }
-];
+// Shared with the carbon box, so both name a fuel the same way (config/events/chemicalFormOptions).
+const FUEL_TYPES = CHEMICAL_FUEL_TYPES;
 
 // ENHANCED SCHEMA - Following Equipment/Soil/Pest enhanced patterns with dynamic validation
 // Now includes EPA Worker Protection Standard (WPS) compliance fields per 40 CFR 170.309

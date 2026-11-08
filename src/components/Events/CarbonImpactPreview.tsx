@@ -28,14 +28,12 @@ import {
   getImpactLevel as getImpactLevelUtil
 } from '../../utils/carbonDisplayUtils';
 import { isNotEstimated } from 'utils/carbonStatus';
+import { APPLICATION_METHODS, WATER_SOURCES, type EnumOption } from 'config/events/enums';
 import {
-  APPLICATION_METHODS,
-  APPLICATION_METHODS_BY_CHEMICAL_TYPE,
-  CHEMICAL_SUBTYPES_BY_MAIN_TYPE,
-  FUEL_TYPES,
-  WATER_SOURCES,
-  type EnumOption
-} from 'config/events/enums';
+  CHEMICAL_FUEL_TYPES,
+  CHEMICAL_SUBTYPE_KEYS,
+  chemicalMethodKey
+} from 'config/events/chemicalFormOptions';
 import { productionEventRegistry } from 'config/events/productionEvent';
 
 interface CarbonCalculation {
@@ -234,15 +232,10 @@ interface CarbonImpactPreviewProps {
  * The response names things by code ("mowing_floor_management", "ground_spray",
  * "synthetic_pesticide"), and the panel printed the code with the underscores swapped for
  * spaces: English on a Spanish screen, and not the words the form itself uses (2026-11-08).
- * Each code now resolves to the same label the form's own select shows.
+ * Each code now resolves to the label the form beside it shows: the production subtype from
+ * the production registry, and the input-application codes from the input form's own tables
+ * (`chemicalFormOptions`), which word a method differently per product type.
  */
-const ALL_APPLICATION_METHODS: readonly EnumOption[] = [
-  ...APPLICATION_METHODS,
-  ...Object.values(APPLICATION_METHODS_BY_CHEMICAL_TYPE).flat()
-];
-const ALL_CHEMICAL_SUBTYPES: readonly EnumOption[] = Object.values(
-  CHEMICAL_SUBTYPES_BY_MAIN_TYPE
-).flat();
 // The fertilizer calculator reports its short form; the form's options carry the suffix.
 const FERTILIZER_SUBTYPE_OPTION: Record<string, string> = {
   organic: 'organic_fertilizer',
@@ -306,6 +299,15 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
       const option = code ? options.find((o) => o.value === code) : undefined;
       return option ? intl.formatMessage({ id: option.labelKey }) : asText(code);
     };
+    const keyLabel = (key: string | undefined, code?: string | null) =>
+      key ? intl.formatMessage({ id: key }) : asText(code);
+    // The input form's product type (FE/PE/HE/FU) decides how it words a method.
+    const chemicalType: string | undefined =
+      eventType === 'Chemical' ? formData?.type || formData?.chemical_type : undefined;
+    const methodLabel = (method: string) =>
+      chemicalMethodKey(chemicalType, method)
+        ? keyLabel(chemicalMethodKey(chemicalType, method), method)
+        : optionLabel(APPLICATION_METHODS, method);
     // On the production form the activity is the subtype the farmer picked, so its name is the
     // one the form shows; the response's `production_activity` is only the fallback.
     const productionSubtypeKey =
@@ -1242,10 +1244,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                     <Text color="blue.600">{t('label.applicationMethod')}</Text>
                                     <Text color="blue.800">
                                       {calculation.breakdown.application_method
-                                        ? optionLabel(
-                                            ALL_APPLICATION_METHODS,
-                                            calculation.breakdown.application_method
-                                          )
+                                        ? methodLabel(calculation.breakdown.application_method)
                                         : t('na')}
                                     </Text>
                                   </HStack>
@@ -1279,7 +1278,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                         <Text color="blue.600">{t('label.fuelType')}</Text>
                                         <Text color="blue.800">
                                           {optionLabel(
-                                            FUEL_TYPES,
+                                            CHEMICAL_FUEL_TYPES,
                                             calculation.breakdown.application_fuel_type || 'diesel'
                                           )}
                                         </Text>
@@ -1791,7 +1790,10 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                                   fontWeight={
                                                     isEcoFriendly ? 'semibold' : 'normal'
                                                   }>
-                                                  {optionLabel(ALL_CHEMICAL_SUBTYPES, subtype)}
+                                                  {keyLabel(
+                                                    CHEMICAL_SUBTYPE_KEYS[subtype],
+                                                    subtype
+                                                  )}
                                                   {isOrganic && ''}
                                                   {isBiological && ''}
                                                 </Text>
@@ -1869,11 +1871,13 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                             {FERTILIZER_SUBTYPE_OPTION[
                                               calculation.breakdown.fertilizer_subtype
                                             ]
-                                              ? optionLabel(
-                                                  CHEMICAL_SUBTYPES_BY_MAIN_TYPE.FE,
-                                                  FERTILIZER_SUBTYPE_OPTION[
-                                                    calculation.breakdown.fertilizer_subtype
-                                                  ]
+                                              ? keyLabel(
+                                                  CHEMICAL_SUBTYPE_KEYS[
+                                                    FERTILIZER_SUBTYPE_OPTION[
+                                                      calculation.breakdown.fertilizer_subtype
+                                                    ]
+                                                  ],
+                                                  calculation.breakdown.fertilizer_subtype
                                                 )
                                               : asText(calculation.breakdown.fertilizer_subtype)}
                                             {calculation.breakdown.fertilizer_subtype ===

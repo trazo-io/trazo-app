@@ -77,9 +77,15 @@ describe('carbon box values, in Spanish', () => {
         }
       }
     );
-    expect(screen.getByText(es['events.applicationMethods.groundSpray'])).toBeInTheDocument();
-    expect(screen.getByText(es['events.chemicalSubtypes.syntheticPesticide'])).toBeInTheDocument();
-    expect(screen.getByText(es['events.fuelTypes.diesel'])).toBeInTheDocument();
+    // The input form's own wording, which for a method depends on the product type (review of
+    // app #327: the generic catalog's labels differed from the select beside the box).
+    expect(
+      screen.getByText(es['events.chemical.methods.groundSprayCropsSoil'])
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(es['events.chemical.subtypeOptions.syntheticPesticide'])
+    ).toBeInTheDocument();
+    expect(screen.getByText(es['events.chemical.fuelTypes.diesel'])).toBeInTheDocument();
     expect(document.body.textContent).not.toMatch(/ground spray|synthetic pesticide/i);
   });
 
@@ -97,7 +103,23 @@ describe('carbon box values, in Spanish', () => {
         }
       }
     );
-    expect(screen.getByText(es['events.chemicalSubtypes.slowRelease'])).toBeInTheDocument();
+    expect(screen.getByText(es['events.chemical.subtypeOptions.slowRelease'])).toBeInTheDocument();
+    expect(
+      screen.getByText(es['events.chemical.methods.broadcastIncorporated'])
+    ).toBeInTheDocument();
+  });
+
+  it('words the same method the way the form does for a herbicide', () => {
+    show(
+      'Chemical',
+      { type: 'HE' },
+      {
+        co2e: 5,
+        calculation_method: 'chemical',
+        breakdown: { application_method: 'ground_spray', application_emissions_kg_co2e: 5 }
+      }
+    );
+    expect(screen.getByText(es['events.chemical.methods.groundSprayEmergent'])).toBeInTheDocument();
   });
 
   it('a code no option knows still shows, as words, rather than vanishing', () => {
