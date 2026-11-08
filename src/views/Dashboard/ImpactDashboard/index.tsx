@@ -83,8 +83,8 @@ export default function ImpactDashboard() {
                 iconColor="green.600"
                 iconBg="green.100"
                 // A count of what the shopper actually did, never a number Trazo assigned to a
-                // farm. This card previously led with the average transparency score, which is
-                // a PRODUCER-dashboard KPI — putting it in front of a shopper is the
+                // farm. This card previously led with the average transparency score, a self-assigned
+                // grade, retired as a concept — putting it in front of a shopper is the
                 // self-created sustainability label banned by ECGT 2024/825 (live 2026-09-27)
                 // and an FTC 16 CFR 260.4 general-benefit risk. See
                 // .claude/rules/transparency-first.md.
@@ -203,8 +203,8 @@ export default function ImpactDashboard() {
                         </HStack>
 
                         {/* Compact Badges Row — documented FACTS only. The transparency-score
-                            percentage badge that used to lead this row was a producer KPI shown
-                            to a shopper; the event count below says something verifiable
+                            percentage badge that used to lead this row was a self-assigned grade
+                            shown to a shopper; the event count below says something verifiable
                             instead. */}
                         <HStack spacing={2} flexWrap="wrap">
                           {scan.events_viewed > 0 && (

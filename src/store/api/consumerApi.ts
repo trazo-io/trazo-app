@@ -27,8 +27,8 @@ export interface EnhancedScan {
   farm_name: string;
   location: string;
   // Transparency-first fields.
-  // `transparency_score` was removed from this type on 2026-08-06. It is a PRODUCER-dashboard
-  // KPI; typing it here is what let the consumer Discover page render it as a hero metric
+  // `transparency_score` was removed from this type on 2026-08-06. The score is retired as a
+  // concept; typing it here is what let the consumer Discover page render it as a hero metric
   // ("Avg Transparency Score") and the journey list render it as a percentage badge — the
   // self-created sustainability label ECGT 2024/825 bans (live 2026-09-27). Consumer surfaces
   // carry documented COUNTS, not a number Trazo assigned to a farm. Do not re-add it; the

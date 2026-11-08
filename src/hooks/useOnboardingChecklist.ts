@@ -133,8 +133,8 @@ export function resolveWriterCompletion({
     allParcels.some((p: any) => p.has_current_production === true) || productionList.length > 0;
 
   // Count events directly. This used to read `transparency_score > 0` as a proxy — a live
-  // dependency on the metric that was retired from every UI surface 2026-08-11 and is now a
-  // backend-only KPI, and one the anti-gaming rules can legitimately hold at 0 for a season
+  // dependency on the metric that was retired from every UI surface 2026-08-11 and whose column
+  // is gone (trazo-back 0237/0238), and one the anti-gaming rules can legitimately hold at 0 for a season
   // that DOES have events. `events_count` is on the same `carbon/productions-flat/` payload.
   const hasEvents = productionList.some((p) => (p.events_count ?? 0) > 0);
   const hasFinished = productionList.some((p) => !!p.finish_date);

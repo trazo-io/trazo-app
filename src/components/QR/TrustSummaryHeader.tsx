@@ -358,8 +358,8 @@ function buildEventsPillar(props: TrustSummaryHeaderProps, intl: IntlShape): Pil
           productPhrase,
           // Self-graded "% complete" removed from the consumer surface (2026-06
           // claim-safety): the pillar communicates the factual fraction only
-          // (e.g. "12 of 13"); the self-assigned percentage is a farmer-dashboard
-          // KPI, not a consumer claim (EU ECGT 2024/825 / FTC 16 CFR 260.6).
+          // (e.g. "12 of 13"); a self-assigned percentage is retired as a
+          // concept, and never a consumer claim (EU ECGT 2024/825 / FTC 16 CFR 260.6).
           scoreSuffix: ''
         }
       )

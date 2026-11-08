@@ -22,8 +22,8 @@
  *  - the transparency SCORE badge (rendered twice, mobile + desktop). Cut from the farm home
  *    2026-08-04 and from the Production quick-stats per §10.4 as "the 4th duplicate of one
  *    number". This note used to add "its home is /transparency" — that page was never routed,
- *    and on 2026-08-11 the score was retired from producer UI entirely. It has no home now;
- *    it is a backend KPI. See `.claude/rules/transparency-first.md`.
+ *    and on 2026-08-11 the score was retired from producer UI entirely. It has no home now:
+ *    retired as a concept, its column dropped. See `.claude/rules/transparency-first.md`.
  *  - "Quick Stats" — area and crop, both duplicated by the Basic Information card below.
  *  - the initials Avatar and the duplicated mobile/desktop identity layouts.
  *  - "Share", which called navigator.share on `window.location.href` — an authenticated
