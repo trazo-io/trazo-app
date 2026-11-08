@@ -451,6 +451,7 @@ const EducationTopicDetail: React.FC = () => {
             </Box>
 
             <StandardAlert
+              mb={0}
               status="warning"
               title={intl.formatMessage({ id: 'education.detail.farmEvents.notSalesTitle' })}
               description={intl.formatMessage({ id: 'education.detail.farmEvents.notSalesDesc' })}
@@ -2578,6 +2579,7 @@ const EducationTopicDetail: React.FC = () => {
             </Box>
 
             <StandardAlert
+              mb={0}
               status="warning"
               title={intl.formatMessage({ id: 'education.detail.inspectionPrep.retentionTitle' })}
               description={intl.formatMessage({
@@ -2642,6 +2644,7 @@ const EducationTopicDetail: React.FC = () => {
             <Text>{intl.formatMessage({ id: 'education.detail.seasonLifecycle.finishDesc' })}</Text>
 
             <StandardAlert
+              mb={0}
               status="warning"
               title={intl.formatMessage({ id: 'education.detail.seasonLifecycle.finishWarnTitle' })}
               description={intl.formatMessage({
@@ -2710,6 +2713,7 @@ const EducationTopicDetail: React.FC = () => {
             <Text>{intl.formatMessage({ id: 'education.detail.ospData.lockDesc' })}</Text>
 
             <StandardAlert
+              mb={0}
               status="warning"
               title={intl.formatMessage({ id: 'education.detail.ospData.updateTitle' })}
               description={intl.formatMessage({ id: 'education.detail.ospData.updateDesc' })}
@@ -2843,6 +2847,7 @@ const EducationTopicDetail: React.FC = () => {
             <Text>{intl.formatMessage({ id: 'education.detail.traceback.certifierDesc' })}</Text>
 
             <StandardAlert
+              mb={0}
               status="warning"
               title={intl.formatMessage({ id: 'education.detail.traceback.limitTitle' })}
               description={intl.formatMessage({ id: 'education.detail.traceback.limitDesc' })}
@@ -2935,6 +2940,7 @@ const EducationTopicDetail: React.FC = () => {
             </Box>
 
             <StandardAlert
+              mb={0}
               status="warning"
               title={intl.formatMessage({ id: 'education.detail.recordCorrections.limitTitle' })}
               description={intl.formatMessage({
@@ -3031,6 +3037,7 @@ const EducationTopicDetail: React.FC = () => {
     <StandardPage
       title={topic.title}
       description={topic.description}
+      contentMaxW="68ch"
       showBackButton
       backLabel={intl.formatMessage(
         { id: 'common.backTo' },
@@ -3047,10 +3054,9 @@ const EducationTopicDetail: React.FC = () => {
             already on the hub card the reader clicked to get here. */}
         {/* No card and no icon column (2026-11-08). The card put a box around boxes, and the
             topic icon took its own column beside the text: on a 390px phone that left about
-            four words a line. A guide is read, so it gets a reading measure instead. */}
-        <Box w="full" maxW="68ch">
-          {topic.content}
-        </Box>
+            four words a line. The reading measure is StandardPage's contentMaxW, so the title
+            and the guide share one column (review of app #330). */}
+        {topic.content}
       </VStack>
     </StandardPage>
   );

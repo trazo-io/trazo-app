@@ -31,17 +31,27 @@ describe('guide source', () => {
     expect(DETAIL).not.toMatch(/status="success"/);
   });
 
+  it('a callout carries no margin of its own inside the guide stack', () => {
+    // StandardAlert defaults mb=6; inside VStack spacing={6} that doubled the gap below every
+    // warning (review of app #330).
+    const alerts = DETAIL.match(/<StandardAlert[^>]*>/g) ?? [];
+    expect(alerts.length).toBe(6);
+    expect(alerts.every((a) => /mb=\{0\}/.test(a))).toBe(true);
+  });
+
   it('a callout is a real caution; openings and notes are plain text', () => {
     expect(DETAIL.match(/<ArticleLead\b/g)?.length).toBeGreaterThanOrEqual(13);
     expect(
-      DETAIL.match(/<StandardAlert\s+status="(\w+)"/g)?.every((m) => m.includes('warning'))
+      DETAIL.match(/<StandardAlert[^>]*status="(\w+)"/g)?.every((m) => m.includes('warning'))
     ).toBe(true);
   });
 
   it('puts no card or icon column around the guide', () => {
     const page = DETAIL.slice(DETAIL.lastIndexOf('return ('));
     expect(page).not.toMatch(/<Card\b|topic\.icon/);
-    expect(page).toMatch(/maxW="68ch"/);
+    // The measure belongs to StandardPage, so the title and the guide share one column.
+    expect(page).toMatch(/contentMaxW="68ch"/);
+    expect(page).not.toMatch(/<Box[^>]*maxW=/);
   });
 
   it.each(['EducationTopicDetail.tsx', 'EducationFAQ.tsx'])(
