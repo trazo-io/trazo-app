@@ -8,10 +8,6 @@ import {
   Text,
   Heading,
   Icon,
-  Alert,
-  AlertIcon,
-  AlertTitle,
-  AlertDescription,
   UnorderedList,
   ListItem,
   Grid,
@@ -49,9 +45,8 @@ import {
   FaMapMarkedAlt,
   FaRoute
 } from 'react-icons/fa';
-import { StandardPage } from 'components/Design/StandardComponents';
-import Card from 'components/Card/Card';
-import CardBody from 'components/Card/CardBody';
+import { StandardAlert, StandardPage } from 'components/Design/StandardComponents';
+import { ArticleLead, ArticleNote } from './articleBlocks';
 
 interface DocumentationTopic {
   id: string;
@@ -77,17 +72,10 @@ const EducationTopicDetail: React.FC = () => {
         category: intl.formatMessage({ id: 'education.categoryGettingStarted' }),
         content: (
           <VStack spacing={6} align="stretch">
-            <Alert status="success">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({ id: 'education.detail.gettingStarted.welcomeTitle' })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({ id: 'education.detail.gettingStarted.welcomeDesc' })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <ArticleLead
+              title={intl.formatMessage({ id: 'education.detail.gettingStarted.welcomeTitle' })}>
+              {intl.formatMessage({ id: 'education.detail.gettingStarted.welcomeDesc' })}
+            </ArticleLead>
 
             <Heading size="md" color="gray.700">
               {intl.formatMessage({ id: 'education.detail.gettingStarted.howItWorksTitle' })}
@@ -172,17 +160,12 @@ const EducationTopicDetail: React.FC = () => {
               </ListItem>
             </UnorderedList>
 
-            <Alert status="info">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({ id: 'education.detail.gettingStarted.revolutionaryTitle' })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({ id: 'education.detail.gettingStarted.revolutionaryDesc' })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <ArticleNote
+              title={intl.formatMessage({
+                id: 'education.detail.gettingStarted.revolutionaryTitle'
+              })}>
+              {intl.formatMessage({ id: 'education.detail.gettingStarted.revolutionaryDesc' })}
+            </ArticleNote>
           </VStack>
         )
       },
@@ -467,29 +450,16 @@ const EducationTopicDetail: React.FC = () => {
               </Grid>
             </Box>
 
-            <Alert status="warning">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({ id: 'education.detail.farmEvents.notSalesTitle' })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({ id: 'education.detail.farmEvents.notSalesDesc' })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <StandardAlert
+              status="warning"
+              title={intl.formatMessage({ id: 'education.detail.farmEvents.notSalesTitle' })}
+              description={intl.formatMessage({ id: 'education.detail.farmEvents.notSalesDesc' })}
+            />
 
-            <Alert status="success">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({ id: 'education.detail.farmEvents.proTipTitle' })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({ id: 'education.detail.farmEvents.proTipDesc' })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <ArticleNote
+              title={intl.formatMessage({ id: 'education.detail.farmEvents.proTipTitle' })}>
+              {intl.formatMessage({ id: 'education.detail.farmEvents.proTipDesc' })}
+            </ArticleNote>
           </VStack>
         )
       },
@@ -594,17 +564,10 @@ const EducationTopicDetail: React.FC = () => {
               </VStack>
             </Box>
 
-            <Alert status="success">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({ id: 'education.detail.qrCodes.successTitle' })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({ id: 'education.detail.qrCodes.successDesc' })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <ArticleNote
+              title={intl.formatMessage({ id: 'education.detail.qrCodes.successTitle' })}>
+              {intl.formatMessage({ id: 'education.detail.qrCodes.successDesc' })}
+            </ArticleNote>
           </VStack>
         )
       },
@@ -616,17 +579,10 @@ const EducationTopicDetail: React.FC = () => {
         category: intl.formatMessage({ id: 'education.categoryEnvironmentalImpact' }),
         content: (
           <VStack spacing={6} align="stretch">
-            <Alert status="warning">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({ id: 'education.detail.carbonData.contextTitle' })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({ id: 'education.detail.carbonData.contextDesc' })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <ArticleLead
+              title={intl.formatMessage({ id: 'education.detail.carbonData.contextTitle' })}>
+              {intl.formatMessage({ id: 'education.detail.carbonData.contextDesc' })}
+            </ArticleLead>
 
             <Heading size="md" color="gray.700">
               {intl.formatMessage({ id: 'education.detail.carbonData.philosophyTitle' })}
@@ -773,17 +729,10 @@ const EducationTopicDetail: React.FC = () => {
               </VStack>
             </Box>
 
-            <Alert status="success">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({ id: 'education.detail.carbonData.bestOfBothTitle' })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({ id: 'education.detail.carbonData.bestOfBothDesc' })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <ArticleNote
+              title={intl.formatMessage({ id: 'education.detail.carbonData.bestOfBothTitle' })}>
+              {intl.formatMessage({ id: 'education.detail.carbonData.bestOfBothDesc' })}
+            </ArticleNote>
           </VStack>
         )
       },
@@ -795,21 +744,14 @@ const EducationTopicDetail: React.FC = () => {
         category: intl.formatMessage({ id: 'education.categoryEnvironmentalImpact' }),
         content: (
           <VStack spacing={6} align="stretch">
-            <Alert status="info">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({
-                    id: 'education.detail.carbonMethodology.verifiedSourcesTitle'
-                  })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({
-                    id: 'education.detail.carbonMethodology.verifiedSourcesDesc'
-                  })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <ArticleLead
+              title={intl.formatMessage({
+                id: 'education.detail.carbonMethodology.verifiedSourcesTitle'
+              })}>
+              {intl.formatMessage({
+                id: 'education.detail.carbonMethodology.verifiedSourcesDesc'
+              })}
+            </ArticleLead>
 
             <Heading size="md" color="gray.700">
               {intl.formatMessage({ id: 'education.detail.carbonMethodology.dataSourcesTitle' })}
@@ -1138,14 +1080,11 @@ const EducationTopicDetail: React.FC = () => {
                     id: 'education.detail.carbonMethodology.fertilizerSource'
                   })}
                 </Text>
-                <Alert status="success" size="sm">
-                  <AlertIcon />
-                  <Text fontSize="sm">
-                    {intl.formatMessage({
-                      id: 'education.detail.carbonMethodology.organicFertilizer'
-                    })}
-                  </Text>
-                </Alert>
+                <Text fontSize="sm" color="gray.700">
+                  {intl.formatMessage({
+                    id: 'education.detail.carbonMethodology.organicFertilizer'
+                  })}
+                </Text>
               </VStack>
             </Box>
 
@@ -1378,19 +1317,12 @@ const EducationTopicDetail: React.FC = () => {
             <Heading size="md" color="gray.700">
               {intl.formatMessage({ id: 'education.detail.carbonMethodology.philosophyTitle' })}
             </Heading>
-            <Alert status="success">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({
-                    id: 'education.detail.carbonMethodology.directFocusTitle'
-                  })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({ id: 'education.detail.carbonMethodology.directFocusDesc' })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <ArticleNote
+              title={intl.formatMessage({
+                id: 'education.detail.carbonMethodology.directFocusTitle'
+              })}>
+              {intl.formatMessage({ id: 'education.detail.carbonMethodology.directFocusDesc' })}
+            </ArticleNote>
 
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
               <Heading size="sm" color="gray.700" mb={3}>
@@ -1418,19 +1350,14 @@ const EducationTopicDetail: React.FC = () => {
               </Grid>
             </Box>
 
-            <Alert status="info">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({ id: 'education.detail.carbonMethodology.continuousTitle' })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({
-                    id: 'education.detail.carbonMethodology.continuousImprovement'
-                  })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <ArticleNote
+              title={intl.formatMessage({
+                id: 'education.detail.carbonMethodology.continuousTitle'
+              })}>
+              {intl.formatMessage({
+                id: 'education.detail.carbonMethodology.continuousImprovement'
+              })}
+            </ArticleNote>
           </VStack>
         )
       },
@@ -1442,17 +1369,10 @@ const EducationTopicDetail: React.FC = () => {
         category: intl.formatMessage({ id: 'education.categoryGettingStarted' }),
         content: (
           <VStack spacing={6} align="stretch">
-            <Alert status="success">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({ id: 'education.detail.firstProduction.readyTitle' })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({ id: 'education.detail.firstProduction.readyDesc' })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <ArticleLead
+              title={intl.formatMessage({ id: 'education.detail.firstProduction.readyTitle' })}>
+              {intl.formatMessage({ id: 'education.detail.firstProduction.readyDesc' })}
+            </ArticleLead>
 
             <Heading size="md" color="gray.700">
               {intl.formatMessage({ id: 'education.detail.firstProduction.step1Title' })}
@@ -1583,17 +1503,12 @@ const EducationTopicDetail: React.FC = () => {
               </VStack>
             </Box>
 
-            <Alert status="info">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({ id: 'education.detail.firstProduction.quickStartTitle' })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({ id: 'education.detail.firstProduction.quickStartDesc' })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <ArticleNote
+              title={intl.formatMessage({
+                id: 'education.detail.firstProduction.quickStartTitle'
+              })}>
+              {intl.formatMessage({ id: 'education.detail.firstProduction.quickStartDesc' })}
+            </ArticleNote>
           </VStack>
         )
       },
@@ -1814,17 +1729,10 @@ const EducationTopicDetail: React.FC = () => {
               </Grid>
             </Box>
 
-            <Alert status="success">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({ id: 'education.detail.eventMastery.successTitle' })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({ id: 'education.detail.eventMastery.successDesc' })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <ArticleNote
+              title={intl.formatMessage({ id: 'education.detail.eventMastery.successTitle' })}>
+              {intl.formatMessage({ id: 'education.detail.eventMastery.successDesc' })}
+            </ArticleNote>
           </VStack>
         )
       },
@@ -1836,17 +1744,10 @@ const EducationTopicDetail: React.FC = () => {
         category: intl.formatMessage({ id: 'education.categoryCompliance' }),
         content: (
           <VStack spacing={6} align="stretch">
-            <Alert status="warning">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({ id: 'education.detail.scoreOptimization.goalTitle' })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({ id: 'education.detail.scoreOptimization.goalDesc' })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <ArticleLead
+              title={intl.formatMessage({ id: 'education.detail.scoreOptimization.goalTitle' })}>
+              {intl.formatMessage({ id: 'education.detail.scoreOptimization.goalDesc' })}
+            </ArticleLead>
 
             <Heading size="md" color="gray.700">
               {intl.formatMessage({ id: 'education.detail.scoreOptimization.weightsTitle' })}
@@ -2044,17 +1945,12 @@ const EducationTopicDetail: React.FC = () => {
               </Grid>
             </Box>
 
-            <Alert status="success">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({ id: 'education.detail.scoreOptimization.benchmarkTitle' })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({ id: 'education.detail.scoreOptimization.benchmarkDesc' })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <ArticleNote
+              title={intl.formatMessage({
+                id: 'education.detail.scoreOptimization.benchmarkTitle'
+              })}>
+              {intl.formatMessage({ id: 'education.detail.scoreOptimization.benchmarkDesc' })}
+            </ArticleNote>
           </VStack>
         )
       },
@@ -2335,17 +2231,12 @@ const EducationTopicDetail: React.FC = () => {
               </VStack>
             </Box>
 
-            <Alert status="info">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({ id: 'education.detail.consumerEngagement.metricsTitle' })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({ id: 'education.detail.consumerEngagement.metricsDesc' })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <ArticleNote
+              title={intl.formatMessage({
+                id: 'education.detail.consumerEngagement.metricsTitle'
+              })}>
+              {intl.formatMessage({ id: 'education.detail.consumerEngagement.metricsDesc' })}
+            </ArticleNote>
           </VStack>
         )
       },
@@ -2357,17 +2248,10 @@ const EducationTopicDetail: React.FC = () => {
         category: intl.formatMessage({ id: 'education.categoryCompliance' }),
         content: (
           <VStack spacing={6} align="stretch">
-            <Alert status="info">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({ id: 'education.detail.organicSystemPlan.whatIsTitle' })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({ id: 'education.detail.organicSystemPlan.whatIsDesc' })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <ArticleLead
+              title={intl.formatMessage({ id: 'education.detail.organicSystemPlan.whatIsTitle' })}>
+              {intl.formatMessage({ id: 'education.detail.organicSystemPlan.whatIsDesc' })}
+            </ArticleLead>
 
             <Heading size="md" color="gray.700">
               {intl.formatMessage({ id: 'education.detail.organicSystemPlan.commonOspTitle' })}
@@ -2432,21 +2316,14 @@ const EducationTopicDetail: React.FC = () => {
               </VStack>
             </Box>
 
-            <Alert status="success">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({
-                    id: 'education.detail.organicSystemPlan.whereToFindTitle'
-                  })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({
-                    id: 'education.detail.organicSystemPlan.whereToFindDesc'
-                  })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <ArticleNote
+              title={intl.formatMessage({
+                id: 'education.detail.organicSystemPlan.whereToFindTitle'
+              })}>
+              {intl.formatMessage({
+                id: 'education.detail.organicSystemPlan.whereToFindDesc'
+              })}
+            </ArticleNote>
           </VStack>
         )
       },
@@ -2458,17 +2335,10 @@ const EducationTopicDetail: React.FC = () => {
         category: intl.formatMessage({ id: 'education.categoryCompliance' }),
         content: (
           <VStack spacing={6} align="stretch">
-            <Alert status="info">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({ id: 'education.detail.renewalSeason.whyNowTitle' })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({ id: 'education.detail.renewalSeason.whyNowDesc' })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <ArticleLead
+              title={intl.formatMessage({ id: 'education.detail.renewalSeason.whyNowTitle' })}>
+              {intl.formatMessage({ id: 'education.detail.renewalSeason.whyNowDesc' })}
+            </ArticleLead>
 
             <Heading size="md" color="gray.700">
               {intl.formatMessage({ id: 'education.detail.renewalSeason.occspTitle' })}
@@ -2542,17 +2412,10 @@ const EducationTopicDetail: React.FC = () => {
               {intl.formatMessage({ id: 'education.detail.renewalSeason.migratingDesc' })}
             </Text>
 
-            <Alert status="success">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({ id: 'education.detail.renewalSeason.readinessTitle' })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({ id: 'education.detail.renewalSeason.readinessDesc' })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <ArticleNote
+              title={intl.formatMessage({ id: 'education.detail.renewalSeason.readinessTitle' })}>
+              {intl.formatMessage({ id: 'education.detail.renewalSeason.readinessDesc' })}
+            </ArticleNote>
           </VStack>
         )
       },
@@ -2564,17 +2427,10 @@ const EducationTopicDetail: React.FC = () => {
         category: intl.formatMessage({ id: 'education.categoryCompliance' }),
         content: (
           <VStack spacing={6} align="stretch">
-            <Alert status="info">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({ id: 'education.detail.inspectionPrep.introTitle' })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({ id: 'education.detail.inspectionPrep.introDesc' })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <ArticleLead
+              title={intl.formatMessage({ id: 'education.detail.inspectionPrep.introTitle' })}>
+              {intl.formatMessage({ id: 'education.detail.inspectionPrep.introDesc' })}
+            </ArticleLead>
 
             <Box overflowX="auto" w="full">
               <Grid
@@ -2721,29 +2577,18 @@ const EducationTopicDetail: React.FC = () => {
               </Grid>
             </Box>
 
-            <Alert status="warning">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({ id: 'education.detail.inspectionPrep.retentionTitle' })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({ id: 'education.detail.inspectionPrep.retentionDesc' })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <StandardAlert
+              status="warning"
+              title={intl.formatMessage({ id: 'education.detail.inspectionPrep.retentionTitle' })}
+              description={intl.formatMessage({
+                id: 'education.detail.inspectionPrep.retentionDesc'
+              })}
+            />
 
-            <Alert status="success">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({ id: 'education.detail.inspectionPrep.readinessTitle' })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({ id: 'education.detail.inspectionPrep.readinessDesc' })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <ArticleNote
+              title={intl.formatMessage({ id: 'education.detail.inspectionPrep.readinessTitle' })}>
+              {intl.formatMessage({ id: 'education.detail.inspectionPrep.readinessDesc' })}
+            </ArticleNote>
           </VStack>
         )
       },
@@ -2755,17 +2600,10 @@ const EducationTopicDetail: React.FC = () => {
         category: intl.formatMessage({ id: 'education.categoryFarmDocumentation' }),
         content: (
           <VStack spacing={6} align="stretch">
-            <Alert status="info">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({ id: 'education.detail.seasonLifecycle.introTitle' })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({ id: 'education.detail.seasonLifecycle.introDesc' })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <ArticleLead
+              title={intl.formatMessage({ id: 'education.detail.seasonLifecycle.introTitle' })}>
+              {intl.formatMessage({ id: 'education.detail.seasonLifecycle.introDesc' })}
+            </ArticleLead>
 
             <Heading size="md" color="gray.700">
               {intl.formatMessage({ id: 'education.detail.seasonLifecycle.startTitle' })}
@@ -2803,34 +2641,23 @@ const EducationTopicDetail: React.FC = () => {
             </Heading>
             <Text>{intl.formatMessage({ id: 'education.detail.seasonLifecycle.finishDesc' })}</Text>
 
-            <Alert status="warning">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({ id: 'education.detail.seasonLifecycle.finishWarnTitle' })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({ id: 'education.detail.seasonLifecycle.finishWarnDesc' })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <StandardAlert
+              status="warning"
+              title={intl.formatMessage({ id: 'education.detail.seasonLifecycle.finishWarnTitle' })}
+              description={intl.formatMessage({
+                id: 'education.detail.seasonLifecycle.finishWarnDesc'
+              })}
+            />
 
             <Heading size="md" color="gray.700">
               {intl.formatMessage({ id: 'education.detail.seasonLifecycle.afterTitle' })}
             </Heading>
             <Text>{intl.formatMessage({ id: 'education.detail.seasonLifecycle.afterDesc' })}</Text>
 
-            <Alert status="success">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({ id: 'education.detail.seasonLifecycle.whereTitle' })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({ id: 'education.detail.seasonLifecycle.whereDesc' })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <ArticleNote
+              title={intl.formatMessage({ id: 'education.detail.seasonLifecycle.whereTitle' })}>
+              {intl.formatMessage({ id: 'education.detail.seasonLifecycle.whereDesc' })}
+            </ArticleNote>
           </VStack>
         )
       },
@@ -2842,17 +2669,9 @@ const EducationTopicDetail: React.FC = () => {
         category: intl.formatMessage({ id: 'education.categoryCompliance' }),
         content: (
           <VStack spacing={6} align="stretch">
-            <Alert status="info">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({ id: 'education.detail.ospData.introTitle' })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({ id: 'education.detail.ospData.introDesc' })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <ArticleLead title={intl.formatMessage({ id: 'education.detail.ospData.introTitle' })}>
+              {intl.formatMessage({ id: 'education.detail.ospData.introDesc' })}
+            </ArticleLead>
 
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
               <VStack spacing={3} align="stretch">
@@ -2890,29 +2709,15 @@ const EducationTopicDetail: React.FC = () => {
             </Heading>
             <Text>{intl.formatMessage({ id: 'education.detail.ospData.lockDesc' })}</Text>
 
-            <Alert status="warning">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({ id: 'education.detail.ospData.updateTitle' })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({ id: 'education.detail.ospData.updateDesc' })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <StandardAlert
+              status="warning"
+              title={intl.formatMessage({ id: 'education.detail.ospData.updateTitle' })}
+              description={intl.formatMessage({ id: 'education.detail.ospData.updateDesc' })}
+            />
 
-            <Alert status="success">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({ id: 'education.detail.ospData.whereTitle' })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({ id: 'education.detail.ospData.whereDesc' })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <ArticleNote title={intl.formatMessage({ id: 'education.detail.ospData.whereTitle' })}>
+              {intl.formatMessage({ id: 'education.detail.ospData.whereDesc' })}
+            </ArticleNote>
           </VStack>
         )
       },
@@ -2929,17 +2734,10 @@ const EducationTopicDetail: React.FC = () => {
         category: intl.formatMessage({ id: 'education.categoryCompliance' }),
         content: (
           <VStack spacing={6} align="stretch">
-            <Alert status="info">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({ id: 'education.detail.traceback.introTitle' })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({ id: 'education.detail.traceback.introDesc' })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <ArticleLead
+              title={intl.formatMessage({ id: 'education.detail.traceback.introTitle' })}>
+              {intl.formatMessage({ id: 'education.detail.traceback.introDesc' })}
+            </ArticleLead>
 
             <Heading size="md" color="gray.700">
               {intl.formatMessage({ id: 'education.detail.traceback.runTitle' })}
@@ -3044,29 +2842,16 @@ const EducationTopicDetail: React.FC = () => {
             </Heading>
             <Text>{intl.formatMessage({ id: 'education.detail.traceback.certifierDesc' })}</Text>
 
-            <Alert status="warning">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({ id: 'education.detail.traceback.limitTitle' })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({ id: 'education.detail.traceback.limitDesc' })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <StandardAlert
+              status="warning"
+              title={intl.formatMessage({ id: 'education.detail.traceback.limitTitle' })}
+              description={intl.formatMessage({ id: 'education.detail.traceback.limitDesc' })}
+            />
 
-            <Alert status="success">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({ id: 'education.detail.traceback.habitTitle' })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({ id: 'education.detail.traceback.habitDesc' })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <ArticleNote
+              title={intl.formatMessage({ id: 'education.detail.traceback.habitTitle' })}>
+              {intl.formatMessage({ id: 'education.detail.traceback.habitDesc' })}
+            </ArticleNote>
           </VStack>
         )
       },
@@ -3078,17 +2863,10 @@ const EducationTopicDetail: React.FC = () => {
         category: intl.formatMessage({ id: 'education.categoryCompliance' }),
         content: (
           <VStack spacing={6} align="stretch">
-            <Alert status="info">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({ id: 'education.detail.recordCorrections.lockTitle' })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({ id: 'education.detail.recordCorrections.lockDesc' })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <ArticleLead
+              title={intl.formatMessage({ id: 'education.detail.recordCorrections.lockTitle' })}>
+              {intl.formatMessage({ id: 'education.detail.recordCorrections.lockDesc' })}
+            </ArticleLead>
 
             <Heading size="md" color="gray.700">
               {intl.formatMessage({ id: 'education.detail.recordCorrections.hitLockTitle' })}
@@ -3156,29 +2934,18 @@ const EducationTopicDetail: React.FC = () => {
               </VStack>
             </Box>
 
-            <Alert status="warning">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({ id: 'education.detail.recordCorrections.limitTitle' })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({ id: 'education.detail.recordCorrections.limitDesc' })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <StandardAlert
+              status="warning"
+              title={intl.formatMessage({ id: 'education.detail.recordCorrections.limitTitle' })}
+              description={intl.formatMessage({
+                id: 'education.detail.recordCorrections.limitDesc'
+              })}
+            />
 
-            <Alert status="success">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({ id: 'education.detail.recordCorrections.whereTitle' })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({ id: 'education.detail.recordCorrections.whereDesc' })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <ArticleNote
+              title={intl.formatMessage({ id: 'education.detail.recordCorrections.whereTitle' })}>
+              {intl.formatMessage({ id: 'education.detail.recordCorrections.whereDesc' })}
+            </ArticleNote>
           </VStack>
         )
       },
@@ -3190,17 +2957,10 @@ const EducationTopicDetail: React.FC = () => {
         category: intl.formatMessage({ id: 'education.categoryCompliance' }),
         content: (
           <VStack spacing={6} align="stretch">
-            <Alert status="info">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({ id: 'education.detail.bufferZones.ruleTitle' })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({ id: 'education.detail.bufferZones.ruleDesc' })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <ArticleLead
+              title={intl.formatMessage({ id: 'education.detail.bufferZones.ruleTitle' })}>
+              {intl.formatMessage({ id: 'education.detail.bufferZones.ruleDesc' })}
+            </ArticleLead>
 
             <Heading size="md" color="gray.700">
               {intl.formatMessage({ id: 'education.detail.bufferZones.recordPerBorderTitle' })}
@@ -3241,17 +3001,10 @@ const EducationTopicDetail: React.FC = () => {
             </Heading>
             <Text>{intl.formatMessage({ id: 'education.detail.bufferZones.driftDesc' })}</Text>
 
-            <Alert status="success">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>
-                  {intl.formatMessage({ id: 'education.detail.bufferZones.whereTitle' })}
-                </AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({ id: 'education.detail.bufferZones.whereDesc' })}
-                </AlertDescription>
-              </Box>
-            </Alert>
+            <ArticleNote
+              title={intl.formatMessage({ id: 'education.detail.bufferZones.whereTitle' })}>
+              {intl.formatMessage({ id: 'education.detail.bufferZones.whereDesc' })}
+            </ArticleNote>
           </VStack>
         )
       }
@@ -3279,6 +3032,10 @@ const EducationTopicDetail: React.FC = () => {
       title={topic.title}
       description={topic.description}
       showBackButton
+      backLabel={intl.formatMessage(
+        { id: 'common.backTo' },
+        { place: intl.formatMessage({ id: 'education.pageTitle' }) }
+      )}
       onBack={() => navigate('/admin/dashboard/education')}>
       <VStack spacing={6} w="full" align="stretch">
         {/* 2026-08-21 — a header card stood here that printed the page's own <h1> a second
@@ -3288,16 +3045,12 @@ const EducationTopicDetail: React.FC = () => {
             organic system plan in trazo". Its category line was also `green.500` AS TEXT on a
             white card — 2.78:1, the failure frontend.md calls out by name. The category is
             already on the hub card the reader clicked to get here. */}
-        <Card w="full">
-          <CardBody>
-            <HStack align="start" spacing={4}>
-              <Icon as={topic.icon} boxSize={8} color="green.700" flexShrink={0} />
-              <Box flex="1" minW={0}>
-                {topic.content}
-              </Box>
-            </HStack>
-          </CardBody>
-        </Card>
+        {/* No card and no icon column (2026-11-08). The card put a box around boxes, and the
+            topic icon took its own column beside the text: on a 390px phone that left about
+            four words a line. A guide is read, so it gets a reading measure instead. */}
+        <Box w="full" maxW="68ch">
+          {topic.content}
+        </Box>
       </VStack>
     </StandardPage>
   );

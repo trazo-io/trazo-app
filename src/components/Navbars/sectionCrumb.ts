@@ -32,7 +32,9 @@ const RULES: Array<[RegExp, string]> = [
   // alone, so the bar did not say where the farmer was).
   [/^\/admin\/dashboard\/field-notes\/?$/, 'fieldNotes.title'],
   [/^\/admin\/dashboard\/subscription\/?$/, 'app.subscription'],
-  [/^\/admin\/dashboard\/settings\/?$/, 'app.companySettings']
+  [/^\/admin\/dashboard\/settings\/?$/, 'app.companySettings'],
+  // The help center and every guide in it (2026-11-08: a guide's bar read "Home" alone).
+  [/^\/admin\/dashboard\/education(\/.*)?$/, 'education.pageTitle']
 ];
 
 /**

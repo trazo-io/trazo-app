@@ -137,6 +137,10 @@ const EducationFAQ: React.FC = () => {
       title={intl.formatMessage({ id: 'education.faqPageTitle' })}
       description={intl.formatMessage({ id: 'education.faqPageDescription' })}
       showBackButton
+      backLabel={intl.formatMessage(
+        { id: 'common.backTo' },
+        { place: intl.formatMessage({ id: 'education.pageTitle' }) }
+      )}
       onBack={() => navigate('/admin/dashboard/education')}
       // Frame owns the width, so the hero sits on the same column as the content (the
       // VStack used to centre itself while the hero ran full width).
