@@ -204,6 +204,20 @@ describe('the help center says season, activity and tú', () => {
     );
   });
 
+  it('names carbon sources per input, never as a blanket, and claims no "direct" scope', () => {
+    // compliance.md and carbon-methodology.md: provenance is per input class (P2O5 and K2O are
+    // Trazo estimates, pesticides academic LCA), and the estimate includes the manufacturing of
+    // what the farm buys, so "direct operational emissions" is wrong as well as unsafe. The
+    // carbon guides said "All emission factors in Trazo are sourced from official EPA and USDA
+    // publications" until 2026-11-08.
+    const BLANKET =
+      /EPA (and|&|y el|y) USDA|EPA\/USDA|all (emission )?factors|todos los factores|direct operational|(operacional(es)?|operativas?) directa?s?|government-sourced|fuentes gubernamentales/i;
+    const claims = keys
+      .filter((k) => BLANKET.test(en[k]) || BLANKET.test(es[k] ?? ''))
+      .map((k) => `${k}: ${en[k].slice(0, 80)}`);
+    expect(claims).toEqual([]);
+  });
+
   it('promises no pricing outcome', () => {
     const premium = keys.filter((k) =>
       /premium|precio superior|sobreprecio/i.test(`${en[k]} ${es[k]}`)
