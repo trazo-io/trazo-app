@@ -510,8 +510,8 @@ const HistoryCard = ({ amount }) => {
                             // removed 2026-08-11 along with the aggregate above. Successive passes
                             // had already stripped its A-F letters (2026-08-02), its tier badges and
                             // carbon fallback (2026-08-04) and its "/100" — each time leaving the
-                            // grade itself in place under quieter typography. The number is a
-                            // backend KPI, not a verdict to show the grower whose season it grades.
+                            // grade itself in place under quieter typography. The number was a
+                            // self-assigned grade, retired as a concept; nothing computes it now.
                             //
                             // `production.transparency_score` no longer exists: the column went in
                             // history 0237/0238 and the calculator counts only (2026-11-08).
