@@ -17,6 +17,7 @@ import {
   PRODUCTION_HANDLER_URL
 } from 'config';
 import baseApi from './baseApi';
+import type { FacilityProduct } from './facilityProductApi';
 
 export type PostHarvestFacilityType =
   | 'huller'
@@ -75,6 +76,8 @@ export interface PostHarvestFacility {
   notes?: string | null;
   /** Products it handles or stores, with detail and packaging form, as the operation describes them. */
   products_detail?: string;
+  /** The facility's product rows (CCOF G6.1 C2, OTCO C7 7.10-2); written through `facilityProductApi`. */
+  products?: FacilityProduct[];
   /** The crops on the production records linked to this facility, by season year; read-only. */
   crops_recorded?: { crop: string; years: number[] }[];
   /** WSDA AGR 2519's activities at this facility, by key (`config/facilityActivities`). */

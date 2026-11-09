@@ -21,6 +21,9 @@ vi.mock('store/api/postHarvestFacilityApi', () => ({
   ]
 }));
 
+// The product rows have their own test (facilityProductRows.test.tsx).
+vi.mock('../FacilityProductRows', () => ({ default: () => null }));
+
 const facility = (over: Record<string, unknown> = {}) => ({
   id: 4,
   name: 'Valley Packers',
