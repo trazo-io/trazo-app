@@ -118,7 +118,11 @@ interface CarbonCalculation {
     fungicide_subtype?: string;
     // Fertilizer calculation breakdown (2025-12-24)
     fertilizer_subtype?: 'organic' | 'synthetic' | 'slow_release';
-    note?: string; // Explanation of fertilizer type impact
+    note?: string; // Explanation of fertilizer type impact (English, from the calculator)
+    /** Which note this is; the panel words it in the reader's language. */
+    note_code?: string;
+    /** For the `aggregate_applications` note: how many applications the summary covers. */
+    aggregate_application_count?: number;
     npk_content?: {
       N?: number;
       P?: number;
@@ -304,16 +308,36 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
     // The input form's product type (FE/PE/HE/FU) decides how it words a method.
     const chemicalType: string | undefined =
       eventType === 'Chemical' ? formData?.type || formData?.chemical_type : undefined;
-    const methodLabel = (method: string) =>
-      chemicalMethodKey(chemicalType, method)
-        ? keyLabel(chemicalMethodKey(chemicalType, method), method)
-        : optionLabel(APPLICATION_METHODS, method);
+    // The product type's own wording first; a method that type's list lacks (a fertilizer
+    // recorded as chemigation) takes the wording of the type that offers it, before any code.
+    const methodLabel = (method: string) => {
+      const key = [chemicalType, 'PE', 'HE', 'FU', 'FE', '']
+        .map((type) => chemicalMethodKey(type, method))
+        .find(Boolean);
+      return key ? keyLabel(key, method) : optionLabel(APPLICATION_METHODS, method);
+    };
     // On the production form the activity is the subtype the farmer picked, so its name is the
     // one the form shows; the response's `production_activity` is only the fallback.
     const productionSubtypeKey =
       eventType === 'Production'
         ? productionEventRegistry.subtypes.find((st) => st.code === formData?.type)?.labelKey
         : undefined;
+    /*
+     * The calculator's explanation of a factor, in the reader's language (2026-11-09). It sends
+     * an English sentence in `note` and, since then, a `note_code`; the code picks the copy here.
+     * A response from before the code existed still shows its English note rather than nothing.
+     */
+    const noteText = (() => {
+      const b = calculation?.breakdown;
+      if (!b?.note) return null;
+      const id = b.note_code ? `carbonPreview.note.${b.note_code}` : '';
+      return id && intl.messages[id]
+        ? intl.formatMessage(
+            { id },
+            { count: b.aggregate_application_count ?? 0, kg: b.active_ingredient_kg ?? 0 }
+          )
+        : b.note;
+    })();
     const bgColor = useColorModeValue('gray.50', 'gray.700');
     const borderColor = useColorModeValue('gray.200', 'gray.600');
     const textColor = useColorModeValue('gray.800', 'white');
@@ -1804,7 +1828,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                                   color="green.700"
                                                   fontStyle="italic"
                                                   pl={2}>
-                                                  {calculation.breakdown.note}
+                                                  {noteText}
                                                 </Text>
                                               )}
                                             </>
@@ -1902,7 +1926,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                             color="green.700"
                                             fontStyle="italic"
                                             pl={2}>
-                                            {calculation.breakdown.note}
+                                            {noteText}
                                           </Text>
                                         )}
                                       </>
@@ -2011,7 +2035,17 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                      the closing note describes the basis instead of awarding
                                      a green check to a citation that does not exist. */
                                   <Text fontSize="xs" color="gray.600" flex={1}>
-                                    {intl.formatMessage({ id: 'carbon.basis.trazoEstimate' })}
+                                    {/* An input's figure is factors from several sources, and
+                                        its application fuel is EPA-sourced, so "no published
+                                        factor applies, it is not fuel-driven" was false there
+                                        (2026-11-09). That line is for work that burns nothing. */}
+                                    {intl.formatMessage({
+                                      id:
+                                        calculation.breakdown.manufacturing_emissions_kg_co2e ||
+                                        calculation.breakdown.application_emissions_kg_co2e
+                                          ? 'carbon.basis.inputFactors'
+                                          : 'carbon.basis.trazoEstimate'
+                                    })}
                                   </Text>
                                 )}
                               </HStack>
