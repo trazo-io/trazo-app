@@ -69,7 +69,6 @@ export interface TrustSummaryHeaderProps {
   organicClaim?: OrganicClaim | null;
   certifications?: ConsumerCertification[];
   documentedEventsCount?: number;
-  expectedEventsCount?: number;
   blockchainStatus?: 'verified' | 'submitted' | 'pending' | 'tampered' | null;
   totalPhotoEvidenceCount?: number;
   onMethodologyClick?: () => void;
@@ -116,7 +115,7 @@ function buildOriginPillar(props: TrustSummaryHeaderProps, intl: IntlShape): Pil
   const baseTooltip = intl.formatMessage({
     id: 'consumer.trust.originTooltip',
     defaultMessage:
-      'This product is traceable to a specific farm and harvest period. Every event below is tied to this production batch.'
+      'This product is traceable to a specific farm and harvest period. Every practice below is tied to this lot.'
   });
 
   // Batch identity (lot/harvest) is owned by the HARVEST pillar — the old
@@ -275,24 +274,21 @@ function buildPracticesPillar(props: TrustSummaryHeaderProps, intl: IntlShape): 
 }
 
 /**
- * EVENTS pillar — answers "How thoroughly was this documented?"
+ * DOCUMENTED pillar: how many farming practices are on file for this lot, as a count.
  *
- * Renamed from DOCUMENTATION to EVENTS in the 2026 hero redesign: the
- * percentage score now lives in the hero badge (CarbonHeroSection). This
- * pillar surfaces the underlying *fraction* (e.g. "13 of 13") which gives
- * different, complementary information — fractions communicate
- * completeness/transparency; the hero score communicates verdict.
- *
- * Always renders — falls back to "Limited Data" when no events on file.
+ * It showed a completeness fraction ("12 of 13") and could say "exceeds the baseline for this
+ * crop"; there is no score and no expected count on the buyer page, so it is the number of
+ * documented practices and nothing graded (2026-11-08). Falls back to "Limited Data" when no
+ * practice is on file.
  */
 function buildEventsPillar(props: TrustSummaryHeaderProps, intl: IntlShape): PillarData | null {
-  const { documentedEventsCount = 0, expectedEventsCount, productName } = props;
+  const { documentedEventsCount = 0 } = props;
 
   if (documentedEventsCount === 0) {
     return {
       pillarName: intl.formatMessage({
         id: 'consumer.trust.pillarEvents',
-        defaultMessage: 'EVENTS'
+        defaultMessage: 'DOCUMENTED'
       }),
       pillarIcon: FaClipboardCheck,
       badgeLabel: intl.formatMessage({
@@ -301,7 +297,7 @@ function buildEventsPillar(props: TrustSummaryHeaderProps, intl: IntlShape): Pil
       }),
       tooltipExplainer: intl.formatMessage({
         id: 'consumer.trust.limitedDataTooltip',
-        defaultMessage: 'Documentation data is being collected for this production.'
+        defaultMessage: 'Documentation for this lot is still being collected.'
       }),
       tone: 'limited'
     };
@@ -315,73 +311,22 @@ function buildEventsPillar(props: TrustSummaryHeaderProps, intl: IntlShape): Pil
   // tone means un-gating the score server-side can never silently reintroduce grading.
   const tone: PillarTone = 'documented';
 
-  // Display rules:
-  // - When actual < expected: "12 of 13" (transparency about completeness)
-  // - When actual >= expected: just "13 events" (fraction reads odd as "23 of 9")
-  // - When no expected count: plain count
-  const showFraction = expectedEventsCount != null && documentedEventsCount < expectedEventsCount;
-  const badgeLabel = showFraction
-    ? intl.formatMessage(
-        { id: 'consumer.trust.eventsFraction', defaultMessage: '{count} of {expected}' },
-        { count: documentedEventsCount, expected: expectedEventsCount }
-      )
-    : intl.formatMessage(
-        {
-          id: 'consumer.trust.eventsCount',
-          defaultMessage: '{count} {count, plural, one {event} other {events}}'
-        },
-        { count: documentedEventsCount }
-      );
+  // A count, nothing else. A completeness fraction ("12 of 13 expected") and an "exceeds the
+  // baseline for this crop" verdict lived here, wired to a prop no caller passed; both are the
+  // self-graded completeness claim transparency-first.md withholds from shoppers (2026-11-08).
+  // The number alone: the sublabel below it already says "farming practices".
+  const badgeLabel = intl.formatNumber(documentedEventsCount);
 
-  const productPhrase = productName
-    ? intl.formatMessage(
-        {
-          id: 'consumer.trust.thisNamedProduction',
-          defaultMessage: 'this {productName} production'
-        },
-        { productName }
-      )
-    : intl.formatMessage({
-        id: 'consumer.trust.thisProduction',
-        defaultMessage: 'this production'
-      });
-  const tooltipExplainer = showFraction
-    ? intl.formatMessage(
-        {
-          id: 'consumer.trust.eventsFractionTooltip',
-          defaultMessage:
-            '{count} of {expected} expected farming practices documented for {productPhrase}{scoreSuffix}.'
-        },
-        {
-          count: documentedEventsCount,
-          expected: expectedEventsCount,
-          productPhrase,
-          // Self-graded "% complete" removed from the consumer surface (2026-06
-          // claim-safety): the pillar communicates the factual fraction only
-          // (e.g. "12 of 13"); a self-assigned percentage is retired as a
-          // concept, and never a consumer claim (EU ECGT 2024/825 / FTC 16 CFR 260.6).
-          scoreSuffix: ''
-        }
-      )
-    : expectedEventsCount != null
-    ? intl.formatMessage(
-        {
-          id: 'consumer.trust.eventsExceedsTooltip',
-          defaultMessage:
-            '{count} farming {count, plural, one {event} other {events}} documented for {productPhrase} — exceeds the {expected}-event baseline for this crop.'
-        },
-        { count: documentedEventsCount, expected: expectedEventsCount, productPhrase }
-      )
-    : intl.formatMessage(
-        {
-          id: 'consumer.trust.eventsDocumentedTooltip',
-          defaultMessage: '{count} farming {count, plural, one {event} other {events}} documented.'
-        },
-        { count: documentedEventsCount }
-      );
+  const tooltipExplainer = intl.formatMessage(
+    { id: 'consumer.trust.eventsDocumentedTooltip' },
+    { count: documentedEventsCount }
+  );
 
   return {
-    pillarName: intl.formatMessage({ id: 'consumer.trust.pillarEvents', defaultMessage: 'EVENTS' }),
+    pillarName: intl.formatMessage({
+      id: 'consumer.trust.pillarEvents',
+      defaultMessage: 'DOCUMENTED'
+    }),
     pillarIcon: FaClipboardCheck,
     badgeLabel,
     badgeSublabel: intl.formatMessage({
@@ -434,7 +379,7 @@ function buildHarvestPillar(props: TrustSummaryHeaderProps, intl: IntlShape): Pi
     tooltipExplainer: intl.formatMessage({
       id: 'consumer.trust.harvestTooltip',
       defaultMessage:
-        'Harvest date and lot number tie this product to one specific production batch — the basis of traceability. Reported by the farmer.'
+        'Harvest date and lot number tie this product to one specific lot, which is the basis of traceability. Reported by the farmer.'
     }),
     tone: 'documented'
   };
@@ -477,14 +422,14 @@ function buildRecordsPillar(props: TrustSummaryHeaderProps, intl: IntlShape): Pi
       badgeSublabel: intl.formatMessage(
         {
           id: 'consumer.trust.photosAcrossEvents',
-          defaultMessage: '{count} photos across events'
+          defaultMessage: '{count} photos across the practices'
         },
         { count: totalPhotoEvidenceCount }
       ),
       tooltipExplainer: intl.formatMessage({
         id: 'consumer.trust.photoEvidencedTooltip',
         defaultMessage:
-          '5+ photos are attached across documented events, providing visual evidence alongside the written records.'
+          '5+ photos are attached across the documented practices, as visual evidence alongside the written records.'
       }),
       tone: 'verified'
     };
@@ -507,7 +452,7 @@ function buildRecordsPillar(props: TrustSummaryHeaderProps, intl: IntlShape): Pi
       tooltipExplainer: intl.formatMessage({
         id: 'consumer.trust.recordsOnFileTooltip',
         defaultMessage:
-          'Farmer-logged records are on file. Photo evidence appears here once events include photos.'
+          'Farmer-logged records are on file. Photo evidence appears here once practices include photos.'
       }),
       tone: 'documented'
     };

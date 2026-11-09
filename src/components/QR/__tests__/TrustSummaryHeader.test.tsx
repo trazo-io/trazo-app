@@ -31,7 +31,6 @@ const renderHeader = (props: Partial<TrustSummaryHeaderProps> = {}) => {
       { status: 'verified_via_database', certifier_name: 'CCOF', display_name: 'USDA Organic' }
     ] as any,
     documentedEventsCount: 20,
-    expectedEventsCount: 15,
     blockchainStatus: 'verified',
     totalPhotoEvidenceCount: 14,
     isLoading: false
@@ -48,7 +47,7 @@ const renderHeader = (props: Partial<TrustSummaryHeaderProps> = {}) => {
 describe('TrustSummaryHeader (claim-safe trust strip)', () => {
   it('renders the certification pillar first', () => {
     renderHeader();
-    const pillarLabels = screen.getAllByText(/^(PRACTICES|ORIGIN|HARVEST|EVENTS|RECORDS)$/);
+    const pillarLabels = screen.getAllByText(/^(PRACTICES|ORIGIN|HARVEST|DOCUMENTED|RECORDS)$/);
     expect(pillarLabels[0]).toHaveTextContent('PRACTICES');
     expect(screen.getByText('Certified Organic')).toBeInTheDocument();
     expect(screen.getByText('via CCOF')).toBeInTheDocument();
@@ -81,14 +80,17 @@ describe('TrustSummaryHeader (claim-safe trust strip)', () => {
   it('falls back to the events pillar when no harvest data exists', () => {
     renderHeader({ harvestDate: undefined, lotId: undefined });
     expect(screen.queryByText('HARVEST')).not.toBeInTheDocument();
-    expect(screen.getByText('EVENTS')).toBeInTheDocument();
-    expect(screen.getByText(/20 events/)).toBeInTheDocument();
+    expect(screen.getByText('DOCUMENTED')).toBeInTheDocument();
+    // A count of practices, never a fraction or a verdict against a baseline (2026-11-08).
+    expect(screen.getByText('20')).toBeInTheDocument();
+    expect(screen.getByText('farming practices')).toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/ of \d|expected|baseline|exceeds/i);
   });
 
   it('shows photo evidence in the records pillar instead of blockchain', () => {
     renderHeader({ totalPhotoEvidenceCount: 14 });
     expect(screen.getByText('Photo-evidenced')).toBeInTheDocument();
-    expect(screen.getByText(/14 photos across events/)).toBeInTheDocument();
+    expect(screen.getByText(/14 photos across the practices/)).toBeInTheDocument();
   });
 
   it('withholds a claim for self-reported farms without asserting the opposite', () => {
