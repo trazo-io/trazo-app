@@ -38,6 +38,8 @@ describe('every note the calculator can send has copy', () => {
     // Nine product notes and the aggregate one. Fewer means the backend lost codes, or this is
     // reading a trazo-back from before they existed.
     expect(codes.length, 'read no note_code from trazo-back').toBeGreaterThanOrEqual(10);
+    // Built in carbon/views.py, not in the service: named so a read of only one file fails.
+    expect(codes).toContain('aggregate_applications');
     const missing = codes.filter(
       (c) => !en[`carbonPreview.note.${c}`] || !es[`carbonPreview.note.${c}`]
     );
