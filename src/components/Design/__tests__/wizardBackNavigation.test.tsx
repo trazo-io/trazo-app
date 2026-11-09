@@ -259,7 +259,8 @@ describe('Multi-step forms: the two Backs never share a label', () => {
   it('lets every stepper return to a step already visited, through its own Continue', () => {
     // Reported 2026-10-19: back on step 1 after visiting step 2, step 2 was not clickable.
     const steppers = WIZARDS.map((w) => w.file).filter((f) => read(f).includes('<StandardStepper'));
-    expect(steppers.length).toBe(5);
+    // Six since 2026-11-09: the OSP module wizard took the shared step bar.
+    expect(steppers.length).toBe(6);
     for (const file of steppers) {
       const tag = read(file).match(/<StandardStepper\b[\s\S]*?\/>/)?.[0] ?? '';
       expect(tag, file).toContain('furthestStep={furthestStep}');

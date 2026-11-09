@@ -28,7 +28,9 @@ const WIZARDS = [
   'src/views/Dashboard/Dashboard/Company/AddCompany.jsx',
   'src/components/Forms/StandardParcelForm_Transparency.tsx',
   'src/components/Forms/StandardFarmForm.tsx',
-  'src/components/Forms/StandardFinishProductionForm.tsx'
+  'src/components/Forms/StandardFinishProductionForm.tsx',
+  // 2026-11-09: the OSP module questionnaire had a progress strip and a footer of its own.
+  'src/views/Dashboard/OSP/OSPModuleWizard.tsx'
 ];
 
 describe('one stepper, one footer', () => {
@@ -40,6 +42,17 @@ describe('one stepper, one footer', () => {
     expect(src).not.toMatch(/<StandardButton[^>]*onClick=\{(nextStep|previousStep)\}/);
     // No Cancel in a footer: the header Back names where it goes.
     expect(src).not.toMatch(/onClick=\{(onCancel|handleCancel)\}/);
+  });
+
+  it('the parcel application keeps its section tabs but shares the footer', () => {
+    // Its sections are independent and each tab says whether that section still owes evidence,
+    // so it is not a linear step bar. The footer is the shared one: it drew a greyed-out
+    // "Previous step" on the first section (2026-11-09).
+    const src = read('src/views/Dashboard/Parcel/ParcelApplicationWizard.tsx');
+    expect(src).toContain('<StandardSectionTabs');
+    expect(src).toMatch(/import WizardActions from 'components\/Design\/WizardActions'/);
+    expect(src).toMatch(/onBack=\{clamped > 0 \?/);
+    expect(src).not.toMatch(/isDisabled=\{clamped === 0\}/);
   });
 
   it('StandardStepper has one look: the variant prop is gone', () => {

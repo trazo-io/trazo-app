@@ -21,7 +21,6 @@ import {
   Checkbox,
   Flex,
   HStack,
-  Progress,
   Radio,
   RadioGroup,
   Stack,
@@ -36,7 +35,6 @@ import { useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import {
-  GuidanceNote,
   StandardButton,
   StandardCard,
   StandardInput,
@@ -44,9 +42,12 @@ import {
   StandardPageLoading,
   StandardAlert,
   StandardSelect,
+  StandardStepper,
   StandardTextarea,
   STATUS_URGENCY_TOKENS
 } from 'components/Design/StandardComponents';
+import WizardActions from 'components/Design/WizardActions';
+import { useFurthestStep } from 'hooks/useFurthestStep';
 import {
   answerValue,
   effectiveValue,
@@ -822,6 +823,9 @@ const OSPModuleWizard = () => {
   const clampedStep = Math.min(stepIndex, Math.max(pages.length - 1, 0));
   const onReview = stepIndex >= pages.length && !notApplicable;
   const currentPage = onReview ? null : pages[clampedStep];
+  // The step the bar shows, the review counting as the last one.
+  const barStep = onReview ? pages.length : clampedStep;
+  const furthestStep = useFurthestStep(barStep);
 
   const missing = useMemo(
     () => (definition ? missingRequired(definition, answers, notApplicable) : []),
@@ -1007,6 +1011,11 @@ const OSPModuleWizard = () => {
     navigate(`/admin/dashboard/farm/${farmId}/osp`);
   };
 
+  const backToPlan = intl.formatMessage(
+    { id: 'common.backTo' },
+    { place: intl.formatMessage({ id: 'osp.modules.pageTitle' }) }
+  );
+
   if (!workingOsp) {
     if (!ospsResolved) return <StandardPageLoading />;
     return (
@@ -1014,6 +1023,7 @@ const OSPModuleWizard = () => {
         title={intl.formatMessage({ id: 'osp.modules.pageTitle' })}
         description={intl.formatMessage({ id: 'osp.modules.pageDescription' })}
         showBackButton
+        backLabel={backToPlan}
         onBack={() => navigate(`/admin/dashboard/farm/${farmId}/osp`)}
         contentMaxW="4xl">
         <StandardCard>
@@ -1052,6 +1062,8 @@ const OSPModuleWizard = () => {
       title={title}
       description={definition.nop_cites.join(' · ')}
       showBackButton
+      // Names where it goes, as every other form's header Back does (2026-11-09: "Volver").
+      backLabel={backToPlan}
       onBack={() => navigate(`/admin/dashboard/farm/${farmId}/osp`)}
       // A form/reading page: header and body share one centred column. The `maxW="3xl"` that used
       // to live on the VStack below only narrowed the CONTENT, leaving it pinned to the left of a
@@ -1078,8 +1090,13 @@ const OSPModuleWizard = () => {
           out for an info glyph, which put Trazo's success green behind text that reports no
           success and announced it in an assertive live region.
         */}
+        {/* Plain text since 2026-11-09. As boxed GuidanceNotes, the module's teaching copy, the
+            page's own and the record-types note stacked three boxes before the first question.
+            It is the opening of the page, so it reads as one. */}
         {definition.education.map((block, i) => (
-          <GuidanceNote key={i}>{pickText(block, locale)}</GuidanceNote>
+          <Text key={i} fontSize="md" color="gray.700" lineHeight="tall">
+            {pickText(block, locale)}
+          </Text>
         ))}
 
         {isLocked ? (
@@ -1145,26 +1162,24 @@ const OSPModuleWizard = () => {
               </StandardButton>
             ) : (
               <>
-                <Box>
-                  <Progress
-                    value={
-                      pages.length
-                        ? ((onReview ? pages.length : clampedStep) / pages.length) * 100
-                        : 0
-                    }
-                    size="sm"
-                    borderRadius="md"
-                    colorScheme="green"
-                  />
-                  <Text fontSize="xs" color="gray.500" mt={1}>
-                    {onReview
-                      ? intl.formatMessage({ id: 'osp.wizard.reviewStep' })
-                      : intl.formatMessage(
-                          { id: 'osp.wizard.stepCount' },
-                          { current: clampedStep + 1, total: pages.length }
-                        )}
-                  </Text>
-                </Box>
+                {/* The same step bar as every other stepped form (2026-11-09); this module had a
+                    progress strip and a "Step 2 of 3" line of its own. Pages behind are links back,
+                    the review is the last step. */}
+                <StandardStepper
+                  steps={[
+                    ...pages.map((page) => ({
+                      title: page.title ? pickText(page.title, locale) : ''
+                    })),
+                    { title: intl.formatMessage({ id: 'osp.wizard.reviewStepShort' }) }
+                  ]}
+                  currentStep={barStep}
+                  completedSteps={Array.from({ length: barStep }, (_, i) => i)}
+                  allowStepClick
+                  furthestStep={furthestStep}
+                  // Back is a jump; forward goes through Save & continue, which saves the page
+                  // and names what it is missing, as every stepper's forward click must.
+                  onStepClick={(step) => (step < barStep ? setStepIndex(step) : handleNext())}
+                />
 
                 {currentPage ? (
                   <StandardCard
@@ -1176,7 +1191,9 @@ const OSPModuleWizard = () => {
                     different shapes. One component, both call sites.
                   */}
                       {currentPage.education.map((block, i) => (
-                        <GuidanceNote key={i}>{pickText(block, locale)}</GuidanceNote>
+                        <Text key={i} fontSize="sm" color="gray.700" lineHeight="tall">
+                          {pickText(block, locale)}
+                        </Text>
                       ))}
                       {currentPage.questions
                         .filter((q) =>
@@ -1343,29 +1360,27 @@ const OSPModuleWizard = () => {
                   />
                 ) : null}
 
-                <Flex justify="space-between" gap={3}>
-                  <StandardButton
-                    variant="outline"
-                    minH="44px"
-                    onClick={() => setStepIndex((i) => Math.max(i - 1, 0))}
-                    isDisabled={clampedStep === 0 && !onReview}>
-                    {intl.formatMessage({ id: 'common.previousStep' })}
-                  </StandardButton>
-                  {onReview ? (
-                    <StandardButton minH="44px" onClick={handleComplete} isLoading={saving}>
-                      {intl.formatMessage({ id: 'osp.wizard.complete' })}
-                    </StandardButton>
-                  ) : (
-                    <StandardButton minH="44px" onClick={handleNext} isLoading={saving}>
-                      {intl.formatMessage({
-                        id:
-                          pageFlagged && blankHere.length
-                            ? 'osp.wizard.continueAnyway'
-                            : 'osp.wizard.next'
-                      })}
-                    </StandardButton>
-                  )}
-                </Flex>
+                {/* The shared footer. It drew a greyed-out "Previous step" on the first page,
+                    which reads as broken; WizardActions leaves it off there. */}
+                <WizardActions
+                  onBack={
+                    clampedStep > 0 || onReview
+                      ? () => setStepIndex((i) => Math.max(Math.min(i, pages.length) - 1, 0))
+                      : undefined
+                  }
+                  backLabel={intl.formatMessage({ id: 'common.previousStep' })}
+                  backShortLabel={intl.formatMessage({ id: 'app.previous' })}
+                  primaryLabel={intl.formatMessage({
+                    id: onReview
+                      ? 'osp.wizard.complete'
+                      : pageFlagged && blankHere.length
+                      ? 'osp.wizard.continueAnyway'
+                      : 'osp.wizard.next'
+                  })}
+                  onPrimary={onReview ? handleComplete : handleNext}
+                  primaryLeadsOn={!onReview}
+                  isLoading={saving}
+                />
               </>
             )}
           </>

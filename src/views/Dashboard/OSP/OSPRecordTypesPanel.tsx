@@ -57,7 +57,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   StandardAlert,
   StandardButton,
-  StandardCard,
   StandardInput,
   StandardTextarea
 } from 'components/Design/StandardComponents';
@@ -135,9 +134,8 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
   const intl = useIntl();
   const navigate = useNavigate();
   const toast = useToast();
-  const borderColor = useColorModeValue('gray.200', 'gray.600');
   const mutedColor = useColorModeValue('gray.600', 'gray.400');
-  // A SUGGESTED row is the catalogue's guess, not the farm's answer, so it is neutral and dashed
+  // A SUGGESTED row is the catalogue's guess, not the farm's answer, so it is neutral and tinted
   // until a person ticks it (2026-11-04). It was green.50 with a green dashed border: the colour
   // of a confirmed answer, on the one panel whose point is that Trazo suggests and the farm
   // confirms. Green arrives with the tick (the checkbox), and only then.
@@ -337,10 +335,7 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
         justify="space-between"
         gap={3}
         px={3}
-        py={2}
-        borderWidth="1px"
-        borderColor={borderColor}
-        borderRadius="md">
+        py={2}>
         <Stack spacing={1} flex="1" minW={0} w="100%">
           <Text fontSize="sm">{row.label}</Text>
           <Text fontSize="xs" color={mutedColor}>
@@ -401,7 +396,7 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
 
   if (isError) {
     return (
-      <StandardCard>
+      <Box mt={4}>
         <StandardAlert
           status="info"
           mb={0}
@@ -411,25 +406,33 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
               'Record types could not be loaded right now. Your plan is unaffected — try again shortly.'
           })}
         />
-      </StandardCard>
+      </Box>
     );
   }
 
   const summary = data?.summary;
 
   return (
+    // A section of the question page it is embedded in, so a heading rather than a second card
+    // inside the page's card (2026-11-09).
     <Box mt={4}>
-      <StandardCard
-        titleIcon={<Icon as={FaFileAlt} color="green.700" />}
-        title={intl.formatMessage({
-          id: 'osp.recordTypes.title',
-          defaultMessage: 'Records you maintain'
-        })}
-        subtitle={intl.formatMessage({
-          id: 'osp.recordTypes.subtitle',
-          defaultMessage:
-            "The recordkeeping section of your certifier's form — Common OSP § 11, CCOF G8.0 A, WSDA AGR 2121-O. We show what your logs already evidence; you confirm what your operation actually keeps."
-        })}>
+      <Box>
+        <HStack spacing={2} mb={1}>
+          <Icon as={FaFileAlt} color="green.700" />
+          <Text fontWeight="semibold" color="gray.800">
+            {intl.formatMessage({
+              id: 'osp.recordTypes.title',
+              defaultMessage: 'Records you maintain'
+            })}
+          </Text>
+        </HStack>
+        <Text fontSize="sm" color="gray.600" mb={4}>
+          {intl.formatMessage({
+            id: 'osp.recordTypes.subtitle',
+            defaultMessage:
+              "The recordkeeping section of your certifier's form — Common OSP § 11, CCOF G8.0 A, WSDA AGR 2121-O. We show what your logs already evidence; you confirm what your operation actually keeps."
+          })}
+        </Text>
         <Stack spacing={4}>
           {summary && (
             <HStack spacing={2} flexWrap="wrap">
@@ -485,15 +488,13 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
               certifier, and what you leave unticked is left out") is the whole reason to
               spend five minutes here. */}
           {isEditable ? (
-            <StandardAlert
-              status="info"
-              mb={0}
-              description={intl.formatMessage({
+            <Text fontSize="sm" color="gray.700" lineHeight="tall">
+              {intl.formatMessage({
                 id: 'osp.recordTypes.attestationNote',
                 defaultMessage:
                   'Nothing here is checked for you — what your logs show is a suggestion, and ticking a box is your statement to your certifier. Every box you tick prints in your renewal packet, under G8.0 Record Keeping and in your plan’s recordkeeping section; anything left unticked is left out.'
               })}
-            />
+            </Text>
           ) : (
             <StandardAlert
               status="warning"
@@ -536,7 +537,7 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
               <Text fontSize="sm" fontWeight="semibold" mb={2}>
                 {group}
               </Text>
-              <Stack spacing={1}>
+              <Stack spacing={0} divider={<Divider borderColor="gray.200" />}>
                 {rows.map((row) => {
                   // A queued tick renders as ticked. `pending` is transport state, so a row the
                   // operator just ticked stops looking like a suggestion straight away.
@@ -552,12 +553,10 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
                       justify="space-between"
                       gap={3}
                       px={3}
-                      py={2}
-                      borderWidth="1px"
-                      borderStyle={isSuggested ? 'dashed' : 'solid'}
-                      borderColor={isSuggested ? 'gray.300' : borderColor}
-                      bg={isSuggested ? suggestedBg : 'transparent'}
-                      borderRadius="md">
+                      py={3}
+                      // A suggestion keeps its tint; the dashed box it also had is gone with the
+                      // other boxes (2026-11-09).
+                      bg={isSuggested ? suggestedBg : 'transparent'}>
                       <Checkbox
                         isChecked={isConfirmed}
                         onChange={() => handleToggle(row)}
@@ -686,13 +685,7 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
                   );
                 })}
                 {notKeptFor && rows.some((r) => r.key === notKeptFor) && (
-                  <Stack
-                    spacing={2}
-                    px={3}
-                    py={2}
-                    borderWidth="1px"
-                    borderColor={borderColor}
-                    borderRadius="md">
+                  <Stack spacing={2} px={3} py={2}>
                     <Text fontSize="xs" color="gray.700">
                       {intl.formatMessage({
                         id: 'osp.recordTypes.notKeptHelp',
@@ -794,10 +787,7 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
                     justify="space-between"
                     gap={3}
                     px={3}
-                    py={2}
-                    borderWidth="1px"
-                    borderColor={borderColor}
-                    borderRadius="md">
+                    py={2}>
                     <Stack spacing={0}>
                       <Text fontSize="sm">{wb.title}</Text>
                       <Text fontSize="xs" color={mutedColor}>
@@ -908,7 +898,7 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
             </Box>
           )}
         </Stack>
-      </StandardCard>
+      </Box>
     </Box>
   );
 };

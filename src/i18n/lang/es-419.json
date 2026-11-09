@@ -6977,6 +6977,7 @@
   "osp.seedlingSuppliers.forbidden": "Solo los administradores de la empresa y los gerentes de finca pueden ver la lista de proveedores.",
   "osp.seedlingSuppliers.review": "Revisar",
   "osp.wizard.reviewStep": "Revisa tus respuestas",
+  "osp.wizard.reviewStepShort": "Revisión",
   "osp.wizard.reviewTitle": "Revisar antes de completar",
   "osp.wizard.saveFailed": "No se pudieron guardar tus respuestas",
   "osp.wizard.saveFailedGeneric": "El guardado no llegó al servidor. Revisa tu conexión e inténtalo de nuevo; tus respuestas siguen en pantalla.",
