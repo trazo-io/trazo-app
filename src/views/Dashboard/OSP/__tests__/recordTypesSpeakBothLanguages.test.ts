@@ -7,7 +7,7 @@
  * record type added there without copy here would show English on a Spanish screen. This reads
  * the backend source from the sibling trazo-back checkout (CI checks out its main).
  */
-import { readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { describe, expect, it } from 'vitest';
 import enUS from '../../../../i18n/lang/en-US.json';
@@ -17,15 +17,19 @@ import { RECORD_TYPE_GROUP_KEYS } from '../OSPRecordTypesPanel';
 const en = enUS as Record<string, string>;
 const es = esUY as Record<string, string>;
 const BACK = join(__dirname, '../../../../../../trazo-back/certifications/services');
-const REGISTRY = readFileSync(join(BACK, 'common_osp_records.py'), 'utf8');
-const REQUIRED = readFileSync(join(BACK, 'required_records.py'), 'utf8');
+// Read inside the tests, so a missing sibling checkout fails the first test with a clear message
+// rather than crashing the file at collection (review of app #343).
+const registry = () => readFileSync(join(BACK, 'common_osp_records.py'), 'utf8');
+const requiredSource = () => readFileSync(join(BACK, 'required_records.py'), 'utf8');
 
 /** key, verbatim label (adjacent string literals joined), and whether it can carry evidence. */
-const recordTypes = () =>
-  // The label is one literal or adjacent literals in parentheses; a comment may follow it.
-  [
+const recordTypes = () => {
+  const REGISTRY = registry();
+  // Comments may precede the key; the label is one literal or adjacent literals in
+  // parentheses, and a comment may follow it.
+  return [
     ...REGISTRY.matchAll(
-      /RecordType\(\s*key="([a-z_]+)",\s*label=(\((?:\s*"(?:[^"\\]|\\.)*")+\s*\)|"(?:[^"\\]|\\.)*")/g
+      /RecordType\(\s*(?:#[^\n]*\n\s*)*key="([a-z0-9_]+)",\s*label=(\((?:\s*"(?:[^"\\]|\\.)*")+\s*\)|"(?:[^"\\]|\\.)*")/g
     )
   ].map((m) => {
     const next = REGISTRY.indexOf('RecordType(', (m.index ?? 0) + 1);
@@ -36,23 +40,33 @@ const recordTypes = () =>
       evidenced: !/evidence=lambda b: \(0, ""\)/.test(block)
     };
   });
+};
 
 describe('the § 11 registry has copy for everything the backend sends', () => {
-  const types = recordTypes();
+  it('finds the sibling trazo-back checkout', () => {
+    expect(
+      existsSync(join(BACK, 'common_osp_records.py')),
+      `missing ${BACK}: check out trazo-back beside trazo-app (CLAUDE.md, worktree layout)`
+    ).toBe(true);
+  });
 
-  it('reads the registry', () => {
-    expect(types.length).toBeGreaterThanOrEqual(45);
+  it('reads every record type the registry defines, not just the ones its pattern fits', () => {
+    // Exact, not a floor: a definition the pattern above misses (a reordered argument, a label
+    // built with format()) would otherwise go unchecked for copy (review of app #343).
+    const defined = (registry().match(/^\s+RecordType\(/gm) ?? []).length;
+    expect(defined).toBeGreaterThan(40);
+    expect(recordTypes().length).toBe(defined);
   });
 
   it('every record type: the English is the form verbatim, and there is Spanish', () => {
-    const wrong = types.filter(
+    const wrong = recordTypes().filter(
       (t) => en[`osp.recordTypes.type.${t.key}`] !== t.label || !es[`osp.recordTypes.type.${t.key}`]
     );
     expect(wrong.map((t) => t.key)).toEqual([]);
   });
 
   it('every group heading is mapped and worded', () => {
-    const groups = [...REGISTRY.matchAll(/^GROUP_[A-Z]+ = "([^"]+)"/gm)].map((m) => m[1]);
+    const groups = [...registry().matchAll(/^GROUP_[A-Z]+ = "([^"]+)"/gm)].map((m) => m[1]);
     expect(groups.length).toBe(4);
     expect(Object.keys(RECORD_TYPE_GROUP_KEYS).sort()).toEqual([...groups].sort());
     for (const key of Object.values(RECORD_TYPE_GROUP_KEYS)) {
@@ -62,7 +76,7 @@ describe('the § 11 registry has copy for everything the backend sends', () => {
   });
 
   it('every record type that can carry evidence has an evidence line in both languages', () => {
-    const missing = types
+    const missing = recordTypes()
       .filter((t) => t.evidenced)
       .filter((t) => !en[`osp.recordTypes.basis.${t.key}`] || !es[`osp.recordTypes.basis.${t.key}`])
       .map((t) => t.key);
@@ -70,6 +84,7 @@ describe('the § 11 registry has copy for everything the backend sends', () => {
   });
 
   it('every reason a plan can require a record has copy', () => {
+    const REQUIRED = requiredSource();
     const block = REQUIRED.slice(REQUIRED.indexOf('TRIGGERS'));
     const keys = [...block.matchAll(/^ {4}"([a-z_]+)": \(/gm)].map((m) => m[1]);
     expect(keys.length).toBeGreaterThanOrEqual(7);

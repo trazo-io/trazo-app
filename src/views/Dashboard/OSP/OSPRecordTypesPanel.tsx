@@ -165,9 +165,11 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
       : row.basis;
   const formatConfirmed = (iso: string) => {
     const d = new Date(iso);
+    // UTC: the stored calendar date, never shifted by the viewer's zone (ADR 011,
+    // utils/dateOnly.ts), so it reads the same day the packet prints (review of app #343).
     return Number.isNaN(d.getTime())
       ? iso.slice(0, 10)
-      : intl.formatDate(d, { dateStyle: 'medium' });
+      : intl.formatDate(d, { dateStyle: 'medium', timeZone: 'UTC' });
   };
   const navigate = useNavigate();
   const toast = useToast();
