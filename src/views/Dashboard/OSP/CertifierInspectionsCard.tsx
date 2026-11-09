@@ -167,6 +167,9 @@ const CertifierInspectionsCard: React.FC<Props> = ({ companyId, farmId, state })
   // True for the whole save, uploads and record together. The RTK flags alone drop to false in the
   // gap between one request finishing and the next starting, which re-enabled the form mid-save.
   const [saving, setSaving] = useState(false);
+  // Titles of files uploaded in this form but not yet on a saved record: after a failed save the
+  // form still links them, and "attached file" did not say which one.
+  const [uploadedTitles, setUploadedTitles] = useState<Record<number, string>>({});
 
   const t = (id: string, values?: Record<string, React.ReactNode>) =>
     intl.formatMessage({ id }, values as Record<string, string>);
@@ -247,6 +250,7 @@ const CertifierInspectionsCard: React.FC<Props> = ({ companyId, farmId, state })
         title: `${title} - ${file.name}`
       }).unwrap();
       ids.push(doc.id);
+      setUploadedTitles((u) => ({ ...u, [doc.id]: doc.title }));
       link(doc.id);
       setFiles((f) => ({ ...f, [key]: (f[key] ?? []).filter((x) => x !== file) }));
     }
@@ -370,7 +374,7 @@ const CertifierInspectionsCard: React.FC<Props> = ({ companyId, farmId, state })
   };
 
   // Titles of every file the saved rows name, for the "on file" lines in the forms.
-  const titles: Record<number, string> = {};
+  const titles: Record<number, string> = { ...uploadedTitles };
   inspections.forEach((i) => {
     if (i.report_document && i.report_document_title)
       titles[i.report_document] = i.report_document_title;
@@ -390,7 +394,9 @@ const CertifierInspectionsCard: React.FC<Props> = ({ companyId, farmId, state })
    * so without this a wrong attachment could never leave the record. Unlinking keeps the file. */
   const attached = (id: number, onRemove: () => void) => (
     <HStack key={id} spacing={2} data-testid="attached-file">
-      <Text fontSize="xs" flex={1} minW={0} noOfLines={1}>
+      {/* Wraps, never truncates: two files sent with one response share a long prefix, and cut to
+          one line at phone width they read the same. */}
+      <Text fontSize="xs" flex={1} minW={0} wordBreak="break-word">
         {t('osp.inspections.onFile', { title: titles[id] ?? t('osp.inspections.attachedFile') })}
       </Text>
       <StandardButton size="xs" variant="ghost" onClick={onRemove}>
