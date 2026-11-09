@@ -97,6 +97,19 @@ interface OSPRecordTypesPanelProps {
  * This batches TRANSPORT, never intent: every key in a flushed request is a box the operator
  * ticked. There is deliberately no "confirm all suggested" control — see the module docstring.
  */
+/*
+ * The § 11 group headings, verbatim from the form (common_osp_records.py GROUP_*), to the key of
+ * their copy. The backend sends the form's English, which is what the packet prints; the panel
+ * shows it in the reader's language (2026-11-09). recordTypesSpeakBothLanguages.test.ts checks
+ * these strings against the backend's constants.
+ */
+export const RECORD_TYPE_GROUP_KEYS: Record<string, string> = {
+  'What types of records do you maintain for organic crop production?': 'crop',
+  'What types of input and materials records do you maintain?': 'inputs',
+  'What types of general production and management records do you maintain?': 'general',
+  'What types of purchase, sales, and transport records do you maintain?': 'sales'
+};
+
 const FLUSH_DELAY_MS = 600;
 
 /** Mirrors `common_osp_records.FREE_TEXT_LABEL_MAX` — the server refuses anything longer. */
@@ -132,6 +145,32 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
   onNavigateAway
 }) => {
   const intl = useIntl();
+  /*
+   * The backend's § 11 labels, evidence lines and plan reasons are English: the labels are the
+   * form's own wording and print as-is in the packet. On screen each is worded from its key in
+   * the reader's language, falling back to the backend's text for a key with no copy yet.
+   */
+  const copy = (id: string, fallback: string, values?: Record<string, string | number>) =>
+    intl.messages[id] ? intl.formatMessage({ id }, values) : fallback;
+  const recordLabel = (row: OSPRecordType) => copy(`osp.recordTypes.type.${row.key}`, row.label);
+  const groupLabel = (group: string) =>
+    RECORD_TYPE_GROUP_KEYS[group]
+      ? copy(`osp.recordTypes.group.${RECORD_TYPE_GROUP_KEYS[group]}`, group)
+      : group;
+  const basisLabel = (row: OSPRecordType) =>
+    row.status === 'evidence_check_failed'
+      ? intl.formatMessage({ id: 'osp.recordTypes.basisCheckFailed' })
+      : row.basis && row.count > 0
+      ? copy(`osp.recordTypes.basis.${row.key}`, row.basis, { count: row.count })
+      : row.basis;
+  const formatConfirmed = (iso: string) => {
+    const d = new Date(iso);
+    // UTC: the stored calendar date, never shifted by the viewer's zone (ADR 011,
+    // utils/dateOnly.ts), so it reads the same day the packet prints (review of app #343).
+    return Number.isNaN(d.getTime())
+      ? iso.slice(0, 10)
+      : intl.formatDate(d, { dateStyle: 'medium', timeZone: 'UTC' });
+  };
   const navigate = useNavigate();
   const toast = useToast();
   const mutedColor = useColorModeValue('gray.600', 'gray.400');
@@ -337,7 +376,7 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
         px={3}
         py={2}>
         <Stack spacing={1} flex="1" minW={0} w="100%">
-          <Text fontSize="sm">{row.label}</Text>
+          <Text fontSize="sm">{recordLabel(row)}</Text>
           <Text fontSize="xs" color={mutedColor}>
             {row.cfr_cite}
           </Text>
@@ -535,7 +574,7 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
           {grouped.map(({ group, rows }) => (
             <Box key={group}>
               <Text fontSize="sm" fontWeight="semibold" mb={2}>
-                {group}
+                {groupLabel(group)}
               </Text>
               <Stack spacing={0} divider={<Divider borderColor="gray.200" />}>
                 {rows.map((row) => {
@@ -564,14 +603,14 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
                         colorScheme="green"
                         alignItems="flex-start">
                         <Stack spacing={0}>
-                          <Text fontSize="sm">{row.label}</Text>
+                          <Text fontSize="sm">{recordLabel(row)}</Text>
                           <HStack spacing={2} flexWrap="wrap">
                             <Text fontSize="xs" color={mutedColor}>
                               {row.cfr_cite}
                             </Text>
                             {row.basis && (
                               <Text fontSize="xs" color={mutedColor}>
-                                {row.basis}
+                                {basisLabel(row)}
                               </Text>
                             )}
                             {row.external_by_design && !row.basis && (
@@ -602,7 +641,7 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
                                           'Confirmed {date} on plan v{version} — not re-stated on this plan'
                                       },
                                       {
-                                        date: row.confirmed_at.slice(0, 10),
+                                        date: formatConfirmed(row.confirmed_at),
                                         version: row.carried_from_version
                                       }
                                     )
@@ -611,7 +650,7 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
                                         id: 'osp.recordTypes.confirmedOn',
                                         defaultMessage: 'Confirmed {date}'
                                       },
-                                      { date: row.confirmed_at.slice(0, 10) }
+                                      { date: formatConfirmed(row.confirmed_at) }
                                     )}
                               </Text>
                             )}
@@ -622,7 +661,12 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
                                     id: 'osp.recordTypes.requiredBecause',
                                     defaultMessage: 'Required by your plan: {because}'
                                   },
-                                  { because: row.required_because ?? '' }
+                                  {
+                                    because: copy(
+                                      `osp.recordTypes.because.${row.key}`,
+                                      row.required_because ?? ''
+                                    )
+                                  }
                                 )}
                               </Text>
                             )}
