@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.11.25",
+  "content_version": "2026.11.26",
   "registry": {
-    "content_version": "2026.11.25",
+    "content_version": "2026.11.26",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -19454,7 +19454,8 @@
                 "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
-                "max_length": null
+                "max_length": null,
+                "retired": true
               },
               {
                 "key": "production_aids_listed",
@@ -19478,6 +19479,59 @@
                 ],
                 "nop_cite": "§ 205.601",
                 "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null,
+                "retired": true
+              },
+              {
+                "key": "crop_production_aids_none_used",
+                "kind": "boolean",
+                "label": {
+                  "en": "No seed treatments, growing media or adjuvants are used or planned",
+                  "es": "No se usa ni se planea usar ningún tratamiento de semilla, sustrato de cultivo ni adyuvante"
+                },
+                "coaching": {
+                  "en": "Seed treatments include coatings, pelleting materials and inoculants. Growing media include substrate, planting mix and potting soil.",
+                  "es": "Los tratamientos de semilla incluyen recubrimientos, materiales de peletizado e inoculantes. Los sustratos de cultivo incluyen sustrato, mezcla para siembra y tierra para macetas."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.601",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "crop_production_aids_listed",
+                "kind": "boolean",
+                "label": {
+                  "en": "All seed treatments, growing media and adjuvants I use or plan to use are entered in the materials list above",
+                  "es": "Todo tratamiento de semilla, sustrato de cultivo y adyuvante que uso o planeo usar está registrado en la lista de materiales de arriba"
+                },
+                "coaching": {
+                  "en": "File each one under Production aids, with its full product name, manufacturer and reason for use. Seed treatments named on your planting records and tank-mix partners named on your application records are compared with the list.",
+                  "es": "Registra cada uno en Auxiliares de producción, con el nombre completo del producto, el fabricante y el motivo de uso. Los tratamientos de semilla anotados en tus registros de siembra y los productos de mezcla de tanque anotados en tus registros de aplicación se comparan con la lista."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "crop_production_aids_none_used",
+                    "op": "falsy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.601",
+                "prefill": {
+                  "source": "materials_category_evidence"
+                },
                 "parcel_field": null,
                 "establishment_field": null,
                 "embed": null,
