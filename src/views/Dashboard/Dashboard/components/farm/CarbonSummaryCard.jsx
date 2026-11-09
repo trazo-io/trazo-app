@@ -89,7 +89,7 @@ const TransparencySummaryCard = ({ farmId }) => {
   // annual inspection. Farm home now leads with what a certifier would query
   // (CertifierReadinessCard) and states facts here. This note used to end "the score keeps its
   // own page: /admin/dashboard/farm/:farmId/transparency" — that page was never routed and was
-  // deleted 2026-08-11. The score has no producer surface; it is a backend KPI.
+  // deleted 2026-08-11. The score has no surface anywhere; it is retired as a concept.
   //
   // Do not reintroduce a score, tier badge, grade, or progress bar on this card.
 
