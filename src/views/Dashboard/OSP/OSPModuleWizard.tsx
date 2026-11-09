@@ -87,6 +87,7 @@ import OSPRecordTypesPanel from './OSPRecordTypesPanel';
 import { selectWorkingOsp } from './selectWorkingOsp';
 import { holdsRetiredOption, offeredOptions, toggleCheckbox } from 'config/osp/optionChoices';
 import { agentCaption, blankAskedKeys } from 'config/osp/agentCaption';
+import { refusedAnswerLines } from 'config/osp/answerRefusals';
 
 /**
  * `isReadOnly` is the plan-is-locked state, and it should now never be true: a locked plan
@@ -320,7 +321,11 @@ const QuestionField = ({
             ) : question.embed === 'post_harvest_facilities' ? (
               <OSPHandlerFacilitiesPanel companyId={companyId} farmId={farmId} />
             ) : question.embed === 'on_farm_facilities' ? (
-              <OSPOwnFacilitiesPanel companyId={companyId} farmId={farmId} isReadOnly={isReadOnly} />
+              <OSPOwnFacilitiesPanel
+                companyId={companyId}
+                farmId={farmId}
+                isReadOnly={isReadOnly}
+              />
             ) : question.embed === 'sourced_products' ? (
               <OSPSourcedProductsPanel
                 companyId={companyId}
@@ -860,6 +865,10 @@ const OSPModuleWizard = () => {
         { fields: labels.join(', ') }
       );
     }
+    // A statement the server refused, per question: name the question and say why. Read before the generic
+    // reader, which drops these nested objects and fell through to "did not reach the server".
+    const refused = refusedAnswerLines(payload, definition, intl.locale);
+    if (refused.length) return refused.join(' ');
     return (
       apiErrorMessage(err, ['missing']) ??
       intl.formatMessage({ id: 'osp.wizard.saveFailedGeneric' })
