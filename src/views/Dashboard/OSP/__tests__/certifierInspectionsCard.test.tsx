@@ -282,7 +282,14 @@ describe('saving a notice with several files (review of app #333)', () => {
       call += 1;
       // The response file fails the first time it is tried, and succeeds on the retry.
       if (file === sent && call === 2) return { unwrap: () => Promise.reject({ status: 500 }) };
-      return { unwrap: () => Promise.resolve({ id: file === letter ? 51 : 52 }) };
+      return {
+        unwrap: () =>
+          Promise.resolve({
+            id: file === letter ? 51 : 52,
+            title:
+              file === letter ? 'Certifier letter - letter.pdf' : 'Response to certifier - sent.pdf'
+          })
+      };
     });
     resolving(addNotice, noticeRow({ id: 20 }));
     renderCard();
@@ -296,6 +303,10 @@ describe('saving a notice with several files (review of app #333)', () => {
     fireEvent.click(within(form).getByText(en['osp.inspections.save']));
     await waitFor(() => expect(upload).toHaveBeenCalledTimes(2));
     expect(addNotice).not.toHaveBeenCalled();
+    // After the failure the form names the uploaded letter by its title, not "attached file".
+    expect(
+      within(screen.getByTestId('notice-form')).getByText(/On file: Certifier letter - letter\.pdf/)
+    ).toBeTruthy();
     await waitFor(() =>
       expect(screen.getByTestId('notice-form').querySelector('fieldset')?.disabled).toBe(false)
     );
