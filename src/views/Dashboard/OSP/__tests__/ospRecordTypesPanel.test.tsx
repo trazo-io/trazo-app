@@ -37,7 +37,10 @@ vi.mock('react-redux', () => ({
     fn({
       company: {
         currentCompany: {
-          subscription: { status: 'active', effective_limits: { compliance_exports: complianceExports } }
+          subscription: {
+            status: 'active',
+            effective_limits: { compliance_exports: complianceExports }
+          }
         }
       }
     })
@@ -331,5 +334,33 @@ describe('OSP § 11 registry panel', () => {
     expect(
       screen.queryByText(enUS['osp.attachments.complianceOnly' as keyof typeof enUS] as string)
     ).toBeNull();
+  });
+});
+
+describe('OSP § 11 registry panel, in Spanish', () => {
+  // The labels are the form's English and print as-is in the packet; on screen they, the group
+  // headings and the evidence lines are worded from their keys (2026-11-09).
+  it('words the record types, their group and their evidence in Spanish', async () => {
+    const { default: esUY } = await import('../../../../i18n/lang/es-419.json');
+    const es = esUY as Record<string, string>;
+    render(
+      <ChakraProvider>
+        <MemoryRouter>
+          <IntlProvider locale="es-419" messages={es}>
+            <OSPRecordTypesPanel
+              companyId="7"
+              farmId="3"
+              osp={{ id: '11', status: 'draft', version_number: 1 } as never}
+              onNavigateAway={flushDirty}
+            />
+          </IntlProvider>
+        </MemoryRouter>
+      </ChakraProvider>
+    );
+    expect(screen.getByText(es['osp.recordTypes.type.harvest_records'])).toBeInTheDocument();
+    expect(screen.getByText(es['osp.recordTypes.group.crop'])).toBeInTheDocument();
+    expect(screen.getByText('34 cosechas registradas')).toBeInTheDocument();
+    const text = document.body.textContent ?? '';
+    expect(text).not.toMatch(/events logged|Harvest records|What types of records/);
   });
 });
