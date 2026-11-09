@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.11.26",
+  "content_version": "2026.11.27",
   "registry": {
-    "content_version": "2026.11.26",
+    "content_version": "2026.11.27",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -3524,6 +3524,1621 @@
                 "options": [],
                 "required": false,
                 "visible_when": [],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "g3_1_container_greenhouse",
+        "code": "G3.1",
+        "title": {
+          "en": "Container & Greenhouse/Shadehouse Production",
+          "es": "Producción en contenedores y en invernadero o casa sombra"
+        },
+        "nop_cites": [
+          "§ 205.200",
+          "§ 205.201",
+          "§ 205.202",
+          "§ 205.272"
+        ],
+        "education": [
+          {
+            "en": "Complete this module if your organic system includes any crop or plant production that does not take place in the ground (annual seedlings or transplants, planting stock or other nursery production in pots, edible sprouts, wheatgrass or microgreens, mushrooms, or crops grown to harvest in containers), or any crop production in greenhouses, shadehouses or buildings. If none of these apply, mark it not applicable.",
+            "es": "Completa este módulo si tu sistema orgánico incluye cualquier producción de cultivos o plantas que no se haga en el suelo (plántulas anuales o trasplantes, material de plantación u otra producción de vivero en macetas, germinados comestibles, pasto de trigo o microverdes, hongos, o cultivos llevados a cosecha en contenedores), o cualquier producción en invernaderos, casas sombra o edificios. Si nada de esto aplica, márcalo como no aplicable."
+          }
+        ],
+        "allows_not_applicable": true,
+        "na_label": {
+          "en": "None of these: no annual seedlings, potted planting stock, sprouts, microgreens, mushrooms or container crops are produced, and no crop is grown in a greenhouse, shadehouse or building.",
+          "es": "Nada de esto: no se producen plántulas anuales, material de plantación en macetas, germinados, microverdes, hongos ni cultivos en contenedores, y ningún cultivo se produce en invernadero, casa sombra o edificio."
+        },
+        "default_section_key": "practices_procedures",
+        "repeat_per_parcel": false,
+        "pages": [
+          {
+            "key": "a_types_locations",
+            "title": {
+              "en": "A. Production types and locations",
+              "es": "A. Tipos de producción y ubicaciones"
+            },
+            "education": [],
+            "visible_when": [],
+            "questions": [
+              {
+                "key": "structure_production_types",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Which of the following do you produce organically? Check all that apply.",
+                  "es": "¿Cuáles de estos produces de forma orgánica? Marca todo lo que corresponda."
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "annual_seedlings",
+                    "label": {
+                      "en": "Annual seedlings (e.g. tomato transplants or other annual plants grown from seed)",
+                      "es": "Plántulas anuales (p. ej. trasplantes de tomate u otras plantas anuales cultivadas a partir de semilla)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "potted_planting_stock",
+                    "label": {
+                      "en": "Planting stock (other than annual seedlings) or other nursery production in pots (e.g. ornamentals, potted herbs)",
+                      "es": "Material de plantación (que no sea plántula anual) u otra producción de vivero en macetas (p. ej. ornamentales, hierbas en maceta)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "edible_sprouts",
+                    "label": {
+                      "en": "Edible sprouts (including fodder for livestock)",
+                      "es": "Germinados comestibles (incluido forraje para ganado)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "microgreens",
+                    "label": {
+                      "en": "Wheatgrass, microgreens, pea/sunflower shoots, or similar",
+                      "es": "Pasto de trigo, microverdes, brotes de chícharo o girasol, o similares"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "mushrooms",
+                    "label": {
+                      "en": "Mushrooms (CCOF also asks G3.2 Mushroom Production)",
+                      "es": "Hongos (CCOF también pide G3.2 Producción de hongos)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "container_crops",
+                    "label": {
+                      "en": "Crops grown to harvest/maturity in containers (in substrate or growing media, or in hydroponic, aeroponic or aquaponic systems)",
+                      "es": "Cultivos llevados a cosecha o madurez en contenedores (en sustrato o medio de cultivo, o en sistemas hidropónicos, aeropónicos o acuapónicos)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "in_ground_in_structures",
+                    "label": {
+                      "en": "Crops grown in the ground (not in containers) within greenhouses, shadehouses and/or buildings",
+                      "es": "Cultivos en el suelo (no en contenedores) dentro de invernaderos, casas sombra o edificios"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [],
+                "nop_cite": "§ 205.201",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "annual_seedlings_use",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Annual seedlings are produced:",
+                  "es": "Las plántulas anuales se producen:"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "on_farm_use",
+                    "label": {
+                      "en": "For on-farm use",
+                      "es": "Para uso en la finca"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "for_sale",
+                    "label": {
+                      "en": "For sale",
+                      "es": "Para venta"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "structure_production_types",
+                    "op": "includes",
+                    "value": "annual_seedlings"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "potted_stock_use",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Planting stock or nursery production in pots is produced:",
+                  "es": "El material de plantación o la producción de vivero en macetas se produce:"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "on_farm_use",
+                    "label": {
+                      "en": "For on-farm use",
+                      "es": "Para uso en la finca"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "for_sale",
+                    "label": {
+                      "en": "For sale",
+                      "es": "Para venta"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "structure_production_types",
+                    "op": "includes",
+                    "value": "potted_planting_stock"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "locations_within_certified_parcel",
+                "kind": "radio",
+                "label": {
+                  "en": "For these production types, are all growing locations within the boundaries of a certified organic parcel?",
+                  "es": "Para estos tipos de producción, ¿todos los lugares de cultivo están dentro de los límites de una parcela orgánica certificada?"
+                },
+                "coaching": {
+                  "en": "Every organic growing location must be on your certifier's record before organic sales. Show each greenhouse, shadehouse or building on your parcel map.",
+                  "es": "Cada lugar de cultivo orgánico debe estar en el registro de tu certificadora antes de las ventas orgánicas. Muestra cada invernadero, casa sombra o edificio en tu mapa de parcela."
+                },
+                "options": [
+                  {
+                    "value": "yes",
+                    "label": {
+                      "en": "Yes",
+                      "es": "Sí"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "no",
+                    "label": {
+                      "en": "No: a Parcel Application is submitted for each other location",
+                      "es": "No: se presenta una solicitud de parcela por cada otro lugar"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [],
+                "nop_cite": "§ 205.202",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              }
+            ]
+          },
+          {
+            "key": "b_materials_practices",
+            "title": {
+              "en": "B. Production materials and practices",
+              "es": "B. Materiales y prácticas de producción"
+            },
+            "education": [],
+            "visible_when": [],
+            "questions": [
+              {
+                "key": "uses_growing_media",
+                "kind": "radio",
+                "label": {
+                  "en": "Do you use growing media (including substrate, planting mix, potting soils)?",
+                  "es": "¿Usas medio de cultivo (incluido sustrato, mezcla para siembra, tierra para macetas)?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "yes",
+                    "label": {
+                      "en": "Yes",
+                      "es": "Sí"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "none_used",
+                    "label": {
+                      "en": "No, none used",
+                      "es": "No, no se usa"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [],
+                "nop_cite": "§ 205.203",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "growing_media_components_listed",
+                "kind": "boolean",
+                "label": {
+                  "en": "Are all components of your growing media (e.g. peat moss, coconut fiber, vermiculite, perlite, sand, compost, microbial inoculants) on your materials list?",
+                  "es": "¿Todos los componentes de tu medio de cultivo (p. ej. turba, fibra de coco, vermiculita, perlita, arena, composta, inoculantes microbianos) están en tu lista de materiales?"
+                },
+                "coaching": {
+                  "en": "List each one under Production aids on the Materials Application.",
+                  "es": "Registra cada uno en Auxiliares de producción en la Solicitud de materiales."
+                },
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "uses_growing_media",
+                    "op": "eq",
+                    "value": "yes"
+                  }
+                ],
+                "nop_cite": "§ 205.203",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "growing_media_new_each_cycle",
+                "kind": "radio",
+                "label": {
+                  "en": "Is new growing media used for each production cycle?",
+                  "es": "¿Se usa medio de cultivo nuevo en cada ciclo de producción?"
+                },
+                "coaching": {
+                  "en": "Spent growing media from nonorganic production may not be reused for organic production.",
+                  "es": "El medio de cultivo usado en producción no orgánica no puede reutilizarse en producción orgánica."
+                },
+                "options": [
+                  {
+                    "value": "yes",
+                    "label": {
+                      "en": "Yes",
+                      "es": "Sí"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "no_reused",
+                    "label": {
+                      "en": "No, growing media is reused",
+                      "es": "No, el medio de cultivo se reutiliza"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "uses_growing_media",
+                    "op": "eq",
+                    "value": "yes"
+                  }
+                ],
+                "nop_cite": "§ 205.203",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "growing_media_reuse_source",
+                "kind": "textarea",
+                "label": {
+                  "en": "Describe the source of the reused growing media.",
+                  "es": "Describe de dónde viene el medio de cultivo reutilizado."
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "growing_media_new_each_cycle",
+                    "op": "eq",
+                    "value": "no_reused"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "growing_media_disposal",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How is growing media disposed of at the end of the production cycle?",
+                  "es": "¿Cómo se desecha el medio de cultivo al final del ciclo de producción?"
+                },
+                "coaching": {
+                  "en": "Spent growing media must be managed so it does not contribute to contamination or degradation of natural resources.",
+                  "es": "El medio de cultivo usado debe manejarse de forma que no contribuya a la contaminación ni a la degradación de los recursos naturales."
+                },
+                "options": [
+                  {
+                    "value": "reused_onsite",
+                    "label": {
+                      "en": "Reused or recycled on site",
+                      "es": "Se reutiliza o recicla en el sitio"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "composted_onsite",
+                    "label": {
+                      "en": "Composted on site",
+                      "es": "Se composta en el sitio"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otro"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "uses_growing_media",
+                    "op": "eq",
+                    "value": "yes"
+                  }
+                ],
+                "nop_cite": "§ 205.200",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "growing_media_disposal_other",
+                "kind": "textarea",
+                "label": {
+                  "en": "Explain how else spent growing media is disposed of.",
+                  "es": "Explica de qué otra forma se desecha el medio de cultivo usado."
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "growing_media_disposal",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "irrigation_effluent_management",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How do you manage irrigation water effluent or runoff so it does not contaminate the surrounding environment (waterways, soil)?",
+                  "es": "¿Cómo manejas el agua de riego sobrante o de escurrimiento para que no contamine el entorno (cuerpos de agua, suelo)?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "recaptured_reused",
+                    "label": {
+                      "en": "Recaptured and reused",
+                      "es": "Se recaptura y se reutiliza"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otro"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [],
+                "nop_cite": "§ 205.200",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "irrigation_effluent_other",
+                "kind": "textarea",
+                "label": {
+                  "en": "Explain how else irrigation effluent or runoff is managed.",
+                  "es": "Explica de qué otra forma se maneja el agua sobrante o de escurrimiento."
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "irrigation_effluent_management",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "sprout_seed_always_organic",
+                "kind": "boolean",
+                "label": {
+                  "en": "Do you always use organic seed to produce edible sprouts?",
+                  "es": "¿Siempre usas semilla orgánica para producir germinados comestibles?"
+                },
+                "coaching": {
+                  "en": "Organic seed is always required for edible sprout production.",
+                  "es": "La semilla orgánica siempre es obligatoria para producir germinados comestibles."
+                },
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "structure_production_types",
+                    "op": "includes",
+                    "value": "edible_sprouts"
+                  }
+                ],
+                "nop_cite": "§ 205.204(a)(1)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "sprout_seed_sanitizers",
+                "kind": "radio",
+                "label": {
+                  "en": "Are sanitizers used on sprouting seed?",
+                  "es": "¿Se usan sanitizantes en la semilla para germinar?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "none",
+                    "label": {
+                      "en": "No sanitizers are used",
+                      "es": "No se usan sanitizantes"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "listed",
+                    "label": {
+                      "en": "Yes, and each one is on my materials list",
+                      "es": "Sí, y cada uno está en mi lista de materiales"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "structure_production_types",
+                    "op": "includes",
+                    "value": "edible_sprouts"
+                  }
+                ],
+                "nop_cite": "§ 205.605",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "sprout_seed_sanitizing_procedure",
+                "kind": "textarea",
+                "label": {
+                  "en": "Describe the seed sanitizing and rinsing procedures.",
+                  "es": "Describe los procedimientos de sanitización y enjuague de la semilla."
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "sprout_seed_sanitizers",
+                    "op": "eq",
+                    "value": "listed"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              }
+            ]
+          },
+          {
+            "key": "b4_container_systems",
+            "title": {
+              "en": "B4. Crops grown to harvest in containers",
+              "es": "B4. Cultivos llevados a cosecha en contenedores"
+            },
+            "education": [],
+            "visible_when": [
+              {
+                "question": "structure_production_types",
+                "op": "includes",
+                "value": "container_crops"
+              }
+            ],
+            "questions": [
+              {
+                "key": "container_system_photos",
+                "kind": "upload",
+                "label": {
+                  "en": "Photographs of the system",
+                  "es": "Fotografías del sistema"
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [],
+                "nop_cite": "§ 205.201",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "container_system_types",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Type of system",
+                  "es": "Tipo de sistema"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "substrate_containers",
+                    "label": {
+                      "en": "Substrate production in pots, bags, troughs or other containers",
+                      "es": "Producción en sustrato en macetas, bolsas, canaletas u otros contenedores"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "hydroponic",
+                    "label": {
+                      "en": "Hydroponic",
+                      "es": "Hidropónico"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "aeroponic",
+                    "label": {
+                      "en": "Aeroponic",
+                      "es": "Aeropónico"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "aquaponic",
+                    "label": {
+                      "en": "Aquaponic",
+                      "es": "Acuapónico"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otro"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [],
+                "nop_cite": "§ 205.201",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "container_system_types_other",
+                "kind": "textarea",
+                "label": {
+                  "en": "Describe the other system.",
+                  "es": "Describe el otro sistema."
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "container_system_types",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "container_production_cycle",
+                "kind": "textarea",
+                "label": {
+                  "en": "The stages and length of the production cycle for each crop grown",
+                  "es": "Las etapas y la duración del ciclo de producción de cada cultivo"
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [],
+                "nop_cite": "§ 205.201",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "container_root_support",
+                "kind": "textarea",
+                "label": {
+                  "en": "If substrate or growing media is not used, how are plants and roots supported (e.g. net pots, trays, polystyrene sheets)?",
+                  "es": "Si no se usa sustrato ni medio de cultivo, ¿cómo se sostienen las plantas y las raíces (p. ej. macetas de red, charolas, láminas de poliestireno)?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.201",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "container_media_biology",
+                "kind": "textarea",
+                "label": {
+                  "en": "If substrate or growing media is used, does it contain biological activity or organic matter, and does it feed the plant throughout the whole production cycle?",
+                  "es": "Si se usa sustrato o medio de cultivo, ¿tiene actividad biológica o materia orgánica, y nutre a la planta durante todo el ciclo de producción?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.203",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "container_liquid_nutrition",
+                "kind": "textarea",
+                "label": {
+                  "en": "If liquid nutrition is used, how is it delivered to the roots (indirectly through the growing media, or directly, such as NFT, flood and drain, deep water culture, rafts, aeroponics)?",
+                  "es": "Si se usa nutrición líquida, ¿cómo llega a las raíces (de forma indirecta a través del medio de cultivo, o directa, como NFT, inundación y drenaje, cultivo en agua profunda, balsas, aeroponía)?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.203",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "container_fish_integrated",
+                "kind": "boolean",
+                "label": {
+                  "en": "Are fish integrated into the system (aquaponics)?",
+                  "es": "¿El sistema integra peces (acuaponía)?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [],
+                "nop_cite": "§ 205.201",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              }
+            ]
+          },
+          {
+            "key": "c_nonorganic_structures",
+            "title": {
+              "en": "C. Nonorganic production in greenhouses, shadehouses and buildings",
+              "es": "C. Producción no orgánica en invernaderos, casas sombra y edificios"
+            },
+            "education": [],
+            "visible_when": [],
+            "questions": [
+              {
+                "key": "organic_in_structures",
+                "kind": "boolean",
+                "label": {
+                  "en": "Does any of this organic production take place in greenhouses, shadehouses or buildings?",
+                  "es": "¿Alguna parte de esta producción orgánica se hace en invernaderos, casas sombra o edificios?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [],
+                "nop_cite": "§ 205.272",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "nonorganic_in_structures",
+                "kind": "boolean",
+                "label": {
+                  "en": "Does your operation also have nonorganic production in greenhouses, shadehouses or buildings?",
+                  "es": "¿Tu operación también tiene producción no orgánica en invernaderos, casas sombra o edificios?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "organic_in_structures",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.272",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "nonorganic_structure_arrangement",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Which of these describe your nonorganic production in greenhouses, shadehouses or buildings?",
+                  "es": "¿Cuáles de estos describen tu producción no orgánica en invernaderos, casas sombra o edificios?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "dedicated_areas",
+                    "label": {
+                      "en": "Organic and nonorganic production take place in different, dedicated growing areas (e.g. adjacent structures, bays, sectors), shown on the parcel map",
+                      "es": "La producción orgánica y la no orgánica se hacen en áreas de cultivo distintas y dedicadas (p. ej. estructuras contiguas, naves, sectores), mostradas en el mapa de parcela"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "alternating_production",
+                    "label": {
+                      "en": "We seek CCOF approval to use specific organic growing areas for nonorganic production when organic production is not taking place there (alternating production)",
+                      "es": "Buscamos la aprobación de CCOF para usar áreas de cultivo orgánico específicas para producción no orgánica cuando ahí no hay producción orgánica (producción alternada)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "nonorganic_in_structures",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.272",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "organic_area_identification",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How do you identify organic and nonorganic growing areas?",
+                  "es": "¿Cómo identificas las áreas de cultivo orgánicas y no orgánicas?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "clear_signage",
+                    "label": {
+                      "en": "Clear signage",
+                      "es": "Letreros claros"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otro"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "nonorganic_in_structures",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.272",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "organic_area_identification_other",
+                "kind": "textarea",
+                "label": {
+                  "en": "Describe how else the growing areas are identified.",
+                  "es": "Describe de qué otra forma se identifican las áreas de cultivo."
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "organic_area_identification",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "organic_plant_distinction",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How do you label or distinguish organic and nonorganic plants from production through shipment or sale?",
+                  "es": "¿Cómo etiquetas o distingues las plantas orgánicas de las no orgánicas desde la producción hasta el envío o la venta?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "tray_plant_tags",
+                    "label": {
+                      "en": "Tray or plant tags (attached with the labels on G7.0)",
+                      "es": "Etiquetas en charolas o plantas (adjuntas con las etiquetas en G7.0)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otro"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "nonorganic_in_structures",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.272",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "organic_plant_distinction_other",
+                "kind": "textarea",
+                "label": {
+                  "en": "Describe how else organic and nonorganic plants are distinguished.",
+                  "es": "Describe de qué otra forma se distinguen las plantas orgánicas de las no orgánicas."
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "organic_plant_distinction",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "media_fertility_commingling_prevention",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How do you keep growing media and fertility materials for organic and nonorganic production from mixing during preparation and storage?",
+                  "es": "¿Cómo evitas que se mezclen el medio de cultivo y los materiales de fertilidad para la producción orgánica y la no orgánica durante la preparación y el almacenamiento?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "only_listed_materials",
+                    "label": {
+                      "en": "Only materials on my materials list are used, for both organic and nonorganic production",
+                      "es": "Solo se usan materiales de mi lista de materiales, tanto en la producción orgánica como en la no orgánica"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "cleanout_sop",
+                    "label": {
+                      "en": "Standard Operating Procedure (SOP) for equipment cleanout (attached below)",
+                      "es": "Procedimiento operativo estándar (POE) para limpiar el equipo (adjunto abajo)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "separate_areas",
+                    "label": {
+                      "en": "Separate preparation and/or storage areas",
+                      "es": "Áreas de preparación o almacenamiento separadas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otro"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "nonorganic_in_structures",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.272",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "commingling_sop_upload",
+                "kind": "upload",
+                "label": {
+                  "en": "Equipment cleanout SOP",
+                  "es": "POE de limpieza del equipo"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "media_fertility_commingling_prevention",
+                    "op": "includes",
+                    "value": "cleanout_sop"
+                  }
+                ],
+                "nop_cite": "§ 205.272",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "media_fertility_commingling_other",
+                "kind": "textarea",
+                "label": {
+                  "en": "Describe how else mixing is prevented.",
+                  "es": "Describe de qué otra forma se evita la mezcla."
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "media_fertility_commingling_prevention",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "shared_ventilation_drift",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How do you prevent drift of prohibited materials through shared ventilation systems?",
+                  "es": "¿Cómo evitas la deriva de materiales prohibidos por sistemas de ventilación compartidos?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "no_shared_ventilation",
+                    "label": {
+                      "en": "Not applicable, no shared ventilation systems",
+                      "es": "No aplica, no hay ventilación compartida"
+                    },
+                    "exclusive": true
+                  },
+                  {
+                    "value": "only_listed_materials",
+                    "label": {
+                      "en": "Only materials on my materials list are applied, for both organic and nonorganic production",
+                      "es": "Solo se aplican materiales de mi lista de materiales, tanto en la producción orgánica como en la no orgánica"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otro"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "nonorganic_in_structures",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.272",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "shared_ventilation_other",
+                "kind": "textarea",
+                "label": {
+                  "en": "Describe how else drift through shared ventilation is prevented.",
+                  "es": "Describe de qué otra forma se evita la deriva por la ventilación compartida."
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "shared_ventilation_drift",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "shared_irrigation_contact",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How do you prevent contact with prohibited materials applied through shared irrigation systems?",
+                  "es": "¿Cómo evitas el contacto con materiales prohibidos aplicados por sistemas de riego compartidos?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "no_shared_irrigation",
+                    "label": {
+                      "en": "Not applicable, no shared irrigation systems",
+                      "es": "No aplica, no hay riego compartido"
+                    },
+                    "exclusive": true
+                  },
+                  {
+                    "value": "only_listed_materials",
+                    "label": {
+                      "en": "Only materials on my materials list are applied, for both organic and nonorganic production",
+                      "es": "Solo se aplican materiales de mi lista de materiales, tanto en la producción orgánica como en la no orgánica"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otro"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "nonorganic_in_structures",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.272",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "shared_irrigation_other",
+                "kind": "textarea",
+                "label": {
+                  "en": "Describe how else contact through shared irrigation is prevented.",
+                  "es": "Describe de qué otra forma se evita el contacto por el riego compartido."
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "shared_irrigation_contact",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              }
+            ]
+          },
+          {
+            "key": "d_alternating",
+            "title": {
+              "en": "D. Alternating production",
+              "es": "D. Producción alternada"
+            },
+            "education": [
+              {
+                "en": "Prohibited substances may not be applied to certified organic land. CCOF may approve using an organic growing area for nonorganic production while no organic production is there, if prohibited substances do not contact land at the location, practices prevent contact when organic production resumes, and records are sufficient. CCOF tells you whether the plan is approved.",
+                "es": "No se pueden aplicar sustancias prohibidas en tierra orgánica certificada. CCOF puede aprobar el uso de un área de cultivo orgánico para producción no orgánica mientras ahí no haya producción orgánica, si las sustancias prohibidas no tocan la tierra del lugar, las prácticas evitan el contacto al reanudar la producción orgánica y los registros son suficientes. CCOF te avisa si el plan se aprueba."
+              }
+            ],
+            "visible_when": [
+              {
+                "question": "nonorganic_structure_arrangement",
+                "op": "includes",
+                "value": "alternating_production"
+              }
+            ],
+            "questions": [
+              {
+                "key": "alternating_flooring",
+                "kind": "radio",
+                "label": {
+                  "en": "Which applies to the organic growing locations you want to use for alternating production?",
+                  "es": "¿Qué aplica a los lugares de cultivo orgánico que quieres usar para producción alternada?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "impermeable_flooring",
+                    "label": {
+                      "en": "They have solid, permanent, impermeable flooring (e.g. concrete)",
+                      "es": "Tienen piso sólido, permanente e impermeable (p. ej. concreto)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "no_impermeable_flooring",
+                    "label": {
+                      "en": "They do not have solid, permanent, impermeable flooring (e.g. soil, landscape fabric, gravel)",
+                      "es": "No tienen piso sólido, permanente e impermeable (p. ej. suelo, malla, grava)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [],
+                "nop_cite": "§ 205.202",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "alternating_flooring_photos",
+                "kind": "upload",
+                "label": {
+                  "en": "Photographs of the locations",
+                  "es": "Fotografías de los lugares"
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [],
+                "nop_cite": "§ 205.202",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "alternating_ground_protection",
+                "kind": "textarea",
+                "label": {
+                  "en": "Explain how prohibited materials are kept from contacting the land beneath the growing area.",
+                  "es": "Explica cómo se evita que los materiales prohibidos toquen la tierra debajo del área de cultivo."
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "alternating_flooring",
+                    "op": "eq",
+                    "value": "no_impermeable_flooring"
+                  }
+                ],
+                "nop_cite": "§ 205.202",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "alternating_locations",
+                "kind": "textarea",
+                "label": {
+                  "en": "List each organic growing location for alternating production (e.g. parcel name, greenhouse or building number) and the crop types to be produced there.",
+                  "es": "Indica cada lugar de cultivo orgánico para producción alternada (p. ej. nombre de la parcela, número de invernadero o edificio) y los tipos de cultivo que se producirán ahí."
+                },
+                "coaching": {
+                  "en": "Update this plan and have it approved again before using any other location.",
+                  "es": "Actualiza este plan y vuelve a obtener la aprobación antes de usar cualquier otro lugar."
+                },
+                "options": [],
+                "required": true,
+                "visible_when": [],
+                "nop_cite": "§ 205.202",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "alternating_timing",
+                "kind": "radio",
+                "label": {
+                  "en": "When do you expect to use these locations for nonorganic production?",
+                  "es": "¿Cuándo esperas usar estos lugares para producción no orgánica?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "intermittent",
+                    "label": {
+                      "en": "Intermittently, based on customer demand",
+                      "es": "De forma intermitente, según la demanda"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "regular_schedule",
+                    "label": {
+                      "en": "On a regular schedule",
+                      "es": "Con un calendario regular"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [],
+                "nop_cite": "§ 205.202",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "alternating_schedule",
+                "kind": "textarea",
+                "label": {
+                  "en": "Describe the schedule.",
+                  "es": "Describe el calendario."
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "alternating_timing",
+                    "op": "eq",
+                    "value": "regular_schedule"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "alternating_cleaning_sop",
+                "kind": "textarea",
+                "label": {
+                  "en": "Describe your procedure for cleaning all equipment and surfaces of prohibited-substance residue before organic production resumes.",
+                  "es": "Describe tu procedimiento para limpiar todo el equipo y las superficies de residuos de sustancias prohibidas antes de reanudar la producción orgánica."
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.272",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "alternating_cleaning_sop_upload",
+                "kind": "upload",
+                "label": {
+                  "en": "Cleaning SOP, if you keep it as a document",
+                  "es": "POE de limpieza, si lo tienes como documento"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.272",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "alternating_documentation",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How do you document the start and end dates of each organic and nonorganic production cycle, and that the cleaning procedure was done before each organic cycle?",
+                  "es": "¿Cómo documentas las fechas de inicio y fin de cada ciclo de producción orgánica y no orgánica, y que el procedimiento de limpieza se hizo antes de cada ciclo orgánico?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "production_records",
+                    "label": {
+                      "en": "Production records",
+                      "es": "Registros de producción"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "cleaning_logs",
+                    "label": {
+                      "en": "Cleaning logs",
+                      "es": "Bitácoras de limpieza"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otro"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [],
+                "nop_cite": "§ 205.103",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "alternating_documentation_other",
+                "kind": "textarea",
+                "label": {
+                  "en": "Describe how else it is documented.",
+                  "es": "Describe de qué otra forma se documenta."
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "alternating_documentation",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
@@ -23215,6 +24830,358 @@
         "stock_treatments",
         "stock_sold_as_organic",
         "stock_records_kept"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g3_1_container_greenhouse",
+      "label": "stale_chain:growing_media_reuse_source:uses_growing_media:eq",
+      "answers": {
+        "growing_media_new_each_cycle": "no_reused",
+        "uses_growing_media": "__not_an_option__"
+      },
+      "visible_questions": [
+        "structure_production_types",
+        "locations_within_certified_parcel",
+        "uses_growing_media",
+        "irrigation_effluent_management",
+        "organic_in_structures"
+      ],
+      "missing_required": [
+        "structure_production_types",
+        "locations_within_certified_parcel",
+        "irrigation_effluent_management",
+        "organic_in_structures"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g3_1_container_greenhouse",
+      "label": "stale_chain:growing_media_disposal_other:uses_growing_media:eq",
+      "answers": {
+        "growing_media_disposal": [
+          "other"
+        ],
+        "uses_growing_media": "__not_an_option__"
+      },
+      "visible_questions": [
+        "structure_production_types",
+        "locations_within_certified_parcel",
+        "uses_growing_media",
+        "irrigation_effluent_management",
+        "organic_in_structures"
+      ],
+      "missing_required": [
+        "structure_production_types",
+        "locations_within_certified_parcel",
+        "irrigation_effluent_management",
+        "organic_in_structures"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g3_1_container_greenhouse",
+      "label": "stale_chain:sprout_seed_sanitizing_procedure:structure_production_types:includes",
+      "answers": {
+        "sprout_seed_sanitizers": "listed",
+        "structure_production_types": [
+          "__not_an_option__"
+        ]
+      },
+      "visible_questions": [
+        "structure_production_types",
+        "locations_within_certified_parcel",
+        "uses_growing_media",
+        "irrigation_effluent_management",
+        "organic_in_structures"
+      ],
+      "missing_required": [
+        "locations_within_certified_parcel",
+        "uses_growing_media",
+        "irrigation_effluent_management",
+        "organic_in_structures"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g3_1_container_greenhouse",
+      "label": "stale_chain:nonorganic_structure_arrangement:organic_in_structures:truthy",
+      "answers": {
+        "nonorganic_in_structures": true,
+        "organic_in_structures": false
+      },
+      "visible_questions": [
+        "structure_production_types",
+        "locations_within_certified_parcel",
+        "uses_growing_media",
+        "irrigation_effluent_management",
+        "organic_in_structures"
+      ],
+      "missing_required": [
+        "structure_production_types",
+        "locations_within_certified_parcel",
+        "uses_growing_media",
+        "irrigation_effluent_management"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g3_1_container_greenhouse",
+      "label": "stale_chain:organic_area_identification:organic_in_structures:truthy",
+      "answers": {
+        "nonorganic_in_structures": true,
+        "organic_in_structures": false
+      },
+      "visible_questions": [
+        "structure_production_types",
+        "locations_within_certified_parcel",
+        "uses_growing_media",
+        "irrigation_effluent_management",
+        "organic_in_structures"
+      ],
+      "missing_required": [
+        "structure_production_types",
+        "locations_within_certified_parcel",
+        "uses_growing_media",
+        "irrigation_effluent_management"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g3_1_container_greenhouse",
+      "label": "stale_chain:organic_area_identification_other:nonorganic_in_structures:truthy",
+      "answers": {
+        "organic_area_identification": [
+          "other"
+        ],
+        "nonorganic_in_structures": false
+      },
+      "visible_questions": [
+        "structure_production_types",
+        "locations_within_certified_parcel",
+        "uses_growing_media",
+        "irrigation_effluent_management",
+        "organic_in_structures"
+      ],
+      "missing_required": [
+        "structure_production_types",
+        "locations_within_certified_parcel",
+        "uses_growing_media",
+        "irrigation_effluent_management",
+        "organic_in_structures"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g3_1_container_greenhouse",
+      "label": "stale_chain:organic_plant_distinction:organic_in_structures:truthy",
+      "answers": {
+        "nonorganic_in_structures": true,
+        "organic_in_structures": false
+      },
+      "visible_questions": [
+        "structure_production_types",
+        "locations_within_certified_parcel",
+        "uses_growing_media",
+        "irrigation_effluent_management",
+        "organic_in_structures"
+      ],
+      "missing_required": [
+        "structure_production_types",
+        "locations_within_certified_parcel",
+        "uses_growing_media",
+        "irrigation_effluent_management"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g3_1_container_greenhouse",
+      "label": "stale_chain:organic_plant_distinction_other:nonorganic_in_structures:truthy",
+      "answers": {
+        "organic_plant_distinction": [
+          "other"
+        ],
+        "nonorganic_in_structures": false
+      },
+      "visible_questions": [
+        "structure_production_types",
+        "locations_within_certified_parcel",
+        "uses_growing_media",
+        "irrigation_effluent_management",
+        "organic_in_structures"
+      ],
+      "missing_required": [
+        "structure_production_types",
+        "locations_within_certified_parcel",
+        "uses_growing_media",
+        "irrigation_effluent_management",
+        "organic_in_structures"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g3_1_container_greenhouse",
+      "label": "stale_chain:media_fertility_commingling_prevention:organic_in_structures:truthy",
+      "answers": {
+        "nonorganic_in_structures": true,
+        "organic_in_structures": false
+      },
+      "visible_questions": [
+        "structure_production_types",
+        "locations_within_certified_parcel",
+        "uses_growing_media",
+        "irrigation_effluent_management",
+        "organic_in_structures"
+      ],
+      "missing_required": [
+        "structure_production_types",
+        "locations_within_certified_parcel",
+        "uses_growing_media",
+        "irrigation_effluent_management"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g3_1_container_greenhouse",
+      "label": "stale_chain:commingling_sop_upload:nonorganic_in_structures:truthy",
+      "answers": {
+        "media_fertility_commingling_prevention": [
+          "cleanout_sop"
+        ],
+        "nonorganic_in_structures": false
+      },
+      "visible_questions": [
+        "structure_production_types",
+        "locations_within_certified_parcel",
+        "uses_growing_media",
+        "irrigation_effluent_management",
+        "organic_in_structures"
+      ],
+      "missing_required": [
+        "structure_production_types",
+        "locations_within_certified_parcel",
+        "uses_growing_media",
+        "irrigation_effluent_management",
+        "organic_in_structures"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g3_1_container_greenhouse",
+      "label": "stale_chain:media_fertility_commingling_other:nonorganic_in_structures:truthy",
+      "answers": {
+        "media_fertility_commingling_prevention": [
+          "other"
+        ],
+        "nonorganic_in_structures": false
+      },
+      "visible_questions": [
+        "structure_production_types",
+        "locations_within_certified_parcel",
+        "uses_growing_media",
+        "irrigation_effluent_management",
+        "organic_in_structures"
+      ],
+      "missing_required": [
+        "structure_production_types",
+        "locations_within_certified_parcel",
+        "uses_growing_media",
+        "irrigation_effluent_management",
+        "organic_in_structures"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g3_1_container_greenhouse",
+      "label": "stale_chain:shared_ventilation_drift:organic_in_structures:truthy",
+      "answers": {
+        "nonorganic_in_structures": true,
+        "organic_in_structures": false
+      },
+      "visible_questions": [
+        "structure_production_types",
+        "locations_within_certified_parcel",
+        "uses_growing_media",
+        "irrigation_effluent_management",
+        "organic_in_structures"
+      ],
+      "missing_required": [
+        "structure_production_types",
+        "locations_within_certified_parcel",
+        "uses_growing_media",
+        "irrigation_effluent_management"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g3_1_container_greenhouse",
+      "label": "stale_chain:shared_ventilation_other:nonorganic_in_structures:truthy",
+      "answers": {
+        "shared_ventilation_drift": [
+          "other"
+        ],
+        "nonorganic_in_structures": false
+      },
+      "visible_questions": [
+        "structure_production_types",
+        "locations_within_certified_parcel",
+        "uses_growing_media",
+        "irrigation_effluent_management",
+        "organic_in_structures"
+      ],
+      "missing_required": [
+        "structure_production_types",
+        "locations_within_certified_parcel",
+        "uses_growing_media",
+        "irrigation_effluent_management",
+        "organic_in_structures"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g3_1_container_greenhouse",
+      "label": "stale_chain:shared_irrigation_contact:organic_in_structures:truthy",
+      "answers": {
+        "nonorganic_in_structures": true,
+        "organic_in_structures": false
+      },
+      "visible_questions": [
+        "structure_production_types",
+        "locations_within_certified_parcel",
+        "uses_growing_media",
+        "irrigation_effluent_management",
+        "organic_in_structures"
+      ],
+      "missing_required": [
+        "structure_production_types",
+        "locations_within_certified_parcel",
+        "uses_growing_media",
+        "irrigation_effluent_management"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g3_1_container_greenhouse",
+      "label": "stale_chain:shared_irrigation_other:nonorganic_in_structures:truthy",
+      "answers": {
+        "shared_irrigation_contact": [
+          "other"
+        ],
+        "nonorganic_in_structures": false
+      },
+      "visible_questions": [
+        "structure_production_types",
+        "locations_within_certified_parcel",
+        "uses_growing_media",
+        "irrigation_effluent_management",
+        "organic_in_structures"
+      ],
+      "missing_required": [
+        "structure_production_types",
+        "locations_within_certified_parcel",
+        "uses_growing_media",
+        "irrigation_effluent_management",
+        "organic_in_structures"
       ],
       "missing_required_na": []
     },
