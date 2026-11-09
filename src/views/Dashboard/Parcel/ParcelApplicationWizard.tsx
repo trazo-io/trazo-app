@@ -20,6 +20,7 @@ import {
   Badge,
   Box,
   Checkbox,
+  Divider,
   Flex,
   HStack,
   Radio,
@@ -30,14 +31,7 @@ import {
   useToast,
   VStack
 } from '@chakra-ui/react';
-import {
-  FaCheckCircle,
-  FaChevronLeft,
-  FaChevronRight,
-  FaMapMarkedAlt,
-  FaPlus,
-  FaTrash
-} from 'react-icons/fa';
+import { FaCheckCircle, FaMapMarkedAlt, FaPlus, FaTrash } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -54,6 +48,7 @@ import {
   StandardTextarea
 } from 'components/Design/StandardComponents';
 import type { SectionTabStatus } from 'components/Design/StandardComponents';
+import WizardActions from 'components/Design/WizardActions';
 import CardWithMap from 'components/Map/CardWithMap';
 import FieldHistorySection from 'views/Dashboard/Dashboard/Parcel/FieldHistorySection';
 import { answerValue, visiblePages, visibleQuestions } from 'config/osp/conditionEval';
@@ -229,9 +224,9 @@ export const BufferEditor = ({
   };
 
   return (
-    <VStack align="stretch" spacing={3}>
+    <VStack align="stretch" spacing={3} divider={<Divider borderColor="gray.200" />}>
       {rows.map((row, index) => (
-        <Box key={index} p={3} borderWidth="1px" borderColor="gray.200" borderRadius="md">
+        <Box key={index}>
           <Flex justify="space-between" align="center" mb={2}>
             <Badge variant="subtle" fontSize="11px">
               {row.direction || intl.formatMessage({ id: 'parcelApp.buffers.border' })}
@@ -874,13 +869,8 @@ const ParcelApplicationWizard = () => {
                   zoom={(data.map_metadata as { zoom?: unknown } | null)?.zoom}
                 />
                 {bufferRows.length > 0 ? (
-                  <Box
-                    p={3}
-                    bg="green.50"
-                    borderWidth="1px"
-                    borderColor="green.200"
-                    borderRadius="md">
-                    <Text fontSize="sm" fontWeight="semibold" color="green.700" mb={1}>
+                  <Box>
+                    <Text fontSize="sm" fontWeight="semibold" color="gray.800" mb={1}>
                       {intl.formatMessage(
                         { id: 'parcelApp.map.bufferSummary' },
                         { count: bufferRows.length }
@@ -990,7 +980,7 @@ const ParcelApplicationWizard = () => {
             );
         const accounted = cov?.complete === true;
         return (
-          <Box p={4} borderWidth="1px" borderColor="gray.200" borderRadius="md">
+          <Box>
             <Stack spacing={2}>
               <HStack spacing={3} align="flex-start">
                 {/* green.700 / gray.500, not green.500 / gray.300 (2.78 and 1.94). This glyph is
@@ -1057,7 +1047,7 @@ const ParcelApplicationWizard = () => {
         // that exact line (or that there is none) so the operator sees what the certifier will read.
         const cert = data?.land_history?.certificate;
         return (
-          <Box p={4} borderWidth="1px" borderColor="gray.200" borderRadius="md">
+          <Box>
             <Stack spacing={1}>
               <Text fontSize="sm" fontWeight="600">
                 {cert
@@ -1092,7 +1082,7 @@ const ParcelApplicationWizard = () => {
         // Was a bare label: no case here, so the card printed its title and nothing else.
         const rows = data?.adjoining_affidavits ?? [];
         return (
-          <Box p={4} borderWidth="1px" borderColor="gray.200" borderRadius="md">
+          <Box>
             {rows.length === 0 ? (
               <Text fontSize="sm" color="gray.600">
                 {intl.formatMessage({ id: 'parcelApp.adjoining.none' })}
@@ -1130,7 +1120,7 @@ const ParcelApplicationWizard = () => {
         // Read-only: what §D prints. Filed on the OSP screen, not here.
         const rows = data?.change_notifications ?? [];
         return (
-          <Box p={4} borderWidth="1px" borderColor="gray.200" borderRadius="md">
+          <Box>
             {rows.length === 0 ? (
               <Text fontSize="sm" color="gray.600">
                 {intl.formatMessage({ id: 'parcelApp.changes.none' })}
@@ -1178,7 +1168,7 @@ const ParcelApplicationWizard = () => {
         // Read-only: what §D prints. Recorded as a General activity on the season.
         const rows = data?.contamination_incidents ?? [];
         return (
-          <Box p={4} borderWidth="1px" borderColor="gray.200" borderRadius="md">
+          <Box>
             {rows.length === 0 ? (
               <Text fontSize="sm" color="gray.600">
                 {intl.formatMessage({ id: 'parcelApp.incidents.none' })}
@@ -1267,12 +1257,12 @@ const ParcelApplicationWizard = () => {
           {currentPage ? (
             <StandardCard>
               <VStack align="stretch" spacing={5}>
+                {/* Plain text (2026-11-09): a green box read as "done", and it was a box inside
+                    the page's card. */}
                 {currentPage.education.map((block, i) => (
-                  <Box key={i} p={3} bg="green.50" borderRadius="md">
-                    <Text fontSize="sm" color="gray.700">
-                      {pickText(block, locale)}
-                    </Text>
-                  </Box>
+                  <Text key={i} fontSize="sm" color="gray.700" lineHeight="tall">
+                    {pickText(block, locale)}
+                  </Text>
                 ))}
                 {visibleQuestions(definition, answers)
                   .filter(({ page }) => page.key === currentPage.key)
@@ -1293,41 +1283,24 @@ const ParcelApplicationWizard = () => {
           ) : null}
         </StandardSectionTabs>
 
-        <Flex justify="space-between">
-          {/* size="sm" = 14px, the app's button label size. These were Chakra's default md
-              (16px), so the wizard's own nav read a size larger than the page's Back button
-              sitting directly above them. */}
-          <StandardButton
-            variant="outline"
-            size="sm"
-            leftIcon={<FaChevronLeft />}
-            isDisabled={clamped === 0}
-            onClick={() => goTo(clamped - 1)}>
-            {intl.formatMessage({ id: 'common.previousStep' })}
-          </StandardButton>
-          {clamped < pages.length - 1 ? (
-            <StandardButton
-              size="sm"
-              rightIcon={<FaChevronRight />}
-              isLoading={saving}
-              onClick={() => goTo(clamped + 1)}>
-              {intl.formatMessage({ id: 'app.continue' })}
-            </StandardButton>
-          ) : (
-            <StandardButton
-              size="sm"
-              isLoading={saving}
-              // Every other control on this page reads `canWrite`; this one did not, so a
-              // Viewer got an enabled Save that the server then refused with a 403. The server
-              // IS the gate (`ReadOnlyForViewers` blocks non-safe methods and its role set
-              // matches `canWrite` exactly) — this is the control finally reading the flag it
-              // was already surrounded by. Open since the 2026-08-15 edit-lock audit.
-              isDisabled={!canWrite}
-              onClick={() => flush()}>
-              {intl.formatMessage({ id: 'app.save' })}
-            </StandardButton>
-          )}
-        </Flex>
+        {/* The shared footer (2026-11-09). This page drew a greyed-out "Previous step" on
+            the first section, which reads as broken; WizardActions leaves it off there. The
+            last section saves rather than continuing. */}
+        <WizardActions
+          onBack={clamped > 0 ? () => goTo(clamped - 1) : undefined}
+          backLabel={intl.formatMessage({ id: 'common.previousStep' })}
+          backShortLabel={intl.formatMessage({ id: 'app.previous' })}
+          primaryLabel={intl.formatMessage({
+            id: clamped < pages.length - 1 ? 'app.continue' : 'app.save'
+          })}
+          onPrimary={clamped < pages.length - 1 ? () => goTo(clamped + 1) : () => flush()}
+          primaryLeadsOn={clamped < pages.length - 1}
+          isLoading={saving}
+          // Every other control on this page reads `canWrite`; a Viewer got an enabled Save the
+          // server then refused with a 403 (2026-08-15 edit-lock audit). Continue stays open:
+          // a read-only user can still page through their own application.
+          isDisabled={clamped === pages.length - 1 && !canWrite}
+        />
       </VStack>
     </StandardPage>
   );

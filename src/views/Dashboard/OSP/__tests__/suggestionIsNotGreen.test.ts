@@ -62,7 +62,10 @@ function bannerAround(src: string, messageId: string): string {
 describe('a suggestion is not green', () => {
   it('OSP record types: a suggested row is neutral until ticked', () => {
     expect(RECORD_TYPES).toMatch(/const suggestedBg = useColorModeValue\('gray\./);
-    expect(RECORD_TYPES).toMatch(/borderColor=\{isSuggested \? 'gray\.\d+'/);
+    // Rows, not boxes, since 2026-11-09: a suggestion is told apart by its neutral tint, never
+    // a green one.
+    expect(RECORD_TYPES).toMatch(/bg=\{isSuggested \? suggestedBg : 'transparent'\}/);
+    expect(RECORD_TYPES).not.toMatch(/isSuggested \? 'green/);
     const basis = block(RECORD_TYPES, '{row.basis && (', 120);
     expect(basis).not.toMatch(/green\./);
   });

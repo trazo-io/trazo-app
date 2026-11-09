@@ -6977,6 +6977,7 @@
   "osp.seedlingSuppliers.forbidden": "Only company admins and farm managers can see the supplier list.",
   "osp.seedlingSuppliers.review": "Review",
   "osp.wizard.reviewStep": "Review your answers",
+  "osp.wizard.reviewStepShort": "Review",
   "osp.wizard.reviewTitle": "Review before completing",
   "osp.wizard.saveFailed": "Could not save your answers",
   "osp.wizard.saveFailedGeneric": "The save did not reach the server. Check your connection and try again — your answers are still on screen.",
