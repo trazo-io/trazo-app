@@ -4107,6 +4107,14 @@
                       "es": "Sí, y cada uno está en mi lista de materiales"
                     },
                     "exclusive": false
+                  },
+                  {
+                    "value": "not_listed",
+                    "label": {
+                      "en": "Yes, but not every one is on my materials list yet",
+                      "es": "Sí, pero todavía no todos están en mi lista de materiales"
+                    },
+                    "exclusive": false
                   }
                 ],
                 "required": true,
@@ -4138,8 +4146,11 @@
                 "visible_when": [
                   {
                     "question": "sprout_seed_sanitizers",
-                    "op": "eq",
-                    "value": "listed"
+                    "op": "one_of",
+                    "value": [
+                      "listed",
+                      "not_listed"
+                    ]
                   }
                 ],
                 "nop_cite": null,
