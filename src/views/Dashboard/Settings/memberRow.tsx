@@ -66,7 +66,11 @@ const MemberRow = ({
     establishments?.length > 0
       ? establishments.join(', ')
       : intl.formatMessage({ id: 'app.noEstablishmentsAssigned' });
-  const showControls = canManage && roleCode && onRoleChange && onRemove && roleChoices.length > 0;
+  // Remove needs no roles catalogue, so a roles query still loading (or failing) never takes it
+  // away; the select needs the catalogue to have anything to offer (review of #352).
+  const showRemove = canManage && Boolean(onRemove);
+  const showRoleSelect = canManage && Boolean(roleCode && onRoleChange) && roleChoices.length > 0;
+  const showControls = showRemove || showRoleSelect;
 
   return (
     <Flex
@@ -98,27 +102,38 @@ const MemberRow = ({
       </Box>
       {showControls ? (
         <HStack spacing={2} flexShrink={0}>
-          <StandardSelect
-            size="sm"
-            w="auto"
-            value={roleCode}
-            isDisabled={isBusy}
-            aria-label={intl.formatMessage({ id: 'settings.team.roleFor' }, { name })}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => onRoleChange(e.target.value)}>
-            {roleChoices.map((choice) => (
-              <option key={choice.id} value={choice.id}>
-                {choice.name}
-              </option>
-            ))}
-          </StandardSelect>
-          <StandardButton
-            size="sm"
-            variant="ghost"
-            isDisabled={isBusy}
-            aria-label={intl.formatMessage({ id: 'settings.team.removeLabel' }, { name })}
-            onClick={onRemove}>
-            {intl.formatMessage({ id: 'settings.team.remove' })}
-          </StandardButton>
+          {!showRoleSelect && (
+            <Text fontSize="sm" color="gray.600">
+              {displayRole}
+            </Text>
+          )}
+          {showRoleSelect && (
+            <StandardSelect
+              size="sm"
+              w="auto"
+              value={roleCode}
+              isDisabled={isBusy}
+              aria-label={intl.formatMessage({ id: 'settings.team.roleFor' }, { name })}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                onRoleChange?.(e.target.value)
+              }>
+              {roleChoices.map((choice) => (
+                <option key={choice.id} value={choice.id}>
+                  {choice.name}
+                </option>
+              ))}
+            </StandardSelect>
+          )}
+          {showRemove && (
+            <StandardButton
+              size="sm"
+              variant="ghost"
+              isDisabled={isBusy}
+              aria-label={intl.formatMessage({ id: 'settings.team.removeLabel' }, { name })}
+              onClick={onRemove}>
+              {intl.formatMessage({ id: 'settings.team.remove' })}
+            </StandardButton>
+          )}
         </HStack>
       ) : (
         <Text fontSize="sm" color="gray.600" flexShrink={0}>

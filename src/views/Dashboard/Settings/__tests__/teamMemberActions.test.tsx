@@ -191,3 +191,73 @@ describe('Settings > Team: changing a role', () => {
     expect(await screen.findByText('Ana Ruiz is now Viewer')).toBeTruthy();
   });
 });
+
+describe('Settings > Team: review of #352', () => {
+  it('keeps each row disabled until its own role change settles', async () => {
+    const settle: Record<number, () => void> = {};
+    changeRole = vi.fn(({ membershipId }: { membershipId: number }) => ({
+      unwrap: () => new Promise((resolve) => (settle[membershipId] = () => resolve({})))
+    })) as never;
+    vi.mocked(useChangeCompanyMemberRoleMutation).mockReturnValue([
+      changeRole,
+      { isLoading: false }
+    ] as never);
+    vi.mocked(useGetCompanyMembersQuery).mockReturnValue({
+      data: [...TEAM, member(4, 'Tomás Herrera', 'VW')]
+    } as never);
+    renderIn();
+    const ana = () => screen.getByRole('combobox', { name: 'Role for Ana Ruiz' });
+    const tomas = () => screen.getByRole('combobox', { name: 'Role for Tomás Herrera' });
+
+    fireEvent.change(ana(), { target: { value: 'VW' } });
+    await waitFor(() => expect((ana() as HTMLSelectElement).disabled).toBe(true));
+    fireEvent.change(tomas(), { target: { value: 'FM' } });
+    await waitFor(() => expect((tomas() as HTMLSelectElement).disabled).toBe(true));
+    // Starting Tomás's change must not re-enable Ana's row, and Tomás settling first must not
+    // re-enable it either.
+    expect((ana() as HTMLSelectElement).disabled).toBe(true);
+    settle[4]();
+    await waitFor(() => expect((tomas() as HTMLSelectElement).disabled).toBe(false));
+    expect((ana() as HTMLSelectElement).disabled).toBe(true);
+    settle[2]();
+    await waitFor(() => expect((ana() as HTMLSelectElement).disabled).toBe(false));
+  });
+
+  it('never shows a refusal code it does not know as text', async () => {
+    remove = unwrapping(() => Promise.reject({ status: 400, data: { code: 'some_new_rule' } }));
+    vi.mocked(useRemoveCompanyMemberMutation).mockReturnValue([
+      remove,
+      { isLoading: false }
+    ] as never);
+    renderIn();
+    fireEvent.click(screen.getByRole('button', { name: 'Remove Ana Ruiz from the team' }));
+    const dialog = await screen.findByRole('alertdialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Remove from team' }));
+    expect(await screen.findByText(enUS['settings.team.error.generic'])).toBeTruthy();
+    expect(screen.queryByText(/some_new_rule/)).toBeNull();
+  });
+
+  it('cannot be cancelled once the removal is sent', async () => {
+    vi.mocked(useRemoveCompanyMemberMutation).mockReturnValue([
+      remove,
+      { isLoading: true }
+    ] as never);
+    renderIn();
+    fireEvent.click(screen.getByRole('button', { name: 'Remove Ana Ruiz from the team' }));
+    const dialog = await screen.findByRole('alertdialog');
+    const cancel = within(dialog).getByRole('button', { name: 'Cancel' }) as HTMLButtonElement;
+    expect(cancel.disabled).toBe(true);
+    fireEvent.keyDown(dialog, { key: 'Escape' });
+    expect(screen.getByRole('alertdialog')).toBeTruthy();
+  });
+
+  it('still offers Remove while the roles catalogue is missing', async () => {
+    const { useGetUserRolesQuery } = await import('store/api/userApi');
+    vi.mocked(useGetUserRolesQuery).mockReturnValueOnce({ data: undefined } as never);
+    renderIn();
+    const ana = screen.getAllByTestId('member-row')[1];
+    expect(within(ana).queryByRole('combobox')).toBeNull();
+    expect(within(ana).getByText(enUS['app.farmManager'])).toBeTruthy();
+    expect(within(ana).getByRole('button', { name: 'Remove Ana Ruiz from the team' })).toBeTruthy();
+  });
+});

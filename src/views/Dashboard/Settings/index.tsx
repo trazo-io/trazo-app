@@ -104,7 +104,16 @@ export default function SettingsView() {
   const [rotateCompanyCode, { isLoading: isRotatingCode }] = useRotateCompanyCodeMutation();
   const [changeMemberRole] = useChangeCompanyMemberRoleMutation();
   const [removeMember, { isLoading: isRemovingMember }] = useRemoveCompanyMemberMutation();
-  const [busyMembershipId, setBusyMembershipId] = useState<number | null>(null);
+  // Per row, not one shared id: two role changes in flight must each keep their own row disabled
+  // until their own request settles (review of #352).
+  const [busyMembershipIds, setBusyMembershipIds] = useState<ReadonlySet<number>>(new Set());
+  const setBusy = (membershipId: number, busy: boolean) =>
+    setBusyMembershipIds((current) => {
+      const next = new Set(current);
+      if (busy) next.add(membershipId);
+      else next.delete(membershipId);
+      return next;
+    });
   const [pendingRemoval, setPendingRemoval] = useState<CompanyMember | null>(null);
   const cancelRemovalRef = useRef<HTMLButtonElement>(null);
   const dispatch = useDispatch();
@@ -186,7 +195,9 @@ export default function SettingsView() {
       title: intl.formatMessage({ id: 'settings.team.error.title' }),
       description: key
         ? intl.formatMessage({ id: key })
-        : apiErrorMessage(error) ?? intl.formatMessage({ id: 'settings.team.error.generic' }),
+        : // `code` is a slug for the catalogue above, never text to show (review of #352).
+          apiErrorMessage(error, ['code']) ??
+          intl.formatMessage({ id: 'settings.team.error.generic' }),
       status: 'error',
       duration: 5000,
       isClosable: true
@@ -198,7 +209,8 @@ export default function SettingsView() {
 
   const handleRoleChange = async (member: CompanyMember, roleCode: string) => {
     if (!currentCompany?.id || roleCode === member.role_code) return;
-    setBusyMembershipId(member.membership_id);
+    if (busyMembershipIds.has(member.membership_id)) return;
+    setBusy(member.membership_id, true);
     try {
       await changeMemberRole({
         companyId: currentCompany.id,
@@ -217,13 +229,14 @@ export default function SettingsView() {
     } catch (error) {
       teamErrorToast(error);
     } finally {
-      setBusyMembershipId(null);
+      setBusy(member.membership_id, false);
     }
   };
 
   const handleConfirmRemoval = async () => {
     if (!currentCompany?.id || !pendingRemoval) return;
     const member = pendingRemoval;
+    setBusy(member.membership_id, true);
     try {
       await removeMember({
         companyId: currentCompany.id,
@@ -238,6 +251,7 @@ export default function SettingsView() {
     } catch (error) {
       teamErrorToast(error);
     } finally {
+      setBusy(member.membership_id, false);
       setPendingRemoval(null);
     }
   };
@@ -387,7 +401,7 @@ export default function SettingsView() {
                             isSetupOperator={member.is_setup_operator}
                             canManage={member.can_manage}
                             roleChoices={roleOptions}
-                            isBusy={busyMembershipId === member.membership_id}
+                            isBusy={busyMembershipIds.has(member.membership_id)}
                             onRoleChange={(roleCode) => handleRoleChange(member, roleCode)}
                             onRemove={() => setPendingRemoval(member)}
                           />
@@ -553,7 +567,11 @@ export default function SettingsView() {
       <AlertDialog
         isOpen={pendingRemoval !== null}
         leastDestructiveRef={cancelRemovalRef}
-        onClose={() => setPendingRemoval(null)}
+        // Once the DELETE is sent, closing the dialog would not stop it: Cancel, Esc and the
+        // overlay would only hide a removal that still happens (review of #352).
+        onClose={() => !isRemovingMember && setPendingRemoval(null)}
+        closeOnEsc={!isRemovingMember}
+        closeOnOverlayClick={!isRemovingMember}
         isCentered>
         <AlertDialogOverlay>
           <AlertDialogContent mx={4}>
@@ -574,6 +592,7 @@ export default function SettingsView() {
                 ref={cancelRemovalRef}
                 variant="ghost"
                 size="sm"
+                isDisabled={isRemovingMember}
                 onClick={() => setPendingRemoval(null)}>
                 {intl.formatMessage({ id: 'settings.team.removeConfirm.cancel' })}
               </StandardButton>
