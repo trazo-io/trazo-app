@@ -404,6 +404,7 @@ const BrandOwnerRegisterSection = ({ companyId, farmId, state }: Props) => {
         mb={0}
         headerAction={
           <StandardButton
+            variant="outline"
             size="sm"
             leftIcon={<Icon as={FaPlus} />}
             onClick={() => setEditing('new')}>
