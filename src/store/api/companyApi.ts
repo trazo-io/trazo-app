@@ -168,6 +168,30 @@ const companyApi = baseApi.injectEndpoints({
       }),
       providesTags: ['Company']
     }),
+    // Company admins only, and only on rows whose `can_manage` is true (trazo-back users/team.py).
+    // `membershipId` is the row's `membership_id`; the row's `id` is the company.
+    changeCompanyMemberRole: build.mutation<
+      unknown,
+      { companyId: string | number; membershipId: number; role: string }
+    >({
+      query: ({ companyId, membershipId, role }) => ({
+        url: `${COMPANY_URL(String(companyId))}members/${membershipId}/`,
+        method: 'PATCH',
+        credentials: 'include',
+        body: { role }
+      }),
+      invalidatesTags: ['Company']
+    }),
+    removeCompanyMember: build.mutation<void, { companyId: string | number; membershipId: number }>(
+      {
+        query: ({ companyId, membershipId }) => ({
+          url: `${COMPANY_URL(String(companyId))}members/${membershipId}/`,
+          method: 'DELETE',
+          credentials: 'include'
+        }),
+        invalidatesTags: ['Company']
+      }
+    ),
     getCarbonEmissionSources: build.query<any[], void>({
       query: () => ({
         url: '/carbon/sources/',
@@ -404,6 +428,8 @@ export const {
   useEditFarmMutation,
   useGetFarmQuery,
   useGetCompanyMembersQuery,
+  useChangeCompanyMemberRoleMutation,
+  useRemoveCompanyMemberMutation,
   useRotateCompanyCodeMutation,
   useGetCarbonEmissionSourcesQuery,
   useGetCarbonOffsetActionsQuery,
