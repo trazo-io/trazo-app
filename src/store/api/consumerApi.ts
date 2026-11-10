@@ -4,29 +4,26 @@
  * Favorites, shopping goals and compare_products left with their backend routes and models
  * (trazo-back history 0254, 2026-11-09); no screen called them. update_impact, recommendations
  * and analytics were removed with them: the backend never had those routes.
+ *
+ * The impact dashboard is counted live since 2026-11-10 (trazo-back history 0256 retires
+ * UserImpactSummary). Its offset, miles, trees, points, level and achievements fields, and the
+ * response's `recommendations` and `achievements`, left the payload; no screen rendered them.
  */
 import { baseApi } from './baseApi';
 
 // Types for consumer API responses
-export interface UserImpactSummary {
+/** The signed-in shopper's own counts. Never a verdict on a farm. */
+export interface ConsumerImpactMetrics {
   total_scans: number;
-  total_reviews: number;
-  total_carbon_offset_kg: number;
-  miles_driving_offset: number;
-  trees_equivalent: number;
-  sustainable_farms_found: number;
-  local_farms_found: number;
-  better_choices_made: number;
-  achievements_earned: string[];
-  current_level: number;
-  points_earned: number;
-  first_scan_date?: string;
-  last_scan_date?: string;
+  verified_farms_scanned: number;
+  farming_events_viewed: number;
+  /** Distinct scanned productions with at least one recorded activity a shopper is served. */
+  documented_products: number;
 }
 
 export interface EnhancedScan {
   id: number;
-  production_id: number; // History.id for navigation links (not HistoryScan.id)
+  production_public_id: string; // History.public_id, for the consumer page link
   product_name: string;
   farm_name: string;
   location: string;
@@ -37,7 +34,7 @@ export interface EnhancedScan {
   // self-created sustainability label ECGT 2024/825 bans (live 2026-09-27). Consumer surfaces
   // carry documented COUNTS, not a number Trazo assigned to a farm. Do not re-add it; the
   // guard in views/Scan/__tests__/noScoreOnConsumer.test.ts now covers these screens.
-  events_viewed?: number;
+  events_viewed: number;
   // Carbon fields (secondary). `carbon_score` (an A+-to-F grade) was removed from the API on
   // 2026-08-04 — a self-created sustainability label, with thresholds attributed to the USDA.
   // `carbon_footprint` is the measured amount, e.g. "1.23 kg CO₂e" (NOT per kg — see
@@ -51,23 +48,11 @@ export interface EnhancedScan {
 }
 
 export interface ImpactDashboardResponse {
-  impact_metrics: UserImpactSummary;
+  impact_metrics: ConsumerImpactMetrics;
   recent_scans: EnhancedScan[];
   quick_stats: {
-    better_choices: number;
-    local_farms: number;
+    documented_products: number;
   };
-  recommendations: Array<{
-    name: string;
-    description: string;
-    sustainability_focus: string;
-  }>;
-  achievements: Array<{
-    title: string;
-    description: string;
-    icon: string;
-    earned_date: string;
-  }>;
 }
 
 export interface ShoppingHistoryResponse {

@@ -65,7 +65,6 @@ export default function ImpactDashboard() {
   const impactMetrics = dashboardData?.impact_metrics;
   const recentScans = dashboardData?.recent_scans || [];
   const quickStats = dashboardData?.quick_stats;
-  const recommendations = dashboardData?.recommendations || [];
 
   return (
     <StandardPage
@@ -165,7 +164,7 @@ export default function ImpactDashboard() {
                 recentScans.map((scan) => (
                   <Box
                     as={RouterLink}
-                    to={`/production/${scan.production_public_id || scan.public_id}`}
+                    to={`/production/${scan.production_public_id}`}
                     key={scan.id}
                     w="full"
                     bg="white"
@@ -249,7 +248,10 @@ export default function ImpactDashboard() {
                   icon={FaLeaf}
                   iconColor="green.600"
                   iconBg="green.100"
-                  value={quickStats?.better_choices || 0}
+                  // Until 2026-11-10 this read `better_choices`: scans of farms holding a listed
+                  // certification, or of seasons with USDA-factor carbon entries. Not what the
+                  // tooltip below promises; `documented_products` is.
+                  value={quickStats?.documented_products || 0}
                   label="Documented Products"
                   size="sm"
                   tooltip={{
