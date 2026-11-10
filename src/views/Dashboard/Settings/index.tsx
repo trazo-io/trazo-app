@@ -191,13 +191,13 @@ export default function SettingsView() {
   const teamErrorToast = (error: unknown) => {
     const code = (error as { data?: { code?: string } })?.data?.code;
     const key = code ? TEAM_REFUSAL_KEYS[code] : undefined;
+    // The code is a slug for the catalogue above, never text to show, so the fallback skips it
+    // (review of #352).
+    const fallback =
+      apiErrorMessage(error, ['code']) ?? intl.formatMessage({ id: 'settings.team.error.generic' });
     toast({
       title: intl.formatMessage({ id: 'settings.team.error.title' }),
-      description: key
-        ? intl.formatMessage({ id: key })
-        : // `code` is a slug for the catalogue above, never text to show (review of #352).
-          apiErrorMessage(error, ['code']) ??
-          intl.formatMessage({ id: 'settings.team.error.generic' }),
+      description: key ? intl.formatMessage({ id: key }) : fallback,
       status: 'error',
       duration: 5000,
       isClosable: true
