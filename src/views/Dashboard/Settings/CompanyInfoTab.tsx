@@ -9,7 +9,6 @@ import {
   Icon,
   Badge,
   Link,
-  Divider,
   useToast
 } from '@chakra-ui/react';
 import {
@@ -33,6 +32,7 @@ import { useUpdateCompanyMutation } from 'store/api/companyApi';
 import { setCompany } from 'store/features/companySlice';
 import EditCompanyModal, {
   LEGAL_STRUCTURE_LABEL_KEYS,
+  commodityLabel,
   isKnownSustainabilityCommitment
 } from './EditCompanyModal';
 
@@ -220,21 +220,6 @@ const CompanyInfoTab: React.FC<CompanyInfoTabProps> = () => {
     return null;
   };
 
-  // Get primary commodities label
-  const getCommoditiesLabel = (value?: string) => {
-    const commodities: Record<string, string> = {
-      fruits_tree: 'Frutas de Árbol',
-      fruits_vine: 'Frutas de Vid',
-      vegetables: 'Vegetales',
-      grains: 'Granos',
-      nuts: 'Nueces',
-      dairy: 'Lácteos',
-      livestock: 'Ganado',
-      mixed: 'Mixto'
-    };
-    return value ? commodities[value] || value : null;
-  };
-
   return (
     <VStack spacing={8} w="100%">
       {/* Logo & Company Identity Section */}
@@ -388,7 +373,9 @@ const CompanyInfoTab: React.FC<CompanyInfoTabProps> = () => {
           <InfoRow
             icon={FaLeaf}
             label={intl.formatMessage({ id: 'app.primaryCommodities' })}
-            value={getCommoditiesLabel(currentCompany.primary_commodities)}
+            value={commodityLabel(currentCompany.primary_commodities, (id) =>
+              intl.formatMessage({ id })
+            )}
           />
           <InfoRow
             icon={FaLeaf}

@@ -180,7 +180,9 @@ const WIZARDS: { file: string; header: 'own' | 'forwarded' | null }[] = [
   { file: 'src/components/Forms/StandardParcelForm_Transparency.tsx', header: 'forwarded' },
   { file: 'src/components/Forms/StandardFarmForm.tsx', header: 'forwarded' },
   { file: 'src/components/Forms/StandardFinishProductionForm.tsx', header: 'forwarded' },
-  { file: 'src/views/Dashboard/OSP/OSPModuleWizard.tsx', header: null }
+  { file: 'src/views/Dashboard/OSP/OSPModuleWizard.tsx', header: null },
+  // A modal: its header close button leaves, so there is no page Back to name.
+  { file: 'src/views/Dashboard/Settings/EditCompanyModal.tsx', header: null }
 ];
 
 // The pages that render a 'forwarded' form, each of which must pass the label down.
@@ -259,8 +261,9 @@ describe('Multi-step forms: the two Backs never share a label', () => {
   it('lets every stepper return to a step already visited, through its own Continue', () => {
     // Reported 2026-10-19: back on step 1 after visiting step 2, step 2 was not clickable.
     const steppers = WIZARDS.map((w) => w.file).filter((f) => read(f).includes('<StandardStepper'));
-    // Six since 2026-11-09: the OSP module wizard took the shared step bar.
-    expect(steppers.length).toBe(6);
+    // Six since 2026-11-09 (the OSP module wizard took the shared step bar), seven with the
+    // Edit company modal the same day.
+    expect(steppers.length).toBe(7);
     for (const file of steppers) {
       const tag = read(file).match(/<StandardStepper\b[\s\S]*?\/>/)?.[0] ?? '';
       expect(tag, file).toContain('furthestStep={furthestStep}');

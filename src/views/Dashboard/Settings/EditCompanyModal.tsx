@@ -1,4 +1,15 @@
-import React, { useState, useEffect } from 'react';
+/**
+ * Edit the company from Company Settings.
+ *
+ * Every word comes from the catalogue: until 2026-11-09 this form was written in Spanish
+ * literals, so an English-speaking company edited itself in Spanish. It uses the app's one
+ * stepper and footer (StandardStepper + WizardActions, as the farm and company wizards do),
+ * and it never lets Save fail silently: each Continue checks its own step, and a rejected
+ * save jumps to the step that holds the bad field and says so. Before, clearing "Number of
+ * employees" made the value NaN, the resolver refused the form on a step the person could
+ * not see, and Save did nothing at all.
+ */
+import React, { useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
 import {
   Modal,
@@ -8,61 +19,57 @@ import {
   ModalBody,
   ModalFooter,
   ModalCloseButton,
-  Box,
   VStack,
-  HStack,
-  Text,
   SimpleGrid,
-  Icon,
+  Box,
   useBreakpointValue,
+  useToast,
   Drawer,
   DrawerOverlay,
   DrawerContent,
   DrawerHeader,
   DrawerBody,
   DrawerFooter,
-  DrawerCloseButton,
-  Circle,
-  Progress
+  DrawerCloseButton
 } from '@chakra-ui/react';
-import {
-  FaBuilding,
-  FaMapMarkerAlt,
-  FaGlobe,
-  FaLeaf,
-  FaChevronLeft,
-  FaChevronRight,
-  FaCheck,
-  FaFlag
-} from 'react-icons/fa';
-import { useForm, FormProvider } from 'react-hook-form';
+import { useForm, FormProvider, FieldErrors } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { object, string, number, boolean } from 'zod';
+import { object, string, number, boolean, literal } from 'zod';
 import {
   StandardField,
   StandardInput,
   StandardTextarea,
   StandardSelect,
-  StandardButton
+  StandardStepper
 } from 'components/Design/StandardComponents';
+import WizardActions from 'components/Design/WizardActions';
+import { useFurthestStep } from 'hooks/useFurthestStep';
 
-// Validation schema matching AddCompany
+// Messages are catalogue KEYS, rendered through intl at the field (a module-scope schema
+// cannot hold a translated sentence).
+const URL_KEY = 'company.edit.validation.url';
+const optionalUrl = string().url(URL_KEY).optional().or(literal(''));
+
 const editCompanySchema = object({
-  name: string().min(1, 'El nombre de la compañía es requerido'),
+  name: string().trim().min(1, 'company.validation.name.required'),
   tradename: string().optional(),
-  contact_email: string().email('Correo electrónico inválido').optional().or(string().length(0)),
+  contact_email: string().email('company.validation.email.invalid').optional().or(literal('')),
   contact_phone: string().optional(),
   address: string().optional(),
   city: string().optional(),
-  state: string().optional(), // 2-letter US state code for USDA API
+  state: string().optional(), // 2-letter US state code
   zip_code: string().optional(),
-  website: string().url('URL inválida').optional().or(string().length(0)),
+  website: optionalUrl,
   description: string().optional(),
   fiscal_id: string().optional(),
-  facebook: string().url('URL de Facebook inválida').optional().or(string().length(0)),
-  instagram: string().url('URL de Instagram inválida').optional().or(string().length(0)),
+  facebook: optionalUrl,
+  instagram: optionalUrl,
   certifications: string().optional(),
-  employee_count: number().optional().nullable(),
+  employee_count: number({ invalid_type_error: 'company.edit.validation.employees' })
+    .int('company.edit.validation.employees')
+    .min(0, 'company.edit.validation.employees')
+    .nullable()
+    .optional(),
   is_active: boolean().optional(),
   industry: string().optional(),
   legal_structure: string().optional(),
@@ -101,12 +108,27 @@ interface EditCompanyModalProps {
   isLoading?: boolean;
 }
 
-const STEPS = [
-  { title: 'Información Básica', icon: FaBuilding, description: 'Nombre y datos principales' },
-  { title: 'Ubicación', icon: FaMapMarkerAlt, description: 'Dirección y contacto' },
-  { title: 'Detalles', icon: FaGlobe, description: 'Web y redes sociales' },
-  { title: 'Sostenibilidad', icon: FaLeaf, description: 'Información agrícola' }
+// The fields each step owns: Continue validates these, and a rejected save opens the step
+// that holds the first bad one.
+export const FIELDS_BY_STEP: Array<Array<keyof EditCompanyFormData>> = [
+  [
+    'name',
+    'tradename',
+    'contact_email',
+    'contact_phone',
+    'legal_structure',
+    'industry',
+    'fiscal_id',
+    'employee_count',
+    'description'
+  ],
+  ['address', 'city', 'state', 'zip_code'],
+  ['website', 'facebook', 'instagram', 'certifications'],
+  ['primary_commodities', 'sustainability_commitment']
 ];
+
+// An empty number input is "no answer", not NaN.
+const toCount = (v: unknown) => (v === '' || v === null || v === undefined ? null : Number(v));
 
 // Stored values mapped to the labels the company wizard (AddCompany) already uses, so one
 // stored legal structure reads the same on every screen.
@@ -129,16 +151,27 @@ const INDUSTRIES = [
   'greenhouse'
 ];
 
-const PRIMARY_COMMODITIES = [
-  { value: 'fruits_tree', label: 'Frutas de Árbol' },
-  { value: 'fruits_vine', label: 'Frutas de Vid' },
-  { value: 'vegetables', label: 'Vegetales' },
-  { value: 'grains', label: 'Granos' },
-  { value: 'nuts', label: 'Nueces' },
-  { value: 'dairy', label: 'Lácteos' },
-  { value: 'livestock', label: 'Ganado' },
-  { value: 'mixed', label: 'Mixto' }
+// Stored values. Labels: `company.commodity.<value>` (they were Spanish literals, so an
+// English-speaking company read "Frutas de Árbol" on its own settings page).
+export const PRIMARY_COMMODITIES = [
+  'fruits_tree',
+  'fruits_vine',
+  'vegetables',
+  'grains',
+  'nuts',
+  'dairy',
+  'livestock',
+  'mixed'
 ];
+
+/** The label for a stored commodity, or the stored text itself when it is not one we know. */
+export const commodityLabel = (
+  value: string | null | undefined,
+  format: (id: string) => string
+): string | null => {
+  if (!value) return null;
+  return PRIMARY_COMMODITIES.includes(value) ? format(`company.commodity.${value}`) : value;
+};
 
 // Stored values a farmer may pick. Labels: `company.sustainabilityCommitment.<value>`.
 export const SUSTAINABILITY_COMMITMENTS = [
@@ -241,11 +274,24 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
   isLoading = false
 }) => {
   const intl = useIntl();
+  const toast = useToast();
   const [currentStep, setCurrentStep] = useState(0);
+  const furthestStep = useFurthestStep(currentStep);
   const isMobile = useBreakpointValue({ base: true, md: false });
+  const t = (id: string) => intl.formatMessage({ id });
+
+  const steps = [
+    { title: t('company.form.step.identity.title') },
+    { title: t('company.form.step.location.title') },
+    { title: t('company.edit.step.web') },
+    { title: t('company.edit.step.farming') }
+  ];
+  const lastStep = steps.length - 1;
 
   const methods = useForm<EditCompanyFormData>({
     resolver: zodResolver(editCompanySchema),
+    mode: 'onTouched',
+    reValidateMode: 'onChange',
     defaultValues: {
       name: '',
       tradename: '',
@@ -253,7 +299,7 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
       contact_phone: '',
       address: '',
       city: '',
-      state: '', // 2-letter US state code
+      state: '',
       zip_code: '',
       website: '',
       description: '',
@@ -274,8 +320,17 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
     register,
     handleSubmit,
     reset,
+    trigger,
     formState: { errors }
   } = methods;
+
+  // A field's message: a catalogue key from the schema, or (for anything zod says on its
+  // own) the sentence as it came.
+  const err = (field: keyof EditCompanyFormData) => {
+    const message = errors[field]?.message as string | undefined;
+    if (!message) return undefined;
+    return intl.messages[message] ? t(message) : message;
+  };
 
   // Reset form when company changes or modal opens
   useEffect(() => {
@@ -287,7 +342,7 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
         contact_phone: company.contact_phone || company.phone || '',
         address: company.address || '',
         city: company.city || '',
-        state: company.state || '', // 2-letter US state code
+        state: company.state || '',
         zip_code: company.zip_code || '',
         website: company.website || '',
         description: company.description || '',
@@ -295,7 +350,7 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
         facebook: company.facebook || '',
         instagram: company.instagram || '',
         certifications: company.certifications || '',
-        employee_count: company.employee_count || null,
+        employee_count: company.employee_count ?? null,
         is_active: company.is_active !== false,
         industry: company.industry || '',
         legal_structure: company.legal_structure || '',
@@ -307,7 +362,7 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
   }, [company, isOpen, reset]);
 
   const handleFormSubmit = async (data: EditCompanyFormData) => {
-    // Clean up empty strings to null/undefined
+    // Clean up empty strings to null
     const cleanedData = Object.fromEntries(
       Object.entries(data).map(([key, value]) => [key, value === '' ? null : value])
     );
@@ -316,16 +371,29 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
     await onSubmit(cleanedData as EditCompanyFormData);
   };
 
-  const nextStep = () => {
-    if (currentStep < STEPS.length - 1) {
-      setCurrentStep(currentStep + 1);
-    }
+  const handleInvalidSubmit = (formErrors: FieldErrors<EditCompanyFormData>) => {
+    const badField = Object.keys(formErrors)[0] as keyof EditCompanyFormData;
+    const stepIndex = FIELDS_BY_STEP.findIndex((fields) => fields.includes(badField));
+    if (stepIndex >= 0) setCurrentStep(stepIndex);
+    const message = formErrors[badField]?.message as string | undefined;
+    toast({
+      title: t('company.form.toast.invalid.title'),
+      description:
+        message && intl.messages[message] ? t(message) : t('company.form.toast.invalid.body'),
+      status: 'error',
+      duration: 5000,
+      isClosable: true
+    });
+  };
+
+  const nextStep = async () => {
+    if (currentStep >= lastStep) return;
+    const valid = await trigger(FIELDS_BY_STEP[currentStep]);
+    if (valid) setCurrentStep(currentStep + 1);
   };
 
   const prevStep = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    }
+    if (currentStep > 0) setCurrentStep(currentStep - 1);
   };
 
   const handleClose = () => {
@@ -333,102 +401,59 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
     onClose();
   };
 
-  // Step Progress Indicator
-  const StepIndicator = () => (
-    <Box mb={6}>
-      <HStack spacing={2} justify="center" mb={4}>
-        {STEPS.map((step, index) => (
-          <React.Fragment key={index}>
-            <VStack spacing={1}>
-              <Circle
-                size="36px"
-                bg={index <= currentStep ? 'green.500' : 'gray.200'}
-                color={index <= currentStep ? 'white' : 'gray.500'}
-                cursor="pointer"
-                onClick={() => setCurrentStep(index)}
-                transition="all 0.2s"
-                _hover={{ transform: 'scale(1.05)' }}>
-                {index < currentStep ? (
-                  <Icon as={FaCheck} boxSize={4} />
-                ) : (
-                  <Icon as={step.icon} boxSize={4} />
-                )}
-              </Circle>
-              <Text
-                fontSize="xs"
-                fontWeight={index === currentStep ? 'bold' : 'normal'}
-                color={index <= currentStep ? 'green.600' : 'gray.500'}
-                display={{ base: 'none', md: 'block' }}>
-                {step.title}
-              </Text>
-            </VStack>
-            {index < STEPS.length - 1 && (
-              <Box
-                h="2px"
-                w={{ base: '20px', md: '40px' }}
-                bg={index < currentStep ? 'green.500' : 'gray.200'}
-                transition="all 0.2s"
-              />
-            )}
-          </React.Fragment>
-        ))}
-      </HStack>
-      <Progress
-        value={(currentStep / (STEPS.length - 1)) * 100}
-        size="xs"
-        colorScheme="green"
-        borderRadius="full"
-      />
-    </Box>
-  );
-
-  // Step 1: Basic Information
-  const BasicInfoStep = () => (
+  // Steps are rendered by plain functions, not components declared in the body: a component
+  // type made on every render remounts its inputs, which drops focus mid-edit.
+  const renderIdentity = () => (
     <VStack spacing={5} align="stretch">
-      <StandardField label="Nombre de la Compañía" required error={errors.name?.message}>
-        <StandardInput placeholder="Ej: Green Valley Farms" {...register('name')} />
+      <StandardField label={t('company.form.name.label')} required error={err('name')}>
+        <StandardInput placeholder={t('company.form.name.placeholder')} {...register('name')} />
       </StandardField>
 
-      <StandardField label="Nombre Comercial" error={errors.tradename?.message}>
-        <StandardInput placeholder="Nombre comercial (opcional)" {...register('tradename')} />
+      <StandardField label={t('company.form.tradename.label')} error={err('tradename')}>
+        <StandardInput
+          placeholder={t('company.form.tradename.placeholder')}
+          {...register('tradename')}
+        />
       </StandardField>
 
       <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-        <StandardField label="Correo Electrónico" error={errors.contact_email?.message}>
+        <StandardField label={t('company.form.email.label')} error={err('contact_email')}>
           <StandardInput
             type="email"
-            placeholder="contacto@empresa.com"
+            placeholder={t('company.form.email.placeholder')}
             {...register('contact_email')}
           />
         </StandardField>
 
-        <StandardField label="Teléfono" error={errors.contact_phone?.message}>
+        <StandardField label={t('company.form.phone.label')} error={err('contact_phone')}>
           <StandardInput
             type="tel"
-            placeholder="+1 (555) 123-4567"
+            placeholder={t('company.form.phone.placeholder')}
             {...register('contact_phone')}
           />
         </StandardField>
       </SimpleGrid>
 
       <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-        <StandardField label="Estructura Legal" error={errors.legal_structure?.message}>
+        <StandardField
+          label={t('company.form.legalStructure.label')}
+          error={err('legal_structure')}>
           <StandardSelect {...register('legal_structure')}>
-            <option value="">Seleccionar...</option>
+            <option value="">{t('company.form.legalStructure.placeholder')}</option>
             {Object.entries(LEGAL_STRUCTURE_LABEL_KEYS).map(([value, id]) => (
               <option key={value} value={value}>
-                {intl.formatMessage({ id })}
+                {t(id)}
               </option>
             ))}
           </StandardSelect>
         </StandardField>
 
-        <StandardField label="Industria" error={errors.industry?.message}>
+        <StandardField label={t('app.industry')} error={err('industry')}>
           <StandardSelect {...register('industry')}>
-            <option value="">Seleccionar...</option>
+            <option value="">{t('app.select')}</option>
             {INDUSTRIES.map((value) => (
               <option key={value} value={value}>
-                {intl.formatMessage({ id: `company.industry.${value}` })}
+                {t(`company.industry.${value}`)}
               </option>
             ))}
           </StandardSelect>
@@ -436,61 +461,56 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
       </SimpleGrid>
 
       <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-        <StandardField label="ID Fiscal" error={errors.fiscal_id?.message}>
-          <StandardInput placeholder="RFC / EIN" {...register('fiscal_id')} />
+        <StandardField label={t('app.fiscalId')} error={err('fiscal_id')}>
+          <StandardInput
+            placeholder={t('company.edit.fiscalId.placeholder')}
+            {...register('fiscal_id')}
+          />
         </StandardField>
 
-        <StandardField label="Número de Empleados" error={errors.employee_count?.message}>
+        <StandardField label={t('app.employeeCount')} error={err('employee_count')}>
           <StandardInput
             type="number"
-            placeholder="15"
-            {...register('employee_count', { valueAsNumber: true })}
+            min={0}
+            step={1}
+            {...register('employee_count', { setValueAs: toCount })}
           />
         </StandardField>
       </SimpleGrid>
 
-      <StandardField label="Descripción" error={errors.description?.message}>
+      <StandardField label={t('app.description')} error={err('description')}>
         <StandardTextarea
-          placeholder="Breve descripción de su compañía..."
+          placeholder={t('company.edit.description.placeholder')}
           {...register('description')}
         />
       </StandardField>
     </VStack>
   );
 
-  // Step 2: Location
-  const LocationStep = () => (
+  // The state is the company's headquarters. It no longer claims to feed "precise carbon
+  // calculations with USDA regional data": nothing reads the company's state for carbon,
+  // and the farm's own location is set on the farm.
+  const renderLocation = () => (
     <VStack spacing={5} align="stretch">
-      <Box p={4} bg="blue.50" borderRadius="lg" border="1px solid" borderColor="blue.200" mb={2}>
-        <HStack spacing={3} align="flex-start">
-          <Icon as={FaFlag} color="blue.500" boxSize={5} mt={0.5} />
-          <Box>
-            <Text fontWeight="semibold" color="blue.800" fontSize="sm">
-              Estados Unidos
-            </Text>
-            <Text fontSize="xs" color="blue.700" mt={1}>
-              Tu estado es necesario para cálculos precisos de carbono usando datos regionales de la
-              USDA.
-            </Text>
-          </Box>
-        </HStack>
-      </Box>
-
-      <StandardField label="Dirección" error={errors.address?.message}>
-        <StandardInput placeholder="123 Farm Road" {...register('address')} />
+      <StandardField label={t('company.form.address.label')} error={err('address')}>
+        <StandardInput
+          placeholder={t('company.form.address.placeholder')}
+          {...register('address')}
+        />
       </StandardField>
 
       <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-        <StandardField label="Ciudad" error={errors.city?.message}>
-          <StandardInput placeholder="Farmington" {...register('city')} />
+        <StandardField label={t('company.form.city.label')} error={err('city')}>
+          <StandardInput placeholder={t('company.form.city.placeholder')} {...register('city')} />
         </StandardField>
 
         <StandardField
-          label="Estado"
-          error={errors.state?.message}
-          helpText="Requerido para cálculos de carbono">
+          label={t('company.form.state.label')}
+          error={err('state')}
+          helpText={t('company.form.state.help')}>
           <StandardSelect {...register('state')}>
-            <option value="">Seleccionar estado...</option>
+            {/* US state names are postal identifiers and stay as they are. */}
+            <option value="">{t('company.form.state.placeholder')}</option>
             {US_STATES.map((state) => (
               <option key={state.code} value={state.code}>
                 {state.name}
@@ -500,169 +520,127 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
         </StandardField>
       </SimpleGrid>
 
-      <StandardField label="Código Postal" error={errors.zip_code?.message}>
-        <StandardInput placeholder="12345" {...register('zip_code')} />
+      <StandardField label={t('company.form.zip.label')} error={err('zip_code')}>
+        <StandardInput placeholder={t('company.form.zip.placeholder')} {...register('zip_code')} />
       </StandardField>
     </VStack>
   );
 
-  // Step 3: Details (Web & Social)
-  const DetailsStep = () => (
+  const renderWeb = () => (
     <VStack spacing={5} align="stretch">
-      <StandardField label="Sitio Web" error={errors.website?.message}>
+      <StandardField label={t('app.website')} error={err('website')}>
         <StandardInput
           type="url"
-          placeholder="https://www.miempresa.com"
+          placeholder={t('company.edit.website.placeholder')}
           {...register('website')}
         />
       </StandardField>
 
-      <StandardField label="Facebook" error={errors.facebook?.message}>
+      <StandardField label="Facebook" error={err('facebook')}>
         <StandardInput
           type="url"
-          placeholder="https://facebook.com/miempresa"
+          placeholder={t('company.edit.facebook.placeholder')}
           {...register('facebook')}
         />
       </StandardField>
 
-      <StandardField label="Instagram" error={errors.instagram?.message}>
+      <StandardField label="Instagram" error={err('instagram')}>
         <StandardInput
           type="url"
-          placeholder="https://instagram.com/miempresa"
+          placeholder={t('company.edit.instagram.placeholder')}
           {...register('instagram')}
         />
       </StandardField>
 
       <StandardField
-        label="Certificaciones"
-        helpText="Separe múltiples certificaciones con comas"
-        error={errors.certifications?.message}>
+        label={t('app.certificationsList')}
+        helpText={t('company.edit.certifications.help')}
+        error={err('certifications')}>
         <StandardInput
-          placeholder="USDA Organic, Fair Trade, Rainforest Alliance"
+          placeholder={t('company.edit.certifications.placeholder')}
           {...register('certifications')}
         />
       </StandardField>
     </VStack>
   );
 
-  // Step 4: Sustainability
-  const SustainabilityStep = () => (
+  // The green "commitment to transparency" box that sat under these two fields is gone: it
+  // said the answers help "your consumers" learn about your practices, and neither value
+  // reaches any consumer surface (sustainabilityCommitmentRetired.test.ts).
+  const renderFarming = () => (
     <VStack spacing={5} align="stretch">
-      <StandardField label="Productos Principales" error={errors.primary_commodities?.message}>
+      <StandardField label={t('app.primaryCommodities')} error={err('primary_commodities')}>
         <StandardSelect {...register('primary_commodities')}>
-          <option value="">Seleccionar...</option>
-          {PRIMARY_COMMODITIES.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
+          <option value="">{t('app.select')}</option>
+          {PRIMARY_COMMODITIES.map((value) => (
+            <option key={value} value={value}>
+              {t(`company.commodity.${value}`)}
             </option>
           ))}
         </StandardSelect>
       </StandardField>
 
       <StandardField
-        label="Compromiso de Sostenibilidad"
-        error={errors.sustainability_commitment?.message}>
+        label={t('app.sustainabilityCommitment')}
+        error={err('sustainability_commitment')}>
         <StandardSelect {...register('sustainability_commitment')}>
-          <option value="">Seleccionar...</option>
+          <option value="">{t('app.select')}</option>
           {sustainabilityCommitmentOptions(company?.sustainability_commitment).map(
             ({ value, retired }) => (
               <option key={value} value={value} disabled={retired}>
-                {intl.formatMessage({ id: `company.sustainabilityCommitment.${value}` })}
+                {t(`company.sustainabilityCommitment.${value}`)}
               </option>
             )
           )}
         </StandardSelect>
       </StandardField>
-
-      <Box p={4} bg="green.50" borderRadius="lg" border="1px solid" borderColor="green.200">
-        <HStack spacing={3} align="flex-start">
-          <Icon as={FaLeaf} color="green.500" boxSize={5} mt={0.5} />
-          <Box>
-            <Text fontWeight="semibold" color="green.800" fontSize="sm">
-              Compromiso con la Transparencia
-            </Text>
-            <Text fontSize="xs" color="green.700" mt={1}>
-              Al completar esta información, ayudas a tus consumidores a conocer mejor tus prácticas
-              agrícolas y tu compromiso con la sostenibilidad.
-            </Text>
-          </Box>
-        </HStack>
-      </Box>
     </VStack>
   );
 
-  const renderCurrentStep = () => {
-    switch (currentStep) {
-      case 0:
-        return <BasicInfoStep />;
-      case 1:
-        return <LocationStep />;
-      case 2:
-        return <DetailsStep />;
-      case 3:
-        return <SustainabilityStep />;
-      default:
-        return <BasicInfoStep />;
-    }
-  };
+  const renderStep = [renderIdentity, renderLocation, renderWeb, renderFarming][currentStep];
 
-  const NavigationButtons = () => (
-    <HStack spacing={3} w="100%" justify="space-between">
-      <StandardButton
-        variant="outline"
-        onClick={currentStep === 0 ? handleClose : prevStep}
-        leftIcon={currentStep === 0 ? undefined : <Icon as={FaChevronLeft} />}>
-        {currentStep === 0 ? 'Cancelar' : 'Anterior'}
-      </StandardButton>
-
-      {currentStep < STEPS.length - 1 ? (
-        <StandardButton
-          variant="primary"
-          onClick={nextStep}
-          rightIcon={<Icon as={FaChevronRight} />}>
-          Siguiente
-        </StandardButton>
-      ) : (
-        <StandardButton
-          variant="primary"
-          onClick={handleSubmit(handleFormSubmit)}
-          isLoading={isLoading}
-          loadingText="Guardando..."
-          leftIcon={<Icon as={FaCheck} />}>
-          Guardar Cambios
-        </StandardButton>
-      )}
-    </HStack>
-  );
-
-  const modalContent = (
+  const body = (
     <FormProvider {...methods}>
-      <StepIndicator />
-      <Box minH="400px">{renderCurrentStep()}</Box>
+      <VStack spacing={6} align="stretch">
+        <StandardStepper
+          steps={steps}
+          currentStep={currentStep}
+          allowStepClick
+          furthestStep={furthestStep}
+          onStepClick={(step) => (step < currentStep ? setCurrentStep(step) : nextStep())}
+        />
+        <Box>{renderStep()}</Box>
+      </VStack>
     </FormProvider>
   );
 
-  // Use Drawer on mobile, Modal on desktop
+  // No Cancel: the close button in the header leaves. Same footer as every wizard.
+  const actions = (
+    <Box w="100%">
+      <WizardActions
+        onBack={currentStep > 0 ? prevStep : undefined}
+        backLabel={t('common.previousStep')}
+        backShortLabel={t('app.previous')}
+        primaryLabel={currentStep < lastStep ? t('app.continue') : t('company.edit.save')}
+        primaryLeadsOn={currentStep < lastStep}
+        onPrimary={
+          currentStep < lastStep ? nextStep : handleSubmit(handleFormSubmit, handleInvalidSubmit)
+        }
+        isLoading={isLoading}
+        loadingText={t('app.saving')}
+      />
+    </Box>
+  );
+
   if (isMobile) {
     return (
       <Drawer isOpen={isOpen} onClose={handleClose} placement="bottom" size="full">
         <DrawerOverlay />
         <DrawerContent borderTopRadius="2xl">
           <DrawerCloseButton />
-          <DrawerHeader borderBottomWidth="1px">
-            <VStack align="start" spacing={1}>
-              <Text fontSize="lg" fontWeight="bold">
-                Editar Compañía
-              </Text>
-              <Text fontSize="sm" color="gray.500">
-                {STEPS[currentStep].description}
-              </Text>
-            </VStack>
-          </DrawerHeader>
-          <DrawerBody py={6}>{modalContent}</DrawerBody>
-          <DrawerFooter borderTopWidth="1px">
-            <NavigationButtons />
-          </DrawerFooter>
+          <DrawerHeader fontSize="lg">{t('company.edit.title')}</DrawerHeader>
+          <DrawerBody pb={6}>{body}</DrawerBody>
+          <DrawerFooter pt={0}>{actions}</DrawerFooter>
         </DrawerContent>
       </Drawer>
     );
@@ -670,23 +648,12 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} size="xl" scrollBehavior="inside">
-      <ModalOverlay bg="blackAlpha.600" backdropFilter="blur(4px)" />
+      <ModalOverlay bg="blackAlpha.600" />
       <ModalContent borderRadius="2xl" mx={4}>
-        <ModalHeader borderBottomWidth="1px" pb={4}>
-          <VStack align="start" spacing={1}>
-            <Text fontSize="xl" fontWeight="bold">
-              Editar Compañía
-            </Text>
-            <Text fontSize="sm" color="gray.500" fontWeight="normal">
-              {STEPS[currentStep].description}
-            </Text>
-          </VStack>
-        </ModalHeader>
+        <ModalHeader fontSize="xl">{t('company.edit.title')}</ModalHeader>
         <ModalCloseButton />
-        <ModalBody py={6}>{modalContent}</ModalBody>
-        <ModalFooter borderTopWidth="1px" pt={4}>
-          <NavigationButtons />
-        </ModalFooter>
+        <ModalBody pb={6}>{body}</ModalBody>
+        <ModalFooter pt={0}>{actions}</ModalFooter>
       </ModalContent>
     </Modal>
   );
