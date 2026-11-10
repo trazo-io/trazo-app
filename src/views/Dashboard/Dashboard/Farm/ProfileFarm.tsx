@@ -81,7 +81,6 @@ import {
   StandardPageLoading,
   StandardSection,
   StandardInput,
-  StandardAlert,
   PAGE_TITLE
 } from 'components/Design/StandardComponents';
 import { InfoRow, FieldGroup, PageHeaderMeta, FieldList } from 'components/Design/ProfileField';
@@ -244,9 +243,24 @@ function ProfileFarm() {
     }
   };
 
+  // Back names the farm and goes to its home, like the farm edit page ("Back to Calapooia
+  // Bend Farm"). It went to /admin/dashboard as a bare "Back".
+  const goToFarm = () => navigate(`/admin/dashboard/farm/${farmId}`);
+  const backLabel = establishmentData?.name
+    ? intl.formatMessage({ id: 'common.backTo' }, { place: establishmentData.name })
+    : intl.formatMessage({ id: 'common.backToFarm' });
+
+  // A stored value to its catalogue label; an unknown or retired value keeps the old
+  // title-casing so it still reads (a farm may hold a method that is no longer offered).
+  const catalogueLabel = (prefix: string, value?: string | null) => {
+    if (!value) return '';
+    const id = `${prefix}.${value}`;
+    return intl.messages[id] ? intl.formatMessage({ id }) : formatDisplayValue(value);
+  };
+
   if (isLoading || isUninitialized) {
     return (
-      <StandardPage showBackButton onBack={() => navigate('/admin/dashboard')}>
+      <StandardPage showBackButton onBack={goToFarm} backLabel={backLabel}>
         <StandardPageLoading />
       </StandardPage>
     );
@@ -254,7 +268,7 @@ function ProfileFarm() {
 
   if (error || !establishmentData) {
     return (
-      <StandardPage showBackButton onBack={() => navigate('/admin/dashboard')}>
+      <StandardPage showBackButton onBack={goToFarm} backLabel={backLabel}>
         <Center py={20}>
           <Text color="red.700">{intl.formatMessage({ id: 'establishment.errorLoading' })}</Text>
         </Center>
@@ -275,7 +289,7 @@ function ProfileFarm() {
   });
 
   return (
-    <StandardPage showBackButton onBack={() => navigate('/admin/dashboard')}>
+    <StandardPage showBackButton onBack={goToFarm} backLabel={backLabel}>
       <VStack gap={{ base: 5, md: 8 }} w="100%" align="stretch">
         {/* ── PAGE HEADER — deliberately not a card ─────────────────────────────────
             The old identity card wrapped an initials Avatar (which rendered "C(" for
@@ -354,7 +368,8 @@ function ProfileFarm() {
                     with the same weight as the "Active" status beside it. */}
                 {(establishmentData.establishment_type || establishmentData.type) && (
                   <Badge variant="neutral" borderRadius="full" fontSize="xs">
-                    {formatDisplayValue(
+                    {catalogueLabel(
+                      'farm.form.farmType',
                       establishmentData.establishment_type || establishmentData.type
                     )}
                   </Badge>
@@ -493,6 +508,7 @@ function ProfileFarm() {
                 headerAction={
                   canWrite ? (
                     <StandardButton
+                      variant="outline"
                       size="sm"
                       leftIcon={<Icon as={FaPlus} />}
                       onClick={addCertDisclosure.onOpen}>
@@ -838,10 +854,12 @@ function ProfileFarm() {
                           <Text fontSize="sm" fontWeight="medium" color="gray.700">
                             {intl.formatMessage({ id: 'farm.split.toggleLabel' })}
                           </Text>
+                          {/* Neutral, not green (2026-11-10): this is the farm's own answer, and a
+                              green "Yes, organic and conventional..." read as an approval. */}
                           <Text
                             fontSize="md"
                             fontWeight="semibold"
-                            color={splitDeclaration === 'unanswered' ? 'gray.500' : 'green.700'}>
+                            color={splitDeclaration === 'unanswered' ? 'gray.500' : 'gray.800'}>
                             {intl.formatMessage({
                               id:
                                 splitDeclaration === 'yes'
@@ -907,18 +925,15 @@ function ProfileFarm() {
                     </VStack>
                   </FieldGroup>
 
-                  {/* ONE regulatory note for both attestations, not two stacked blue boxes.
-                      A real Alert rather than a blue Box: blue carries no meaning in this
-                      palette EXCEPT as Chakra's info status, so hand-painting blue.50/blue.700
-                      borrowed the convention without the semantics. As an Alert it also gets
-                      the info glyph and the role a screen reader needs. */}
-                  <StandardAlert
-                    status="info"
-                    mb={0}
-                    description={`${intl.formatMessage({
+                  {/* ONE regulatory note for both attestations, as plain text (2026-11-10). It was
+                      an info alert with a coloured edge: reference to the rules behind the two
+                      cards above, not a status, so it reads as a caption, like the help center's
+                      guidance. */}
+                  <Text fontSize="xs" color="gray.500" lineHeight="1.6">
+                    {`${intl.formatMessage({
                       id: 'farm.soe.regulatoryNote'
                     })} ${intl.formatMessage({ id: 'farm.split.regulatoryNote' })}`}
-                  />
+                  </Text>
                 </VStack>
               </StandardCard>
             </Box>
@@ -1085,7 +1100,10 @@ function ProfileFarm() {
                       layout="inline"
                       icon={FaTractor}
                       label={intl.formatMessage({ id: 'establishment.farmingMethod' })}
-                      value={formatDisplayValue(establishmentData.farming_method)}
+                      value={catalogueLabel(
+                        'quickStart.field.productionMethod.option',
+                        establishmentData.farming_method
+                      )}
                     />
                   </FieldList>
                 </FieldGroup>

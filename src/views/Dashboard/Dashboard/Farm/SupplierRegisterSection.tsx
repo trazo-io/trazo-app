@@ -17,6 +17,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   Badge,
   Box,
+  Flex,
   Divider,
   HStack,
   Icon,
@@ -419,7 +420,11 @@ const SupplierRegisterSection = ({ companyId, farmId, state }: Props) => {
         padding={{ base: 0, md: 4 }}
         mb={0}
         headerAction={
-          <StandardButton size="sm" leftIcon={<Icon as={FaPlus} />} onClick={() => startAdding()}>
+          <StandardButton
+            variant="outline"
+            size="sm"
+            leftIcon={<Icon as={FaPlus} />}
+            onClick={() => startAdding()}>
             {intl.formatMessage({ id: 'suppliers.add' })}
           </StandardButton>
         }>
@@ -451,55 +456,65 @@ const SupplierRegisterSection = ({ companyId, farmId, state }: Props) => {
                         px={focused ? 3 : 0}
                         bg={focused ? 'green.50' : undefined}
                         borderRadius={focused ? 'md' : undefined}>
-                        <Text fontSize="sm">
-                          {intl.formatMessage(
-                            { id: 'suppliers.unconfirmed.row' },
-                            { name: u.name, count: u.records }
-                          )}
-                        </Text>
-                        <HStack spacing={2} mt={1} flexWrap="wrap">
-                          {active.length > 0 && (
-                            <>
-                              <StandardSelect
-                                aria-label={intl.formatMessage(
-                                  { id: 'suppliers.unconfirmed.attachTo' },
-                                  { name: u.name }
-                                )}
-                                size="sm"
-                                maxW="xs"
-                                value={attachTo[u.name] ?? ''}
-                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                                  setAttachTo({ ...attachTo, [u.name]: e.target.value })
-                                }>
-                                <option value="">
-                                  {intl.formatMessage({ id: 'suppliers.unconfirmed.choose' })}
-                                </option>
-                                {active.map((s) => (
-                                  <option key={s.id} value={String(s.id)}>
-                                    {s.name}
+                        {/* One row: the spelling on the left, what to do with it on the right
+                            (2026-11-10). The actions sat on a line of their own under every
+                            name, so each spelling took two lines and the action read as a
+                            heading for the next row. Wraps under the name on a phone. */}
+                        <Flex
+                          justify="space-between"
+                          align="center"
+                          gap={2}
+                          rowGap={1}
+                          flexWrap="wrap">
+                          <Text fontSize="sm" minW={0}>
+                            {intl.formatMessage(
+                              { id: 'suppliers.unconfirmed.row' },
+                              { name: u.name, count: u.records }
+                            )}
+                          </Text>
+                          <HStack spacing={2} flexWrap="wrap" justify="flex-end">
+                            {active.length > 0 && (
+                              <>
+                                <StandardSelect
+                                  aria-label={intl.formatMessage(
+                                    { id: 'suppliers.unconfirmed.attachTo' },
+                                    { name: u.name }
+                                  )}
+                                  size="sm"
+                                  maxW="xs"
+                                  value={attachTo[u.name] ?? ''}
+                                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                                    setAttachTo({ ...attachTo, [u.name]: e.target.value })
+                                  }>
+                                  <option value="">
+                                    {intl.formatMessage({ id: 'suppliers.unconfirmed.choose' })}
                                   </option>
-                                ))}
-                              </StandardSelect>
-                              <StandardButton
-                                variant="outline"
-                                size="sm"
-                                isDisabled={!attachTo[u.name]}
-                                onClick={() => attach(u.name)}>
-                                {intl.formatMessage({ id: 'suppliers.unconfirmed.attach' })}
-                              </StandardButton>
-                            </>
-                          )}
-                          <StandardButton
-                            variant="ghost"
-                            size="sm"
-                            // Flush with the name above: a ghost button's side padding indented
-                            // it off the row's left edge. Underline on hover instead of a fill.
-                            px={0}
-                            _hover={{ bg: 'transparent', textDecoration: 'underline' }}
-                            onClick={() => startAdding(u.name)}>
-                            {intl.formatMessage({ id: 'suppliers.unconfirmed.create' })}
-                          </StandardButton>
-                        </HStack>
+                                  {active.map((s) => (
+                                    <option key={s.id} value={String(s.id)}>
+                                      {s.name}
+                                    </option>
+                                  ))}
+                                </StandardSelect>
+                                <StandardButton
+                                  variant="outline"
+                                  size="sm"
+                                  isDisabled={!attachTo[u.name]}
+                                  onClick={() => attach(u.name)}>
+                                  {intl.formatMessage({ id: 'suppliers.unconfirmed.attach' })}
+                                </StandardButton>
+                              </>
+                            )}
+                            <StandardButton
+                              variant="ghost"
+                              size="sm"
+                              // A text action at the row's end: underline on hover, no fill.
+                              px={0}
+                              _hover={{ bg: 'transparent', textDecoration: 'underline' }}
+                              onClick={() => startAdding(u.name)}>
+                              {intl.formatMessage({ id: 'suppliers.unconfirmed.create' })}
+                            </StandardButton>
+                          </HStack>
+                        </Flex>
                       </Box>
                     );
                   })}
