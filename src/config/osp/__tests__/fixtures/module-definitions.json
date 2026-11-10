@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.11.30",
+  "content_version": "2026.12.01",
   "registry": {
-    "content_version": "2026.11.30",
+    "content_version": "2026.12.01",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -21516,6 +21516,115 @@
             "visible_when": [],
             "questions": [
               {
+                "key": "facility_pest_problems",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Which pests do you have, or does your pest control plan cover, in storage and handling areas?",
+                  "es": "¿Qué plagas tienes, o cubre tu plan de control de plagas, en las áreas de almacenamiento y manejo?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "flying_insects",
+                    "label": {
+                      "en": "Flying insects",
+                      "es": "Insectos voladores"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "crawling_insects",
+                    "label": {
+                      "en": "Crawling insects",
+                      "es": "Insectos rastreros"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "rats",
+                    "label": {
+                      "en": "Rats",
+                      "es": "Ratas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "mice",
+                    "label": {
+                      "en": "Mice",
+                      "es": "Ratones"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "spiders",
+                    "label": {
+                      "en": "Spiders",
+                      "es": "Arañas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "birds",
+                    "label": {
+                      "en": "Birds",
+                      "es": "Aves"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otra (describe abajo)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "none",
+                    "label": {
+                      "en": "No pests in the facilities",
+                      "es": "No hay plagas en las instalaciones"
+                    },
+                    "exclusive": true
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.271",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "facility_pest_problems_other",
+                "kind": "text",
+                "label": {
+                  "en": "Name the other pest",
+                  "es": "Indica la otra plaga"
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "facility_pest_problems",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
                 "key": "preventive_practices",
                 "kind": "checkbox_group",
                 "label": {
@@ -21569,6 +21678,54 @@
                     "label": {
                       "en": "Stock rotation so product does not sit long enough to attract pests",
                       "es": "Rotación de existencias para que el producto no permanezca lo suficiente como para atraer plagas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "incoming_inspection",
+                    "label": {
+                      "en": "Inspecting incoming product and ingredients for pests",
+                      "es": "Inspección de producto e ingredientes que llegan, en busca de plagas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "sealed_screened_openings",
+                    "label": {
+                      "en": "Vents, doors and windows sealed or screened",
+                      "es": "Ventilas, puertas y ventanas selladas o con malla"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "positive_air_pressure",
+                    "label": {
+                      "en": "Positive air pressure",
+                      "es": "Presión de aire positiva"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "exterior_sheet_metal",
+                    "label": {
+                      "en": "Sheet metal on the exterior sides of the building",
+                      "es": "Lámina metálica en los costados exteriores del edificio"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "interior_inspection_zones",
+                    "label": {
+                      "en": "Inspection zones kept along the interior perimeter",
+                      "es": "Zonas de inspección a lo largo del perímetro interior"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "lighting_away_from_openings",
+                    "label": {
+                      "en": "Light fixtures placed away from vents, windows and doors",
+                      "es": "Lámparas colocadas lejos de ventilas, ventanas y puertas"
                     },
                     "exclusive": false
                   },
@@ -21670,6 +21827,22 @@
                     "label": {
                       "en": "Freezing or heat treatment",
                       "es": "Tratamiento por frío o calor"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "electrocutors",
+                    "label": {
+                      "en": "Electrocutors (bug zappers)",
+                      "es": "Electrocutores (matainsectos)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "sticky_traps",
+                    "label": {
+                      "en": "Sticky traps",
+                      "es": "Trampas adhesivas"
                     },
                     "exclusive": false
                   },
@@ -21913,6 +22086,22 @@
                     "exclusive": false
                   },
                   {
+                    "value": "stored_away_from_organic",
+                    "label": {
+                      "en": "Non-approved materials are stored away from organic product and packaging",
+                      "es": "Los materiales no aprobados se guardan lejos del producto orgánico y el empaque"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "separate_equipment",
+                    "label": {
+                      "en": "Separate equipment and tools are used for prohibited materials",
+                      "es": "Se usan equipo y herramientas separados para los materiales prohibidos"
+                    },
+                    "exclusive": false
+                  },
+                  {
                     "value": "employee_training",
                     "label": {
                       "en": "Documented employee training",
@@ -21933,6 +22122,250 @@
                   }
                 ],
                 "nop_cite": "§ 205.271(c)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "pest_controls_sufficient",
+                "kind": "radio",
+                "label": {
+                  "en": "Do your prevention and physical controls adequately prevent or control pests?",
+                  "es": "¿Tus medidas de prevención y controles físicos previenen o controlan bien las plagas?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "yes",
+                    "label": {
+                      "en": "Yes",
+                      "es": "Sí"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "no",
+                    "label": {
+                      "en": "No",
+                      "es": "No"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "none_used",
+                    "label": {
+                      "en": "Not applicable, none are used",
+                      "es": "No aplica, no se usa ninguno"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.271(c)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "additional_pest_measures",
+                "kind": "textarea",
+                "label": {
+                  "en": "What other pest control measures do you use?",
+                  "es": "¿Qué otras medidas de control de plagas usas?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "pest_controls_sufficient",
+                    "op": "eq",
+                    "value": "no"
+                  }
+                ],
+                "nop_cite": "§ 205.271(c)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "national_list_sufficient",
+                "kind": "radio",
+                "label": {
+                  "en": "Are National List materials sufficient to prevent or control pests in organic storage areas?",
+                  "es": "¿Los materiales de la Lista Nacional bastan para prevenir o controlar plagas en las áreas de almacenamiento orgánico?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "yes",
+                    "label": {
+                      "en": "Yes",
+                      "es": "Sí"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "no",
+                    "label": {
+                      "en": "No, other materials are needed",
+                      "es": "No, se necesitan otros materiales"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "material_tier",
+                    "op": "one_of",
+                    "value": [
+                      "national_list",
+                      "synthetic_approved"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.271(d)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "synthetic_material_justification",
+                "kind": "textarea",
+                "label": {
+                  "en": "Why are prevention, physical controls and National List materials not effective against the target pest?",
+                  "es": "¿Por qué la prevención, los controles físicos y los materiales de la Lista Nacional no son eficaces contra la plaga?"
+                },
+                "coaching": {
+                  "en": "Your certifier may ask for a letter of justification; attach it below if you have one.",
+                  "es": "Tu certificadora puede pedir una carta de justificación; adjúntala abajo si la tienes."
+                },
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "material_tier",
+                    "op": "eq",
+                    "value": "synthetic_approved"
+                  }
+                ],
+                "nop_cite": "§ 205.271(d)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "synthetic_material_justification_upload",
+                "kind": "upload",
+                "label": {
+                  "en": "Letter of justification",
+                  "es": "Carta de justificación"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "material_tier",
+                    "op": "eq",
+                    "value": "synthetic_approved"
+                  }
+                ],
+                "nop_cite": "§ 205.271(d)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "bait_station_use",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How are bait stations used in storage and handling areas?",
+                  "es": "¿Cómo se usan las estaciones de cebo en las áreas de almacenamiento y manejo?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "exterior_perimeter_only",
+                    "label": {
+                      "en": "All bait stations are on the exterior perimeter, outside areas used for organic handling",
+                      "es": "Todas las estaciones de cebo están en el perímetro exterior, fuera de las áreas de manejo orgánico"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "allowed_bait_only",
+                    "label": {
+                      "en": "Stations are baited only with a nonsynthetic or organically allowed material",
+                      "es": "Las estaciones solo llevan un cebo no sintético o permitido en orgánico"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otro (describe abajo)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "none",
+                    "label": {
+                      "en": "No bait stations are used",
+                      "es": "No se usan estaciones de cebo"
+                    },
+                    "exclusive": true
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.271",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "bait_station_use_other",
+                "kind": "textarea",
+                "label": {
+                  "en": "Describe the bait used and where the stations are.",
+                  "es": "Describe el cebo que se usa y dónde están las estaciones."
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "bait_station_use",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
@@ -28762,9 +29195,12 @@
         "pest_control_records",
         "pest_monitoring_practices",
         "pest_monitoring_frequency",
+        "facility_pest_problems",
         "preventive_practices",
         "mechanical_controls",
-        "material_tier"
+        "material_tier",
+        "pest_controls_sufficient",
+        "bait_station_use"
       ],
       "missing_required": [
         "uses_pest_control_company",
