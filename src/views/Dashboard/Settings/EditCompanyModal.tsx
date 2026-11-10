@@ -142,7 +142,7 @@ export const LEGAL_STRUCTURE_LABEL_KEYS: Record<string, string> = {
 };
 
 // Stored values. Labels: `company.industry.<value>`.
-const INDUSTRIES = [
+export const INDUSTRIES = [
   'crop_production',
   'livestock',
   'dairy',
