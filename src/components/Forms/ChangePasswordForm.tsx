@@ -1,30 +1,40 @@
+/**
+ * Change your own password: current, new, confirm. Used by the producer page
+ * (views/Settings/ChangePassword) and the consumer one.
+ *
+ * 2026-11-10: every label, placeholder, rule and message was an English literal, so the form
+ * stayed English in Spanish. It now reads the catalogue, and the strength meter and rule list
+ * are the sign-up form's own `PasswordStrengthIndicator` (already translated) instead of a
+ * second hand-written copy of the same five rules.
+ *
+ * The page carries the title, so the card has none (it said "Change Password" twice).
+ */
 import React, { useState } from 'react';
 import { useIntl } from 'react-intl';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import {
+  Flex,
   VStack,
-  Text,
   useToast,
   InputGroup,
   InputRightElement,
-  IconButton,
-  Progress,
-  Box,
-  List,
-  ListItem,
-  ListIcon,
-  Collapse
+  IconButton
 } from '@chakra-ui/react';
-import { FaEye, FaEyeSlash, FaCheck, FaTimes } from 'react-icons/fa';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { useChangePasswordMutation } from '../../store/api/authApi';
-import { passwordValidator, PasswordValidationResult } from '../../utils/passwordValidation';
+import {
+  DEFAULT_REQUIREMENTS,
+  passwordValidator,
+  PasswordValidationResult
+} from '../../utils/passwordValidation';
 import {
   StandardCard,
   StandardField,
   StandardInput,
   StandardButton
 } from '../Design/StandardComponents';
+import { PasswordStrengthIndicator } from './PasswordStrengthIndicator';
 
 interface ChangePasswordFormData {
   oldPassword: string;
@@ -36,19 +46,20 @@ interface ChangePasswordFormProps {
   userType: 'producer' | 'consumer';
 }
 
+// The API answers a wrong current password with this English sentence (users/views.py
+// `change_password`). It belongs on the field, in the reader's language.
+const WRONG_CURRENT = 'Current password is incorrect';
+
 export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ userType }) => {
   const navigate = useNavigate();
   const intl = useIntl();
+  const t = (id: string, values?: Record<string, string | number>) =>
+    intl.formatMessage({ id }, values);
   const toast = useToast();
   const [changePassword, { isLoading }] = useChangePasswordMutation();
 
-  const [showOldPassword, setShowOldPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [passwordValidation, setPasswordValidation] = useState<PasswordValidationResult | null>(
-    null
-  );
-  const [showPasswordRequirements, setShowPasswordRequirements] = useState(false);
+  const [show, setShow] = useState({ old: false, new: false, confirm: false });
+  const [validation, setValidation] = useState<PasswordValidationResult | null>(null);
 
   const {
     register,
@@ -60,34 +71,16 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ userType
 
   const newPassword = watch('newPassword');
 
-  // Validate password as user types
   React.useEffect(() => {
-    if (newPassword) {
-      const validation = passwordValidator.validate(newPassword);
-      setPasswordValidation(validation);
-      setShowPasswordRequirements(true);
-    } else {
-      setPasswordValidation(null);
-      setShowPasswordRequirements(false);
-    }
+    setValidation(newPassword ? passwordValidator.validate(newPassword) : null);
   }, [newPassword]);
 
   const onSubmit = async (data: ChangePasswordFormData) => {
-    // Validate passwords match
-    if (data.newPassword !== data.confirmPassword) {
-      setError('confirmPassword', {
-        type: 'manual',
-        message: 'Passwords do not match'
-      });
-      return;
-    }
-
-    // Validate password strength
-    const validation = passwordValidator.validate(data.newPassword);
-    if (!validation.isValid) {
+    // The rule list under the field shows which rule is unmet; the toast only says so. The
+    // validator's own sentences are English, so they are not repeated here.
+    if (!passwordValidator.validate(data.newPassword).isValid) {
       toast({
-        title: intl.formatMessage({ id: 'auth.password.toast.requirementsNotMet' }),
-        description: validation.errors[0],
+        title: t('auth.password.toast.requirementsNotMet'),
         status: 'error',
         duration: 5000,
         isClosable: true
@@ -102,27 +95,27 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ userType
       }).unwrap();
 
       toast({
-        title: intl.formatMessage({ id: 'auth.changePassword.toast.success.title' }),
-        description: intl.formatMessage({ id: 'auth.changePassword.toast.success.body' }),
+        title: t('auth.changePassword.toast.success.title'),
+        description: t('auth.changePassword.toast.success.body'),
         status: 'success',
         duration: 5000,
         isClosable: true
       });
 
-      // Redirect to login page
-      if (userType === 'producer') {
-        navigate('/auth');
-      } else {
-        navigate('/consumidor/auth');
-      }
+      navigate(userType === 'producer' ? '/auth' : '/consumidor/auth');
     } catch (error: any) {
-      const errorMessage =
-        error?.data?.detail ||
-        error?.data?.error ||
-        intl.formatMessage({ id: 'auth.changePassword.toast.failed.body' });
+      const serverMessage = error?.data?.detail || error?.data?.error;
+      if (serverMessage === WRONG_CURRENT) {
+        setError('oldPassword', { type: 'server', message: t('account.password.wrongCurrent') });
+        return;
+      }
       toast({
-        title: intl.formatMessage({ id: 'app.error' }),
-        description: Array.isArray(errorMessage) ? errorMessage[0] : errorMessage,
+        title: t('app.error'),
+        // Django's password validators answer in English; better a true English line than a
+        // generic one that hides which rule the server applied.
+        description:
+          (Array.isArray(serverMessage) ? serverMessage[0] : serverMessage) ||
+          t('auth.changePassword.toast.failed.body'),
         status: 'error',
         duration: 5000,
         isClosable: true
@@ -130,186 +123,87 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ userType
     }
   };
 
-  const getPasswordStrengthColor = () => {
-    if (!passwordValidation) return 'gray.300';
-    return passwordValidator.getStrengthColor(passwordValidation.score);
-  };
-
-  const getPasswordStrengthLabel = () => {
-    if (!passwordValidation) return '';
-    return passwordValidator.getStrengthLabel(passwordValidation.score);
-  };
+  const toggle = (field: keyof typeof show) => (
+    <InputRightElement>
+      <IconButton
+        aria-label={show[field] ? t('auth.password.hide') : t('auth.password.show')}
+        icon={show[field] ? <FaEyeSlash /> : <FaEye />}
+        onClick={() => setShow((s) => ({ ...s, [field]: !s[field] }))}
+        variant="ghost"
+        size="sm"
+      />
+    </InputRightElement>
+  );
 
   return (
-    <StandardCard
-      title="Change Password"
-      subtitle="Enter your current password and choose a new secure password">
+    <StandardCard mb={0}>
       <form onSubmit={handleSubmit(onSubmit)}>
         <VStack spacing={6} align="stretch">
-          {/* Current Password */}
-          <StandardField label="Current Password" required error={errors.oldPassword?.message}>
+          <StandardField
+            label={t('account.password.current')}
+            required
+            error={errors.oldPassword?.message}>
             <InputGroup>
               <StandardInput
-                type={showOldPassword ? 'text' : 'password'}
-                placeholder="Enter current password"
+                type={show.old ? 'text' : 'password'}
+                autoComplete="current-password"
                 {...register('oldPassword', {
-                  required: 'Current password is required'
+                  required: t('account.password.currentRequired')
                 })}
               />
-              <InputRightElement>
-                <IconButton
-                  aria-label={showOldPassword ? 'Hide password' : 'Show password'}
-                  icon={showOldPassword ? <FaEyeSlash /> : <FaEye />}
-                  onClick={() => setShowOldPassword(!showOldPassword)}
-                  variant="ghost"
-                  size="sm"
-                />
-              </InputRightElement>
+              {toggle('old')}
             </InputGroup>
           </StandardField>
 
-          {/* New Password */}
           <StandardField
-            label="New Password"
+            label={t('account.password.new')}
             required
-            error={errors.newPassword?.message}
-            helpText="Choose a strong password that meets all requirements">
+            error={errors.newPassword?.message}>
             <InputGroup>
               <StandardInput
-                type={showNewPassword ? 'text' : 'password'}
-                placeholder="Enter new password"
+                type={show.new ? 'text' : 'password'}
+                autoComplete="new-password"
                 {...register('newPassword', {
-                  required: 'New password is required',
+                  required: t('account.password.newRequired'),
                   minLength: {
-                    value: 12,
-                    message: 'Password must be at least 12 characters'
+                    value: DEFAULT_REQUIREMENTS.minLength,
+                    message: t('account.password.minLength', {
+                      min: DEFAULT_REQUIREMENTS.minLength
+                    })
                   }
                 })}
-                onFocus={() => setShowPasswordRequirements(true)}
               />
-              <InputRightElement>
-                <IconButton
-                  aria-label={showNewPassword ? 'Hide password' : 'Show password'}
-                  icon={showNewPassword ? <FaEyeSlash /> : <FaEye />}
-                  onClick={() => setShowNewPassword(!showNewPassword)}
-                  variant="ghost"
-                  size="sm"
-                />
-              </InputRightElement>
+              {toggle('new')}
             </InputGroup>
+            <PasswordStrengthIndicator password={newPassword} validation={validation} />
           </StandardField>
 
-          {/* Password Strength Indicator */}
-          {passwordValidation && (
-            <Box>
-              <Text fontSize="sm" fontWeight="medium" mb={2}>
-                Password Strength: {getPasswordStrengthLabel()}
-              </Text>
-              <Progress
-                value={passwordValidation.score}
-                colorScheme={getPasswordStrengthColor().split('.')[0]}
-                size="sm"
-                borderRadius="md"
-              />
-            </Box>
-          )}
-
-          {/* Password Requirements */}
-          <Collapse in={showPasswordRequirements} animateOpacity>
-            <Box bg="gray.50" p={4} borderRadius="lg" borderWidth="1px" borderColor="gray.200">
-              <Text fontSize="sm" fontWeight="semibold" mb={2}>
-                Password Requirements:
-              </Text>
-              <List spacing={1} fontSize="sm">
-                <ListItem>
-                  <ListIcon
-                    as={newPassword?.length >= 12 ? FaCheck : FaTimes}
-                    color={newPassword?.length >= 12 ? 'green.500' : 'gray.400'}
-                  />
-                  At least 12 characters long
-                </ListItem>
-                <ListItem>
-                  <ListIcon
-                    as={/[A-Z]/.test(newPassword || '') ? FaCheck : FaTimes}
-                    color={/[A-Z]/.test(newPassword || '') ? 'green.500' : 'gray.400'}
-                  />
-                  One uppercase letter (A-Z)
-                </ListItem>
-                <ListItem>
-                  <ListIcon
-                    as={/[a-z]/.test(newPassword || '') ? FaCheck : FaTimes}
-                    color={/[a-z]/.test(newPassword || '') ? 'green.500' : 'gray.400'}
-                  />
-                  One lowercase letter (a-z)
-                </ListItem>
-                <ListItem>
-                  <ListIcon
-                    as={/\d/.test(newPassword || '') ? FaCheck : FaTimes}
-                    color={/\d/.test(newPassword || '') ? 'green.500' : 'gray.400'}
-                  />
-                  One number (0-9)
-                </ListItem>
-                <ListItem>
-                  <ListIcon
-                    as={/[!@#$%^&*(),.?":{}|<>]/.test(newPassword || '') ? FaCheck : FaTimes}
-                    color={
-                      /[!@#$%^&*(),.?":{}|<>]/.test(newPassword || '') ? 'green.500' : 'gray.400'
-                    }
-                  />
-                  One special character (!@#$%^&*(),.?":{}|&lt;&gt;)
-                </ListItem>
-              </List>
-              {passwordValidation && passwordValidation.warnings.length > 0 && (
-                <Box mt={3}>
-                  <Text fontSize="sm" color="orange.600" fontWeight="medium">
-                    Warnings:
-                  </Text>
-                  {passwordValidation.warnings.map((warning, index) => (
-                    <Text key={index} fontSize="sm" color="orange.600">
-                      • {warning}
-                    </Text>
-                  ))}
-                </Box>
-              )}
-            </Box>
-          </Collapse>
-
-          {/* Confirm Password */}
           <StandardField
-            label="Confirm New Password"
+            label={t('account.password.confirm')}
             required
             error={errors.confirmPassword?.message}>
             <InputGroup>
               <StandardInput
-                type={showConfirmPassword ? 'text' : 'password'}
-                placeholder="Confirm new password"
+                type={show.confirm ? 'text' : 'password'}
+                autoComplete="new-password"
                 {...register('confirmPassword', {
-                  required: 'Please confirm your password',
-                  validate: (value) => value === newPassword || 'Passwords do not match'
+                  required: t('account.password.confirmRequired'),
+                  validate: (value) => value === newPassword || t('account.password.mismatch')
                 })}
               />
-              <InputRightElement>
-                <IconButton
-                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
-                  icon={showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  variant="ghost"
-                  size="sm"
-                />
-              </InputRightElement>
+              {toggle('confirm')}
             </InputGroup>
           </StandardField>
 
-          {/* Submit Button */}
-          <StandardButton
-            type="submit"
-            variant="primary"
-            size="lg"
-            isLoading={isLoading}
-            loadingText="Changing Password..."
-            width="full">
-            Change Password
-          </StandardButton>
+          <Flex justify="flex-end">
+            <StandardButton
+              type="submit"
+              variant="primary"
+              isLoading={isLoading}
+              loadingText={t('account.password.submitting')}>
+              {t('account.password.submit')}
+            </StandardButton>
+          </Flex>
         </VStack>
       </form>
     </StandardCard>

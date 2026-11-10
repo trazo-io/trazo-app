@@ -1,20 +1,10 @@
+import React from 'react';
 // Chakra imports
-import {
-  Avatar,
-  AvatarBadge,
-  Box,
-  FormLabel,
-  Text,
-  Grid,
-  VStack,
-  HStack,
-  Icon
-} from '@chakra-ui/react';
+import { Avatar, Box, Flex, Text, Grid, VStack, HStack, Icon } from '@chakra-ui/react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useEffect, useRef, useState } from 'react';
 import { object, string } from 'zod';
 import { useNavigate } from 'react-router-dom';
-import { FaLock, FaChevronRight } from 'react-icons/fa';
 
 import {
   StandardPage,
@@ -118,52 +108,30 @@ function ProfileUser() {
   return (
     <StandardPage
       title={intl.formatMessage({ id: 'app.userProfile' })}
-      description={intl.formatMessage({ id: 'app.modifyFormToEditProfile' })}
-      showBackButton
-      onBack={() => navigate(-1)}>
-      <StandardCard title={intl.formatMessage({ id: 'app.mainInfo' })} variant="elevated">
+      description={intl.formatMessage({ id: 'app.modifyFormToEditProfile' })}>
+      <StandardCard title={intl.formatMessage({ id: 'app.mainInfo' })} variant="elevated" mb={0}>
         <FormProvider {...basicMethods}>
           <form onSubmit={handleSubmit(onSubmitUseInfo)} style={{ width: '100%' }}>
             <VStack spacing={6} align="stretch">
-              {/* Avatar Upload Section */}
-              <Box textAlign="center">
-                <Avatar
-                  ref={image}
-                  src={picture || undefined}
-                  w="120px"
-                  h="120px"
-                  borderRadius="2xl"
-                  boxShadow="lg"
-                  mx="auto"
-                  mb={4}>
-                  <AvatarBadge
-                    boxSize="2em"
-                    bg="green.100"
-                    border="2px solid white"
-                    borderRadius="full"
-                    {...getRootProps({ className: 'dropzone' })}>
-                    <FiCamera color="#2E7D32" size={20} />
-                    <StandardInput
-                      id="imageInput"
-                      type="file"
-                      accept="image/*"
-                      position="absolute"
-                      opacity={0}
-                      aria-hidden="true"
-                      width="100%"
-                      height="100%"
-                      top={0}
-                      left={0}
-                      zIndex={2}
-                      cursor={'pointer'}
-                      {...getInputProps()}
-                    />
-                  </AvatarBadge>
-                </Avatar>
-                <Text fontSize="sm" color="gray.600" mt={2}>
-                  {intl.formatMessage({ id: 'profile.clickToUpdatePicture' })}
-                </Text>
-              </Box>
+              {/* The photo as a row: a 64px avatar and a "Change photo" control beside it (was a
+                  120px gray silhouette centred over the form, with a camera badge to aim for). */}
+              <HStack spacing={4}>
+                <Avatar ref={image} src={picture || undefined} size="lg" bg="gray.200" />
+                <Box position="relative" {...getRootProps({ className: 'dropzone' })}>
+                  <StandardButton
+                    variant="outline"
+                    size="sm"
+                    leftIcon={<Icon as={FiCamera} />}
+                    as="span"
+                    cursor="pointer">
+                    {intl.formatMessage({ id: 'profile.clickToUpdatePicture' })}
+                  </StandardButton>
+                  <StandardInput
+                    {...(getInputProps() as React.ComponentProps<typeof StandardInput>)}
+                    aria-label={intl.formatMessage({ id: 'profile.clickToUpdatePicture' })}
+                  />
+                </Box>
+              </HStack>
 
               {/* Personal Information */}
               <Grid templateColumns={{ base: '1fr', md: '1fr 1fr' }} gap={6}>
@@ -212,14 +180,12 @@ function ProfileUser() {
               </Grid>
 
               {/* Action Buttons */}
-              <HStack spacing={4} justify="flex-end" pt={4}>
+              <HStack spacing={4} justify="flex-end">
                 <StandardButton
                   variant="primary"
                   type="submit"
                   isLoading={isLoading}
-                  loadingText={intl.formatMessage({ id: 'profile.saving' })}
-                  size="lg"
-                  px={8}>
+                  loadingText={intl.formatMessage({ id: 'profile.saving' })}>
                   {intl.formatMessage({ id: 'app.save' })}
                 </StandardButton>
               </HStack>
@@ -228,49 +194,25 @@ function ProfileUser() {
         </FormProvider>
       </StandardCard>
 
-      {/* Security Settings Section */}
+      {/* The password as one row: what it is, and the button that changes it (was a gray
+          bordered box with a green lock and a chevron, under a paragraph about "authentication
+          settings" the account does not have). */}
       <Box mt={6}>
         <StandardCard
           title={intl.formatMessage({ id: 'profile.securitySettings' })}
-          variant="elevated">
-          <VStack spacing={4} align="stretch">
+          variant="elevated"
+          mb={0}>
+          <Flex justify="space-between" align="center" gap={4} wrap="wrap">
             <Text fontSize="sm" color="gray.600">
-              {intl.formatMessage({ id: 'profile.securityDescription' })}
+              {intl.formatMessage({ id: 'profile.changePasswordDescription' })}
             </Text>
-
-            {/* Change Password Link */}
-            <Box
-              as="button"
-              onClick={() => navigate('/admin/dashboard/settings/change-password')}
-              w="100%"
-              p={4}
-              bg="gray.50"
-              borderRadius="lg"
-              border="1px solid"
-              borderColor="gray.200"
-              _hover={{
-                bg: 'gray.100',
-                borderColor: 'gray.300',
-                transform: 'translateY(-1px)',
-                boxShadow: 'sm'
-              }}
-              transition="all 0.2s">
-              <HStack justify="space-between">
-                <HStack spacing={3}>
-                  <Icon as={FaLock} color="green.500" boxSize={5} />
-                  <VStack align="start" spacing={0}>
-                    <Text fontWeight="semibold" color="gray.700">
-                      {intl.formatMessage({ id: 'profile.changePassword' })}
-                    </Text>
-                    <Text fontSize="sm" color="gray.500">
-                      {intl.formatMessage({ id: 'profile.changePasswordDescription' })}
-                    </Text>
-                  </VStack>
-                </HStack>
-                <Icon as={FaChevronRight} color="gray.400" />
-              </HStack>
-            </Box>
-          </VStack>
+            <StandardButton
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/admin/dashboard/settings/change-password')}>
+              {intl.formatMessage({ id: 'profile.changePassword' })}
+            </StandardButton>
+          </Flex>
         </StandardCard>
       </Box>
     </StandardPage>

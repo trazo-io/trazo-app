@@ -380,14 +380,10 @@ const App = () => {
                     they opened their own profile — the second half of the select-company
                     lock-out, alongside the onboarding redirect in Authenticated.jsx. */}
                 <Route path="profile" element={<ProfileUser />} />
-                <Route
-                  path="settings/change-password"
-                  element={
-                    <AdminGuard>
-                      <ChangePassword />
-                    </AdminGuard>
-                  }
-                />
+                {/* Your OWN password, so every member may change it: under AdminGuard a Farm
+                    Manager or Viewer who pressed "Change password" on their profile got "Access
+                    restricted" (2026-11-10). The API acts on request.user only. */}
+                <Route path="settings/change-password" element={<ChangePassword />} />
                 <Route
                   path="pricing"
                   element={
