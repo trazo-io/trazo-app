@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.11.27",
+  "content_version": "2026.11.28",
   "registry": {
-    "content_version": "2026.11.27",
+    "content_version": "2026.11.28",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -13865,6 +13865,658 @@
                 "max_length": null
               },
               {
+                "key": "packaging_materials",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "What packaging touches the organic product? Check all that apply.",
+                  "es": "¿Qué empaques tocan el producto orgánico? Marca todo lo que corresponda."
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "flexible_plastic",
+                    "label": {
+                      "en": "Flexible plastic (bags or wraps)",
+                      "es": "Plástico flexible (bolsas o envolturas)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "hard_plastic",
+                    "label": {
+                      "en": "Hard plastic (containers, clamshells or jars)",
+                      "es": "Plástico rígido (envases, clamshells o frascos)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "glass",
+                    "label": {
+                      "en": "Glass containers",
+                      "es": "Envases de vidrio"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "metal",
+                    "label": {
+                      "en": "Metal cans or tins",
+                      "es": "Latas de metal"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "paper",
+                    "label": {
+                      "en": "Paper",
+                      "es": "Papel"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "cardboard",
+                    "label": {
+                      "en": "Cardboard",
+                      "es": "Cartón"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "twine",
+                    "label": {
+                      "en": "Twine (jute, hemp, sisal)",
+                      "es": "Cordel (yute, cáñamo, sisal)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "compostable",
+                    "label": {
+                      "en": "Compostable or biodegradable packaging",
+                      "es": "Empaque compostable o biodegradable"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "cloth",
+                    "label": {
+                      "en": "Cloth",
+                      "es": "Tela"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "wood",
+                    "label": {
+                      "en": "Wood",
+                      "es": "Madera"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otro"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "none",
+                    "label": {
+                      "en": "No packaging: the product leaves in harvest containers or in bulk",
+                      "es": "Sin empaque: el producto sale en contenedores de cosecha o a granel"
+                    },
+                    "exclusive": true
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.272",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "packaging_materials_other",
+                "kind": "textarea",
+                "label": {
+                  "en": "Name the other packaging.",
+                  "es": "Indica el otro empaque."
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "packaging_materials",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "packaging_contamination_safeguards",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How do you make sure packaging, storage and shipping containers do not contaminate the crop with prohibited substances? Check all that apply.",
+                  "es": "¿Cómo te aseguras de que los empaques y los contenedores de almacenamiento y envío no contaminen el cultivo con sustancias prohibidas? Marca todo lo que corresponda."
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "only_new",
+                    "label": {
+                      "en": "Only new containers are used",
+                      "es": "Solo se usan contenedores nuevos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "reused_stamped_organic",
+                    "label": {
+                      "en": "Reused containers are permanently and clearly stamped organic",
+                      "es": "Los contenedores reutilizados tienen el sello orgánico permanente y claro"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "reused_plastic_metal_cloth_cleaned",
+                    "label": {
+                      "en": "Reused plastic, metal or cloth containers are cleaned after use with nonorganic products",
+                      "es": "Los contenedores reutilizados de plástico, metal o tela se limpian después de usarse con productos no orgánicos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "cardboard_not_exposed",
+                    "label": {
+                      "en": "Cardboard containers have not been exposed to prohibited materials",
+                      "es": "Los contenedores de cartón no han estado expuestos a materiales prohibidos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "wood_lined",
+                    "label": {
+                      "en": "Wood containers are completely lined with plastic",
+                      "es": "Los contenedores de madera están forrados por completo con plástico"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otro"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "packaging_materials",
+                    "op": "includes_any",
+                    "value": [
+                      "flexible_plastic",
+                      "hard_plastic",
+                      "glass",
+                      "metal",
+                      "paper",
+                      "cardboard",
+                      "twine",
+                      "compostable",
+                      "cloth",
+                      "wood",
+                      "other"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.272(b)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "packaging_contamination_safeguards_other",
+                "kind": "textarea",
+                "label": {
+                  "en": "Describe the other safeguard.",
+                  "es": "Describe la otra medida."
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "packaging_contamination_safeguards",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "packaging_untreated_proof",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "What shows that the paper, cardboard or twine was not treated with prohibited materials (synthetic fungicides, preservatives, fumigants) after it was made?",
+                  "es": "¿Qué demuestra que el papel, el cartón o el cordel no se trató con materiales prohibidos (fungicidas sintéticos, conservadores, fumigantes) después de fabricarse?"
+                },
+                "coaching": {
+                  "en": "Active or smart packaging that could contaminate organic products is not allowed.",
+                  "es": "No se permite empaque activo o inteligente que pueda contaminar productos orgánicos."
+                },
+                "options": [
+                  {
+                    "value": "spec_sheet",
+                    "label": {
+                      "en": "A composition or specification sheet (attached below)",
+                      "es": "Una ficha de composición o especificaciones (adjunta abajo)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "letter_of_guarantee",
+                    "label": {
+                      "en": "A letter of guarantee from the manufacturer or supplier (attached below)",
+                      "es": "Una carta de garantía del fabricante o proveedor (adjunta abajo)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other_documentation",
+                    "label": {
+                      "en": "Other documentation (attached below)",
+                      "es": "Otra documentación (adjunta abajo)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "no_documentation",
+                    "label": {
+                      "en": "No documentation from the supplier yet",
+                      "es": "Todavía no hay documentación del proveedor"
+                    },
+                    "exclusive": true
+                  }
+                ],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "packaging_materials",
+                    "op": "includes_any",
+                    "value": [
+                      "paper",
+                      "cardboard",
+                      "twine"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.272(b)(1)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "compostable_packaging_non_gmo_proof",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How do you make sure the compostable or biodegradable packaging is not made with genetically modified materials?",
+                  "es": "¿Cómo te aseguras de que el empaque compostable o biodegradable no esté hecho con materiales genéticamente modificados?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "supplier_documentation",
+                    "label": {
+                      "en": "Documentation from the manufacturer or supplier (attached below)",
+                      "es": "Documentación del fabricante o proveedor (adjunta abajo)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "label_states_non_gmo",
+                    "label": {
+                      "en": "The label (attached below) states it is non-GMO",
+                      "es": "La etiqueta (adjunta abajo) dice que no es transgénico"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other_documentation",
+                    "label": {
+                      "en": "Other documentation (attached below)",
+                      "es": "Otra documentación (adjunta abajo)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "no_documentation",
+                    "label": {
+                      "en": "No documentation yet",
+                      "es": "Todavía no hay documentación"
+                    },
+                    "exclusive": true
+                  }
+                ],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "packaging_materials",
+                    "op": "includes",
+                    "value": "compostable"
+                  }
+                ],
+                "nop_cite": "§ 205.105(e)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "single_use_packaging_food_grade_proof",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "For single-use packaging, how do you make sure it is food grade?",
+                  "es": "Para el empaque de un solo uso, ¿cómo te aseguras de que sea apto para alimentos?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "certificate_or_letter",
+                    "label": {
+                      "en": "A certificate of compliance or guarantee letter from the manufacturer or supplier (attached below)",
+                      "es": "Un certificado de cumplimiento o carta de garantía del fabricante o proveedor (adjunto abajo)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "spec_sheet",
+                    "label": {
+                      "en": "A product specification sheet (attached below)",
+                      "es": "Una ficha de especificaciones del producto (adjunta abajo)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "label_states_food_grade",
+                    "label": {
+                      "en": "The label (attached below) states it is food grade",
+                      "es": "La etiqueta (adjunta abajo) dice que es apto para alimentos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other_documentation",
+                    "label": {
+                      "en": "Other documentation (attached below)",
+                      "es": "Otra documentación (adjunta abajo)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "no_documentation",
+                    "label": {
+                      "en": "No documentation yet",
+                      "es": "Todavía no hay documentación"
+                    },
+                    "exclusive": true
+                  },
+                  {
+                    "value": "no_single_use",
+                    "label": {
+                      "en": "No single-use packaging is used",
+                      "es": "No se usa empaque de un solo uso"
+                    },
+                    "exclusive": true
+                  }
+                ],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "packaging_materials",
+                    "op": "includes_any",
+                    "value": [
+                      "flexible_plastic",
+                      "hard_plastic",
+                      "glass",
+                      "metal",
+                      "paper",
+                      "cardboard",
+                      "twine",
+                      "compostable",
+                      "cloth",
+                      "wood",
+                      "other"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.272",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "packaging_documents_upload",
+                "kind": "upload",
+                "label": {
+                  "en": "Packaging documents (specification sheets, letters of guarantee, labels)",
+                  "es": "Documentos de empaque (fichas de especificaciones, cartas de garantía, etiquetas)"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "packaging_materials",
+                    "op": "includes_any",
+                    "value": [
+                      "flexible_plastic",
+                      "hard_plastic",
+                      "glass",
+                      "metal",
+                      "paper",
+                      "cardboard",
+                      "twine",
+                      "compostable",
+                      "cloth",
+                      "wood",
+                      "other"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.272",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "packaging_reused",
+                "kind": "radio",
+                "label": {
+                  "en": "Do you reuse packaging?",
+                  "es": "¿Reutilizas empaques?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "no",
+                    "label": {
+                      "en": "No",
+                      "es": "No"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "yes",
+                    "label": {
+                      "en": "Yes",
+                      "es": "Sí"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "packaging_materials",
+                    "op": "includes_any",
+                    "value": [
+                      "flexible_plastic",
+                      "hard_plastic",
+                      "glass",
+                      "metal",
+                      "paper",
+                      "cardboard",
+                      "twine",
+                      "compostable",
+                      "cloth",
+                      "wood",
+                      "other"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.272(b)(2)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "packaging_reuse_description",
+                "kind": "textarea",
+                "label": {
+                  "en": "Describe the packaging you reuse and how.",
+                  "es": "Describe qué empaques reutilizas y cómo."
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "packaging_reused",
+                    "op": "eq",
+                    "value": "yes"
+                  }
+                ],
+                "nop_cite": "§ 205.272(b)(2)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "reused_packaging_held_nonorganic",
+                "kind": "radio",
+                "label": {
+                  "en": "Has any reused packaging ever held non-organic product?",
+                  "es": "¿Algún empaque reutilizado ha contenido producto no orgánico?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "organic_only",
+                    "label": {
+                      "en": "No, it has only held organic product",
+                      "es": "No, solo ha contenido producto orgánico"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "yes_protected",
+                    "label": {
+                      "en": "Yes, and the product is protected from contact with possible residue (described below)",
+                      "es": "Sí, y el producto está protegido del contacto con posibles residuos (descrito abajo)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "yes_not_protected",
+                    "label": {
+                      "en": "Yes, and nothing is in place yet to protect the product",
+                      "es": "Sí, y todavía no hay nada para proteger el producto"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "packaging_reused",
+                    "op": "eq",
+                    "value": "yes"
+                  }
+                ],
+                "nop_cite": "§ 205.272",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "reused_packaging_protection",
+                "kind": "textarea",
+                "label": {
+                  "en": "How is the product protected from contact with possible residue?",
+                  "es": "¿Cómo se protege el producto del contacto con posibles residuos?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "reused_packaging_held_nonorganic",
+                    "op": "eq",
+                    "value": "yes_protected"
+                  }
+                ],
+                "nop_cite": "§ 205.272",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
                 "key": "harvest_container_material",
                 "kind": "checkbox_group",
                 "label": {
@@ -16724,6 +17376,367 @@
                   }
                 ],
                 "nop_cite": "§ 205.605",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "crop_wash_location",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Where are crops washed?",
+                  "es": "¿Dónde se lavan los cultivos?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "in_field",
+                    "label": {
+                      "en": "In the field",
+                      "es": "En el campo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "at_facility",
+                    "label": {
+                      "en": "At a handling or packing facility",
+                      "es": "En una instalación de manejo o empaque"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "post_harvest_water_uses",
+                    "op": "includes",
+                    "value": "crop_washing"
+                  }
+                ],
+                "nop_cite": "§ 205.272",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "post_harvest_water_potability",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "The water is not only from a municipal source. How do you make sure it is safe to drink (potable)?",
+                  "es": "El agua no viene solo de la red municipal. ¿Cómo te aseguras de que sea apta para beber (potable)?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "household_drinking_water",
+                    "label": {
+                      "en": "The well provides drinking water for the household",
+                      "es": "El pozo da el agua para beber de la casa"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "tested_regularly",
+                    "label": {
+                      "en": "The water is tested regularly for contaminants",
+                      "es": "El agua se analiza con regularidad"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "treated_sdwa",
+                    "label": {
+                      "en": "The water is treated with an approved disinfectant following the Safe Drinking Water Act",
+                      "es": "El agua se trata con un desinfectante aprobado según la Ley de Agua Potable Segura"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otro"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "not_shown",
+                    "label": {
+                      "en": "Not shown potable yet",
+                      "es": "Todavía no se demuestra que sea potable"
+                    },
+                    "exclusive": true
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "uses_water",
+                    "op": "truthy",
+                    "value": null
+                  },
+                  {
+                    "question": "post_harvest_water_source",
+                    "op": "includes_any",
+                    "value": [
+                      "on_site_well",
+                      "other"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.272",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "post_harvest_water_treatment_materials",
+                "kind": "textarea",
+                "label": {
+                  "en": "List the materials used to treat the water.",
+                  "es": "Indica los materiales que se usan para tratar el agua."
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "post_harvest_water_potability",
+                    "op": "includes",
+                    "value": "treated_sdwa"
+                  }
+                ],
+                "nop_cite": "§ 205.605",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "post_harvest_water_potability_other",
+                "kind": "textarea",
+                "label": {
+                  "en": "Describe how else the water is shown potable.",
+                  "es": "Describe de qué otra forma se demuestra que el agua es potable."
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "post_harvest_water_potability",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "post_harvest_water_positive_test",
+                "kind": "radio",
+                "label": {
+                  "en": "Has any water test come back positive for contaminants?",
+                  "es": "¿Algún análisis del agua salió positivo para contaminantes?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "no",
+                    "label": {
+                      "en": "No",
+                      "es": "No"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "yes",
+                    "label": {
+                      "en": "Yes",
+                      "es": "Sí"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "post_harvest_water_potability",
+                    "op": "includes",
+                    "value": "tested_regularly"
+                  }
+                ],
+                "nop_cite": "§ 205.272",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "post_harvest_water_positive_explanation",
+                "kind": "textarea",
+                "label": {
+                  "en": "Explain the result and what was done about it.",
+                  "es": "Explica el resultado y lo que se hizo al respecto."
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "post_harvest_water_positive_test",
+                    "op": "eq",
+                    "value": "yes"
+                  }
+                ],
+                "nop_cite": "§ 205.272",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "post_harvest_water_test_results",
+                "kind": "upload",
+                "label": {
+                  "en": "Water test results",
+                  "es": "Resultados de los análisis del agua"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "post_harvest_water_potability",
+                    "op": "includes",
+                    "value": "tested_regularly"
+                  }
+                ],
+                "nop_cite": "§ 205.272",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "water_treated_onsite",
+                "kind": "boolean",
+                "label": {
+                  "en": "Is the water treated on site (e.g. UV, carbon filtration, reverse osmosis, water softeners, pH adjustment)?",
+                  "es": "¿El agua se trata en el sitio (p. ej. UV, filtro de carbón, ósmosis inversa, suavizadores, ajuste de pH)?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "uses_water",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.272",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "treated_water_meets_sdwa",
+                "kind": "radio",
+                "label": {
+                  "en": "Does the treated water still meet the Safe Drinking Water Act standards?",
+                  "es": "¿El agua tratada sigue cumpliendo las normas de la Ley de Agua Potable Segura?"
+                },
+                "coaching": {
+                  "en": "Ask the treatment manufacturer if you are unsure. Your certifier may ask for documentation.",
+                  "es": "Pregunta al fabricante del tratamiento si tienes dudas. Tu certificadora puede pedir documentación."
+                },
+                "options": [
+                  {
+                    "value": "yes",
+                    "label": {
+                      "en": "Yes",
+                      "es": "Sí"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "not_confirmed",
+                    "label": {
+                      "en": "Not confirmed yet",
+                      "es": "Todavía no se confirma"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "no",
+                    "label": {
+                      "en": "No",
+                      "es": "No"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "water_treated_onsite",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.272",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "water_system_management",
+                "kind": "textarea",
+                "label": {
+                  "en": "Describe how you manage the water system for safe drinking and quality, including how you monitor the water.",
+                  "es": "Describe cómo manejas el sistema de agua para que sea segura para beber y de calidad, incluido cómo vigilas el agua."
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "water_treated_onsite",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.272",
                 "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
@@ -22578,6 +23591,7 @@
         "container_safeguards",
         "containers_reused_from_prohibited",
         "packaging_free_of_prohibited",
+        "packaging_materials",
         "harvest_container_material",
         "harvest_containers_stamped_organic",
         "who_transports",
@@ -22633,6 +23647,7 @@
         "container_safeguards",
         "containers_reused_from_prohibited",
         "packaging_free_of_prohibited",
+        "packaging_materials",
         "harvest_container_material",
         "harvest_containers_stamped_organic",
         "who_transports",
@@ -22685,6 +23700,7 @@
         "container_safeguards",
         "containers_reused_from_prohibited",
         "packaging_free_of_prohibited",
+        "packaging_materials",
         "harvest_container_material",
         "harvest_containers_stamped_organic",
         "who_transports",
@@ -22744,6 +23760,7 @@
         "container_safeguards",
         "containers_reused_from_prohibited",
         "packaging_free_of_prohibited",
+        "packaging_materials",
         "harvest_container_material",
         "harvest_containers_stamped_organic",
         "who_transports",
@@ -22804,6 +23821,7 @@
         "container_safeguards",
         "containers_reused_from_prohibited",
         "packaging_free_of_prohibited",
+        "packaging_materials",
         "harvest_container_material",
         "harvest_containers_stamped_organic",
         "who_transports",
@@ -22860,6 +23878,7 @@
         "container_safeguards",
         "containers_reused_from_prohibited",
         "packaging_free_of_prohibited",
+        "packaging_materials",
         "harvest_container_material",
         "harvest_containers_stamped_organic",
         "unstamped_container_safeguards",
@@ -22916,6 +23935,7 @@
         "container_safeguards",
         "containers_reused_from_prohibited",
         "packaging_free_of_prohibited",
+        "packaging_materials",
         "harvest_container_material",
         "harvest_containers_stamped_organic",
         "empty_bin_storage",
@@ -22968,6 +23988,7 @@
         "container_safeguards",
         "containers_reused_from_prohibited",
         "packaging_free_of_prohibited",
+        "packaging_materials",
         "harvest_container_material",
         "harvest_containers_stamped_organic",
         "who_transports",
@@ -23026,6 +24047,7 @@
         "container_safeguards",
         "containers_reused_from_prohibited",
         "packaging_free_of_prohibited",
+        "packaging_materials",
         "harvest_container_material",
         "harvest_containers_stamped_organic",
         "who_transports",
@@ -23078,6 +24100,7 @@
         "container_safeguards",
         "containers_reused_from_prohibited",
         "packaging_free_of_prohibited",
+        "packaging_materials",
         "harvest_container_material",
         "harvest_containers_stamped_organic",
         "who_transports",
@@ -23134,6 +24157,7 @@
         "containers_cleaning_method",
         "containers_reused_from_prohibited",
         "packaging_free_of_prohibited",
+        "packaging_materials",
         "harvest_container_material",
         "container_cleaning_records",
         "container_cleaning_sop_upload",
@@ -25826,6 +26850,222 @@
     },
     {
       "module": "g6_1_harvest_transport",
+      "label": "stale_chain:packaging_contamination_safeguards_other:packaging_materials:includes_any",
+      "answers": {
+        "packaging_contamination_safeguards": [
+          "other"
+        ],
+        "packaging_materials": [
+          "__not_an_option__"
+        ]
+      },
+      "visible_questions": [
+        "who_harvests",
+        "harvest_method",
+        "harvest_records_kept",
+        "harvest_transport_records_source",
+        "third_party_activities",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "packaging_materials",
+        "harvest_container_material",
+        "harvest_containers_stamped_organic",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "transport_container_types",
+        "transport_unit_cleaning_documentation",
+        "transport_shared_with_noncertified",
+        "first_stop_before_buyer",
+        "handled_by_another_operation"
+      ],
+      "missing_required": [
+        "who_harvests",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "handled_by_another_operation"
+      ],
+      "missing_required_na": [
+        "who_harvests",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "handled_by_another_operation"
+      ]
+    },
+    {
+      "module": "g6_1_harvest_transport",
+      "label": "stale_chain:packaging_reuse_description:packaging_materials:includes_any",
+      "answers": {
+        "packaging_reused": "yes",
+        "packaging_materials": [
+          "__not_an_option__"
+        ]
+      },
+      "visible_questions": [
+        "who_harvests",
+        "harvest_method",
+        "harvest_records_kept",
+        "harvest_transport_records_source",
+        "third_party_activities",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "packaging_materials",
+        "harvest_container_material",
+        "harvest_containers_stamped_organic",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "transport_container_types",
+        "transport_unit_cleaning_documentation",
+        "transport_shared_with_noncertified",
+        "first_stop_before_buyer",
+        "handled_by_another_operation"
+      ],
+      "missing_required": [
+        "who_harvests",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "handled_by_another_operation"
+      ],
+      "missing_required_na": [
+        "who_harvests",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "handled_by_another_operation"
+      ]
+    },
+    {
+      "module": "g6_1_harvest_transport",
+      "label": "stale_chain:reused_packaging_held_nonorganic:packaging_materials:includes_any",
+      "answers": {
+        "packaging_reused": "yes",
+        "packaging_materials": [
+          "__not_an_option__"
+        ]
+      },
+      "visible_questions": [
+        "who_harvests",
+        "harvest_method",
+        "harvest_records_kept",
+        "harvest_transport_records_source",
+        "third_party_activities",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "packaging_materials",
+        "harvest_container_material",
+        "harvest_containers_stamped_organic",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "transport_container_types",
+        "transport_unit_cleaning_documentation",
+        "transport_shared_with_noncertified",
+        "first_stop_before_buyer",
+        "handled_by_another_operation"
+      ],
+      "missing_required": [
+        "who_harvests",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "handled_by_another_operation"
+      ],
+      "missing_required_na": [
+        "who_harvests",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "handled_by_another_operation"
+      ]
+    },
+    {
+      "module": "g6_1_harvest_transport",
+      "label": "stale_chain:reused_packaging_protection:packaging_reused:eq",
+      "answers": {
+        "reused_packaging_held_nonorganic": "yes_protected",
+        "packaging_reused": "__not_an_option__"
+      },
+      "visible_questions": [
+        "who_harvests",
+        "harvest_method",
+        "harvest_records_kept",
+        "harvest_transport_records_source",
+        "third_party_activities",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "packaging_materials",
+        "harvest_container_material",
+        "harvest_containers_stamped_organic",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "transport_container_types",
+        "transport_unit_cleaning_documentation",
+        "transport_shared_with_noncertified",
+        "first_stop_before_buyer",
+        "handled_by_another_operation"
+      ],
+      "missing_required": [
+        "who_harvests",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "handled_by_another_operation"
+      ],
+      "missing_required_na": [
+        "who_harvests",
+        "container_types",
+        "container_safeguards",
+        "containers_reused_from_prohibited",
+        "packaging_free_of_prohibited",
+        "who_transports",
+        "transport_units_inspected_clean",
+        "lot_identification_on_every_load",
+        "handled_by_another_operation"
+      ]
+    },
+    {
+      "module": "g6_1_harvest_transport",
       "label": "stale_chain:container_cleaning_sop_upload:container_safeguards:includes",
       "answers": {
         "container_cleaning_records": [
@@ -25845,6 +27085,7 @@
         "container_safeguards",
         "containers_reused_from_prohibited",
         "packaging_free_of_prohibited",
+        "packaging_materials",
         "harvest_container_material",
         "harvest_containers_stamped_organic",
         "who_transports",
@@ -25896,6 +27137,7 @@
         "container_safeguards",
         "containers_reused_from_prohibited",
         "packaging_free_of_prohibited",
+        "packaging_materials",
         "harvest_container_material",
         "harvest_containers_stamped_organic",
         "who_transports",
@@ -25947,6 +27189,7 @@
         "container_safeguards",
         "containers_reused_from_prohibited",
         "packaging_free_of_prohibited",
+        "packaging_materials",
         "harvest_container_material",
         "harvest_containers_stamped_organic",
         "who_transports",
@@ -25998,6 +27241,7 @@
         "container_safeguards",
         "containers_reused_from_prohibited",
         "packaging_free_of_prohibited",
+        "packaging_materials",
         "harvest_container_material",
         "harvest_containers_stamped_organic",
         "who_transports",
@@ -26047,6 +27291,7 @@
         "container_safeguards",
         "containers_reused_from_prohibited",
         "packaging_free_of_prohibited",
+        "packaging_materials",
         "harvest_container_material",
         "harvest_containers_stamped_organic",
         "who_transports",
@@ -26150,6 +27395,471 @@
         "process_flow",
         "food_contact_cleaning_methods",
         "uses_water",
+        "commingling_controls",
+        "handling_records"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g6_4_handling",
+      "label": "stale_chain:crop_wash_location:uses_water:truthy",
+      "answers": {
+        "handling_activities": true,
+        "post_harvest_water_uses": [
+          "crop_washing"
+        ],
+        "uses_water": false
+      },
+      "visible_questions": [
+        "handling_activities",
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "on_farm_facility_table",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "uses_water",
+        "commingling_controls",
+        "applies_post_harvest_inputs",
+        "noncertified_only_inputs_used",
+        "handling_records",
+        "facility_docs"
+      ],
+      "missing_required": [
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "commingling_controls",
+        "handling_records"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g6_4_handling",
+      "label": "stale_chain:post_harvest_water_treatment_materials:uses_water:truthy",
+      "answers": {
+        "handling_activities": true,
+        "post_harvest_water_potability": [
+          "treated_sdwa"
+        ],
+        "uses_water": false
+      },
+      "visible_questions": [
+        "handling_activities",
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "on_farm_facility_table",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "uses_water",
+        "commingling_controls",
+        "applies_post_harvest_inputs",
+        "noncertified_only_inputs_used",
+        "handling_records",
+        "facility_docs"
+      ],
+      "missing_required": [
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "commingling_controls",
+        "handling_records"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g6_4_handling",
+      "label": "stale_chain:post_harvest_water_treatment_materials:post_harvest_water_source:includes_any",
+      "answers": {
+        "handling_activities": true,
+        "post_harvest_water_potability": [
+          "treated_sdwa"
+        ],
+        "post_harvest_water_source": [
+          "__not_an_option__"
+        ]
+      },
+      "visible_questions": [
+        "handling_activities",
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "on_farm_facility_table",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "uses_water",
+        "commingling_controls",
+        "applies_post_harvest_inputs",
+        "noncertified_only_inputs_used",
+        "handling_records",
+        "facility_docs"
+      ],
+      "missing_required": [
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "uses_water",
+        "commingling_controls",
+        "handling_records"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g6_4_handling",
+      "label": "stale_chain:post_harvest_water_potability_other:uses_water:truthy",
+      "answers": {
+        "handling_activities": true,
+        "post_harvest_water_potability": [
+          "other"
+        ],
+        "uses_water": false
+      },
+      "visible_questions": [
+        "handling_activities",
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "on_farm_facility_table",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "uses_water",
+        "commingling_controls",
+        "applies_post_harvest_inputs",
+        "noncertified_only_inputs_used",
+        "handling_records",
+        "facility_docs"
+      ],
+      "missing_required": [
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "commingling_controls",
+        "handling_records"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g6_4_handling",
+      "label": "stale_chain:post_harvest_water_potability_other:post_harvest_water_source:includes_any",
+      "answers": {
+        "handling_activities": true,
+        "post_harvest_water_potability": [
+          "other"
+        ],
+        "post_harvest_water_source": [
+          "__not_an_option__"
+        ]
+      },
+      "visible_questions": [
+        "handling_activities",
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "on_farm_facility_table",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "uses_water",
+        "commingling_controls",
+        "applies_post_harvest_inputs",
+        "noncertified_only_inputs_used",
+        "handling_records",
+        "facility_docs"
+      ],
+      "missing_required": [
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "uses_water",
+        "commingling_controls",
+        "handling_records"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g6_4_handling",
+      "label": "stale_chain:post_harvest_water_positive_test:uses_water:truthy",
+      "answers": {
+        "handling_activities": true,
+        "post_harvest_water_potability": [
+          "tested_regularly"
+        ],
+        "uses_water": false
+      },
+      "visible_questions": [
+        "handling_activities",
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "on_farm_facility_table",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "uses_water",
+        "commingling_controls",
+        "applies_post_harvest_inputs",
+        "noncertified_only_inputs_used",
+        "handling_records",
+        "facility_docs"
+      ],
+      "missing_required": [
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "commingling_controls",
+        "handling_records"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g6_4_handling",
+      "label": "stale_chain:post_harvest_water_positive_test:post_harvest_water_source:includes_any",
+      "answers": {
+        "handling_activities": true,
+        "post_harvest_water_potability": [
+          "tested_regularly"
+        ],
+        "post_harvest_water_source": [
+          "__not_an_option__"
+        ]
+      },
+      "visible_questions": [
+        "handling_activities",
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "on_farm_facility_table",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "uses_water",
+        "commingling_controls",
+        "applies_post_harvest_inputs",
+        "noncertified_only_inputs_used",
+        "handling_records",
+        "facility_docs"
+      ],
+      "missing_required": [
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "uses_water",
+        "commingling_controls",
+        "handling_records"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g6_4_handling",
+      "label": "stale_chain:post_harvest_water_positive_explanation:post_harvest_water_potability:includes",
+      "answers": {
+        "handling_activities": true,
+        "post_harvest_water_positive_test": "yes",
+        "post_harvest_water_potability": [
+          "__not_an_option__"
+        ]
+      },
+      "visible_questions": [
+        "handling_activities",
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "on_farm_facility_table",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "uses_water",
+        "commingling_controls",
+        "applies_post_harvest_inputs",
+        "noncertified_only_inputs_used",
+        "handling_records",
+        "facility_docs"
+      ],
+      "missing_required": [
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "uses_water",
+        "commingling_controls",
+        "handling_records"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g6_4_handling",
+      "label": "stale_chain:post_harvest_water_test_results:uses_water:truthy",
+      "answers": {
+        "handling_activities": true,
+        "post_harvest_water_potability": [
+          "tested_regularly"
+        ],
+        "uses_water": false
+      },
+      "visible_questions": [
+        "handling_activities",
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "on_farm_facility_table",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "uses_water",
+        "commingling_controls",
+        "applies_post_harvest_inputs",
+        "noncertified_only_inputs_used",
+        "handling_records",
+        "facility_docs"
+      ],
+      "missing_required": [
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "commingling_controls",
+        "handling_records"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g6_4_handling",
+      "label": "stale_chain:post_harvest_water_test_results:post_harvest_water_source:includes_any",
+      "answers": {
+        "handling_activities": true,
+        "post_harvest_water_potability": [
+          "tested_regularly"
+        ],
+        "post_harvest_water_source": [
+          "__not_an_option__"
+        ]
+      },
+      "visible_questions": [
+        "handling_activities",
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "on_farm_facility_table",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "uses_water",
+        "commingling_controls",
+        "applies_post_harvest_inputs",
+        "noncertified_only_inputs_used",
+        "handling_records",
+        "facility_docs"
+      ],
+      "missing_required": [
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "uses_water",
+        "commingling_controls",
+        "handling_records"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g6_4_handling",
+      "label": "stale_chain:treated_water_meets_sdwa:uses_water:truthy",
+      "answers": {
+        "handling_activities": true,
+        "water_treated_onsite": true,
+        "uses_water": false
+      },
+      "visible_questions": [
+        "handling_activities",
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "on_farm_facility_table",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "uses_water",
+        "commingling_controls",
+        "applies_post_harvest_inputs",
+        "noncertified_only_inputs_used",
+        "handling_records",
+        "facility_docs"
+      ],
+      "missing_required": [
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "commingling_controls",
+        "handling_records"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g6_4_handling",
+      "label": "stale_chain:water_system_management:uses_water:truthy",
+      "answers": {
+        "handling_activities": true,
+        "water_treated_onsite": true,
+        "uses_water": false
+      },
+      "visible_questions": [
+        "handling_activities",
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "on_farm_facility_table",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "uses_water",
+        "commingling_controls",
+        "applies_post_harvest_inputs",
+        "noncertified_only_inputs_used",
+        "handling_records",
+        "facility_docs"
+      ],
+      "missing_required": [
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
         "commingling_controls",
         "handling_records"
       ],
