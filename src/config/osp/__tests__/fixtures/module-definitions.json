@@ -22404,6 +22404,420 @@
                 "max_length": null
               }
             ]
+          },
+          {
+            "key": "b_certification_history",
+            "title": {
+              "en": "B. Certification history",
+              "es": "B. Historial de certificación"
+            },
+            "education": [
+              {
+                "en": "Certifiers ask whether this operation, or anyone responsibly connected to it (owners, officers, managers, the person who signs), has held or applied for organic certification before, and whether any of it ended badly. One answer covers all of them.",
+                "es": "Los certificadores preguntan si esta operación, o alguien responsablemente vinculado a ella (dueños, directivos, gerentes, quien firma), tuvo o solicitó antes una certificación orgánica, y si alguna terminó mal. Una respuesta los cubre a todos."
+              }
+            ],
+            "visible_when": [],
+            "questions": [
+              {
+                "key": "history_ever_certified",
+                "kind": "boolean",
+                "label": {
+                  "en": "Has this operation, or anyone responsibly connected to it, ever been certified organic?",
+                  "es": "¿Esta operación, o alguien responsablemente vinculado a ella, estuvo alguna vez certificada como orgánica?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.401(c)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "history_prior_agents",
+                "kind": "textarea",
+                "label": {
+                  "en": "Which certifying agencies, and the dates (or years) each certification was held?",
+                  "es": "¿Qué agencias certificadoras, y en qué fechas (o años) se tuvo cada certificación?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "history_ever_certified",
+                    "op": "eq",
+                    "value": true
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": {
+                  "en": "e.g. Oregon Tilth, March 2015 to June 2021; CCOF since 2022",
+                  "es": "p. ej. Oregon Tilth, de marzo de 2015 a junio de 2021; CCOF desde 2022"
+                },
+                "max_length": null
+              },
+              {
+                "key": "history_suspended",
+                "kind": "boolean",
+                "label": {
+                  "en": "Was that certification, or the certification of any field or product, ever suspended?",
+                  "es": "¿Esa certificación, o la de algún campo o producto, fue suspendida alguna vez?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "history_ever_certified",
+                    "op": "eq",
+                    "value": true
+                  }
+                ],
+                "nop_cite": "§ 205.662(e)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "history_revoked",
+                "kind": "boolean",
+                "label": {
+                  "en": "Was it ever revoked?",
+                  "es": "¿Fue revocada alguna vez?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "history_ever_certified",
+                    "op": "eq",
+                    "value": true
+                  }
+                ],
+                "nop_cite": "§ 205.662(e)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "history_surrendered_outstanding",
+                "kind": "boolean",
+                "label": {
+                  "en": "Was a certification ever surrendered while noncompliances or conditions were still outstanding?",
+                  "es": "¿Se renunció alguna vez a una certificación con incumplimientos o condiciones todavía pendientes?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "history_ever_certified",
+                    "op": "eq",
+                    "value": true
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "history_outstanding_noncompliances",
+                "kind": "boolean",
+                "label": {
+                  "en": "Is any noncompliance issued by any of those agencies still outstanding?",
+                  "es": "¿Hay algún incumplimiento emitido por alguna de esas agencias que siga pendiente?"
+                },
+                "coaching": {
+                  "en": "For your current agency, the Certifier inspections and notices card on the Organic System Plan page lists each notice and whether its resolution notice is on file. It only knows what you recorded there, so answer for every agency yourself.",
+                  "es": "Para tu agencia actual, la tarjeta Inspecciones y avisos de la certificadora en la página del Plan del Sistema Orgánico muestra cada aviso y si tienes archivada su resolución. Solo sabe lo que registraste ahí, así que responde tú por cada agencia."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "history_ever_certified",
+                    "op": "eq",
+                    "value": true
+                  }
+                ],
+                "nop_cite": "§ 205.662(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "history_denied",
+                "kind": "boolean",
+                "label": {
+                  "en": "Was an application for organic certification ever denied?",
+                  "es": "¿Alguna vez se denegó una solicitud de certificación orgánica?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.405",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "history_withdrew_outstanding",
+                "kind": "boolean",
+                "label": {
+                  "en": "Was an application for certification ever withdrawn while noncompliances were still outstanding?",
+                  "es": "¿Se retiró alguna vez una solicitud de certificación con incumplimientos todavía pendientes?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.401(c)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              }
+            ]
+          },
+          {
+            "key": "c_adverse_history",
+            "title": {
+              "en": "C. What happened",
+              "es": "C. Qué pasó"
+            },
+            "education": [
+              {
+                "en": "You answered yes above. Both CCOF and OTCO ask for the years and agencies, a copy of every letter, and what you did to correct it.",
+                "es": "Respondiste que sí arriba. CCOF y OTCO piden los años y las agencias, una copia de cada carta y lo que hiciste para corregirlo."
+              }
+            ],
+            "visible_when": [],
+            "visible_when_any": [
+              {
+                "question": "history_suspended",
+                "op": "eq",
+                "value": true
+              },
+              {
+                "question": "history_revoked",
+                "op": "eq",
+                "value": true
+              },
+              {
+                "question": "history_surrendered_outstanding",
+                "op": "eq",
+                "value": true
+              },
+              {
+                "question": "history_outstanding_noncompliances",
+                "op": "eq",
+                "value": true
+              },
+              {
+                "question": "history_denied",
+                "op": "eq",
+                "value": true
+              },
+              {
+                "question": "history_withdrew_outstanding",
+                "op": "eq",
+                "value": true
+              }
+            ],
+            "questions": [
+              {
+                "key": "history_adverse_explanation",
+                "kind": "textarea",
+                "label": {
+                  "en": "For each yes: the year, the agency, what happened and the corrective actions taken.",
+                  "es": "Por cada sí: el año, la agencia, qué pasó y las acciones correctivas que tomaste."
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "history_letters_upload",
+                "kind": "upload",
+                "label": {
+                  "en": "Attach every letter about it: notices, the suspension, revocation or denial, and any resolution.",
+                  "es": "Adjunta cada carta al respecto: avisos, la suspensión, revocación o denegación, y cualquier resolución."
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "history_this_agent_records",
+                "kind": "info",
+                "label": {
+                  "en": "Notices from your current agency that you recorded on the Certifier inspections and notices card print in the renewal packet with their letters. Attach here the letters from earlier agencies, and anything not on that card.",
+                  "es": "Los avisos de tu agencia actual que registraste en la tarjeta Inspecciones y avisos de la certificadora se imprimen en el paquete de renovación con sus cartas. Adjunta aquí las cartas de agencias anteriores y todo lo que no esté en esa tarjeta."
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "history_not_sold_since_suspension",
+                "kind": "boolean",
+                "label": {
+                  "en": "I affirm that no product has been sold, labeled or represented as organic since the date of the suspension.",
+                  "es": "Afirmo que ningún producto se vendió, etiquetó ni presentó como orgánico desde la fecha de la suspensión."
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "history_suspended",
+                    "op": "eq",
+                    "value": true
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "history_currently_suspended",
+                "kind": "boolean",
+                "label": {
+                  "en": "Is the operation suspended today?",
+                  "es": "¿La operación está suspendida hoy?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "history_suspended",
+                    "op": "eq",
+                    "value": true
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "history_request_reinstatement",
+                "kind": "boolean",
+                "label": {
+                  "en": "I request that the National Organic Program reinstate this operation's certification.",
+                  "es": "Solicito que el Programa Orgánico Nacional restablezca la certificación de esta operación."
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "history_suspended",
+                    "op": "eq",
+                    "value": true
+                  },
+                  {
+                    "question": "history_currently_suspended",
+                    "op": "eq",
+                    "value": true
+                  }
+                ],
+                "nop_cite": "§ 205.662(f)(1)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "history_not_sold_since_revocation",
+                "kind": "boolean",
+                "label": {
+                  "en": "I affirm that no product has been sold, labeled or represented as organic since the date of the revocation.",
+                  "es": "Afirmo que ningún producto se vendió, etiquetó ni presentó como orgánico desde la fecha de la revocación."
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "history_revoked",
+                    "op": "eq",
+                    "value": true
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              }
+            ]
           }
         ]
       }
@@ -28166,6 +28580,103 @@
         "mechanical_controls"
       ],
       "missing_required_na": []
+    },
+    {
+      "module": "certification_contract",
+      "label": "stale_chain:history_not_sold_since_suspension:history_ever_certified:eq",
+      "answers": {
+        "history_suspended": true,
+        "history_ever_certified": false
+      },
+      "visible_questions": [
+        "contract_notes",
+        "contract_scopes",
+        "contract_upload",
+        "history_ever_certified",
+        "history_denied",
+        "history_withdrew_outstanding"
+      ],
+      "missing_required": [
+        "contract_notes",
+        "contract_scopes"
+      ],
+      "missing_required_na": [
+        "contract_notes",
+        "contract_scopes"
+      ]
+    },
+    {
+      "module": "certification_contract",
+      "label": "stale_chain:history_currently_suspended:history_ever_certified:eq",
+      "answers": {
+        "history_suspended": true,
+        "history_ever_certified": false
+      },
+      "visible_questions": [
+        "contract_notes",
+        "contract_scopes",
+        "contract_upload",
+        "history_ever_certified",
+        "history_denied",
+        "history_withdrew_outstanding"
+      ],
+      "missing_required": [
+        "contract_notes",
+        "contract_scopes"
+      ],
+      "missing_required_na": [
+        "contract_notes",
+        "contract_scopes"
+      ]
+    },
+    {
+      "module": "certification_contract",
+      "label": "stale_chain:history_request_reinstatement:history_ever_certified:eq",
+      "answers": {
+        "history_suspended": true,
+        "history_currently_suspended": true,
+        "history_ever_certified": false
+      },
+      "visible_questions": [
+        "contract_notes",
+        "contract_scopes",
+        "contract_upload",
+        "history_ever_certified",
+        "history_denied",
+        "history_withdrew_outstanding"
+      ],
+      "missing_required": [
+        "contract_notes",
+        "contract_scopes"
+      ],
+      "missing_required_na": [
+        "contract_notes",
+        "contract_scopes"
+      ]
+    },
+    {
+      "module": "certification_contract",
+      "label": "stale_chain:history_not_sold_since_revocation:history_ever_certified:eq",
+      "answers": {
+        "history_revoked": true,
+        "history_ever_certified": false
+      },
+      "visible_questions": [
+        "contract_notes",
+        "contract_scopes",
+        "contract_upload",
+        "history_ever_certified",
+        "history_denied",
+        "history_withdrew_outstanding"
+      ],
+      "missing_required": [
+        "contract_notes",
+        "contract_scopes"
+      ],
+      "missing_required_na": [
+        "contract_notes",
+        "contract_scopes"
+      ]
     }
   ]
 }
