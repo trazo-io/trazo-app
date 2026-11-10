@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.11.29",
+  "content_version": "2026.11.30",
   "registry": {
-    "content_version": "2026.11.29",
+    "content_version": "2026.11.30",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -16427,10 +16427,58 @@
                     "exclusive": false
                   },
                   {
+                    "value": "freezing",
+                    "label": {
+                      "en": "Freezing",
+                      "es": "Congelado"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "cutting",
+                    "label": {
+                      "en": "Cutting",
+                      "es": "Cortado"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "cooking",
+                    "label": {
+                      "en": "Cooking",
+                      "es": "Cocción"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "mixing",
+                    "label": {
+                      "en": "Mixing",
+                      "es": "Mezclado"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "fermenting",
+                    "label": {
+                      "en": "Fermenting",
+                      "es": "Fermentado"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "seed_cleaning",
+                    "label": {
+                      "en": "Seed cleaning",
+                      "es": "Limpieza de semilla"
+                    },
+                    "exclusive": false
+                  },
+                  {
                     "value": "pest_treatment_nonfumigation",
                     "label": {
-                      "en": "Fumigation-free pest treatment (e.g., freezing)",
-                      "es": "Tratamiento de plagas sin fumigación (p. ej., congelado)"
+                      "en": "Fumigation-free pest treatment",
+                      "es": "Tratamiento de plagas sin fumigación"
                     },
                     "exclusive": false
                   },
@@ -16479,6 +16527,95 @@
                   }
                 ],
                 "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "simple_handling_disqualifiers",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Does any of this apply to your on-farm handling? Check all that apply.",
+                  "es": "¿Algo de esto aplica a tu manejo en la finca? Marca todo lo que corresponda."
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "nonorganic_handled_here",
+                    "label": {
+                      "en": "Non-organic product is also handled or processed at this facility",
+                      "es": "También se maneja o procesa producto no orgánico en esta instalación"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "off_farm_ingredients",
+                    "label": {
+                      "en": "Products made here contain ingredients from off the farm (other than salt)",
+                      "es": "Los productos hechos aquí contienen ingredientes de fuera de la finca (que no sean sal)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "multi_ingredient_products",
+                    "label": {
+                      "en": "Multi-ingredient products are made here",
+                      "es": "Aquí se hacen productos de varios ingredientes"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "multi_farm_csa",
+                    "label": {
+                      "en": "A multi-farm CSA is operated (other farms' product is distributed)",
+                      "es": "Se opera una CSA de varias fincas (se distribuye producto de otras fincas)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "complex_handling",
+                    "label": {
+                      "en": "Complex handling such as baking, brewing or extracting",
+                      "es": "Manejo complejo como hornear, elaborar bebidas o extraer"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "none",
+                    "label": {
+                      "en": "None of these: only my own organic crop, in simple steps",
+                      "es": "Nada de esto: solo mi propio cultivo orgánico, en pasos simples"
+                    },
+                    "exclusive": true
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "handling_activities",
+                    "op": "includes_any",
+                    "value": [
+                      "washing",
+                      "hulling_shelling",
+                      "drying",
+                      "sorting_grading",
+                      "packing",
+                      "cooling",
+                      "freezing",
+                      "cutting",
+                      "cooking",
+                      "mixing",
+                      "fermenting",
+                      "seed_cleaning",
+                      "pest_treatment_nonfumigation",
+                      "other"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.100(a)",
                 "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
@@ -17880,6 +18017,25 @@
                 "max_length": null
               },
               {
+                "key": "shares_handling_area_or_equipment",
+                "kind": "boolean",
+                "label": {
+                  "en": "Are the handling area, food contact surfaces or packing equipment used for both organic and non-organic crops?",
+                  "es": "¿El área de manejo, las superficies en contacto con alimentos o el equipo de empaque se usan tanto para cultivos orgánicos como no orgánicos?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.272(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
                 "key": "commingling_controls",
                 "kind": "checkbox_group",
                 "label": {
@@ -17928,6 +18084,22 @@
                     "label": {
                       "en": "Labeled, dedicated containers throughout handling",
                       "es": "Contenedores etiquetados y dedicados durante todo el manejo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "organic_first",
+                    "label": {
+                      "en": "Organic crops are processed before non-organic crops",
+                      "es": "Los cultivos orgánicos se procesan antes que los no orgánicos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "separate_storage_areas",
+                    "label": {
+                      "en": "Organic and non-organic crops are stored in separate areas",
+                      "es": "Los cultivos orgánicos y no orgánicos se almacenan en áreas separadas"
                     },
                     "exclusive": false
                   },
@@ -17983,8 +18155,8 @@
                   "es": "¿Aplicas algún insumo directamente a los cultivos después de la cosecha, certificados o no (una cera, un lavado sanitizante, un agente de maduración o antibrotación, un gas de empaque)?"
                 },
                 "coaching": {
-                  "en": "List each one on your materials list, under post-harvest materials, with its brand and manufacturer.",
-                  "es": "Anota cada uno en tu lista de materiales, en materiales de poscosecha, con su marca y fabricante."
+                  "en": "Include processing aids, such as an anti-foaming agent in the wash line. List each one on your materials list, under post-harvest materials, with its brand and manufacturer.",
+                  "es": "Incluye los auxiliares de proceso, como un antiespumante en la línea de lavado. Anota cada uno en tu lista de materiales, en materiales de poscosecha, con su marca y fabricante."
                 },
                 "options": [],
                 "required": false,
@@ -24623,6 +24795,7 @@
       },
       "visible_questions": [
         "handling_activities",
+        "simple_handling_disqualifiers",
         "products_handled",
         "own_products_only",
         "handling_site",
@@ -24631,6 +24804,7 @@
         "food_contact_cleaning_methods",
         "uses_equipment_sanitizer_or_cleaner",
         "uses_water",
+        "shares_handling_area_or_equipment",
         "commingling_controls",
         "applies_post_harvest_inputs",
         "post_harvest_input_types",
@@ -24667,6 +24841,7 @@
       },
       "visible_questions": [
         "handling_activities",
+        "simple_handling_disqualifiers",
         "products_handled",
         "own_products_only",
         "handling_site",
@@ -24675,6 +24850,7 @@
         "food_contact_cleaning_methods",
         "uses_equipment_sanitizer_or_cleaner",
         "uses_water",
+        "shares_handling_area_or_equipment",
         "commingling_controls",
         "applies_post_harvest_inputs",
         "noncertified_only_inputs_used",
@@ -27758,6 +27934,7 @@
         "food_contact_cleaning_methods",
         "uses_equipment_sanitizer_or_cleaner",
         "uses_water",
+        "shares_handling_area_or_equipment",
         "commingling_controls",
         "applies_post_harvest_inputs",
         "noncertified_only_inputs_used",
@@ -27796,6 +27973,7 @@
         "food_contact_cleaning_methods",
         "uses_equipment_sanitizer_or_cleaner",
         "uses_water",
+        "shares_handling_area_or_equipment",
         "commingling_controls",
         "applies_post_harvest_inputs",
         "noncertified_only_inputs_used",
@@ -27834,6 +28012,7 @@
         "food_contact_cleaning_methods",
         "uses_equipment_sanitizer_or_cleaner",
         "uses_water",
+        "shares_handling_area_or_equipment",
         "commingling_controls",
         "applies_post_harvest_inputs",
         "noncertified_only_inputs_used",
@@ -27872,6 +28051,7 @@
         "food_contact_cleaning_methods",
         "uses_equipment_sanitizer_or_cleaner",
         "uses_water",
+        "shares_handling_area_or_equipment",
         "commingling_controls",
         "applies_post_harvest_inputs",
         "noncertified_only_inputs_used",
@@ -27912,6 +28092,7 @@
         "food_contact_cleaning_methods",
         "uses_equipment_sanitizer_or_cleaner",
         "uses_water",
+        "shares_handling_area_or_equipment",
         "commingling_controls",
         "applies_post_harvest_inputs",
         "noncertified_only_inputs_used",
@@ -27951,6 +28132,7 @@
         "food_contact_cleaning_methods",
         "uses_equipment_sanitizer_or_cleaner",
         "uses_water",
+        "shares_handling_area_or_equipment",
         "commingling_controls",
         "applies_post_harvest_inputs",
         "noncertified_only_inputs_used",
@@ -27991,6 +28173,7 @@
         "food_contact_cleaning_methods",
         "uses_equipment_sanitizer_or_cleaner",
         "uses_water",
+        "shares_handling_area_or_equipment",
         "commingling_controls",
         "applies_post_harvest_inputs",
         "noncertified_only_inputs_used",
@@ -28030,6 +28213,7 @@
         "food_contact_cleaning_methods",
         "uses_equipment_sanitizer_or_cleaner",
         "uses_water",
+        "shares_handling_area_or_equipment",
         "commingling_controls",
         "applies_post_harvest_inputs",
         "noncertified_only_inputs_used",
@@ -28070,6 +28254,7 @@
         "food_contact_cleaning_methods",
         "uses_equipment_sanitizer_or_cleaner",
         "uses_water",
+        "shares_handling_area_or_equipment",
         "commingling_controls",
         "applies_post_harvest_inputs",
         "noncertified_only_inputs_used",
@@ -28109,6 +28294,7 @@
         "food_contact_cleaning_methods",
         "uses_equipment_sanitizer_or_cleaner",
         "uses_water",
+        "shares_handling_area_or_equipment",
         "commingling_controls",
         "applies_post_harvest_inputs",
         "noncertified_only_inputs_used",
@@ -28148,6 +28334,7 @@
         "food_contact_cleaning_methods",
         "uses_equipment_sanitizer_or_cleaner",
         "uses_water",
+        "shares_handling_area_or_equipment",
         "commingling_controls",
         "applies_post_harvest_inputs",
         "noncertified_only_inputs_used",
@@ -28188,6 +28375,7 @@
         "food_contact_cleaning_methods",
         "uses_equipment_sanitizer_or_cleaner",
         "uses_water",
+        "shares_handling_area_or_equipment",
         "commingling_controls",
         "applies_post_harvest_inputs",
         "noncertified_only_inputs_used",
@@ -28225,6 +28413,7 @@
         "food_contact_cleaning_methods",
         "uses_equipment_sanitizer_or_cleaner",
         "uses_water",
+        "shares_handling_area_or_equipment",
         "commingling_controls",
         "applies_post_harvest_inputs",
         "noncertified_only_inputs_used",
@@ -28261,6 +28450,7 @@
         "food_contact_cleaning_methods",
         "uses_equipment_sanitizer_or_cleaner",
         "uses_water",
+        "shares_handling_area_or_equipment",
         "commingling_controls",
         "applies_post_harvest_inputs",
         "noncertified_only_inputs_used",
@@ -28297,6 +28487,7 @@
         "food_contact_cleaning_methods",
         "uses_equipment_sanitizer_or_cleaner",
         "uses_water",
+        "shares_handling_area_or_equipment",
         "commingling_controls",
         "applies_post_harvest_inputs",
         "noncertified_only_inputs_used",
@@ -28333,6 +28524,7 @@
         "food_contact_cleaning_methods",
         "uses_equipment_sanitizer_or_cleaner",
         "uses_water",
+        "shares_handling_area_or_equipment",
         "commingling_controls",
         "applies_post_harvest_inputs",
         "noncertified_only_inputs_used",
@@ -28370,6 +28562,7 @@
         "food_contact_cleaning_methods",
         "uses_equipment_sanitizer_or_cleaner",
         "uses_water",
+        "shares_handling_area_or_equipment",
         "commingling_controls",
         "applies_post_harvest_inputs",
         "noncertified_only_inputs_used",
