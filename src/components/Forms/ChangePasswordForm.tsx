@@ -50,6 +50,28 @@ interface ChangePasswordFormProps {
 // `change_password`). It belongs on the field, in the reader's language.
 const WRONG_CURRENT = 'Current password is incorrect';
 
+/**
+ * The server's password validators (AUTH_PASSWORD_VALIDATORS: Django's three built-ins plus
+ * trazo-back/backend/security/password_validators.py) answer in English sentences, with no
+ * code in the response. Each known sentence maps to a catalogue key, so the reason reaches the
+ * reader in their language; anything unknown gets the generic translated failure, never the raw
+ * English (review of #354). Parity with the backend file: changePasswordServerMessages.test.ts.
+ */
+export const SERVER_PASSWORD_MESSAGES: Array<[RegExp, string]> = [
+  [/too similar to the/i, 'account.password.server.similar'],
+  [/too common|common words or predictable patterns/i, 'account.password.server.common'],
+  [/entirely numeric/i, 'account.password.server.numeric'],
+  [/at least \d+ characters/i, 'account.password.server.tooShort'],
+  [/^Password must contain /i, 'account.password.server.complexity'],
+  [/too simple/i, 'account.password.server.simple'],
+  [/found in data breaches/i, 'account.password.server.breached'],
+  [/cannot contain your (email|first name|last name)/i, 'account.password.server.personal'],
+  [/sequential|keyboard patterns/i, 'account.password.server.sequential']
+];
+
+export const serverPasswordMessageKey = (message: string): string | null =>
+  SERVER_PASSWORD_MESSAGES.find(([pattern]) => pattern.test(message))?.[1] ?? null;
+
 export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ userType }) => {
   const navigate = useNavigate();
   const intl = useIntl();
@@ -109,13 +131,23 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ userType
         setError('oldPassword', { type: 'server', message: t('account.password.wrongCurrent') });
         return;
       }
+      // A rule the server applied to the NEW password belongs on that field, translated.
+      const messages: string[] = Array.isArray(serverMessage)
+        ? serverMessage
+        : serverMessage
+        ? [serverMessage]
+        : [];
+      const ruleKey = messages.map(serverPasswordMessageKey).find(Boolean);
+      if (ruleKey) {
+        setError('newPassword', {
+          type: 'server',
+          message: t(ruleKey, { min: DEFAULT_REQUIREMENTS.minLength })
+        });
+        return;
+      }
       toast({
         title: t('app.error'),
-        // Django's password validators answer in English; better a true English line than a
-        // generic one that hides which rule the server applied.
-        description:
-          (Array.isArray(serverMessage) ? serverMessage[0] : serverMessage) ||
-          t('auth.changePassword.toast.failed.body'),
+        description: t('auth.changePassword.toast.failed.body'),
         status: 'error',
         duration: 5000,
         isClosable: true

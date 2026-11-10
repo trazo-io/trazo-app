@@ -111,6 +111,37 @@ describe('Change password form speaks the reader’s language', () => {
   });
 });
 
+describe('a rule the server applies reaches the reader translated (review of #354)', () => {
+  it('shows the translated reason on the new-password field, never Django’s English', async () => {
+    const change = vi.fn(() => ({
+      unwrap: () => Promise.reject({ data: { error: ['This password is too common.'] } })
+    }));
+    renderForm('es-419', change);
+    const inputs = document.querySelectorAll('input[type="password"]');
+    await userEvent.type(inputs[0] as HTMLElement, 'old-one');
+    await userEvent.type(inputs[1] as HTMLElement, 'Blueberry#2026');
+    await userEvent.type(inputs[2] as HTMLElement, 'Blueberry#2026');
+    await userEvent.click(screen.getByRole('button', { name: ES['account.password.submit'] }));
+    expect(await screen.findByText(ES['account.password.server.common'])).toBeTruthy();
+    expect(screen.queryByText(/too common/)).toBeNull();
+  });
+
+  it('an unknown server sentence gets the generic translated failure, not the raw text', async () => {
+    const change = vi.fn(() => ({
+      unwrap: () => Promise.reject({ data: { error: ['Some new English rule.'] } })
+    }));
+    renderForm('es-419', change);
+    const inputs = document.querySelectorAll('input[type="password"]');
+    await userEvent.type(inputs[0] as HTMLElement, 'old-one');
+    await userEvent.type(inputs[1] as HTMLElement, 'Blueberry#2026');
+    await userEvent.type(inputs[2] as HTMLElement, 'Blueberry#2026');
+    await userEvent.click(screen.getByRole('button', { name: ES['account.password.submit'] }));
+    await waitFor(() => expect(change).toHaveBeenCalledTimes(1));
+    expect(await screen.findByText(ES['auth.changePassword.toast.failed.body'])).toBeTruthy();
+    expect(screen.queryByText('Some new English rule.')).toBeNull();
+  });
+});
+
 describe('Your profile', () => {
   it('is a top-level page with no unnamed Back, and its password row links on', () => {
     const profile = read('views/Dashboard/Dashboard/User/ProfileUser.tsx');
