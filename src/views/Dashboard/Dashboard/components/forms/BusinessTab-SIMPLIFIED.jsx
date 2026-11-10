@@ -2,8 +2,9 @@
 // Tracks business activities that enhance agricultural transparency and consumer trust
 // Phase 1 Enhanced: Trust indicators, progressive disclosure, consumer value messaging
 
-import { HStack, Box, VStack, SimpleGrid } from '@chakra-ui/react';
+import { HStack, Box, VStack, SimpleGrid, Link } from '@chakra-ui/react';
 import {
+  StandardAlert,
   StandardButton,
   StandardField,
   StandardInput,
@@ -27,11 +28,13 @@ import { object, string, array } from 'zod';
 import CustomFieldsForm from './CustomFieldsForm';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
+import { useParams } from 'react-router-dom';
 // Event Field Registry (Phase 5G — form integration)
 import { useFormFields } from 'src/hooks/useFormFields';
 import { RegistryFormField } from 'src/components/Forms/RegistryFormField';
 // D3 — the stored subtype must follow the chosen activity, not the model default.
 import { resolveBusinessSubtype } from 'src/config/events/businessSubtype';
+import { ospCertifierInspectionsPath } from 'src/views/Dashboard/OSP/ospLinks';
 
 // Business type display names for auto-generated event names
 const BUSINESS_TYPE_NAMES = {
@@ -124,6 +127,42 @@ export const buildBusinessSchema = (intl) =>
       });
     }
   });
+
+/**
+ * "Third-party verification" stores as the Inspection subtype (IN). It stays offered: a
+ * GlobalG.A.P., food safety or kosher audit has no other home. An ORGANIC certifier's inspection
+ * does: the certifier inspections card holds it with the § 205.662 notices, the operation's
+ * response and the resolution letter, and the renewal packet lists it from there. An IN event
+ * holds none of that, so the form says where the organic one goes instead of refusing it.
+ *
+ * Opens in a new tab: the wizard keeps its draft in memory, and leaving the page would drop it.
+ * No farm in the URL (an edit surface outside the farm routes): the words alone, no link.
+ */
+export const OrganicInspectionPointer = () => {
+  const intl = useIntl();
+  const { farmId } = useParams();
+  return (
+    <StandardAlert
+      status="info"
+      mb={0}
+      title={intl.formatMessage({ id: 'events.business.help.organicInspectionPointer.title' })}
+      description={intl.formatMessage({
+        id: 'events.business.help.organicInspectionPointer.body'
+      })}>
+      {farmId && (
+        <Link
+          href={ospCertifierInspectionsPath(farmId)}
+          isExternal
+          fontSize="sm"
+          fontWeight="semibold"
+          color="green.700"
+          data-testid="organic-inspection-pointer-link">
+          {intl.formatMessage({ id: 'events.business.help.organicInspectionPointer.link' })}
+        </Link>
+      )}
+    </StandardAlert>
+  );
+};
 
 const BusinessTab = forwardRef(
   ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}, hideActions = false }, ref) => {
@@ -488,6 +527,8 @@ const BusinessTab = forwardRef(
                       />
                     </StandardField>
                   </SimpleGrid>
+
+                  {businessType === 'verification' && <OrganicInspectionPointer />}
 
                   {/* Certification / verification / audit details.
                       `sustainability_audit` was NOT in this gate until 2026-08-21, yet the

@@ -90,7 +90,7 @@ import CertifierInspectionsCard, {
   UnresolvedCertifierNoticesLine
 } from './CertifierInspectionsCard';
 import { useComplianceExports } from 'components/Guards/ComplianceExportsGuard';
-import { FIRST_SECTION_WITHOUT_TEXT } from './ospLinks';
+import { CERTIFIER_INSPECTIONS_SECTION, FIRST_SECTION_WITHOUT_TEXT } from './ospLinks';
 import { useFarm, useFarmState } from 'hooks/useMeasurementSystem';
 import { useUserRole } from 'hooks/useUserRole';
 import { todayLocalISODate } from 'utils/dateOnly';
@@ -288,6 +288,31 @@ interface OSPDraftPayload {
   savedAt: string;
 }
 
+/**
+ * Re-scrolls `target` to the top of the view whenever the page's height changes, until the reader
+ * moves or `settleMs` passes. Returns the cleanup. No-op where ResizeObserver does not exist.
+ */
+const keepInViewWhileThePageSettles = (target: HTMLElement, settleMs = 5000) => {
+  if (typeof ResizeObserver === 'undefined') return undefined;
+  let lastTop = target.getBoundingClientRect().top + window.scrollY;
+  const observer = new ResizeObserver(() => {
+    const top = target.getBoundingClientRect().top + window.scrollY;
+    if (top === lastTop) return;
+    lastTop = top;
+    target.scrollIntoView({ block: 'start' });
+  });
+  const stop = () => {
+    observer.disconnect();
+    window.clearTimeout(timer);
+    READER_MOVED.forEach((e) => window.removeEventListener(e, stop));
+  };
+  const timer = window.setTimeout(stop, settleMs);
+  READER_MOVED.forEach((e) => window.addEventListener(e, stop, { passive: true }));
+  observer.observe(document.body);
+  return stop;
+};
+const READER_MOVED = ['wheel', 'touchstart', 'keydown', 'mousedown'] as const;
+
 const OSPView: React.FC = () => {
   const intl = useIntl();
   const toast = useToast();
@@ -295,6 +320,9 @@ const OSPView: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const opensFirstSectionWithoutText = searchParams.get('section') === FIRST_SECTION_WITHOUT_TEXT;
+  // Arrived from the Business event form's pointer: an organic certifier's inspection is recorded
+  // on the inspections card, not as an event.
+  const opensCertifierInspections = searchParams.get('section') === CERTIFIER_INSPECTIONS_SECTION;
   // Drill-down page: reached from the OSP module list, never from the sidebar, so it owes a
   // Back button (page-layout standard). Same target and same StandardPage affordance the
   // module wizard uses. Unsaved narrative text survives the exit — the draft autosaves to
@@ -552,6 +580,27 @@ const OSPView: React.FC = () => {
     target.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
   }, [opensFirstSectionWithoutText, sectionToOpen, editableOsp?.id]);
 
+  // Same on-arrival rule for the inspections card. It renders on the full page and on the
+  // no-plan-yet page alike, so the scroll waits for whichever of the two has mounted it.
+  //
+  // One scroll is not enough here: the annual update card above it loads its own data after the
+  // page does and grows by a screen or more, which pushed the card back out of view (browser
+  // check 2026-11-09). So the card is kept in view while the page above it settles, for a few
+  // seconds at most, and never against the reader: the first wheel, touch or key stops it.
+  const inspectionsNode = useRef<HTMLDivElement | null>(null);
+  const scrolledToInspections = useRef(false);
+  // Stopped on unmount only: a later change to the effect's inputs must not end it early.
+  const stopKeepingInspectionsInView = useRef<(() => void) | undefined>();
+  useEffect(() => {
+    if (!opensCertifierInspections || scrolledToInspections.current) return;
+    const target = inspectionsNode.current;
+    if (!target) return;
+    scrolledToInspections.current = true;
+    target.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
+    stopKeepingInspectionsInView.current = keepInViewWhileThePageSettles(target);
+  }, [opensCertifierInspections, editableOsp?.id, ospSummaries?.length]);
+  useEffect(() => () => stopKeepingInspectionsInView.current?.(), []);
+
   // --- Mutations ----------------------------------------------------------
   const [createOSP, { isLoading: creating }] = useCreateOSPMutation();
   const [updateOSP, { isLoading: saving }] = useUpdateOSPMutation();
@@ -700,6 +749,22 @@ const OSPView: React.FC = () => {
   if (listLoading || listUninitialized) return <StandardPageLoading />;
 
   // Error state: list fetch failed. Without it, we'd spin forever on "Detail pending".
+  // The farm's own record of its certifier's inspections and the items the agent sent
+  // (7 CFR 205.662), with its responses. On every plan: recording is free; what the packet prints
+  // from it is what Compliance buys. It does not depend on a plan being on file, so the no-plan
+  // page carries it too: the Business event form links here for every farm, and an inspection
+  // happens whether or not the plan was written in Trazo.
+  const inspectionsCard =
+    companyId && farmId ? (
+      <Box ref={inspectionsNode}>
+        <CertifierInspectionsCard
+          companyId={companyId}
+          farmId={farmId}
+          state={farmState ?? undefined}
+        />
+      </Box>
+    ) : null;
+
   if (listError) {
     return (
       <StandardPage
@@ -788,6 +853,7 @@ const OSPView: React.FC = () => {
             </Text>
           </VStack>
         </StandardCard>
+        <Box mt={4}>{inspectionsCard}</Box>
       </StandardPage>
     );
   }
@@ -1288,16 +1354,8 @@ const OSPView: React.FC = () => {
         />
       )}
 
-      {/* The farm's own record of its certifier's inspections and the items the agent sent
-          (7 CFR 205.662), with its responses. On every plan: recording is free; what the packet
-          prints from it is what Compliance buys. */}
-      {companyId && farmId && (
-        <CertifierInspectionsCard
-          companyId={companyId}
-          farmId={farmId}
-          state={farmState ?? undefined}
-        />
-      )}
+      {/* Certifier inspections and notices: see `inspectionsCard` above the early returns. */}
+      {inspectionsCard}
 
       {/* What to copy onto the agent's own renewal form, for the plan the packet is built from
           by default. Compliance only, like the packet it is read from; nothing for an agent
