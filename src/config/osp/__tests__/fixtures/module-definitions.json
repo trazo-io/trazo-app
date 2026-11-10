@@ -16477,8 +16477,8 @@
                   {
                     "value": "pest_treatment_nonfumigation",
                     "label": {
-                      "en": "Fumigation-free pest treatment (e.g., freezing)",
-                      "es": "Tratamiento de plagas sin fumigación (p. ej., congelado)"
+                      "en": "Fumigation-free pest treatment",
+                      "es": "Tratamiento de plagas sin fumigación"
                     },
                     "exclusive": false
                   },
