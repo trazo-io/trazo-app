@@ -21,6 +21,8 @@ import { useRotateCompanyCodeMutation } from 'store/api/companyApi';
 
 vi.mock('store/api/companyApi', () => ({
   useGetCompanyMembersQuery: vi.fn(() => ({ data: [] })),
+  useChangeCompanyMemberRoleMutation: vi.fn(() => [vi.fn(), { isLoading: false }]),
+  useRemoveCompanyMemberMutation: vi.fn(() => [vi.fn(), { isLoading: false }]),
   useRotateCompanyCodeMutation: vi.fn()
 }));
 vi.mock('store/api/userApi', () => ({ useGetUserRolesQuery: vi.fn(() => ({ data: [] })) }));

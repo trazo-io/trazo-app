@@ -3,8 +3,9 @@
  *
  * Team: the members table put the role and an actions menu in columns three and four, off
  * screen on a phone, and the menu's Edit and Delete did nothing (`onClick={() => {}}`; the API
- * has no endpoint for either). Members are now rows: name, farms, role. No control the page
- * cannot honour.
+ * had no endpoint for either). Members are now rows: name, farms, role. No control the page
+ * cannot honour (since 2026-11-10 the API can remove a member or change a role, and the row shows
+ * those controls only where it says so: teamMemberActions.test.tsx).
  *
  * Company information: four cards of icon + uppercase label fields became one card of label /
  * value rows, and it no longer prints the sign-up "sustainability goals" (retired by
@@ -28,6 +29,8 @@ import { useGetCompanyMembersQuery } from 'store/api/companyApi';
 
 vi.mock('store/api/companyApi', () => ({
   useGetCompanyMembersQuery: vi.fn(() => ({ data: [] })),
+  useChangeCompanyMemberRoleMutation: vi.fn(() => [vi.fn(), { isLoading: false }]),
+  useRemoveCompanyMemberMutation: vi.fn(() => [vi.fn(), { isLoading: false }]),
   useRotateCompanyCodeMutation: vi.fn(() => [vi.fn(), { isLoading: false }]),
   useUpdateCompanyMutation: vi.fn(() => [vi.fn(), { isLoading: false }])
 }));
@@ -92,7 +95,8 @@ describe('Settings > Team: members are rows', () => {
     expect(within(rows[1]).getByText(enUS['app.viewerRole'])).toBeTruthy();
 
     expect(screen.queryByRole('table')).toBeNull();
-    // Edit and Delete did nothing; nothing on a row may offer them.
+    // Edit and Delete did nothing. A row the API does not mark `can_manage` (these have no such
+    // field) offers no control at all; teamMemberActions.test.tsx covers the rows that do.
     for (const row of rows) expect(within(row).queryByRole('button')).toBeNull();
     expect(screen.getByText('2 members')).toBeTruthy();
   });
