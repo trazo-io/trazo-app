@@ -1,20 +1,5 @@
 // Chakra imports
-import {
-  Box,
-  Badge,
-  Flex,
-  SimpleGrid,
-  Table,
-  Tbody,
-  Text,
-  Th,
-  Thead,
-  Tr,
-  Td,
-  VStack,
-  HStack,
-  useToast
-} from '@chakra-ui/react';
+import { Box, SimpleGrid, Text, VStack, HStack, useToast } from '@chakra-ui/react';
 import { CopyIcon, CheckIcon } from '@chakra-ui/icons';
 import { FaUsers, FaBuilding } from 'react-icons/fa';
 import React, { useEffect, useState } from 'react';
@@ -28,9 +13,10 @@ import {
   StandardPage,
   StandardSearchInput,
   StandardSectionTabs,
-  StandardSpinner
+  StandardSpinner,
+  StatusList
 } from 'components/Design/StandardComponents';
-import MemberRow from './memberRow';
+import MemberRow, { ROLE_LABEL_KEYS } from './memberRow';
 import CompanyInfoTab from './CompanyInfoTab';
 import { useGetCompanyMembersQuery, useRotateCompanyCodeMutation } from 'store/api/companyApi';
 import { useGetUserRolesQuery } from 'store/api/userApi';
@@ -40,6 +26,9 @@ import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 import { setCompany } from 'store/features/companySlice';
 import { apiErrorMessage } from 'utils/apiErrorMessage';
+
+// A team this size or smaller is read at a glance; past it the search box appears.
+const SEARCH_FROM = 8;
 
 // Types
 interface RoleOption {
@@ -207,25 +196,18 @@ export default function SettingsView() {
     window.scrollTo(0, 0);
   }, []);
 
-  const roleNameMap: Record<string, string> = {
-    'Company Admin': intl.formatMessage({ id: 'app.administrator' }),
-    'Farm Manager': intl.formatMessage({ id: 'app.farmManager' }),
-    Viewer: intl.formatMessage({ id: 'app.viewerRole' })
-  };
-
   const roleOptions: RoleOption[] =
     userRoles?.map((role) => ({
       id: role.id,
-      name: roleNameMap[role.name] || role.name
+      name: ROLE_LABEL_KEYS[role.name]
+        ? intl.formatMessage({ id: ROLE_LABEL_KEYS[role.name] })
+        : role.name
     })) || [];
 
   return (
     <StandardPage
-      title={intl.formatMessage({ id: 'app.companySettings' }) || 'Company Settings'}
-      description={
-        intl.formatMessage({ id: 'app.companySettingsDescription' }) ||
-        'This screen is only visible to company admins'
-      }>
+      title={intl.formatMessage({ id: 'app.companySettings' })}
+      description={intl.formatMessage({ id: 'app.companySettingsDescription' })}>
       <VStack w="100%" align="stretch" spacing={6} className="main-content-area">
         {/* Left-aligned underline tabs, the app's tab style (2026-11-07). A centred segmented
             control here was the only centred tab row in the app. */}
@@ -253,177 +235,67 @@ export default function SettingsView() {
           <Box pt={4}>
             {/* Team Tab Panel */}
             {settingsTab === 'team' && (
-              <VStack spacing={10} w="100%" pb={12}>
-                {/* Members Overview Section - Most Important First */}
-                <Box w="100%">
-                  <StandardCard
-                    title={
-                      intl.formatMessage({ id: 'app.membersInThisCompany' }) ||
-                      'Miembros de la Compañía'
-                    }
-                    subtitle={intl.formatMessage({ id: 'app.manageMembersSubtitle' })}
-                    variant="elevated">
-                    <Box py={4}>
-                      <VStack spacing={8} align="stretch">
-                        {/* Search Bar */}
-                        <Flex
-                          justify="space-between"
-                          align="center"
-                          w="100%"
-                          flexWrap="wrap"
-                          gap={4}>
-                          <StandardSearchInput
-                            placeholder={intl.formatMessage({ id: 'settings.searchMembers' })}
-                            value={searchTerm}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                              setSearchTerm(e.target.value)
-                            }
-                            maxW={{ base: 'full', smd: '360px' }}
-                          />
-                          <Badge
-                            px={4}
-                            py={2}
-                            borderRadius="full"
-                            bg="green.100"
-                            color="green.800"
-                            fontSize="sm"
-                            fontWeight="medium">
-                            {filteredMembers.length}{' '}
-                            {filteredMembers.length !== 1
-                              ? intl.formatMessage({ id: 'app.members' })
-                              : intl.formatMessage({ id: 'app.member' })}
-                          </Badge>
-                        </Flex>
+              // The page stack owns the gap: each card passes mb={0} (StandardCard's default
+              // mb=6 stacked on spacing=10 drew a 64px gap above the invite cards).
+              <VStack spacing={6} w="100%" pb={12}>
+                <StandardCard
+                  title={intl.formatMessage({ id: 'app.membersInThisCompany' })}
+                  subtitle={
+                    companyMembers
+                      ? String(
+                          intl.formatMessage(
+                            { id: 'settings.team.count' },
+                            { count: companyMembers.length }
+                          )
+                        )
+                      : undefined
+                  }
+                  variant="elevated"
+                  mb={0}>
+                  <VStack spacing={4} align="stretch">
+                    {/* Search earns its place on a long list only. */}
+                    {(companyMembers?.length ?? 0) > SEARCH_FROM && (
+                      <StandardSearchInput
+                        placeholder={intl.formatMessage({ id: 'settings.searchMembers' })}
+                        value={searchTerm}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setSearchTerm(e.target.value)
+                        }
+                        maxW={{ base: 'full', smd: '360px' }}
+                      />
+                    )}
 
-                        {/* Members Table - Responsive with horizontal scroll on mobile */}
-                        <Box
-                          overflowX="auto"
-                          overflowY="auto"
-                          w="100%"
-                          borderRadius={{ base: 'lg', md: '2xl' }}
-                          border="1px solid"
-                          borderColor="gray.100"
-                          bg="white"
-                          boxShadow="sm">
-                          <Table variant="simple" size={{ base: 'sm', md: 'lg' }}>
-                            <Thead
-                              bg="gray.50"
-                              borderBottom="2px solid"
-                              borderColor="gray.100"
-                              position="sticky"
-                              top={0}
-                              zIndex={1}>
-                              <Tr>
-                                <Th
-                                  color="gray.700"
-                                  fontWeight="bold"
-                                  fontSize="xs"
-                                  textTransform="uppercase"
-                                  letterSpacing="wider"
-                                  py={{ base: 3, md: 5 }}
-                                  px={{ base: 3, md: 6 }}
-                                  whiteSpace="nowrap">
-                                  {intl.formatMessage({ id: 'app.name' }) || 'NOMBRE'}
-                                </Th>
-                                <Th
-                                  color="gray.700"
-                                  fontWeight="bold"
-                                  fontSize="xs"
-                                  textTransform="uppercase"
-                                  letterSpacing="wider"
-                                  py={{ base: 3, md: 5 }}
-                                  px={{ base: 3, md: 6 }}
-                                  whiteSpace="nowrap">
-                                  {intl.formatMessage({ id: 'app.currentWorkingEstablishments' }) ||
-                                    'ESTABLECIMIENTOS EN LOS QUE TRABAJA'}
-                                </Th>
-                                <Th
-                                  color="gray.700"
-                                  fontWeight="bold"
-                                  fontSize="xs"
-                                  textTransform="uppercase"
-                                  letterSpacing="wider"
-                                  py={{ base: 3, md: 5 }}
-                                  px={{ base: 3, md: 6 }}
-                                  whiteSpace="nowrap">
-                                  {intl.formatMessage({ id: 'app.role' }) || 'ROL'}
-                                </Th>
-                                <Th
-                                  color="gray.700"
-                                  fontWeight="bold"
-                                  fontSize="xs"
-                                  textTransform="uppercase"
-                                  letterSpacing="wider"
-                                  py={{ base: 3, md: 5 }}
-                                  px={{ base: 3, md: 6 }}
-                                  whiteSpace="nowrap">
-                                  {intl.formatMessage({ id: 'app.actions' }) || 'ACCIONES'}
-                                </Th>
-                              </Tr>
-                            </Thead>
-                            <Tbody>
-                              {filteredMembers.length > 0 ? (
-                                filteredMembers.map((member: any, index: number) => (
-                                  <MemberRow
-                                    key={index}
-                                    name={member.user}
-                                    establishments={member.establishments_in_charge.map(
-                                      (est: any) => est.name
-                                    )}
-                                    role={member.role}
-                                  />
-                                ))
-                              ) : (
-                                <Tr>
-                                  <Td colSpan={4} textAlign="center" py={16}>
-                                    <VStack spacing={4}>
-                                      <Box
-                                        w="60px"
-                                        h="60px"
-                                        borderRadius="full"
-                                        bg="gray.100"
-                                        display="flex"
-                                        alignItems="center"
-                                        justifyContent="center"
-                                        mb={2}>
-                                        <Text fontSize="2xl">👥</Text>
-                                      </Box>
-                                      <Text color="gray.600" fontSize="lg" fontWeight="semibold">
-                                        {searchTerm
-                                          ? intl.formatMessage({ id: 'app.noMembersFound' })
-                                          : intl.formatMessage({ id: 'app.noMembersYet' })}
-                                      </Text>
-                                      <Text
-                                        color="gray.500"
-                                        fontSize="md"
-                                        maxW="300px"
-                                        textAlign="center">
-                                        {searchTerm
-                                          ? intl.formatMessage({ id: 'app.tryOtherSearch' })
-                                          : intl.formatMessage({ id: 'app.inviteFirstMember' })}
-                                      </Text>
-                                    </VStack>
-                                  </Td>
-                                </Tr>
-                              )}
-                            </Tbody>
-                          </Table>
-                        </Box>
-                      </VStack>
-                    </Box>
-                  </StandardCard>
-                </Box>
+                    {filteredMembers.length > 0 ? (
+                      <StatusList testId="member-list">
+                        {filteredMembers.map((member: any, index: number) => (
+                          <MemberRow
+                            key={`${member.user}-${index}`}
+                            name={member.user}
+                            establishments={member.establishments_in_charge.map(
+                              (est: any) => est.name
+                            )}
+                            role={member.role}
+                          />
+                        ))}
+                      </StatusList>
+                    ) : (
+                      <Text fontSize="sm" color="gray.600" py={3}>
+                        {searchTerm
+                          ? intl.formatMessage({ id: 'app.noMembersFound' })
+                          : intl.formatMessage({ id: 'app.inviteFirstMember' })}
+                      </Text>
+                    )}
+                  </VStack>
+                </StandardCard>
 
                 {/* Invite + Invitation Code: two halves of "add a person", so they sit side by
                 side once there is room rather than costing a screen of scroll each. */}
                 <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6} w="100%" alignItems="start">
                   <Box w="100%">
                     <StandardCard
-                      title={
-                        intl.formatMessage({ id: 'app.inviteNewMembers' }) ||
-                        'Invitar nuevos miembros'
-                      }
-                      variant="elevated">
+                      title={intl.formatMessage({ id: 'app.inviteNewMembers' })}
+                      variant="elevated"
+                      mb={0}>
                       <Box py={4}>
                         <VStack spacing={10} align="stretch">
                           <VStack spacing={6} w="100%">
@@ -474,8 +346,7 @@ export default function SettingsView() {
                                 onClick={handleInviteSubmit}
                                 isLoading={isSendingInvitation}
                                 loadingText={intl.formatMessage({ id: 'app.sending' })}>
-                                {intl.formatMessage({ id: 'app.sendInvite' }) ||
-                                  'Enviar invitación'}
+                                {intl.formatMessage({ id: 'app.sendInvite' })}
                               </StandardButton>
                             </HStack>
                           </VStack>
@@ -489,7 +360,8 @@ export default function SettingsView() {
                     <StandardCard
                       title={intl.formatMessage({ id: 'app.invitationCode' })}
                       subtitle={intl.formatMessage({ id: 'app.shareCodeSubtitle' })}
-                      variant="elevated">
+                      variant="elevated"
+                      mb={0}>
                       <Box py={3}>
                         <VStack spacing={4} align="stretch">
                           {/* One row: the code, Copy, and Generate new code (2026-11-07). Was a
