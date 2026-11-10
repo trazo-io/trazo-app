@@ -21438,8 +21438,8 @@
                 "visible_when": [
                   {
                     "question": "history_ever_certified",
-                    "op": "eq",
-                    "value": true
+                    "op": "truthy",
+                    "value": null
                   }
                 ],
                 "nop_cite": null,
@@ -21466,8 +21466,8 @@
                 "visible_when": [
                   {
                     "question": "history_ever_certified",
-                    "op": "eq",
-                    "value": true
+                    "op": "truthy",
+                    "value": null
                   }
                 ],
                 "nop_cite": "§ 205.662(e)",
@@ -21491,8 +21491,8 @@
                 "visible_when": [
                   {
                     "question": "history_ever_certified",
-                    "op": "eq",
-                    "value": true
+                    "op": "truthy",
+                    "value": null
                   }
                 ],
                 "nop_cite": "§ 205.662(e)",
@@ -21507,8 +21507,8 @@
                 "key": "history_surrendered_outstanding",
                 "kind": "boolean",
                 "label": {
-                  "en": "Was a certification ever surrendered while noncompliances or conditions were still outstanding?",
-                  "es": "¿Se renunció alguna vez a una certificación con incumplimientos o condiciones todavía pendientes?"
+                  "en": "Was a certification ever surrendered while the agency's findings or conditions were still unresolved?",
+                  "es": "¿Se renunció alguna vez a una certificación con hallazgos o condiciones de la agencia todavía sin resolver?"
                 },
                 "coaching": null,
                 "options": [],
@@ -21516,8 +21516,8 @@
                 "visible_when": [
                   {
                     "question": "history_ever_certified",
-                    "op": "eq",
-                    "value": true
+                    "op": "truthy",
+                    "value": null
                   }
                 ],
                 "nop_cite": null,
@@ -21532,8 +21532,8 @@
                 "key": "history_outstanding_noncompliances",
                 "kind": "boolean",
                 "label": {
-                  "en": "Is any noncompliance issued by any of those agencies still outstanding?",
-                  "es": "¿Hay algún incumplimiento emitido por alguna de esas agencias que siga pendiente?"
+                  "en": "Is any notice issued by any of those agencies still unresolved?",
+                  "es": "¿Hay algún aviso emitido por alguna de esas agencias que siga sin resolver?"
                 },
                 "coaching": {
                   "en": "For your current agency, the Certifier inspections and notices card on the Organic System Plan page lists each notice and whether its resolution notice is on file. It only knows what you recorded there, so answer for every agency yourself.",
@@ -21544,8 +21544,8 @@
                 "visible_when": [
                   {
                     "question": "history_ever_certified",
-                    "op": "eq",
-                    "value": true
+                    "op": "truthy",
+                    "value": null
                   }
                 ],
                 "nop_cite": "§ 205.662(a)",
@@ -21579,8 +21579,8 @@
                 "key": "history_withdrew_outstanding",
                 "kind": "boolean",
                 "label": {
-                  "en": "Was an application for certification ever withdrawn while noncompliances were still outstanding?",
-                  "es": "¿Se retiró alguna vez una solicitud de certificación con incumplimientos todavía pendientes?"
+                  "en": "Was an application for certification ever withdrawn while the agency's findings were still unresolved?",
+                  "es": "¿Se retiró alguna vez una solicitud de certificación con hallazgos de la agencia todavía sin resolver?"
                 },
                 "coaching": null,
                 "options": [],
@@ -21612,33 +21612,33 @@
             "visible_when_any": [
               {
                 "question": "history_suspended",
-                "op": "eq",
-                "value": true
+                "op": "truthy",
+                "value": null
               },
               {
                 "question": "history_revoked",
-                "op": "eq",
-                "value": true
+                "op": "truthy",
+                "value": null
               },
               {
                 "question": "history_surrendered_outstanding",
-                "op": "eq",
-                "value": true
+                "op": "truthy",
+                "value": null
               },
               {
                 "question": "history_outstanding_noncompliances",
-                "op": "eq",
-                "value": true
+                "op": "truthy",
+                "value": null
               },
               {
                 "question": "history_denied",
-                "op": "eq",
-                "value": true
+                "op": "truthy",
+                "value": null
               },
               {
                 "question": "history_withdrew_outstanding",
-                "op": "eq",
-                "value": true
+                "op": "truthy",
+                "value": null
               }
             ],
             "questions": [
@@ -21712,8 +21712,8 @@
                 "visible_when": [
                   {
                     "question": "history_suspended",
-                    "op": "eq",
-                    "value": true
+                    "op": "truthy",
+                    "value": null
                   }
                 ],
                 "nop_cite": null,
@@ -21737,8 +21737,8 @@
                 "visible_when": [
                   {
                     "question": "history_suspended",
-                    "op": "eq",
-                    "value": true
+                    "op": "truthy",
+                    "value": null
                   }
                 ],
                 "nop_cite": null,
@@ -21762,13 +21762,13 @@
                 "visible_when": [
                   {
                     "question": "history_suspended",
-                    "op": "eq",
-                    "value": true
+                    "op": "truthy",
+                    "value": null
                   },
                   {
                     "question": "history_currently_suspended",
-                    "op": "eq",
-                    "value": true
+                    "op": "truthy",
+                    "value": null
                   }
                 ],
                 "nop_cite": "§ 205.662(f)(1)",
@@ -21792,8 +21792,8 @@
                 "visible_when": [
                   {
                     "question": "history_revoked",
-                    "op": "eq",
-                    "value": true
+                    "op": "truthy",
+                    "value": null
                   }
                 ],
                 "nop_cite": null,
@@ -26873,7 +26873,7 @@
     },
     {
       "module": "certification_contract",
-      "label": "stale_chain:history_not_sold_since_suspension:history_ever_certified:eq",
+      "label": "stale_chain:history_not_sold_since_suspension:history_ever_certified:truthy",
       "answers": {
         "history_suspended": true,
         "history_ever_certified": false
@@ -26897,7 +26897,7 @@
     },
     {
       "module": "certification_contract",
-      "label": "stale_chain:history_currently_suspended:history_ever_certified:eq",
+      "label": "stale_chain:history_currently_suspended:history_ever_certified:truthy",
       "answers": {
         "history_suspended": true,
         "history_ever_certified": false
@@ -26921,7 +26921,7 @@
     },
     {
       "module": "certification_contract",
-      "label": "stale_chain:history_request_reinstatement:history_ever_certified:eq",
+      "label": "stale_chain:history_request_reinstatement:history_ever_certified:truthy",
       "answers": {
         "history_suspended": true,
         "history_currently_suspended": true,
@@ -26946,7 +26946,7 @@
     },
     {
       "module": "certification_contract",
-      "label": "stale_chain:history_not_sold_since_revocation:history_ever_certified:eq",
+      "label": "stale_chain:history_not_sold_since_revocation:history_ever_certified:truthy",
       "answers": {
         "history_revoked": true,
         "history_ever_certified": false
