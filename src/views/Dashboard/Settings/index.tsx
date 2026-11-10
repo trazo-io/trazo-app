@@ -1,8 +1,21 @@
 // Chakra imports
-import { Box, SimpleGrid, Text, VStack, HStack, useToast } from '@chakra-ui/react';
+import {
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogOverlay,
+  Box,
+  SimpleGrid,
+  Text,
+  VStack,
+  HStack,
+  useToast
+} from '@chakra-ui/react';
 import { CopyIcon, CheckIcon } from '@chakra-ui/icons';
 import { FaUsers, FaBuilding } from 'react-icons/fa';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import {
   StandardCard,
@@ -18,7 +31,12 @@ import {
 } from 'components/Design/StandardComponents';
 import MemberRow, { ROLE_LABEL_KEYS } from './memberRow';
 import CompanyInfoTab from './CompanyInfoTab';
-import { useGetCompanyMembersQuery, useRotateCompanyCodeMutation } from 'store/api/companyApi';
+import {
+  useChangeCompanyMemberRoleMutation,
+  useGetCompanyMembersQuery,
+  useRemoveCompanyMemberMutation,
+  useRotateCompanyCodeMutation
+} from 'store/api/companyApi';
 import { useGetUserRolesQuery } from 'store/api/userApi';
 import { useSendInvitationMutation } from 'store/api/invitationApi';
 import { ROLE_FARM_MANAGER } from 'config';
@@ -35,6 +53,29 @@ interface RoleOption {
   id: string;
   name: string;
 }
+
+// One row of GET /companies/<id>/members/. `id` is the COMPANY; the row is `membership_id`.
+interface CompanyMember {
+  id: number;
+  membership_id: number;
+  user: string;
+  role: string;
+  role_code: string;
+  is_you: boolean;
+  is_setup_operator: boolean;
+  can_manage: boolean;
+  establishments_in_charge: { name: string }[];
+}
+
+// The refusals trazo-back users/team.py names, worded here in the reader's language. Any other
+// error falls back to the server's message.
+const TEAM_REFUSAL_KEYS: Record<string, string> = {
+  self: 'settings.team.error.self',
+  setup_operator: 'settings.team.error.setupOperator',
+  setup_operator_caller: 'settings.team.error.setupOperatorCaller',
+  last_admin: 'settings.team.error.lastAdmin',
+  not_admin: 'settings.team.error.notAdmin'
+};
 
 export default function SettingsView() {
   const intl = useIntl();
@@ -61,12 +102,26 @@ export default function SettingsView() {
   const { data: userRoles } = useGetUserRolesQuery();
   const [sendInvitation, { isLoading: isSendingInvitation }] = useSendInvitationMutation();
   const [rotateCompanyCode, { isLoading: isRotatingCode }] = useRotateCompanyCodeMutation();
+  const [changeMemberRole] = useChangeCompanyMemberRoleMutation();
+  const [removeMember, { isLoading: isRemovingMember }] = useRemoveCompanyMemberMutation();
+  // Per row, not one shared id: two role changes in flight must each keep their own row disabled
+  // until their own request settles (review of #352).
+  const [busyMembershipIds, setBusyMembershipIds] = useState<ReadonlySet<number>>(new Set());
+  const setBusy = (membershipId: number, busy: boolean) =>
+    setBusyMembershipIds((current) => {
+      const next = new Set(current);
+      if (busy) next.add(membershipId);
+      else next.delete(membershipId);
+      return next;
+    });
+  const [pendingRemoval, setPendingRemoval] = useState<CompanyMember | null>(null);
+  const cancelRemovalRef = useRef<HTMLButtonElement>(null);
   const dispatch = useDispatch();
 
   // Filter members based on search term
   const filteredMembers =
     companyMembers?.filter(
-      (member) =>
+      (member: CompanyMember) =>
         member.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
         member.role.toLowerCase().includes(searchTerm.toLowerCase())
     ) || [];
@@ -130,6 +185,74 @@ export default function SettingsView() {
         duration: 4000,
         isClosable: true
       });
+    }
+  };
+
+  const teamErrorToast = (error: unknown) => {
+    const code = (error as { data?: { code?: string } })?.data?.code;
+    const key = code ? TEAM_REFUSAL_KEYS[code] : undefined;
+    // The code is a slug for the catalogue above, never text to show, so the fallback skips it
+    // (review of #352).
+    const fallback =
+      apiErrorMessage(error, ['code']) ?? intl.formatMessage({ id: 'settings.team.error.generic' });
+    toast({
+      title: intl.formatMessage({ id: 'settings.team.error.title' }),
+      description: key ? intl.formatMessage({ id: key }) : fallback,
+      status: 'error',
+      duration: 5000,
+      isClosable: true
+    });
+  };
+
+  const roleName = (roleCode: string) =>
+    roleOptions.find((option) => option.id === roleCode)?.name ?? roleCode;
+
+  const handleRoleChange = async (member: CompanyMember, roleCode: string) => {
+    if (!currentCompany?.id || roleCode === member.role_code) return;
+    if (busyMembershipIds.has(member.membership_id)) return;
+    setBusy(member.membership_id, true);
+    try {
+      await changeMemberRole({
+        companyId: currentCompany.id,
+        membershipId: member.membership_id,
+        role: roleCode
+      }).unwrap();
+      toast({
+        title: intl.formatMessage(
+          { id: 'settings.team.roleChanged' },
+          { name: member.user, role: roleName(roleCode) }
+        ),
+        status: 'success',
+        duration: 4000,
+        isClosable: true
+      });
+    } catch (error) {
+      teamErrorToast(error);
+    } finally {
+      setBusy(member.membership_id, false);
+    }
+  };
+
+  const handleConfirmRemoval = async () => {
+    if (!currentCompany?.id || !pendingRemoval) return;
+    const member = pendingRemoval;
+    setBusy(member.membership_id, true);
+    try {
+      await removeMember({
+        companyId: currentCompany.id,
+        membershipId: member.membership_id
+      }).unwrap();
+      toast({
+        title: intl.formatMessage({ id: 'settings.team.removed' }, { name: member.user }),
+        status: 'success',
+        duration: 4000,
+        isClosable: true
+      });
+    } catch (error) {
+      teamErrorToast(error);
+    } finally {
+      setBusy(member.membership_id, false);
+      setPendingRemoval(null);
     }
   };
 
@@ -267,14 +390,20 @@ export default function SettingsView() {
 
                     {filteredMembers.length > 0 ? (
                       <StatusList testId="member-list">
-                        {filteredMembers.map((member: any, index: number) => (
+                        {filteredMembers.map((member: CompanyMember, index: number) => (
                           <MemberRow
-                            key={`${member.user}-${index}`}
+                            key={member.membership_id ?? `${member.user}-${index}`}
                             name={member.user}
-                            establishments={member.establishments_in_charge.map(
-                              (est: any) => est.name
-                            )}
+                            establishments={member.establishments_in_charge.map((est) => est.name)}
                             role={member.role}
+                            roleCode={member.role_code}
+                            isYou={member.is_you}
+                            isSetupOperator={member.is_setup_operator}
+                            canManage={member.can_manage}
+                            roleChoices={roleOptions}
+                            isBusy={busyMembershipIds.has(member.membership_id)}
+                            onRoleChange={(roleCode) => handleRoleChange(member, roleCode)}
+                            onRemove={() => setPendingRemoval(member)}
                           />
                         ))}
                       </StatusList>
@@ -433,6 +562,51 @@ export default function SettingsView() {
           </Box>
         </StandardSectionTabs>
       </VStack>
+
+      {/* Removal names the person and what happens, in plain words, before anything is sent. */}
+      <AlertDialog
+        isOpen={pendingRemoval !== null}
+        leastDestructiveRef={cancelRemovalRef}
+        // Once the DELETE is sent, closing the dialog would not stop it: Cancel, Esc and the
+        // overlay would only hide a removal that still happens (review of #352).
+        onClose={() => !isRemovingMember && setPendingRemoval(null)}
+        closeOnEsc={!isRemovingMember}
+        closeOnOverlayClick={!isRemovingMember}
+        isCentered>
+        <AlertDialogOverlay>
+          <AlertDialogContent mx={4}>
+            <AlertDialogHeader fontSize="md" fontWeight="bold">
+              {intl.formatMessage(
+                { id: 'settings.team.removeConfirm.title' },
+                { name: pendingRemoval?.user ?? '' }
+              )}
+            </AlertDialogHeader>
+            <AlertDialogBody fontSize="sm">
+              {intl.formatMessage(
+                { id: 'settings.team.removeConfirm.body' },
+                { name: pendingRemoval?.user ?? '', company: currentCompany?.name ?? '' }
+              )}
+            </AlertDialogBody>
+            <AlertDialogFooter>
+              <StandardButton
+                ref={cancelRemovalRef}
+                variant="ghost"
+                size="sm"
+                isDisabled={isRemovingMember}
+                onClick={() => setPendingRemoval(null)}>
+                {intl.formatMessage({ id: 'settings.team.removeConfirm.cancel' })}
+              </StandardButton>
+              <StandardButton
+                size="sm"
+                onClick={handleConfirmRemoval}
+                isLoading={isRemovingMember}
+                ml={2}>
+                {intl.formatMessage({ id: 'settings.team.removeConfirm.confirm' })}
+              </StandardButton>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
     </StandardPage>
   );
 }
