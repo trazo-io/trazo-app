@@ -58,6 +58,16 @@ interface ParcelCropHistoryEntry {
   last_prohibited_substance?: string | null;
   date_last_prohibited: string | null;
   notes: string;
+  /** CCOF ORGB49 F7 month range, stored as day 1 ("2024-03-01"). */
+  period_start?: string | null;
+  period_end?: string | null;
+  /** WSDA AGR 2264 ref 10 acreage, a decimal string. */
+  acres?: string | null;
+  /** OTCO C2 2.4 seed / planting stock columns; "" is not stated. */
+  propagule_type?: string;
+  gmo_status?: string;
+  seed_treated?: string;
+  seed_treatment_name?: string;
   created_at: string;
   updated_at: string;
 }
@@ -72,14 +82,23 @@ const PRODUCTION_METHODS = [
   { value: 'organic', label: 'Organic' },
   { value: 'transitional', label: 'Transitional' },
   { value: 'regenerative', label: 'Regenerative' },
-  { value: 'fallow', label: 'Fallow' }
+  { value: 'fallow', label: 'Fallow' },
+  { value: 'pasture', label: 'Pasture' },
+  { value: 'other', label: 'Other' }
 ];
+
+// OTCO C2 2.4's "Seeds / Planting Stock Information" columns. Blank stays "not stated".
+const PROPAGULE_TYPES = ['seed', 'seedling', 'planting_stock'];
+const GMO_STATUSES = ['non_gmo', 'gmo', 'unknown'];
+const SEED_TREATED = ['untreated', 'treated', 'unknown'];
 
 const METHOD_COLORS: Record<string, string> = {
   organic: 'green',
   transitional: 'orange',
   regenerative: 'teal',
   fallow: 'gray',
+  pasture: 'green',
+  other: 'gray',
   conventional: 'blue'
 };
 
@@ -97,7 +116,15 @@ const emptyForm = {
   last_prohibited_substance: '',
   date_last_prohibited: '',
   substance_applications: [] as SubstanceApplicationRow[],
-  notes: ''
+  notes: '',
+  // Month inputs hold "YYYY-MM"; the server stores day 1.
+  period_start: '',
+  period_end: '',
+  acres: '',
+  propagule_type: '',
+  gmo_status: '',
+  seed_treated: '',
+  seed_treatment_name: ''
 };
 
 const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, canWrite }) => {
@@ -126,6 +153,45 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
   const entries = historyEntries as ParcelCropHistoryEntry[];
   const isSaving = isCreating || isUpdating;
 
+  // The month span, acres and planting columns under the crop, when any is stated.
+  const rowDetail = (entry: ParcelCropHistoryEntry): string => {
+    const month = (iso?: string | null) =>
+      iso ? intl.formatDate(new Date(`${iso}T00:00:00`), { year: 'numeric', month: 'short' }) : '';
+    const start = month(entry.period_start);
+    const end = month(entry.period_end);
+    const bits: string[] = [];
+    if (start || end) {
+      bits.push(start && end && start !== end ? `${start} – ${end}` : start || end);
+    }
+    if (entry.acres != null && entry.acres !== '') {
+      bits.push(
+        intl.formatMessage(
+          { id: 'parcel.fieldHistory.row.acres' },
+          { acres: Number(entry.acres).toString() }
+        )
+      );
+    }
+    if (entry.propagule_type) {
+      bits.push(
+        intl.formatMessage({ id: `parcel.fieldHistory.propagule.${entry.propagule_type}` })
+      );
+    }
+    if (entry.gmo_status) {
+      bits.push(intl.formatMessage({ id: `parcel.fieldHistory.gmo.${entry.gmo_status}` }));
+    }
+    if (entry.seed_treated) {
+      const treated = intl.formatMessage({
+        id: `parcel.fieldHistory.treated.${entry.seed_treated}`
+      });
+      bits.push(
+        entry.seed_treated === 'treated' && entry.seed_treatment_name
+          ? `${treated} (${entry.seed_treatment_name})`
+          : treated
+      );
+    }
+    return bits.join(' · ');
+  };
+
   const openCreate = () => {
     setEditingId(null);
     setForm(emptyForm);
@@ -146,7 +212,14 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
       substance_applications: Array.isArray(entry.substance_applications)
         ? entry.substance_applications
         : [],
-      notes: entry.notes || ''
+      notes: entry.notes || '',
+      period_start: (entry.period_start || '').slice(0, 7),
+      period_end: (entry.period_end || '').slice(0, 7),
+      acres: entry.acres ?? '',
+      propagule_type: entry.propagule_type || '',
+      gmo_status: entry.gmo_status || '',
+      seed_treated: entry.seed_treated || '',
+      seed_treatment_name: entry.seed_treatment_name || ''
     });
     setShowForm(true);
   };
@@ -406,6 +479,120 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
                       ))}
                     </StandardSelect>
                   </Box>
+                </HStack>
+                {/* CCOF ORGB49 F7 asks each use with a from-to month range, and OTCO C2 2.4 lets a
+                    history start the month after the last prohibited input; WSDA AGR 2264 ref 10
+                    asks the acreage. All optional. */}
+                <HStack spacing={3} flexWrap="wrap" align="flex-end">
+                  <Box flex={1} minW="140px">
+                    <Text fontSize="xs" color="gray.500" fontWeight="semibold" mb={1}>
+                      {intl.formatMessage({ id: 'parcel.fieldHistory.label.periodStart' })}
+                    </Text>
+                    <StandardInput
+                      type="month"
+                      placeholder="YYYY-MM"
+                      value={form.period_start}
+                      onChange={(e) => setForm((f) => ({ ...f, period_start: e.target.value }))}
+                    />
+                  </Box>
+                  <Box flex={1} minW="140px">
+                    <Text fontSize="xs" color="gray.500" fontWeight="semibold" mb={1}>
+                      {intl.formatMessage({ id: 'parcel.fieldHistory.label.periodEnd' })}
+                    </Text>
+                    <StandardInput
+                      type="month"
+                      placeholder="YYYY-MM"
+                      value={form.period_end}
+                      onChange={(e) => setForm((f) => ({ ...f, period_end: e.target.value }))}
+                    />
+                  </Box>
+                  <Box minW="110px" flex="0 0 auto">
+                    <Text fontSize="xs" color="gray.500" fontWeight="semibold" mb={1}>
+                      {intl.formatMessage({ id: 'parcel.fieldHistory.label.acres' })}
+                    </Text>
+                    <StandardInput
+                      type="number"
+                      inputMode="decimal"
+                      min={0}
+                      step="0.01"
+                      value={form.acres}
+                      onChange={(e) => setForm((f) => ({ ...f, acres: e.target.value }))}
+                    />
+                  </Box>
+                </HStack>
+                <HStack spacing={3} flexWrap="wrap" align="flex-end">
+                  <Box flex={1} minW="140px">
+                    <Text fontSize="xs" color="gray.500" fontWeight="semibold" mb={1}>
+                      {intl.formatMessage({ id: 'parcel.fieldHistory.label.propagule' })}
+                    </Text>
+                    <StandardSelect
+                      value={form.propagule_type}
+                      onChange={(e) => setForm((f) => ({ ...f, propagule_type: e.target.value }))}>
+                      <option value="">
+                        {intl.formatMessage({ id: 'parcel.fieldHistory.notStated' })}
+                      </option>
+                      {PROPAGULE_TYPES.map((v) => (
+                        <option key={v} value={v}>
+                          {intl.formatMessage({ id: `parcel.fieldHistory.propagule.${v}` })}
+                        </option>
+                      ))}
+                    </StandardSelect>
+                  </Box>
+                  <Box flex={1} minW="140px">
+                    <Text fontSize="xs" color="gray.500" fontWeight="semibold" mb={1}>
+                      {intl.formatMessage({ id: 'parcel.fieldHistory.label.gmo' })}
+                    </Text>
+                    <StandardSelect
+                      value={form.gmo_status}
+                      onChange={(e) => setForm((f) => ({ ...f, gmo_status: e.target.value }))}>
+                      <option value="">
+                        {intl.formatMessage({ id: 'parcel.fieldHistory.notStated' })}
+                      </option>
+                      {GMO_STATUSES.map((v) => (
+                        <option key={v} value={v}>
+                          {intl.formatMessage({ id: `parcel.fieldHistory.gmo.${v}` })}
+                        </option>
+                      ))}
+                    </StandardSelect>
+                  </Box>
+                  <Box flex={1} minW="140px">
+                    <Text fontSize="xs" color="gray.500" fontWeight="semibold" mb={1}>
+                      {intl.formatMessage({ id: 'parcel.fieldHistory.label.seedTreated' })}
+                    </Text>
+                    <StandardSelect
+                      value={form.seed_treated}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          seed_treated: e.target.value,
+                          // A name kept under "untreated" would print a treatment nobody applied.
+                          seed_treatment_name:
+                            e.target.value === 'treated' ? f.seed_treatment_name : ''
+                        }))
+                      }>
+                      <option value="">
+                        {intl.formatMessage({ id: 'parcel.fieldHistory.notStated' })}
+                      </option>
+                      {SEED_TREATED.map((v) => (
+                        <option key={v} value={v}>
+                          {intl.formatMessage({ id: `parcel.fieldHistory.treated.${v}` })}
+                        </option>
+                      ))}
+                    </StandardSelect>
+                  </Box>
+                  {form.seed_treated === 'treated' && (
+                    <Box flex={1} minW="160px">
+                      <Text fontSize="xs" color="gray.500" fontWeight="semibold" mb={1}>
+                        {intl.formatMessage({ id: 'parcel.fieldHistory.label.treatmentName' })}
+                      </Text>
+                      <StandardInput
+                        value={form.seed_treatment_name}
+                        onChange={(e) =>
+                          setForm((f) => ({ ...f, seed_treatment_name: e.target.value }))
+                        }
+                      />
+                    </Box>
+                  )}
                 </HStack>
                 <Box>
                   <Text fontSize="xs" color="gray.500" fontWeight="semibold" mb={1}>
@@ -688,6 +875,11 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
                               },
                               { crop: entry.cover_crop }
                             )}
+                          </Text>
+                        ) : null}
+                        {rowDetail(entry) ? (
+                          <Text fontSize="xs" color="gray.500">
+                            {rowDetail(entry)}
                           </Text>
                         ) : null}
                       </Td>
