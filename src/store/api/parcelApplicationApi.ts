@@ -224,6 +224,9 @@ export interface TransitionStatus {
   note?: string;
 }
 
+/** '' is "not stated", never "not yet bearing". */
+export type BearingStatus = '' | 'bearing' | 'non_bearing';
+
 /** One crop grown now or planned on a parcel, with its acreage. `acres` arrives as a decimal string. */
 export interface PlannedCrop {
   id: number;
@@ -231,11 +234,20 @@ export interface PlannedCrop {
   variety: string;
   expected_harvest: string | null;
   acres: string | null;
+  /** An orchard planting's block, as written under Section / rows on activities. Free text; nothing links to it. */
+  block_name: string;
+  rootstock: string;
+  year_planted: number | null;
+  bearing_status: BearingStatus;
 }
 
-export type PlannedCropInput = Pick<PlannedCrop, 'crop' | 'variety'> & {
+export type PlannedCropInput = Pick<
+  PlannedCrop,
+  'crop' | 'variety' | 'block_name' | 'rootstock' | 'bearing_status'
+> & {
   expected_harvest: string | null;
   acres: string | null;
+  year_planted: number | null;
 };
 
 const plannedCropsUrl = (companyId: string, farmId: string, parcelId: string) =>
