@@ -16120,6 +16120,15 @@
                     "value": "uncertified_facility"
                   },
                   {
+                    "question": "storage_locations",
+                    "op": "includes_any",
+                    "value": [
+                      "commercial_cold_off_farm",
+                      "certified_handler",
+                      "uncertified_facility"
+                    ]
+                  },
+                  {
                     "question": "owns_crop_in_storage",
                     "op": "ne",
                     "value": "no"
@@ -16151,6 +16160,15 @@
                     "question": "storage_locations",
                     "op": "includes",
                     "value": "uncertified_facility"
+                  },
+                  {
+                    "question": "storage_locations",
+                    "op": "includes_any",
+                    "value": [
+                      "commercial_cold_off_farm",
+                      "certified_handler",
+                      "uncertified_facility"
+                    ]
                   },
                   {
                     "question": "owns_crop_in_storage",
