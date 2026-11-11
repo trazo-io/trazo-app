@@ -28,6 +28,24 @@ export const userApi = baseApi.injectEndpoints({
       },
       invalidatesTags: (result, error, { userId }) => [{ type: 'User', userId }]
     }),
+    // Change the login email (overall review 2026-11, OV-SEC-C03): the password, then a link to
+    // the new address. Nothing changes until `confirmEmailChange` runs from that link.
+    requestEmailChange: builder.mutation({
+      query: ({ newEmail, password }) => ({
+        url: USER_URL() + 'request_email_change/',
+        method: 'POST',
+        credentials: 'include',
+        body: { new_email: newEmail, password }
+      })
+    }),
+    confirmEmailChange: builder.mutation({
+      query: ({ token }) => ({
+        url: USER_URL() + 'confirm_email_change/',
+        method: 'POST',
+        credentials: 'include',
+        body: { token }
+      })
+    }),
     getUserRoles: builder.query({
       query: () => ({
         url: USER_URL() + 'roles',
@@ -37,4 +55,10 @@ export const userApi = baseApi.injectEndpoints({
   })
 });
 
-export const { useGetMeQuery, useUpdateUserMutation, useGetUserRolesQuery } = userApi;
+export const {
+  useGetMeQuery,
+  useUpdateUserMutation,
+  useGetUserRolesQuery,
+  useRequestEmailChangeMutation,
+  useConfirmEmailChangeMutation
+} = userApi;

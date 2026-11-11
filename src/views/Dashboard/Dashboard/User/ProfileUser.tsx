@@ -20,9 +20,11 @@ import { useSelector } from 'react-redux';
 import { useUpdateUserMutation } from 'store/api/userApi';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
+import ChangeEmailModal from './ChangeEmailModal';
 
 function ProfileUser() {
   const intl = useIntl();
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
 
   const formSchemaBasic = object({
     first_name: string().min(1, intl.formatMessage({ id: 'profile.firstNameRequired' })),
@@ -157,15 +159,19 @@ function ProfileUser() {
               </Grid>
 
               <Grid templateColumns={{ base: '1fr', md: '1fr 1fr' }} gap={6}>
-                <StandardField
-                  label={intl.formatMessage({ id: 'app.email' })}
-                  required
-                  error={errors.email?.message as string}>
-                  <StandardInput
-                    type="email"
-                    placeholder={intl.formatMessage({ id: 'app.email' })}
-                    {...register('email')}
-                  />
+                {/* Read-only here (overall review 2026-11, OV-SEC-C03): the login email changes
+                    with the password and a link to the new address, never with Save. */}
+                <StandardField label={intl.formatMessage({ id: 'app.email' })} required>
+                  <StandardInput type="email" isReadOnly {...register('email')} />
+                  <StandardButton
+                    variant="ghost"
+                    size="sm"
+                    mt={1}
+                    px={0}
+                    _hover={{ bg: 'transparent', textDecoration: 'underline' }}
+                    onClick={() => setIsEmailModalOpen(true)}>
+                    {intl.formatMessage({ id: 'account.email.title' })}
+                  </StandardButton>
                 </StandardField>
 
                 <StandardField
@@ -215,6 +221,11 @@ function ProfileUser() {
           </Flex>
         </StandardCard>
       </Box>
+      <ChangeEmailModal
+        isOpen={isEmailModalOpen}
+        onClose={() => setIsEmailModalOpen(false)}
+        currentEmail={currentUser?.email || ''}
+      />
     </StandardPage>
   );
 }
