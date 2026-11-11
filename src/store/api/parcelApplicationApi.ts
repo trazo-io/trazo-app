@@ -68,6 +68,10 @@ export interface ParcelApplicationResponse {
   has_polygon: boolean;
   /** [lat, lng] of the drawn boundary's centre, as the parcel PDF prints it in §A; null with no boundary. */
   boundary_centre?: [number, number] | null;
+  /** §A crop table (CCOF ORGB49 A8, WSDA AGR 2264 ref 8, OTCO C2 2.1 10): rows the operator typed. */
+  planned_crops?: PlannedCrop[];
+  /** Crops of the seasons still open on this parcel, offered as a starting point, never added unasked. */
+  open_season_crops?: string[];
   polygon?: Array<{ lat: number; lng: number }> | null;
   map_metadata?: Record<string, unknown> | null;
   has_affidavit: boolean;
@@ -220,6 +224,23 @@ export interface TransitionStatus {
   note?: string;
 }
 
+/** One crop grown now or planned on a parcel, with its acreage. `acres` arrives as a decimal string. */
+export interface PlannedCrop {
+  id: number;
+  crop: string;
+  variety: string;
+  expected_harvest: string | null;
+  acres: string | null;
+}
+
+export type PlannedCropInput = Pick<PlannedCrop, 'crop' | 'variety'> & {
+  expected_harvest: string | null;
+  acres: string | null;
+};
+
+const plannedCropsUrl = (companyId: string, farmId: string, parcelId: string) =>
+  PARCEL_APPLICATION_URL(companyId, farmId, parcelId).replace('application/', 'planned-crops/');
+
 const parcelApplicationApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     getParcelTransitionStatus: build.query<TransitionStatus, ParcelArgs>({
@@ -254,6 +275,37 @@ const parcelApplicationApi = baseApi.injectEndpoints({
         body: buffer_zones !== undefined ? { values, buffer_zones } : { values }
       }),
       invalidatesTags: (_r, _e, { parcelId }) => [{ type: 'ParcelApplication', id: parcelId }]
+    }),
+    // The planned-crop rows ride on the application payload, so each change refetches it. The wizard
+    // hydrates its answers once, so the refetch never overwrites what the operator is typing.
+    addPlannedCrop: build.mutation<PlannedCrop, ParcelArgs & { data: PlannedCropInput }>({
+      query: ({ companyId, farmId, parcelId, data }) => ({
+        url: plannedCropsUrl(companyId, farmId, parcelId),
+        method: 'POST',
+        credentials: 'include',
+        body: data
+      }),
+      invalidatesTags: (_r, _e, { parcelId }) => [{ type: 'ParcelApplication', id: parcelId }]
+    }),
+    updatePlannedCrop: build.mutation<
+      PlannedCrop,
+      ParcelArgs & { cropId: number; data: PlannedCropInput }
+    >({
+      query: ({ companyId, farmId, parcelId, cropId, data }) => ({
+        url: `${plannedCropsUrl(companyId, farmId, parcelId)}${cropId}/`,
+        method: 'PATCH',
+        credentials: 'include',
+        body: data
+      }),
+      invalidatesTags: (_r, _e, { parcelId }) => [{ type: 'ParcelApplication', id: parcelId }]
+    }),
+    deletePlannedCrop: build.mutation<void, ParcelArgs & { cropId: number }>({
+      query: ({ companyId, farmId, parcelId, cropId }) => ({
+        url: `${plannedCropsUrl(companyId, farmId, parcelId)}${cropId}/`,
+        method: 'DELETE',
+        credentials: 'include'
+      }),
+      invalidatesTags: (_r, _e, { parcelId }) => [{ type: 'ParcelApplication', id: parcelId }]
     })
   })
 });
@@ -261,7 +313,10 @@ const parcelApplicationApi = baseApi.injectEndpoints({
 export const {
   useGetParcelApplicationQuery,
   useSaveParcelApplicationMutation,
-  useGetParcelTransitionStatusQuery
+  useGetParcelTransitionStatusQuery,
+  useAddPlannedCropMutation,
+  useUpdatePlannedCropMutation,
+  useDeletePlannedCropMutation
 } = parcelApplicationApi;
 
 export default parcelApplicationApi;
