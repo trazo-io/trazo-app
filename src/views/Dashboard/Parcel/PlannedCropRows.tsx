@@ -5,39 +5,86 @@
  * Every figure is the operator's. Nothing is computed into a row: a crop of a season still open on
  * the parcel is offered as a starting point (it fills the crop name), and the operator saves it.
  * A column left blank stays blank, and the parcel PDF prints "Not stated".
+ *
+ * An orchard row is one block: block name, rootstock, year planted and bearing status (overall review
+ * 2026-11, OV-FJ-C06). The block is the free-text name written under Section / rows on activities;
+ * nothing links an activity to the row. Like the parcel PDF, a row shows those four only once a row
+ * on the parcel states one, so a vegetable parcel's list stays as it was. A blank bearing status is
+ * "not stated", never "not yet bearing".
  */
 import React, { useState } from 'react';
 import { Divider, HStack, SimpleGrid, Text, useToast, VStack, Wrap } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
 
-import { StandardButton, StandardField, StandardInput } from 'components/Design/StandardComponents';
+import {
+  StandardButton,
+  StandardField,
+  StandardInput,
+  StandardNumberInput,
+  StandardSelect
+} from 'components/Design/StandardComponents';
 import {
   useAddPlannedCropMutation,
   useDeletePlannedCropMutation,
   useUpdatePlannedCropMutation,
+  type BearingStatus,
   type PlannedCrop,
   type PlannedCropInput
 } from 'store/api/parcelApplicationApi';
 import { apiErrorMessage } from 'utils/apiErrorMessage';
 import { formatDateOnly } from 'utils/dateOnly';
 
-type FormState = { crop: string; variety: string; expected_harvest: string; acres: string };
+type FormState = {
+  crop: string;
+  variety: string;
+  expected_harvest: string;
+  acres: string;
+  block_name: string;
+  rootstock: string;
+  year_planted: string;
+  bearing_status: BearingStatus;
+};
 
-const EMPTY: FormState = { crop: '', variety: '', expected_harvest: '', acres: '' };
+const EMPTY: FormState = {
+  crop: '',
+  variety: '',
+  expected_harvest: '',
+  acres: '',
+  block_name: '',
+  rootstock: '',
+  year_planted: '',
+  bearing_status: ''
+};
+
+/** The earliest planting year the server accepts (`EARLIEST_YEAR_PLANTED` in product/models.py). */
+const EARLIEST_YEAR_PLANTED = 1900;
 
 const fromCrop = (c: PlannedCrop): FormState => ({
   crop: c.crop,
   variety: c.variety,
   expected_harvest: c.expected_harvest ?? '',
-  acres: c.acres ?? ''
+  acres: c.acres ?? '',
+  block_name: c.block_name ?? '',
+  rootstock: c.rootstock ?? '',
+  year_planted: c.year_planted != null ? String(c.year_planted) : '',
+  bearing_status: c.bearing_status ?? ''
 });
 
 const toInput = (f: FormState): PlannedCropInput => ({
   crop: f.crop.trim(),
   variety: f.variety.trim(),
   expected_harvest: f.expected_harvest || null,
-  acres: f.acres.trim() || null
+  acres: f.acres.trim() || null,
+  block_name: f.block_name.trim(),
+  rootstock: f.rootstock.trim(),
+  year_planted: f.year_planted.trim() ? Number(f.year_planted) : null,
+  bearing_status: f.bearing_status
 });
+
+/** Whether a row states any orchard column, mirroring `_states_orchard_fields` in the backend's
+ *  parcel_application_lines.py: one such row shows the orchard columns for the whole parcel. */
+export const statesOrchardFields = (c: PlannedCrop): boolean =>
+  Boolean(c.block_name || c.rootstock || c.year_planted != null || c.bearing_status);
 
 /** The words of a crop name, lower case and singular, mirroring `_crop_words` in the backend's
  *  parcel_application_lines.py: "Bartlett pears" holds "pear", "Pineapple" does not hold "apple". */
@@ -88,8 +135,9 @@ const CropForm = ({
   const [update, { isLoading: isUpdating }] = useUpdatePlannedCropMutation();
   const busy = isAdding || isUpdating;
 
-  const set = (key: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    setForm({ ...form, [key]: e.target.value });
+  const set =
+    (key: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+      setForm({ ...form, [key]: e.target.value });
 
   const save = async () => {
     try {
@@ -119,6 +167,52 @@ const CropForm = ({
         </StandardField>
         <StandardField label={intl.formatMessage({ id: 'parcelApp.crops.variety' })}>
           <StandardInput value={form.variety} onChange={set('variety')} isDisabled={busy} />
+        </StandardField>
+        <StandardField
+          label={intl.formatMessage({ id: 'parcelApp.crops.block' })}
+          helpText={intl.formatMessage({ id: 'parcelApp.crops.blockHelp' })}>
+          <StandardInput
+            value={form.block_name}
+            onChange={set('block_name')}
+            isDisabled={busy}
+            maxLength={50}
+          />
+        </StandardField>
+        <StandardField label={intl.formatMessage({ id: 'parcelApp.crops.rootstock' })}>
+          <StandardInput
+            value={form.rootstock}
+            onChange={set('rootstock')}
+            isDisabled={busy}
+            placeholder={intl.formatMessage({ id: 'parcelApp.crops.rootstockPlaceholder' })}
+          />
+        </StandardField>
+        <StandardField label={intl.formatMessage({ id: 'parcelApp.crops.yearPlanted' })}>
+          {/* A year is a whole count, so StandardNumberInput; no clamping, so a typo reaches the
+              server's own refusal instead of being silently rewritten to a year the operator did not type. */}
+          <StandardNumberInput
+            value={form.year_planted}
+            onChange={(value) => setForm({ ...form, year_planted: value })}
+            isDisabled={busy}
+            precision={0}
+            min={EARLIEST_YEAR_PLANTED}
+            max={new Date().getFullYear()}
+            keepWithinRange={false}
+            clampValueOnBlur={false}
+            inputMode="numeric"
+            hideStepper
+          />
+        </StandardField>
+        <StandardField label={intl.formatMessage({ id: 'parcelApp.crops.bearingStatus' })}>
+          <StandardSelect
+            value={form.bearing_status}
+            onChange={set('bearing_status')}
+            isDisabled={busy}>
+            <option value="">{intl.formatMessage({ id: 'parcelApp.crops.notStated' })}</option>
+            <option value="bearing">{intl.formatMessage({ id: 'parcelApp.crops.bearing' })}</option>
+            <option value="non_bearing">
+              {intl.formatMessage({ id: 'parcelApp.crops.nonBearing' })}
+            </option>
+          </StandardSelect>
         </StandardField>
         <StandardField label={intl.formatMessage({ id: 'parcelApp.crops.harvest' })}>
           <StandardInput
@@ -173,6 +267,24 @@ const PlannedCropRows = ({
 
   const listed = crops.map((c) => c.crop);
   const unlisted = openSeasonCrops.filter((name) => !cropIsListed(name, listed));
+  const orchard = crops.some(statesOrchardFields);
+  const bearingLabel: Record<BearingStatus, string> = {
+    '': notStated,
+    bearing: intl.formatMessage({ id: 'parcelApp.crops.bearing' }),
+    non_bearing: intl.formatMessage({ id: 'parcelApp.crops.nonBearing' })
+  };
+  const orchardLine = (crop: PlannedCrop) =>
+    [
+      ['parcelApp.crops.block', crop.block_name || notStated],
+      ['parcelApp.crops.rootstock', crop.rootstock || notStated],
+      [
+        'parcelApp.crops.yearPlanted',
+        crop.year_planted != null ? String(crop.year_planted) : notStated
+      ],
+      ['parcelApp.crops.bearingStatus', bearingLabel[crop.bearing_status ?? ''] ?? notStated]
+    ]
+      .map(([id, value]) => `${intl.formatMessage({ id })}: ${value}`)
+      .join(' · ');
 
   const startNew = (crop = '') => {
     setInitial({ ...EMPTY, crop });
@@ -231,6 +343,14 @@ const PlannedCropRows = ({
                   }`
                 ].join(' · ')}
               </Text>
+              {orchard ? (
+                <Text
+                  fontSize="xs"
+                  color="gray.600"
+                  data-testid={`planned-crop-orchard-${crop.id}`}>
+                  {orchardLine(crop)}
+                </Text>
+              ) : null}
               {canWrite ? (
                 <HStack spacing={2}>
                   <StandardButton size="sm" variant="ghost" onClick={() => setEditing(crop.id)}>
