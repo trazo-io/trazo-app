@@ -291,6 +291,24 @@ const calendarDay = (dateStr: string): { date: Date; timeZone?: 'UTC' } | null =
 const yearOf = (day: { date: Date; timeZone?: 'UTC' }) =>
   day.timeZone ? day.date.getUTCFullYear() : day.date.getFullYear();
 
+/**
+ * The calendar day a stored date PRINTS as, as a comparable key ("2025-9-29"), or null.
+ *
+ * Every "same day?" decision on the consumer page must be taken in the frame `calendarDay`
+ * renders in, or the page prints what it decided against: two picks at 06:00Z and 20:00Z are
+ * one printed day (Sep 29) but two local days in California, which made a degenerate
+ * "Sep 29 – Sep 29" range (review of trazo-app #367).
+ */
+export const dayKey = (dateStr?: string | null): string | null => {
+  if (!dateStr) return null;
+  const day = calendarDay(dateStr);
+  if (!day) return null;
+  const { date } = day;
+  return day.timeZone
+    ? `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}-${date.getUTCDate()}`
+    : `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+};
+
 export const formatDateRangeForConsumer = (
   startDate?: string | null,
   endDate?: string | null,
@@ -339,19 +357,10 @@ export const resolveHarvestDates = (
 
   const first = harvestDates[0];
   const last = harvestDates[harvestDates.length - 1];
-  // Compare the days as the READER will see them. Slicing the ISO string compares UTC days,
-  // but every formatter downstream renders in the viewer's local zone, so two passes at
-  // 02:00Z and 20:00Z on the same UTC day are one calendar day apart in California — the
-  // page would then print a single date for what was actually a two-day pick. This is the
-  // calendar-date-as-UTC class that has bitten this codebase before; keep the comparison in
-  // the same frame as the render.
-  const localDay = (iso: string) => {
-    const d = new Date(iso);
-    return Number.isNaN(d.getTime())
-      ? iso.slice(0, 10)
-      : `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-  };
-  return { first, last, isRange: localDay(first) !== localDay(last), fromRecords: true };
+  // Compare the days as they will be PRINTED (`dayKey`, the same frame as `calendarDay`). Until
+  // 2026-11-11 this compared viewer-local days while the formatters had also rendered locally;
+  // the formatters now print stored timestamps in UTC, so the comparison follows them.
+  return { first, last, isRange: dayKey(first) !== dayKey(last), fromRecords: true };
 };
 
 /**
@@ -392,21 +401,15 @@ export const resolveProductionDisplayDates = (
   // ⚠️ Compare the DAY, not the instant. `History.finish_date` and `CommonEvent.date` are both
   // DateTimeFields, so a lot closed the same afternoon it was picked has two timestamps that
   // differ by hours and a `!==` suppression that can never fire — the row would print on every
-  // lot. `resolveHarvestDates` already compares local calendar days thirty lines up, for the
-  // same reason: the comparison has to happen in the frame the reader sees.
-  const sameLocalDay = (a?: string | null, b?: string | null): boolean => {
+  // lot. The comparison is on the day each date PRINTS as (`dayKey`), like `resolveHarvestDates`.
+  const samePrintedDay = (a?: string | null, b?: string | null): boolean => {
     if (!a || !b) return false;
-    const da = new Date(a);
-    const db = new Date(b);
-    if (Number.isNaN(da.getTime()) || Number.isNaN(db.getTime())) return a === b;
-    return (
-      da.getFullYear() === db.getFullYear() &&
-      da.getMonth() === db.getMonth() &&
-      da.getDate() === db.getDate()
-    );
+    const ka = dayKey(a);
+    const kb = dayKey(b);
+    return ka && kb ? ka === kb : a === b;
   };
   const closedForDisplay =
-    seasonClosedDate && !sameLocalDay(seasonClosedDate, window.last)
+    seasonClosedDate && !samePrintedDay(seasonClosedDate, window.last)
       ? seasonClosedDate
       : !window.fromRecords
       ? seasonClosedDate ?? undefined
