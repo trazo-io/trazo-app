@@ -81,6 +81,14 @@ const toInput = (f: FormState): PlannedCropInput => ({
   bearing_status: f.bearing_status
 });
 
+/** Whether a typed year is one the server accepts: blank, or a whole year from 1900 to this year. Checked
+ *  before saving so the operator reads why in their own language; the server refuses the same years. */
+export const yearPlantedIsValid = (raw: string, thisYear = new Date().getFullYear()): boolean => {
+  const year = raw.trim();
+  if (!year) return true;
+  return /^\d{4}$/.test(year) && Number(year) >= EARLIEST_YEAR_PLANTED && Number(year) <= thisYear;
+};
+
 /** Whether a row states any orchard column, mirroring `_states_orchard_fields` in the backend's
  *  parcel_application_lines.py: one such row shows the orchard columns for the whole parcel. */
 export const statesOrchardFields = (c: PlannedCrop): boolean =>
@@ -139,7 +147,11 @@ const CropForm = ({
     (key: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
       setForm({ ...form, [key]: e.target.value });
 
+  const thisYear = new Date().getFullYear();
+  const yearInvalid = !yearPlantedIsValid(form.year_planted, thisYear);
+
   const save = async () => {
+    if (yearInvalid) return;
     try {
       const data = toInput(form);
       if (crop) await update({ companyId, farmId, parcelId, cropId: crop.id, data }).unwrap();
@@ -186,7 +198,16 @@ const CropForm = ({
             placeholder={intl.formatMessage({ id: 'parcelApp.crops.rootstockPlaceholder' })}
           />
         </StandardField>
-        <StandardField label={intl.formatMessage({ id: 'parcelApp.crops.yearPlanted' })}>
+        <StandardField
+          label={intl.formatMessage({ id: 'parcelApp.crops.yearPlanted' })}
+          error={
+            yearInvalid
+              ? intl.formatMessage(
+                  { id: 'parcelApp.crops.yearPlantedRange' },
+                  { from: EARLIEST_YEAR_PLANTED, to: thisYear }
+                )
+              : undefined
+          }>
           {/* A year is a whole count, so StandardNumberInput; no clamping, so a typo reaches the
               server's own refusal instead of being silently rewritten to a year the operator did not type. */}
           <StandardNumberInput
@@ -195,7 +216,7 @@ const CropForm = ({
             isDisabled={busy}
             precision={0}
             min={EARLIEST_YEAR_PLANTED}
-            max={new Date().getFullYear()}
+            max={thisYear}
             keepWithinRange={false}
             clampValueOnBlur={false}
             inputMode="numeric"

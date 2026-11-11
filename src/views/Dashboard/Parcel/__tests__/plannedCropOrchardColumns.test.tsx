@@ -24,7 +24,7 @@ vi.mock('store/api/parcelApplicationApi', () => ({
   useDeletePlannedCropMutation: () => [vi.fn(), { isLoading: false }]
 }));
 
-import PlannedCropRows, { statesOrchardFields } from '../PlannedCropRows';
+import PlannedCropRows, { statesOrchardFields, yearPlantedIsValid } from '../PlannedCropRows';
 
 const row = (over: Partial<PlannedCrop>): PlannedCrop => ({
   id: 1,
@@ -123,6 +123,33 @@ describe('planned-crop orchard columns', () => {
         bearing_status: 'non_bearing'
       }
     });
+  });
+
+  it('refuses a future year in the form, in words, without calling the server', async () => {
+    // Found rendering the form (2026-11-11): the server's refusal reached a Spanish-reading grower as
+    // "year_planted: Year planted must be from 1900 to 2026", in English with the field key.
+    renderRows([]);
+    fireEvent.click(screen.getByRole('button', { name: 'Add a crop' }));
+    fireEvent.change(screen.getByLabelText(/^Crop/), { target: { value: 'Apples' } });
+    const next = new Date().getFullYear() + 1;
+    fireEvent.change(screen.getByLabelText(/^Year planted/), { target: { value: String(next) } });
+    expect(
+      screen.getByText(new RegExp(`Enter a year from 1900 to ${next - 1}`))
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Save crop' }));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(add).not.toHaveBeenCalled();
+  });
+
+  it('accepts a blank year or a whole year from 1900 to this year, and nothing else', () => {
+    expect(yearPlantedIsValid('', 2026)).toBe(true);
+    expect(yearPlantedIsValid('  ', 2026)).toBe(true);
+    expect(yearPlantedIsValid('1900', 2026)).toBe(true);
+    expect(yearPlantedIsValid('2026', 2026)).toBe(true);
+    expect(yearPlantedIsValid('2027', 2026)).toBe(false);
+    expect(yearPlantedIsValid('1899', 2026)).toBe(false);
+    expect(yearPlantedIsValid('15', 2026)).toBe(false);
+    expect(yearPlantedIsValid('2015.5', 2026)).toBe(false);
   });
 
   it('edits a row back to not stated: blank year is null, blank bearing is empty', async () => {

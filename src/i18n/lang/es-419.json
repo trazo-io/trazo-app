@@ -7529,6 +7529,7 @@
   "parcelApp.crops.rootstock": "Portainjerto",
   "parcelApp.crops.rootstockPlaceholder": "p. ej., M.9, Geneva 41",
   "parcelApp.crops.yearPlanted": "Año de plantación",
+  "parcelApp.crops.yearPlantedRange": "Escribe un año de {from} a {to}, o déjalo en blanco si todavía no se plantó.",
   "parcelApp.crops.bearingStatus": "Estado de producción",
   "parcelApp.crops.bearing": "En producción",
   "parcelApp.crops.nonBearing": "Aún sin producción",

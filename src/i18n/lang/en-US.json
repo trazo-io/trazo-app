@@ -7529,6 +7529,7 @@
   "parcelApp.crops.rootstock": "Rootstock",
   "parcelApp.crops.rootstockPlaceholder": "e.g., M.9, Geneva 41",
   "parcelApp.crops.yearPlanted": "Year planted",
+  "parcelApp.crops.yearPlantedRange": "Enter a year from {from} to {to}, or leave it blank if the planting has not gone in yet.",
   "parcelApp.crops.bearingStatus": "Bearing status",
   "parcelApp.crops.bearing": "Bearing",
   "parcelApp.crops.nonBearing": "Not yet bearing",
