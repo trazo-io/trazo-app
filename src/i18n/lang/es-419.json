@@ -6820,6 +6820,7 @@
   "osp.modules.parcelSectionHint": "La Solicitud de Parcela (§ 205.202) se completa una vez por parcela: APN, zonas de amortiguamiento, mapas e historial del terreno. Abre la solicitud de cada parcela abajo.",
   "osp.modules.parcelSectionTitle": "Módulo por parcela",
   "osp.modules.progressCount": "{answered} de {required} respuestas requeridas",
+  "osp.modules.allAnsweredRecheck": "Todo respondido · {count, plural, one {# respuesta} other {# respuestas}} por revisar con tus registros",
   "osp.modules.agentAsksBlank": "Aquí hay {count, plural, one {# pregunta} other {# preguntas}} sin responder que {agent} hace.",
   "osp.modules.review": "Revisar / editar",
   "osp.modules.showAllParcels": "Ver los {count} lotes",
