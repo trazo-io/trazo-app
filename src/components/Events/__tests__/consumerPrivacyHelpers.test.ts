@@ -5,7 +5,8 @@ import { describe, it, expect } from 'vitest';
 import {
   maskPerformerName,
   formatHarvestQuantity,
-  formatHarvestDate
+  formatHarvestDate,
+  formatDateRangeForConsumer
 } from '../../../utils/consumerDisplay';
 
 describe('maskPerformerName (worker privacy on public page)', () => {
@@ -33,9 +34,23 @@ describe('formatHarvestDate (local-safe harvest date)', () => {
     expect(formatHarvestDate('2026-03-18')).toBe('Mar 18, 2026');
   });
 
-  it('formats full ISO timestamps', () => {
-    const result = formatHarvestDate('2026-03-18T12:00:00Z');
-    expect(result).toMatch(/Mar 1[78], 2026/);
+  it('prints a stored timestamp as the day the record names, in every viewer zone', () => {
+    // Stored UTC wall clocks. An early-morning record printed in the viewer's zone read the day
+    // before anywhere in the Americas (Aug 7 06:00Z showed "Aug 6, 2025" on the buyer page).
+    expect(formatHarvestDate('2026-03-18T12:00:00Z')).toBe('Mar 18, 2026');
+    expect(formatHarvestDate('2025-08-07T06:00:00Z')).toBe('Aug 7, 2025');
+    expect(formatHarvestDate('2025-08-07T23:30:00Z')).toBe('Aug 7, 2025');
+    expect(formatHarvestDate('2025-08-07T06:00:00Z', 'es-419')).toMatch(/^7 ago/);
+  });
+
+  it('prints a range of stored timestamps as the recorded days, year from the same clock', () => {
+    expect(formatDateRangeForConsumer('2025-09-29T06:00:00Z', '2025-10-03T06:00:00Z')).toBe(
+      'Sep 29 – Oct 3, 2025'
+    );
+    // 00:30Z on Jan 1 is still Dec 31 in the Americas; the year must come from UTC too.
+    expect(formatDateRangeForConsumer('2025-12-30T06:00:00Z', '2026-01-01T00:30:00Z')).toBe(
+      'Dec 30, 2025 – Jan 1, 2026'
+    );
   });
 
   it('returns null for missing or invalid input', () => {

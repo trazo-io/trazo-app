@@ -102,13 +102,15 @@ describe('harvest date agreement across displays', () => {
     expect(d.parcelCard.seasonClosedDate).toBe('2025-10-04T17:00:00+00:00');
   });
 
-  it('suppresses the season-close row when close and last harvest fall on the same LOCAL day', () => {
+  it('suppresses the season-close row when close and last harvest fall on the same recorded day', () => {
     // `History.finish_date` and `CommonEvent.date` are both DateTimeFields, so a lot closed the
     // afternoon it was picked has two timestamps hours apart. An instant comparison could never
     // suppress the row and it printed on every lot; the comparison is per calendar day, in the
-    // same frame the reader sees, exactly as `resolveHarvestDates` compares.
-    const picked = new Date(2025, 8, 30, 9, 0, 0).toISOString();
-    const closed = new Date(2025, 8, 30, 17, 30, 0).toISOString();
+    // frame the page prints (stored UTC wall clocks, ADR 011), exactly as `resolveHarvestDates`
+    // compares. Until 2026-11-11 the times were built from the machine's local clock, so the
+    // outcome depended on where the suite ran.
+    const picked = '2025-09-30T09:00:00Z';
+    const closed = '2025-09-30T17:30:00Z';
     const d = deriveDisplayDates([{ production_type: 'HA', date: picked }], closed);
 
     expect(d.parcelCard.harvestDate).toBe(picked);
@@ -138,12 +140,13 @@ describe('harvest date agreement across displays', () => {
 });
 
 describe('harvest date boundaries', () => {
-  it('does not invent a range from two passes on the same LOCAL day', () => {
-    // Two picks four hours apart. Whether they straddle a UTC midnight depends on the offset,
-    // and every formatter downstream renders in the viewer's local zone — so the comparison has
-    // to happen in the same frame as the render, or the card prints "Aug 7 - Aug 8" for one day.
-    const morning = new Date(2026, 7, 7, 6, 0, 0).toISOString();
-    const evening = new Date(2026, 7, 7, 21, 0, 0).toISOString();
+  it('does not invent a range from two passes on the same recorded day', () => {
+    // Stored timestamps are UTC wall clocks (ADR 011): "06:00Z" is the 06:00 the farmer entered.
+    // Both picks print as Aug 7, so the comparison, taken in the same frame as the render, must
+    // not print "Aug 7 - Aug 8" for one day. (Until 2026-11-11 these were built from the
+    // viewer's local clock, the model the consumer page no longer renders in.)
+    const morning = '2026-08-07T06:00:00Z';
+    const evening = '2026-08-07T21:00:00Z';
     const result = resolveHarvestDates(
       [
         { production_type: 'HA', date: morning },
@@ -156,9 +159,9 @@ describe('harvest date boundaries', () => {
     expect(result.fromRecords).toBe(true);
   });
 
-  it('does report a range for passes on adjacent local days', () => {
-    const lateNight = new Date(2026, 7, 7, 23, 30, 0).toISOString();
-    const nextMorning = new Date(2026, 7, 8, 0, 30, 0).toISOString();
+  it('does report a range for passes on adjacent recorded days', () => {
+    const lateNight = '2026-08-07T23:30:00Z';
+    const nextMorning = '2026-08-08T00:30:00Z';
     const result = resolveHarvestDates(
       [
         { production_type: 'HA', date: lateNight },
