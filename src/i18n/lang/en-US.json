@@ -1950,6 +1950,8 @@
   "account.email.confirm.title": "Confirm your new email",
   "account.email.confirm.doneTitle": "Email changed",
   "account.email.confirm.invalidTitle": "This link no longer works",
+  "account.email.confirm.retry": "We could not confirm right now. Check your connection and try again.",
+  "account.email.confirm.taken": "Another account now uses that email, so the change was not made. Request it again from your profile with a different address.",
   "account.email.confirm.body": "Confirm to make this your login email. Every session on the account then ends, and you sign in again with the new address.",
   "account.email.confirm.submit": "Confirm new email",
   "account.email.confirm.done": "Your login email is now {email}. Sign in with it.",

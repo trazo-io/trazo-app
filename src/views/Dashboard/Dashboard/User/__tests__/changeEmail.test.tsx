@@ -25,6 +25,10 @@ import { useConfirmEmailChangeMutation, useRequestEmailChangeMutation } from 'st
 
 const dispatch = vi.fn();
 vi.mock('react-redux', () => ({ useDispatch: () => dispatch }));
+const clearLocalSession = vi.fn();
+vi.mock('store/clearLocalSession', () => ({
+  clearLocalSession: (...args: unknown[]) => clearLocalSession(...args)
+}));
 vi.mock('store/api/userApi', () => ({
   useRequestEmailChangeMutation: vi.fn(),
   useConfirmEmailChangeMutation: vi.fn()
@@ -103,7 +107,10 @@ describe('Change email', () => {
 });
 
 describe('the page the link opens', () => {
-  beforeEach(() => dispatch.mockReset());
+  beforeEach(() => {
+    dispatch.mockReset();
+    clearLocalSession.mockReset();
+  });
 
   it('changes nothing until the person presses Confirm', async () => {
     const trigger = mutation(async () => ({ email: 'laurel@newfarm.example' }));
@@ -118,8 +125,8 @@ describe('the page the link opens', () => {
     expect((await screen.findByTestId('email-change-done')).textContent).toContain(
       'laurel@newfarm.example'
     );
-    // Every session just ended; this browser's sign-in is dropped too.
-    await waitFor(() => expect(dispatch).toHaveBeenCalled());
+    // Every session just ended: this tab is cleared the way Sign out clears it (review of #362).
+    await waitFor(() => expect(clearLocalSession).toHaveBeenCalledWith(dispatch));
   });
 
   it('says plainly when the link no longer works', async () => {
@@ -133,7 +140,37 @@ describe('the page the link opens', () => {
     wrap(<ConfirmEmailChange />, 'en-US', '/auth/confirm-email-change?token=old');
     await userEvent.click(screen.getByRole('button', { name: EN['account.email.confirm.submit'] }));
     expect(await screen.findByTestId('email-change-invalid')).toBeTruthy();
-    expect(dispatch).not.toHaveBeenCalled();
+    expect(clearLocalSession).not.toHaveBeenCalled();
+  });
+
+  it('keeps Confirm up after a failure that is not the link’s fault (review of #362)', async () => {
+    const trigger = mutation(async () => {
+      throw { status: 'FETCH_ERROR' };
+    });
+    vi.mocked(useConfirmEmailChangeMutation).mockReturnValue([
+      trigger,
+      { isLoading: false }
+    ] as never);
+    wrap(<ConfirmEmailChange />, 'en-US', '/auth/confirm-email-change?token=still-good');
+    await userEvent.click(screen.getByRole('button', { name: EN['account.email.confirm.submit'] }));
+    expect(await screen.findByTestId('email-change-retry')).toBeTruthy();
+    expect(screen.queryByTestId('email-change-invalid')).toBeNull();
+    expect(screen.getByRole('button', { name: EN['account.email.confirm.submit'] })).toBeTruthy();
+  });
+
+  it('says so when another account took the address meanwhile', async () => {
+    const trigger = mutation(async () => {
+      throw { data: { code: 'email_taken' } };
+    });
+    vi.mocked(useConfirmEmailChangeMutation).mockReturnValue([
+      trigger,
+      { isLoading: false }
+    ] as never);
+    wrap(<ConfirmEmailChange />, 'en-US', '/auth/confirm-email-change?token=abc');
+    await userEvent.click(screen.getByRole('button', { name: EN['account.email.confirm.submit'] }));
+    expect((await screen.findByTestId('email-change-invalid')).textContent).toBe(
+      EN['account.email.confirm.taken']
+    );
   });
 
   it('is routed outside the signed-out-only routes, so a signed-in browser can open it', () => {
@@ -141,5 +178,20 @@ describe('the page the link opens', () => {
     const route = app.indexOf('path="/auth/confirm-email-change"');
     expect(route).toBeGreaterThan(-1);
     expect(route).toBeLessThan(app.indexOf('<Route element={<CheckAuth />}>'));
+  });
+});
+
+describe('every sign-out clears the same things', () => {
+  it('both navbars and the email-change page use the one teardown', () => {
+    for (const file of [
+      'components/Navbars/AdminNavbarLinks.tsx',
+      'components/Navbars/AuthNavbar.tsx',
+      'views/Authentication/ConfirmEmailChange.tsx'
+    ]) {
+      const src = read(file);
+      expect(src, file).toContain('clearLocalSession(dispatch)');
+      expect(src, file).not.toMatch(/resetApiState\(\)/);
+    }
+    expect(read('store/clearLocalSession.ts')).toContain('resetApiState()');
   });
 });

@@ -17,9 +17,16 @@ import { Box, Heading, Text, VStack } from '@chakra-ui/react';
 
 import { StandardButton, StandardCard } from 'components/Design/StandardComponents';
 import { useConfirmEmailChangeMutation } from 'store/api/userApi';
-import { logout } from 'store/features/authSlice';
+import { clearLocalSession } from 'store/clearLocalSession';
 
-type State = { kind: 'ready' } | { kind: 'done'; email: string } | { kind: 'invalid' };
+type State =
+  | { kind: 'ready'; retry?: boolean }
+  | { kind: 'done'; email: string }
+  | { kind: 'invalid'; reason: 'link' | 'taken' };
+
+// The API's answers that END this link. Anything else (a network error, a 500, a rate limit) leaves
+// the button up to try again: telling someone a valid link is dead sends them to replace it.
+const TERMINAL: Record<string, 'link' | 'taken'> = { invalid_link: 'link', email_taken: 'taken' };
 
 const ConfirmEmailChange: React.FC = () => {
   const intl = useIntl();
@@ -29,16 +36,19 @@ const ConfirmEmailChange: React.FC = () => {
   const [params] = useSearchParams();
   const token = params.get('token') || '';
   const [confirmEmailChange, { isLoading }] = useConfirmEmailChangeMutation();
-  const [state, setState] = useState<State>(token ? { kind: 'ready' } : { kind: 'invalid' });
+  const [state, setState] = useState<State>(
+    token ? { kind: 'ready' } : { kind: 'invalid', reason: 'link' }
+  );
 
   const confirm = async () => {
     try {
       const result = await confirmEmailChange({ token }).unwrap();
-      // Every session on the account just ended; drop this browser's too.
-      dispatch(logout());
+      // Every session on the account just ended: drop everything this tab holds, as Sign out does.
+      clearLocalSession(dispatch);
       setState({ kind: 'done', email: result.email });
-    } catch {
-      setState({ kind: 'invalid' });
+    } catch (err: any) {
+      const reason = TERMINAL[err?.data?.code];
+      setState(reason ? { kind: 'invalid', reason } : { kind: 'ready', retry: true });
     }
   };
 
@@ -60,6 +70,11 @@ const ConfirmEmailChange: React.FC = () => {
               <Text fontSize="sm" color="gray.600">
                 {t('account.email.confirm.body')}
               </Text>
+              {state.retry && (
+                <Text fontSize="sm" color="red.700" data-testid="email-change-retry">
+                  {t('account.email.confirm.retry')}
+                </Text>
+              )}
               <StandardButton
                 variant="primary"
                 onClick={confirm}
@@ -84,7 +99,11 @@ const ConfirmEmailChange: React.FC = () => {
           )}
           {state.kind === 'invalid' && (
             <Text fontSize="sm" color="gray.700" data-testid="email-change-invalid">
-              {t('account.email.confirm.invalid')}
+              {t(
+                state.reason === 'taken'
+                  ? 'account.email.confirm.taken'
+                  : 'account.email.confirm.invalid'
+              )}
             </Text>
           )}
         </VStack>

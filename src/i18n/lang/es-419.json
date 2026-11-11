@@ -1950,6 +1950,8 @@
   "account.email.confirm.title": "Confirma tu nuevo correo electrónico",
   "account.email.confirm.doneTitle": "Correo electrónico cambiado",
   "account.email.confirm.invalidTitle": "Este enlace ya no funciona",
+  "account.email.confirm.retry": "No pudimos confirmar en este momento. Revisa tu conexión y vuelve a intentarlo.",
+  "account.email.confirm.taken": "Otra cuenta usa ahora ese correo, así que el cambio no se hizo. Vuelve a solicitarlo desde tu perfil con otra dirección.",
   "account.email.confirm.body": "Confirma para que este sea tu correo de inicio de sesión. Después se cierran todas las sesiones de la cuenta y vuelves a iniciar sesión con la nueva dirección.",
   "account.email.confirm.submit": "Confirmar nuevo correo",
   "account.email.confirm.done": "Tu correo de inicio de sesión ahora es {email}. Inicia sesión con él.",
