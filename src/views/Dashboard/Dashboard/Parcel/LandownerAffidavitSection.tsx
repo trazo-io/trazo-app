@@ -32,6 +32,7 @@ import {
   StandardTextarea
 } from 'components/Design/StandardComponents';
 import {
+  AFFIDAVIT_MATERIAL_TYPES,
   LandownerAffidavit,
   YearHistoryRow,
   useCreateLandownerAffidavitMutation,
@@ -69,7 +70,18 @@ const EMPTY_FORM = {
   management_period_start: '',
   management_period_end: '',
   parcel_legal_description: '',
-  yearly_history: [] as YearHistoryRow[]
+  yearly_history: [] as YearHistoryRow[],
+  // CCOF Affidavit B and C; WSDA AGR 2262 5a, 5b, 6, 6a. '' is "not stated".
+  signer_basis: '' as '' | 'owned' | 'managed' | 'other',
+  signer_basis_other: '',
+  signer_title: '',
+  signer_company: '',
+  signer_email: '',
+  last_inspection_date: '',
+  portion_remains: '' as '' | 'yes' | 'no',
+  acres_remaining: '',
+  treated_seed_planted: '' as '' | 'yes' | 'no',
+  treated_seed_detail: ''
 };
 
 const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelId, canWrite }) => {
@@ -128,7 +140,17 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
       management_period_start: a.management_period_start || '',
       management_period_end: a.management_period_end || '',
       parcel_legal_description: a.parcel_legal_description || '',
-      yearly_history: Array.isArray(a.yearly_history) ? a.yearly_history : []
+      yearly_history: Array.isArray(a.yearly_history) ? a.yearly_history : [],
+      signer_basis: a.signer_basis || '',
+      signer_basis_other: a.signer_basis_other || '',
+      signer_title: a.signer_title || '',
+      signer_company: a.signer_company || '',
+      signer_email: a.signer_email || '',
+      last_inspection_date: a.last_inspection_date || '',
+      portion_remains: a.portion_remains || '',
+      acres_remaining: a.acres_remaining ?? '',
+      treated_seed_planted: a.treated_seed_planted || '',
+      treated_seed_detail: a.treated_seed_detail || ''
     });
     setShowForm(true);
   };
@@ -172,8 +194,28 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
       yearly_history: form.yearly_history.filter(
         (r) =>
           r &&
-          (r.year || r.land_use || r.inputs || r.applied_by || r.manufacturer || r.date_applied)
-      )
+          (r.year ||
+            r.land_use ||
+            r.inputs ||
+            r.applied_by ||
+            r.manufacturer ||
+            r.date_applied ||
+            r.material_type ||
+            r.period_from ||
+            r.period_to ||
+            r.acres)
+      ),
+      signer_basis: form.signer_basis,
+      signer_basis_other: form.signer_basis === 'other' ? form.signer_basis_other : '',
+      signer_title: form.signer_title,
+      signer_company: form.signer_company,
+      signer_email: form.signer_email,
+      last_inspection_date: form.last_inspection_date || null,
+      portion_remains: form.portion_remains,
+      acres_remaining:
+        form.portion_remains === 'yes' && form.acres_remaining ? form.acres_remaining : null,
+      treated_seed_planted: form.treated_seed_planted,
+      treated_seed_detail: form.treated_seed_planted === 'yes' ? form.treated_seed_detail : ''
     };
     try {
       if (editingId != null) {
@@ -550,6 +592,137 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
               </FormControl>
             </SimpleGrid>
 
+            {/* CCOF Affidavit B and C: why the signer knows the parcel, and who they are. WSDA AGR
+                2262 5a, 5b, 6, 6a: their last inspection, what stays on their certificate, and
+                treated seed in their period. Each starts "Not stated". */}
+            <Divider my={3} />
+            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+              <FormControl>
+                <FormLabel fontSize="sm">
+                  {intl.formatMessage({ id: 'parcel.affidavit.signerBasis' })}
+                </FormLabel>
+                <StandardSelect
+                  value={form.signer_basis}
+                  onChange={(e) => set('signer_basis', e.target.value)}>
+                  <option value="">
+                    {intl.formatMessage({ id: 'parcel.affidavit.notStated' })}
+                  </option>
+                  {(['owned', 'managed', 'other'] as const).map((v) => (
+                    <option key={v} value={v}>
+                      {intl.formatMessage({ id: `parcel.affidavit.signerBasis.${v}` })}
+                    </option>
+                  ))}
+                </StandardSelect>
+              </FormControl>
+              {form.signer_basis === 'other' && (
+                <FormControl>
+                  <FormLabel fontSize="sm">
+                    {intl.formatMessage({ id: 'parcel.affidavit.signerBasisOther' })}
+                  </FormLabel>
+                  <StandardInput
+                    value={form.signer_basis_other}
+                    onChange={(e) => set('signer_basis_other', e.target.value)}
+                  />
+                </FormControl>
+              )}
+              <FormControl>
+                <FormLabel fontSize="sm">
+                  {intl.formatMessage({ id: 'parcel.affidavit.signerTitle' })}
+                </FormLabel>
+                <StandardInput
+                  value={form.signer_title}
+                  onChange={(e) => set('signer_title', e.target.value)}
+                />
+              </FormControl>
+              <FormControl>
+                <FormLabel fontSize="sm">
+                  {intl.formatMessage({ id: 'parcel.affidavit.signerCompany' })}
+                </FormLabel>
+                <StandardInput
+                  value={form.signer_company}
+                  onChange={(e) => set('signer_company', e.target.value)}
+                />
+              </FormControl>
+              <FormControl>
+                <FormLabel fontSize="sm">
+                  {intl.formatMessage({ id: 'parcel.affidavit.signerEmail' })}
+                </FormLabel>
+                <StandardInput
+                  type="email"
+                  value={form.signer_email}
+                  onChange={(e) => set('signer_email', e.target.value)}
+                />
+              </FormControl>
+              <FormControl>
+                <FormLabel fontSize="sm">
+                  {intl.formatMessage({ id: 'parcel.affidavit.lastInspectionDate' })}
+                </FormLabel>
+                <StandardInput
+                  type="date"
+                  value={form.last_inspection_date}
+                  onChange={(e) => set('last_inspection_date', e.target.value)}
+                />
+              </FormControl>
+              <FormControl>
+                <FormLabel fontSize="sm">
+                  {intl.formatMessage({ id: 'parcel.affidavit.portionRemains' })}
+                </FormLabel>
+                <StandardSelect
+                  value={form.portion_remains}
+                  onChange={(e) => set('portion_remains', e.target.value)}>
+                  <option value="">
+                    {intl.formatMessage({ id: 'parcel.affidavit.notStated' })}
+                  </option>
+                  <option value="yes">
+                    {intl.formatMessage({ id: 'parcel.affidavit.portionRemains.yes' })}
+                  </option>
+                  <option value="no">
+                    {intl.formatMessage({ id: 'parcel.affidavit.portionRemains.no' })}
+                  </option>
+                </StandardSelect>
+              </FormControl>
+              {form.portion_remains === 'yes' && (
+                <FormControl>
+                  <FormLabel fontSize="sm">
+                    {intl.formatMessage({ id: 'parcel.affidavit.acresRemaining' })}
+                  </FormLabel>
+                  <StandardInput
+                    type="number"
+                    inputMode="decimal"
+                    min={0}
+                    step="0.01"
+                    value={form.acres_remaining}
+                    onChange={(e) => set('acres_remaining', e.target.value)}
+                  />
+                </FormControl>
+              )}
+              <FormControl>
+                <FormLabel fontSize="sm">
+                  {intl.formatMessage({ id: 'parcel.affidavit.treatedSeed' })}
+                </FormLabel>
+                <StandardSelect
+                  value={form.treated_seed_planted}
+                  onChange={(e) => set('treated_seed_planted', e.target.value)}>
+                  <option value="">
+                    {intl.formatMessage({ id: 'parcel.affidavit.notStated' })}
+                  </option>
+                  <option value="yes">{intl.formatMessage({ id: 'parcel.affidavit.yes' })}</option>
+                  <option value="no">{intl.formatMessage({ id: 'parcel.affidavit.no' })}</option>
+                </StandardSelect>
+              </FormControl>
+              {form.treated_seed_planted === 'yes' && (
+                <FormControl>
+                  <FormLabel fontSize="sm">
+                    {intl.formatMessage({ id: 'parcel.affidavit.treatedSeedDetail' })}
+                  </FormLabel>
+                  <StandardInput
+                    value={form.treated_seed_detail}
+                    onChange={(e) => set('treated_seed_detail', e.target.value)}
+                  />
+                </FormControl>
+              )}
+            </SimpleGrid>
+
             <Divider my={3} />
             <HStack justify="space-between" mb={2}>
               <Text fontSize="sm" fontWeight="semibold">
@@ -571,72 +744,121 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
             </HStack>
             <VStack spacing={2} align="stretch">
               {form.yearly_history.map((row, idx) => (
-                <SimpleGrid key={idx} columns={{ base: 1, md: 4 }} spacing={2}>
-                  <StandardInput
-                    placeholder={intl.formatMessage({
-                      id: 'parcel.affidavit.yearHistory.year',
-                      defaultMessage: 'Year'
-                    })}
-                    value={String(row.year ?? '')}
-                    onChange={(e) => updateYearRow(idx, 'year', e.target.value)}
-                  />
-                  <StandardInput
-                    placeholder={intl.formatMessage({
-                      id: 'parcel.affidavit.yearHistory.landUse',
-                      defaultMessage: 'Land use'
-                    })}
-                    value={row.land_use || ''}
-                    onChange={(e) => updateYearRow(idx, 'land_use', e.target.value)}
-                  />
-                  <StandardInput
-                    placeholder={intl.formatMessage({
-                      id: 'parcel.affidavit.yearHistory.inputs',
-                      defaultMessage: 'Inputs applied'
-                    })}
-                    value={row.inputs || ''}
-                    onChange={(e) => updateYearRow(idx, 'inputs', e.target.value)}
-                  />
-                  <HStack spacing={1}>
+                <VStack key={idx} align="stretch" spacing={2}>
+                  <SimpleGrid columns={{ base: 1, md: 4 }} spacing={2}>
                     <StandardInput
                       placeholder={intl.formatMessage({
-                        id: 'parcel.affidavit.yearHistory.appliedBy',
-                        defaultMessage: 'Applied by'
+                        id: 'parcel.affidavit.yearHistory.year',
+                        defaultMessage: 'Year'
                       })}
-                      value={row.applied_by || ''}
-                      onChange={(e) => updateYearRow(idx, 'applied_by', e.target.value)}
+                      value={String(row.year ?? '')}
+                      onChange={(e) => updateYearRow(idx, 'year', e.target.value)}
                     />
-                    {/* USDA asks Material / Manufacturer / Date Applied as separate
+                    <StandardInput
+                      placeholder={intl.formatMessage({
+                        id: 'parcel.affidavit.yearHistory.landUse',
+                        defaultMessage: 'Land use'
+                      })}
+                      value={row.land_use || ''}
+                      onChange={(e) => updateYearRow(idx, 'land_use', e.target.value)}
+                    />
+                    <StandardInput
+                      placeholder={intl.formatMessage({
+                        id: 'parcel.affidavit.yearHistory.inputs',
+                        defaultMessage: 'Inputs applied'
+                      })}
+                      value={row.inputs || ''}
+                      onChange={(e) => updateYearRow(idx, 'inputs', e.target.value)}
+                    />
+                    <HStack spacing={1}>
+                      <StandardInput
+                        placeholder={intl.formatMessage({
+                          id: 'parcel.affidavit.yearHistory.appliedBy',
+                          defaultMessage: 'Applied by'
+                        })}
+                        value={row.applied_by || ''}
+                        onChange={(e) => updateYearRow(idx, 'applied_by', e.target.value)}
+                      />
+                      {/* USDA asks Material / Manufacturer / Date Applied as separate
                         columns. `inputs` above is the material; a 36-month eligibility
                         check needs the date, which it has never carried. */}
-                    <StandardInput
-                      placeholder={intl.formatMessage({
-                        id: 'parcel.affidavit.yearHistory.manufacturer',
-                        defaultMessage: 'Manufacturer'
-                      })}
-                      value={row.manufacturer || ''}
-                      onChange={(e) => updateYearRow(idx, 'manufacturer', e.target.value)}
-                    />
-                    <StandardInput
-                      type="date"
+                      <StandardInput
+                        placeholder={intl.formatMessage({
+                          id: 'parcel.affidavit.yearHistory.manufacturer',
+                          defaultMessage: 'Manufacturer'
+                        })}
+                        value={row.manufacturer || ''}
+                        onChange={(e) => updateYearRow(idx, 'manufacturer', e.target.value)}
+                      />
+                      <StandardInput
+                        type="date"
+                        aria-label={intl.formatMessage({
+                          id: 'parcel.affidavit.yearHistory.dateApplied',
+                          defaultMessage: 'Date applied'
+                        })}
+                        value={row.date_applied || ''}
+                        onChange={(e) => updateYearRow(idx, 'date_applied', e.target.value)}
+                      />
+                      <IconButton
+                        aria-label={intl.formatMessage({
+                          id: 'parcel.affidavit.yearHistory.removeAria',
+                          defaultMessage: 'Remove year'
+                        })}
+                        size="sm"
+                        variant="ghost"
+                        icon={<FaTrash />}
+                        onClick={() => removeYearRow(idx)}
+                      />
+                    </HStack>
+                  </SimpleGrid>
+                  {/* CCOF Affidavit D "Type"; WSDA AGR 2262 ref 7 months produced and acreage. */}
+                  <SimpleGrid columns={{ base: 1, md: 4 }} spacing={2}>
+                    <StandardSelect
                       aria-label={intl.formatMessage({
-                        id: 'parcel.affidavit.yearHistory.dateApplied',
-                        defaultMessage: 'Date applied'
+                        id: 'parcel.affidavit.yearHistory.materialType'
                       })}
-                      value={row.date_applied || ''}
-                      onChange={(e) => updateYearRow(idx, 'date_applied', e.target.value)}
-                    />
-                    <IconButton
+                      value={row.material_type || ''}
+                      onChange={(e) => updateYearRow(idx, 'material_type', e.target.value)}>
+                      <option value="">
+                        {intl.formatMessage({
+                          id: 'parcel.affidavit.yearHistory.materialTypeNone'
+                        })}
+                      </option>
+                      {AFFIDAVIT_MATERIAL_TYPES.map((v) => (
+                        <option key={v} value={v}>
+                          {intl.formatMessage({ id: `parcel.affidavit.materialType.${v}` })}
+                        </option>
+                      ))}
+                    </StandardSelect>
+                    <StandardInput
+                      type="month"
+                      placeholder="YYYY-MM"
                       aria-label={intl.formatMessage({
-                        id: 'parcel.affidavit.yearHistory.removeAria',
-                        defaultMessage: 'Remove year'
+                        id: 'parcel.affidavit.yearHistory.periodFrom'
                       })}
-                      size="sm"
-                      variant="ghost"
-                      icon={<FaTrash />}
-                      onClick={() => removeYearRow(idx)}
+                      value={row.period_from || ''}
+                      onChange={(e) => updateYearRow(idx, 'period_from', e.target.value)}
                     />
-                  </HStack>
-                </SimpleGrid>
+                    <StandardInput
+                      type="month"
+                      placeholder="YYYY-MM"
+                      aria-label={intl.formatMessage({
+                        id: 'parcel.affidavit.yearHistory.periodTo'
+                      })}
+                      value={row.period_to || ''}
+                      onChange={(e) => updateYearRow(idx, 'period_to', e.target.value)}
+                    />
+                    <StandardInput
+                      type="number"
+                      inputMode="decimal"
+                      min={0}
+                      step="0.01"
+                      placeholder={intl.formatMessage({ id: 'parcel.affidavit.yearHistory.acres' })}
+                      value={row.acres || ''}
+                      onChange={(e) => updateYearRow(idx, 'acres', e.target.value)}
+                    />
+                  </SimpleGrid>
+                </VStack>
               ))}
             </VStack>
 

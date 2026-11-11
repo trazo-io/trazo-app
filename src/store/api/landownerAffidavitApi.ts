@@ -16,7 +16,24 @@ export interface YearHistoryRow {
    *  determination turns on the date. Optional: rows already on file predate them. */
   manufacturer?: string;
   date_applied?: string;
+  /** CCOF ORGB49 Affidavit D "Type" (fertilizer, pest_disease_control, herbicide, compost_manure,
+   *  seed_treatment, adjuvant, other); "" is not stated. */
+  material_type?: string;
+  /** WSDA AGR 2262 ref 7: months produced ("YYYY-MM") and acreage of the use on this row. */
+  period_from?: string;
+  period_to?: string;
+  acres?: string;
 }
+
+export const AFFIDAVIT_MATERIAL_TYPES = [
+  'fertilizer',
+  'pest_disease_control',
+  'herbicide',
+  'compost_manure',
+  'seed_treatment',
+  'adjuvant',
+  'other'
+] as const;
 
 export interface LandownerAffidavit {
   id: number;
@@ -47,6 +64,19 @@ export interface LandownerAffidavit {
   management_period_start?: string | null;
   management_period_end?: string | null;
   parcel_legal_description?: string | null;
+  /** CCOF Affidavit B: owned / managed / other ("" not stated), with the description of "other". */
+  signer_basis?: '' | 'owned' | 'managed' | 'other';
+  signer_basis_other?: string;
+  /** CCOF Affidavit C signature block; WSDA AGR 2262 attestation (email). */
+  signer_title?: string;
+  signer_company?: string;
+  signer_email?: string;
+  /** WSDA AGR 2262 5a(i), 5b, 6, 6a. */
+  last_inspection_date?: string | null;
+  portion_remains?: '' | 'yes' | 'no';
+  acres_remaining?: string | null;
+  treated_seed_planted?: '' | 'yes' | 'no';
+  treated_seed_detail?: string;
 }
 
 interface Scope {
