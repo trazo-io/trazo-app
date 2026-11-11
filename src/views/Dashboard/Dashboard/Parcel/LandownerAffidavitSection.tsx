@@ -132,6 +132,8 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
     setForm((f) => ({ ...f, yearly_history: f.yearly_history.filter((_, i) => i !== idx) }));
 
   const startEdit = (a: LandownerAffidavit) => {
+    // A file chosen for another affidavit must never upload onto this one (review of app #372).
+    setSignedFile(null);
     setEditingId(a.id);
     setForm({
       signer_role: a.signer_role === 'this_operation' ? 'this_operation' : 'prior_manager',
@@ -370,10 +372,7 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
                         defaultMessage: '(unnamed)'
                       })}
                   </Text>
-                  <Badge
-                    colorScheme={a.signed_document ? 'green' : 'gray'}
-                    variant="subtle"
-                    fontSize="10px">
+                  <Badge variant={a.signed_document ? 'neutral' : 'warning'}>
                     {intl.formatMessage({
                       id: a.signed_document
                         ? 'parcel.affidavit.signedCopyOnFile'
@@ -381,7 +380,7 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
                     })}
                   </Badge>
                   {a.signer_role === 'this_operation' && (
-                    <Badge colorScheme="gray" variant="subtle" fontSize="10px">
+                    <Badge variant="neutral">
                       {intl.formatMessage({ id: 'parcel.affidavit.role.thisOperationBadge' })}
                     </Badge>
                   )}
