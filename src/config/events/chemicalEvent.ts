@@ -16,7 +16,7 @@
  *
  * Conditional `required` (not visibility) is used for EPA WPS compliance:
  *   required: (e) => e.restricted_use_pesticide === true — applicator_certification
- *   only becomes mandatory when the product is a Restricted Use Pesticide (40 CFR 170.309).
+ *   only becomes mandatory when the product is a Restricted Use Pesticide (7 U.S.C. 136j(a)(2)(F)).
  *   Visibility is unconditional so organic/biological applications can still
  *   document applicator credentials for NOP 7 CFR 205.103 traceability.
  *

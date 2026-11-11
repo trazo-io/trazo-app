@@ -1,8 +1,9 @@
 /**
- * Off-farm post-harvest handlers — CCOF G6.1 / 7 CFR 205.272.
+ * Off-farm post-harvest handlers: CCOF G6.1 / 7 CFR 205.100(a), subject to § 205.101.
  *
  * When a lot leaves the farm for a huller, dryer, cold store or packer, that facility must be
- * a certified organic handler and its current organic certificate has to travel with the lot.
+ * a certified organic handler (unless a § 205.101 exemption applies) and its current organic
+ * certificate has to travel with the lot.
  * The certifier packet prints that certificate; until 2026-08-16 nothing in the app could
  * record it, so the packet printed the ask on every export instead.
  *

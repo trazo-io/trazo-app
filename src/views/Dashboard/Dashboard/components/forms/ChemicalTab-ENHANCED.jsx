@@ -131,7 +131,7 @@ const firstFilled = (...candidates) => {
 const FUEL_TYPES = CHEMICAL_FUEL_TYPES;
 
 // ENHANCED SCHEMA - Following Equipment/Soil/Pest enhanced patterns with dynamic validation
-// Now includes EPA Worker Protection Standard (WPS) compliance fields per 40 CFR 170.309
+// Now includes the pesticide application fields of the EPA Worker Protection Standard (40 CFR 170.311(b)(1))
 // 2025-01-21: Added chemical_subtype for accurate carbon emission factor selection
 /**
  * A BUILDER, not a constant. The schema used to live at module scope, which put every
@@ -188,7 +188,7 @@ export const buildChemicalSchema = (intl, { multiTarget = false } = {}) =>
     nitrogen_percentage: string().optional(),
     phosphorus_percentage: string().optional(),
     potassium_percentage: string().optional(),
-    // §E-3 — micronutrients (FE), 7 CFR 205.601(j)(6)
+    // §E-3: micronutrients (FE), 7 CFR 205.601(j)(7)
     micronutrient_type: string().optional(),
     micronutrient_rate: string().optional(),
     micronutrient_rate_unit: string().optional(),
@@ -206,7 +206,7 @@ export const buildChemicalSchema = (intl, { multiTarget = false } = {}) =>
     target_pest_disease: string().optional(),
     observation: string().optional(),
     private_note: string().optional(),
-    // EPA Worker Protection Standard (WPS) Compliance Fields - 40 CFR 170.309
+    // Pesticide application fields (EPA WPS application record: 40 CFR 170.311(b)(1))
     applicator_name: string().optional(),
     // F21 — GG authorizer (FV-GFS 32.02.01 #10) + FSMA supervisor review (112.161(b))
     authorizer_name: string().optional(),
@@ -1478,7 +1478,7 @@ const ChemicalTab = forwardRef(
         // "Please fill in all required fields: Application Method" on a filled form
         // (2026-08-21, Serenade and Grandevo on the Calapooia Bend rehearsal).
         application_method: application_method || '',
-        // EPA Worker Protection Standard (WPS) Compliance - 40 CFR 170.309
+        // Pesticide application fields (EPA WPS application record: 40 CFR 170.311(b)(1))
         // These are direct model fields on ChemicalEvent, not extra_data
         applicator_name: applicator_name || null,
         epa_registration_number: epa_registration_number || null,
@@ -1515,7 +1515,7 @@ const ChemicalTab = forwardRef(
           data.potassium_percentage != null
             ? data.potassium_percentage
             : null,
-        // §E-3 — micronutrients (7 CFR 205.601(j)(6)). Fertilizer-only: send null for every
+        // §E-3: micronutrients (7 CFR 205.601(j)(7)). Fertilizer-only: send null for every
         // other subtype so re-typing an FE event as a pesticide actually clears the stored
         // values rather than leaving a phantom zinc application on the record.
         // All three stand or fall together: a rate with no nutrient names nothing, and a unit
@@ -3430,7 +3430,7 @@ const ChemicalTab = forwardRef(
                         </Box>
                       )}
 
-                      {/* §E-3 Micronutrients (FE only). 7 CFR 205.601(j)(6) permits synthetic
+                      {/* §E-3 Micronutrients (FE only). 7 CFR 205.601(j)(7) permits synthetic
                             micronutrients ONLY where a soil or plant-tissue deficiency is
                             documented — so the field carries the pointer to that record rather
                             than leaving an inspector to guess why zinc was applied. UC Davis 2024
@@ -5333,7 +5333,7 @@ const ChemicalTab = forwardRef(
                 </CollapsibleSection>
               )}
 
-              {/* Section 5: EPA Worker Protection Standard (WPS) Compliance - 40 CFR 170.309 */}
+              {/* Section 5: pesticide application record (EPA WPS, 40 CFR 170.311(b)(1)) */}
               {(chemicalType === 'PE' || chemicalType === 'HE' || chemicalType === 'FU') && (
                 <SectionBox>
                   <SectionHeader
@@ -5347,7 +5347,7 @@ const ChemicalTab = forwardRef(
                       {intl.formatMessage({
                         id: 'events.chemical.wps.body',
                         defaultMessage:
-                          'EPA Worker Protection Standard (40 CFR 170.309) requires documentation of applicator information and safety intervals for pesticide applications.'
+                          'EPA Worker Protection Standard (40 CFR 170.311(b)(1)): for each pesticide product applied, keep the safety data sheet, the product name, EPA registration number and active ingredients, the crop or site treated, the dates and times the application started and ended, and the restricted-entry interval. Applicator certification for restricted use pesticides is a separate federal rule (7 U.S.C. 136j(a)(2)(F)).'
                       })}
                     </Text>
 
@@ -5474,7 +5474,7 @@ const ChemicalTab = forwardRef(
                     </StandardField>
 
                     {/* Applicator Certification — always shown for NOP traceability.
-                          Required only when RUP=true (EPA WPS 40 CFR 170.309);
+                          Required only when RUP=true (7 U.S.C. 136j(a)(2)(F));
                           optional but audit-surfaced for organic/biological applications. */}
                     <StandardField
                       label={intl.formatMessage({

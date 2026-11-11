@@ -718,7 +718,7 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
     surfaces: { modal: 'secondary', form: 'secondary' }
   },
 
-  // ---- NOP Compliance: Amendment organic approval (7 CFR 205.203(b)) ----
+  // ---- NOP Compliance: Amendment organic basis (7 CFR 205.203(d), (e); § 205.105) ----
   {
     name: 'amendment_organic_approved',
     labelKey: 'events.soil.fields.amendmentOrganicApproved',

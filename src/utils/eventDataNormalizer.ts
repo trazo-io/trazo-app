@@ -1562,7 +1562,7 @@ function normalizeChemicalEventData(
     'application_timing',
     'application_details', // Sprint 6: Additional application notes for transparency
     'weather_conditions',
-    // EPA WPS Compliance Fields - 40 CFR 170.309
+    // Pesticide application fields (EPA WPS application record: 40 CFR 170.311(b)(1))
     'applicator_name',
     'epa_registration_number',
     'restricted_use_pesticide',

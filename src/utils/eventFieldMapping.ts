@@ -131,7 +131,7 @@ export const PRODUCTION_FIELD_MAPPING: DataSourceMapping = {
 /**
  * Chemical Event Field Mappings (Type 2)
  * Handles: FE, PE, FU, HE
- * Includes EPA Worker Protection Standard (WPS) compliance fields per 40 CFR 170.309
+ * Includes the pesticide application fields of the EPA Worker Protection Standard (40 CFR 170.311(b)(1))
  */
 export const CHEMICAL_FIELD_MAPPING: DataSourceMapping = {
   form: {
@@ -157,7 +157,7 @@ export const CHEMICAL_FIELD_MAPPING: DataSourceMapping = {
     application_timing: 'application_timing',
     weather_conditions: 'weather_conditions',
     observation: 'observation',
-    // EPA WPS Compliance Fields - 40 CFR 170.309
+    // Pesticide application fields (EPA WPS application record: 40 CFR 170.311(b)(1))
     applicator_name: 'applicator_name',
     epa_registration_number: 'epa_registration_number',
     restricted_use_pesticide: 'restricted_use_pesticide',
@@ -193,7 +193,7 @@ export const CHEMICAL_FIELD_MAPPING: DataSourceMapping = {
     weather_conditions: 'weather_conditions',
     observation: 'observation',
     description: 'description',
-    // EPA WPS Compliance Fields - 40 CFR 170.309
+    // Pesticide application fields (EPA WPS application record: 40 CFR 170.311(b)(1))
     applicator_name: 'applicator_name',
     epa_registration_number: 'epa_registration_number',
     restricted_use_pesticide: 'restricted_use_pesticide',
