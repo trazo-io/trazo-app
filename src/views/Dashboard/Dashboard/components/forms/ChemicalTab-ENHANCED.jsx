@@ -55,6 +55,7 @@ import {
   FaTrash
 } from 'react-icons/fa';
 import { FormProvider, useForm, useWatch, Controller, useFieldArray } from 'react-hook-form';
+import OrganicBasisBlankNotice from './OrganicBasisBlankNotice';
 import React, {
   useEffect,
   useMemo,
@@ -1963,6 +1964,12 @@ const ChemicalTab = forwardRef(
                         )}
                       />
                     </StandardField>
+                  )}
+                  {chemicalType && (
+                    <OrganicBasisBlankNotice
+                      control={methods.control}
+                      messageId="events.chemical.organicBasis.blankWarning"
+                    />
                   )}
 
                   {/* Sprint 5: Aggregate Chemical Support - Summary Mode Toggle (Fertilizer, Fungicide & Pesticide) */}

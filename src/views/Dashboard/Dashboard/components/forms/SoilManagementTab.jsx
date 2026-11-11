@@ -1834,6 +1834,22 @@ const SoilManagementTab = forwardRef(
                           )}
                         </StandardSelect>
                       </StandardField>
+                      {/* An amendment saved with no basis prints in the packet as "organic
+                          status not recorded" and leaves the parcel's transition undated
+                          (overall review 2026-11). Warn, never block. Counted as an input the
+                          way the backend counts it: a type or a product name is recorded. */}
+                      {!watchedAmendmentOrganicApproved &&
+                        Boolean(watchedAmendmentType || watch('amendment_product_name')) && (
+                          <Box gridColumn="1 / -1">
+                            <StandardAlert
+                              status="warning"
+                              mb={0}
+                              description={intl.formatMessage({
+                                id: 'events.soil.fields.amendmentOrganicBlankWarning'
+                              })}
+                            />
+                          </Box>
+                        )}
                       {/*
                         Nitrogen content drives TWO things that were both incomplete without
                         it: post-application field N2O (compost is usually the largest N

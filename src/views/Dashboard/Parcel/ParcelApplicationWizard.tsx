@@ -52,6 +52,7 @@ import WizardActions from 'components/Design/WizardActions';
 import CardWithMap from 'components/Map/CardWithMap';
 import FieldHistorySection from 'views/Dashboard/Dashboard/Parcel/FieldHistorySection';
 import { answerValue, visiblePages, visibleQuestions } from 'config/osp/conditionEval';
+import { coverageRemedyKeys } from './coverageRemedies';
 import { holdsRetiredOption, offeredOptions, toggleCheckbox } from 'config/osp/optionChoices';
 import { pickText } from 'config/osp/types';
 import type { AnswerValue, ModuleAnswers, ModuleQuestion } from 'config/osp/types';
@@ -953,6 +954,16 @@ const ParcelApplicationWizard = () => {
               })
             : intl.formatMessage({ id: 'parcelApp.managers.notRecorded' });
         const cov = lh?.coverage;
+        // Which remedy fits a gap depends on who managed the land then (OV-FJ-C05): see
+        // coverageRemedies.ts.
+        const gapRemedies = (gaps: Array<[string, string]>) =>
+          coverageRemedyKeys(
+            gaps,
+            lh?.current_manager.period_start ?? null,
+            answerValue(answers, 'currently_certified') === 'yes'
+          )
+            .map((id) => intl.formatMessage({ id }))
+            .join(' ');
         const coverageText = !cov
           ? null
           : cov.not_asked
@@ -969,7 +980,7 @@ const ParcelApplicationWizard = () => {
               { id: 'parcelApp.managers.coverage.complete' },
               { start: fmt(cov.window_start), end: fmt(cov.window_end) }
             )
-          : intl.formatMessage(
+          : `${intl.formatMessage(
               { id: 'parcelApp.managers.coverage.gaps' },
               {
                 count: cov.gaps.length,
@@ -977,7 +988,7 @@ const ParcelApplicationWizard = () => {
                 end: fmt(cov.window_end),
                 ranges: cov.gaps.map(([a, b]) => `${fmt(a)} – ${fmt(b)}`).join('; ')
               }
-            );
+            )} ${gapRemedies(cov.gaps)}`;
         const accounted = cov?.complete === true;
         return (
           <Box>

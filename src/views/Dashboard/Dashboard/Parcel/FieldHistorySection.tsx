@@ -717,6 +717,32 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
                         minW="160px"
                         whiteSpace="normal">
                         {entry.substances_applied || '—'}
+                        {/* The date that decides the 36 months (§ 205.202(b)) was stored and never
+                            shown, so the grower could not see it had been saved (overall review
+                            2026-11, OV-FJ-C08). */}
+                        {(entry.last_prohibited_substance || entry.date_last_prohibited) && (
+                          <Text fontSize="xs" color="gray.700" mt={1}>
+                            {intl.formatMessage(
+                              { id: 'parcel.fieldHistory.row.lastProhibited' },
+                              {
+                                detail: [
+                                  entry.last_prohibited_substance,
+                                  entry.date_last_prohibited &&
+                                    intl.formatDate(
+                                      new Date(`${entry.date_last_prohibited}T00:00:00`),
+                                      {
+                                        year: 'numeric',
+                                        month: 'short',
+                                        day: 'numeric'
+                                      }
+                                    )
+                                ]
+                                  .filter(Boolean)
+                                  .join(', ')
+                              }
+                            )}
+                          </Text>
+                        )}
                       </Td>
                       <Td
                         fontSize="xs"
