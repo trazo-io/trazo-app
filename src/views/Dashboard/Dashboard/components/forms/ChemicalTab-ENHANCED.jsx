@@ -55,6 +55,7 @@ import {
   FaTrash
 } from 'react-icons/fa';
 import { FormProvider, useForm, useWatch, Controller, useFieldArray } from 'react-hook-form';
+import OrganicBasisBlankNotice from './OrganicBasisBlankNotice';
 import React, {
   useEffect,
   useMemo,
@@ -1963,6 +1964,15 @@ const ChemicalTab = forwardRef(
                         )}
                       />
                     </StandardField>
+                  )}
+                  {/* Not where the basis is required: there the save is refused with its own
+                      error, and "you can save without one" would contradict it (review of
+                      trazo-app #359). */}
+                  {chemicalType && !requiresOrganicBasis && (
+                    <OrganicBasisBlankNotice
+                      control={methods.control}
+                      messageId="events.chemical.organicBasis.blankWarning"
+                    />
                   )}
 
                   {/* Sprint 5: Aggregate Chemical Support - Summary Mode Toggle (Fertilizer, Fungicide & Pesticide) */}

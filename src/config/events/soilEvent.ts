@@ -322,8 +322,10 @@ const formatHabitatType = (v: unknown): string | null => {
 // (7 CFR 205.203(c)(1)). Default enum resolver would render bare "120"/"90"/"Na"
 // — we inject the NOP context so the consumer card + farmer modal stay readable.
 const MANURE_HARVEST_INTERVAL_LABELS: Record<string, string> = {
-  '120': '120 days (crop contacts soil)',
-  '90': '90 days (crop elevated)',
+  // A floor, not a crop class (7 CFR 205.203(c)(1) "not less than"): a tree crop kept at
+  // 120 days is compliant, so the label must not say its fruit touches the soil.
+  '120': 'At least 120 days',
+  '90': 'At least 90 days',
   na: 'N/A (composted or none)'
 };
 
