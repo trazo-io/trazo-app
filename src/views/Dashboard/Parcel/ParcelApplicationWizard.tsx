@@ -76,6 +76,7 @@ import { OSP_MODULE_PDF_URL } from 'config';
 const PARCEL_MAP_SECTION = 'parcel_application_map';
 import { env } from 'config/environment';
 import type { BufferZoneRow } from 'store/api/parcelApplicationApi';
+import PlannedCropRows from './PlannedCropRows';
 import { useUserRole } from 'hooks/useUserRole';
 import type { RootState } from 'store/index';
 import { useComplianceExports } from 'components/Guards/ComplianceExportsGuard';
@@ -1127,6 +1128,17 @@ const ParcelApplicationWizard = () => {
           </Box>
         );
       }
+      case 'planned_crops':
+        return (
+          <PlannedCropRows
+            crops={data?.planned_crops ?? []}
+            openSeasonCrops={data?.open_season_crops ?? []}
+            canWrite={canWrite}
+            companyId={companyId}
+            farmId={farmId || ''}
+            parcelId={parcelId || ''}
+          />
+        );
       case 'location_coordinates': {
         // Read-only: the centre §A prints, from the boundary drawn on the map (section E).
         const centre = data?.boundary_centre;
