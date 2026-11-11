@@ -2414,7 +2414,7 @@
   "certifierReadiness.detail.land_requirements.last_prohibited": "{years, plural, one {# year} other {# years}} of field history on file; last prohibited application {date}. Your certifier confirms the 36-month date.",
   "certifierReadiness.detail.land_requirements.unclassified": "{years, plural, one {# year} other {# years}} of field history on file and no prohibited application recorded, but {count, plural, one {# input has} other {# inputs have}} no organic status. Classify them; your certifier then confirms the 36-month period.",
   "certifierReadiness.detail.land_requirements.unconfirmed": "{years, plural, one {# year} other {# years}} of field history on file and no prohibited application recorded; {count, plural, one {# input carries} other {# inputs carry}} an organic basis not yet confirmed. Confirm each with your certifier.",
-  "certifierReadiness.detail.ofpp.missing": "No Organic Fraud Prevention Plan on file. SOE 2024 requires one.",
+  "certifierReadiness.detail.ofpp.missing": "No organic fraud prevention plan on file. § 205.201(a)(3) asks the OSP to describe how the operation prevents organic fraud, and certifiers ask for it as a fraud prevention plan.",
   "certifierReadiness.detail.ofpp.suspicious": "The uploaded file {filename} looks like a misfiled invoice, so Trazo treats the Organic Fraud Prevention Plan as missing. § 205.201(a)(3) asks the plan to describe how you verify suppliers and the organic status of what you receive, and how you prevent organic fraud.",
   "certifierReadiness.ospThin": "; below the floor: {sections}",
   "certifierReadiness.ospGap": "; {count, plural, one {# input on the inputs list is} other {# inputs on the inputs list are}} not referenced in the narrative",
