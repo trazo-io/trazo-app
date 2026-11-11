@@ -24,6 +24,7 @@ import { useIntl } from 'react-intl';
 import { formatDateFromTimestamp, formatDateOnly, todayLocalISODate } from 'utils/dateOnly';
 
 import {
+  StandardAlert,
   StandardButton,
   StandardCard,
   StandardField,
@@ -218,15 +219,85 @@ const parseApiErrors = (err: unknown): { fields: FieldErrors; general: string | 
     general.push(payload);
   } else if (payload && typeof payload === 'object') {
     Object.entries(payload as Record<string, unknown>).forEach(([key, msgs]) => {
-      const text = Array.isArray(msgs) ? msgs.map(String).join(' ') : String(msgs);
+      // A refusal can carry structured fields beside its sentence (a code, the sections it names);
+      // those are read where they are shown, never pasted into a toast. A nested field error is
+      // still a message: its strings are kept, never stringified to "[object Object]".
+      if (NON_MESSAGE_KEYS.has(key)) return;
+      const parts = messageStrings(msgs);
+      if (!parts.length) return;
+      const text = parts.join(' ');
       if ((FIELD_KEYS as readonly string[]).includes(key)) {
         fields[key as FieldKey] = text;
-      } else {
+      } else if (!general.includes(text)) {
+        // A refused action answers `{error, detail}` with the same sentence twice; say it once.
         general.push(text);
       }
     });
   }
   return { fields, general: general.length ? general.join(' ') : null };
+};
+
+/** Machine fields a refusal carries beside its sentence: never shown as text. */
+const NON_MESSAGE_KEYS = new Set([
+  'code',
+  'action',
+  'prior_osp_version',
+  'new_osp_version',
+  'sections'
+]);
+
+/** Every string in a DRF error value, however deeply it is nested. */
+const messageStrings = (value: unknown): string[] => {
+  if (typeof value === 'string') return [value];
+  if (Array.isArray(value)) return value.flatMap(messageStrings);
+  if (value && typeof value === 'object') return Object.values(value).flatMap(messageStrings);
+  return [];
+};
+
+/**
+ * The server refuses to sign or file an update that attests a § 205.201(a) section unchanged while
+ * the two plan versions differ in it (`annual_update_filing.attested_sections_that_differ`;
+ * overall review 2026-11, OV-PK-O01). The card names each section and what differs, in the
+ * reader's language, from the structured fields; the server's English sentence is the fallback.
+ */
+const ATTESTED_UNCHANGED_BUT_DIFFERS = 'attested_unchanged_but_differs';
+
+interface DifferingSection {
+  section: string;
+  clause: string;
+  label: string;
+  differs: string[];
+  modules: { key: string; code: string; title: Record<string, string> }[];
+}
+
+interface AttestationRefusal {
+  prior: number | null;
+  next: number | null;
+  sections: DifferingSection[];
+}
+
+export const attestationRefusal = (err: unknown): AttestationRefusal | null => {
+  const data = (err as { data?: unknown })?.data as Record<string, unknown> | undefined;
+  if (!data || typeof data !== 'object' || data.code !== ATTESTED_UNCHANGED_BUT_DIFFERS)
+    return null;
+  const sections = Array.isArray(data.sections) ? (data.sections as DifferingSection[]) : [];
+  if (!sections.length) return null;
+  const version = (v: unknown) => (typeof v === 'number' ? v : null);
+  return {
+    prior: version(data.prior_osp_version),
+    next: version(data.new_osp_version),
+    sections
+  };
+};
+
+const DIFFERS_LABELS: Record<string, { id: string; defaultMessage: string }> = {
+  answers: { id: 'osp.annual.refusal.differs.answers', defaultMessage: 'answers' },
+  materials: { id: 'osp.annual.refusal.differs.materials', defaultMessage: 'the materials list' },
+  narrative: { id: 'osp.annual.refusal.differs.narrative', defaultMessage: 'your own narrative' },
+  record_types: {
+    id: 'osp.annual.refusal.differs.recordTypes',
+    defaultMessage: 'the record types confirmed'
+  }
 };
 
 const FILING_METHOD_LABELS: Record<FilingMethod, { id: string; defaultMessage: string }> = {
@@ -440,6 +511,11 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
   // filings are known; `emptyForm(currentYear)` would offer a year the form then refuses.
   const [form, setForm] = useState({ ...emptyForm(currentYear), reporting_year: '' });
   const [pending, setPending] = useState<PendingAction>(null);
+  // A sign or file refused because an attested-unchanged section differs between the plan
+  // versions. Shown in the row's action panel until the panel closes, not only in a toast.
+  const [refusal, setRefusal] = useState<
+    ({ id: number; kind: PendingKind } & AttestationRefusal) | null
+  >(null);
   const [signerTitle, setSignerTitle] = useState('');
   // The signer is the operation's responsible person (farm profile contact), not the account
   // (recordkeeping review F-23): the account is recorded apart as the recorder.
@@ -807,6 +883,7 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
     setFilingMethod('');
     setFilingDate(todayIso());
     setWithdrawReason('');
+    setRefusal(null);
     setPending(id == null || !kind ? null : { id, kind });
   };
 
@@ -832,6 +909,10 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
         title: intl.formatMessage(DONE_LABELS[kind])
       });
     } catch (err: unknown) {
+      const refused = attestationRefusal(err);
+      // Cleared on any other error, so a refusal from an earlier attempt never sits beside a
+      // different failure (review of trazo-app #364).
+      setRefusal(refused ? { id: u.id, kind, ...refused } : null);
       const { general } = parseApiErrors(err);
       toast({
         status: 'error',
@@ -841,14 +922,55 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
           id: 'osp.annual.toast.actionError',
           defaultMessage: 'That did not go through'
         }),
-        description:
-          general ??
-          intl.formatMessage({
-            id: 'osp.annual.toast.errorGeneric',
-            defaultMessage: 'Please try again. If it keeps failing, check your connection.'
-          })
+        description: refused
+          ? intl.formatMessage({
+              id: 'osp.annual.refusal.toast',
+              defaultMessage:
+                'The update says a section is unchanged that differs between the plan versions. The sections are listed on the update.'
+            })
+          : general ??
+            intl.formatMessage({
+              id: 'osp.annual.toast.errorGeneric',
+              defaultMessage: 'Please try again. If it keeps failing, check your connection.'
+            })
       });
     }
+  };
+
+  const moduleTitle = (title: Record<string, string>) =>
+    title[intl.locale.toLowerCase().startsWith('es') ? 'es' : 'en'] || title.en || '';
+
+  /** One section the refusal names: "§ 205.201(a)(5) Commingling barriers: answers in G6.0 ...". */
+  const refusalLine = (row: DifferingSection) => {
+    const what = row.differs
+      .map((kind) =>
+        kind === 'answers' && row.modules.length
+          ? intl.formatMessage(
+              {
+                id: 'osp.annual.refusal.differs.answersIn',
+                defaultMessage: 'answers in {modules}'
+              },
+              {
+                modules: row.modules
+                  .map((m) => `${m.code} ${moduleTitle(m.title)}`.trim())
+                  .join(', ')
+              }
+            )
+          : DIFFERS_LABELS[kind]
+          ? intl.formatMessage(DIFFERS_LABELS[kind])
+          : kind
+      )
+      .join('; ');
+    return intl.formatMessage(
+      { id: 'osp.annual.refusal.section', defaultMessage: '§ 205.201{clause} {section}: {what}' },
+      {
+        clause: row.clause,
+        section: SECTION_LABELS[row.section]
+          ? intl.formatMessage(SECTION_LABELS[row.section])
+          : row.label,
+        what
+      }
+    );
   };
 
   // Only the newest revision of a year can be corrected; older ones already have a correction.
@@ -1205,6 +1327,43 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
                         }
                       />
                     </StandardField>
+                  )}
+                  {refusal && refusal.id === u.id && refusal.kind === pending.kind && (
+                    <Box mt={3} data-testid="annual-attestation-refusal">
+                      <StandardAlert
+                        status="error"
+                        mb={0}
+                        title={intl.formatMessage(
+                          // Signing only: filing records what was already sent and is never
+                          // refused over the attestation (review of slice 2b, 2026-11).
+                          {
+                            id: 'osp.annual.refusal.signTitle',
+                            defaultMessage:
+                              'Not signed: this update says {count, plural, one {a section is} other {# sections are}} unchanged since plan v{prior}, but plan v{next} differs there.'
+                          },
+                          {
+                            count: refusal.sections.length,
+                            prior: refusal.prior ?? u.prior_osp_version ?? '',
+                            next: refusal.next ?? u.new_osp_version ?? ''
+                          }
+                        )}>
+                        <Box as="ul" pl={4} fontSize="sm">
+                          {refusal.sections.map((row) => (
+                            <li key={row.section}>{refusalLine(row)}</li>
+                          ))}
+                        </Box>
+                        <Text fontSize="sm">
+                          {intl.formatMessage(
+                            {
+                              id: 'osp.annual.refusal.signNext',
+                              defaultMessage:
+                                'Edit the update, untick {count, plural, one {that section} other {those sections}} and describe the change in the summary, then sign.'
+                            },
+                            { count: refusal.sections.length }
+                          )}
+                        </Text>
+                      </StandardAlert>
+                    </Box>
                   )}
                   <HStack justify="flex-end" spacing={2} mt={2}>
                     <StandardButton size="xs" variant="ghost" onClick={() => openPending(null)}>

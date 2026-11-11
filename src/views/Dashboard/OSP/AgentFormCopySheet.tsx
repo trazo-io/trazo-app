@@ -165,23 +165,12 @@ const ITEM_LABELS: Record<string, Msg> = {
     id: 'osp.agentSheet.item.crop_update_parcels',
     defaultMessage: 'Parcels, crops and acres'
   },
-  // WSDA: Renewal Fee Form (AGR 2521) and Site Update Information (AGR 2516).
+  // WSDA: Renewal Fee Form (AGR 2521, one row: the form is not reproduced) and Site Update
+  // Information (AGR 2516).
   wsda_due: { id: 'osp.agentSheet.item.ccof_due', defaultMessage: 'Due date' },
-  wsda_send: { id: 'osp.agentSheet.item.wsda_send', defaultMessage: 'How to send it' },
-  cert_no: { id: 'osp.agentSheet.item.cert_no', defaultMessage: 'Cert No' },
-  wsda_gross_income: {
-    id: 'osp.agentSheet.item.wsda_gross_income',
-    defaultMessage: 'Gross annual income'
-  },
-  wsda_renewal_fee: { id: 'osp.agentSheet.item.wsda_renewal_fee', defaultMessage: 'Renewal fee' },
-  wsda_late_fee: { id: 'osp.agentSheet.item.wsda_late_fee', defaultMessage: 'Late fee' },
-  wsda_how_sent: {
-    id: 'osp.agentSheet.item.wsda_how_sent',
-    defaultMessage: 'How you are submitting'
-  },
-  wsda_sent_date: {
-    id: 'osp.agentSheet.item.wsda_sent_date',
-    defaultMessage: 'Date the application was sent'
+  wsda_fee_form: {
+    id: 'osp.agentSheet.item.wsda_fee_form',
+    defaultMessage: 'The copy the agent sent'
   },
   site_changes: { id: 'osp.agentSheet.item.site_changes', defaultMessage: 'Sites and changes' },
   acreage_removed: {
@@ -222,20 +211,19 @@ interface Facility2519 {
   certificate: { number: string; certifier: string; copy_on_file: boolean } | null;
   exemption_basis: string;
   missing: string[];
+  /** The AGR 2121 questions whose Yes puts it on the form: "K 1" (stores), "L 1" (handles). */
+  basis?: string[];
 }
 
-/**
- * Where an agent's form names a shared row differently, the row carries the form's own word. WSDA's
- * AGR 2521 header reads "Business Name / Name / Email / Cert No / Phone"; Oregon Tilth's Step 1
- * asks for a "Registered Business Name" and a "Primary Contact".
- */
-const AGENT_ITEM_LABELS: Record<string, Record<string, Msg>> = {
-  wsda: {
-    business_name: {
-      id: 'osp.agentSheet.item.business_name_plain',
-      defaultMessage: 'Business name'
-    },
-    contact_name: { id: 'osp.agentSheet.item.contact_name_plain', defaultMessage: 'Name' }
+/** Why a facility is on AGR 2519, by the plan's answer that puts it there (`_on_behalf`). */
+const BASIS_2519: Record<string, Msg> = {
+  'K 1': {
+    id: 'osp.agentSheet.detail.facilities_2519_basis.k1',
+    defaultMessage: 'another operation stores your crop while you own it (K 1)'
+  },
+  'L 1': {
+    id: 'osp.agentSheet.detail.facilities_2519_basis.l1',
+    defaultMessage: 'another operation handles your crop while you own it (L 1)'
   }
 };
 
@@ -1086,15 +1074,55 @@ const AgentFormCopySheet: React.FC<Props> = ({ companyId, farmId, ospId }) => {
             )}
           </Text>
         ) : null;
+        // Only a facility that stores or handles the crop while the grower still owns it is listed
+        // (OV-PK-W04): a buyer that takes title on delivery is named here, never offered the form.
+        const notOnBehalf = (e.not_on_behalf as string[] | undefined) || [];
+        const notStated = (e.not_stated as string[] | undefined) || [];
+        const notOnBehalfLine = notOnBehalf.length ? (
+          <Text data-testid="sheet-2519-not-on-behalf">
+            {intl.formatMessage(
+              {
+                id: 'osp.agentSheet.detail.facilities_2519_not_on_behalf',
+                defaultMessage:
+                  "Not on this form: {names}. Your plan's answers say they do not store or handle your crop while you still own it (for example, the crop goes straight to the buyer, or ownership passes on delivery)."
+              },
+              { names: notOnBehalf.join(', ') }
+            )}
+          </Text>
+        ) : null;
+        const notStatedLine = notStated.length ? (
+          <Text color="amber.800" data-testid="sheet-2519-not-stated">
+            {intl.formatMessage(
+              {
+                id: 'osp.agentSheet.detail.facilities_2519_not_stated',
+                defaultMessage:
+                  'Your plan does not yet say whether {names} store or handle your crop while you still own it. Answer Harvest & Transport (where the crop goes before the buyer, and off-farm handling) and Storage in your plan, and this sheet will list the ones that need this form.'
+              },
+              { names: notStated.join(', ') }
+            )}
+          </Text>
+        ) : null;
         if (row.kind !== 'value')
           return (
             <VStack align="stretch" spacing={1}>
-              <Text>
-                {intl.formatMessage({
-                  id: 'osp.agentSheet.detail.facilities_2519_none',
-                  defaultMessage: 'No facility run by another operation is on file.'
-                })}
-              </Text>
+              {/* "none_stated": the plan is silent about at least one facility, so no "none" is
+                  claimed; the line naming them says what to answer. */}
+              {e.reason !== 'none_stated' && (
+                <Text>
+                  {e.reason === 'none_on_behalf'
+                    ? intl.formatMessage({
+                        id: 'osp.agentSheet.detail.facilities_2519_none_on_behalf',
+                        defaultMessage:
+                          "By your plan's answers, no facility run by another operation stores or handles your crop while you still own it."
+                      })
+                    : intl.formatMessage({
+                        id: 'osp.agentSheet.detail.facilities_2519_none',
+                        defaultMessage: 'No facility run by another operation is on file.'
+                      })}
+                </Text>
+              )}
+              {notOnBehalfLine}
+              {notStatedLine}
               {ownLine}
             </VStack>
           );
@@ -1136,6 +1164,21 @@ const AgentFormCopySheet: React.FC<Props> = ({ companyId, farmId, ospId }) => {
                   borderColor="gray.200"
                   data-testid={`sheet-2519-${f.facility_id}`}>
                   <Text fontWeight="semibold">{f.name}</Text>
+                  {f.basis && f.basis.length ? (
+                    <Text>
+                      {intl.formatMessage(
+                        {
+                          id: 'osp.agentSheet.detail.facilities_2519_basis',
+                          defaultMessage: "On this form because, by your plan's answers, {reasons}."
+                        },
+                        {
+                          reasons: f.basis
+                            .map((b) => (BASIS_2519[b] ? intl.formatMessage(BASIS_2519[b]) : b))
+                            .join('; ')
+                        }
+                      )}
+                    </Text>
+                  ) : null}
                   {address ? (
                     <Text>
                       {intl.formatMessage(
@@ -1249,6 +1292,8 @@ const AgentFormCopySheet: React.FC<Props> = ({ companyId, farmId, ospId }) => {
                 defaultMessage: 'You tick the responsibility statement on the form; Trazo does not.'
               })}
             </Text>
+            {notOnBehalfLine}
+            {notStatedLine}
             {ownLine}
           </VStack>
         );
@@ -1269,108 +1314,62 @@ const AgentFormCopySheet: React.FC<Props> = ({ companyId, farmId, ospId }) => {
           {
             id: 'osp.agentSheet.detail.wsda_due',
             defaultMessage:
-              'Your renewal application and fee are due by {due}. The agent sends both forms: fill in the copies it sent. Each month after {due} adds a ${lateFee} late fee.'
+              'Your renewal application is due by {due}. The agent sends it to you with its fee form: fill in the copies it sent and send them as they say. Questions: {email}.'
           },
-          { due: monthDay(String(e.due)), lateFee: String(e.late_fee_per_month || '') }
+          { due: monthDay(String(e.due)), email: String(e.email || '') }
         );
-      case 'wsda_send':
-        return intl.formatMessage(
-          {
-            id: 'osp.agentSheet.detail.wsda_send',
-            defaultMessage:
-              'You can email the application to {email}, but the fee form and check go by mail: payable to {payee}, {mail} (by courier: {courier}).'
-          },
-          {
-            email: String(e.email || ''),
-            payee: String(e.check_payable_to || ''),
-            mail: String(e.mail || ''),
-            courier: String(e.courier || '')
-          }
-        );
-      case 'cert_no':
-        return row.kind === 'value'
-          ? String(row.value)
-          : intl.formatMessage({
-              id: 'osp.agentSheet.detail.cert_no_missing',
-              defaultMessage: 'Not recorded. It is on your certificate from the agent.'
-            });
-      case 'wsda_gross_income': {
+      case 'wsda_fee_form': {
+        // The fee form is not reproduced (WSDA, reply received by 2026-11-09: "Our fee forms are updated regularly.
+        // Inputting it in your system would potentially cause an operation to use an outdated
+        // form."). The one figure Trazo holds is offered as a cross-check, never as a fee figure.
         const year = String(e.year || '');
-        const ask = intl.formatMessage(
-          {
-            id: 'osp.agentSheet.detail.wsda_income',
-            defaultMessage:
-              'Money received in {year, select, none {the last calendar year} other {{year}}} from organic crops, products or services: copy it from your books (year-end packer statements, 1099s).'
-          },
-          { year: year || 'none' }
-        );
+        const use = intl.formatMessage({
+          id: 'osp.agentSheet.detail.wsda_fee_form',
+          defaultMessage:
+            'Use the fee form the agent sends with your renewal application. The agent updates it regularly and does not publish it, so Trazo does not copy its lines or link an older copy.'
+        });
         if (e.reason === 'no_filing')
-          return `${ask} ${intl.formatMessage({
-            id: 'osp.agentSheet.detail.wsda_income_no_filing',
-            defaultMessage: "Start this year's annual update to see Trazo's cross-check."
+          return `${use} ${intl.formatMessage({
+            id: 'osp.agentSheet.detail.wsda_fee_form_no_filing',
+            defaultMessage: "Start this year's annual update to see Trazo's sales cross-check."
           })}`;
         if (e.reason === 'period_not_over')
-          return intl.formatMessage(
+          return `${use} ${intl.formatMessage(
             {
-              id: 'osp.agentSheet.detail.wsda_income_not_over',
+              id: 'osp.agentSheet.detail.wsda_fee_form_not_over',
               defaultMessage:
-                'Calendar {year} is not over yet. Copy the income received in it from your books once it is.'
+                'Calendar {year} is not over yet, so there is no sales cross-check for it.'
             },
             { year }
-          );
+          )}`;
         if (e.subtotal != null)
-          return `${ask} ${intl.formatMessage(
+          return `${use} ${intl.formatMessage(
             {
-              id: 'osp.agentSheet.detail.wsda_income_cross_check',
+              id: 'osp.agentSheet.detail.wsda_fee_form_cross_check',
               defaultMessage:
-                'As a cross-check, your sales records in Trazo show {amount} invoiced as organic and dated in {year}. Money paid in another year than the sale, and services, make the two differ.'
+                'For checking your own figures only: your sales records in Trazo show {amount} invoiced as organic and dated in {year}. This is not a fee figure. It counts each sale by its date, not by when it was paid.'
             },
             { amount: money(e.subtotal), year }
           )}`;
-        return `${ask} ${
+        return `${use} ${
           Number(e.n_unpriced) > 0
             ? intl.formatMessage(
                 {
-                  id: 'osp.agentSheet.detail.wsda_income_unpriced',
+                  id: 'osp.agentSheet.detail.wsda_fee_form_unpriced',
                   defaultMessage:
-                    '{count, plural, one {# sale} other {# sales}} in {year} {count, plural, one {has} other {have}} no amount recorded, so there is no cross-check.'
+                    '{count, plural, one {# sale} other {# sales}} in {year} {count, plural, one {has} other {have}} no amount recorded, so there is no sales cross-check.'
                 },
                 { count: Number(e.n_unpriced), year }
               )
             : intl.formatMessage(
                 {
-                  id: 'osp.agentSheet.detail.wsda_income_no_sales',
+                  id: 'osp.agentSheet.detail.wsda_fee_form_no_sales',
                   defaultMessage: 'No sale invoiced as organic is recorded for {year}.'
                 },
                 { year }
               )
         }`;
       }
-      case 'wsda_renewal_fee':
-        return intl.formatMessage({
-          id: 'osp.agentSheet.detail.wsda_renewal_fee',
-          defaultMessage:
-            "From the agent's fee table on the form, by the income above. The table also sets a minimum fee for larger operations."
-        });
-      case 'wsda_late_fee':
-        return intl.formatMessage(
-          {
-            id: 'osp.agentSheet.detail.wsda_late_fee',
-            defaultMessage:
-              '${lateFee} for each month after {due}. Leave it blank if you file on time.'
-          },
-          { lateFee: String(e.late_fee_per_month || ''), due: monthDay(String(e.due)) }
-        );
-      case 'wsda_how_sent':
-        return intl.formatMessage({
-          id: 'osp.agentSheet.detail.wsda_how_sent',
-          defaultMessage: 'Answer it on the form. The fee form and check always go by mail.'
-        });
-      case 'wsda_sent_date':
-        return intl.formatMessage({
-          id: 'osp.agentSheet.detail.wsda_sent_date',
-          defaultMessage: 'Only if you send the application and the fee separately.'
-        });
       case 'acreage_removed':
         return intl.formatMessage({
           id: 'osp.agentSheet.detail.acreage_removed',
@@ -1463,19 +1462,30 @@ const AgentFormCopySheet: React.FC<Props> = ({ companyId, farmId, ospId }) => {
                 {forms.map((f, i) => (
                   <React.Fragment key={f.stem || f.title}>
                     {i ? ' · ' : ''}
-                    {ext(
-                      f.url,
-                      f.sent_with_renewal
-                        ? intl.formatMessage(
-                            {
-                              id: 'osp.agentSheet.formSentByAgent',
-                              defaultMessage:
-                                '{form} (an earlier published copy; fill in the one the agent sent)'
-                            },
-                            { form: f.document_id || f.title }
-                          )
-                        : f.document_id || f.title
-                    )}
+                    {/* A form the agent asked Trazo not to reproduce is named, never linked: the
+                        link was to the outdated copy the agent warned about (OV-PK-W01). */}
+                    {f.not_reproduced
+                      ? intl.formatMessage(
+                          {
+                            id: 'osp.agentSheet.formNotReproduced',
+                            defaultMessage:
+                              '{form} (the agent sends it with your renewal application; not linked here)'
+                          },
+                          { form: f.document_id || f.title }
+                        )
+                      : ext(
+                          f.url,
+                          f.sent_with_renewal
+                            ? intl.formatMessage(
+                                {
+                                  id: 'osp.agentSheet.formSentByAgent',
+                                  defaultMessage:
+                                    '{form} (an earlier published copy; fill in the one the agent sent)'
+                                },
+                                { form: f.document_id || f.title }
+                              )
+                            : f.document_id || f.title
+                        )}
                   </React.Fragment>
                 ))}
               </>
@@ -1523,8 +1533,7 @@ const AgentFormCopySheet: React.FC<Props> = ({ companyId, farmId, ospId }) => {
                       <HStack justify="space-between" align="flex-start" spacing={3}>
                         <Text fontSize="sm" fontWeight="semibold">
                           {intl.formatMessage(
-                            AGENT_ITEM_LABELS[sheet.agent]?.[row.item] ||
-                              ITEM_LABELS[row.item] || { id: row.item, defaultMessage: row.item }
+                            ITEM_LABELS[row.item] || { id: row.item, defaultMessage: row.item }
                           )}
                         </Text>
                         <Badge colorScheme="gray" variant="subtle" flexShrink={0}>

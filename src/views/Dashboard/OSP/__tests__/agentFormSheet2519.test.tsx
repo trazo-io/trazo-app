@@ -156,6 +156,83 @@ describe('AGR 2519 on the copy sheet', () => {
     );
   });
 
+  // OV-PK-W04: a buyer that takes title on delivery is named, never offered the form, and the
+  // "fits" sentence appears only on a facility the plan says handles the crop while the grower owns it.
+  it('lists only what stores or handles the crop while the grower owns it, and names the buyers', () => {
+    const cold = { ...facilitiesRow.value[0], basis: ['K 1'] };
+    result = {
+      data: sheetWith([
+        {
+          ...facilitiesRow,
+          value: [cold],
+          extra: {
+            ...facilitiesRow.extra,
+            not_on_behalf: ['Marion Bend Fruit Co.'],
+            not_stated: []
+          }
+        }
+      ])
+    };
+    renderSheet();
+    const row = screen.getByTestId('agent-sheet-facilities_2519');
+    expect(screen.getByTestId('sheet-2519-11')).toHaveTextContent(
+      "On this form because, by your plan's answers, another operation stores your crop while you own it (K 1)."
+    );
+    expect(screen.getByTestId('sheet-2519-11')).toHaveTextContent(
+      'the statement for a certified third party fits'
+    );
+    expect(screen.getByTestId('sheet-2519-not-on-behalf')).toHaveTextContent(
+      "Not on this form: Marion Bend Fruit Co.. Your plan's answers say they do not store or handle your crop while you still own it"
+    );
+    // The buyer gets no block of its own, so no responsibility statement is said to fit it.
+    const blocks = Array.from(row.querySelectorAll('[data-testid^="sheet-2519-"]')).filter((el) =>
+      /^sheet-2519-\d+$/.test(el.getAttribute('data-testid') || '')
+    );
+    expect(blocks.map((el) => el.getAttribute('data-testid'))).toEqual(['sheet-2519-11']);
+  });
+
+  const noteRow = (extra: Record<string, unknown>) => ({
+    step: '2519',
+    item: 'facilities_2519',
+    kind: 'note',
+    value: null,
+    source: '',
+    extra: { own_facilities: [], not_on_behalf: [], not_stated: [], ...extra }
+  });
+
+  it('says when the plan sends the crop straight to the buyer', () => {
+    result = {
+      data: sheetWith([
+        noteRow({
+          reason: 'none_on_behalf',
+          not_on_behalf: ['Cascade Organic Distributors', 'Marion Bend Fruit Co.']
+        })
+      ])
+    };
+    renderSheet();
+    const row = screen.getByTestId('agent-sheet-facilities_2519');
+    expect(row).toHaveTextContent(
+      "By your plan's answers, no facility run by another operation stores or handles your crop while you still own it."
+    );
+    expect(row).not.toHaveTextContent('fits');
+    expect(screen.getByTestId('sheet-2519-not-on-behalf')).toHaveTextContent(
+      'Cascade Organic Distributors, Marion Bend Fruit Co.'
+    );
+  });
+
+  it('claims no "none" while the plan does not say, and names what to answer', () => {
+    result = {
+      data: sheetWith([noteRow({ reason: 'none_stated', not_stated: ['Valley Cold Storage'] })])
+    };
+    renderSheet();
+    const row = screen.getByTestId('agent-sheet-facilities_2519');
+    expect(row).not.toHaveTextContent('no facility run by another operation');
+    expect(row).not.toHaveTextContent('No facility run by another operation is on file.');
+    expect(screen.getByTestId('sheet-2519-not-stated')).toHaveTextContent(
+      'Your plan does not yet say whether Valley Cold Storage store or handle your crop'
+    );
+  });
+
   it('speaks Spanish', () => {
     result = { data: sheetWith([facilitiesRow]) };
     renderSheet('es-419', esLA);
