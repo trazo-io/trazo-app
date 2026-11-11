@@ -100,6 +100,8 @@ export interface AgentFormSheetForm {
   stem?: string;
   /** The agent sends its own copy with the renewal; the linked one is an earlier published edition. */
   sent_with_renewal?: boolean;
+  /** The agent asked Trazo not to reproduce the form: it is named, never linked, and has one row. */
+  not_reproduced?: boolean;
 }
 
 export interface AgentFormSheet {

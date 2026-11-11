@@ -528,6 +528,10 @@ describe('the agent-form copy sheet', () => {
     expect(screen.getByText('Crop Update (ORGB88), only if your crops change')).toBeInTheDocument();
   });
 
+  // WSDA's fee form is not reproduced (overall review 2026-11, OV-PK-W01; WSDA, reply received by 2026-11-09: "Our
+  // fee forms are updated regularly. Inputting it in your system would potentially cause an
+  // operation to use an outdated form."): one row, no link, and no mailing box, payee or late fee
+  // read from the old published copy (OV-PK-W17).
   const wsdaSheet = {
     agent: 'wsda',
     agent_name: 'Washington State Department of Agriculture',
@@ -535,24 +539,29 @@ describe('the agent-form copy sheet', () => {
       title: 'Renewal Fee Form',
       document_id: 'AGR 2521',
       revision: '',
-      url: 'https://agr.wa.gov/',
-      stem: '2521-renewal-fee'
+      url: '',
+      stem: '2521-renewal-fee',
+      sent_with_renewal: true,
+      not_reproduced: true
     },
     forms: [
       {
         title: 'Renewal Fee Form',
         document_id: 'AGR 2521',
         revision: '',
-        url: 'https://agr.wa.gov/',
+        url: '',
         stem: '2521-renewal-fee',
-        sent_with_renewal: true
+        sent_with_renewal: true,
+        not_reproduced: true
       },
       {
         title: 'Site Update Information',
         document_id: 'AGR 2516',
         revision: 'R 01/20',
         url: 'https://agr.wa.gov/',
-        stem: '2516-site-update'
+        stem: '2516-site-update',
+        sent_with_renewal: false,
+        not_reproduced: false
       }
     ],
     plan_version: 2,
@@ -560,76 +569,53 @@ describe('the agent-form copy sheet', () => {
     rows: [
       {
         step: '0',
-        item: 'wsda_send',
+        item: 'wsda_due',
         kind: 'note',
         value: null,
         source: '',
-        extra: {
-          email: 'organic@agr.wa.gov',
-          check_payable_to: 'WSDA Organic Program',
-          mail: 'PO Box 42591, Olympia, WA 98504-2560',
-          courier: '1111 Washington St SE, Olympia, WA 98504-2560'
-        }
+        extra: { due: '03-01', email: 'organic@agr.wa.gov', phone: '(360) 902-1805' }
       },
       {
         step: '2521',
-        item: 'wsda_gross_income',
+        item: 'wsda_fee_form',
         kind: 'yours',
         value: null,
         source: '',
         extra: { year: 2026, subtotal: '640.00', n_sales: 1, n_unpriced: 0 }
-      },
-      {
-        step: '2521',
-        item: 'business_name',
-        kind: 'value',
-        value: 'Brandt Family Farms LLC',
-        source: 'company',
-        extra: {}
-      },
-      {
-        step: '2521',
-        item: 'contact_name',
-        kind: 'value',
-        value: 'Laurel Brandt',
-        source: 'establishment',
-        extra: {}
       }
     ]
   };
 
-  it("labels shared rows with WSDA's own words, and Oregon Tilth's with its own", () => {
+  it("sends the grower to WSDA's own fee form and gives Trazo's subtotal only as a cross-check", () => {
     result = { data: wsdaSheet };
     renderSheet();
-    expect(screen.getByTestId('agent-sheet-business_name')).toHaveTextContent(/^Business name/);
-    expect(screen.getByTestId('agent-sheet-contact_name')).toHaveTextContent(/^Name/);
-    result = { data: sheet };
-    renderSheet();
-    expect(screen.getAllByTestId('agent-sheet-business_name').pop()).toHaveTextContent(
-      /^Registered business name/
+    const fee = screen.getByTestId('agent-sheet-wsda_fee_form');
+    expect(fee).toHaveTextContent('The copy the agent sent');
+    expect(fee).toHaveTextContent('Yours to answer');
+    expect(fee).not.toHaveTextContent('From Trazo');
+    expect(fee).toHaveTextContent(
+      'Use the fee form the agent sends with your renewal application. The agent updates it regularly and does not publish it'
     );
-  });
-
-  it("leaves WSDA's income line to the books and gives Trazo's subtotal only as a cross-check", () => {
-    result = { data: wsdaSheet };
-    renderSheet();
-    const income = screen.getByTestId('agent-sheet-wsda_gross_income');
-    expect(income).toHaveTextContent('Yours to answer');
-    expect(income).not.toHaveTextContent('From Trazo');
-    expect(income).toHaveTextContent(
-      'Money received in 2026 from organic crops, products or services: copy it from your books'
+    expect(fee).toHaveTextContent(
+      'For checking your own figures only: your sales records in Trazo show $640.00'
     );
-    expect(income).toHaveTextContent('As a cross-check, your sales records in Trazo show $640.00');
-    expect(screen.getByTestId('agent-sheet-wsda_send')).toHaveTextContent(
-      'the fee form and check go by mail: payable to WSDA Organic Program'
+    expect(fee).toHaveTextContent('This is not a fee figure.');
+    expect(screen.getByTestId('agent-sheet-wsda_due')).toHaveTextContent(
+      'Your renewal application is due by March 1.'
     );
-    // The fee form WSDA sends is not always the published edition: no revision is named for it.
+    // Nothing read from the old published copy is left: no mailing box, payee, late fee or "by mail".
+    const page = document.body.textContent || '';
+    for (const gone of ['42591', 'payable to', 'late fee', 'by mail', 'Gross annual income']) {
+      expect(page).not.toContain(gone);
+    }
+    // Named, never linked; a published form keeps its link.
     expect(screen.getByText(/AGR 2521; AGR 2516, R 01\/20/)).toBeInTheDocument();
     expect(
-      screen.getByRole('link', {
-        name: 'AGR 2521 (an earlier published copy; fill in the one the agent sent)'
-      })
+      screen.getByText(
+        /AGR 2521 \(the agent sends it with your renewal application; not linked here\)/
+      )
     ).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /AGR 2521/ })).toBeNull();
     expect(screen.getByRole('link', { name: 'AGR 2516' })).toBeInTheDocument();
   });
 
@@ -637,8 +623,11 @@ describe('the agent-form copy sheet', () => {
     result = { data: wsdaSheet };
     renderSheet('es-419', esLA);
     expect(screen.getByText('Formulario de tarifa de renovación (AGR 2521)')).toBeInTheDocument();
-    expect(screen.getByTestId('agent-sheet-wsda_gross_income')).toHaveTextContent(
-      'cópialo de tu contabilidad'
+    expect(screen.getByTestId('agent-sheet-wsda_fee_form')).toHaveTextContent(
+      'Usa el formulario de tarifa que el agente envía con tu solicitud de renovación.'
+    );
+    expect(screen.getByTestId('agent-sheet-wsda_fee_form')).toHaveTextContent(
+      'No es una cifra de tarifa.'
     );
   });
 
