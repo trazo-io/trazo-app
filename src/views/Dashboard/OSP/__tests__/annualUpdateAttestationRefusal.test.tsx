@@ -142,6 +142,20 @@ describe('an update attesting a changed section unchanged is refused, and the ca
     await waitFor(() => expect(screen.queryByTestId('annual-attestation-refusal')).toBeNull());
   });
 
+  it('clears the refusal when a later attempt fails for another reason', async () => {
+    // Review of trazo-app #364: the box stayed beside a different error.
+    signUpdate.mockImplementationOnce(() => ({ unwrap: () => Promise.reject(refusal('sign')) }));
+    signUpdate.mockImplementationOnce(() => ({
+      unwrap: () => Promise.reject({ status: 409, data: { error: 'Locked', detail: 'Locked' } })
+    }));
+    renderCard();
+    fireEvent.click(within(row(/Draft row\./)).getByRole('button', { name: 'Sign' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Sign this update' }));
+    await screen.findByTestId('annual-attestation-refusal');
+    fireEvent.click(screen.getByRole('button', { name: 'Sign this update' }));
+    await waitFor(() => expect(screen.queryByTestId('annual-attestation-refusal')).toBeNull());
+  });
+
   it('speaks Spanish', async () => {
     renderCard('es-419', esLA);
     fireEvent.click(within(row(/Draft row\./)).getByRole('button', { name: 'Firmar' }));

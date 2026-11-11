@@ -910,7 +910,9 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
       });
     } catch (err: unknown) {
       const refused = attestationRefusal(err);
-      if (refused) setRefusal({ id: u.id, kind, ...refused });
+      // Cleared on any other error, so a refusal from an earlier attempt never sits beside a
+      // different failure (review of trazo-app #364).
+      setRefusal(refused ? { id: u.id, kind, ...refused } : null);
       const { general } = parseApiErrors(err);
       toast({
         status: 'error',
@@ -1329,7 +1331,7 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
                   {refusal && refusal.id === u.id && refusal.kind === pending.kind && (
                     <Box mt={3} data-testid="annual-attestation-refusal">
                       <StandardAlert
-                        status="warning"
+                        status="error"
                         mb={0}
                         title={intl.formatMessage(
                           // Signing only: filing records what was already sent and is never
