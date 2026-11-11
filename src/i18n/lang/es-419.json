@@ -745,6 +745,7 @@
   "events.validation.activityRequired": "Elige lo que hiciste",
   "events.validation.nameRequired": "Ponle un nombre a la actividad",
   "events.validation.dateRequired": "Indica la fecha",
+  "events.validation.timeRequired": "Escribe también la hora, o en una aplicación de insumos marca \"La hora no consta en mi registro\".",
   "events.general.validation.typeRequired": "Elige el tipo de actividad",
   "events.general.validation.contaminationSourceRequired": "Indica qué causó la contaminación. Es obligatorio al registrar un incidente.",
   "events.soil.validation.typeRequired": "Elige el tipo de labor de suelo",

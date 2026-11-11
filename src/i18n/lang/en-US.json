@@ -745,6 +745,7 @@
   "events.validation.activityRequired": "Choose what you did",
   "events.validation.nameRequired": "Give the activity a name",
   "events.validation.dateRequired": "Enter the date",
+  "events.validation.timeRequired": "Enter the time as well, or tick \"The time is not on my record\" on an input application.",
   "events.general.validation.typeRequired": "Choose the kind of activity",
   "events.general.validation.contaminationSourceRequired": "Say what caused the contamination. It is required when you log an incident.",
   "events.soil.validation.typeRequired": "Choose the kind of soil work",

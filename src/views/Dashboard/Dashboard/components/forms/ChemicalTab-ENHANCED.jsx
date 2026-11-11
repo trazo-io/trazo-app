@@ -624,7 +624,10 @@ const ChemicalTab = forwardRef(
         // SPRINT 6 FIX (2025-12-24): Read from extra_data as fallback (no model field exists)
         active_ingredient:
           initialValues.active_ingredient || initialValues.extra_data?.active_ingredient || '',
-        concentration: initialValues.concentration || '',
+        // A ticked "Not on my record" wins over a seeded or merged value (review of app #371).
+        concentration: isAffirmativeFlag(initialValues.concentration_not_recorded)
+          ? ''
+          : initialValues.concentration || '',
         concentration_not_recorded: isAffirmativeFlag(initialValues.concentration_not_recorded)
           ? 'true'
           : 'false',
@@ -993,7 +996,10 @@ const ChemicalTab = forwardRef(
           // SPRINT 6 FIX (2025-12-24): Read from extra_data as fallback (no model field exists)
           active_ingredient:
             initialValues.active_ingredient || initialValues.extra_data?.active_ingredient || '',
-          concentration: initialValues.concentration || '',
+          // The tick wins over a voice or re-offer merge: the box is disabled under it.
+          concentration: isAffirmativeFlag(initialValues.concentration_not_recorded)
+            ? ''
+            : initialValues.concentration || '',
           concentration_not_recorded: isAffirmativeFlag(initialValues.concentration_not_recorded)
             ? 'true'
             : 'false',

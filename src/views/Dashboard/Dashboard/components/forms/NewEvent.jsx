@@ -122,8 +122,11 @@ import {
 } from 'config/activityVerbs';
 import { formatFieldValue, getFieldConfig, getSubtypes } from 'config/events';
 import {
+  dateAfterUntick,
   dayWithoutTime,
+  isDayOnly,
   requiredFieldsForSave,
+  withoutConcentrationUnderFlag,
   withTimeNotRecorded
 } from 'config/events/saveRequiredFields';
 import { localizeFieldValue } from 'utils/fieldDisplayUtils';
@@ -177,6 +180,12 @@ const formSchemaBasic = object({
   performed_by: string().optional(), // Optional — helps with traceability but not required
   // A spray's "The time is not on my record" (OV-FJ-C12). Offered for input applications only.
   time_not_recorded: boolean().optional()
+}).superRefine((data, ctx) => {
+  // A bare day (kept when the tick is undone) still owes its time: saved as it is, the server would
+  // file it at midnight, a time nobody stated.
+  if (!data.time_not_recorded && isDayOnly(data.date)) {
+    ctx.addIssue({ code: 'custom', path: ['date'], message: 'events.validation.timeRequired' });
+  }
 });
 
 // A verb tile's preset fields name the tile (Cleanout => "Cleaning"); they are not entries, so a
@@ -1052,6 +1061,10 @@ function NewEventForm({ isEdit = false, eventId = null }) {
   // the draft reads them here. Without this a refresh on step 0 lost the operator's name.
   const [step0Date, step0PerformedBy] = basicMethods.watch(['date', 'performed_by']);
   const step0TimeNotRecorded = basicMethods.watch('time_not_recorded');
+  // The tick and the locked time box show TOGETHER, on an input application once the activity is
+  // known (review of app #371: reopening the chooser hid the tick and left the time locked).
+  const timeFlagOffered = activeEventType === 2 && (isEdit || typeChooserAnswered);
+  const timeLocked = timeFlagOffered && Boolean(step0TimeNotRecorded);
 
   // D9 — persist the in-progress event so a refresh, a locked phone or a stray Back does not
   // discard a half-filled chemical application. Scoped per parcel and per create/edit target.
@@ -1462,9 +1475,13 @@ function NewEventForm({ isEdit = false, eventId = null }) {
     if ((isEdit || isRepeat) && existingEvent && !hasLoadedExistingData.current) {
       // Repeat mode reuses the whole edit mapping below but stays a CREATE:
       // the date resets to now and the album block is skipped further down.
+      // A record whose time is not on its source record opens as its bare day: the stored noon is a
+      // placeholder, never a time to show or send back.
       const eventDate =
         !isRepeat && existingEvent.date
-          ? new Date(existingEvent.date).toISOString().slice(0, 16)
+          ? isAffirmativeFlag(existingEvent.time_not_recorded)
+            ? new Date(existingEvent.date).toISOString().slice(0, 10)
+            : new Date(existingEvent.date).toISOString().slice(0, 16)
           : nowLocalDateTimeInput();
 
       // Map backend type to frontend code
@@ -1770,10 +1787,11 @@ function NewEventForm({ isEdit = false, eventId = null }) {
   /**
    * "The time is not on my record" (OV-FJ-C12; rehearsal finding 8). A paper spray log gives the day
    * and no clock time, and a `datetime-local` will not hold one without the other, so the wizard
-   * used to make the grower invent a time. Ticked: the day is kept, the clock is the noon
-   * placeholder imported day-only rows use (never shown as a time), the time box is cleared and
-   * disabled. Unticked: the time typed before the tick comes back, or the box is empty and the
-   * date is asked for again; the placeholder is never offered as a time.
+   * used to make the grower invent a time. Ticked: the date is the bare day (the server stores it
+   * at its noon placeholder, never shown as a time), the time box is cleared and disabled.
+   * Unticked: the time typed before the tick comes back; when there was none (the tick arrived by
+   * an edit, a draft or a type change) the day is KEPT and only the time is left to enter. A known
+   * day is never blanked (review of app #371).
    */
   const timeBeforeFlagRef = useRef('');
   const setTimeNotRecorded = (checked) => {
@@ -1783,9 +1801,10 @@ function NewEventForm({ isEdit = false, eventId = null }) {
       timeBeforeFlagRef.current = current.length > 10 ? current.slice(11, 16) : '';
       basicMethods.setValue('date', dayWithoutTime(day), { shouldDirty: true });
     } else {
-      const time = timeBeforeFlagRef.current;
+      basicMethods.setValue('date', dateAfterUntick(current, timeBeforeFlagRef.current), {
+        shouldDirty: true
+      });
       timeBeforeFlagRef.current = '';
-      basicMethods.setValue('date', day && time ? `${day}T${time}` : '', { shouldDirty: true });
     }
     basicMethods.setValue('time_not_recorded', checked, { shouldDirty: true });
   };
@@ -1870,7 +1889,10 @@ function NewEventForm({ isEdit = false, eventId = null }) {
     if (activeStep === 0 && eventFormData && eventFormData.date) {
       const currentBasicValues = basicMethods.getValues();
       if (!currentBasicValues.date || currentBasicValues.date === nowLocalDateTimeInput()) {
-        basicMethods.reset({ date: eventFormData.date });
+        basicMethods.reset({
+          date: eventFormData.date,
+          time_not_recorded: isAffirmativeFlag(eventFormData.time_not_recorded)
+        });
       }
     }
 
@@ -1941,6 +1963,11 @@ function NewEventForm({ isEdit = false, eventId = null }) {
     // already written, and clobbering it would lose work they cannot get back.
     if (kept.observation && String(eventFormData.observation ?? '').trim()) {
       delete kept.observation;
+    }
+    // A ticked "Not on my record" wins over a heard concentration: the box is disabled under it,
+    // so a merged value would leave a form that cannot be saved (review of app #371).
+    if ('concentration' in kept && withoutConcentrationUnderFlag(kept, eventFormData) !== kept) {
+      delete kept.concentration;
     }
 
     // A block the farmer NAMED that voice could not fill — OFFERED, never written.
@@ -2524,7 +2551,11 @@ function NewEventForm({ isEdit = false, eventId = null }) {
     // On an application the message never fills a product, rate, quantity, area or unit: those come
     // from the confirmer's own records (audit T29). Decided by the record's type now, not by a hint.
     const applicationRecord = isApplicationRecord(activeEventType, eventFormData);
-    const kept = applicationRecord ? withoutInputValues(pending.kept).allowed : pending.kept;
+    // A ticked "Not on my record" wins, even when it came after the offer was built.
+    const kept = withoutConcentrationUnderFlag(
+      applicationRecord ? withoutInputValues(pending.kept).allowed : pending.kept,
+      eventFormData
+    );
 
     // WHAT WAS ACTUALLY WRITTEN, not what was offered. `mergeOfferedValues` fills empties and
     // never overwrites, which is the point: while the offer stands the farmer is invited to read
@@ -2602,7 +2633,13 @@ function NewEventForm({ isEdit = false, eventId = null }) {
     if (!subtype) return;
     pendingVoiceRef.current = null;
 
-    const { kept, dropped } = gateVoiceOverridesToForm(pending.detected, activeEventType, subtype);
+    const { kept: gated, dropped } = gateVoiceOverridesToForm(
+      pending.detected,
+      activeEventType,
+      subtype
+    );
+    // A ticked "Not on my record" wins over a re-offered concentration (review of app #371).
+    const kept = withoutConcentrationUnderFlag(gated, eventFormData);
 
     // A HELD PASTED NOTE IS RE-OFFERED, NEVER MERGED.
     //
@@ -4214,7 +4251,7 @@ function NewEventForm({ isEdit = false, eventId = null }) {
                               label={intl.formatMessage({ id: 'app.eventDateTime' })}
                               required
                               helpText={
-                                step0TimeNotRecorded
+                                timeLocked
                                   ? intl.formatMessage({
                                       id: 'events.wizard.timeNotOnMyRecordHelp'
                                     })
@@ -4229,7 +4266,9 @@ function NewEventForm({ isEdit = false, eventId = null }) {
                                   id: basicMethods.formState.errors.date.message
                                 })
                               }>
-                              {step0TimeNotRecorded ? (
+                              {timeLocked || isDayOnly(step0Date) ? (
+                                // A day input and a time input: locked under the tick, or open when
+                                // the day is known and only its time is still to enter.
                                 <HStack spacing={2} align="stretch">
                                   <StandardInput
                                     type="date"
@@ -4244,15 +4283,31 @@ function NewEventForm({ isEdit = false, eventId = null }) {
                                     }
                                     data-testid="event-day-input"
                                   />
-                                  {/* Cleared and disabled: there is no time to enter. */}
                                   <StandardInput
+                                    key={timeLocked ? 'time-locked' : 'time-open'}
                                     type="time"
                                     // Not the FormControl's id: that one is the day input's.
                                     id="event-time-input"
                                     required={false}
-                                    value=""
-                                    readOnly
-                                    isDisabled
+                                    {...(timeLocked
+                                      ? { value: '', readOnly: true, isDisabled: true }
+                                      : {
+                                          defaultValue: '',
+                                          // A time entered states it: the date becomes day and
+                                          // time, and any hidden tick is undone with it.
+                                          onChange: (e) => {
+                                            const day = (step0Date || '').slice(0, 10);
+                                            if (!day || !e.target.value) return;
+                                            basicMethods.setValue('time_not_recorded', false, {
+                                              shouldDirty: true
+                                            });
+                                            basicMethods.setValue(
+                                              'date',
+                                              `${day}T${e.target.value}`,
+                                              { shouldDirty: true, shouldValidate: true }
+                                            );
+                                          }
+                                        })}
                                     aria-label={intl.formatMessage({
                                       id: 'events.wizard.timeInput'
                                     })}
@@ -4266,7 +4321,7 @@ function NewEventForm({ isEdit = false, eventId = null }) {
                                 />
                               )}
                               {/* Input applications only: the flag is a ChemicalEvent column. */}
-                              {activeEventType === 2 && (isEdit || typeChooserAnswered) && (
+                              {timeFlagOffered && (
                                 <Checkbox
                                   // Its own id and state, not the date field's (FormControl).
                                   id="time-not-recorded"
@@ -5172,7 +5227,14 @@ function NewEventForm({ isEdit = false, eventId = null }) {
                         }
                         dateLabel={(() => {
                           const value = basicMethods.getValues('date');
-                          const when = value ? new Date(value) : null;
+                          // A bare day is built from its parts: `new Date('YYYY-MM-DD')` is UTC
+                          // midnight, which prints the previous day west of Greenwich.
+                          const dayParts = isDayOnly(value) ? value.split('-').map(Number) : null;
+                          const when = dayParts
+                            ? new Date(dayParts[0], dayParts[1] - 1, dayParts[2])
+                            : value
+                            ? new Date(value)
+                            : null;
                           if (!when || Number.isNaN(when.getTime())) return '';
                           // The day, and the phrase where the time would be: never the
                           // noon placeholder the record is stored at.

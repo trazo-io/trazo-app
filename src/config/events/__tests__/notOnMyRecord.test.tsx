@@ -28,7 +28,13 @@ import es419 from '../../../i18n/lang/es-419.json';
 import { baseApi } from 'store/api/baseApi';
 // @ts-expect-error: ChemicalTab-ENHANCED is a .jsx module with no type declarations.
 import * as chemicalTabModule from 'views/Dashboard/Dashboard/components/forms/ChemicalTab-ENHANCED';
-import { dayWithoutTime, requiredFieldsForSave, withTimeNotRecorded } from '../saveRequiredFields';
+import {
+  dateAfterUntick,
+  dayWithoutTime,
+  requiredFieldsForSave,
+  withoutConcentrationUnderFlag,
+  withTimeNotRecorded
+} from '../saveRequiredFields';
 
 const ChemicalTab = chemicalTabModule.default;
 const { buildChemicalSchema } = chemicalTabModule;
@@ -155,6 +161,44 @@ describe('"Not on my record" on the concentration', () => {
     ]);
   });
 
+  it('a seeded or merged concentration never lands beside the tick', async () => {
+    // Review of app #371: a voice fill or a late re-offer merged a concentration while the box
+    // was ticked, leaving a disabled input holding a value and a form that could not be saved.
+    const { container, ref, onSubmitHandler } = renderTab({
+      ...SPRAY,
+      concentration: '46.1%',
+      concentration_not_recorded: true
+    });
+    await waitFor(() => expect(concentrationInput(container)).toBeTruthy());
+    expect(concentrationInput(container).value).toBe('');
+    expect(concentrationInput(container).disabled).toBe(true);
+    await act(async () => {
+      await ref.current!.submitForm();
+    });
+    expect(onSubmitHandler).toHaveBeenCalledTimes(1);
+    expect(onSubmitHandler.mock.calls[0][0].concentration).toBe('');
+  });
+
+  it('the wizard drops a heard or re-offered concentration under the tick', () => {
+    const ticked = { concentration_not_recorded: 'true' };
+    expect(
+      withoutConcentrationUnderFlag({ concentration: '46.1%', commercial_name: 'Kocide' }, ticked)
+    ).toEqual({ commercial_name: 'Kocide' });
+    const offered = { concentration: '46.1%' };
+    expect(withoutConcentrationUnderFlag(offered, { concentration_not_recorded: false })).toBe(
+      offered
+    );
+    // Every place the wizard merges offered values reads it: direct voice, the tap on a held
+    // offer, and the late-subtype re-offer.
+    expect(NEW_EVENT).toContain('withoutConcentrationUnderFlag(kept, eventFormData) !== kept');
+    expect(NEW_EVENT).toMatch(
+      /const kept = withoutConcentrationUnderFlag\(\s*applicationRecord \? withoutInputValues\(pending\.kept\)\.allowed : pending\.kept,\s*eventFormData\s*\);/
+    );
+    expect(NEW_EVENT).toContain(
+      'const kept = withoutConcentrationUnderFlag(gated, eventFormData);'
+    );
+  });
+
   it("the wizard's save gate agrees", () => {
     expect(requiredFieldsForSave(2, { ...SPRAY, concentration_not_recorded: true })).not.toContain(
       'concentration'
@@ -164,14 +208,30 @@ describe('"Not on my record" on the concentration', () => {
 });
 
 describe('"The time is not on my record" on the wizard date', () => {
-  it('sends the day at the noon placeholder and the mark as a real bool', () => {
+  it('sends the BARE day and the mark as a real bool', () => {
+    // Review of back #395 / app #371: the server judges "a day with no time" by the date's shape,
+    // so `T12:00` would be a stated noon and refused under the tick.
     expect(withTimeNotRecorded({ date: '2026-04-20T09:30', time_not_recorded: true })).toEqual({
-      data: { date: '2026-04-20T12:00', time_not_recorded: true },
+      data: { date: '2026-04-20', time_not_recorded: true },
       conflict: false
     });
-    // A day-only value (the date input) gets the same placeholder.
-    expect(dayWithoutTime('2026-04-20')).toBe('2026-04-20T12:00');
+    expect(dayWithoutTime('2026-04-20')).toBe('2026-04-20');
+    expect(dayWithoutTime('2026-04-20T12:00')).toBe('2026-04-20');
     expect(dayWithoutTime('')).toBe('');
+  });
+
+  it('unticking keeps a known day and leaves only the time to enter', () => {
+    // Review of app #371: a tick that arrived by an edit, a draft or a type change has no earlier
+    // time to give back, and the whole date used to be wiped.
+    expect(dateAfterUntick('2026-04-20', '')).toBe('2026-04-20');
+    expect(dateAfterUntick('2026-04-20T12:00', '')).toBe('2026-04-20');
+    expect(dateAfterUntick('2026-04-20', '06:30')).toBe('2026-04-20T06:30');
+    expect(dateAfterUntick('', '')).toBe('');
+    expect(NEW_EVENT).toContain('dateAfterUntick(current, timeBeforeFlagRef.current)');
+    // The kept day still owes its time before Continue: never filed at a midnight nobody stated.
+    expect(NEW_EVENT).toMatch(
+      /!data\.time_not_recorded && isDayOnly\(data\.date\)[\s\S]{0,120}events\.validation\.timeRequired/
+    );
   });
 
   it('unticked, the clock is left alone and the mark is sent as false so an edit clears it', () => {
@@ -192,17 +252,26 @@ describe('"The time is not on my record" on the wizard date', () => {
   });
 
   it('is offered on input applications only, clears and disables the time, and is saved', () => {
-    // The tick renders only for an input application (the mark is a ChemicalEvent column).
+    // The tick renders only for an input application (the mark is a ChemicalEvent column), and the
+    // LOCKED time box follows the very same gate, so the two always show together (review of app
+    // #371: reopening the chooser hid the tick and left a disabled, empty time box behind).
+    expect(NEW_EVENT).toContain(
+      'const timeFlagOffered = activeEventType === 2 && (isEdit || typeChooserAnswered);'
+    );
+    expect(NEW_EVENT).toContain(
+      'const timeLocked = timeFlagOffered && Boolean(step0TimeNotRecorded);'
+    );
     expect(NEW_EVENT).toMatch(
-      /activeEventType === 2 && \(isEdit \|\| typeChooserAnswered\) && \(\s*<Checkbox\s+\/\/[^\n]*\n\s*id="time-not-recorded"/
+      /\{timeFlagOffered && \(\s*<Checkbox\s+\/\/[^\n]*\n\s*id="time-not-recorded"/
     );
-    // Ticked: a day input and a cleared, disabled time input.
-    const flagged = NEW_EVENT.slice(
-      NEW_EVENT.indexOf('{step0TimeNotRecorded ? ('),
-      NEW_EVENT.indexOf('type="datetime-local"', NEW_EVENT.indexOf('{step0TimeNotRecorded ? ('))
+    expect(NEW_EVENT).not.toContain('{step0TimeNotRecorded ? (');
+    // Locked: a day input and a cleared, disabled time input, only under `timeLocked`.
+    const row = NEW_EVENT.slice(
+      NEW_EVENT.indexOf('{timeLocked || isDayOnly(step0Date) ? ('),
+      NEW_EVENT.indexOf('type="datetime-local"', NEW_EVENT.indexOf('{timeLocked || isDayOnly('))
     );
-    expect(flagged).toContain('type="date"');
-    expect(flagged).toMatch(/type="time"[\s\S]*value=""[\s\S]*isDisabled/);
+    expect(row).toContain('type="date"');
+    expect(row).toMatch(/timeLocked\s*\?\s*\{ value: '', readOnly: true, isDisabled: true \}/);
     // Saved through the shared helper; any other record type drops the key.
     expect(NEW_EVENT).toContain('withTimeNotRecorded(processedEventFormData)');
     expect(NEW_EVENT).toContain('delete processedEventFormData.time_not_recorded;');
