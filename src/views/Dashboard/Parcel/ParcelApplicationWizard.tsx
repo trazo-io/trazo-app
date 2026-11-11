@@ -1128,7 +1128,7 @@ const ParcelApplicationWizard = () => {
           </Box>
         );
       }
-      case 'planned_crops':
+      case 'crop_table':
         return (
           <PlannedCropRows
             crops={data?.planned_crops ?? []}

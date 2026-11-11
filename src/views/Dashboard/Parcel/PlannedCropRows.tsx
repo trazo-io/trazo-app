@@ -163,7 +163,7 @@ const PlannedCropRows = ({
   };
 
   return (
-    <VStack align="stretch" spacing={2} data-embed="planned_crops">
+    <VStack align="stretch" spacing={2} data-embed="crop_table">
       {crops.length === 0 && editing !== 'new' ? (
         <Text fontSize="sm" color="gray.600">
           {intl.formatMessage({ id: 'parcelApp.crops.empty' })}
