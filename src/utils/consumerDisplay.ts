@@ -268,30 +268,48 @@ export const maskPerformerName = (name: string): string => {
  * Both ends are parsed as LOCAL dates when they are calendar-date strings: "2025-09-12" via
  * `new Date()` is UTC midnight, which renders as the 11th everywhere in the US.
  */
+/**
+ * A stored date as the calendar day it names, and the zone to print it in.
+ *
+ * Date-only strings ("2026-03-18") are built as LOCAL dates: `new Date('2026-03-18')` is UTC
+ * midnight, which prints as Mar 17 anywhere west of UTC. Timestamps are stored UTC wall clocks
+ * (datetime-wall-clock-utc, ADR 011), so they print in UTC. Until 2026-11-11 the consumer page
+ * printed them in the VIEWER's zone: an Entrust SC spray recorded Aug 7 06:00 read "Aug 6, 2025"
+ * to every shopper in the Americas, and a Sep 29 harvest read "Harvested Sep 28", one day off
+ * from the farm's own record and from the certifier packet.
+ */
+const calendarDay = (dateStr: string): { date: Date; timeZone?: 'UTC' } | null => {
+  const text = dateStr.trim();
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
+  const date = dateOnly
+    ? new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]))
+    : new Date(text);
+  if (Number.isNaN(date.getTime())) return null;
+  return dateOnly ? { date } : { date, timeZone: 'UTC' };
+};
+
+const yearOf = (day: { date: Date; timeZone?: 'UTC' }) =>
+  day.timeZone ? day.date.getUTCFullYear() : day.date.getFullYear();
+
 export const formatDateRangeForConsumer = (
   startDate?: string | null,
   endDate?: string | null,
   locale: string = 'en-US'
 ): string | null => {
   if (!startDate || !endDate) return null;
-  const parseLocal = (dateStr: string): Date => {
-    if (dateStr.includes('T')) return new Date(dateStr);
-    const [y, m, d] = dateStr.split('-').map(Number);
-    return new Date(y, m - 1, d);
-  };
-  const start = parseLocal(startDate);
-  const end = parseLocal(endDate);
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null;
+  const start = calendarDay(startDate);
+  const end = calendarDay(endDate);
+  if (!start || !end) return null;
 
   const loc = locale || 'en-US';
   const dayMonth: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
   const full: Intl.DateTimeFormatOptions = { ...dayMonth, year: 'numeric' };
 
-  const startText =
-    start.getFullYear() === end.getFullYear()
-      ? start.toLocaleDateString(loc, dayMonth)
-      : start.toLocaleDateString(loc, full);
-  return `${startText} – ${end.toLocaleDateString(loc, full)}`;
+  const startText = start.date.toLocaleDateString(loc, {
+    ...(yearOf(start) === yearOf(end) ? dayMonth : full),
+    timeZone: start.timeZone
+  });
+  return `${startText} – ${end.date.toLocaleDateString(loc, { ...full, timeZone: end.timeZone })}`;
 };
 
 export const resolveHarvestDates = (
@@ -425,19 +443,14 @@ export const formatHarvestDate = (
   locale: string = 'en-US'
 ): string | null => {
   if (!dateStr) return null;
-  let d: Date;
-  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr.trim());
-  if (dateOnly) {
-    d = new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]));
-  } else {
-    d = new Date(dateStr);
-  }
-  if (Number.isNaN(d.getTime())) return null;
+  const day = calendarDay(dateStr);
+  if (!day) return null;
   // Locale-aware so a Spanish shopper sees "14 abr 2026", not "Apr 14, 2026".
-  return d.toLocaleDateString(locale || 'en-US', {
+  return day.date.toLocaleDateString(locale || 'en-US', {
     month: 'short',
     day: 'numeric',
-    year: 'numeric'
+    year: 'numeric',
+    timeZone: day.timeZone
   });
 };
 
