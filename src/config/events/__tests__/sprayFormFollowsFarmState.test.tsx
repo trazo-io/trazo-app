@@ -68,29 +68,35 @@ const SPRAY = {
   ]
 };
 
+const sprayFormTree = (
+  farmState: string | null,
+  extra: Record<string, unknown> = {},
+  store = storeForState(farmState)
+) => (
+  <Provider store={store}>
+    <MemoryRouter initialEntries={['/admin/dashboard/farm/1/parcel/2/event/add']}>
+      <Routes>
+        <Route
+          path="/admin/dashboard/farm/:farmId/parcel/:parcelId/event/add"
+          element={
+            <ChakraProvider>
+              <IntlProvider locale="en" messages={messages} onError={() => undefined}>
+                <ChemicalTab
+                  initialValues={{ ...SPRAY, ...extra }}
+                  hideActions
+                  onSubmitHandler={() => undefined}
+                />
+              </IntlProvider>
+            </ChakraProvider>
+          }
+        />
+      </Routes>
+    </MemoryRouter>
+  </Provider>
+);
+
 const renderSprayForm = (farmState: string | null, extra: Record<string, unknown> = {}) =>
-  render(
-    <Provider store={storeForState(farmState)}>
-      <MemoryRouter initialEntries={['/admin/dashboard/farm/1/parcel/2/event/add']}>
-        <Routes>
-          <Route
-            path="/admin/dashboard/farm/:farmId/parcel/:parcelId/event/add"
-            element={
-              <ChakraProvider>
-                <IntlProvider locale="en" messages={messages} onError={() => undefined}>
-                  <ChemicalTab
-                    initialValues={{ ...SPRAY, ...extra }}
-                    hideActions
-                    onSubmitHandler={() => undefined}
-                  />
-                </IntlProvider>
-              </ChakraProvider>
-            }
-          />
-        </Routes>
-      </MemoryRouter>
-    </Provider>
-  );
+  render(sprayFormTree(farmState, extra));
 
 /** Everything a grower can read on the form: text, option labels and placeholders. */
 const readable = (container: HTMLElement) =>
@@ -164,6 +170,23 @@ describe.each([
     const operatorId = container.querySelector('[name="operator_id"]') as HTMLInputElement | null;
     expect(operatorId, 'stored Operator ID hidden from the grower').not.toBeNull();
     expect(operatorId?.value).toBe('37-1234');
+  });
+
+  it('keeps the stored identifiers on screen after the grower clears them', async () => {
+    // Review of app #370: the wizard writes this form's live values back into `initialValues`,
+    // so a plain read of it unmounted the section the moment the grower cleared the field, and
+    // on a non-CA farm there was no way to bring it back.
+    const store = storeForState(farmState);
+    const { container, rerender } = render(
+      sprayFormTree(farmState, { operator_id: '37-1234' }, store)
+    );
+    await waitFor(() => expect(container.querySelector('[name="operator_id"]')).not.toBeNull());
+    rerender(sprayFormTree(farmState, { operator_id: '' }, store));
+    await new Promise((r) => setTimeout(r, 50));
+    expect(
+      container.querySelector('[name="operator_id"]'),
+      'the section unmounted when its stored value was cleared'
+    ).not.toBeNull();
   });
 });
 

@@ -772,25 +772,35 @@ const ChemicalTab = forwardRef(
     const isCaFarm = farmState === 'CA';
     // Hiding is a display decision and never hides data already on the record. A record that
     // holds California PUR identifiers or a county permit keeps showing them on any farm, so
-    // the grower can still see, check or clear what was saved. Read from the record as
-    // loaded, not from live form state.
+    // the grower can still see, check or clear what was saved.
+    //
+    // Latched, not re-read: `initialValues` is the wizard's live form state (this form's own
+    // debounced onDataChange writes back into it), so a plain read flipped to false the moment
+    // the grower cleared the field, and the section unmounted mid-edit with no way back on a
+    // non-CA farm (review of app #370). Once the record has shown a value, the section stays for
+    // the life of the form. A record that loads after mount still latches when its values arrive.
     const recordHolds = (...names) =>
       names.some((name) => String(initialValues?.[name] ?? '').trim() !== '');
-    const recordHoldsCaPurIdentity = recordHolds(
-      'operator_id',
-      'site_id',
-      'application_county',
-      'mtrs_section',
-      'mtrs_township',
-      'mtrs_range',
-      'mtrs_base_meridian',
-      'ffm_code'
-    );
-    const recordHoldsCaPermit = recordHolds(
-      'ca_dpr_permit_number',
-      'ca_dpr_permit_county',
-      'ca_dpr_permit_expires'
-    );
+    const heldCaFieldsRef = useRef({ purIdentity: false, permit: false });
+    if (
+      recordHolds(
+        'operator_id',
+        'site_id',
+        'application_county',
+        'mtrs_section',
+        'mtrs_township',
+        'mtrs_range',
+        'mtrs_base_meridian',
+        'ffm_code'
+      )
+    ) {
+      heldCaFieldsRef.current.purIdentity = true;
+    }
+    if (recordHolds('ca_dpr_permit_number', 'ca_dpr_permit_county', 'ca_dpr_permit_expires')) {
+      heldCaFieldsRef.current.permit = true;
+    }
+    const recordHoldsCaPurIdentity = heldCaFieldsRef.current.purIdentity;
+    const recordHoldsCaPermit = heldCaFieldsRef.current.permit;
 
     // PUR boxes 3 and 8 are issued to the OPERATOR and the SITE, not to a spray (3 CCR 6622),
     // so the farm and the parcel carry them and the export falls back to those. The inputs
