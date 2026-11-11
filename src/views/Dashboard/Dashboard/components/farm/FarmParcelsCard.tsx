@@ -43,12 +43,15 @@ import {
 import { QuickAddParcelModal } from 'components/Parcels/QuickAddParcelModal';
 import { useBatchS3Images } from 'hooks/useBatchS3Images';
 import { canCreateMore, getLimit } from 'utils/subscriptionLimits';
+import { joinList } from 'components/Certifications/readinessMessages';
 
 export interface FarmParcel {
   id: number;
   name: string;
   area?: number | string | null;
   product?: string | null;
+  /** What the block grows, also between seasons (server: current, planned, product, latest). */
+  crop_names?: string[];
   image?: string | null;
   application_status?: string;
   evidence_status?: string;
@@ -164,7 +167,11 @@ export default function FarmParcelsCard({ farmId, parcels = [] }: Props) {
                   ac != null
                     ? intl.formatMessage({ id: 'parcel.card.acres' }, { count: ac.toFixed(1) })
                     : null,
-                  p.product || null
+                  // `crop_names`, not `product`: `product` is the CURRENT season's crop, so a
+                  // block whose season had just finished printed acres and no crop (2026-11-11).
+                  // joinList: Intl.ListFormat with a comma fallback for the older WebViews the
+                  // build still targets (safari13.1 has no Intl.ListFormat).
+                  p.crop_names?.length ? joinList(intl, p.crop_names, 0) : p.product || null
                 ].filter(Boolean);
                 const missing = (p.evidence_missing || []).length;
                 return (

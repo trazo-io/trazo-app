@@ -15,7 +15,11 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { formatDateRangeForConsumer, resolveHarvestDates } from '../consumerDisplay';
+import {
+  formatDateRangeForConsumer,
+  resolveHarvestDates,
+  resolveProductionDisplayDates
+} from '../consumerDisplay';
 
 describe('resolveHarvestDates', () => {
   const CLOSE_DATE = '2025-09-22T17:00:00+00:00';
@@ -120,18 +124,44 @@ describe('resolveHarvestDates — fresh-eyes hardening (2026-08-20)', () => {
     expect(result.last).toBe('2025-09-12T23:00:00-08:00');
   });
 
-  it('decides "is this a range" in the reader\'s timezone, not UTC', () => {
-    // Both land on 2025-09-12 in UTC, but in America/Los_Angeles (pinned by vitest.config)
-    // the first is the 11th and the second the 12th — a real two-day pick that a UTC-day
-    // comparison would collapse into one date.
-    const result = resolveHarvestDates(
+  it('decides "is this a range" on the days the page prints, not the viewer\'s local days', () => {
+    // Stored timestamps print in UTC (calendarDay). Both of these print as Sep 12, so they are
+    // one day, even though America/Los_Angeles (pinned by vitest.config) calls the first the
+    // 11th. Deciding locally printed a degenerate "Sep 12 – Sep 12" (review of #367).
+    const oneDay = resolveHarvestDates(
       [
         { production_type: 'HA', date: '2025-09-12T02:00:00+00:00' },
         { production_type: 'HA', date: '2025-09-12T20:00:00+00:00' },
       ],
       null
     );
-    expect(result.isRange).toBe(true);
+    expect(oneDay.isRange).toBe(false);
+
+    // ...and the other direction: one LOCAL day in California, two printed days.
+    const twoDays = resolveHarvestDates(
+      [
+        { production_type: 'HA', date: '2025-09-12T20:00:00+00:00' },
+        { production_type: 'HA', date: '2025-09-13T02:00:00+00:00' },
+      ],
+      null
+    );
+    expect(twoDays.isRange).toBe(true);
+  });
+
+  it('hides a season close that prints as the same day as the last pick', () => {
+    // Same printed day (Sep 29), different local days in California: the close row adds nothing.
+    const dates = resolveProductionDisplayDates(
+      [{ production_type: 'HA', date: '2025-09-29T06:00:00+00:00' }],
+      '2025-09-29T23:00:00+00:00'
+    );
+    expect(dates.seasonClosedDate).toBeUndefined();
+
+    // Same local day in California, different printed days: the close is a separate fact.
+    const shown = resolveProductionDisplayDates(
+      [{ production_type: 'HA', date: '2025-09-29T20:00:00+00:00' }],
+      '2025-09-30T02:00:00+00:00'
+    );
+    expect(shown.seasonClosedDate).toBe('2025-09-30T02:00:00+00:00');
   });
 
   it('ignores an unparseable date rather than sorting it to the front', () => {

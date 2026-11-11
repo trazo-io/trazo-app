@@ -485,7 +485,7 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({
                       })}
                     </Text>
                     <Text fontSize="md" color={textColor}>
-                      {new Date(parcelData.plantingDate).toLocaleDateString()}
+                      {formatHarvestDate(parcelData.plantingDate, intl.locale)}
                     </Text>
                   </Box>
                 )}
@@ -505,8 +505,7 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({
                           parcelData.harvestDate,
                           intl.locale
                         )) ||
-                        formatHarvestDate(parcelData.harvestDate, intl.locale) ||
-                        new Date(parcelData.harvestDate).toLocaleDateString()}
+                        formatHarvestDate(parcelData.harvestDate, intl.locale)}
                     </Text>
                   </Box>
                 )}
@@ -520,8 +519,7 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({
                       })}
                     </Text>
                     <Text fontSize="md" color={textColor}>
-                      {formatHarvestDate(parcelData.seasonClosedDate, intl.locale) ||
-                        new Date(parcelData.seasonClosedDate).toLocaleDateString()}
+                      {formatHarvestDate(parcelData.seasonClosedDate, intl.locale)}
                     </Text>
                   </Box>
                 )}

@@ -268,30 +268,66 @@ export const maskPerformerName = (name: string): string => {
  * Both ends are parsed as LOCAL dates when they are calendar-date strings: "2025-09-12" via
  * `new Date()` is UTC midnight, which renders as the 11th everywhere in the US.
  */
+/**
+ * A stored date as the calendar day it names, and the zone to print it in.
+ *
+ * Date-only strings ("2026-03-18") are built as LOCAL dates: `new Date('2026-03-18')` is UTC
+ * midnight, which prints as Mar 17 anywhere west of UTC. Timestamps are stored UTC wall clocks
+ * (datetime-wall-clock-utc, ADR 011), so they print in UTC. Until 2026-11-11 the consumer page
+ * printed them in the VIEWER's zone: an Entrust SC spray recorded Aug 7 06:00 read "Aug 6, 2025"
+ * to every shopper in the Americas, and a Sep 29 harvest read "Harvested Sep 28", one day off
+ * from the farm's own record and from the certifier packet.
+ */
+const calendarDay = (dateStr: string): { date: Date; timeZone?: 'UTC' } | null => {
+  const text = dateStr.trim();
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
+  const date = dateOnly
+    ? new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]))
+    : new Date(text);
+  if (Number.isNaN(date.getTime())) return null;
+  return dateOnly ? { date } : { date, timeZone: 'UTC' };
+};
+
+const yearOf = (day: { date: Date; timeZone?: 'UTC' }) =>
+  day.timeZone ? day.date.getUTCFullYear() : day.date.getFullYear();
+
+/**
+ * The calendar day a stored date PRINTS as, as a comparable key ("2025-9-29"), or null.
+ *
+ * Every "same day?" decision on the consumer page must be taken in the frame `calendarDay`
+ * renders in, or the page prints what it decided against: two picks at 06:00Z and 20:00Z are
+ * one printed day (Sep 29) but two local days in California, which made a degenerate
+ * "Sep 29 – Sep 29" range (review of trazo-app #367).
+ */
+export const dayKey = (dateStr?: string | null): string | null => {
+  if (!dateStr) return null;
+  const day = calendarDay(dateStr);
+  if (!day) return null;
+  const { date } = day;
+  return day.timeZone
+    ? `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}-${date.getUTCDate()}`
+    : `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+};
+
 export const formatDateRangeForConsumer = (
   startDate?: string | null,
   endDate?: string | null,
   locale: string = 'en-US'
 ): string | null => {
   if (!startDate || !endDate) return null;
-  const parseLocal = (dateStr: string): Date => {
-    if (dateStr.includes('T')) return new Date(dateStr);
-    const [y, m, d] = dateStr.split('-').map(Number);
-    return new Date(y, m - 1, d);
-  };
-  const start = parseLocal(startDate);
-  const end = parseLocal(endDate);
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null;
+  const start = calendarDay(startDate);
+  const end = calendarDay(endDate);
+  if (!start || !end) return null;
 
   const loc = locale || 'en-US';
   const dayMonth: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
   const full: Intl.DateTimeFormatOptions = { ...dayMonth, year: 'numeric' };
 
-  const startText =
-    start.getFullYear() === end.getFullYear()
-      ? start.toLocaleDateString(loc, dayMonth)
-      : start.toLocaleDateString(loc, full);
-  return `${startText} – ${end.toLocaleDateString(loc, full)}`;
+  const startText = start.date.toLocaleDateString(loc, {
+    ...(yearOf(start) === yearOf(end) ? dayMonth : full),
+    timeZone: start.timeZone
+  });
+  return `${startText} – ${end.date.toLocaleDateString(loc, { ...full, timeZone: end.timeZone })}`;
 };
 
 export const resolveHarvestDates = (
@@ -321,19 +357,10 @@ export const resolveHarvestDates = (
 
   const first = harvestDates[0];
   const last = harvestDates[harvestDates.length - 1];
-  // Compare the days as the READER will see them. Slicing the ISO string compares UTC days,
-  // but every formatter downstream renders in the viewer's local zone, so two passes at
-  // 02:00Z and 20:00Z on the same UTC day are one calendar day apart in California — the
-  // page would then print a single date for what was actually a two-day pick. This is the
-  // calendar-date-as-UTC class that has bitten this codebase before; keep the comparison in
-  // the same frame as the render.
-  const localDay = (iso: string) => {
-    const d = new Date(iso);
-    return Number.isNaN(d.getTime())
-      ? iso.slice(0, 10)
-      : `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-  };
-  return { first, last, isRange: localDay(first) !== localDay(last), fromRecords: true };
+  // Compare the days as they will be PRINTED (`dayKey`, the same frame as `calendarDay`). Until
+  // 2026-11-11 this compared viewer-local days while the formatters had also rendered locally;
+  // the formatters now print stored timestamps in UTC, so the comparison follows them.
+  return { first, last, isRange: dayKey(first) !== dayKey(last), fromRecords: true };
 };
 
 /**
@@ -374,21 +401,15 @@ export const resolveProductionDisplayDates = (
   // ⚠️ Compare the DAY, not the instant. `History.finish_date` and `CommonEvent.date` are both
   // DateTimeFields, so a lot closed the same afternoon it was picked has two timestamps that
   // differ by hours and a `!==` suppression that can never fire — the row would print on every
-  // lot. `resolveHarvestDates` already compares local calendar days thirty lines up, for the
-  // same reason: the comparison has to happen in the frame the reader sees.
-  const sameLocalDay = (a?: string | null, b?: string | null): boolean => {
+  // lot. The comparison is on the day each date PRINTS as (`dayKey`), like `resolveHarvestDates`.
+  const samePrintedDay = (a?: string | null, b?: string | null): boolean => {
     if (!a || !b) return false;
-    const da = new Date(a);
-    const db = new Date(b);
-    if (Number.isNaN(da.getTime()) || Number.isNaN(db.getTime())) return a === b;
-    return (
-      da.getFullYear() === db.getFullYear() &&
-      da.getMonth() === db.getMonth() &&
-      da.getDate() === db.getDate()
-    );
+    const ka = dayKey(a);
+    const kb = dayKey(b);
+    return ka && kb ? ka === kb : a === b;
   };
   const closedForDisplay =
-    seasonClosedDate && !sameLocalDay(seasonClosedDate, window.last)
+    seasonClosedDate && !samePrintedDay(seasonClosedDate, window.last)
       ? seasonClosedDate
       : !window.fromRecords
       ? seasonClosedDate ?? undefined
@@ -425,19 +446,14 @@ export const formatHarvestDate = (
   locale: string = 'en-US'
 ): string | null => {
   if (!dateStr) return null;
-  let d: Date;
-  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr.trim());
-  if (dateOnly) {
-    d = new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]));
-  } else {
-    d = new Date(dateStr);
-  }
-  if (Number.isNaN(d.getTime())) return null;
+  const day = calendarDay(dateStr);
+  if (!day) return null;
   // Locale-aware so a Spanish shopper sees "14 abr 2026", not "Apr 14, 2026".
-  return d.toLocaleDateString(locale || 'en-US', {
+  return day.date.toLocaleDateString(locale || 'en-US', {
     month: 'short',
     day: 'numeric',
-    year: 'numeric'
+    year: 'numeric',
+    timeZone: day.timeZone
   });
 };
 
