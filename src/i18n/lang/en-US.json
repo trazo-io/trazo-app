@@ -6820,6 +6820,7 @@
   "osp.modules.parcelSectionHint": "The Parcel Application (§ 205.202) is completed once per parcel — APN, buffers, maps, and land history. Open each parcel's application below.",
   "osp.modules.parcelSectionTitle": "Parcel-specific module",
   "osp.modules.progressCount": "{answered} of {required} required answers",
+  "osp.modules.allAnsweredRecheck": "All answered · {count, plural, one {# answer} other {# answers}} to recheck against your records",
   "osp.modules.agentAsksBlank": "{agent} asks {count, plural, one {# question} other {# questions}} here that {count, plural, one {is} other {are}} still blank.",
   "osp.modules.review": "Review / edit",
   "osp.modules.showAllParcels": "Show all {count} parcels",

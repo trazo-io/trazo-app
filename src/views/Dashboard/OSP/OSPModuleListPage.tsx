@@ -114,6 +114,13 @@ const ModuleRow = ({
   const status: ModuleStatus = row?.status ?? 'not_started';
   const progress = row?.progress ?? { answered: 0, required: 0, missing: [] };
   const blankAsked = row?.agent_asks_blank?.length ?? 0;
+  // Every required answer given, held open by an attestation its list cannot carry. Printing
+  // "5 of 5 required answers" beside the open circle read as a finished module that would not
+  // close (2026-11-11), so the line says what is left instead.
+  const recheck =
+    status === 'in_progress' && progress.missing.length === 0
+      ? row?.blocked_attestations?.length ?? 0
+      : 0;
   const settled = status === 'completed' || status === 'not_applicable';
 
   return (
@@ -156,6 +163,8 @@ const ModuleRow = ({
           <Text fontSize="xs" color="gray.600">
             {status === 'not_applicable'
               ? intl.formatMessage({ id: 'osp.modules.status.not_applicable' })
+              : recheck > 0
+              ? intl.formatMessage({ id: 'osp.modules.allAnsweredRecheck' }, { count: recheck })
               : progress.required > 0
               ? // Run 8 (R8-10): a count, not a progress bar. Answers given is descriptive only.
                 intl.formatMessage(

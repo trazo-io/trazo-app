@@ -745,6 +745,10 @@ const ActivitiesPage = () => {
                               <Box
                                 as="button"
                                 type="button"
+                                // Block, not the button's default inline-block: on the cell's 24px
+                                // line box the inline strut set a day that holds activities 5px
+                                // lower than an empty day beside it (measured 2026-11-11).
+                                display="block"
                                 w="full"
                                 textAlign="left"
                                 borderRadius="sm"

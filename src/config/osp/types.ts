@@ -122,6 +122,11 @@ export interface ModuleProgressRow {
    * A soft flag; completion never waits on it. Empty for an agent with no register here.
    */
   agent_asks_blank?: string[];
+  /**
+   * Attestations answered Yes over a list that cannot carry them (empty, or missing what the
+   * records show). The server holds such a module in_progress; the row says why.
+   */
+  blocked_attestations?: string[];
 }
 
 export interface ModuleListResponse {

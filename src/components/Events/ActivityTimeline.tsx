@@ -45,11 +45,13 @@ export function ActivityTimelineRow({ date, eventType, subtype, title, meta, onC
       _hover={{ bg: 'gray.50' }}
       _focusVisible={{ boxShadow: 'outline' }}
       data-testid="activity-timeline-row">
-      <Box w="52px" flexShrink={0} pt={0.5}>
+      {/* 64px: the widest time either locale prints at 12px is 62px ("05:30 a.m."). At 52px
+          "AM" wrapped to a third line on every row (2026-11-11). */}
+      <Box w="64px" flexShrink={0} pt={0.5}>
         <Text fontSize="sm" fontWeight="semibold" color="gray.700" whiteSpace="nowrap">
           {formatDateFromTimestamp(date, intl.locale, { day: 'numeric', month: 'short' }) || '—'}
         </Text>
-        <Text fontSize="xs" color="gray.600">
+        <Text fontSize="xs" color="gray.600" whiteSpace="nowrap">
           {formatWallClockTime(date, intl.locale) || ''}
         </Text>
       </Box>
