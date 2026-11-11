@@ -30,16 +30,12 @@ import { RiLogoutBoxRLine } from 'react-icons/ri';
 import { RootState } from 'store';
 import Sidebar from 'components/Sidebar/Sidebar';
 import { HamburgerIcon } from '@chakra-ui/icons';
-import { clearCurrentCompany } from 'store/features/companySlice';
-import { clearUser } from 'store/features/userSlice';
 import logoTrazo from 'assets/img/trazo2.png';
 import logoTrazoConsumer from 'assets/img/trazo-consumer-logo.png';
-import { logout as logoutAction } from 'store/features/authSlice';
 import routes from 'routes.tsx';
 import { useIntl } from 'react-intl';
 import { useLogoutMutation } from 'store/api/authApi';
-import baseApi from 'store/api/baseApi';
-import { clearAllEventDrafts } from 'hooks/useEventDraft';
+import { clearLocalSession } from 'store/clearLocalSession';
 import { useNavigate } from 'react-router-dom';
 
 type AuthNavbarProps = {
@@ -116,12 +112,8 @@ export default function AuthNavbar(props: AuthNavbarProps) {
       console.error('Logout request failed:', err);
     }
     // Always clean up Redux state and redirect, regardless of server response
-    dispatch(logoutAction());
-    dispatch(clearCurrentCompany());
-    dispatch(clearUser());
-    clearAllEventDrafts();
-    // Flush RTK Query cache BEFORE navigation to prevent stale data from previous user
-    dispatch(baseApi.util.resetApiState());
+    // The one teardown every sign-out shares (store/clearLocalSession.ts).
+    clearLocalSession(dispatch);
     navigate('/auth/signin', { replace: true });
   };
 

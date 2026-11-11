@@ -28,16 +28,12 @@ import Sidebar from 'components/Sidebar/Sidebar';
 import { consumerRoutes } from 'layouts/AdminConsumer';
 import { HamburgerIcon } from '@chakra-ui/icons';
 // Hooks
-import { clearCurrentCompany } from 'store/features/companySlice';
-import { clearUser } from 'store/features/userSlice';
-import { logout as logoutAction } from 'store/features/authSlice';
 import defaultRoutes from '../../routes';
 import { ROLE_DISPLAY_COMPANY_ADMIN } from 'config';
 import { useDispatch, useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 import { useLogoutMutation } from 'store/api/authApi';
-import baseApi from 'store/api/baseApi';
-import { clearAllEventDrafts } from 'hooks/useEventDraft';
+import { clearLocalSession } from 'store/clearLocalSession';
 import { useNavigate } from 'react-router-dom';
 
 type HeaderLinksProps = {
@@ -127,12 +123,8 @@ export default function HeaderLinks(props: HeaderLinksProps) {
       console.error('Logout request failed:', err);
     }
     // Always clean up Redux state and redirect, regardless of server response
-    dispatch(logoutAction());
-    dispatch(clearCurrentCompany());
-    dispatch(clearUser());
-    clearAllEventDrafts();
-    // Flush RTK Query cache BEFORE navigation to prevent stale data from previous user
-    dispatch(baseApi.util.resetApiState());
+    // The one teardown every sign-out shares (store/clearLocalSession.ts).
+    clearLocalSession(dispatch);
     navigate('/auth/signin', { replace: true });
   };
 

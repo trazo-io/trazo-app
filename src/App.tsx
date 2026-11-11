@@ -142,6 +142,7 @@ import { useGetCsrfTokenQuery } from './store/api/baseApi';
 const GoogleAuthCallback = lazyWithRetry(() => import('views/Authentication/GoogleAuthCallback'));
 const CertifierReview = lazyWithRetry(() => import('views/CertifierReview/CertifierReview'));
 const BuyerReview = lazyWithRetry(() => import('views/BuyerReview/BuyerReview'));
+const ConfirmEmailChange = lazyWithRetry(() => import('views/Authentication/ConfirmEmailChange'));
 const AcceptInvitation = lazyWithRetry(
   () => import('views/Authentication/Invitation/AcceptInvitation')
 );
@@ -329,6 +330,12 @@ const App = () => {
         <Route path="/privacy" element={<RedirectToPrivacy />} />
 
         {/* Invitation Routes - Available without authentication */}
+        {/* The email-change link (OV-SEC-C03). Outside the signed-out-only routes: the link is
+            often opened in a browser that is still signed in, and those would redirect it away
+            before it could confirm. */}
+        <Route element={<AuthLayout plainNav />}>
+          <Route path="/auth/confirm-email-change" element={<ConfirmEmailChange />} />
+        </Route>
         <Route element={<AuthLayout />}>
           <Route path="/invitation/:invitationCode" element={<AcceptInvitation />} />
           <Route path="/invitation/:invitationCode/setup" element={<SetupPassword />} />
