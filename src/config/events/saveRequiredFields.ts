@@ -32,11 +32,14 @@ export const requiredFieldsForSave = (
         data.type,
         data.application_method ?? data.way_of_application
       );
+      // "Not on my record": the operator stated the source record does not show it (OV-FJ-C12).
+      // That answers the question, so the save does not ask for a value nobody observed.
+      const notOnRecord = isTruthyFlag(data.concentration_not_recorded);
       return [
         'type',
         'commercial_name',
         ...(multiParcel ? [] : ['volume_applied', 'area_treated']),
-        ...(dispenser ? [] : ['concentration']),
+        ...(dispenser || notOnRecord ? [] : ['concentration']),
         'application_method'
       ];
     }
@@ -53,4 +56,33 @@ export const requiredFieldsForSave = (
     default:
       return [];
   }
+};
+
+/**
+ * A day with no clock time, as the wizard sends it: noon, the encoding imported day-only rows
+ * use (trazo-back `cogpro_import._as_event_datetime`), so it lands on the same calendar day in
+ * every zone. A placeholder, never shown as a time. '' when the value holds no day.
+ */
+export const dayWithoutTime = (value: unknown): string => {
+  const day = String(value ?? '').slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(day) ? `${day}T12:00` : '';
+};
+
+/**
+ * "The time is not on my record" on an input application, as the request carries it (OV-FJ-C12).
+ *
+ * Always a real bool, so unticking on an edit clears the stored mark. Ticked, the date is the day
+ * at the noon placeholder, whatever a voice or crew-note offer wrote into it since. `conflict` is
+ * true when a CA start or completion time sits beside the tick: the server refuses that pair (the
+ * mark or a time, never both), so the wizard says so before the request.
+ */
+export const withTimeNotRecorded = (
+  data: Record<string, unknown>
+): { data: Record<string, unknown>; conflict: boolean } => {
+  const flagged = isTruthyFlag(data.time_not_recorded);
+  if (!flagged) return { data: { ...data, time_not_recorded: false }, conflict: false };
+  return {
+    data: { ...data, time_not_recorded: true, date: dayWithoutTime(data.date) },
+    conflict: Boolean(data.application_start || data.application_end)
+  };
 };

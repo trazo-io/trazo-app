@@ -158,7 +158,9 @@ const FLAG_LABEL_IDS: Record<string, string> = {
   schoolsite_proximity_unknown: 'app.pur.flag.schoolsite_proximity_unknown',
   quantity_rate_mismatch: 'app.pur.flag.quantity_rate_mismatch',
   // A dispenser count in box 24: printed as recorded, never converted to pounds or gallons.
-  product_amount_is_count: 'app.pur.flag.product_amount_is_count'
+  product_amount_is_count: 'app.pur.flag.product_amount_is_count',
+  // Boxes 17-18 left blank: the operator said the source record shows no clock time (OV-FJ-C12).
+  time_not_on_source_record: 'app.pur.flag.time_not_on_source_record'
 };
 
 /**

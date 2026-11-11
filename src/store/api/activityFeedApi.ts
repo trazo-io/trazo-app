@@ -26,6 +26,8 @@ export interface ActivityRow {
    */
   production_finished: boolean;
   performed_by: string;
+  /** A spray whose source record shows no clock time: `date` holds a noon placeholder. */
+  time_not_recorded?: boolean;
   /** WS-4 auto-narrative: structured values only; wording composes client-side. */
   detail?: Record<string, unknown>;
 }

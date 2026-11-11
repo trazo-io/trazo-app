@@ -28,6 +28,8 @@ export interface CrewNoteProvenance {
     void_reason: string;
   }>;
   occurred_at: string | null;
+  /** The spray's source record shows no clock time: `occurred_at` holds a noon placeholder. */
+  time_not_recorded?: boolean;
   performer: string;
   applicator: string;
   review: { reviewed: boolean; reviewer_name: string; review_date: string | null };

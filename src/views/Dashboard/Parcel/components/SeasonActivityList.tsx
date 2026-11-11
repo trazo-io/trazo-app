@@ -70,6 +70,7 @@ export default function SeasonActivityList({
             title={getTimelineEventTitle(e, intl)}
             subtype={typeof e.type === 'string' ? e.type : null}
             meta={firstLine(e.description)}
+            timeNotRecorded={e.time_not_recorded === true}
             onClick={() => onOpen(e)}
           />
         )}

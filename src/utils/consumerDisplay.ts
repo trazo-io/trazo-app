@@ -37,6 +37,10 @@ export const CERTIFIER_ONLY_EVENT_FIELDS: readonly string[] = [
   'buffer_zone_meters',
   // Agronomic audit detail
   'concentration',
+  // "Not on the source record" (OV-FJ-C12): the operator's statements about a spray's paper
+  // record, for the farm's own screens and the certifier, never the buyer page.
+  'concentration_not_recorded',
+  'time_not_recorded',
   'volume',
   'volume_unit',
   'volume_applied', // derived from `volume` on the form path only

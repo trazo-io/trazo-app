@@ -13,7 +13,8 @@ import {
   Alert,
   AlertIcon,
   useToast,
-  CircularProgress
+  CircularProgress,
+  Checkbox
 } from '@chakra-ui/react';
 import { BsFillCloudLightningRainFill } from 'react-icons/bs';
 import {
@@ -35,7 +36,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { clearForm, setForm } from 'store/features/formSlice';
 import { useTourStore } from 'store/tourStore';
-import { object, string } from 'zod';
+import { boolean, object, string } from 'zod';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { traceReturnPath } from 'utils/traceReturnPath';
@@ -120,7 +121,11 @@ import {
   verbForKey
 } from 'config/activityVerbs';
 import { formatFieldValue, getFieldConfig, getSubtypes } from 'config/events';
-import { requiredFieldsForSave } from 'config/events/saveRequiredFields';
+import {
+  dayWithoutTime,
+  requiredFieldsForSave,
+  withTimeNotRecorded
+} from 'config/events/saveRequiredFields';
 import { localizeFieldValue } from 'utils/fieldDisplayUtils';
 import { backToLabel } from 'utils/backToLabel';
 import { useFurthestStep } from 'hooks/useFurthestStep';
@@ -163,12 +168,15 @@ import {
   isOperatorChosenDate,
   nowLocalDateTimeInput
 } from 'utils/dateOnly';
+import { isAffirmativeFlag } from 'config/events/formatters';
 
 // Enhanced form schemas with better validation
 // Sprint 1 Epic 1.4: Added performed_by for USDA GAP traceability compliance
 const formSchemaBasic = object({
   date: string().min(1, 'events.validation.dateRequired'),
-  performed_by: string().optional() // Optional — helps with traceability but not required
+  performed_by: string().optional(), // Optional — helps with traceability but not required
+  // A spray's "The time is not on my record" (OV-FJ-C12). Offered for input applications only.
+  time_not_recorded: boolean().optional()
 });
 
 // A verb tile's preset fields name the tile (Cleanout => "Cleaning"); they are not entries, so a
@@ -767,6 +775,11 @@ function NewEventForm({ isEdit = false, eventId = null }) {
   // it wrote.
   const localDateTimeLabel = (value) => {
     if (!value) return '';
+    // Under "The time is not on my record" the day alone: the record is saved at a noon
+    // placeholder, and printing any time here would state one nobody recorded.
+    if (activeEventType === 2 && isAffirmativeFlag(eventFormData.time_not_recorded)) {
+      return localDateLabel(String(value).slice(0, 10));
+    }
     const d = new Date(value);
     if (Number.isNaN(d.getTime())) return localDateLabel(value);
     return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], {
@@ -1019,7 +1032,8 @@ function NewEventForm({ isEdit = false, eventId = null }) {
   const basicMethods = useForm({
     resolver: zodResolver(formSchemaBasic),
     defaultValues: {
-      date: nowLocalDateTimeInput()
+      date: nowLocalDateTimeInput(),
+      time_not_recorded: false
     }
   });
 
@@ -1037,6 +1051,7 @@ function NewEventForm({ isEdit = false, eventId = null }) {
   // Step 0's own fields live in react-hook-form and reach `eventFormData` only on Continue, so
   // the draft reads them here. Without this a refresh on step 0 lost the operator's name.
   const [step0Date, step0PerformedBy] = basicMethods.watch(['date', 'performed_by']);
+  const step0TimeNotRecorded = basicMethods.watch('time_not_recorded');
 
   // D9 — persist the in-progress event so a refresh, a locked phone or a stray Back does not
   // discard a half-filled chemical application. Scoped per parcel and per create/edit target.
@@ -1064,12 +1079,16 @@ function NewEventForm({ isEdit = false, eventId = null }) {
   // and refuses to store an empty form, so this stays cheap and does not arm a restore banner
   // for someone who merely opened the wizard.
   useEffect(() => {
+    // Step 0's tick wins over a copy left in `eventFormData` by an earlier Continue, and an unticked
+    // box adds no key, so it cannot make an untouched form look like a draft worth offering back.
+    const { time_not_recorded: _timeFlagCopy, ...formForDraft } = eventFormData;
     saveDraft(
       activeEventType,
       {
-        ...eventFormData,
+        ...formForDraft,
         ...(step0Date != null ? { date: step0Date } : {}),
-        ...(step0PerformedBy != null ? { performed_by: step0PerformedBy } : {})
+        ...(step0PerformedBy != null ? { performed_by: step0PerformedBy } : {}),
+        ...(step0TimeNotRecorded ? { time_not_recorded: true } : {})
       },
       acceptedFiles?.length || 0,
       multiParcelIds.length > 0 ? { parcelIds: multiParcelIds, targets: multiTargets } : undefined,
@@ -1087,6 +1106,7 @@ function NewEventForm({ isEdit = false, eventId = null }) {
     multiTargets,
     step0Date,
     step0PerformedBy,
+    step0TimeNotRecorded,
     wizardDefaultDate,
     activeVerbKey
   ]);
@@ -1112,7 +1132,8 @@ function NewEventForm({ isEdit = false, eventId = null }) {
     basicMethods.reset(
       {
         date: restoredDate || '',
-        performed_by: draftFields.performed_by ?? basicMethods.getValues('performed_by') ?? ''
+        performed_by: draftFields.performed_by ?? basicMethods.getValues('performed_by') ?? '',
+        time_not_recorded: isAffirmativeFlag(draftFields.time_not_recorded)
       },
       { keepDefaultValues: true }
     );
@@ -1460,6 +1481,8 @@ function NewEventForm({ isEdit = false, eventId = null }) {
         // dedup. Edit mode keeps them — same record, same season.
         ...(isRepeat ? { id: undefined, history: undefined, album: undefined } : {}),
         date: eventDate,
+        // Whether THIS record's time is on its source record; a repeat is a new record, dated now.
+        time_not_recorded: !isRepeat && isAffirmativeFlag(existingEvent.time_not_recorded),
         // Override type field with frontend code mapping
         // GENERAL EVENT FIX: General events store activity category in activity_type,
         // but the serializer returns a verbose type string (e.g. "event.general.tractor...")
@@ -1711,7 +1734,8 @@ function NewEventForm({ isEdit = false, eventId = null }) {
       // 🚨 CRITICAL FIX: Include performed_by field when editing
       basicMethods.reset({
         date: eventDate,
-        performed_by: existingEvent.performed_by || ''
+        performed_by: existingEvent.performed_by || '',
+        time_not_recorded: !isRepeat && isAffirmativeFlag(existingEvent.time_not_recorded)
       });
 
       // Set event type from existing data
@@ -1743,6 +1767,29 @@ function NewEventForm({ isEdit = false, eventId = null }) {
   }, [isEdit, existingEvent, basicMethods, dispatch]);
 
   // Form submission handlers
+  /**
+   * "The time is not on my record" (OV-FJ-C12; rehearsal finding 8). A paper spray log gives the day
+   * and no clock time, and a `datetime-local` will not hold one without the other, so the wizard
+   * used to make the grower invent a time. Ticked: the day is kept, the clock is the noon
+   * placeholder imported day-only rows use (never shown as a time), the time box is cleared and
+   * disabled. Unticked: the time typed before the tick comes back, or the box is empty and the
+   * date is asked for again; the placeholder is never offered as a time.
+   */
+  const timeBeforeFlagRef = useRef('');
+  const setTimeNotRecorded = (checked) => {
+    const current = basicMethods.getValues('date') || '';
+    const day = current.slice(0, 10);
+    if (checked) {
+      timeBeforeFlagRef.current = current.length > 10 ? current.slice(11, 16) : '';
+      basicMethods.setValue('date', dayWithoutTime(day), { shouldDirty: true });
+    } else {
+      const time = timeBeforeFlagRef.current;
+      timeBeforeFlagRef.current = '';
+      basicMethods.setValue('date', day && time ? `${day}T${time}` : '', { shouldDirty: true });
+    }
+    basicMethods.setValue('time_not_recorded', checked, { shouldDirty: true });
+  };
+
   const onSubmitBasic = (data) => {
     // See `subtypeUnanswered`: a hoisted type whose chooser is open and unanswered has no
     // second surface to answer on, so advancing strands the farmer on a form that demands a
@@ -1753,6 +1800,8 @@ function NewEventForm({ isEdit = false, eventId = null }) {
     }
     setSubtypeUnanswered(false);
     const updatedData = { ...eventFormData, ...data, event_type: activeEventType };
+    // Only an input application carries the mark; any other record keeps the time it was given.
+    if (activeEventType !== 2) delete updatedData.time_not_recorded;
     setEventFormData(updatedData);
 
     // Calculate carbon impact
@@ -2862,6 +2911,11 @@ function NewEventForm({ isEdit = false, eventId = null }) {
 
   const handleEventTypeChange = (eventTypeId) => {
     setActiveEventType(eventTypeId);
+    // The mark belongs to input applications. Leaving one must not leave its noon placeholder
+    // behind as the time of a harvest or an irrigation.
+    if (eventTypeId !== 2 && basicMethods.getValues('time_not_recorded')) {
+      setTimeNotRecorded(false);
+    }
 
     // A held offer belongs to the activity it was gated against. The form is being reset to a
     // different one here, so a still-visible "Fill in N values" would write a frozen field set
@@ -3045,12 +3099,29 @@ function NewEventForm({ isEdit = false, eventId = null }) {
           processedEventFormData.description = processedEventFormData.observation;
         }
 
+        // "The time is not on my record": always sent as a real bool, so unticking on an edit
+        // clears the stored mark. Ticked, the day goes at the noon placeholder whatever a voice
+        // or crew-note offer wrote into the date since, and never beside a CA start or end time
+        // (the server refuses that pair too; this says so before the request).
+        const timed = withTimeNotRecorded(processedEventFormData);
+        if (timed.conflict) {
+          const windowError = new Error(
+            intl.formatMessage({ id: 'events.wizard.timeNotRecordedStartEnd' })
+          );
+          windowError.isMissingRequiredFields = true;
+          throw windowError;
+        }
+        processedEventFormData = timed.data;
+
         // ChemicalTab's onSubmit already handles:
         // - Moving active_ingredient, application_details, weather_conditions,
         //   application_timing, target_pest_disease into extra_data
         // - Setting those fields to undefined at top level
         // - Constructing all aggregate/summary fields (fuel_consumption_total, NPK totals, etc.)
         // No extra_data patching needed here — submitForm() triggers the tab's onSubmit.
+      } else {
+        // Only an input application carries the mark (a ChemicalEvent column).
+        delete processedEventFormData.time_not_recorded;
       }
 
       // TILLAGE FIX (2025-12-25): Move tillage-specific fields to extra_data
@@ -4142,20 +4213,77 @@ function NewEventForm({ isEdit = false, eventId = null }) {
                             <StandardField
                               label={intl.formatMessage({ id: 'app.eventDateTime' })}
                               required
-                              helpText={intl.formatMessage({
-                                id: 'events.wizard.dateHelp',
-                                defaultMessage: 'When the work was done, not when you log it.'
-                              })}
+                              helpText={
+                                step0TimeNotRecorded
+                                  ? intl.formatMessage({
+                                      id: 'events.wizard.timeNotOnMyRecordHelp'
+                                    })
+                                  : intl.formatMessage({
+                                      id: 'events.wizard.dateHelp',
+                                      defaultMessage: 'When the work was done, not when you log it.'
+                                    })
+                              }
                               error={
                                 basicMethods.formState.errors.date?.message &&
                                 intl.formatMessage({
                                   id: basicMethods.formState.errors.date.message
                                 })
                               }>
-                              <StandardInput
-                                type="datetime-local"
-                                {...basicMethods.register('date')}
-                              />
+                              {step0TimeNotRecorded ? (
+                                <HStack spacing={2} align="stretch">
+                                  <StandardInput
+                                    type="date"
+                                    aria-label={intl.formatMessage({ id: 'app.date' })}
+                                    value={(step0Date || '').slice(0, 10)}
+                                    onChange={(e) =>
+                                      basicMethods.setValue(
+                                        'date',
+                                        dayWithoutTime(e.target.value),
+                                        { shouldDirty: true, shouldValidate: true }
+                                      )
+                                    }
+                                    data-testid="event-day-input"
+                                  />
+                                  {/* Cleared and disabled: there is no time to enter. */}
+                                  <StandardInput
+                                    type="time"
+                                    // Not the FormControl's id: that one is the day input's.
+                                    id="event-time-input"
+                                    required={false}
+                                    value=""
+                                    readOnly
+                                    isDisabled
+                                    aria-label={intl.formatMessage({
+                                      id: 'events.wizard.timeInput'
+                                    })}
+                                    data-testid="event-time-input"
+                                  />
+                                </HStack>
+                              ) : (
+                                <StandardInput
+                                  type="datetime-local"
+                                  {...basicMethods.register('date')}
+                                />
+                              )}
+                              {/* Input applications only: the flag is a ChemicalEvent column. */}
+                              {activeEventType === 2 && (isEdit || typeChooserAnswered) && (
+                                <Checkbox
+                                  // Its own id and state, not the date field's (FormControl).
+                                  id="time-not-recorded"
+                                  required={false}
+                                  isInvalid={false}
+                                  colorScheme="green"
+                                  minH="44px"
+                                  mt={1}
+                                  alignItems="center"
+                                  isChecked={Boolean(step0TimeNotRecorded)}
+                                  onChange={(e) => setTimeNotRecorded(e.target.checked)}
+                                  data-testid="time-not-recorded">
+                                  <Text fontSize="sm" color="gray.700">
+                                    {intl.formatMessage({ id: 'events.wizard.timeNotOnMyRecord' })}
+                                  </Text>
+                                </Checkbox>
+                              )}
                             </StandardField>
 
                             {/* Sprint 1 Epic 1.4: USDA GAP Traceability - Who performed this activity */}
@@ -5045,9 +5173,18 @@ function NewEventForm({ isEdit = false, eventId = null }) {
                         dateLabel={(() => {
                           const value = basicMethods.getValues('date');
                           const when = value ? new Date(value) : null;
-                          return when && !Number.isNaN(when.getTime())
-                            ? intl.formatDate(when, { dateStyle: 'medium', timeStyle: 'short' })
-                            : '';
+                          if (!when || Number.isNaN(when.getTime())) return '';
+                          // The day, and the phrase where the time would be: never the
+                          // noon placeholder the record is stored at.
+                          if (
+                            activeEventType === 2 &&
+                            basicMethods.getValues('time_not_recorded')
+                          ) {
+                            return `${intl.formatDate(when, {
+                              dateStyle: 'medium'
+                            })} · ${intl.formatMessage({ id: 'events.time.notOnSourceRecord' })}`;
+                          }
+                          return intl.formatDate(when, { dateStyle: 'medium', timeStyle: 'short' });
                         })()}
                         doneBy={basicMethods.getValues('performed_by')}
                         parcelsLabel={intl.formatList(

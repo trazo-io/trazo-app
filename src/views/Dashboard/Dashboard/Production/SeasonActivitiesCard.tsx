@@ -152,6 +152,7 @@ export default function SeasonActivitiesCard({
                 title={titleOf(e, intl)}
                 subtype={(e.production_type || e.type || null) as string | null}
                 meta={metaOf(e, intl)}
+                timeNotRecorded={e.time_not_recorded === true}
                 onClick={() => onOpen(e)}
               />
             )}
