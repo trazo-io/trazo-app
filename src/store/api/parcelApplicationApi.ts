@@ -66,6 +66,8 @@ export interface ParcelApplicationResponse {
   buffer_zones: BufferZoneRow[];
   crop_history_count: number;
   has_polygon: boolean;
+  /** [lat, lng] of the drawn boundary's centre, as the parcel PDF prints it in §A; null with no boundary. */
+  boundary_centre?: [number, number] | null;
   polygon?: Array<{ lat: number; lng: number }> | null;
   map_metadata?: Record<string, unknown> | null;
   has_affidavit: boolean;
