@@ -5064,9 +5064,10 @@ const ProductionTab = forwardRef(
                           />
                         </StandardField>
 
-                        {/* 7 CFR 205.204(a)(4) — perennial stock needs a full year under organic
-                              management before its crop sells as organic. The packet computes the
-                              elapsed time from this date and flags a shortfall. */}
+                        {/* 7 CFR 205.204(a)(4): perennial stock needs a full year under organic
+                              management before the STOCK itself may be sold as organic (not its
+                              crop). The packet computes the elapsed time from this date and flags a
+                              shortfall. */}
                         <StandardField
                           label={intl.formatMessage({
                             id: 'events.production.fields.stockOrganicManagementStart'

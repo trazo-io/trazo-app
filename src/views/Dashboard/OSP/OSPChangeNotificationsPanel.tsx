@@ -3,8 +3,8 @@
  *
  * Lets the producer record a change reported to the certifier. NOP 2615 §3.4
  * enumerates six change categories; the prohibited-substance application is the
- * § 205.400(f)(1) IMMEDIATE category, the rest are § 205.400(f)(2) prior-notice
- * changes. These rows are surfaced in the audit export's "Notification of
+ * § 205.400(f)(1) category, the rest are § 205.400(f)(2) changes. Both limbs carry
+ * the same "Immediately notify" duty. These rows are surfaced in the audit export's "Notification of
  * Changes" block.
  *
  * Backend contract:
@@ -300,7 +300,7 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
       subtitle={intl.formatMessage({
         id: 'osp.changeNotifications.subtitle',
         defaultMessage:
-          'Record any change reported to your certifier. A prohibited-substance application must be reported immediately (§ 205.400(f)(1)); other changes require prior notice (§ 205.400(f)(2)).'
+          'Record any change reported to your certifier. § 205.400(f) makes both immediate duties: a prohibited-substance application or drift (f)(1), and any change to your operation that may affect its compliance (f)(2).'
       })}>
       {/* Existing notifications */}
       <VStack align="stretch" spacing={2} mt={3}>

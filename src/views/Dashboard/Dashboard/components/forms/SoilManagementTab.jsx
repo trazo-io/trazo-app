@@ -93,7 +93,7 @@ const formSchemaSoilManagement = object({
   lab_potassium: string().optional(),
   lab_cec: string().optional(),
   // §E-2: lab analysis (LA) — what was sampled + the micronutrient results that document a
-  // deficiency (7 CFR 205.601(j)(6)). sample_matrix is required for LA via the superRefine below.
+  // deficiency (7 CFR 205.601(j)(7)). sample_matrix is required for LA via the superRefine below.
   sample_matrix: string().optional(),
   lab_zinc_ppm: string().optional(),
   lab_boron_ppm: string().optional(),
@@ -1030,7 +1030,7 @@ const SoilManagementTab = forwardRef(
         put('phosphorus', data.lab_phosphorus);
         put('potassium', data.lab_potassium);
         put('cec', data.lab_cec);
-        // §E-2 micronutrient results — the documented deficiency for § 205.601(j)(6)
+        // §E-2 micronutrient results: the documented deficiency for § 205.601(j)(7)
         put('zinc_ppm', data.lab_zinc_ppm);
         put('boron_ppm', data.lab_boron_ppm);
         put('manganese_ppm', data.lab_manganese_ppm);
@@ -2351,7 +2351,7 @@ const SoilManagementTab = forwardRef(
                     test_results JSONField on submit; pH/OM/texture stay as their own columns above.
                     §E-2: the same block serves Lab Analysis (LA) — an identical record for a leaf,
                     petiole, hull, compost or water sample, plus the micronutrient results that
-                    7 CFR 205.601(j)(6) requires before a micronutrient may be applied. */}
+                    7 CFR 205.601(j)(7) requires before a micronutrient may be applied. */}
               {(watch('type') === 'ST' || watch('type') === 'LA') && (
                 <SectionBox>
                   <SectionHeader
@@ -2365,7 +2365,7 @@ const SoilManagementTab = forwardRef(
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     description={
                       watch('type') === 'LA'
-                        ? 'A dated lab report is the deficiency record a certifier looks for before any micronutrient application (7 CFR 205.601(j)(6)). Attach a photo of the report as well.'
+                        ? 'A dated lab report is the deficiency record a certifier looks for before any micronutrient application (7 CFR 205.601(j)(7)). Attach a photo of the report as well.'
                         : undefined
                     }
                   />
@@ -2453,7 +2453,7 @@ const SoilManagementTab = forwardRef(
                   </SimpleGrid>
 
                   {/* §E-2 micronutrient results. This is the half that makes a micronutrient
-                        application defensible: § 205.601(j)(6) permits synthetic micronutrients
+                        application defensible: § 205.601(j)(7) permits synthetic micronutrients
                         only where a deficiency is documented, so record the numbers the report
                         actually shows and leave the rest blank. */}
                   <Box mt={5}>
@@ -2462,7 +2462,7 @@ const SoilManagementTab = forwardRef(
                     </Text>
                     <Text fontSize="xs" color="gray.500" mb={3}>
                       Fill in only what the report shows. These are the deficiency record for a zinc
-                      or boron application (7 CFR 205.601(j)(6)).
+                      or boron application (7 CFR 205.601(j)(7)).
                     </Text>
                     <SimpleGrid columns={{ base: 1, md: 4 }} spacing={4}>
                       <StandardField label="Zinc (Zn)">

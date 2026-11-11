@@ -211,7 +211,7 @@ const ParcelComplianceCard: React.FC<Props> = ({
     [
       intl.formatMessage({
         id: 'parcel.fields.treatedLumberPresent',
-        defaultMessage: 'Treated lumber present on parcel (7 CFR 205.206)'
+        defaultMessage: 'Treated lumber present (7 CFR 205.206(f))'
       }),
       // Before the parcel loads there is no answer — a dash, never a default "No".
       parcel == null

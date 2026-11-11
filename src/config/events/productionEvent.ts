@@ -820,8 +820,8 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     }
   },
   {
-    // 7 CFR 205.204(a)(4) — perennial planting stock must be under continuous organic
-    // management for a year before its crop sells as organic. Producer/certifier only: it is
+    // 7 CFR 205.204(a)(4): nonorganic perennial planting stock may itself be sold as organic
+    // only after a year under organic management (the stock, not its crop). Producer/certifier only: it is
     // an input to a compliance computation, not a fact a shopper can act on.
     name: 'stock_organic_management_start',
     labelKey: 'events.production.fields.stockOrganicManagementStart',
