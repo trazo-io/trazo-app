@@ -7474,6 +7474,7 @@
   "parcelApp.crops.addNamed": "Agregar {crop}",
   "parcelApp.crops.fromSeasons": "Las temporadas abiertas en esta parcela tienen estos cultivos. Agrega uno para empezar una fila; la variedad, la fecha de cosecha y los acres los completas tú.",
   "parcelApp.crops.error": "No se pudo guardar el cultivo",
+  "parcelApp.crops.deleteError": "No se pudo quitar el cultivo",
   "parcelApp.changes.recorded": "{date} (registrada)",
   "parcelApp.changes.acknowledged": "Recibida por el certificador el {date}",
   "parcelApp.changes.notAcknowledged": "El certificador aún no acusa recibo",

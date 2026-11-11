@@ -39,6 +39,34 @@ const toInput = (f: FormState): PlannedCropInput => ({
   acres: f.acres.trim() || null
 });
 
+/** The words of a crop name, lower case and singular, mirroring `_crop_words` in the backend's
+ *  parcel_application_lines.py: "Bartlett pears" holds "pear", "Pineapple" does not hold "apple". */
+const cropWords = (name: string): Set<string> => {
+  const words = new Set<string>();
+  for (const raw of name.toLowerCase().match(/[a-zà-ÿ]+/g) ?? []) {
+    let word = raw;
+    if (word.endsWith('ies') && word.length > 4) word = `${word.slice(0, -3)}y`;
+    else if (word.endsWith('es') && /(ch|sh|x|ss|o)$/.test(word.slice(0, -2)))
+      word = word.slice(0, -2);
+    else if (word.endsWith('s') && !word.endsWith('ss') && word.length > 3)
+      word = word.slice(0, -1);
+    words.add(word);
+  }
+  return words;
+};
+
+const isSubset = (a: Set<string>, b: Set<string>) => Array.from(a).every((w) => b.has(w));
+
+/** Whether a season's crop is named in the list: every word of one name appears in the other. */
+export const cropIsListed = (name: string, listed: string[]): boolean => {
+  const words = cropWords(name);
+  if (words.size === 0) return true;
+  return listed.some((item) => {
+    const other = cropWords(item);
+    return isSubset(words, other) || (other.size > 0 && isSubset(other, words));
+  });
+};
+
 interface Scope {
   companyId: string;
   farmId: string;
@@ -138,12 +166,13 @@ const PlannedCropRows = ({
   const [editing, setEditing] = useState<number | 'new' | null>(null);
   const [initial, setInitial] = useState<FormState>(EMPTY);
   const [remove] = useDeletePlannedCropMutation();
+  // The row whose DELETE is in flight. Per row, not the hook's shared isLoading, so one removal does not
+  // disable every row; and a second click on the same row never sends a second DELETE (review of app #363).
+  const [pendingId, setPendingId] = useState<number | null>(null);
   const notStated = intl.formatMessage({ id: 'parcelApp.crops.notStated' });
 
-  const listed = crops.map((c) => c.crop.toLowerCase());
-  const unlisted = openSeasonCrops.filter(
-    (name) => !listed.some((l) => l.includes(name.toLowerCase()) || name.toLowerCase().includes(l))
-  );
+  const listed = crops.map((c) => c.crop);
+  const unlisted = openSeasonCrops.filter((name) => !cropIsListed(name, listed));
 
   const startNew = (crop = '') => {
     setInitial({ ...EMPTY, crop });
@@ -151,14 +180,18 @@ const PlannedCropRows = ({
   };
 
   const doDelete = async (crop: PlannedCrop) => {
+    if (pendingId !== null) return;
+    setPendingId(crop.id);
     try {
       await remove({ companyId, farmId, parcelId, cropId: crop.id }).unwrap();
     } catch (err) {
       toast({
         status: 'error',
-        title: intl.formatMessage({ id: 'parcelApp.crops.error' }),
+        title: intl.formatMessage({ id: 'parcelApp.crops.deleteError' }),
         description: apiErrorMessage(err) ?? undefined
       });
+    } finally {
+      setPendingId(null);
     }
   };
 
@@ -203,7 +236,12 @@ const PlannedCropRows = ({
                   <StandardButton size="sm" variant="ghost" onClick={() => setEditing(crop.id)}>
                     {intl.formatMessage({ id: 'parcelApp.crops.edit' })}
                   </StandardButton>
-                  <StandardButton size="sm" variant="ghost" onClick={() => doDelete(crop)}>
+                  <StandardButton
+                    size="sm"
+                    variant="ghost"
+                    isLoading={pendingId === crop.id}
+                    isDisabled={pendingId !== null}
+                    onClick={() => doDelete(crop)}>
                     {intl.formatMessage({ id: 'parcelApp.crops.delete' })}
                   </StandardButton>
                 </HStack>

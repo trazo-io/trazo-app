@@ -7474,6 +7474,7 @@
   "parcelApp.crops.addNamed": "Add {crop}",
   "parcelApp.crops.fromSeasons": "Seasons open on this parcel grow these crops. Add one to start a row; the variety, harvest date and acres are yours to fill in.",
   "parcelApp.crops.error": "The crop could not be saved",
+  "parcelApp.crops.deleteError": "The crop could not be removed",
   "parcelApp.changes.recorded": "{date} (recorded)",
   "parcelApp.changes.acknowledged": "Acknowledged by the certifier {date}",
   "parcelApp.changes.notAcknowledged": "Not yet acknowledged by the certifier",
