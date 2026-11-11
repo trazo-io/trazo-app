@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.12.01",
+  "content_version": "2026.12.02",
   "registry": {
-    "content_version": "2026.12.01",
+    "content_version": "2026.12.02",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -15765,6 +15765,55 @@
                 "max_length": null
               },
               {
+                "key": "owns_crop_in_storage",
+                "kind": "radio",
+                "label": {
+                  "en": "Do you still own the crop while it is stored at a facility you do not operate?",
+                  "es": "¿El cultivo sigue siendo tuyo mientras está almacenado en una instalación que no operas?"
+                },
+                "coaching": {
+                  "en": "Answer No if ownership passes to the buyer or the facility when the crop is delivered there.",
+                  "es": "Responde No si la propiedad pasa al comprador o a la instalación al entregar el cultivo."
+                },
+                "options": [
+                  {
+                    "value": "yes",
+                    "label": {
+                      "en": "Yes, we still own it there",
+                      "es": "Sí, sigue siendo nuestro"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "no",
+                    "label": {
+                      "en": "No, ownership passes when it is delivered",
+                      "es": "No, la propiedad pasa al entregarlo"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "storage_locations",
+                    "op": "includes_any",
+                    "value": [
+                      "commercial_cold_off_farm",
+                      "certified_handler",
+                      "uncertified_facility"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.100(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
                 "key": "storage_other_description",
                 "kind": "text",
                 "label": {
@@ -16069,6 +16118,20 @@
                     "question": "storage_locations",
                     "op": "includes",
                     "value": "uncertified_facility"
+                  },
+                  {
+                    "question": "storage_locations",
+                    "op": "includes_any",
+                    "value": [
+                      "commercial_cold_off_farm",
+                      "certified_handler",
+                      "uncertified_facility"
+                    ]
+                  },
+                  {
+                    "question": "owns_crop_in_storage",
+                    "op": "ne",
+                    "value": "no"
                   }
                 ],
                 "nop_cite": "§ 205.103",
@@ -16097,6 +16160,20 @@
                     "question": "storage_locations",
                     "op": "includes",
                     "value": "uncertified_facility"
+                  },
+                  {
+                    "question": "storage_locations",
+                    "op": "includes_any",
+                    "value": [
+                      "commercial_cold_off_farm",
+                      "certified_handler",
+                      "uncertified_facility"
+                    ]
+                  },
+                  {
+                    "question": "owns_crop_in_storage",
+                    "op": "ne",
+                    "value": "no"
                   }
                 ],
                 "nop_cite": "§ 205.103",
@@ -16190,6 +16267,11 @@
                       "certified_handler",
                       "uncertified_facility"
                     ]
+                  },
+                  {
+                    "question": "owns_crop_in_storage",
+                    "op": "ne",
+                    "value": "no"
                   }
                 ],
                 "nop_cite": "§ 205.272(a)",
@@ -16813,8 +16895,8 @@
                   "es": "Escribe tu proceso de manejo en orden, desde la cosecha hasta el envío"
                 },
                 "coaching": {
-                  "en": "List each step as it happens — for example: harvest → haul to hulling shed → hull → dry → bulk storage → hand-sort → pack → cold storage → ship. This step list is the flow chart your certifier expects to see for the handling operation.",
-                  "es": "Enumera cada paso en el orden en que ocurre — por ejemplo: cosecha → traslado al galpón de descascarado → descascarado → secado → almacenamiento a granel → selección manual → empacado → cámara fría → envío. Esta lista de pasos es el diagrama de flujo que tu certificador espera ver para la operación de manejo."
+                  "en": "List each step as it happens — for example: harvest → haul to hulling shed → hull → dry → bulk storage → hand-sort → pack → cold storage → ship. This step list is the flow chart your certifier expects to see for the handling operation. If you keep a drawn flow chart instead, attach it under Records and documents; either one answers the request.",
+                  "es": "Enumera cada paso en el orden en que ocurre — por ejemplo: cosecha → traslado al galpón de descascarado → descascarado → secado → almacenamiento a granel → selección manual → empacado → cámara fría → envío. Esta lista de pasos es el diagrama de flujo que tu certificador espera ver para la operación de manejo. Si tienes un diagrama de flujo dibujado, adjúntalo en Registros y documentos; cualquiera de los dos responde la solicitud."
                 },
                 "options": [],
                 "required": true,
@@ -18510,8 +18592,8 @@
                   "es": "Adjunta un mapa del sitio, diagrama de flujo del proceso, o procedimientos (SOP) de manejo, si los tienes"
                 },
                 "coaching": {
-                  "en": "Not required to complete this module, but a site map or flow chart is exactly what a certifier asks for first at an on-site handling review.",
-                  "es": "No es obligatorio para completar este módulo, pero un mapa del sitio o diagrama de flujo es justo lo primero que pide un certificador en una revisión de manejo en sitio."
+                  "en": "Not required to complete this module, but a site map or flow chart is exactly what a certifier asks for first at an on-site handling review. A flow chart attached here and the written steps on the process page each answer the request for a flow chart or description.",
+                  "es": "No es obligatorio para completar este módulo, pero un mapa del sitio o diagrama de flujo es justo lo primero que pide un certificador en una revisión de manejo en sitio. Un diagrama adjunto aquí y los pasos escritos en la página del proceso responden cada uno la solicitud de diagrama o descripción."
                 },
                 "options": [],
                 "required": false,
@@ -25987,6 +26069,7 @@
       },
       "visible_questions": [
         "storage_locations",
+        "owns_crop_in_storage",
         "stored_in_sealed_packaging",
         "storage_shared_with_nonorganic",
         "third_party_storage_contracted",
