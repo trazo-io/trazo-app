@@ -3,8 +3,9 @@
  * Backend (model/serializer/viewset) already exists; this is the missing capture form.
  * Lives in the parcel field-history area; one or more affidavits per parcel.
  *
- * Note: signed_document upload (the scanned signature) is deferred — it needs a multipart
- * path; the structured attestation + signature dates are captured here.
+ * The signed copy (the certifier's own form, scanned) uploads after the row saves, as a
+ * multipart PATCH. Until 2026-11-11 there was no way to attach it here, so every "signed
+ * affidavit attached" line in the packet was reachable only through the API.
  */
 import React, { useEffect, useState } from 'react';
 import {
@@ -38,6 +39,7 @@ import {
   useCreateLandownerAffidavitMutation,
   useDeleteLandownerAffidavitMutation,
   useGetLandownerAffidavitsQuery,
+  useUploadLandownerAffidavitDocumentMutation,
   useUpdateLandownerAffidavitMutation
 } from 'store/api/landownerAffidavitApi';
 import { apiErrorMessage } from 'utils/apiErrorMessage';
@@ -50,6 +52,8 @@ interface Props {
 }
 
 const EMPTY_FORM = {
+  // OTCO C2 2.5 / CCOF §G: the operation signs one for its own period too.
+  signer_role: 'prior_manager' as 'prior_manager' | 'this_operation',
   previous_manager_name: '',
   previous_manager_address: '',
   previous_manager_phone: '',
@@ -91,13 +95,21 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
   const [createAffidavit, { isLoading: creating }] = useCreateLandownerAffidavitMutation();
   const [updateAffidavit, { isLoading: updating }] = useUpdateLandownerAffidavitMutation();
   const [deleteAffidavit] = useDeleteLandownerAffidavitMutation();
+  const [uploadDocument, { isLoading: uploading }] = useUploadLandownerAffidavitDocumentMutation();
+  // The signed copy chosen in the form. Kept apart from the JSON fields: it uploads after the row
+  // is saved, and a failed upload leaves the row saved and the file still chosen for a retry.
+  const [signedFile, setSignedFile] = useState<File | null>(null);
+  const fileInputId = React.useId();
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
 
   useEffect(() => {
-    if (!showForm) setForm({ ...EMPTY_FORM });
+    if (!showForm) {
+      setForm({ ...EMPTY_FORM });
+      setSignedFile(null);
+    }
   }, [showForm]);
 
   const set = (key: string, value: unknown) => setForm((f) => ({ ...f, [key]: value }));
@@ -122,6 +134,7 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
   const startEdit = (a: LandownerAffidavit) => {
     setEditingId(a.id);
     setForm({
+      signer_role: a.signer_role === 'this_operation' ? 'this_operation' : 'prior_manager',
       previous_manager_name: a.previous_manager_name || '',
       previous_manager_address: a.previous_manager_address || '',
       previous_manager_phone: a.previous_manager_phone || '',
@@ -168,6 +181,7 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
     }
     const data: Partial<LandownerAffidavit> = {
       parcel: Number(parcelId),
+      signer_role: form.signer_role,
       previous_manager_name: form.previous_manager_name,
       previous_manager_address: form.previous_manager_address || null,
       previous_manager_phone: form.previous_manager_phone || null,
@@ -217,11 +231,32 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
       treated_seed_planted: form.treated_seed_planted,
       treated_seed_detail: form.treated_seed_planted === 'yes' ? form.treated_seed_detail : ''
     };
+    let savedId: number | null = editingId;
     try {
       if (editingId != null) {
         await updateAffidavit({ companyId, farmId, affidavitId: editingId, data }).unwrap();
       } else {
-        await createAffidavit({ companyId, farmId, data }).unwrap();
+        const created = await createAffidavit({ companyId, farmId, data }).unwrap();
+        savedId = created.id;
+        // A retry after a failed upload updates this row instead of creating a second one.
+        setEditingId(created.id);
+      }
+      if (signedFile && savedId != null) {
+        try {
+          await uploadDocument({
+            companyId,
+            farmId,
+            affidavitId: savedId,
+            file: signedFile
+          }).unwrap();
+        } catch (err: unknown) {
+          toast({
+            status: 'error',
+            title: intl.formatMessage({ id: 'parcel.affidavit.toast.uploadError' }),
+            description: apiErrorMessage(err) ?? intl.formatMessage({ id: 'app.errorTryAgain' })
+          });
+          return;
+        }
       }
       toast({
         status: 'success',
@@ -327,13 +362,30 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
           <Box key={a.id} p={3} borderWidth="1px" borderColor="gray.200" borderRadius="md">
             <HStack justify="space-between">
               <Box>
-                <Text fontWeight="semibold" fontSize="sm">
-                  {a.previous_manager_name ||
-                    intl.formatMessage({
-                      id: 'parcel.affidavit.unnamed',
-                      defaultMessage: '(unnamed)'
+                <HStack spacing={2}>
+                  <Text fontWeight="semibold" fontSize="sm">
+                    {a.previous_manager_name ||
+                      intl.formatMessage({
+                        id: 'parcel.affidavit.unnamed',
+                        defaultMessage: '(unnamed)'
+                      })}
+                  </Text>
+                  <Badge
+                    colorScheme={a.signed_document ? 'green' : 'gray'}
+                    variant="subtle"
+                    fontSize="10px">
+                    {intl.formatMessage({
+                      id: a.signed_document
+                        ? 'parcel.affidavit.signedCopyOnFile'
+                        : 'parcel.affidavit.signedCopyMissing'
                     })}
-                </Text>
+                  </Badge>
+                  {a.signer_role === 'this_operation' && (
+                    <Badge colorScheme="gray" variant="subtle" fontSize="10px">
+                      {intl.formatMessage({ id: 'parcel.affidavit.role.thisOperationBadge' })}
+                    </Badge>
+                  )}
+                </HStack>
                 <Text fontSize="xs" color="gray.500">
                   {intl.formatMessage(
                     {
@@ -370,6 +422,23 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
 
         {showForm && (
           <Box p={3} borderWidth="1px" borderColor="green.200" borderRadius="md">
+            {/* Who signs. The operation's own affidavit covers its own period and is never counted
+                as a previous party's; the signed copy is the certifier's form, uploaded. */}
+            <FormControl mb={3}>
+              <FormLabel fontSize="sm">
+                {intl.formatMessage({ id: 'parcel.affidavit.role' })}
+              </FormLabel>
+              <StandardSelect
+                value={form.signer_role}
+                onChange={(e) => set('signer_role', e.target.value)}>
+                <option value="prior_manager">
+                  {intl.formatMessage({ id: 'parcel.affidavit.role.priorManager' })}
+                </option>
+                <option value="this_operation">
+                  {intl.formatMessage({ id: 'parcel.affidavit.role.thisOperation' })}
+                </option>
+              </StandardSelect>
+            </FormControl>
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
               <FormControl isRequired>
                 <FormLabel fontSize="sm">
@@ -864,6 +933,33 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
 
             <FormControl mt={3}>
               <FormLabel fontSize="sm">
+                {intl.formatMessage({ id: 'parcel.affidavit.signedCopy' })}
+              </FormLabel>
+              <Text fontSize="xs" color="gray.600" mb={2}>
+                {intl.formatMessage({ id: 'parcel.affidavit.signedCopyHelp' })}
+              </Text>
+              <input
+                id={fileInputId}
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,.webp,.tif,.tiff"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                  setSignedFile(e.target.files?.[0] || null);
+                  e.target.value = '';
+                }}
+              />
+              <StandardButton
+                size="sm"
+                variant="outline"
+                isDisabled={creating || updating || uploading}
+                onClick={() => document.getElementById(fileInputId)?.click()}>
+                {signedFile
+                  ? signedFile.name
+                  : intl.formatMessage({ id: 'parcel.affidavit.signedCopyChoose' })}
+              </StandardButton>
+            </FormControl>
+            <FormControl mt={3}>
+              <FormLabel fontSize="sm">
                 {intl.formatMessage({
                   id: 'parcel.affidavit.attestation',
                   defaultMessage: 'Attestation (leave blank to use the standard wording)'
@@ -895,7 +991,10 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
               <StandardButton size="sm" variant="ghost" onClick={() => setShowForm(false)}>
                 {intl.formatMessage({ id: 'parcel.affidavit.cancel', defaultMessage: 'Cancel' })}
               </StandardButton>
-              <StandardButton size="sm" onClick={handleSave} isLoading={creating || updating}>
+              <StandardButton
+                size="sm"
+                onClick={handleSave}
+                isLoading={creating || updating || uploading}>
                 {editingId != null
                   ? intl.formatMessage({
                       id: 'parcel.affidavit.update',

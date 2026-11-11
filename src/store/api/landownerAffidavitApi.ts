@@ -64,6 +64,10 @@ export interface LandownerAffidavit {
   management_period_start?: string | null;
   management_period_end?: string | null;
   parcel_legal_description?: string | null;
+  /** Who signs: a previous manager or owner, or this operation for its own period (OTCO C2 2.5, CCOF §G). */
+  signer_role?: 'prior_manager' | 'this_operation';
+  /** URL of the signed copy when one is on file. */
+  signed_document?: string | null;
   /** CCOF Affidavit B: owned / managed / other ("" not stated), with the description of "other". */
   signer_basis?: '' | 'owned' | 'managed' | 'other';
   signer_basis_other?: string;
@@ -132,6 +136,24 @@ const landownerAffidavitApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: [{ type: 'LandownerAffidavit', id: 'LIST' }]
     }),
+    // The signed copy (the certifier's own form, scanned): multipart, after the row is saved. The
+    // backend accepts a PDF or an image up to 50 MB and keeps it in private storage.
+    uploadLandownerAffidavitDocument: build.mutation<
+      LandownerAffidavit,
+      { companyId: string; farmId: string; affidavitId: number; file: File }
+    >({
+      query: ({ companyId, farmId, affidavitId, file }) => {
+        const body = new FormData();
+        body.append('signed_document', file);
+        return {
+          url: LANDOWNER_AFFIDAVIT_URL(companyId, farmId, affidavitId),
+          method: 'PATCH',
+          body,
+          credentials: 'include'
+        };
+      },
+      invalidatesTags: [{ type: 'LandownerAffidavit', id: 'LIST' }]
+    }),
     deleteLandownerAffidavit: build.mutation<void, DeleteArgs>({
       query: ({ companyId, farmId, affidavitId }) => ({
         url: LANDOWNER_AFFIDAVIT_URL(companyId, farmId, affidavitId),
@@ -147,7 +169,8 @@ export const {
   useGetLandownerAffidavitsQuery,
   useCreateLandownerAffidavitMutation,
   useUpdateLandownerAffidavitMutation,
-  useDeleteLandownerAffidavitMutation
+  useDeleteLandownerAffidavitMutation,
+  useUploadLandownerAffidavitDocumentMutation
 } = landownerAffidavitApi;
 
 export default landownerAffidavitApi;
