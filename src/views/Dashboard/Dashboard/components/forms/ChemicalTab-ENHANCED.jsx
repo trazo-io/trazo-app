@@ -1965,7 +1965,10 @@ const ChemicalTab = forwardRef(
                       />
                     </StandardField>
                   )}
-                  {chemicalType && (
+                  {/* Not where the basis is required: there the save is refused with its own
+                      error, and "you can save without one" would contradict it (review of
+                      trazo-app #359). */}
+                  {chemicalType && !requiresOrganicBasis && (
                     <OrganicBasisBlankNotice
                       control={methods.control}
                       messageId="events.chemical.organicBasis.blankWarning"

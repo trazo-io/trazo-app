@@ -64,3 +64,14 @@ describe('OrganicBasisBlankNotice', () => {
     expect(screen.queryByText(WARNING)).toBeNull();
   });
 });
+
+describe('ChemicalTab wiring', () => {
+  it('never shows the "you can save without one" warning where the basis is required', async () => {
+    // Review of trazo-app #359: on a farm whose farming method says organic, the save is refused
+    // with its own error, so the warning must not show beside it.
+    const { readFileSync } = await import('node:fs');
+    const { resolve } = await import('node:path');
+    const source = readFileSync(resolve(__dirname, '../ChemicalTab-ENHANCED.jsx'), 'utf-8');
+    expect(source).toMatch(/chemicalType && !requiresOrganicBasis && \(\s*<OrganicBasisBlankNotice/);
+  });
+});
