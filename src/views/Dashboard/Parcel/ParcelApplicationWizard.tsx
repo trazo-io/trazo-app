@@ -1127,6 +1127,27 @@ const ParcelApplicationWizard = () => {
           </Box>
         );
       }
+      case 'location_coordinates': {
+        // Read-only: the centre §A prints, from the boundary drawn on the map (section E).
+        const centre = data?.boundary_centre;
+        return (
+          <Text fontSize="sm" color="gray.700" data-embed="location_coordinates">
+            {centre
+              ? intl.formatMessage(
+                  { id: 'parcelApp.coordinates.centre' },
+                  { lat: centre[0].toFixed(6), lng: centre[1].toFixed(6) }
+                )
+              : intl.formatMessage({ id: 'parcelApp.coordinates.none' })}
+          </Text>
+        );
+      }
+      case 'operation_export_answer':
+        // The answer lives on the plan (G8.0) and prints on every parcel page; nothing to enter here.
+        return (
+          <Text fontSize="sm" color="gray.600" data-embed="operation_export_answer">
+            {intl.formatMessage({ id: 'parcelApp.export.asked' })}
+          </Text>
+        );
       case 'parcel_change_notifications': {
         // Read-only: what §D prints. Filed on the OSP screen, not here.
         const rows = data?.change_notifications ?? [];
