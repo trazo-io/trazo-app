@@ -494,7 +494,7 @@ export const buildChemicalSchema = (intl, { multiTarget = false } = {}) =>
         path: ['area_numeric'],
         message: intl.formatMessage({
           id: 'events.chemical.validation.areaRequired',
-          defaultMessage: 'Area treated is required for carbon calculation'
+          defaultMessage: 'Area treated is required'
         })
       });
     } else if (parseFloat(effectiveArea) <= 0 || isNaN(parseFloat(effectiveArea))) {
@@ -764,6 +764,33 @@ const ChemicalTab = forwardRef(
     // Gates the CA Pesticide Use Report block below. null (unknown state) hides it,
     // which is correct: the PUR only applies to California operations.
     const farmState = useFarmState(farmId);
+    // Every California-only heading, badge, citation (DPR boxes, 3 CCR, PUR) and field on this
+    // form keys off this one flag (overall review 2026-11, OV-FJ-C13: a Washington farm's spray
+    // form read "Legal spray record / CA pesticide report" and cited DPR boxes on its start and
+    // stop times). While the state is unknown (loading, or none on the farm) the neutral
+    // wording shows: a California obligation is never assumed.
+    const isCaFarm = farmState === 'CA';
+    // Hiding is a display decision and never hides data already on the record. A record that
+    // holds California PUR identifiers or a county permit keeps showing them on any farm, so
+    // the grower can still see, check or clear what was saved. Read from the record as
+    // loaded, not from live form state.
+    const recordHolds = (...names) =>
+      names.some((name) => String(initialValues?.[name] ?? '').trim() !== '');
+    const recordHoldsCaPurIdentity = recordHolds(
+      'operator_id',
+      'site_id',
+      'application_county',
+      'mtrs_section',
+      'mtrs_township',
+      'mtrs_range',
+      'mtrs_base_meridian',
+      'ffm_code'
+    );
+    const recordHoldsCaPermit = recordHolds(
+      'ca_dpr_permit_number',
+      'ca_dpr_permit_county',
+      'ca_dpr_permit_expires'
+    );
 
     // PUR boxes 3 and 8 are issued to the OPERATOR and the SITE, not to a spray (3 CCR 6622),
     // so the farm and the parcel carry them and the export falls back to those. The inputs
@@ -1751,7 +1778,9 @@ const ChemicalTab = forwardRef(
                     </StandardField>
                   )}
 
-                  {/* Chemical Subtype - Conditional based on chemical type for accurate emission factors */}
+                  {/* Chemical Subtype - conditional on the chemical type. The carbon estimate
+                      still reads it in the background; the help speaks about the label, not
+                      about emission factors (OV-FJ-C13). */}
                   {chemicalType && (
                     <StandardField
                       label={intl.formatMessage({
@@ -1761,8 +1790,7 @@ const ChemicalTab = forwardRef(
                       error={errors.chemical_subtype?.message}
                       helpText={intl.formatMessage({
                         id: 'events.chemical.form.chemicalSubtypeHelp',
-                        defaultMessage:
-                          'Select the specific subtype for accurate carbon emission calculations. Different subtypes have different manufacturing emission factors.'
+                        defaultMessage: 'Optional. Pick the kind of product the label describes.'
                       })}>
                       <Controller
                         name="chemical_subtype"
@@ -2080,8 +2108,7 @@ const ChemicalTab = forwardRef(
                               </strong>{' '}
                               {intl.formatMessage({
                                 id: 'events.chemical.summaryMode.timeSavingsHelp',
-                                defaultMessage:
-                                  'Log multiple applications with one entry while maintaining accurate carbon calculations'
+                                defaultMessage: 'Log multiple applications with one entry'
                               })}
                             </Text>
                           </Box>
@@ -2166,7 +2193,7 @@ const ChemicalTab = forwardRef(
                         <Icon as={FaSeedling} mr={2} />
                         {intl.formatMessage({
                           id: 'events.chemical.aggregate.npkHeading',
-                          defaultMessage: 'Total NPK Applied (for Carbon Calculation)'
+                          defaultMessage: 'Total NPK Applied'
                         })}
                       </Text>
 
@@ -2353,7 +2380,7 @@ const ChemicalTab = forwardRef(
                                 })}>
                                 {FUEL_TYPES.map((type) => (
                                   <option key={type.value} value={type.value}>
-                                    {intl.formatMessage({ id: type.labelKey })} ({type.factor})
+                                    {intl.formatMessage({ id: type.labelKey })}
                                   </option>
                                 ))}
                               </StandardSelect>
@@ -2408,39 +2435,9 @@ const ChemicalTab = forwardRef(
                           />
                         </StandardField>
                       </SimpleGrid>
-
-                      {/* Carbon Calculation Preview */}
-                      <Box
-                        mt={4}
-                        p={3}
-                        bg="green.50"
-                        borderRadius="md"
-                        border="1px solid"
-                        borderColor="green.200">
-                        <HStack spacing={2} mb={1}>
-                          <Icon as={FaLeaf} color="green.500" fontSize="sm" />
-                          <Text fontSize="sm" fontWeight="semibold" color="green.700">
-                            {intl.formatMessage({
-                              id: 'events.chemical.carbon.methodHeading',
-                              defaultMessage: 'Carbon Calculation Method'
-                            })}
-                          </Text>
-                        </HStack>
-                        <Text fontSize="xs" color="green.700">
-                          {intl.formatMessage({
-                            id: 'events.chemical.carbon.fertilizerFormula',
-                            defaultMessage:
-                              'Aggregate fertilizer carbon = (N × 10.5) + (P × 1.19) + (K × 0.65) + fuel emissions'
-                          })}
-                          <br />
-                          <strong>
-                            {intl.formatMessage({
-                              id: 'events.chemical.carbon.fertilizerFactors',
-                              defaultMessage: 'IPCC 2006 & EPA 40 CFR Part 98 emission factors'
-                            })}
-                          </strong>
-                        </Text>
-                      </Box>
+                      {/* No carbon-method box here (OV-FJ-C13). This form is the grower's
+                          record; the estimate still runs in the background, and its formula and
+                          factors do not belong between the inputs. */}
                     </Box>
                   )}
 
@@ -2526,7 +2523,7 @@ const ChemicalTab = forwardRef(
                         <Icon as={FaFlask} mr={2} />
                         {intl.formatMessage({
                           id: 'events.chemical.aggregate.activeIngredientHeading',
-                          defaultMessage: 'Active Ingredient Total (for Carbon Calculation)'
+                          defaultMessage: 'Active Ingredient Total'
                         })}
                       </Text>
 
@@ -2536,9 +2533,8 @@ const ChemicalTab = forwardRef(
                           defaultMessage: 'Total Active Ingredient (kg)'
                         })}
                         helpText={intl.formatMessage({
-                          id: 'events.chemical.form.totalActiveIngredientHelpLong',
-                          defaultMessage:
-                            'Combined active ingredient across all applications - used for manufacturing emission calculation'
+                          id: 'events.chemical.form.totalActiveIngredientHelp',
+                          defaultMessage: 'Combined active ingredient across all applications'
                         })}
                         required>
                         <Controller
@@ -2661,7 +2657,7 @@ const ChemicalTab = forwardRef(
                                 })}>
                                 {FUEL_TYPES.map((type) => (
                                   <option key={type.value} value={type.value}>
-                                    {intl.formatMessage({ id: type.labelKey })} ({type.factor})
+                                    {intl.formatMessage({ id: type.labelKey })}
                                   </option>
                                 ))}
                               </StandardSelect>
@@ -2716,51 +2712,7 @@ const ChemicalTab = forwardRef(
                           />
                         </StandardField>
                       </SimpleGrid>
-
-                      {/* Carbon Calculation Preview for Fungicide */}
-                      <Box
-                        mt={4}
-                        p={3}
-                        bg="green.50"
-                        borderRadius="md"
-                        border="1px solid"
-                        borderColor="green.200">
-                        <HStack spacing={2} mb={1}>
-                          <Icon as={FaLeaf} color="green.500" fontSize="sm" />
-                          <Text fontSize="sm" fontWeight="semibold" color="green.700">
-                            {intl.formatMessage({
-                              id: 'events.chemical.carbon.methodHeading',
-                              defaultMessage: 'Carbon Calculation Method'
-                            })}
-                          </Text>
-                        </HStack>
-                        <Text fontSize="xs" color="green.700">
-                          {intl.formatMessage({
-                            id: 'events.chemical.carbon.fungicideFormula',
-                            defaultMessage:
-                              'Aggregate fungicide carbon = (Active Ingredient kg × emission factor) + fuel emissions'
-                          })}
-                          <br />
-                          <strong>
-                            {intl.formatMessage({
-                              id: 'events.chemical.carbon.emissionFactorsLabel',
-                              defaultMessage: 'Emission factors:'
-                            })}
-                          </strong>{' '}
-                          {intl.formatMessage({
-                            id: 'events.chemical.carbon.fungicideFactors',
-                            defaultMessage:
-                              'Copper: 5.5, Sulfur: 1.8, Biological: 2.0, Synthetic: 4.5 kg CO₂e/kg'
-                          })}
-                          <br />
-                          <strong>
-                            {intl.formatMessage({
-                              id: 'events.chemical.carbon.sourceLalAudsley',
-                              defaultMessage: 'Source: Lal 2004, Audsley et al.'
-                            })}
-                          </strong>
-                        </Text>
-                      </Box>
+                      {/* No carbon-method box (OV-FJ-C13): see the fertilizer summary above. */}
                     </Box>
                   )}
 
@@ -2842,7 +2794,7 @@ const ChemicalTab = forwardRef(
                         <Icon as={FaFlask} mr={2} />
                         {intl.formatMessage({
                           id: 'events.chemical.aggregate.pesticideTotalsHeading',
-                          defaultMessage: 'Pesticide Totals for Carbon Calculation'
+                          defaultMessage: 'Pesticide Totals'
                         })}
                       </Text>
 
@@ -2951,7 +2903,7 @@ const ChemicalTab = forwardRef(
                                 })}>
                                 {FUEL_TYPES.map((type) => (
                                   <option key={type.value} value={type.value}>
-                                    {intl.formatMessage({ id: type.labelKey })} ({type.factor})
+                                    {intl.formatMessage({ id: type.labelKey })}
                                   </option>
                                 ))}
                               </StandardSelect>
@@ -3006,47 +2958,7 @@ const ChemicalTab = forwardRef(
                           />
                         </StandardField>
                       </SimpleGrid>
-
-                      {/* Carbon Calculation Preview */}
-                      <Box
-                        mt={4}
-                        p={3}
-                        bg="green.50"
-                        borderRadius="md"
-                        border="1px solid"
-                        borderColor="green.200">
-                        <HStack spacing={2} mb={1}>
-                          <Icon as={FaLeaf} color="green.500" fontSize="sm" />
-                          <Text fontSize="sm" fontWeight="semibold" color="green.700">
-                            {intl.formatMessage({
-                              id: 'events.chemical.carbon.methodHeading',
-                              defaultMessage: 'Carbon Calculation Method'
-                            })}
-                          </Text>
-                        </HStack>
-                        <Text fontSize="xs" color="green.700">
-                          {intl.formatMessage({
-                            id: 'events.chemical.carbon.pesticideFormula',
-                            defaultMessage:
-                              'Aggregate pesticide carbon = (Active Ingredient kg × 8.8) + fuel emissions'
-                          })}
-                          <br />
-                          <strong>
-                            {intl.formatMessage({
-                              id: 'events.chemical.carbon.pesticideFactors',
-                              defaultMessage:
-                                'EPA 40 CFR Part 98: Diesel 10.21 kg CO₂e/gal | Pesticide: 8.8 kg CO₂e/kg AI'
-                            })}
-                          </strong>
-                          <br />
-                          <strong>
-                            {intl.formatMessage({
-                              id: 'events.chemical.carbon.sourceLalAudsley',
-                              defaultMessage: 'Source: Lal 2004, Audsley et al.'
-                            })}
-                          </strong>
-                        </Text>
-                      </Box>
+                      {/* No carbon-method box (OV-FJ-C13): see the fertilizer summary above. */}
                     </Box>
                   )}
 
@@ -3260,7 +3172,7 @@ const ChemicalTab = forwardRef(
                             error={errors.area_numeric?.message}
                             helpText={intl.formatMessage({
                               id: 'app.areaTreatedHelp',
-                              defaultMessage: 'Area coverage for accurate carbon calculation'
+                              defaultMessage: 'Total area treated with product'
                             })}
                             flex={2}>
                             <Controller
@@ -3404,13 +3316,9 @@ const ChemicalTab = forwardRef(
                                   defaultMessage: 'Fertilizer injected through irrigation system'
                                 })}
                               </Text>
-                              <Text fontSize="xs" color="teal.500" mt={1}>
-                                {intl.formatMessage({
-                                  id: 'app.fertigationCarbonNote',
-                                  defaultMessage:
-                                    'When on, the fuel for the application is left out of the carbon estimate, so it is not counted twice with your irrigation records.'
-                                })}
-                              </Text>
+                              {/* The carbon effect of this switch (fuel left out of the estimate)
+                                  is said once, in the carbon preview of the fuel section
+                                  (`app.fertigationCarbonNote`), not on the control (OV-FJ-C13). */}
                             </VStack>
                             <Controller
                               name="is_fertigation"
@@ -4395,21 +4303,40 @@ const ChemicalTab = forwardRef(
                 </SectionBox>
               )}
 
-              {/* F20 (2026-06): Legal Spray Record — lets one Trazo event double as a
-                    GLOBALG.A.P. IFA v6 FV-GFS 32.02.01 PPP record AND a CA Pesticide Use
-                    Report (DPR-PML-017C). Manufacturer + start/end + planted-area are
-                    universal; the CA PUR block is clearly California-only. */}
+              {/* F20 (2026-06): one Trazo event can double as a GLOBALG.A.P. IFA v6
+                    FV-GFS 32.02.01 PPP record AND a CA Pesticide Use Report (DPR-PML-017C).
+                    Manufacturer + start/end + planted-area are universal fields; only their
+                    WORDING is Californian. So a California farm reads "Legal spray record",
+                    the PUR badge and the DPR box numbers, and every other farm (or one whose
+                    state is unknown) reads the same fields under neutral words that claim no
+                    state's law (OV-FJ-C13). The badge outside California is "Certifier record":
+                    manufacturer, the pest control business and the tank-mix partners print in
+                    the certifier packet. */}
               {!isSummaryMode && (
                 <SectionBox>
                   <SectionHeader
                     icon={FaClock}
-                    title={intl.formatMessage({ id: 'events.section.chemical.sprayRecord' })}
-                    badge={intl.formatMessage({ id: 'events.section.badge.caPesticideReport' })}
-                    description={intl.formatMessage({
-                      id: 'events.section.desc.chemicalPur',
-                      defaultMessage:
-                        'Optional fields that make this entry a complete legal pesticide-use record — GLOBALG.A.P. FV-GFS 32.02.01 and the CA monthly Pesticide Use Report (DPR-PML-017C).'
+                    title={intl.formatMessage({
+                      id: isCaFarm
+                        ? 'events.section.chemical.sprayRecord'
+                        : 'events.section.chemical.applicationDetails'
                     })}
+                    badge={
+                      isCaFarm
+                        ? intl.formatMessage({ id: 'events.section.badge.caPesticideReport' })
+                        : intl.formatMessage({ id: 'events.section.badge.certifierRecord' })
+                    }
+                    description={
+                      isCaFarm
+                        ? intl.formatMessage({
+                            id: 'events.section.desc.chemicalPur',
+                            defaultMessage:
+                              'Optional fields that make this entry a complete legal pesticide-use record — GLOBALG.A.P. FV-GFS 32.02.01 and the CA monthly Pesticide Use Report (DPR-PML-017C).'
+                          })
+                        : intl.formatMessage({
+                            id: 'events.section.desc.chemicalApplicationDetails'
+                          })
+                    }
                   />
                   <VStack spacing={4} align="stretch">
                     <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
@@ -4418,11 +4345,17 @@ const ChemicalTab = forwardRef(
                           id: 'events.chemical.form.manufacturer',
                           defaultMessage: 'Manufacturer / Registrant'
                         })}
-                        helpText={intl.formatMessage({
-                          id: 'events.chemical.form.manufacturerHelp',
-                          defaultMessage:
-                            'GLOBALG.A.P. FV-GFS 32.02.01 + DPR box 28 (commercial name holds the brand)'
-                        })}>
+                        helpText={
+                          isCaFarm
+                            ? intl.formatMessage({
+                                id: 'events.chemical.form.manufacturerHelp',
+                                defaultMessage:
+                                  'GLOBALG.A.P. FV-GFS 32.02.01 + DPR box 28 (commercial name holds the brand)'
+                              })
+                            : intl.formatMessage({
+                                id: 'events.chemical.form.manufacturerHelpNeutral'
+                              })
+                        }>
                         <Controller
                           name="manufacturer"
                           control={methods.control}
@@ -4446,11 +4379,17 @@ const ChemicalTab = forwardRef(
                             id: 'events.chemical.fields.plantedArea',
                             defaultMessage: 'Total Planted Area'
                           })}
-                          helpText={intl.formatMessage({
-                            id: 'events.chemical.form.plantedAreaHelp',
-                            defaultMessage:
-                              'DPR box 9 — total planted acres/units at the site (distinct from area treated)'
-                          })}>
+                          helpText={
+                            isCaFarm
+                              ? intl.formatMessage({
+                                  id: 'events.chemical.form.plantedAreaHelp',
+                                  defaultMessage:
+                                    'DPR box 9 — total planted acres/units at the site (distinct from area treated)'
+                                })
+                              : intl.formatMessage({
+                                  id: 'events.chemical.form.plantedAreaHelpNeutral'
+                                })
+                          }>
                           <HStack spacing={2}>
                             <Controller
                               name="planted_area"
@@ -4493,10 +4432,16 @@ const ChemicalTab = forwardRef(
                           id: 'events.chemical.fields.applicationStart',
                           defaultMessage: 'Application Start'
                         })}
-                        helpText={intl.formatMessage({
-                          id: 'events.chemical.form.applicationStartHelp',
-                          defaultMessage: '3 CCR 6624(c)(2) / DPR box 17 — start date & time'
-                        })}>
+                        helpText={
+                          isCaFarm
+                            ? intl.formatMessage({
+                                id: 'events.chemical.form.applicationStartHelp',
+                                defaultMessage: '3 CCR 6624(c)(2) / DPR box 17 — start date & time'
+                              })
+                            : intl.formatMessage({
+                                id: 'events.chemical.form.applicationStartHelpNeutral'
+                              })
+                        }>
                         <Controller
                           name="application_start"
                           control={methods.control}
@@ -4508,10 +4453,17 @@ const ChemicalTab = forwardRef(
                           id: 'events.chemical.fields.applicationEnd',
                           defaultMessage: 'Application End'
                         })}
-                        helpText={intl.formatMessage({
-                          id: 'events.chemical.form.applicationEndHelp',
-                          defaultMessage: '3 CCR 6624(c)(2) / DPR box 18 — completion date & time'
-                        })}>
+                        helpText={
+                          isCaFarm
+                            ? intl.formatMessage({
+                                id: 'events.chemical.form.applicationEndHelp',
+                                defaultMessage:
+                                  '3 CCR 6624(c)(2) / DPR box 18 — completion date & time'
+                              })
+                            : intl.formatMessage({
+                                id: 'events.chemical.form.applicationEndHelpNeutral'
+                              })
+                        }>
                         <Controller
                           name="application_end"
                           control={methods.control}
@@ -4541,11 +4493,15 @@ const ChemicalTab = forwardRef(
                             })}
                           </Text>
                           <Text fontSize="xs" color="gray.600" mt={0.5}>
-                            {intl.formatMessage({
-                              id: 'events.chemical.form.appliedByPcbHelp',
-                              defaultMessage:
-                                'Turn on when a licensed pest control business made this application for hire. The business files its own CA Pesticide Use Report (3 CCR 6626(b)), so this record stays in your spray log but is left off your monthly PUR.'
-                            })}
+                            {isCaFarm
+                              ? intl.formatMessage({
+                                  id: 'events.chemical.form.appliedByPcbHelp',
+                                  defaultMessage:
+                                    'Turn on when a licensed pest control business made this application for hire. The business files its own CA Pesticide Use Report (3 CCR 6626(b)), so this record stays in your spray log but is left off your monthly PUR.'
+                                })
+                              : intl.formatMessage({
+                                  id: 'events.chemical.form.appliedByPcbHelpNeutral'
+                                })}
                           </Text>
                         </Box>
                         <Controller
@@ -4594,8 +4550,10 @@ const ChemicalTab = forwardRef(
                         still occupied a full grid on every non-CA grower's spray form, on
                         the most-repeated form in the product. Hidden outside CA rather than
                         labelled optional. Fields stay in the schema and payload allow-list
-                        so previously-saved CA data still round-trips. */}
-                    {farmState === 'CA' && (
+                        so previously-saved CA data still round-trips, and a record that
+                        already holds any of them shows the block on any farm, so stored
+                        values are never out of the grower's sight. */}
+                    {(isCaFarm || recordHoldsCaPurIdentity) && (
                       <Box
                         p={3}
                         bg="gray.50"
@@ -4821,7 +4779,8 @@ const ChemicalTab = forwardRef(
                       </Box>
                     )}
 
-                    {/* Tank-mix adjuvants — each CA-registered partner is a separate PUR line */}
+                    {/* Tank-mix adjuvants. In California each CA-registered partner is a
+                        separate PUR line, which only a California farm is told. */}
                     {/* Several blocks: partner volumes are per product and per block, so not asked here. */}
                     {!multiTarget && (
                       <Box
@@ -4874,11 +4833,13 @@ const ChemicalTab = forwardRef(
                           </StandardButton>
                         </Stack>
                         <Text fontSize="xs" color="gray.600" mb={3}>
-                          {intl.formatMessage({
-                            id: 'events.chemical.adjuvants.help',
-                            defaultMessage:
-                              'CA-registered adjuvants applied in the tank mix are reportable — each is added as its own line on the Pesticide Use Report (DPR boxes 23/24). Leave empty if none.'
-                          })}
+                          {isCaFarm
+                            ? intl.formatMessage({
+                                id: 'events.chemical.adjuvants.help',
+                                defaultMessage:
+                                  'CA-registered adjuvants applied in the tank mix are reportable — each is added as its own line on the Pesticide Use Report (DPR boxes 23/24). Leave empty if none.'
+                              })
+                            : intl.formatMessage({ id: 'events.chemical.adjuvants.helpNeutral' })}
                         </Text>
 
                         {adjuvantFields.length === 0 ? (
@@ -4963,10 +4924,14 @@ const ChemicalTab = forwardRef(
                                       id: 'events.chemical.adjuvants.epaReg',
                                       defaultMessage: 'EPA / State Reg. No.'
                                     })}
-                                    helpText={intl.formatMessage({
-                                      id: 'events.chemical.form.adjuvantAmountHelp',
-                                      defaultMessage: 'DPR box 23'
-                                    })}>
+                                    helpText={
+                                      isCaFarm
+                                        ? intl.formatMessage({
+                                            id: 'events.chemical.form.adjuvantAmountHelp',
+                                            defaultMessage: 'DPR box 23'
+                                          })
+                                        : undefined
+                                    }>
                                     <Controller
                                       name={`tank_mix_partners.${index}.epa_registration_number`}
                                       control={methods.control}
@@ -4980,10 +4945,14 @@ const ChemicalTab = forwardRef(
                                       id: 'events.chemical.adjuvants.amount',
                                       defaultMessage: 'Total product used'
                                     })}
-                                    helpText={intl.formatMessage({
-                                      id: 'events.chemical.form.adjuvantEpaRegHelp',
-                                      defaultMessage: 'DPR box 24'
-                                    })}>
+                                    helpText={
+                                      isCaFarm
+                                        ? intl.formatMessage({
+                                            id: 'events.chemical.form.adjuvantEpaRegHelp',
+                                            defaultMessage: 'DPR box 24'
+                                          })
+                                        : undefined
+                                    }>
                                     <HStack spacing={2}>
                                       <Controller
                                         name={`tank_mix_partners.${index}.volume`}
@@ -5066,10 +5035,11 @@ const ChemicalTab = forwardRef(
 
                 The fields stay in the schema and the payload allow-list, so an existing CA record
                 still round-trips, and the drift detector keeps gating the actual finding
-                server-side.
+                server-side. A record that already holds a permit value shows the section on any
+                farm and whatever the product name now says: stored data stays in sight.
               */}
               {!isSummaryMode &&
-                farmState === 'CA' &&
+                (isCaFarm || recordHoldsCaPermit) &&
                 (() => {
                   const name = (methods.watch('commercial_name') || '').toLowerCase();
                   const CA_RESTRICTED_KEYWORDS = [
@@ -5085,7 +5055,7 @@ const ChemicalTab = forwardRef(
                     'rotenone'
                   ];
                   const isRestricted = CA_RESTRICTED_KEYWORDS.some((kw) => name.includes(kw));
-                  if (!isRestricted) return null;
+                  if (!isRestricted && !recordHoldsCaPermit) return null;
                   return (
                     <SectionBox>
                       <SectionHeader
@@ -5216,9 +5186,13 @@ const ChemicalTab = forwardRef(
                                 id: 'events.chemical.form.fuelTypePlaceholder',
                                 defaultMessage: 'Select fuel type...'
                               })}>
+                              {/* The fuel's name only. Its kg CO₂e factor stays in
+                                  CHEMICAL_FUEL_TYPES for the carbon preview, which states its
+                                  sources; a grower picking diesel is recording what the sprayer
+                                  burned, not choosing an emission factor (OV-FJ-C13). */}
                               {FUEL_TYPES.map((type) => (
                                 <option key={type.value} value={type.value}>
-                                  {intl.formatMessage({ id: type.labelKey })} ({type.factor})
+                                  {intl.formatMessage({ id: type.labelKey })}
                                 </option>
                               ))}
                             </StandardSelect>
@@ -5231,15 +5205,15 @@ const ChemicalTab = forwardRef(
                           multiTarget
                             ? intl.formatMessage({ id: 'events.multiParcel.fuelUnitLabel' })
                             : watch('application_fuel_type') === 'electric'
-                            ? 'Energy Amount (kWh)'
-                            : 'Fuel Consumed'
+                            ? intl.formatMessage({ id: 'production.field.energyAmount' })
+                            : intl.formatMessage({ id: 'app.fuelConsumed' })
                         }
                         helpText={
                           multiTarget
                             ? intl.formatMessage({ id: 'events.multiParcel.fuelUnitHelp' })
                             : watch('application_fuel_type') === 'electric'
-                            ? 'Energy consumption for carbon emission calculation'
-                            : 'Fuel consumed during application'
+                            ? intl.formatMessage({ id: 'events.chemical.form.energyUsedHelp' })
+                            : intl.formatMessage({ id: 'app.applicationFuelConsumedHelp' })
                         }>
                         <HStack spacing={2}>
                           {!multiTarget && (
@@ -5492,7 +5466,17 @@ const ChemicalTab = forwardRef(
                         name="applicator_certification"
                         control={methods.control}
                         render={({ field }) => (
-                          <StandardInput {...field} placeholder="e.g., CA-12345-AG" />
+                          // A California-shaped example only on a California farm (OV-FJ-C13).
+                          <StandardInput
+                            {...field}
+                            placeholder={
+                              isCaFarm
+                                ? 'e.g., CA-12345-AG'
+                                : intl.formatMessage({
+                                    id: 'events.chemical.form.applicatorCertificationPlaceholder'
+                                  })
+                            }
+                          />
                         )}
                       />
                     </StandardField>

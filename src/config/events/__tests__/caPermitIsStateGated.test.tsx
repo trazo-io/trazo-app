@@ -53,7 +53,7 @@ const RESTRICTED_PRODUCT = {
   commercial_name: 'Kocide 3000 copper hydroxide'
 };
 
-const renderChemicalTab = (farmState: string | null) =>
+const renderChemicalTab = (farmState: string | null, record: Record<string, unknown> = {}) =>
   render(
     <Provider store={storeForState(farmState)}>
       <MemoryRouter initialEntries={['/admin/dashboard/farm/1/parcel/2/event/add']}>
@@ -64,7 +64,7 @@ const renderChemicalTab = (farmState: string | null) =>
               <ChakraProvider>
                 <IntlProvider locale="en" messages={messages} onError={() => undefined}>
                   <ChemicalTab
-                    initialValues={RESTRICTED_PRODUCT}
+                    initialValues={{ ...RESTRICTED_PRODUCT, ...record }}
                     hideActions
                     onSubmitHandler={() => undefined}
                   />
@@ -101,5 +101,17 @@ describe('the CA DPR restricted-materials permit section', () => {
     const { container } = renderChemicalTab(null);
     await waitFor(() => expect(screen.queryAllByText(/Chemical/i).length).toBeGreaterThan(0));
     expect(permitFieldPresent(container)).toBe(false);
+  });
+
+  it.each([
+    ['an Oregon farm', 'OR'],
+    ['a farm whose state is unknown', null]
+  ])('keeps showing a permit number already stored on a record of %s', async (_label, state) => {
+    // OV-FJ-C13. The gate decides what a farm is ASKED, never whether a stored value stays in
+    // sight: a permit number on the record is shown so the grower can check or clear it.
+    const { container } = renderChemicalTab(state, { ca_dpr_permit_number: 'SD-2026-00147' });
+    await waitFor(() => expect(permitFieldPresent(container)).toBe(true));
+    const input = container.querySelector('[name="ca_dpr_permit_number"]') as HTMLInputElement;
+    expect(input.value).toBe('SD-2026-00147');
   });
 });
