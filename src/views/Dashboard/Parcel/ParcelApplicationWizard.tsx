@@ -74,6 +74,30 @@ import { OSP_MODULE_PDF_URL } from 'config';
  * any other section is a file the certifier never sees.
  */
 const PARCEL_MAP_SECTION = 'parcel_application_map';
+// CCOF ORGB49 §G: a container parcel's signed statement (planting date, materials, contamination removal).
+// Mirrors CONTAINER_STATEMENT_SECTION in trazo-back osp_module_pdf.py; the packet ships it per parcel.
+const CONTAINER_STATEMENT_SECTION = 'parcel_application_container_statement';
+
+/** The words one parcel upload uses; the map's are the defaults. */
+const MAP_UPLOAD_MESSAGES = {
+  title: 'parcelApp.map.uploadTitle',
+  hint: 'parcelApp.map.uploadHint',
+  attached: 'parcelApp.map.attached',
+  action: 'parcelApp.map.uploadAction',
+  done: 'parcelApp.map.uploadDone',
+  failed: 'parcelApp.map.uploadFailed',
+  loadFailed: 'parcelApp.map.uploadLoadFailed'
+};
+// No title: the question's own label already names it, and a second heading printed it twice.
+const CONTAINER_STATEMENT_MESSAGES = {
+  title: '',
+  hint: 'parcelApp.containerStatement.hint',
+  attached: 'parcelApp.containerStatement.attached',
+  action: 'parcelApp.containerStatement.action',
+  done: 'parcelApp.containerStatement.done',
+  failed: 'parcelApp.containerStatement.failed',
+  loadFailed: 'parcelApp.containerStatement.loadFailed'
+};
 import { env } from 'config/environment';
 import type { BufferZoneRow } from 'store/api/parcelApplicationApi';
 import PlannedCropRows from './PlannedCropRows';
@@ -590,12 +614,17 @@ const ParcelMapUpload = ({
   companyId,
   farmId,
   parcelId,
-  canWrite
+  canWrite,
+  section = PARCEL_MAP_SECTION,
+  messages = MAP_UPLOAD_MESSAGES
 }: {
   companyId: string;
   farmId: string;
   parcelId: string;
   canWrite: boolean;
+  /** The DMS section the file is linked to, per parcel. The map's by default. */
+  section?: string;
+  messages?: typeof MAP_UPLOAD_MESSAGES;
 }) => {
   const intl = useIntl();
   const toast = useToast();
@@ -603,7 +632,7 @@ const ParcelMapUpload = ({
   const scoped = Boolean(companyId && farmId && parcelId);
 
   const { data: attached = [], isError } = useGetFarmDocumentsQuery(
-    { companyId, farmId, linkedSection: PARCEL_MAP_SECTION },
+    { companyId, farmId, linkedSection: section },
     { skip: !scoped }
   );
   const [uploadDocument, { isLoading: uploading }] = useUploadFarmDocumentMutation();
@@ -622,16 +651,16 @@ const ParcelMapUpload = ({
         title: file.name.replace(/\.[^.]+$/, ''),
         folder: 'organic_system_plan',
         parcel: Number(parcelId),
-        linkedSection: PARCEL_MAP_SECTION
+        linkedSection: section
       }).unwrap();
       toast({
-        title: intl.formatMessage({ id: 'parcelApp.map.uploadDone' }),
+        title: intl.formatMessage({ id: messages.done }),
         status: 'success',
         duration: 3000
       });
     } catch (err) {
       toast({
-        title: intl.formatMessage({ id: 'parcelApp.map.uploadFailed' }),
+        title: intl.formatMessage({ id: messages.failed }),
         description: apiErrorMessage(err) ?? undefined,
         status: 'error',
         duration: 7000,
@@ -643,24 +672,26 @@ const ParcelMapUpload = ({
 
   return (
     <VStack align="stretch" spacing={2}>
-      <Text fontSize="sm" fontWeight="semibold">
-        {intl.formatMessage({ id: 'parcelApp.map.uploadTitle' })}
-      </Text>
+      {messages.title ? (
+        <Text fontSize="sm" fontWeight="semibold">
+          {intl.formatMessage({ id: messages.title })}
+        </Text>
+      ) : null}
       {/* A failed fetch is not an absence: saying "no map attached" because a request failed
           would state something about the operation's records that nobody checked. */}
       {isError ? (
         <Text fontSize="xs" color="red.800">
-          {intl.formatMessage({ id: 'parcelApp.map.uploadLoadFailed' })}
+          {intl.formatMessage({ id: messages.loadFailed })}
         </Text>
       ) : forThisParcel.length > 0 ? (
         forThisParcel.map((doc) => (
           <Text key={doc.id} fontSize="xs" color="gray.700">
-            {intl.formatMessage({ id: 'parcelApp.map.attached' }, { name: doc.title })}
+            {intl.formatMessage({ id: messages.attached }, { name: doc.title })}
           </Text>
         ))
       ) : (
         <Text fontSize="xs" color="gray.600">
-          {intl.formatMessage({ id: 'parcelApp.map.uploadHint' })}
+          {intl.formatMessage({ id: messages.hint })}
         </Text>
       )}
       <input
@@ -676,7 +707,7 @@ const ParcelMapUpload = ({
         isLoading={uploading}
         isDisabled={!canWrite || !scoped}
         onClick={() => fileInput.current?.click()}>
-        {intl.formatMessage({ id: 'parcelApp.map.uploadAction' })}
+        {intl.formatMessage({ id: messages.action })}
       </StandardButton>
     </VStack>
   );
@@ -1153,6 +1184,17 @@ const ParcelApplicationWizard = () => {
           </Text>
         );
       }
+      case 'container_statement':
+        return (
+          <ParcelMapUpload
+            companyId={companyId || ''}
+            farmId={farmId || ''}
+            parcelId={parcelId || ''}
+            canWrite={canWrite}
+            section={CONTAINER_STATEMENT_SECTION}
+            messages={CONTAINER_STATEMENT_MESSAGES}
+          />
+        );
       case 'operation_export_answer':
         // The answer lives on the plan (G8.0) and prints on every parcel page; nothing to enter here.
         return (
