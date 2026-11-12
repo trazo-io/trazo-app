@@ -196,6 +196,28 @@ describe('picking a saved applicator', () => {
     );
   });
 
+  it('picking the same applicator again copies again, over a hand edit', async () => {
+    // Review of #377: the select held the choice, so re-picking the same person fired no change
+    // and a hand-edited value survived silently.
+    listReturns([ROSA, BETO]);
+    const { container } = renderTab(SPRAY);
+    await sectionRendered(container);
+    fireEvent.change(picker(container)!, { target: { value: String(ROSA.id) } });
+    await waitFor(() => expect(field(container, 'applicator_phone')!.value).toBe(ROSA.phone));
+    fireEvent.change(field(container, 'applicator_phone')!, { target: { value: 'typed by hand' } });
+    expect(picker(container)!.value).toBe('');
+    fireEvent.change(picker(container)!, { target: { value: String(ROSA.id) } });
+    await waitFor(() => expect(field(container, 'applicator_phone')!.value).toBe(ROSA.phone));
+  });
+
+  it('keeps the picker when a refetch fails but the list is still cached', async () => {
+    // Review of #377: isError is the LAST request's state; RTK Query keeps the cached data.
+    listReturns([ROSA, BETO], { isError: true });
+    const { container } = renderTab(SPRAY);
+    await sectionRendered(container);
+    expect(picker(container), 'the picker vanished on a failed refetch').not.toBeNull();
+  });
+
   it('asks only for the active applicators of the current company', async () => {
     listReturns([ROSA]);
     const { container } = renderTab(SPRAY);

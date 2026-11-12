@@ -54,8 +54,10 @@ const ApplicatorPicker = ({ onPick }: Props) => {
   );
   const [chosen, setChosen] = useState('');
 
-  // An accelerator, not a field: when the list cannot be read, the inputs below still work.
-  if (!companyId || isLoading || isError) return null;
+  // An accelerator, not a field: when the list cannot be read, the inputs below still work. A
+  // failed refetch (coming back from the list in another tab) keeps the cached list, so the picker
+  // stays while there is something to offer (review of #377).
+  if (!companyId || isLoading || (isError && applicators.length === 0)) return null;
 
   // A new tab, so a half-filled record is never left behind (an edit keeps no draft).
   const manageLink = (id: string) => (
@@ -90,9 +92,11 @@ const ApplicatorPicker = ({ onPick }: Props) => {
         placeholder={intl.formatMessage({ id: 'events.chemical.applicatorPicker.placeholder' })}
         onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {
           const id = event.target.value;
-          setChosen(id);
           const picked = applicators.find((applicator) => String(applicator.id) === id);
           if (picked) onPick(copiedFields(picked));
+          // Back to the placeholder: the picker copies, it does not hold a choice. Picking the
+          // same person again must copy again, over any hand edit (review of #377).
+          setChosen('');
         }}>
         {applicators.map((applicator) => (
           <option key={applicator.id} value={String(applicator.id)}>
