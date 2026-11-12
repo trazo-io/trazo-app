@@ -14,6 +14,11 @@ export const USER_DATA_URL = `${ROOT_URL}users/me/`;
 // Company and Farm URLs
 export const COMPANY_URL = (companyId?: string | undefined) =>
   companyId ? `${ROOT_URL}companies/${companyId}/` : `${ROOT_URL}companies/`;
+// The company's saved applicators. Members read; admins and farm managers write. DELETE deactivates.
+export const APPLICATOR_URL = (companyId: string | number, applicatorId?: number) =>
+  applicatorId != null
+    ? `${ROOT_URL}companies/${companyId}/applicators/${applicatorId}/`
+    : `${ROOT_URL}companies/${companyId}/applicators/`;
 export const FARM_URL = (companyId: string, farmId?: string) =>
   farmId
     ? `${ROOT_URL}companies/${companyId}/establishments/${farmId}/`

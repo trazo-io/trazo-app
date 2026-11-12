@@ -14,7 +14,7 @@ import {
   useToast
 } from '@chakra-ui/react';
 import { CopyIcon, CheckIcon } from '@chakra-ui/icons';
-import { FaUsers, FaBuilding } from 'react-icons/fa';
+import { FaUsers, FaBuilding, FaUserShield } from 'react-icons/fa';
 import React, { useEffect, useRef, useState } from 'react';
 
 import {
@@ -31,6 +31,7 @@ import {
 } from 'components/Design/StandardComponents';
 import MemberRow, { ROLE_LABEL_KEYS } from './memberRow';
 import CompanyInfoTab from './CompanyInfoTab';
+import ApplicatorRegister from './ApplicatorRegister';
 import {
   useChangeCompanyMemberRoleMutation,
   useGetCompanyMembersQuery,
@@ -47,6 +48,11 @@ import { apiErrorMessage } from 'utils/apiErrorMessage';
 
 // A team this size or smaller is read at a glance; past it the search box appears.
 const SEARCH_FROM = 8;
+
+// Tab order. Applicators sit beside Team: both are people, and the spray form copies an
+// applicator's details onto each record (`ApplicatorRegister`).
+const SETTINGS_TABS = ['team', 'applicators', 'company'] as const;
+type SettingsTab = (typeof SETTINGS_TABS)[number];
 
 // Types
 interface RoleOption {
@@ -79,7 +85,7 @@ const TEAM_REFUSAL_KEYS: Record<string, string> = {
 
 export default function SettingsView() {
   const intl = useIntl();
-  const [settingsTab, setSettingsTab] = useState<'team' | 'company'>('team');
+  const [settingsTab, setSettingsTab] = useState<SettingsTab>('team');
   const toast = useToast();
 
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
@@ -336,13 +342,19 @@ export default function SettingsView() {
             control here was the only centred tab row in the app. */}
         <StandardSectionTabs
           ariaLabel={intl.formatMessage({ id: 'app.companySettings' })}
-          activeIndex={settingsTab === 'team' ? 0 : 1}
-          onChange={(index) => setSettingsTab(index === 0 ? 'team' : 'company')}
+          activeIndex={SETTINGS_TABS.indexOf(settingsTab)}
+          onChange={(index) => setSettingsTab(SETTINGS_TABS[index] ?? 'team')}
           tabs={[
             {
               key: 'team',
               label: intl.formatMessage({ id: 'app.team' }),
               icon: FaUsers,
+              status: 'none'
+            },
+            {
+              key: 'applicators',
+              label: intl.formatMessage({ id: 'settings.applicators.title' }),
+              icon: FaUserShield,
               status: 'none'
             },
             {
@@ -555,6 +567,12 @@ export default function SettingsView() {
                   </Box>
                 </SimpleGrid>
               </VStack>
+            )}
+
+            {settingsTab === 'applicators' && (
+              <Box pb={12}>
+                <ApplicatorRegister />
+              </Box>
             )}
 
             {/* Company Information Tab Panel */}

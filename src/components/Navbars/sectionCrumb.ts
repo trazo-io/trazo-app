@@ -33,6 +33,7 @@ const RULES: Array<[RegExp, string]> = [
   [/^\/admin\/dashboard\/field-notes\/?$/, 'fieldNotes.title'],
   [/^\/admin\/dashboard\/subscription\/?$/, 'app.subscription'],
   [/^\/admin\/dashboard\/settings\/?$/, 'app.companySettings'],
+  [/^\/admin\/dashboard\/settings\/applicators\/?$/, 'settings.applicators.title'],
   // The user's own account (2026-11-10: both read "Home" alone).
   [/^\/admin\/dashboard\/profile\/?$/, 'app.userProfile'],
   [/^\/admin\/dashboard\/settings\/change-password\/?$/, 'account.password.title'],

@@ -96,6 +96,7 @@ const ModernProductReview = lazyWithRetry(
   () => import('views/Scan/ProductReview/ModernProductReview')
 );
 const SettingsView = lazyWithRetry(() => import('views/Dashboard/Settings'));
+const ApplicatorsPage = lazyWithRetry(() => import('views/Dashboard/Settings/ApplicatorsPage'));
 const SignIn = lazyWithRetry(() => import('views/Authentication/SignIn/SignInIllustration'));
 const SignInApp = lazyWithRetry(() => import('views/Authentication/SignIn/SignInBasic'));
 const SignUp = lazyWithRetry(() => import('views/Authentication/SignUp/SignUpBasic'));
@@ -499,6 +500,9 @@ const App = () => {
                       </AdminGuard>
                     }
                   />
+                  {/* Saved applicators, for every member: a farm manager logs sprays and may edit
+                      the list, and Company Settings is for administrators only. */}
+                  <Route path="settings/applicators" element={<ApplicatorsPage />} />
                   <Route path="farm/:farmId/transparency" element={<RedirectToFarmHome />} />
                   <Route path="field-notes" element={<FieldNotesInbox />} />
                   <Route path="education" element={<ProducerEducationDashboard />} />
