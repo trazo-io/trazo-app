@@ -296,7 +296,12 @@ const DocumentsPage = () => {
       .filter((ev) => ev?.id != null && ev?.event_type != null)
       .map((ev) => {
         const date = formatDateFromTimestamp(ev.date, intl.locale);
-        const time = formatWallClockTime(ev.date, intl.locale);
+        // A spray whose source record shows no clock time is stored at a noon placeholder: name
+        // that, never print the noon as the time it was applied.
+        const time =
+          ev.time_not_recorded === true
+            ? intl.formatMessage({ id: 'events.time.notOnSourceRecord' })
+            : formatWallClockTime(ev.date, intl.locale);
         const title = eventTitle(ev.event_type, subtypeOf(ev), ev.name, intl);
         const product = (ev.commercial_name || '').trim();
         const parts = [

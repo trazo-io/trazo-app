@@ -899,6 +899,7 @@ const ActivitiesPage = () => {
                         meta={[row.parcel_name, activitySummary(row, intl) || row.description]
                           .filter(Boolean)
                           .join(' · ')}
+                        timeNotRecorded={Boolean(row.time_not_recorded)}
                         onClick={() => openEvent(row)}
                       />
                     )}
@@ -1063,6 +1064,7 @@ const ActivitiesPage = () => {
               meta={[row.parcel_name, activitySummary(row, intl) || row.description]
                 .filter(Boolean)
                 .join(' · ')}
+              timeNotRecorded={Boolean(row.time_not_recorded)}
               onClick={() => openEvent(row)}
             />
           ))}

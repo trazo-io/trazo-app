@@ -392,6 +392,28 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
       quick_form: 'immediate'
     }
   },
+  // "Not on my record" (OV-FJ-C12): the operator's statement that the source record does not show
+  // the fact, never a value. Shown only when ticked, like the hired-application flag. Producer
+  // surfaces only: the buyer payload never carries either (PublicHistorySerializer builds its
+  // event dicts field by field). `time_not_recorded` is collected on the wizard's first step
+  // (NewEvent.jsx), not by this tab, so it has no `form` surface here.
+  {
+    name: 'concentration_not_recorded',
+    labelKey: 'events.chemical.fields.concentrationNotRecorded',
+    valueType: 'boolean',
+    formatter: (value, event) => formatBoolean(value as boolean | string, event),
+    visibleWhen: (e) =>
+      e.concentration_not_recorded === true || e.concentration_not_recorded === 'true',
+    surfaces: { modal: 'immediate', form: 'immediate' }
+  },
+  {
+    name: 'time_not_recorded',
+    labelKey: 'events.chemical.fields.timeNotRecorded',
+    valueType: 'boolean',
+    formatter: (value, event) => formatBoolean(value as boolean | string, event),
+    visibleWhen: (e) => e.time_not_recorded === true || e.time_not_recorded === 'true',
+    surfaces: { modal: 'immediate' }
+  },
 
   // ---- NPK fields (FE Fertilizer only) — Pattern 1: Simple subtype gate ----
   {

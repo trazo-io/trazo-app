@@ -18,7 +18,8 @@ import {
   Divider,
   Wrap,
   WrapItem,
-  Button
+  Button,
+  Checkbox
 } from '@chakra-ui/react';
 import { useParams } from 'react-router-dom';
 import { publicNoteMentionsASupplier } from 'utils/supplierNameNudge';
@@ -79,6 +80,7 @@ import {
   retiredOrganicApprovedLabelKey
 } from 'config/events/enums';
 import { getSubtypes } from 'config/events';
+import { isAffirmativeFlag } from 'config/events/formatters';
 // Event Field Registry (Phase 5G — form integration)
 import { useFormFields } from 'src/hooks/useFormFields';
 import { useFarm, useFarmState } from 'hooks/useMeasurementSystem';
@@ -171,6 +173,8 @@ export const buildChemicalSchema = (intl, { multiTarget = false } = {}) =>
     // In summary mode, per-application fields are hidden and replaced by aggregate totals.
     // Validation is enforced conditionally via superRefine below.
     concentration: string().optional(),
+    // "Not on my record" (OV-FJ-C12): 'true' / 'false' like the other switches on this form.
+    concentration_not_recorded: string().optional(),
     volume_applied: string().optional(),
     volume_numeric: string().optional(),
     volume_unit: string().optional(),
@@ -404,7 +408,20 @@ export const buildChemicalSchema = (intl, { multiTarget = false } = {}) =>
     // PE does not clear the method, so a stale value must not waive the field on a fungicide.
     // A value typed anyway is still checked below.
     const isDispenserApplication = isDispenserRecord(data.type, data.application_method);
-    const concentrationOptional = isDispenserApplication;
+    // "Not on my record" answers the question: the source record does not show it. A value
+    // beside the tick is refused, here and on the server: one or the other, never both.
+    const concentrationNotOnRecord = data.concentration_not_recorded === 'true';
+    if (concentrationNotOnRecord && data.concentration && data.concentration.trim()) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['concentration'],
+        message: intl.formatMessage({
+          id: 'events.chemical.validation.concentrationOrNotOnRecord',
+          defaultMessage: 'Enter the concentration or tick "Not on my record", not both.'
+        })
+      });
+    }
+    const concentrationOptional = isDispenserApplication || concentrationNotOnRecord;
     // The count unit belongs to the dispenser method alone. Anything else counted in dispensers
     // would reach the PUR as "box 24 is a count" on a record that is really a spray.
     if (data.volume_unit === 'dispensers' && !isDispenserApplication) {
@@ -607,7 +624,13 @@ const ChemicalTab = forwardRef(
         // SPRINT 6 FIX (2025-12-24): Read from extra_data as fallback (no model field exists)
         active_ingredient:
           initialValues.active_ingredient || initialValues.extra_data?.active_ingredient || '',
-        concentration: initialValues.concentration || '',
+        // A ticked "Not on my record" wins over a seeded or merged value (review of app #371).
+        concentration: isAffirmativeFlag(initialValues.concentration_not_recorded)
+          ? ''
+          : initialValues.concentration || '',
+        concentration_not_recorded: isAffirmativeFlag(initialValues.concentration_not_recorded)
+          ? 'true'
+          : 'false',
         volume_applied: initialValues.volume_applied?.toString() || '',
         volume_numeric:
           initialValues.volume_numeric?.toString() ||
@@ -866,6 +889,9 @@ const ChemicalTab = forwardRef(
         methods.setValue('wsda_material', null, { shouldDirty: true });
       }
       RECENT_INPUT_PREFILL_FIELDS.forEach((field) => {
+        // A ticked "Not on my record" is this record's answer; a past record's label value is not.
+        if (field === 'concentration' && methods.getValues('concentration_not_recorded') === 'true')
+          return;
         if (product[field] !== null && product[field] !== undefined && product[field] !== '') {
           methods.setValue(field, String(product[field]), { shouldDirty: true });
         }
@@ -1007,7 +1033,13 @@ const ChemicalTab = forwardRef(
           // SPRINT 6 FIX (2025-12-24): Read from extra_data as fallback (no model field exists)
           active_ingredient:
             initialValues.active_ingredient || initialValues.extra_data?.active_ingredient || '',
-          concentration: initialValues.concentration || '',
+          // The tick wins over a voice or re-offer merge: the box is disabled under it.
+          concentration: isAffirmativeFlag(initialValues.concentration_not_recorded)
+            ? ''
+            : initialValues.concentration || '',
+          concentration_not_recorded: isAffirmativeFlag(initialValues.concentration_not_recorded)
+            ? 'true'
+            : 'false',
           // FIXED: Use correct backend field names for form population - check both possible field names
           volume_applied: firstFilled(initialValues.volume_applied, initialValues.volume),
           volume_numeric: firstFilled(
@@ -1214,8 +1246,11 @@ const ChemicalTab = forwardRef(
     const nValue = watch('nitrogen_percentage');
     const pValue = watch('phosphorus_percentage');
     const kValue = watch('potassium_percentage');
+    const concentrationNotOnRecord = watch('concentration_not_recorded') === 'true';
     const NPK_SHAPE = /^\d+(?:\.\d+)?-\d+(?:\.\d+)?-\d+(?:\.\d+)?$/;
     useEffect(() => {
+      // Ticked "Not on my record": the box stays empty, so nothing is derived into it.
+      if (concentrationNotOnRecord) return;
       const current = concentrationValue == null ? '' : String(concentrationValue).trim();
 
       if (chemicalType !== 'FE') {
@@ -1237,7 +1272,15 @@ const ChemicalTab = forwardRef(
         `${parseFloat(nValue)}-${parseFloat(pValue)}-${parseFloat(kValue)}`,
         { shouldValidate: true, shouldDirty: true }
       );
-    }, [chemicalType, nValue, pValue, kValue, concentrationValue, methods]);
+    }, [
+      chemicalType,
+      nValue,
+      pValue,
+      kValue,
+      concentrationValue,
+      concentrationNotOnRecord,
+      methods
+    ]);
 
     // Sprint 5: Watch for summary mode toggle (Aggregate Fertilizer Support)
     // SPRINT 6 FIX (2025-12-23): Only enable summary mode for chemical types that support it (FE, FU, PE)
@@ -1281,6 +1324,7 @@ const ChemicalTab = forwardRef(
       'application_rate_unit',
       'is_fertigation',
       'concentration',
+      'concentration_not_recorded',
       'application_method',
       'application_details',
       'weather_conditions',
@@ -1346,6 +1390,7 @@ const ChemicalTab = forwardRef(
             'application_rate_unit',
             'is_fertigation',
             'concentration',
+            'concentration_not_recorded',
             'application_method',
             'application_details',
             'weather_conditions',
@@ -1477,6 +1522,11 @@ const ChemicalTab = forwardRef(
         applied_by_pcb: data.applied_by_pcb === 'true' || data.applied_by_pcb === true,
         pcb_name:
           data.applied_by_pcb === 'true' || data.applied_by_pcb === true ? data.pcb_name || '' : '',
+        // "Not on my record": a real bool, and an EMPTY STRING for the value, never null. The
+        // payload builder drops nulls, so a null would leave an edited record's old value in place
+        // beside the tick, which the server refuses (the flag or the value, never both).
+        concentration_not_recorded: data.concentration_not_recorded === 'true',
+        concentration: data.concentration_not_recorded === 'true' ? '' : data.concentration,
         // SPRINT 6 FIX (2025-12-24): Explicitly set fields to undefined that are now in extra_data
         // This prevents stale top-level values from eventFormData being preserved during merge
         // When onSubmitMainInfo does {...eventFormData, ...data}, undefined values will be filtered by cleanEventData
@@ -3548,11 +3598,16 @@ const ChemicalTab = forwardRef(
                                 id: 'events.chemical.concentration.productConcentration'
                               })
                         }
-                        required={!isDispenserRecord(chemicalType, watch('application_method'))}
+                        required={
+                          !concentrationNotOnRecord &&
+                          !isDispenserRecord(chemicalType, watch('application_method'))
+                        }
                         error={errors.concentration?.message}
                         helpText={intl.formatMessage({
                           id: !chemicalType
                             ? 'events.chemical.concentration.help.pickType'
+                            : concentrationNotOnRecord
+                            ? 'events.chemical.concentration.notOnMyRecordHelp'
                             : isDispenserRecord(chemicalType, watch('application_method'))
                             ? 'events.chemical.concentration.help.dispenser'
                             : chemicalType === 'FE'
@@ -3582,7 +3637,7 @@ const ChemicalTab = forwardRef(
                                         id: 'events.chemical.concentration.placeholder.pickType'
                                       })
                                 }
-                                isDisabled={!chemicalType}
+                                isDisabled={!chemicalType || concentrationNotOnRecord}
                                 borderColor={
                                   concentrationValidation?.isValid
                                     ? 'green.300'
@@ -3592,8 +3647,49 @@ const ChemicalTab = forwardRef(
                                 }
                               />
 
-                              {/* Real-time Validation Feedback */}
+                              {/* "Not on my record" (OV-FJ-C12). A paper spray log often has no
+                                  concentration, and the only other way through was to look up a
+                                  label or invent one. Ticking clears and disables the box; the
+                                  packet prints "Not on the source record" in its place. Chakra's
+                                  Checkbox is themed (frontend.md); there is no Standard wrapper. */}
                               {chemicalType && (
+                                <Controller
+                                  name="concentration_not_recorded"
+                                  control={methods.control}
+                                  render={({ field: flag }) => (
+                                    <Checkbox
+                                      // Its own id and state: inside the field's FormControl it
+                                      // would otherwise take the input's id (the label's target)
+                                      // and its asterisk, and turn red with the input's error.
+                                      id="concentration-not-recorded"
+                                      required={false}
+                                      isInvalid={false}
+                                      colorScheme="green"
+                                      minH="44px"
+                                      alignItems="center"
+                                      isChecked={flag.value === 'true'}
+                                      onChange={(e) => {
+                                        if (e.target.checked) {
+                                          methods.setValue('concentration', '', {
+                                            shouldDirty: true
+                                          });
+                                        }
+                                        flag.onChange(e.target.checked ? 'true' : 'false');
+                                        methods.trigger('concentration');
+                                      }}
+                                      data-testid="concentration-not-recorded">
+                                      <Text fontSize="sm" color="gray.700">
+                                        {intl.formatMessage({
+                                          id: 'events.chemical.concentration.notOnMyRecord'
+                                        })}
+                                      </Text>
+                                    </Checkbox>
+                                  )}
+                                />
+                              )}
+
+                              {/* Real-time Validation Feedback */}
+                              {chemicalType && !concentrationNotOnRecord && (
                                 <ConcentrationFeedback
                                   validation={
                                     concentrationValidation || {

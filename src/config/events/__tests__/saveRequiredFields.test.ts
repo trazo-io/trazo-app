@@ -37,6 +37,21 @@ describe('requiredFieldsForSave', () => {
     ).not.toContain('concentration');
   });
 
+  it('"Not on my record" answers the concentration, on one parcel and on several', () => {
+    const notOnRecord = { ...spray, concentration_not_recorded: true };
+    expect(requiredFieldsForSave(2, notOnRecord)).not.toContain('concentration');
+    expect(requiredFieldsForSave(2, notOnRecord, { multiParcel: true })).not.toContain(
+      'concentration'
+    );
+    // The form's string spelling counts too; an unticked box keeps today's rule.
+    expect(
+      requiredFieldsForSave(2, { ...spray, concentration_not_recorded: 'true' })
+    ).not.toContain('concentration');
+    expect(requiredFieldsForSave(2, { ...spray, concentration_not_recorded: false })).toContain(
+      'concentration'
+    );
+  });
+
   it('summary mode asks only for what a season summary has', () => {
     expect(requiredFieldsForSave(2, { ...spray, is_summary: 'true' })).toEqual([
       'type',

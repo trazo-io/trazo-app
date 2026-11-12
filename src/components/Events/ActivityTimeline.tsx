@@ -23,10 +23,23 @@ interface RowProps {
   title: string;
   /** One muted line under the title: parcel, first line of the notes. */
   meta?: string;
+  /**
+   * The operator stated the source record shows no clock time (a spray's `time_not_recorded`).
+   * The stored noon is a placeholder, so the row says so instead of printing it.
+   */
+  timeNotRecorded?: boolean;
   onClick: () => void;
 }
 
-export function ActivityTimelineRow({ date, eventType, subtype, title, meta, onClick }: RowProps) {
+export function ActivityTimelineRow({
+  date,
+  eventType,
+  subtype,
+  title,
+  meta,
+  timeNotRecorded = false,
+  onClick
+}: RowProps) {
   const intl = useIntl();
   const tone = eventTypeTone(eventType);
   return (
@@ -51,9 +64,21 @@ export function ActivityTimelineRow({ date, eventType, subtype, title, meta, onC
         <Text fontSize="sm" fontWeight="semibold" color="gray.700" whiteSpace="nowrap">
           {formatDateFromTimestamp(date, intl.locale, { day: 'numeric', month: 'short' }) || '—'}
         </Text>
-        <Text fontSize="xs" color="gray.600" whiteSpace="nowrap">
-          {formatWallClockTime(date, intl.locale) || ''}
-        </Text>
+        {timeNotRecorded ? (
+          <Text
+            fontSize="xs"
+            color="gray.600"
+            whiteSpace="nowrap"
+            title={intl.formatMessage({ id: 'events.time.notOnSourceRecord' })}
+            aria-label={intl.formatMessage({ id: 'events.time.notOnSourceRecord' })}
+            data-testid="activity-time-not-recorded">
+            {intl.formatMessage({ id: 'events.time.notOnSourceRecordShort' })}
+          </Text>
+        ) : (
+          <Text fontSize="xs" color="gray.600" whiteSpace="nowrap">
+            {formatWallClockTime(date, intl.locale) || ''}
+          </Text>
+        )}
       </Box>
       <Circle size="28px" bg={tone.circle} flexShrink={0} mt={0.5}>
         <Icon

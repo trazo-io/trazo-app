@@ -100,7 +100,22 @@ const CrewNoteProvenance = ({ eventId, eventType }: { eventId?: number; eventTyp
           “{note.words}”
         </Text>
         <Text fontSize="sm">
-          {intl.formatMessage({ id: 'crewNote.occurred' }, { when: wallClock(note.occurred_at) })}
+          {intl.formatMessage(
+            { id: 'crewNote.occurred' },
+            {
+              // The day and the phrase when the time is not on the source record: the record is
+              // stored at a noon placeholder, which is not a time anybody stated.
+              when:
+                note.time_not_recorded && note.occurred_at
+                  ? `${intl.formatDate(new Date(note.occurred_at), {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                      timeZone: 'UTC'
+                    })}, ${intl.formatMessage({ id: 'events.time.notOnSourceRecord' })}`
+                  : wallClock(note.occurred_at)
+            }
+          )}
         </Text>
         <Text fontSize="sm">
           {intl.formatMessage(
