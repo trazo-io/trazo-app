@@ -6094,7 +6094,7 @@
   "fieldNotes.farmLabel": "Farm",
   "fieldNotes.parcelLabel": "Parcel",
   "fieldNotes.description": "Messages your crew sent from the field. Nothing here is a record until you log it.",
-  "fieldNotes.audioDeleted": "The recording was deleted when this note was reviewed. The words above are what was kept.",
+  "fieldNotes.audioDeleted": "The recording has been deleted. Trazo keeps it until the note is reviewed, and never more than 30 days. The words above are what was kept.",
   "fieldNotes.audioFailed": "The recording would not play. Reload the page, and if it keeps failing the recording may no longer be available.",
   "fieldNotes.audioUnsupported": "Your browser cannot play this recording.",
   "fieldNotes.machineTranscript": "Read aloud by your crew and written down automatically. Play it back to check the words before you log anything, especially a “no” or a “not”.",

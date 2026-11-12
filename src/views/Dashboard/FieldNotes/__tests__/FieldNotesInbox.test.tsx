@@ -407,7 +407,7 @@ describe('a voice note', () => {
     const { container } = renderInbox(ONE_PARCEL);
 
     expect(container.querySelector('audio')).toBeNull();
-    expect(screen.getByText(/recording was deleted/i)).toBeTruthy();
+    expect(screen.getByText(/recording has been deleted/i)).toBeTruthy();
     // The words survive the recording, which is the point of deleting it.
     expect(screen.getByText(/regamos el bloque 4/)).toBeTruthy();
   });
