@@ -1497,6 +1497,9 @@ function NewEventForm({ isEdit = false, eventId = null }) {
         // the copy to the ORIGINAL (possibly closed) season and confuse the album
         // dedup. Edit mode keeps them — same record, same season.
         ...(isRepeat ? { id: undefined, history: undefined, album: undefined } : {}),
+        // A spray's wind and air temperature are readings of one morning (OV-FJ-C11). A repeat
+        // starts them blank: copied forward, the old reading would save as a new observation.
+        ...(isRepeat ? { wind_from: '', wind_speed_mph: '', air_temperature_f: '' } : {}),
         date: eventDate,
         // Whether THIS record's time is on its source record; a repeat is a new record, dated now.
         time_not_recorded: !isRepeat && isAffirmativeFlag(existingEvent.time_not_recorded),

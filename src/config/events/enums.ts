@@ -198,6 +198,39 @@ export const HAND_DISPENSER_METHOD = 'hand_dispenser';
 export const isDispenserRecord = (type: unknown, method: unknown): boolean =>
   type === 'PE' && method === HAND_DISPENSER_METHOD;
 
+/**
+ * Methods for which a spray record does not ask the wind or the air temperature. Mirrors
+ * `CONDITIONS_EXEMPT_METHODS` in trazo-back/history/services/application_conditions.py.
+ * WAC 16-228-1320(1)(e) exempts bait stations, within-structure applications and drip or
+ * subsurface irrigation; Trazo has method codes for the last two only.
+ */
+export const CONDITIONS_EXEMPT_METHODS: readonly string[] = ['drip', 'subsurface'];
+
+/** The compass point the wind blew FROM, or calm. Mirrors ChemicalEvent.WIND_FROM_CHOICES. */
+export const WIND_FROM_OPTIONS: readonly EnumOption[] = [
+  { value: 'N', labelKey: 'events.chemical.windFrom.N' },
+  { value: 'NE', labelKey: 'events.chemical.windFrom.NE' },
+  { value: 'E', labelKey: 'events.chemical.windFrom.E' },
+  { value: 'SE', labelKey: 'events.chemical.windFrom.SE' },
+  { value: 'S', labelKey: 'events.chemical.windFrom.S' },
+  { value: 'SW', labelKey: 'events.chemical.windFrom.SW' },
+  { value: 'W', labelKey: 'events.chemical.windFrom.W' },
+  { value: 'NW', labelKey: 'events.chemical.windFrom.NW' },
+  { value: 'calm', labelKey: 'events.chemical.windFrom.calm' }
+] as const;
+
+/**
+ * Units for the carrier (water) volume of a spray. Mirrors
+ * ChemicalEvent.CARRIER_VOLUME_UNIT_CHOICES. Gallons per 100 gallons is a concentration, never a
+ * carrier unit, so it is not here. `gal_total` is refused when one tank covers several parcels
+ * (multi_target_spec.json `refused_values`): a total would be copied onto every parcel.
+ */
+export const CARRIER_VOLUME_UNITS: readonly EnumOption[] = [
+  { value: 'gal_per_acre', labelKey: 'events.chemical.carrierUnit.galPerAcre' },
+  { value: 'gal_total', labelKey: 'events.chemical.carrierUnit.galTotal' },
+  { value: 'l_per_ha', labelKey: 'events.chemical.carrierUnit.lPerHa' }
+] as const;
+
 /** Application methods filtered by chemical main type (FE/PE/FU/HE) */
 export const APPLICATION_METHODS_BY_CHEMICAL_TYPE: Record<string, readonly EnumOption[]> = {
   FE: [
@@ -846,6 +879,9 @@ export const ENUM_OPTIONS = {
   // Methods
   application_methods: APPLICATION_METHODS,
   irrigation_methods: IRRIGATION_METHODS,
+  // Spray conditions (WAC 16-228-1320(1)(e), (h))
+  wind_from: WIND_FROM_OPTIONS,
+  carrier_volume_units: CARRIER_VOLUME_UNITS,
   // Sources
   seeds_sources: SEEDS_SOURCES,
   seed_certification_statuses: SEED_CERTIFICATION_STATUSES,
