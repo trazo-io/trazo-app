@@ -238,7 +238,10 @@ const FORM_ONLY_ALIASES: Record<string, string> = {
   receipt_document:
     'a FK id; the modal renders `receipt_document_title` (chemical + soil registries)',
   water_test_summary:
-    'ProductionTab derives `water_test_results` from it at submit; the registry renders those'
+    'ProductionTab derives `water_test_results` from it at submit; the registry renders those',
+  buffer_zone_feet:
+    'registry `buffer_zone_meters` (chemical): a US farm types feet, the form sends metres ' +
+    '(utils/bufferZoneFeet) and never sends this key'
 };
 
 /**

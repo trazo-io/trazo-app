@@ -76,9 +76,14 @@ import { useIntl } from 'react-intl';
 import {
   APPLICATION_PURPOSES,
   APPLICATION_RATE_UNITS,
+  CARRIER_VOLUME_UNITS,
+  CONDITIONS_EXEMPT_METHODS,
+  WIND_FROM_OPTIONS,
   isDispenserRecord,
   retiredOrganicApprovedLabelKey
 } from 'config/events/enums';
+import { specRulesFor } from 'config/events/multiParcel';
+import { feetToMetres, metresToFeet } from 'utils/bufferZoneFeet';
 import { getSubtypes } from 'config/events';
 import { isAffirmativeFlag } from 'config/events/formatters';
 // Event Field Registry (Phase 5G — form integration)
@@ -131,6 +136,17 @@ const firstFilled = (...candidates) => {
  */
 // Shared with the carbon box, so both name a fuel the same way (config/events/chemicalFormOptions).
 const FUEL_TYPES = CHEMICAL_FUEL_TYPES;
+
+/** Blank, or a number inside [min, max]. For the optional readings typed as strings. */
+const blankOrWithin = (min, max) => (val) => {
+  if (!val || val === '') return true;
+  const num = parseFloat(val);
+  return !isNaN(num) && num >= min && num <= max;
+};
+
+/** Carrier units a multi-parcel save refuses (a tank total would be copied onto every parcel). */
+const CARRIER_UNITS_REFUSED_ON_SEVERAL_PARCELS =
+  specRulesFor(2, null)?.refusedValues?.carrier_volume_unit ?? new Set();
 
 // ENHANCED SCHEMA - Following Equipment/Soil/Pest enhanced patterns with dynamic validation
 // Now includes the pesticide application fields of the EPA Worker Protection Standard (40 CFR 170.311(b)(1))
@@ -245,6 +261,16 @@ export const buildChemicalSchema = (intl, { multiTarget = false } = {}) =>
         const num = parseFloat(val);
         return !isNaN(num) && num >= 0;
       }, intl.formatMessage({ id: 'events.chemical.validation.bufferZonePositive', defaultMessage: 'Buffer zone must be a positive number' })),
+    // What a US farm types; only `buffer_zone_meters` is sent (utils/bufferZoneFeet).
+    buffer_zone_feet: string()
+      .optional()
+      .refine(
+        blankOrWithin(0, Number.MAX_SAFE_INTEGER),
+        intl.formatMessage({
+          id: 'events.chemical.validation.bufferZonePositive',
+          defaultMessage: 'Buffer zone must be a positive number'
+        })
+      ),
     // NOP Compliance: Supplier & Purchase Tracking (7 CFR 205.103)
     supplier_name: string().optional(),
     purchase_date: string().optional(),
@@ -265,6 +291,48 @@ export const buildChemicalSchema = (intl, { multiTarget = false } = {}) =>
     manufacturer: string().optional(),
     application_start: string().optional(),
     application_end: string().optional(),
+    // State application facts (OV-FJ-C11; WAC 16-228-1320(1)(e), (h), (k), (l), (n)). All
+    // optional and typed by the operator; the ranges are the model's.
+    wind_from: string().optional(),
+    wind_speed_mph: string()
+      .optional()
+      .refine(
+        blankOrWithin(0, 150),
+        intl.formatMessage({
+          id: 'events.chemical.validation.windSpeedRange',
+          defaultMessage: 'Wind speed must be between 0 and 150 mph'
+        })
+      ),
+    air_temperature_f: string()
+      .optional()
+      .refine(
+        blankOrWithin(-40, 140),
+        intl.formatMessage({
+          id: 'events.chemical.validation.airTemperatureRange',
+          defaultMessage: 'Air temperature must be between -40 and 140 °F'
+        })
+      ),
+    carrier_volume: string()
+      .optional()
+      .refine(
+        (val) => !val || (!isNaN(parseFloat(val)) && parseFloat(val) > 0),
+        intl.formatMessage({
+          id: 'events.chemical.validation.carrierVolumePositive',
+          defaultMessage: 'The carrier volume must be greater than zero'
+        })
+      ),
+    carrier_volume_unit: string().optional(),
+    apparatus_license_plate: string()
+      .max(
+        20,
+        intl.formatMessage({
+          id: 'events.chemical.validation.licensePlateMax',
+          defaultMessage: 'A license plate has at most 20 characters'
+        })
+      )
+      .optional(),
+    applicator_address: string().optional(),
+    applicator_phone: string().optional(),
     planted_area: string().optional(),
     planted_area_unit: string().optional(),
     operator_id: string().optional(),
@@ -279,6 +347,7 @@ export const buildChemicalSchema = (intl, { multiTarget = false } = {}) =>
     // pest control business's to report on the CA PUR, not the grower's (3 CCR 6626(b)).
     applied_by_pcb: string().optional(),
     pcb_name: string().optional(),
+    commercial_firm_address: string().optional(),
     // Tank-mix partners (adjuvants/spreader-stickers) — each CA-registered partner
     // is reportable on its own PUR line (DPR boxes 23/24). Repeatable structured list.
     tank_mix_partners: array(
@@ -400,6 +469,30 @@ export const buildChemicalSchema = (intl, { multiTarget = false } = {}) =>
         );
       }
       return;
+    }
+
+    // A carrier volume and its unit stand or fall together (a unit alone is dropped on submit).
+    if (data.carrier_volume && data.carrier_volume.trim() && !data.carrier_volume_unit) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['carrier_volume_unit'],
+        message: intl.formatMessage({
+          id: 'events.chemical.validation.carrierUnitRequired',
+          defaultMessage: 'Pick the unit for the carrier volume'
+        })
+      });
+    }
+    // One tank over several parcels: a total would land on every parcel's record as its own.
+    if (multiTarget && CARRIER_UNITS_REFUSED_ON_SEVERAL_PARCELS.has(data.carrier_volume_unit)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['carrier_volume_unit'],
+        message: intl.formatMessage({
+          id: 'events.chemical.validation.carrierTotalSeveralParcels',
+          defaultMessage:
+            'A total is not accepted when one tank covers several parcels. Enter it per acre or per hectare.'
+        })
+      });
     }
 
     // A pheromone dispenser is counted and hung, not mixed into a tank, so "the strength on the
@@ -697,6 +790,11 @@ const ChemicalTab = forwardRef(
         applied_scope: initialValues.applied_scope || '',
         applied_scope_detail: initialValues.applied_scope_detail || '',
         buffer_zone_meters: initialValues.buffer_zone_meters?.toString() || '',
+        // Feet for a US farm, from the stored metres; a remount keeps what was typed.
+        buffer_zone_feet: firstFilled(
+          initialValues.buffer_zone_feet,
+          metresToFeet(initialValues.buffer_zone_meters)
+        ),
         // NOP Compliance: Supplier & Purchase Tracking (7 CFR 205.103)
         supplier_name: initialValues.supplier_name || initialValues.extra_data?.supplier_name || '',
         purchase_date: initialValues.purchase_date || initialValues.extra_data?.purchase_date || '',
@@ -729,6 +827,16 @@ const ChemicalTab = forwardRef(
             ? 'true'
             : 'false',
         pcb_name: initialValues.pcb_name || '',
+        commercial_firm_address: initialValues.commercial_firm_address || '',
+        // State application facts (OV-FJ-C11). Strings, like every other input here.
+        wind_from: initialValues.wind_from || '',
+        wind_speed_mph: initialValues.wind_speed_mph?.toString() || '',
+        air_temperature_f: initialValues.air_temperature_f?.toString() || '',
+        carrier_volume: initialValues.carrier_volume?.toString() || '',
+        carrier_volume_unit: initialValues.carrier_volume_unit || '',
+        apparatus_license_plate: initialValues.apparatus_license_plate || '',
+        applicator_address: initialValues.applicator_address || '',
+        applicator_phone: initialValues.applicator_phone || '',
         // Normalize to strings: the form schema declares every adjuvant field as a
         // zod string(), but the backend returns organic_approved as a bool (and volume
         // may be numeric). Un-normalized values fail zod validation on edit → blocked save.
@@ -824,6 +932,15 @@ const ChemicalTab = forwardRef(
     }
     const recordHoldsCaPurIdentity = heldCaFieldsRef.current.purIdentity;
     const recordHoldsCaPermit = heldCaFieldsRef.current.permit;
+    // Wind and temperature are not asked for a drip or subsurface application (WAC
+    // 16-228-1320(1)(e)), so their inputs step aside for those methods. Latched like the CA
+    // sections: a record that holds a reading keeps showing it, so nothing typed is hidden.
+    const heldConditionsRef = useRef(false);
+    if (recordHolds('wind_from', 'wind_speed_mph', 'air_temperature_f')) {
+      heldConditionsRef.current = true;
+    }
+    // A farm in a US state types its buffer zone in feet; elsewhere (or unknown) in metres.
+    const isUsFarm = farmState !== null;
 
     // PUR boxes 3 and 8 are issued to the OPERATOR and the SITE, not to a spray (3 CCR 6622),
     // so the farm and the parcel carry them and the export falls back to those. The inputs
@@ -1117,6 +1234,11 @@ const ChemicalTab = forwardRef(
           applied_scope: initialValues.applied_scope || '',
           applied_scope_detail: initialValues.applied_scope_detail || '',
           buffer_zone_meters: initialValues.buffer_zone_meters?.toString() || '',
+          // Feet for a US farm, from the stored metres; a remount keeps what was typed.
+          buffer_zone_feet: firstFilled(
+            initialValues.buffer_zone_feet,
+            metresToFeet(initialValues.buffer_zone_meters)
+          ),
           // NOP Compliance: Supplier & Purchase Tracking (7 CFR 205.103)
           supplier_name:
             initialValues.supplier_name || initialValues.extra_data?.supplier_name || '',
@@ -1151,6 +1273,16 @@ const ChemicalTab = forwardRef(
               ? 'true'
               : 'false',
           pcb_name: initialValues.pcb_name || '',
+          commercial_firm_address: initialValues.commercial_firm_address || '',
+          // State application facts (OV-FJ-C11). Strings, like every other input here.
+          wind_from: initialValues.wind_from || '',
+          wind_speed_mph: initialValues.wind_speed_mph?.toString() || '',
+          air_temperature_f: initialValues.air_temperature_f?.toString() || '',
+          carrier_volume: initialValues.carrier_volume?.toString() || '',
+          carrier_volume_unit: initialValues.carrier_volume_unit || '',
+          apparatus_license_plate: initialValues.apparatus_license_plate || '',
+          applicator_address: initialValues.applicator_address || '',
+          applicator_phone: initialValues.applicator_phone || '',
           // Normalize to strings (see the primary defaultValues block): backend returns
           // organic_approved as a bool / volume as numeric, which fail zod string() on edit.
           tank_mix_partners: Array.isArray(initialValues.tank_mix_partners)
@@ -1221,6 +1353,8 @@ const ChemicalTab = forwardRef(
     } = useFieldArray({ control: methods.control, name: 'tank_mix_partners' });
 
     const chemicalType = watch('type');
+    const conditionsNotApplicable = CONDITIONS_EXEMPT_METHODS.includes(watch('application_method'));
+    const showConditionReadings = !conditionsNotApplicable || heldConditionsRef.current;
 
     /*
      * "My products" scoped to the type in force — see the comment at the render site.
@@ -1340,6 +1474,16 @@ const ChemicalTab = forwardRef(
       'phi_days',
       'organic_approved',
       'buffer_zone_meters',
+      'buffer_zone_feet',
+      'wind_from',
+      'wind_speed_mph',
+      'air_temperature_f',
+      'carrier_volume',
+      'carrier_volume_unit',
+      'apparatus_license_plate',
+      'applicator_address',
+      'applicator_phone',
+      'commercial_firm_address',
       'applied_scope',
       'applied_scope_detail',
       // NOP Compliance: Supplier & Purchase Tracking
@@ -1406,6 +1550,16 @@ const ChemicalTab = forwardRef(
             'phi_days',
             'organic_approved',
             'buffer_zone_meters',
+            'buffer_zone_feet',
+            'wind_from',
+            'wind_speed_mph',
+            'air_temperature_f',
+            'carrier_volume',
+            'carrier_volume_unit',
+            'apparatus_license_plate',
+            'applicator_address',
+            'applicator_phone',
+            'commercial_firm_address',
             'applied_scope',
             'applied_scope_detail',
             'custom_fields',
@@ -1522,6 +1676,18 @@ const ChemicalTab = forwardRef(
         applied_by_pcb: data.applied_by_pcb === 'true' || data.applied_by_pcb === true,
         pcb_name:
           data.applied_by_pcb === 'true' || data.applied_by_pcb === true ? data.pcb_name || '' : '',
+        // The firm's address travels with the flag, like its name.
+        commercial_firm_address:
+          data.applied_by_pcb === 'true' || data.applied_by_pcb === true
+            ? data.commercial_firm_address || ''
+            : '',
+        // Carrier volume: both halves or neither, and '' rather than null so an edit can clear
+        // them (the payload builder drops nulls). The other readings travel as typed.
+        carrier_volume: data.carrier_volume && data.carrier_volume_unit ? data.carrier_volume : '',
+        carrier_volume_unit:
+          data.carrier_volume && data.carrier_volume_unit ? data.carrier_volume_unit : '',
+        // A US farm types feet; only the metres the column holds are sent.
+        buffer_zone_feet: undefined,
         // "Not on my record": a real bool, and an EMPTY STRING for the value, never null. The
         // payload builder drops nulls, so a null would leave an edited record's old value in place
         // beside the tick, which the server refuses (the flag or the value, never both).
@@ -4112,30 +4278,67 @@ const ChemicalTab = forwardRef(
 
                   {/* Sprint 3 Epic 3.2: Consumer Trust Fields */}
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                    <StandardField
-                      label={intl.formatMessage({
-                        id: 'events.chemical.form.bufferZone',
-                        defaultMessage: 'Buffer Zone (meters)'
-                      })}
-                      error={errors.buffer_zone_meters?.message}
-                      helpText={intl.formatMessage({
-                        id: 'events.chemical.form.bufferZoneHelp',
-                        defaultMessage: 'Required buffer distance from sensitive areas'
-                      })}>
-                      <Controller
-                        name="buffer_zone_meters"
-                        control={methods.control}
-                        render={({ field }) => (
-                          <StandardInput
-                            {...field}
-                            type="number"
-                            step="1"
-                            min="0"
-                            placeholder="e.g., 15"
-                          />
-                        )}
-                      />
-                    </StandardField>
+                    {/* Stored in metres. A farm in a US state types feet: the metres change only
+                        when the grower types, so an untouched record keeps its stored value to
+                        the decimal (utils/bufferZoneFeet). */}
+                    {isUsFarm ? (
+                      <StandardField
+                        label={intl.formatMessage({ id: 'events.chemical.form.bufferZoneFeet' })}
+                        error={errors.buffer_zone_feet?.message}
+                        helpText={intl.formatMessage({
+                          id: 'events.chemical.form.bufferZoneHelp',
+                          defaultMessage: 'Required buffer distance from sensitive areas'
+                        })}>
+                        <Controller
+                          name="buffer_zone_feet"
+                          control={methods.control}
+                          render={({ field }) => (
+                            <StandardInput
+                              {...field}
+                              onChange={(e) => {
+                                field.onChange(e);
+                                methods.setValue(
+                                  'buffer_zone_meters',
+                                  feetToMetres(e.target.value),
+                                  { shouldDirty: true }
+                                );
+                              }}
+                              type="number"
+                              step="1"
+                              min="0"
+                              placeholder={intl.formatMessage({
+                                id: 'events.chemical.form.bufferZoneFeetPlaceholder'
+                              })}
+                            />
+                          )}
+                        />
+                      </StandardField>
+                    ) : (
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.chemical.form.bufferZone',
+                          defaultMessage: 'Buffer Zone (meters)'
+                        })}
+                        error={errors.buffer_zone_meters?.message}
+                        helpText={intl.formatMessage({
+                          id: 'events.chemical.form.bufferZoneHelp',
+                          defaultMessage: 'Required buffer distance from sensitive areas'
+                        })}>
+                        <Controller
+                          name="buffer_zone_meters"
+                          control={methods.control}
+                          render={({ field }) => (
+                            <StandardInput
+                              {...field}
+                              type="number"
+                              step="1"
+                              min="0"
+                              placeholder="e.g., 15"
+                            />
+                          )}
+                        />
+                      </StandardField>
+                    )}
 
                     {/* WS-4 — § 205.103(b)(2): records must identify WHERE the input went.
                         (b)(1) is "be adapted to the particular business" and says nothing about
@@ -4578,6 +4781,167 @@ const ChemicalTab = forwardRef(
                       </StandardField>
                     </SimpleGrid>
 
+                    {/* State application facts (overall review 2026-11, OV-FJ-C11): the wind and
+                        air temperature at the time of application, the carrier volume and the
+                        apparatus plate, from WAC 16-228-1320(1)(e), (h) and (k). Asked of every
+                        farm, because wind and temperature matter for drift in every state; all
+                        optional, and none of it claims any state's rule is met. */}
+                    <Box data-testid="spray-conditions">
+                      <Text fontSize="sm" fontWeight="semibold" color="gray.700">
+                        {intl.formatMessage({ id: 'events.chemical.conditions.heading' })}
+                      </Text>
+                      <Text fontSize="xs" color="gray.600" mt={0.5} mb={3}>
+                        {intl.formatMessage({ id: 'events.chemical.conditions.help' })}
+                      </Text>
+                      {conditionsNotApplicable && (
+                        <Text
+                          fontSize="xs"
+                          color="gray.600"
+                          mb={3}
+                          data-testid="spray-conditions-not-applicable">
+                          {intl.formatMessage({ id: 'events.chemical.conditions.notApplicable' })}
+                        </Text>
+                      )}
+                      {showConditionReadings && (
+                        <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4} mb={4}>
+                          <StandardField
+                            label={intl.formatMessage({ id: 'events.chemical.fields.windFrom' })}
+                            error={errors.wind_from?.message}
+                            helpText={intl.formatMessage({
+                              id: 'events.chemical.form.windFromHelp'
+                            })}>
+                            <Controller
+                              name="wind_from"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardSelect {...field}>
+                                  <option value="">
+                                    {intl.formatMessage({
+                                      id: 'events.chemical.windFrom.placeholder'
+                                    })}
+                                  </option>
+                                  {WIND_FROM_OPTIONS.map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                      {intl.formatMessage({ id: option.labelKey })}
+                                    </option>
+                                  ))}
+                                </StandardSelect>
+                              )}
+                            />
+                          </StandardField>
+                          <StandardField
+                            label={intl.formatMessage({
+                              id: 'events.chemical.fields.windSpeedMph'
+                            })}
+                            error={errors.wind_speed_mph?.message}>
+                            <Controller
+                              name="wind_speed_mph"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardInput
+                                  {...field}
+                                  type="number"
+                                  step="0.1"
+                                  min="0"
+                                  max="150"
+                                  placeholder="0"
+                                />
+                              )}
+                            />
+                          </StandardField>
+                          <StandardField
+                            label={intl.formatMessage({
+                              id: 'events.chemical.fields.airTemperatureF'
+                            })}
+                            error={errors.air_temperature_f?.message}>
+                            <Controller
+                              name="air_temperature_f"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardInput
+                                  {...field}
+                                  type="number"
+                                  step="0.1"
+                                  min="-40"
+                                  max="140"
+                                  placeholder="0"
+                                />
+                              )}
+                            />
+                          </StandardField>
+                        </SimpleGrid>
+                      )}
+                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                        <StandardField
+                          label={intl.formatMessage({ id: 'events.chemical.fields.carrierVolume' })}
+                          error={
+                            errors.carrier_volume?.message || errors.carrier_volume_unit?.message
+                          }
+                          helpText={intl.formatMessage({
+                            id: 'events.chemical.form.carrierVolumeHelp'
+                          })}>
+                          <HStack spacing={2}>
+                            <Controller
+                              name="carrier_volume"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardInput
+                                  {...field}
+                                  type="number"
+                                  step="0.1"
+                                  min="0"
+                                  placeholder="0"
+                                  flex={2}
+                                />
+                              )}
+                            />
+                            <Controller
+                              name="carrier_volume_unit"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardSelect
+                                  {...field}
+                                  flex={1}
+                                  aria-label={intl.formatMessage({
+                                    id: 'events.chemical.carrierUnit.placeholder'
+                                  })}>
+                                  <option value="">
+                                    {intl.formatMessage({
+                                      id: 'events.chemical.carrierUnit.placeholder'
+                                    })}
+                                  </option>
+                                  {CARRIER_VOLUME_UNITS.filter(
+                                    (option) =>
+                                      !multiTarget ||
+                                      !CARRIER_UNITS_REFUSED_ON_SEVERAL_PARCELS.has(option.value) ||
+                                      field.value === option.value
+                                  ).map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                      {intl.formatMessage({ id: option.labelKey })}
+                                    </option>
+                                  ))}
+                                </StandardSelect>
+                              )}
+                            />
+                          </HStack>
+                        </StandardField>
+                        <StandardField
+                          label={intl.formatMessage({
+                            id: 'events.chemical.fields.apparatusLicensePlate'
+                          })}
+                          error={errors.apparatus_license_plate?.message}
+                          helpText={intl.formatMessage({
+                            id: 'events.chemical.form.apparatusLicensePlateHelp'
+                          })}>
+                          <Controller
+                            name="apparatus_license_plate"
+                            control={methods.control}
+                            render={({ field }) => <StandardInput {...field} maxLength={20} />}
+                          />
+                        </StandardField>
+                      </SimpleGrid>
+                    </Box>
+
                     {/* Applied for hire. A licensed pest control business is the reporter for its
                         own applications on the CA PUR (3 CCR 6626(b); PUE Compendium Vol. 1 Ch. 4
                         p. 4-8 — the grower "should not include applications made by pest control
@@ -4647,6 +5011,26 @@ const ChemicalTab = forwardRef(
                               )}
                             />
                           </StandardField>
+                          {/* WAC 16-228-1320(1)(n): the firm's complete address. */}
+                          <Box mt={3}>
+                            <StandardField
+                              label={intl.formatMessage({
+                                id: 'events.chemical.fields.commercialFirmAddress'
+                              })}>
+                              <Controller
+                                name="commercial_firm_address"
+                                control={methods.control}
+                                render={({ field }) => (
+                                  <StandardInput
+                                    {...field}
+                                    placeholder={intl.formatMessage({
+                                      id: 'events.chemical.form.commercialFirmAddressPlaceholder'
+                                    })}
+                                  />
+                                )}
+                              />
+                            </StandardField>
+                          </Box>
                         </Box>
                       )}
                     </Box>
@@ -5451,6 +5835,49 @@ const ChemicalTab = forwardRef(
                               placeholder={intl.formatMessage({
                                 id: 'events.chemical.form.applicatorNamePlaceholder',
                                 defaultMessage: 'Enter applicator name'
+                              })}
+                            />
+                          )}
+                        />
+                      </StandardField>
+
+                      {/* The applicator's address and phone (WAC 16-228-1320(1)(l)). Saved as
+                          text on this record, so a later change to the person's details never
+                          rewrites a spray already logged. */}
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.chemical.fields.applicatorAddress'
+                        })}
+                        helpText={intl.formatMessage({
+                          id: 'events.chemical.form.applicatorAddressHelp'
+                        })}>
+                        <Controller
+                          name="applicator_address"
+                          control={methods.control}
+                          render={({ field }) => (
+                            <StandardInput
+                              {...field}
+                              placeholder={intl.formatMessage({
+                                id: 'events.chemical.form.applicatorAddressPlaceholder'
+                              })}
+                            />
+                          )}
+                        />
+                      </StandardField>
+
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.chemical.fields.applicatorPhone'
+                        })}>
+                        <Controller
+                          name="applicator_phone"
+                          control={methods.control}
+                          render={({ field }) => (
+                            <StandardInput
+                              {...field}
+                              type="tel"
+                              placeholder={intl.formatMessage({
+                                id: 'events.chemical.form.applicatorPhonePlaceholder'
                               })}
                             />
                           )}
