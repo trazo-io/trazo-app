@@ -177,24 +177,25 @@ describe('invitation setup page: terms and refused passwords', () => {
     expect(label!.querySelector('a')).toBeNull();
   });
 
-  it('names the reasons the strength indicator cannot show, in the reader language', async () => {
-    const { passwordValidator } = await import('utils/passwordValidation');
-    const { weakPasswordReasonId } = await import('../SetupPassword');
+  it('names the refusal reason in the reader language, with the same words as sign-up', async () => {
+    // Review of app #378: this screen kept its own table with different wording for the same
+    // validator sentences; it now uses the shared `weakPasswordToastBody`.
+    const { passwordValidator, weakPasswordToastBody } = await import('utils/passwordValidation');
+    const { createIntl } = await import('react-intl');
+    const intl = createIntl({ locale: 'es-419', messages: es419 as Record<string, string> });
     const withName = passwordValidator.validate('Grower#2026xQ', {
       firstName: 'Jane',
       lastName: 'Grower'
     });
     expect(withName.isValid).toBe(false);
-    const id = weakPasswordReasonId(withName.errors);
-    expect(id).toBe('auth.invitationSetup.weakPassword.personalInfo');
-    expect((es419 as Record<string, string>)[id]).toBe(
-      'Tu contraseña no puede contener tu nombre.'
+    expect(weakPasswordToastBody(intl, withName.errors)).toBe(
+      'No uses tu nombre ni tu correo electrónico en la contraseña.'
     );
-    expect(weakPasswordReasonId(['Password is too simple. Try making it longer'])).toBe(
-      'auth.invitationSetup.weakPassword.tooSimple'
+    expect(weakPasswordToastBody(intl, ['Password is too simple. Try making it longer'])).toBe(
+      (es419 as Record<string, string>)['auth.password.message.tooSimple']
     );
-    expect(weakPasswordReasonId(['Password must contain at least one number'])).toBe(
-      'auth.signup.toast.weakPassword.body'
+    expect(weakPasswordToastBody(intl, ['Something no table knows'])).toBe(
+      (es419 as Record<string, string>)['auth.signup.toast.weakPassword.body']
     );
   });
 });

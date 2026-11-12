@@ -373,3 +373,19 @@ export function passwordMessage(
   }
   return null;
 }
+
+/**
+ * The body of the "weak password" toast: the first refusal reason, in the reader's language, or
+ * the generic line when no reason maps. One function for every screen that shows the toast (sign-up
+ * and invitation setup), so the same refusal never reads two ways (review of app #378).
+ */
+export function weakPasswordToastBody(
+  intl: { formatMessage: (d: { id: string }, v?: Record<string, string>) => string },
+  errors: string[] | undefined
+): string {
+  for (const error of errors ?? []) {
+    const known = passwordMessage(error);
+    if (known) return intl.formatMessage({ id: known.id }, known.values);
+  }
+  return intl.formatMessage({ id: 'auth.signup.toast.weakPassword.body' });
+}
