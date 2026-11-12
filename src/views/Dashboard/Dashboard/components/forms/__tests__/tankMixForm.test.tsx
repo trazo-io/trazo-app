@@ -28,13 +28,13 @@ afterEach(cleanup);
 const messages = enUS as unknown as Record<string, string>;
 const intl = createIntl({ locale: 'en', messages });
 
-const store = () =>
+const store = (state = 'WA') =>
   configureStore({
     reducer: {
       company: () => ({
         currentCompany: {
           id: 1,
-          establishments: [{ id: 1, name: 'Test Orchard', state: 'WA', country: 'US' }]
+          establishments: [{ id: 1, name: 'Test Orchard', state, country: 'US' }]
         }
       }),
       [baseApi.reducerPath]: baseApi.reducer
@@ -48,9 +48,13 @@ const SPRAY = {
   application_method: 'air_blast'
 };
 
-const mount = (props: Record<string, unknown> = {}, initial: Record<string, unknown> = {}) =>
+const mount = (
+  props: Record<string, unknown> = {},
+  initial: Record<string, unknown> = {},
+  farmState = 'WA'
+) =>
   render(
-    <Provider store={store()}>
+    <Provider store={store(farmState)}>
       <MemoryRouter initialEntries={['/admin/dashboard/farm/1/parcel/2/event/add']}>
         <Routes>
           <Route
@@ -246,6 +250,62 @@ describe('a line’s own target pest and purchase', () => {
   });
 });
 
+describe('review of app #380 on the form', () => {
+  it('each product line asks Restricted Use, and a line with it makes the applicator number owed', async () => {
+    const { container } = mount({ allowTankMix: true });
+    fireEvent.click(await addButton());
+    const line = await screen.findByTestId('tank-line-2');
+    const rup = within(line).getByText('This product is classified as Restricted Use');
+    expect(rup).toBeInTheDocument();
+    expect(screen.queryByText(/Required for restricted use pesticides/)).toBeNull();
+    fireEvent.click(container.querySelector('#tank-line-2-rup')!);
+    await waitFor(() =>
+      expect((container.querySelector('#tank-line-2-rup') as HTMLInputElement).checked).toBe(true)
+    );
+    // Product 1 is not Restricted Use; line 2 is, so the applicator's number is now owed.
+    expect(await screen.findByText(/Required for restricted use pesticides/)).toBeInTheDocument();
+  });
+
+  it('a California farm is asked the county permit for a restricted product line', async () => {
+    const { container } = mount({ allowTankMix: true }, {}, 'CA');
+    fireEvent.click(await addButton());
+    await screen.findByTestId('tank-line-2');
+    expect(screen.queryByTestId('tank-line-2-permit')).toBeNull();
+    fireEvent.change(container.querySelector('[name="tank_lines.0.commercial_name"]')!, {
+      target: { value: 'Kocide 3000-O' }
+    });
+    expect(await screen.findByTestId('tank-line-2-permit')).toBeInTheDocument();
+    expect(container.querySelector('[name="tank_lines.0.ca_dpr_permit_number"]')).not.toBeNull();
+  });
+
+  it('a Washington farm is not asked a California permit for the same product', async () => {
+    const { container } = mount({ allowTankMix: true });
+    fireEvent.click(await addButton());
+    await screen.findByTestId('tank-line-2');
+    fireEvent.change(container.querySelector('[name="tank_lines.0.commercial_name"]')!, {
+      target: { value: 'Kocide 3000-O' }
+    });
+    await waitFor(() =>
+      expect(
+        (container.querySelector('[name="tank_lines.0.commercial_name"]') as HTMLInputElement).value
+      ).toBe('Kocide 3000-O')
+    );
+    expect(screen.queryByTestId('tank-line-2-permit')).toBeNull();
+  });
+
+  it('a new line after a dispenser record seeds gallons, a unit its select offers', async () => {
+    const { container } = mount(
+      { allowTankMix: true },
+      { volume_unit: 'dispensers', application_method: 'hand_dispenser' }
+    );
+    fireEvent.click(await addButton());
+    await screen.findByTestId('tank-line-2');
+    expect(
+      (container.querySelector('[name="tank_lines.0.volume_unit"]') as HTMLSelectElement).value
+    ).toBe('gal');
+  });
+});
+
 describe('a record that is not a new spray', () => {
   it('keeps showing the partners an old record holds, and offers no tank lines', async () => {
     const { container } = mount(
@@ -327,6 +387,32 @@ describe('each line answers what product 1 answers', () => {
     };
     expect(issues([filled])).toEqual([]);
     expect(issues([{ ...filled, concentration: '90%' }])).toEqual(['tank_lines.0.concentration']);
+  });
+
+  it('a Restricted Use line makes the applicator certification number required', () => {
+    const line = {
+      ...newTankLine(),
+      commercial_name: 'Kocide 3000-O',
+      concentration: '30%',
+      volume_numeric: '6',
+      restricted_use_pesticide: 'true'
+    };
+    const result = buildChemicalSchema(intl, { multiTarget: false }).safeParse({
+      ...base,
+      tank_lines: [line]
+    });
+    expect(result.success).toBe(false);
+    expect(
+      (result as { error: { issues: { path: string[] }[] } }).error.issues.map((i) =>
+        i.path.join('.')
+      )
+    ).toContain('applicator_certification');
+    const withNumber = buildChemicalSchema(intl, { multiTarget: false }).safeParse({
+      ...base,
+      applicator_certification: 'WA-12345',
+      tank_lines: [line]
+    });
+    expect(withNumber.success).toBe(true);
   });
 
   it('with several parcels the line needs no amount', () => {

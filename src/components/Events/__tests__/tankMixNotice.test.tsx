@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { IntlProvider } from 'react-intl';
 import { Provider } from 'react-redux';
@@ -70,6 +70,33 @@ describe('TankMixNotice', () => {
     mount('detail', es419 as Record<string, string>);
     expect(screen.getByText('Un tanque, 3 productos')).toBeInTheDocument();
     expect(screen.getByText(/Dyne-Amic \(coadyuvante\)/)).toBeInTheDocument();
+  });
+
+  it('says "1 product", not "1 products", when the tank has no other line here', () => {
+    detail.data = {
+      tank_mix: { ...LINE_2, line: 1, carries_pass: true, pass_line: 1, pass_record: 6, lines: [] }
+    };
+    mount('detail');
+    expect(screen.getByText('One tank, 1 product')).toBeInTheDocument();
+    cleanup();
+    mount('detail', es419 as Record<string, string>);
+    expect(screen.getByText('Un tanque, 1 producto')).toBeInTheDocument();
+  });
+
+  it('names the one record carrying the pass when two share a line number', () => {
+    detail.data = {
+      tank_mix: {
+        ...LINE_2,
+        pass_line: 1,
+        pass_record: 9,
+        lines: [
+          { id: 6, line: 1, role: 'product', commercial_name: 'Entrust SC' },
+          { id: 9, line: 1, role: 'product', commercial_name: 'Kocide 3000-O' }
+        ]
+      }
+    };
+    mount('detail');
+    expect(screen.getByText(/recorded on Kocide 3000-O, line 1/)).toBeInTheDocument();
   });
 
   it('says nothing outside a tank', () => {

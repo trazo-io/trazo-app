@@ -6,17 +6,21 @@
  * fact on a product line, and a pass's fuel on any line but the first. These pin the body the
  * wizard builds for one parcel and for several, against the split in the spec copy.
  */
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { describe, expect, it } from 'vitest';
 import enUS from '../../../i18n/lang/en-US.json';
 import es419 from '../../../i18n/lang/es-419.json';
 
+import { isCaCountyRestricted } from '../caRestrictedMaterials';
 import { specRulesFor } from '../multiParcel';
 import {
   TANK_MIX,
   buildTankMixBody,
   defaultTargetPest,
+  describeSeveralRecordErrors,
+  pruneTankCardValues,
   newTankLine,
-  tankCardFieldKey,
   tankCardFields,
   tankLineIssues,
   tankLineRequest,
@@ -323,7 +327,8 @@ describe('the tank request on several parcels', () => {
     scope: 'part' as const,
     partArea: '6',
     // The grower typed this one; the rest derive from each product's rate.
-    values: { [tankCardFieldKey(3)]: '12' }
+    // Keyed by the line's own field (its id), never by its position in the tank.
+    values: { [cards.fields[1].key]: '12' }
   };
   const multi = buildMultiTargetBody(
     { ...singleBody(), application_rate: '6', application_rate_unit: 'fl_oz_ac' },
@@ -382,5 +387,114 @@ describe('the tank request on several parcels', () => {
       expect((enUS as Record<string, string>)[id], id).toBeTruthy();
       expect((es419 as Record<string, string>)[id], id).toBeTruthy();
     }
+  });
+});
+
+describe('review of app #380', () => {
+  it('a removed product takes its parcel amounts with it, and never hands them to another', () => {
+    // 4. Amounts keyed by the line's id: removing Kocide leaves Dyne-Amic's 8, not Kocide's 6.
+    const lines = [kocide(), dyneAmic()];
+    const rules = specRulesFor(2, null)!;
+    const before = tankCardFields(lines);
+    const [kocideKey, dyneKey] = before.fields.map((f) => f.key);
+    const target = {
+      ...newTarget({ id: 2, name: 'North', area: 0 }),
+      scope: 'part' as const,
+      partArea: '4',
+      values: { [kocideKey]: '6', [dyneKey]: '8' }
+    };
+    const remaining = [lines[1]];
+    const [pruned] = pruneTankCardValues([target], remaining);
+    expect(pruned.values).toEqual({ [dyneKey]: '8' });
+    const after = tankCardFields(remaining);
+    expect(after.fields[0].key).toBe(dyneKey);
+    const multi = buildMultiTargetBody(
+      { ...singleBody(), application_rate: '6', application_rate_unit: 'fl_oz_ac' },
+      [pruned],
+      { ...rules, fields: [...rules.fields, ...after.fields] },
+      {
+        volume_unit: 'fl_oz',
+        area_unit: 'acres',
+        application_rate: '6',
+        application_rate_unit: 'fl_oz_ac',
+        ...after.form
+      },
+      'unused'
+    );
+    const body = buildTankMixBody({
+      body: multi,
+      lines: remaining,
+      tankId: 't',
+      perTargetKeys: PER_TARGET
+    });
+    expect((body.targets as Record<string, unknown>[])[0].products).toEqual([
+      { volume_applied: '24' },
+      { volume_applied: '8' }
+    ]);
+    // Nothing to prune: the same array comes back, so the form does not re-render for nothing.
+    const unchanged = [target];
+    expect(pruneTankCardValues(unchanged, lines)).toBe(unchanged);
+  });
+
+  it('each line carries its own Restricted Use flag and CA permit to its record', () => {
+    // 5.
+    const line = {
+      ...kocide(),
+      restricted_use_pesticide: 'true',
+      ca_dpr_permit_number: 'SD-2026-00147',
+      ca_dpr_permit_county: 'San Diego',
+      ca_dpr_permit_expires: '2026-12-31'
+    };
+    expect(tankLineRequest(line)).toMatchObject({
+      restricted_use_pesticide: true,
+      ca_dpr_permit_number: 'SD-2026-00147',
+      ca_dpr_permit_county: 'San Diego',
+      ca_dpr_permit_expires: '2026-12-31'
+    });
+    expect(tankLineRequest(kocide())).not.toHaveProperty('restricted_use_pesticide');
+    expect(isCaCountyRestricted('Kocide 3000-O')).toBe(true);
+    expect(isCaCountyRestricted('Dyne-Amic')).toBe(false);
+  });
+
+  it('a new line never seeds a unit its select does not offer', () => {
+    // 7. A dispenser count is product 1's alone; a line falls back to gallons.
+    expect(newTankLine('product', 'dispensers').volume_unit).toBe('gal');
+    expect(newTankLine('product', 'dispensers').quantity_purchased_unit).toBe('gal');
+    expect(newTankLine('product', 'oz').volume_unit).toBe('gal');
+    expect(newTankLine('product', 'fl_oz').volume_unit).toBe('fl_oz');
+    expect(newTankLine().uid).not.toBe(newTankLine().uid);
+  });
+
+  it('says every refusal: the product line and the parcel, named, never a raw id', () => {
+    // 8.
+    const text = describeSeveralRecordErrors(
+      {
+        products: { '2': { rei_hours: ['REI cannot be negative'] } },
+        targets: { '12': ['No open production'] }
+      },
+      {
+        includeTargets: true,
+        lineText: (line, message) => `Product ${line}: ${message}`,
+        nameOf: (key) => (key === '12' ? 'North Block' : null)
+      }
+    );
+    expect(text).toBe('Product 2: REI cannot be negative; North Block: No open production');
+    const unnamed = describeSeveralRecordErrors(
+      { targets: { '99': ['No open production'] } },
+      { includeTargets: true, lineText: (l, m) => m, nameOf: () => null }
+    );
+    expect(unnamed).toBe('No open production');
+    expect(unnamed).not.toContain('99');
+  });
+
+  it('the wizard joins both and names the single-parcel tank’s parcel', () => {
+    const src = readFileSync(
+      join(__dirname, '../../../views/Dashboard/Dashboard/components/forms/NewEvent.jsx'),
+      'utf8'
+    );
+    expect(src).toContain('describeSeveralRecordErrors(error?.data');
+    expect(src).toContain('includeTargets: multiActive || tankRequested');
+    expect(src).toContain('farmParcels.find((p) => String(p.id) === parcel)?.name');
+    expect(src).toContain('setMultiTargets((prev) => pruneTankCardValues(prev, tankLines))');
   });
 });

@@ -32,8 +32,15 @@ import { ReceiptDocumentSelect } from 'components/Forms/ReceiptDocumentSelect';
 // @ts-expect-error OrganicBasisBlankNotice is a .jsx module with no type declarations.
 import OrganicBasisBlankNotice from 'views/Dashboard/Dashboard/components/forms/OrganicBasisBlankNotice';
 import { getSubtypes } from 'config/events';
+import { isCaCountyRestricted } from 'config/events/caRestrictedMaterials';
 import { APPLICATION_PURPOSES, APPLICATION_RATE_UNITS } from 'config/events/enums';
-import { TANK_MIX, defaultTargetPest, newTankLine, type TankLineForm } from 'config/events/tankMix';
+import {
+  TANK_LINE_VOLUME_UNITS,
+  TANK_MIX,
+  defaultTargetPest,
+  newTankLine,
+  type TankLineForm
+} from 'config/events/tankMix';
 
 /** The organic bases product 1 offers, in its order (ChemicalTab section 1). */
 const ORGANIC_BASES = [
@@ -46,16 +53,17 @@ const ORGANIC_BASES = [
   ['transitional', 'events.organicApproved.transitionalOption']
 ] as const;
 
-/** Product units a tank line offers: the spray form's, without the dispenser count (never mixed). */
-const VOLUME_UNITS = [
-  ['L', 'app.unit.liters'],
-  ['gal', 'app.unit.gallons'],
-  ['mL', 'app.unit.milliliters'],
-  ['fl_oz', 'app.unit.fluidOunces'],
-  ['oz_wt', 'app.unit.ouncesWeight'],
-  ['kg', 'app.unit.kilograms'],
-  ['lbs', 'app.unit.pounds']
-] as const;
+/** Labels of the product units a tank line offers (`TANK_LINE_VOLUME_UNITS`, config/events/tankMix). */
+const UNIT_LABELS: Record<string, string> = {
+  L: 'app.unit.liters',
+  gal: 'app.unit.gallons',
+  mL: 'app.unit.milliliters',
+  fl_oz: 'app.unit.fluidOunces',
+  oz_wt: 'app.unit.ouncesWeight',
+  kg: 'app.unit.kilograms',
+  lbs: 'app.unit.pounds'
+};
+const VOLUME_UNITS = TANK_LINE_VOLUME_UNITS.map((code) => [code, UNIT_LABELS[code]] as const);
 
 export interface TankMixLinesProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -64,12 +72,18 @@ export interface TankMixLinesProps {
   severalParcels: boolean;
   /** On a farm whose farming method is organic the basis is required, as for product 1. */
   requiresOrganicBasis: boolean;
+  /** The spray's own type (FE/PE/FU/HE): a line's type when the line names none. */
+  sprayType?: string;
+  /** A California farm: a county-restricted product line asks its permit, as product 1 does. */
+  isCaFarm?: boolean;
 }
 
 export const TankMixLines = ({
   methods,
   severalParcels,
-  requiresOrganicBasis
+  requiresOrganicBasis,
+  sprayType = '',
+  isCaFarm = false
 }: TankMixLinesProps) => {
   const intl = useIntl();
   const { control } = methods;
@@ -120,6 +134,16 @@ export const TankMixLines = ({
         )}
         {fields.map((item, index) => {
           const role = methods.watch(at(index, 'role'));
+          // The type this line is recorded under: its own, or the spray's.
+          const lineType = methods.watch(at(index, 'type')) || sprayType;
+          // Product 1's CA permit gate, per line: a California farm and a county-restricted
+          // product, or a line already holding a permit value (what was typed stays in sight).
+          const holdsPermit = (
+            ['ca_dpr_permit_number', 'ca_dpr_permit_county', 'ca_dpr_permit_expires'] as const
+          ).some((key) => String(methods.watch(at(index, key)) ?? '').trim() !== '');
+          const asksPermit =
+            holdsPermit ||
+            (isCaFarm && isCaCountyRestricted(methods.watch(at(index, 'commercial_name'))));
           const notOnRecord = methods.watch(at(index, 'concentration_not_recorded')) === 'true';
           return (
             <Box
@@ -421,6 +445,88 @@ export const TankMixLines = ({
                     />
                   </StandardField>
                 </SimpleGrid>
+
+                {/* Restricted Use is this product's own fact (40 CFR 152.175); any line with it
+                    makes the applicator's certification number required, as product 1 does. Asked
+                    for the types that render it on product 1. */}
+                {['PE', 'HE', 'FU'].includes(lineType) && (
+                  <Controller
+                    name={at(index, 'restricted_use_pesticide')}
+                    control={control}
+                    render={({ field }) => (
+                      <Checkbox
+                        id={`tank-line-${index + 2}-rup`}
+                        colorScheme="red"
+                        minH="44px"
+                        alignItems="center"
+                        isChecked={field.value === 'true'}
+                        onChange={(e) => field.onChange(e.target.checked ? 'true' : 'false')}>
+                        <Text fontSize="sm" color="gray.700">
+                          {intl.formatMessage({ id: 'events.chemical.restrictedUse.statement' })}
+                        </Text>
+                      </Checkbox>
+                    )}
+                  />
+                )}
+                {asksPermit && (
+                  <Box
+                    p={3}
+                    bg="gray.50"
+                    borderRadius="md"
+                    data-testid={`tank-line-${index + 2}-permit`}>
+                    <Text fontSize="sm" fontWeight="semibold" color="gray.800" mb={2}>
+                      {intl.formatMessage({ id: 'events.section.chemical.dprPermit' })}
+                    </Text>
+                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+                      <StandardField
+                        label={intl.formatMessage({ id: 'events.chemical.form.permitNumber' })}
+                        helpText={intl.formatMessage({
+                          id: 'events.chemical.form.permitNumberHelp'
+                        })}>
+                        <Controller
+                          name={at(index, 'ca_dpr_permit_number')}
+                          control={control}
+                          render={({ field }) => (
+                            <StandardInput {...field} placeholder="e.g., SD-2026-00147" />
+                          )}
+                        />
+                      </StandardField>
+                      <StandardField
+                        label={intl.formatMessage({ id: 'events.chemical.form.permitCounty' })}
+                        helpText={intl.formatMessage({
+                          id: 'events.chemical.form.permitCountyHelp'
+                        })}>
+                        <Controller
+                          name={at(index, 'ca_dpr_permit_county')}
+                          control={control}
+                          render={({ field }) => (
+                            <StandardInput
+                              {...field}
+                              placeholder={intl.formatMessage({
+                                id: 'events.chemical.form.permitCountyPlaceholder'
+                              })}
+                            />
+                          )}
+                        />
+                      </StandardField>
+                    </SimpleGrid>
+                    <Box mt={3}>
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.chemical.fields.caDprPermitExpires'
+                        })}
+                        helpText={intl.formatMessage({
+                          id: 'events.chemical.form.permitExpiresHelp'
+                        })}>
+                        <Controller
+                          name={at(index, 'ca_dpr_permit_expires')}
+                          control={control}
+                          render={({ field }) => <StandardInput {...field} type="date" />}
+                        />
+                      </StandardField>
+                    </Box>
+                  </Box>
+                )}
 
                 {/* This product's own target: one tank can carry an insecticide and a fungicide,
                     and a shared pest would print the wrong one on one of the two records. */}

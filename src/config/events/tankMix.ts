@@ -46,6 +46,11 @@ export type TankMixRole = 'product' | 'adjuvant';
 
 /** One product of the tank after the first, as the form holds it (strings, like the rest). */
 export interface TankLineForm {
+  /**
+   * Minted once per line and never reused. The parcel cards key this product's amount by it, so
+   * removing another line can never hand this product someone else's typed amount.
+   */
+  uid: string;
   role: TankMixRole;
   /** FE / PE / FU / HE when it differs from the spray's; blank keeps the spray's own type. */
   type: string;
@@ -77,7 +82,34 @@ export interface TankLineForm {
   chemical_lot_number: string;
   quantity_purchased: string;
   quantity_purchased_unit: string;
+  /** 'true' / 'false': this product is a Restricted Use Pesticide (the applicator's number is owed). */
+  restricted_use_pesticide: string;
+  /** A California county-restricted material's permit, asked as product 1 asks it. */
+  ca_dpr_permit_number: string;
+  ca_dpr_permit_county: string;
+  ca_dpr_permit_expires: string;
 }
+
+/** The product units a tank line offers: the spray form's, without a dispenser count (never mixed). */
+export const TANK_LINE_VOLUME_UNITS: readonly string[] = [
+  'L',
+  'gal',
+  'mL',
+  'fl_oz',
+  'oz_wt',
+  'kg',
+  'lbs'
+];
+
+let uidCounter = 0;
+/** A line id unique in this page: random where the browser has it, a counter otherwise. */
+export const newLineUid = (): string => {
+  uidCounter += 1;
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID().replace(/-/g, '');
+  }
+  return `l${Date.now().toString(36)}${uidCounter}`;
+};
 
 const filled = (value: unknown) =>
   value !== undefined && value !== null && String(value).trim() !== '';
@@ -95,33 +127,43 @@ export const newTankLine = (
   role: TankMixRole = 'product',
   volumeUnit = 'gal',
   { targetPest = '' }: { targetPest?: string } = {}
-): TankLineForm => ({
-  role,
-  type: '',
-  commercial_name: '',
-  active_ingredient: '',
-  epa_registration_number: '',
-  concentration: '',
-  concentration_not_recorded: 'false',
-  volume_numeric: '',
-  volume_unit: volumeUnit,
-  application_rate: '',
-  application_rate_unit: '',
-  rei_hours: '',
-  phi_days: '',
-  organic_approved: '',
-  omri_product: null,
-  wsda_material: null,
-  target_pest_disease: targetPest,
-  application_purpose: '',
-  supplier_name: '',
-  purchase_date: '',
-  purchase_invoice: '',
-  receipt_document: '',
-  chemical_lot_number: '',
-  quantity_purchased: '',
-  quantity_purchased_unit: volumeUnit
-});
+): TankLineForm => {
+  // Product 1's unit seeds the line only when a line can hold it: never a dispenser count, which
+  // the line's unit select does not offer and the form would then show as blank.
+  const unit = TANK_LINE_VOLUME_UNITS.includes(volumeUnit) ? volumeUnit : 'gal';
+  return {
+    uid: newLineUid(),
+    role,
+    type: '',
+    commercial_name: '',
+    active_ingredient: '',
+    epa_registration_number: '',
+    concentration: '',
+    concentration_not_recorded: 'false',
+    volume_numeric: '',
+    volume_unit: unit,
+    application_rate: '',
+    application_rate_unit: '',
+    rei_hours: '',
+    phi_days: '',
+    organic_approved: '',
+    omri_product: null,
+    wsda_material: null,
+    target_pest_disease: targetPest,
+    application_purpose: '',
+    supplier_name: '',
+    purchase_date: '',
+    purchase_invoice: '',
+    receipt_document: '',
+    chemical_lot_number: '',
+    quantity_purchased: '',
+    quantity_purchased_unit: unit,
+    restricted_use_pesticide: 'false',
+    ca_dpr_permit_number: '',
+    ca_dpr_permit_county: '',
+    ca_dpr_permit_expires: ''
+  };
+};
 
 export type TankLineIssue =
   | 'commercial_name'
@@ -202,6 +244,11 @@ export const tankLineRequest = (
       out.quantity_purchased_unit = String(line.quantity_purchased_unit);
     }
   }
+  // Restricted Use and the CA county permit are this product's own facts (each line its record).
+  if (line.restricted_use_pesticide === 'true') out.restricted_use_pesticide = true;
+  text('ca_dpr_permit_number');
+  text('ca_dpr_permit_county');
+  text('ca_dpr_permit_expires');
   if (typeof line.omri_product === 'number') out.omri_product = line.omri_product;
   if (typeof line.wsda_material === 'number') out.wsda_material = line.wsda_material;
   if (!severalParcels && filled(line.volume_numeric)) {
@@ -221,11 +268,39 @@ export const tankCardLabel = (
     : { labelId: 'events.multiParcel.field.tankLineUnnamed', labelValues: { n: lineNumber } };
 };
 
-/** The per-parcel card field of product N (2..), for the multi-parcel cards. */
-export const tankCardFieldKey = (lineNumber: number) => `tank_line_${lineNumber}_volume`;
-const rateKey = (n: number) => `tank_line_${n}_rate`;
-const rateUnitKey = (n: number) => `tank_line_${n}_rate_unit`;
-const unitKey = (n: number) => `tank_line_${n}_volume_unit`;
+/** A line's key: its minted id (a line without one, from an older draft, keys by position). */
+const lineKey = (line: Partial<TankLineForm>, index: number) => line.uid || `n${index + 2}`;
+
+/** The per-parcel card field of one product line, keyed by the line's id, never its position. */
+export const tankCardFieldKey = (key: string) => `tank_line_${key}_volume`;
+const rateKey = (key: string) => `tank_line_${key}_rate`;
+const rateUnitKey = (key: string) => `tank_line_${key}_rate_unit`;
+const unitKey = (key: string) => `tank_line_${key}_volume_unit`;
+const TANK_CARD_KEY = /^tank_line_.+_volume$/;
+
+/**
+ * The parcel cards' values with every removed line's amount taken out. A removed product's typed
+ * amount must not stay behind on the cards, where it could be read as another product's.
+ * Returns the same array when nothing changed.
+ */
+export const pruneTankCardValues = <T extends { values: Record<string, string> }>(
+  targets: T[],
+  lines: Partial<TankLineForm>[]
+): T[] => {
+  const live = new Set(lines.map((line, index) => tankCardFieldKey(lineKey(line, index))));
+  let changed = false;
+  const next = targets.map((target) => {
+    const stale = Object.keys(target.values).filter(
+      (key) => TANK_CARD_KEY.test(key) && !live.has(key)
+    );
+    if (stale.length === 0) return target;
+    changed = true;
+    const values = { ...target.values };
+    stale.forEach((key) => delete values[key]);
+    return { ...target, values };
+  });
+  return changed ? next : targets;
+};
 
 /**
  * The card fields and the shared-form values that let the parcel cards ask, and derive, each
@@ -233,17 +308,20 @@ const unitKey = (n: number) => `tank_line_${n}_volume_unit`;
  */
 export const tankCardFields = (lines: Partial<TankLineForm>[]) => ({
   fields: lines.map((line, index) => ({
-    key: tankCardFieldKey(index + 2),
-    unit_key: unitKey(index + 2),
+    key: tankCardFieldKey(lineKey(line, index)),
+    unit_key: unitKey(lineKey(line, index)),
     required: true,
-    derive: { rate_key: rateKey(index + 2), rate_unit_key: rateUnitKey(index + 2) },
+    derive: {
+      rate_key: rateKey(lineKey(line, index)),
+      rate_unit_key: rateUnitKey(lineKey(line, index))
+    },
     ...tankCardLabel(line.commercial_name, index + 2)
   })),
   form: Object.fromEntries(
     lines.flatMap((line, index) => [
-      [rateKey(index + 2), line.application_rate ?? ''],
-      [rateUnitKey(index + 2), line.application_rate_unit ?? ''],
-      [unitKey(index + 2), line.volume_unit ?? '']
+      [rateKey(lineKey(line, index)), line.application_rate ?? ''],
+      [rateUnitKey(lineKey(line, index)), line.application_rate_unit ?? ''],
+      [unitKey(lineKey(line, index)), line.volume_unit ?? '']
     ])
   ) as Record<string, unknown>
 });
@@ -341,11 +419,11 @@ export const buildTankMixBody = ({
         if (filled(t[key])) amounts[0].volume_applied = t[key];
         delete t[key];
       });
-      lines.forEach((_line, index) => {
-        const key = tankCardFieldKey(index + 2);
+      lines.forEach((line, index) => {
+        const key = tankCardFieldKey(lineKey(line, index));
         amounts.push(filled(t[key]) ? { volume_applied: t[key] } : {});
         delete t[key];
-        delete t[unitKey(index + 2)];
+        delete t[unitKey(lineKey(line, index))];
       });
       t.products = amounts;
       return t;
@@ -354,4 +432,56 @@ export const buildTankMixBody = ({
   }
 
   return { ...shared, tank_mix_group: tankId, products, targets };
+};
+
+/** A server refusal's detail as one sentence: lists and objects flattened in order. */
+const flattenDetail = (detail: unknown): string =>
+  Array.isArray(detail)
+    ? detail.map(flattenDetail).join(', ')
+    : detail && typeof detail === 'object'
+    ? Object.values(detail as Record<string, unknown>)
+        .map(flattenDetail)
+        .join(', ')
+    : String(detail);
+
+/**
+ * Everything a several-record refusal says, line by line and place by place, joined.
+ *
+ * A tank's server answer can carry both `products` (a line's fault, `{"2": ...}`) and `targets`
+ * (a place's fault, keyed `<parcel>` or `<parcel>/<block>`); neither may hide the other. A target
+ * is named by `nameOf` (a parcel name, with its block), and when no name is known the message
+ * stands alone rather than showing a raw id.
+ */
+export const describeSeveralRecordErrors = (
+  data: unknown,
+  {
+    includeTargets,
+    lineText,
+    nameOf,
+    targetText = (name, message) => `${name}: ${message}`
+  }: {
+    includeTargets: boolean;
+    lineText: (line: string, message: string) => string;
+    nameOf: (key: string) => string | null;
+    targetText?: (name: string, message: string) => string;
+  }
+): string => {
+  const body = data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
+  const parts: string[] = [];
+  const perLine = body.products;
+  if (Array.isArray(perLine)) parts.push(flattenDetail(perLine));
+  else if (perLine && typeof perLine === 'object') {
+    Object.entries(perLine as Record<string, unknown>).forEach(([line, detail]) =>
+      parts.push(lineText(line, flattenDetail(detail)))
+    );
+  }
+  const perTarget = body.targets;
+  if (includeTargets && perTarget && typeof perTarget === 'object' && !Array.isArray(perTarget)) {
+    Object.entries(perTarget as Record<string, unknown>).forEach(([key, detail]) => {
+      const name = nameOf(key);
+      const message = flattenDetail(detail);
+      parts.push(name ? targetText(name, message) : message);
+    });
+  }
+  return parts.join('; ');
 };

@@ -9685,7 +9685,7 @@
   "events.group.title": "{count, plural, other {One application on # parcels}}",
   "events.group.detailBody": "The same application is also recorded on {names}. Each parcel has its own record, with its own area and amounts.",
   "events.group.editBody": "Changes you save here apply to this parcel only. The same application is also recorded on {names}: edit those records to change them.",
-  "events.tankMix.title": "{count, plural, other {One tank, # products}}",
+  "events.tankMix.title": "{count, plural, one {One tank, # product} other {One tank, # products}}",
   "events.tankMix.detailBody": "Sprayed from the same tank as {names}. Each product is a record of its own, edited on its own.",
   "events.tankMix.editBody": "Saving changes this product's record only. The other products of the tank ({names}) do not change.",
   "events.tankMix.aloneBody": "This product was line {line} of a tank. The other products of that tank are no longer recorded on this parcel.",

@@ -103,7 +103,13 @@ import { AlsoAppliedTo, PerParcelCards } from 'components/Events/MultiParcel';
 import ActivityReview from 'components/Events/ActivityReview';
 import WizardActions from 'components/Design/WizardActions';
 import { eventTypeMayGoMulti, multiParcelRulesFor, specRulesFor } from 'config/events/multiParcel';
-import { buildTankMixBody, tankCardFields, tankCardLabel } from 'config/events/tankMix';
+import {
+  buildTankMixBody,
+  describeSeveralRecordErrors,
+  pruneTankCardValues,
+  tankCardFields,
+  tankCardLabel
+} from 'config/events/tankMix';
 import { useDefaultUnits } from 'hooks/useMeasurementSystem';
 import { useGetParcelGeometryQuery } from 'store/api/parcelGeometryApi';
 import { useGoogleMap } from '@react-google-maps/api';
@@ -965,6 +971,11 @@ function NewEventForm({ isEdit = false, eventId = null }) {
   });
   const multiParcelEligible = multiMode !== 'off';
   const [multiTargets, setMultiTargets] = useState([]);
+  // A removed tank product's typed amounts leave every parcel card with it (config/events/tankMix.ts):
+  // the cards key amounts by the line's id, so nothing moves onto another product either.
+  useEffect(() => {
+    setMultiTargets((prev) => pruneTankCardValues(prev, tankLines));
+  }, [tankLines]);
   const [showMultiIssues, setShowMultiIssues] = useState(false);
   // Minted once per wizard session and sent as the server's idempotency key, so a save retried
   // after a lost response returns the records already written instead of writing them again.
@@ -3564,48 +3575,36 @@ function NewEventForm({ isEdit = false, eventId = null }) {
         }
       }
 
-      // Several blocks: the server answers per block, `{"targets": {"<parcel id>": ...}}`, and
-      // nothing was written. Name the block, not the id, so the grower knows which one to fix.
-      const perBlock = error?.data?.targets;
-      const flatten = (detail) =>
-        Array.isArray(detail)
-          ? detail.map(flatten).join(', ')
-          : detail && typeof detail === 'object'
-          ? Object.values(detail).map(flatten).join(', ')
-          : String(detail);
-      // A tank: the server names the product line at fault, `{"products": {"2": ...}}`.
-      const perLine = error?.data?.products;
-      if (perLine && typeof perLine === 'object') {
-        fieldErrors = Array.isArray(perLine)
-          ? flatten(perLine)
-          : Object.entries(perLine)
-              .map(
-                ([line, detail]) =>
-                  `${intl.formatMessage(
-                    { id: 'events.chemical.tankMix.lineLabel' },
-                    { n: line }
-                  )}: ${flatten(detail)}`
-              )
-              .join('; ');
-      }
-      if (
-        (multiActive || perLine) &&
-        perBlock &&
-        typeof perBlock === 'object' &&
-        !Array.isArray(perBlock)
-      ) {
-        fieldErrors = Object.entries(perBlock)
-          .map(([id, detail]) =>
-            intl.formatMessage(
-              { id: 'events.multiParcel.blockFailed' },
-              {
-                name: multiTargets.find((t) => String(t.parcelId) === id)?.name || id,
-                message: flatten(detail)
-              }
-            )
-          )
-          .join('; ');
-      }
+      // Several records (a tank, or one activity on several blocks): nothing was written, and the
+      // grower must see which one to fix. The server names the product
+      // line at fault (`products`) and the place at fault (`targets`, keyed `<parcel>` or
+      // `<parcel>/<block>`). Both are said, joined (config/events/tankMix.ts), and a place by its
+      // name, the single-parcel tank's too, never by a raw id.
+      const tankRequested =
+        tankMixAllowed &&
+        Array.isArray(eventFormData.tank_lines) &&
+        eventFormData.tank_lines.length > 0;
+      const placeName = (key) => {
+        const [parcel, block] = String(key).split('/');
+        const name =
+          multiTargets.find((t) => String(t.parcelId) === parcel)?.name ||
+          farmParcels.find((p) => String(p.id) === parcel)?.name ||
+          '';
+        if (!name) return block || null;
+        return block ? `${name} (${block})` : name;
+      };
+      const severalRecordErrors = describeSeveralRecordErrors(error?.data, {
+        includeTargets: multiActive || tankRequested,
+        lineText: (line, message) =>
+          `${intl.formatMessage(
+            { id: 'events.chemical.tankMix.lineLabel' },
+            { n: line }
+          )}: ${message}`,
+        nameOf: placeName,
+        targetText: (name, message) =>
+          intl.formatMessage({ id: 'events.multiParcel.blockFailed' }, { name, message })
+      });
+      if (severalRecordErrors) fieldErrors = severalRecordErrors;
 
       const errorDescription = isValidationError
         ? error.message

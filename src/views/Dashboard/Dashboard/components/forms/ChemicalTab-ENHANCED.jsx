@@ -85,6 +85,7 @@ import {
 } from 'config/events/enums';
 import { specRulesFor } from 'config/events/multiParcel';
 import { tankLineIssues } from 'config/events/tankMix';
+import { isCaCountyRestricted } from 'config/events/caRestrictedMaterials';
 import { TankMixLines } from 'components/Events/TankMixLines';
 import { feetToMetres, metresToFeet } from 'utils/bufferZoneFeet';
 import { getSubtypes } from 'config/events';
@@ -394,7 +395,12 @@ export const buildChemicalSchema = (intl, { multiTarget = false } = {}) =>
         receipt_document: string().nullable().optional(),
         chemical_lot_number: string().optional(),
         quantity_purchased: string().optional(),
-        quantity_purchased_unit: string().optional()
+        quantity_purchased_unit: string().optional(),
+        uid: string().optional(),
+        restricted_use_pesticide: string().optional(),
+        ca_dpr_permit_number: string().optional(),
+        ca_dpr_permit_county: string().optional(),
+        ca_dpr_permit_expires: string().optional()
       })
     ).optional(),
     // Phase 3: Application fuel tracking for equipment fuel emissions
@@ -450,7 +456,12 @@ export const buildChemicalSchema = (intl, { multiTarget = false } = {}) =>
     // asterisk on that field was previously enforced by nothing at all.
     // Scoped to the types that RENDER the RUP switch — a stale 'true' carried across a
     // switch to FE must not demand a field the fertilizer form does not show.
-    if (['PE', 'HE', 'FU'].includes(data.type) && data.restricted_use_pesticide === 'true') {
+    // Any product of a tank mix counts: each line is a record of its own, and a Restricted Use line
+    // owes the (shared) applicator's certification number exactly as product 1 does.
+    const anyRestrictedUse =
+      (['PE', 'HE', 'FU'].includes(data.type) && data.restricted_use_pesticide === 'true') ||
+      (data.tank_lines || []).some((line) => line && line.restricted_use_pesticide === 'true');
+    if (anyRestrictedUse) {
       req(
         'applicator_certification',
         intl.formatMessage({
@@ -1458,7 +1469,10 @@ const ChemicalTab = forwardRef(
     const areaValue = watch('area_numeric') || watch('area_treated');
     const volumeValue = watch('volume_numeric') || watch('volume_applied');
     const concentrationValue = watch('concentration');
-    const isRestrictedUse = watch('restricted_use_pesticide') === 'true';
+    // Product 1, or any other product of the tank: the applicator's number is then owed.
+    const isRestrictedUse =
+      watch('restricted_use_pesticide') === 'true' ||
+      (watch('tank_lines') || []).some((line) => line?.restricted_use_pesticide === 'true');
 
     // D2 — derive the free-text "NPK Ratio" from the structured trio so the farmer types the
     // analysis once. Only fills when concentration is EMPTY: a value they typed themselves is
@@ -4279,6 +4293,8 @@ const ChemicalTab = forwardRef(
                   methods={methods}
                   severalParcels={multiTarget}
                   requiresOrganicBasis={requiresOrganicBasis}
+                  sprayType={chemicalType}
+                  isCaFarm={isCaFarm}
                 />
               )}
 
@@ -5654,19 +5670,8 @@ const ChemicalTab = forwardRef(
                 (isCaFarm || recordHoldsCaPermit) &&
                 (() => {
                   const name = (methods.watch('commercial_name') || '').toLowerCase();
-                  const CA_RESTRICTED_KEYWORDS = [
-                    'copper hydroxide',
-                    'copper sulfate',
-                    'copper oxychloride',
-                    'bordeaux',
-                    'kocide',
-                    'sulfur',
-                    'pyrethrin',
-                    'spinosad',
-                    'entrust',
-                    'rotenone'
-                  ];
-                  const isRestricted = CA_RESTRICTED_KEYWORDS.some((kw) => name.includes(kw));
+                  // One list for product 1 and every tank line (config/events/caRestrictedMaterials).
+                  const isRestricted = isCaCountyRestricted(name);
                   if (!isRestricted && !recordHoldsCaPermit) return null;
                   return (
                     <SectionBox>

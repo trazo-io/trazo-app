@@ -9685,7 +9685,7 @@
   "events.group.title": "{count, plural, other {Una aplicación en # parcelas}}",
   "events.group.detailBody": "La misma aplicación también está registrada en {names}. Cada parcela tiene un registro propio, con la superficie y las cantidades de esa parcela.",
   "events.group.editBody": "Los cambios que guardes aquí se aplican solo a esta parcela. La misma aplicación también está registrada en {names}: edita esos registros para cambiarlos.",
-  "events.tankMix.title": "{count, plural, other {Un tanque, # productos}}",
+  "events.tankMix.title": "{count, plural, one {Un tanque, # producto} other {Un tanque, # productos}}",
   "events.tankMix.detailBody": "Aplicado desde el mismo tanque que {names}. Cada producto es un registro aparte y se edita por separado.",
   "events.tankMix.editBody": "Guardar cambia solo el registro de este producto. Los demás productos del tanque ({names}) no cambian.",
   "events.tankMix.aloneBody": "Este producto fue la línea {line} de un tanque. Los demás productos de ese tanque ya no están registrados en esta parcela.",

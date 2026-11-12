@@ -31,6 +31,8 @@ export interface TankMixDetail {
   role: 'product' | 'adjuvant' | '';
   carries_pass: boolean;
   pass_line: number | null;
+  /** The ONE record that carries the pass (two records can share a line number). */
+  pass_record?: number | null;
   lines: TankMixLine[];
 }
 
@@ -66,7 +68,9 @@ export const TankMixNotice = ({ farmId, eventId, eventType, variant }: TankMixNo
   if (!tank) return null;
 
   const names = tankLineNames(tank.lines, intl);
-  const carrier = tank.lines.find((line) => line.line === tank.pass_line);
+  const carrier =
+    tank.lines.find((line) => tank.pass_record != null && line.id === tank.pass_record) ??
+    tank.lines.find((line) => line.line === tank.pass_line);
   const passElsewhere =
     !tank.carries_pass && tank.pass_line != null
       ? intl.formatMessage(
