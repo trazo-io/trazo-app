@@ -5,7 +5,7 @@
  * when a second is marked.
  */
 import React, { useState } from 'react';
-import { Divider, HStack, SimpleGrid, Text, useToast, VStack } from '@chakra-ui/react';
+import { Divider, HStack, SimpleGrid, Skeleton, Text, useToast, VStack } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
 
 import {
@@ -64,17 +64,31 @@ const ContactForm = ({
 
   const set =
     (key: keyof OperationContactInput) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
-      setForm({ ...form, [key]: e.target.value });
+    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+      const value = e.target.value;
+      // A description kept under a connection that no longer asks for it would ride the PATCH unseen.
+      if (key === 'connection' && value !== 'other') {
+        setForm({
+          ...form,
+          connection: value as OperationContactInput['connection'],
+          connection_other: ''
+        });
+        return;
+      }
+      setForm({ ...form, [key]: value });
+    };
   // The roles as one checkbox list: one person can hold several.
   const roles = ROLE_FLAGS.filter((flag) => form[flag]);
+  // Unticking "responsibly connected" clears its connection: the payload carries only what the form shows
+  // (review of app #379).
   const setRoles = (next: string[]) =>
     setForm({
       ...form,
       ...(Object.fromEntries(ROLE_FLAGS.map((flag) => [flag, next.includes(flag)])) as Record<
         RoleFlag,
         boolean
-      >)
+      >),
+      ...(next.includes('is_responsibly_connected') ? {} : { connection: '', connection_other: '' })
     });
 
   const save = async () => {
@@ -164,10 +178,12 @@ const OSPOperationContactsPanel = ({
 }: Scope & { isReadOnly?: boolean }) => {
   const intl = useIntl();
   const toast = useToast();
-  const { data: contacts = [], isError } = useGetOperationContactsQuery(
-    { companyId, farmId },
-    { skip: !companyId || !farmId }
-  );
+  const scoped = Boolean(companyId && farmId);
+  const {
+    data: contacts = [],
+    isLoading,
+    isError
+  } = useGetOperationContactsQuery({ companyId, farmId }, { skip: !scoped });
   // null: no form open; 'new': adding; a number: editing that row.
   const [editing, setEditing] = useState<number | 'new' | null>(null);
   // One DELETE per row: a double click must not send a second (review of app #363).
@@ -191,7 +207,10 @@ const OSPOperationContactsPanel = ({
     }
   };
 
-  if (isError) {
+  // A skipped query reads as not loading with no data: that is "unavailable", never "nobody named" (review of app
+  // #379). A failed fetch is not an absence either.
+  if (isLoading) return <Skeleton height="80px" borderRadius="md" />;
+  if (isError || !scoped) {
     return (
       <Text fontSize="sm" color="red.800">
         {intl.formatMessage({ id: 'osp.contacts.loadError' })}
