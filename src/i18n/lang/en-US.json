@@ -4698,6 +4698,7 @@
   "events.chemical.form.bufferZone": "Buffer Zone (meters)",
   "events.chemical.form.bufferZoneHelp": "Required buffer distance from sensitive areas",
   "events.chemical.form.bufferZoneFeet": "Buffer Zone (feet)",
+  "events.chemical.form.bufferZoneFeetPlaceholder": "e.g., 50",
   "events.chemical.form.chemicalSubtype": "Chemical Subtype",
   "events.chemical.form.chemicalSubtypeHelp": "Optional. Pick the kind of product the label describes.",
   "events.chemical.form.chemicalSubtypePlaceholder": "Select subtype (optional)...",

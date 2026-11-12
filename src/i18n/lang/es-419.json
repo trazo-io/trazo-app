@@ -4698,6 +4698,7 @@
   "events.chemical.form.bufferZone": "Zona de amortiguamiento (metros)",
   "events.chemical.form.bufferZoneHelp": "Distancia de amortiguamiento requerida respecto de áreas sensibles",
   "events.chemical.form.bufferZoneFeet": "Zona de amortiguamiento (pies)",
+  "events.chemical.form.bufferZoneFeetPlaceholder": "p. ej., 50",
   "events.chemical.form.chemicalSubtype": "Subtipo de insumo",
   "events.chemical.form.chemicalSubtypeHelp": "Opcional. Elige el tipo de producto que describe la etiqueta.",
   "events.chemical.form.chemicalSubtypePlaceholder": "Selecciona un subtipo (opcional)...",

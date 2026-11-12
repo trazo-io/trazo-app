@@ -4306,7 +4306,9 @@ const ChemicalTab = forwardRef(
                               type="number"
                               step="1"
                               min="0"
-                              placeholder="e.g., 50"
+                              placeholder={intl.formatMessage({
+                                id: 'events.chemical.form.bufferZoneFeetPlaceholder'
+                              })}
                             />
                           )}
                         />
