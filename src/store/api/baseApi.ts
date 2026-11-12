@@ -68,7 +68,8 @@ export const baseApi = createApi({
     'ProductionEquipment',
     'SeasonPlan',
     'FieldNote',
-    'CrewSender'
+    'CrewSender',
+    'Applicator'
   ]
 });
 

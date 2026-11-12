@@ -68,6 +68,7 @@ import React, {
 import { CarbonImpactPreview } from 'components/Events/CarbonImpactPreview';
 import { CHEMICAL_FUEL_TYPES } from 'config/events/chemicalFormOptions';
 import { ReceiptDocumentSelect } from 'components/Forms/ReceiptDocumentSelect';
+import ApplicatorPicker from 'components/Forms/ApplicatorPicker';
 import InputVerifyHelper from 'components/Compliance/InputVerifyHelper';
 import { object, string, array, number } from 'zod';
 import CustomFieldsForm from './CustomFieldsForm';
@@ -5814,6 +5815,21 @@ const ChemicalTab = forwardRef(
                           'EPA Worker Protection Standard (40 CFR 170.311(b)(1)): for each pesticide product applied, keep the safety data sheet, the product name, EPA registration number and active ingredients, the crop or site treated, the dates and times the application started and ended, and the restricted-entry interval. Applicator certification for restricted use pesticides is a separate federal rule (7 U.S.C. 136j(a)(2)(F)).'
                       })}
                     </Text>
+
+                    {/* A saved applicator's name, license, address and phone are COPIED into the
+                        inputs below on a pick, and stay editable. Only a pick copies: opening a
+                        record to edit it never refills it. The choice is not a form value, so it
+                        is never sent with the record. */}
+                    <ApplicatorPicker
+                      onPick={(values) =>
+                        Object.entries(values).forEach(([name, value]) =>
+                          methods.setValue(name, value || '', {
+                            shouldDirty: true,
+                            shouldValidate: true
+                          })
+                        )
+                      }
+                    />
 
                     <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                       <StandardField
