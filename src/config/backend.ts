@@ -150,6 +150,16 @@ export const POST_HARVEST_FACILITY_VERIFY_URL = (
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/post-harvest-facilities/${facilityId}/verify/`;
 // Seed and planting-stock suppliers and their organic certificates (CCOF G3.0, OTCO C3, WSDA
 // 2121-B). Company admins and farm managers only: a supplier list is commercial data.
+// The people the operation names to its certifier (OTCO O1 section B; CCOF Contract A4, C1, C2). Company admins
+// and farm managers only: names, phones and emails.
+export const OPERATION_CONTACT_URL = (
+  companyId: string,
+  farmId: string,
+  contactId?: string | number
+) =>
+  contactId != null
+    ? `${ROOT_URL}companies/${companyId}/establishments/${farmId}/operation-contacts/${contactId}/`
+    : `${ROOT_URL}companies/${companyId}/establishments/${farmId}/operation-contacts/`;
 export const BRAND_OWNER_URL = (companyId: string, farmId: string, ownerId?: string | number) =>
   ownerId != null
     ? `${ROOT_URL}companies/${companyId}/establishments/${farmId}/brand-owners/${ownerId}/`

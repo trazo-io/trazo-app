@@ -77,6 +77,7 @@ import { OSPLockedNotice, StartNewVersionButton } from './OSPLockedNotice';
 import OSPApprovedInputsPanel from './OSPApprovedInputsPanel';
 import OSPMaterialsListPanel from './OSPMaterialsListPanel';
 import OSPBrandOwnersPanel from './OSPBrandOwnersPanel';
+import OSPOperationContactsPanel from './OSPOperationContactsPanel';
 import OSPEquipmentPanel from './OSPEquipmentPanel';
 import OSPSourcedProductsPanel from './OSPSourcedProductsPanel';
 import OSPSeedlingSuppliersPanel from './OSPSeedlingSuppliersPanel';
@@ -332,6 +333,12 @@ const QuestionField = ({
                 companyId={companyId}
                 farmId={farmId}
                 onNavigateAway={onNavigateAway}
+              />
+            ) : question.embed === 'operation_contacts' ? (
+              <OSPOperationContactsPanel
+                companyId={companyId}
+                farmId={farmId}
+                isReadOnly={isReadOnly}
               />
             ) : question.embed === 'brand_owners' ? (
               <OSPBrandOwnersPanel

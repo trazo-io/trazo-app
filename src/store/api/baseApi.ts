@@ -65,6 +65,7 @@ export const baseApi = createApi({
     'CertifierNotice',
     'Supplier',
     'BrandOwner',
+    'OperationContact',
     'ProductionEquipment',
     'SeasonPlan',
     'FieldNote',

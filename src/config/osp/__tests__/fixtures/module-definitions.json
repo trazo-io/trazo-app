@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.12.02",
+  "content_version": "2026.12.07",
   "registry": {
-    "content_version": "2026.12.02",
+    "content_version": "2026.12.07",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -23020,6 +23020,28 @@
                 "max_length": null
               },
               {
+                "key": "operation_contacts",
+                "kind": "info",
+                "label": {
+                  "en": "The people you name to your certifier, and their roles",
+                  "es": "Las personas que nombras ante tu certificador, y sus funciones"
+                },
+                "coaching": {
+                  "en": "Include the legally responsible person, the primary contact, everyone authorized to meet inspectors or change the plan, and every partner, officer, director, manager or owner of 10 percent or more. One person can hold several roles.",
+                  "es": "Incluye a la persona legalmente responsable, al contacto principal, a cada persona autorizada para reunirse con inspectores o cambiar el plan, y a cada socio, directivo, gerente o dueño del 10 por ciento o más. Una misma persona puede tener varias funciones."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.2",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": "operation_contacts",
+                "placeholder": null,
+                "max_length": null
+              },
+              {
                 "key": "contract_scopes",
                 "kind": "checkbox_group",
                 "label": {
@@ -29302,6 +29324,7 @@
       },
       "visible_questions": [
         "contract_notes",
+        "operation_contacts",
         "contract_scopes",
         "contract_upload",
         "history_ever_certified",
@@ -29326,6 +29349,7 @@
       },
       "visible_questions": [
         "contract_notes",
+        "operation_contacts",
         "contract_scopes",
         "contract_upload",
         "history_ever_certified",
@@ -29351,6 +29375,7 @@
       },
       "visible_questions": [
         "contract_notes",
+        "operation_contacts",
         "contract_scopes",
         "contract_upload",
         "history_ever_certified",
@@ -29375,6 +29400,7 @@
       },
       "visible_questions": [
         "contract_notes",
+        "operation_contacts",
         "contract_scopes",
         "contract_upload",
         "history_ever_certified",
