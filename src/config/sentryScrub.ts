@@ -32,6 +32,15 @@ export function scrubEvent(event: ErrorEvent): ErrorEvent {
     event.request.url = scrubUrl(event.request.url) as string | undefined;
     delete event.request.query_string;
     delete event.request.cookies;
+    // The SDK copies document.referrer into the Referer header before this hook runs, and with
+    // `strict-origin-when-cross-origin` a same-origin referrer is the FULL previous URL, so the page
+    // after a review link or an invitation would carry its token here (review of #373).
+    const headers = event.request.headers;
+    if (headers) {
+      for (const name of Object.keys(headers)) {
+        if (name.toLowerCase() === 'referer') headers[name] = scrubUrl(headers[name]) as string;
+      }
+    }
   }
   if (event.breadcrumbs) {
     event.breadcrumbs = event.breadcrumbs.map(scrubBreadcrumb);

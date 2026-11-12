@@ -24,7 +24,8 @@ describe('what the browser sends to Sentry', () => {
       request: {
         url: `https://app.trazo.io/auth/confirm-email-change?token=${TOKEN}`,
         query_string: `token=${TOKEN}`,
-        cookies: { access: TOKEN }
+        cookies: { access: TOKEN },
+        headers: { Referer: `https://app.trazo.io/certifier-review/${TOKEN}?x=${TOKEN}` }
       },
       breadcrumbs: [
         { category: 'navigation', data: { from: '/', to: `/auth/reset-password?token=${TOKEN}` } },
@@ -37,6 +38,9 @@ describe('what the browser sends to Sentry', () => {
     // ANTI-VACUITY: the event still says where the error happened.
     expect(event.request?.url).toBe('https://app.trazo.io/auth/confirm-email-change');
     expect(event.breadcrumbs?.[1].data?.method).toBe('POST');
+    expect(event.request?.headers?.Referer).toBe(
+      'https://app.trazo.io/certifier-review/[redacted]'
+    );
     expect(event.breadcrumbs?.[2].message).toBe('button');
   });
 
