@@ -20,6 +20,12 @@ export interface PerParcelField {
   required: boolean;
   /** Suggest rate × area: never a value written unseen. */
   derive?: { rate_key: string; rate_unit_key: string };
+  /**
+   * The card label, when it is not `events.multiParcel.field.<key>`: each product of a tank mix
+   * names its own amount ("Kocide 3000-O applied (lb)", config/events/tankMix.ts).
+   */
+  labelId?: string;
+  labelValues?: Record<string, string | number>;
 }
 
 interface RawUi {

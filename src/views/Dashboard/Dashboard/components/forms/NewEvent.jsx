@@ -98,10 +98,12 @@ import { useGetSeasonPlanQuery } from 'store/api/seasonPlanApi';
 import { EventPreviewModal } from 'components/Events/EventPreviewModal';
 import { PhotoRecommendationsBox } from 'components/Events/PhotoRecommendationsBox';
 import { ApplicationGroupNotice } from 'components/Events/ApplicationGroupNotice';
+import { TankMixNotice } from 'components/Events/TankMixNotice';
 import { AlsoAppliedTo, PerParcelCards } from 'components/Events/MultiParcel';
 import ActivityReview from 'components/Events/ActivityReview';
 import WizardActions from 'components/Design/WizardActions';
-import { eventTypeMayGoMulti, multiParcelRulesFor } from 'config/events/multiParcel';
+import { eventTypeMayGoMulti, multiParcelRulesFor, specRulesFor } from 'config/events/multiParcel';
+import { buildTankMixBody, tankCardFields, tankCardLabel } from 'config/events/tankMix';
 import { useDefaultUnits } from 'hooks/useMeasurementSystem';
 import { useGetParcelGeometryQuery } from 'store/api/parcelGeometryApi';
 import { useGoogleMap } from '@react-google-maps/api';
@@ -887,8 +889,32 @@ function NewEventForm({ isEdit = false, eventId = null }) {
   // What the cards ask and the save sends: the spec's per-parcel fields, less any amount the
   // form itself would not ask for this activity (no fuel on an electric irrigation pump, none
   // on pollination). A value left on a card for a field that disappeared is not sent.
+  // Several products from one tank (OV-RK-C04): a new spray from the plain entry only. An edit is
+  // one product's record; a plan item and a crew note are answered by one record.
+  const tankMixAllowed =
+    activeEventType === 2 && !isEdit && !isRepeat && !activePlanItem && !fieldNoteIdFromUrl;
+  const tankLines = useMemo(
+    () =>
+      tankMixAllowed && Array.isArray(eventFormData.tank_lines) ? eventFormData.tank_lines : [],
+    [tankMixAllowed, eventFormData.tank_lines]
+  );
   const cardRules = useMemo(() => {
     if (!multiRules) return multiRules;
+    if (activeEventType === 2 && tankLines.length > 0) {
+      // Each product names its own amount on each parcel: product 1 the form's own, products
+      // 2..N from their lines, each derived from that product's rate when its units line up.
+      return {
+        ...multiRules,
+        fields: [
+          ...multiRules.fields.map((field) =>
+            field.key === 'volume_applied'
+              ? { ...field, ...tankCardLabel(eventFormData.commercial_name, 1) }
+              : field
+          ),
+          ...tankCardFields(tankLines).fields
+        ]
+      };
+    }
     if (activeEventType === 1) {
       const asks = productionAsksPerParcel(eventFormData.type, eventFormData.fuel_type);
       return {
@@ -915,7 +941,9 @@ function NewEventForm({ isEdit = false, eventId = null }) {
     activeEventType,
     eventFormData.type,
     eventFormData.fuel_type,
-    eventFormData.is_contamination_incident
+    eventFormData.is_contamination_incident,
+    eventFormData.commercial_name,
+    tankLines
   ]);
   const [multiParcelIds, setMultiParcelIds] = useState([]);
   // Soil and pest answer their subtype in their own tab, after the parcels are picked: the
@@ -941,6 +969,8 @@ function NewEventForm({ isEdit = false, eventId = null }) {
   // Minted once per wizard session and sent as the server's idempotency key, so a save retried
   // after a lost response returns the records already written instead of writing them again.
   const applicationGroupRef = useRef(null);
+  // The tank's id, minted once per wizard session: the server's idempotency key for a tank mix.
+  const tankMixGroupRef = useRef(null);
   const multiActive = multiMode === 'active';
   const multiParcelPaused = multiMode === 'paused';
   useEffect(() => {
@@ -1015,7 +1045,9 @@ function NewEventForm({ isEdit = false, eventId = null }) {
           ...(data || {}),
           volume_unit: data?.volume_unit || 'gal',
           application_fuel_unit: data?.application_fuel_unit || 'gal',
-          area_unit: data?.area_unit || 'acres'
+          area_unit: data?.area_unit || 'acres',
+          // Each tank product's rate and units, read by its card field (config/events/tankMix.ts).
+          ...(tankMixAllowed ? tankCardFields(data?.tank_lines || []).form : {})
         }
       : {
           ...(data || {}),
@@ -3268,6 +3300,14 @@ function NewEventForm({ isEdit = false, eventId = null }) {
         finalEventData.observation = farmerNote;
       }
 
+      // Products 2..N of a tank leave the record body: they are records of their own.
+      const tankLinesToSave =
+        tankMixAllowed && Array.isArray(finalEventData.tank_lines) ? finalEventData.tank_lines : [];
+      delete finalEventData.tank_lines;
+      const tankSave = tankLinesToSave.length > 0;
+      // Every key the server takes per parcel for a spray: a tank sends them in its target(s).
+      const tankPerTargetKeys = specRulesFor(2, null)?.perTargetKeys ?? new Set();
+
       let savedEvent;
       if (isEdit) {
         // Update existing event
@@ -3299,16 +3339,50 @@ function NewEventForm({ isEdit = false, eventId = null }) {
           return;
         }
         if (!applicationGroupRef.current) applicationGroupRef.current = newApplicationGroup();
+        const multiBody = buildMultiTargetBody(
+          finalEventData,
+          multiTargets,
+          cardRules,
+          multiForm(eventFormData),
+          applicationGroupRef.current
+        );
+        // Several products from one tank on these parcels (config/events/tankMix.ts): the cards
+        // above asked each product's amount on each parcel, and the tank id replaces the group.
+        if (tankSave && !tankMixGroupRef.current) tankMixGroupRef.current = newApplicationGroup();
         savedEvent = await createEvent({
           companyId: currentCompany.id,
           farmId: parseInt(farmId || '0'),
-          ...buildMultiTargetBody(
-            finalEventData,
-            multiTargets,
-            cardRules,
-            multiForm(eventFormData),
-            applicationGroupRef.current
-          )
+          ...(tankSave
+            ? buildTankMixBody({
+                body: multiBody,
+                lines: tankLinesToSave,
+                tankId: tankMixGroupRef.current,
+                perTargetKeys: tankPerTargetKeys
+              })
+            : multiBody)
+        }).unwrap();
+      } else if (tankSave) {
+        // Several products from one tank on this parcel: one request, one record per product,
+        // all or none (config/events/tankMix.ts).
+        if (!tankMixGroupRef.current) tankMixGroupRef.current = newApplicationGroup();
+        savedEvent = await createEvent({
+          companyId: currentCompany.id,
+          farmId: parseInt(farmId || '0'),
+          ...buildTankMixBody({
+            body: finalEventData,
+            lines: tankLinesToSave,
+            tankId: tankMixGroupRef.current,
+            perTargetKeys: tankPerTargetKeys,
+            singleTarget: {
+              parcel: Number(parcelId),
+              // The season this spray is logged on, when the form names one.
+              history:
+                postHarvestTarget?.id ??
+                (/^\d+$/.test(String(planProductionIdFromUrl ?? ''))
+                  ? Number(planProductionIdFromUrl)
+                  : null)
+            }
+          })
         }).unwrap();
       } else {
         // Create new event
@@ -3366,7 +3440,7 @@ function NewEventForm({ isEdit = false, eventId = null }) {
       // record's; the others share every field the checklist reads except amount and area.
       const savedRecordCount = Array.isArray(savedEvent?.records) ? savedEvent.records.length : 1;
       const savedToText = intl.formatMessage(
-        { id: 'events.multiParcel.savedTo' },
+        { id: tankSave ? 'events.chemical.tankMix.savedTo' : 'events.multiParcel.savedTo' },
         { count: savedRecordCount }
       );
       const completenessGaps = Array.isArray(savedEvent?.completeness_gaps)
@@ -3493,13 +3567,33 @@ function NewEventForm({ isEdit = false, eventId = null }) {
       // Several blocks: the server answers per block, `{"targets": {"<parcel id>": ...}}`, and
       // nothing was written. Name the block, not the id, so the grower knows which one to fix.
       const perBlock = error?.data?.targets;
-      if (multiActive && perBlock && typeof perBlock === 'object' && !Array.isArray(perBlock)) {
-        const flatten = (detail) =>
-          Array.isArray(detail)
-            ? detail.map(flatten).join(', ')
-            : detail && typeof detail === 'object'
-            ? Object.values(detail).map(flatten).join(', ')
-            : String(detail);
+      const flatten = (detail) =>
+        Array.isArray(detail)
+          ? detail.map(flatten).join(', ')
+          : detail && typeof detail === 'object'
+          ? Object.values(detail).map(flatten).join(', ')
+          : String(detail);
+      // A tank: the server names the product line at fault, `{"products": {"2": ...}}`.
+      const perLine = error?.data?.products;
+      if (perLine && typeof perLine === 'object') {
+        fieldErrors = Array.isArray(perLine)
+          ? flatten(perLine)
+          : Object.entries(perLine)
+              .map(
+                ([line, detail]) =>
+                  `${intl.formatMessage(
+                    { id: 'events.chemical.tankMix.lineLabel' },
+                    { n: line }
+                  )}: ${flatten(detail)}`
+              )
+              .join('; ');
+      }
+      if (
+        (multiActive || perLine) &&
+        perBlock &&
+        typeof perBlock === 'object' &&
+        !Array.isArray(perBlock)
+      ) {
         fieldErrors = Object.entries(perBlock)
           .map(([id, detail]) =>
             intl.formatMessage(
@@ -3915,6 +4009,15 @@ function NewEventForm({ isEdit = false, eventId = null }) {
               this parcel's only, and the form says so before the first field. */}
           {isEdit && (
             <ApplicationGroupNotice
+              farmId={farmId}
+              eventId={eventId}
+              eventType={eventTypeFromUrl}
+              variant="edit"
+            />
+          )}
+          {/* One product of a tank mix: saving changes this product's record only. */}
+          {isEdit && (
+            <TankMixNotice
               farmId={farmId}
               eventId={eventId}
               eventType={eventTypeFromUrl}
@@ -5027,6 +5130,7 @@ function NewEventForm({ isEdit = false, eventId = null }) {
                          factor and what the PUR export asserts. */
                       hideTypeSelect
                       multiTarget={multiActive}
+                      allowTankMix={tankMixAllowed}
                       carbonCalculation={carbonCalculation}
                       isCalculatingCarbon={isCalculatingCarbon || isCalculating}
                     />

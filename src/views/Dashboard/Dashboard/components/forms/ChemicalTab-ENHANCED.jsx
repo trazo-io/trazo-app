@@ -84,6 +84,8 @@ import {
   retiredOrganicApprovedLabelKey
 } from 'config/events/enums';
 import { specRulesFor } from 'config/events/multiParcel';
+import { tankLineIssues } from 'config/events/tankMix';
+import { TankMixLines } from 'components/Events/TankMixLines';
 import { feetToMetres, metresToFeet } from 'utils/bufferZoneFeet';
 import { getSubtypes } from 'config/events';
 import { isAffirmativeFlag } from 'config/events/formatters';
@@ -363,6 +365,38 @@ export const buildChemicalSchema = (intl, { multiTarget = false } = {}) =>
         organic_approved: string().optional()
       })
     ).optional(),
+    // Several products from one tank (OV-RK-C04): products 2..N, each saved as its own record
+    // (config/events/tankMix.ts). Product 1 is the form's own product above.
+    tank_lines: array(
+      object({
+        role: string().optional(),
+        type: string().optional(),
+        commercial_name: string().optional(),
+        active_ingredient: string().optional(),
+        epa_registration_number: string().optional(),
+        concentration: string().optional(),
+        concentration_not_recorded: string().optional(),
+        volume_numeric: string().optional(),
+        volume_unit: string().optional(),
+        application_rate: string().optional(),
+        application_rate_unit: string().optional(),
+        rei_hours: string().optional(),
+        phi_days: string().optional(),
+        organic_approved: string().optional(),
+        omri_product: number().nullable().optional(),
+        wsda_material: number().nullable().optional(),
+        // Each product's own target and purchase (zod drops any key not declared here).
+        target_pest_disease: string().optional(),
+        application_purpose: string().optional(),
+        supplier_name: string().optional(),
+        purchase_date: string().optional(),
+        purchase_invoice: string().optional(),
+        receipt_document: string().nullable().optional(),
+        chemical_lot_number: string().optional(),
+        quantity_purchased: string().optional(),
+        quantity_purchased_unit: string().optional()
+      })
+    ).optional(),
     // Phase 3: Application fuel tracking for equipment fuel emissions
     application_fuel_type: string().optional(),
     application_fuel_consumed: string()
@@ -471,6 +505,32 @@ export const buildChemicalSchema = (intl, { multiTarget = false } = {}) =>
       }
       return;
     }
+
+    // Each product of the tank answers what product 1 answers (config/events/tankMix.ts). With
+    // several parcels its amount is asked on each parcel card, so it is not required here.
+    const TANK_LINE_MESSAGES = {
+      commercial_name: ['commercial_name', 'events.chemical.tankMix.validation.nameRequired'],
+      concentration: ['concentration', 'events.chemical.validation.concentrationRequired'],
+      concentration_and_flag: [
+        'concentration',
+        'events.chemical.validation.concentrationOrNotOnRecord'
+      ],
+      volume_numeric: ['volume_numeric', 'events.chemical.tankMix.validation.amountRequired'],
+      volume_unit: ['volume_unit', 'events.chemical.validation.volumeUnitRequired'],
+      rate_unit: ['application_rate_unit', 'events.chemical.tankMix.validation.rateUnitRequired'],
+      rei_hours: ['rei_hours', 'events.chemical.validation.reiPositive'],
+      phi_days: ['phi_days', 'events.chemical.validation.phiPositive']
+    };
+    (data.tank_lines || []).forEach((line, index) => {
+      tankLineIssues(line, { severalParcels: multiTarget }).forEach((issue) => {
+        const [key, id] = TANK_LINE_MESSAGES[issue];
+        ctx.addIssue({
+          code: 'custom',
+          path: ['tank_lines', index, key],
+          message: intl.formatMessage({ id })
+        });
+      });
+    });
 
     // A carrier volume and its unit stand or fall together (a unit alone is dropped on submit).
     if (data.carrier_volume && data.carrier_volume.trim() && !data.carrier_volume_unit) {
@@ -664,6 +724,17 @@ const PublicNoteSupplierHint = ({ control }) => {
   );
 };
 
+/**
+ * The values handed to the wizard, with `tank_lines` as a NEW array of new objects. react-hook-form
+ * returns the same array it mutates in place, so the wizard's memo on `tank_lines` never saw a
+ * product line's name change and the per-parcel amount kept reading "Product 2 applied" after the
+ * grower typed "Kocide 3000-O" (found rendering the tank mix at 375 px, 2026-11-12).
+ */
+const withFreshTankLines = (values) =>
+  Array.isArray(values?.tank_lines)
+    ? { ...values, tank_lines: values.tank_lines.map((line) => ({ ...line })) }
+    : values;
+
 const ChemicalTab = forwardRef(
   (
     {
@@ -692,6 +763,11 @@ const ChemicalTab = forwardRef(
        * have no per-block value, so they are hidden here and asked per block by the wizard.
        */
       multiTarget = false,
+      /**
+       * "Add a product to this tank" (OV-RK-C04). Only on a new spray from the plain entry: an
+       * edit is one product's record, and a plan item or a crew note is answered by one record.
+       */
+      allowTankMix = false,
       carbonCalculation = null,
       isCalculatingCarbon = false
     },
@@ -852,6 +928,8 @@ const ChemicalTab = forwardRef(
                 p.organic_approved === true || p.organic_approved === 'true' ? 'true' : 'false'
             }))
           : [],
+        // Products 2..N of a tank (a draft or a remount brings them back as typed).
+        tank_lines: Array.isArray(initialValues.tank_lines) ? initialValues.tank_lines : [],
         // Phase 3: Application fuel tracking
         application_fuel_type: initialValues.application_fuel_type || '',
         application_fuel_consumed: initialValues.application_fuel_consumed?.toString() || '',
@@ -1067,7 +1145,7 @@ const ChemicalTab = forwardRef(
         flushData: () => {
           if (onDataChange) {
             const currentValues = methods.getValues();
-            onDataChange(currentValues);
+            onDataChange(withFreshTankLines(currentValues));
           }
         },
         submitForm: () =>
@@ -1297,6 +1375,7 @@ const ChemicalTab = forwardRef(
                   p.organic_approved === true || p.organic_approved === 'true' ? 'true' : 'false'
               }))
             : [],
+          tank_lines: Array.isArray(initialValues.tank_lines) ? initialValues.tank_lines : [],
           // Phase 3: Application fuel tracking
           application_fuel_type: initialValues.application_fuel_type || '',
           application_fuel_consumed: initialValues.application_fuel_consumed?.toString() || '',
@@ -1354,6 +1433,12 @@ const ChemicalTab = forwardRef(
     } = useFieldArray({ control: methods.control, name: 'tank_mix_partners' });
 
     const chemicalType = watch('type');
+    // An old record's tank-mix partners stay visible and editable; a new spray uses tank lines.
+    const recordHoldsTankMixPartners =
+      Array.isArray(initialValues.tank_mix_partners) && initialValues.tank_mix_partners.length > 0;
+    // One product of a tank whose pass's fuel is recorded on another line (TankMixNotice says
+    // which): the server refuses fuel here, so it is not asked.
+    const fuelOnAnotherTankLine = initialValues.tank_mix?.carries_pass === false;
     const conditionsNotApplicable = CONDITIONS_EXEMPT_METHODS.includes(watch('application_method'));
     const showConditionReadings = !conditionsNotApplicable || heldConditionsRef.current;
 
@@ -1506,12 +1591,17 @@ const ChemicalTab = forwardRef(
       'nitrogen_total_kg',
       'phosphorus_total_kg',
       'potassium_total_kg',
-      'event_count'
+      'event_count',
+      // Products 2..N of a tank: the parcel cards ask their amounts, so the wizard needs them.
+      'tank_lines'
     ]);
     // Serialize watched values so useEffect only fires when actual VALUES change,
     // not on every render (watch() returns a new array reference each time)
     const watchedFieldsSerialized = JSON.stringify(watchedFields);
-    const previousValuesRef = useRef({});
+    // The last values handed up, as a JSON snapshot. Holding the objects themselves compared the
+    // tank lines with themselves (react-hook-form mutates that array in place), so a product line's
+    // edit never counted as a change and the wizard kept a stale copy (2026-11-12).
+    const previousValuesRef = useRef('{}');
 
     useEffect(() => {
       const timeoutId = setTimeout(() => {
@@ -1583,20 +1673,20 @@ const ChemicalTab = forwardRef(
             'nitrogen_total_kg',
             'phosphorus_total_kg',
             'potassium_total_kg',
-            'event_count'
+            'event_count',
+            'tank_lines'
           ];
           const currentRelevantValues = {};
           relevantFields.forEach((field) => {
             currentRelevantValues[field] = currentValues[field];
           });
 
-          const hasChanged =
-            JSON.stringify(currentRelevantValues) !== JSON.stringify(previousValuesRef.current);
+          const hasChanged = JSON.stringify(currentRelevantValues) !== previousValuesRef.current;
 
           if (hasChanged) {
-            previousValuesRef.current = currentRelevantValues;
+            previousValuesRef.current = JSON.stringify(currentRelevantValues);
             try {
-              onDataChange(currentValues);
+              onDataChange(withFreshTankLines(currentValues));
             } catch (error) {
               console.error('[ChemicalTab]: Error calling onDataChange:', error);
             }
@@ -1619,6 +1709,21 @@ const ChemicalTab = forwardRef(
         // `false` tells submitForm to reject — without it the wizard's submit promise
         // resolved on this early return and advanced past a form that saved nothing.
         return false;
+      }
+      // The same rule for every other product of the tank: each is its own record.
+      if (requiresOrganicBasis && Array.isArray(data.tank_lines)) {
+        const blank = data.tank_lines
+          .map((line, index) => (line && !line.organic_approved ? index : null))
+          .filter((index) => index !== null);
+        if (blank.length > 0) {
+          blank.forEach((index) =>
+            methods.setError(`tank_lines.${index}.organic_approved`, {
+              type: 'manual',
+              message: intl.formatMessage({ id: 'events.chemical.organicBasis.required' })
+            })
+          );
+          return false;
+        }
       }
 
       // Process numeric data and map frontend field names to backend field names
@@ -1804,6 +1909,9 @@ const ChemicalTab = forwardRef(
                 organic_approved: p.organic_approved === 'true' || p.organic_approved === true
               }))
           : [],
+        // Products 2..N of a tank, as typed: NewEvent turns them into the tank request
+        // (config/events/tankMix.ts). None in summary mode, which is not one pass.
+        tank_lines: isSummaryEvent || !Array.isArray(data.tank_lines) ? [] : data.tank_lines,
         // Store enhanced fields in extra_data for backend compatibility
         extra_data: {
           // Unit fields for carbon calculation accuracy
@@ -4164,6 +4272,16 @@ const ChemicalTab = forwardRef(
                 </VStack>
               </SectionBox>
 
+              {/* Several products from one tank (OV-RK-C04): products 2..N, each saved as its
+                  own record with its own rate, REI, PHI and organic basis. */}
+              {allowTankMix && !isSummaryMode && chemicalType && (
+                <TankMixLines
+                  methods={methods}
+                  severalParcels={multiTarget}
+                  requiresOrganicBasis={requiresOrganicBasis}
+                />
+              )}
+
               {/* Section 3: Environmental Context & Transparency */}
               <SectionBox>
                 <SectionHeader
@@ -5273,7 +5391,10 @@ const ChemicalTab = forwardRef(
                     {/* Tank-mix adjuvants. In California each CA-registered partner is a
                         separate PUR line, which only a California farm is told. */}
                     {/* Several blocks: partner volumes are per product and per block, so not asked here. */}
-                    {!multiTarget && (
+                    {/* Only on a record that already holds partners (OV-RK-C04): a new spray adds
+                        its other products with "Add a product to this tank", each a full record.
+                        An old record keeps showing, and saving, the partners it has. */}
+                    {!multiTarget && recordHoldsTankMixPartners && (
                       <Box
                         p={3}
                         bg="gray.50"
@@ -5707,7 +5828,7 @@ const ChemicalTab = forwardRef(
                             : intl.formatMessage({ id: 'app.applicationFuelConsumedHelp' })
                         }>
                         <HStack spacing={2}>
-                          {!multiTarget && (
+                          {!multiTarget && !fuelOnAnotherTankLine && (
                             <Controller
                               name="application_fuel_consumed"
                               control={methods.control}

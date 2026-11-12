@@ -1,4 +1,5 @@
 import { ApplicationGroupNotice } from 'components/Events/ApplicationGroupNotice';
+import { TankMixNotice } from 'components/Events/TankMixNotice';
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   VStack,
@@ -1081,6 +1082,13 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
             eventId={event.id}
             eventType={event.event_type}
             parcelName={parcelName}
+            variant="detail"
+          />
+          {/* One product of a tank mix: the tank's other products on this parcel. */}
+          <TankMixNotice
+            farmId={farmId}
+            eventId={event.id}
+            eventType={event.event_type}
             variant="detail"
           />
           {/* Buyer-page visibility, stated up front. Certifier-only subtypes (BU/SS/EM/TP)
