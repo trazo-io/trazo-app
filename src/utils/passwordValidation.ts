@@ -343,3 +343,33 @@ export const PasswordSecurityAudit = {
     };
   }
 };
+
+/**
+ * The validator's messages in the reader's language (settings audit leftover, 2026-11-12).
+ *
+ * `errors` and `warnings` above are English sentences, and several screens printed them as is, so a
+ * Spanish reader got "Password contains common words or predictable patterns". Each sentence maps
+ * to a catalogue id here, next to where it is written, so adding a message without copy fails
+ * `passwordMessagesHaveCopy.test.ts`. Returns null for a sentence this table does not know.
+ */
+const PASSWORD_MESSAGE_IDS: Array<[RegExp, string]> = [
+  [/^Password must be at least (\d+) characters long$/, 'auth.password.message.minLength'],
+  [/^Password must contain at least one uppercase letter$/, 'auth.password.message.uppercase'],
+  [/^Password must contain at least one lowercase letter$/, 'auth.password.message.lowercase'],
+  [/^Password must contain at least one number$/, 'auth.password.message.number'],
+  [/^Password must contain at least one special character/, 'auth.password.message.special'],
+  [/^Password is too simple\./, 'auth.password.message.tooSimple'],
+  [/^Password contains sequential characters/, 'auth.password.message.sequential'],
+  [/^Password contains common words/, 'auth.password.message.commonWords'],
+  [/^Password cannot contain personal information$/, 'auth.password.message.personalInfo']
+];
+
+export function passwordMessage(
+  message: string
+): { id: string; values: Record<string, string> } | null {
+  for (const [pattern, id] of PASSWORD_MESSAGE_IDS) {
+    const m = pattern.exec(message);
+    if (m) return { id, values: m[1] ? { min: m[1] } : {} };
+  }
+  return null;
+}

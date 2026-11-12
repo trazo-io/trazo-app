@@ -35,7 +35,7 @@ import { useIntl } from 'react-intl';
 import { apiErrorMessage } from 'utils/apiErrorMessage';
 import { useDispatch } from 'react-redux';
 import AuthFooter from 'components/Footer/AuthFooter';
-import { passwordValidator } from '../../../utils/passwordValidation';
+import { passwordMessage, passwordValidator } from '../../../utils/passwordValidation';
 import { PERSON_NAME_PATTERN, PERSON_NAME_MAX_LENGTH } from '../../../utils/nameValidation';
 import { PasswordStrengthIndicator } from '../../../components/Forms/PasswordStrengthIndicator';
 import {
@@ -208,9 +208,14 @@ const AppSignUp: React.FC = () => {
       if (!passwordValidation || !passwordValidation.isValid) {
         toast({
           title: intl.formatMessage({ id: 'auth.signup.toast.weakPassword.title' }),
-          description:
-            passwordValidation?.errors[0] ||
-            intl.formatMessage({ id: 'auth.signup.toast.weakPassword.body' }),
+          description: (() => {
+            const known = passwordValidation?.errors[0]
+              ? passwordMessage(passwordValidation.errors[0])
+              : null;
+            return known
+              ? intl.formatMessage({ id: known.id }, known.values)
+              : intl.formatMessage({ id: 'auth.signup.toast.weakPassword.body' });
+          })(),
           status: 'error',
           duration: 4000,
           isClosable: true

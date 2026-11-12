@@ -48,6 +48,13 @@ export interface Certification {
   verification_source?: string;
   verification_source_url?: string;
   verification_notes?: string;
+  /**
+   * The verifier's note as a code (trazo-back `certifications/verification_notes.py`), read back
+   * from the stored English. Render `certification.verificationNote.<code>` with the params; fall
+   * back to `verification_notes` only when the code is null (text no template wrote).
+   */
+  verification_note_code?: string | null;
+  verification_note_params?: Record<string, string | number>;
   usda_operation_name?: string;
   notes?: string;
   document_url?: string;
