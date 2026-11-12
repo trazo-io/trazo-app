@@ -40,6 +40,8 @@ interface RawType {
   either: string[];
   refused: string[];
   refused_extra_data: string[];
+  /** A shared key refused only when it holds one of these values (a tank-total carrier volume). */
+  refused_values?: Record<string, string[]>;
   ui: RawUi;
 }
 
@@ -73,6 +75,11 @@ export interface MultiParcelRules {
   refusedKeys: Set<string>;
   /** Keys refused inside `extra_data`. */
   refusedExtraDataKeys: Set<string>;
+  /**
+   * Values a shared key may not take in a multi-parcel save (`carrier_volume_unit: gal_total`):
+   * the form does not offer them, because the server would refuse a value copied onto every parcel.
+   */
+  refusedValues: Record<string, Set<string>>;
   /**
    * Units of this activity's per-parcel amounts that the server takes per parcel (`either`):
    * they leave the shared body and travel beside each amount. Listed from the spec, not from
@@ -118,6 +125,9 @@ export const specRulesFor = (
     refusedKeys: new Set(raw.refused),
     // Same as the server's loader: a top-level refusal holds inside extra_data too.
     refusedExtraDataKeys: new Set([...raw.refused_extra_data, ...raw.refused]),
+    refusedValues: Object.fromEntries(
+      Object.entries(raw.refused_values ?? {}).map(([key, values]) => [key, new Set(values)])
+    ),
     // Every key that is per parcel for ANY subtype stays out of the shared body (the server
     // refuses it there), plus the refused ones.
     hiddenKeys: new Set([

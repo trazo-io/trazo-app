@@ -34,6 +34,21 @@ export const CERTIFIER_ONLY_EVENT_FIELDS: readonly string[] = [
   // will see this" preview does not show a business the public page never names.
   'applied_by_pcb',
   'pcb_name',
+  // State application facts (2026-11-12, OV-FJ-C11; WAC 16-228-1320(1)). Mirrors the backend
+  // tuple, which gives the reason for each:
+  // - a named person's contact details (address, phone), more identifying than the name above;
+  'applicator_address',
+  'applicator_phone',
+  // - the hired firm's address, a trading partner of record like `pcb_name`;
+  'commercial_firm_address',
+  // - a vehicle plate, which tells a shopper nothing about the food and identifies equipment;
+  'apparatus_license_plate',
+  // - drift readings (same class as `buffer_zone_meters`) and the carrier volume, a rate.
+  'wind_from',
+  'wind_speed_mph',
+  'air_temperature_f',
+  'carrier_volume',
+  'carrier_volume_unit',
   'buffer_zone_meters',
   // Agronomic audit detail
   'concentration',
@@ -356,7 +371,12 @@ export const resolveHarvestDates = (
     // Added 2026-09-16: without it a caller cannot tell a fallback from a real single-pass
     // harvest, and `ParcelMapInfo` printed the close date under a "HARVEST DATE" label — three
     // weeks later than the pick on one audited lot, and on the same page as the true range.
-    return { first: fallbackDate ?? null, last: fallbackDate ?? null, isRange: false, fromRecords: false };
+    return {
+      first: fallbackDate ?? null,
+      last: fallbackDate ?? null,
+      isRange: false,
+      fromRecords: false
+    };
   }
 
   const first = harvestDates[0];

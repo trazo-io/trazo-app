@@ -49,6 +49,35 @@ import {
   SHOPPER_BASIS_RECORDED
 } from './formatters';
 
+/**
+ * A reading with its unit: "4 mph", "62 °F". Units are notation, not words, so they are not
+ * translated. Blank or unparseable is null, so the row is not drawn.
+ */
+const withUnit =
+  (unit: string) =>
+  (value: unknown): string | null => {
+    if (value == null || value === '') return null;
+    const numeric = typeof value === 'number' ? value : parseFloat(String(value));
+    if (Number.isNaN(numeric)) return null;
+    return `${numeric.toLocaleString(undefined, { maximumFractionDigits: 1 })} ${unit}`;
+  };
+
+/** Carrier volume unit codes as they are written. A total is plain gallons. */
+const CARRIER_UNIT_SYMBOLS: Record<string, string> = {
+  gal_per_acre: 'gal/acre',
+  gal_total: 'gal',
+  l_per_ha: 'L/ha'
+};
+
+const formatCarrierVolume = (value: unknown, event: Record<string, unknown>): string | null => {
+  if (value == null || value === '') return null;
+  const numeric = typeof value === 'number' ? value : parseFloat(String(value));
+  if (Number.isNaN(numeric)) return null;
+  const unit = CARRIER_UNIT_SYMBOLS[String(event.carrier_volume_unit ?? '')];
+  const formatted = numeric.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  return unit ? `${formatted} ${unit}` : formatted;
+};
+
 // Organic approval labels — acronyms must be properly capitalized (OMRI, USDA, NOP)
 const ORGANIC_APPROVED_LABELS: Record<string, string> = {
   omri_listed: 'OMRI Listed',
@@ -666,6 +695,24 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
       form: 'secondary'
     }
   },
+  // The applicator's address and phone (WAC 16-228-1320(1)(l), OV-FJ-C11). Copies typed onto
+  // THIS record, never a link, so a later profile edit cannot rewrite a past spray. A named
+  // person's contact details: certifier-only, stripped from the buyer payload
+  // (CERTIFIER_ONLY_EVENT_FIELDS), so no consumer surface.
+  {
+    name: 'applicator_address',
+    labelKey: 'events.chemical.fields.applicatorAddress',
+    valueType: 'string',
+    visibleForSubtypes: ['PE', 'FU', 'HE'],
+    surfaces: { modal: 'secondary', form: 'secondary' }
+  },
+  {
+    name: 'applicator_phone',
+    labelKey: 'events.chemical.fields.applicatorPhone',
+    valueType: 'string',
+    visibleForSubtypes: ['PE', 'FU', 'HE'],
+    surfaces: { modal: 'secondary', form: 'secondary' }
+  },
   {
     name: 'epa_registration_number',
     labelKey: 'events.chemical.fields.epaRegistrationNumber',
@@ -943,6 +990,47 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     formatter: formatDateTime,
     surfaces: { modal: 'secondary', form: 'secondary' }
   },
+  // ---- State application facts (OV-FJ-C11; WAC 16-228-1320(1)(e), (h), (k)) ----
+  // Every state, not only Washington: wind and temperature matter for drift anywhere. Producer
+  // surfaces only. A wind reading or a carrier volume is drift and rate data a regulator reads
+  // against the label; to a shopper without the label it reads as a hazard (same call as
+  // buffer_zone_meters). Stripped from the buyer payload as CERTIFIER_ONLY_EVENT_FIELDS.
+  {
+    name: 'wind_from',
+    labelKey: 'events.chemical.fields.windFrom',
+    valueType: 'enum',
+    enumSource: 'wind_from',
+    surfaces: { modal: 'secondary', form: 'secondary' }
+  },
+  {
+    name: 'wind_speed_mph',
+    labelKey: 'events.chemical.fields.windSpeedMph',
+    valueType: 'number',
+    formatter: withUnit('mph'),
+    surfaces: { modal: 'secondary', form: 'secondary' }
+  },
+  {
+    name: 'air_temperature_f',
+    labelKey: 'events.chemical.fields.airTemperatureF',
+    valueType: 'number',
+    formatter: withUnit('°F'),
+    surfaces: { modal: 'secondary', form: 'secondary' }
+  },
+  {
+    // The carrier (water) the product went out in, not the product: `volume_applied` is the
+    // product and `concentration` its label strength.
+    name: 'carrier_volume',
+    labelKey: 'events.chemical.fields.carrierVolume',
+    valueType: 'number',
+    formatter: formatCarrierVolume,
+    surfaces: { modal: 'secondary', form: 'secondary' }
+  },
+  {
+    name: 'apparatus_license_plate',
+    labelKey: 'events.chemical.fields.apparatusLicensePlate',
+    valueType: 'string',
+    surfaces: { modal: 'secondary', form: 'secondary' }
+  },
   {
     name: 'planted_area',
     labelKey: 'events.chemical.fields.plantedArea',
@@ -1051,6 +1139,14 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
   {
     name: 'pcb_name',
     labelKey: 'events.chemical.fields.pcbName',
+    valueType: 'string',
+    visibleWhen: (e) => e.applied_by_pcb === true || e.applied_by_pcb === 'true',
+    surfaces: { modal: 'secondary', form: 'secondary' }
+  },
+  {
+    // WAC 16-228-1320(1)(n): a commercial application names the firm's complete address.
+    name: 'commercial_firm_address',
+    labelKey: 'events.chemical.fields.commercialFirmAddress',
     valueType: 'string',
     visibleWhen: (e) => e.applied_by_pcb === true || e.applied_by_pcb === 'true',
     surfaces: { modal: 'secondary', form: 'secondary' }
