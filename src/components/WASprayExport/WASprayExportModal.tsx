@@ -14,7 +14,7 @@
  * The copy never says the document satisfies the rule: whether the department accepts the form
  * is its decision (WAC 16-228-1320(5)), and the note says only that.
  */
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Badge, Box, HStack, Icon, Stack, Text, VStack, useToast } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import { FiAlertTriangle, FiDownload, FiEdit2, FiFileText } from 'react-icons/fi';
@@ -40,8 +40,10 @@ interface WASprayPass {
   parcel_id: number | null;
   parcel_name: string;
   block: string;
-  /** YYYY-MM-DD, the application's day. */
+  /** YYYY-MM-DD, the application's day; "" when the lines of a tank hold different days. */
   event_date: string;
+  /** Each distinct day of the lines, when they differ (empty otherwise). */
+  event_days?: string[];
   products: string[];
   /** Item letters of WAC 16-228-1320(1) the record leaves blank, in rule order. */
   blank_items: string[];
@@ -92,6 +94,16 @@ export const periodParams = (year: number, month: number): string => {
   return `start=${year}-${mm}-01&end=${year}-${mm}-${String(lastDay).padStart(2, '0')}`;
 };
 
+interface Period {
+  year: number;
+  month: number;
+}
+
+const exportUrl = (establishmentId: number | string, period: Period, exportFormat: string) =>
+  `${config.API_BASE_URL}/histories/wa-spray-records-export/` +
+  `?establishment_id=${establishmentId}&${periodParams(period.year, period.month)}` +
+  `&export_format=${exportFormat}`;
+
 /** The server's sentence for a refused request: `detail` (the plan refusal) before `error`. */
 const errorMessage = async (response: Response, fallback: string) => {
   try {
@@ -117,6 +129,12 @@ const WASprayExportModal: React.FC<WASprayExportModalProps> = ({
   const [year, setYear] = useState<number>(now.getFullYear());
   const [month, setMonth] = useState<number>(WHOLE_YEAR);
   const [summary, setSummary] = useState<WASpraySummary | null>(null);
+  // The period the summary on screen was built for. Download asks for THIS period, never the
+  // live selection, so the file is the one the preview showed.
+  const [previewed, setPreviewed] = useState<Period | null>(null);
+  // Each preview request takes the next number; a response that is not the latest is dropped,
+  // so a slow answer for an earlier period never overwrites the one picked after it.
+  const requestSeq = useRef(0);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [downloading, setDownloading] = useState<'pdf' | 'csv' | null>(null);
@@ -126,44 +144,49 @@ const WASprayExportModal: React.FC<WASprayExportModalProps> = ({
     intl.formatDate(new Date(2000, i, 1), { month: 'long' })
   );
 
-  const url = useCallback(
-    (exportFormat: string) =>
-      `${config.API_BASE_URL}/histories/wa-spray-records-export/` +
-      `?establishment_id=${establishmentId}&${periodParams(
-        year,
-        month
-      )}&export_format=${exportFormat}`,
-    [establishmentId, year, month]
-  );
-
   const loadPreview = useCallback(async () => {
     if (!establishmentId || !isOpen) return;
+    const seq = ++requestSeq.current;
+    const period = { year, month };
+    const isLatest = () => seq === requestSeq.current;
     setIsPreviewing(true);
     setSummary(null);
+    setPreviewed(null);
     setPreviewError(null);
     try {
-      const response = await fetch(url('json'), { credentials: 'include' });
+      const response = await fetch(exportUrl(establishmentId, period, 'json'), {
+        credentials: 'include'
+      });
       if (!response.ok) {
-        throw new Error(
-          await errorMessage(response, intl.formatMessage({ id: 'app.waSpray.previewFailed' }))
+        const message = await errorMessage(
+          response,
+          intl.formatMessage({ id: 'app.waSpray.previewFailed' })
         );
+        if (isLatest()) setPreviewError(message);
+        return;
       }
-      setSummary(await response.json());
+      const body = await response.json();
+      if (!isLatest()) return;
+      setSummary(body);
+      setPreviewed(period);
     } catch (error) {
-      setPreviewError(error instanceof Error ? error.message : '');
+      if (isLatest()) setPreviewError(error instanceof Error ? error.message : '');
     } finally {
-      setIsPreviewing(false);
+      if (isLatest()) setIsPreviewing(false);
     }
-  }, [url, establishmentId, isOpen, intl]);
+  }, [establishmentId, year, month, isOpen, intl]);
 
   useEffect(() => {
     if (isOpen) loadPreview();
   }, [isOpen, loadPreview]);
 
   const handleDownload = async (exportFormat: 'pdf' | 'csv') => {
+    if (!previewed) return;
     setDownloading(exportFormat);
     try {
-      const response = await fetch(url(exportFormat), { credentials: 'include' });
+      const response = await fetch(exportUrl(establishmentId, previewed, exportFormat), {
+        credentials: 'include'
+      });
       if (!response.ok) {
         throw new Error(
           await errorMessage(response, intl.formatMessage({ id: 'app.exportFailed' }))
@@ -173,7 +196,10 @@ const WASprayExportModal: React.FC<WASprayExportModalProps> = ({
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      const period = month === WHOLE_YEAR ? `${year}` : `${year}-${String(month).padStart(2, '0')}`;
+      const period =
+        previewed.month === WHOLE_YEAR
+          ? `${previewed.year}`
+          : `${previewed.year}-${String(previewed.month).padStart(2, '0')}`;
       link.download = `trazo-wa-spray-records-${establishmentId}-${period}.${exportFormat}`;
       document.body.appendChild(link);
       link.click();
@@ -268,7 +294,7 @@ const WASprayExportModal: React.FC<WASprayExportModalProps> = ({
             onClick={() => handleDownload('csv')}
             isLoading={downloading === 'csv'}
             loadingText={intl.formatMessage({ id: 'app.exportDownloading' })}
-            isDisabled={!hasPasses || isPreviewing || !!downloading}
+            isDisabled={!hasPasses || !previewed || isPreviewing || !!downloading}
             w={{ base: 'full', smd: 'auto' }}>
             {intl.formatMessage({ id: 'app.waSpray.downloadCsv' })}
           </StandardButton>
@@ -279,7 +305,7 @@ const WASprayExportModal: React.FC<WASprayExportModalProps> = ({
             onClick={() => handleDownload('pdf')}
             isLoading={downloading === 'pdf'}
             loadingText={intl.formatMessage({ id: 'app.exportDownloading' })}
-            isDisabled={!hasPasses || isPreviewing || !!downloading}
+            isDisabled={!hasPasses || !previewed || isPreviewing || !!downloading}
             w={{ base: 'full', smd: 'auto' }}>
             {intl.formatMessage({ id: 'app.waSpray.downloadPdf' })}
           </StandardButton>
@@ -384,7 +410,12 @@ const WASprayExportModal: React.FC<WASprayExportModalProps> = ({
                           </Text>
                           <Text fontSize="xs" color="gray.600">
                             {[
-                              formatDay(pass.event_date),
+                              pass.event_date
+                                ? formatDay(pass.event_date)
+                                : intl.formatMessage(
+                                    { id: 'app.waSpray.daysDiffer' },
+                                    { days: (pass.event_days ?? []).map(formatDay).join(', ') }
+                                  ),
                               [pass.parcel_name, pass.block].filter(Boolean).join(', '),
                               pass.products.length > 1
                                 ? intl.formatMessage(

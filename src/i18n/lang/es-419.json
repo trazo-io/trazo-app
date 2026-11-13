@@ -9674,6 +9674,7 @@
   "app.waSpray.noApplicationsTitle": "No hay registros de aplicación en este período",
   "app.waSpray.noApplications": "No hay ninguna aplicación de pesticida, fungicida ni herbicida registrada en esta finca para el período que elegiste.",
   "app.waSpray.openEvent": "Abrir actividad",
+  "app.waSpray.daysDiffer": "Líneas registradas en días distintos: {days}",
   "parcel.dpr.nearSchoolsite": "¿A menos de 1/4 de milla de una escuela?",
   "parcel.dpr.nearSchoolsite.no": "No",
   "parcel.dpr.nearSchoolsite.unknown": "Sin responder",

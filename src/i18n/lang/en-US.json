@@ -9674,6 +9674,7 @@
   "app.waSpray.noApplicationsTitle": "No spray records in this period",
   "app.waSpray.noApplications": "No pesticide, fungicide or herbicide application is logged on this farm for the period you picked.",
   "app.waSpray.openEvent": "Open activity",
+  "app.waSpray.daysDiffer": "Lines recorded on different days: {days}",
   "parcel.dpr.nearSchoolsite": "Within 1/4 mile of a schoolsite?",
   "parcel.dpr.nearSchoolsite.no": "No",
   "parcel.dpr.nearSchoolsite.unknown": "Not answered yet",

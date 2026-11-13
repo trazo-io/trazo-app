@@ -144,6 +144,69 @@ describe('the period it asks for', () => {
 });
 
 describe('WASprayExportModal', () => {
+  it('drops a slow preview for an earlier period and downloads the period on screen', async () => {
+    // Two previews in flight: the whole year (slow) and March (fast). The year's answer lands
+    // LAST and must not replace March's, and Download must ask for March.
+    const year = new Date().getFullYear();
+    const pending: Array<{ url: string; resolve: (body: unknown) => void }> = [];
+    const respond = (body: unknown) => ({
+      ok: true,
+      status: 200,
+      json: async () => body,
+      blob: async () => new Blob(['%PDF'])
+    });
+    const fetchMock = vi.fn((url: string) => {
+      if (!url.includes('export_format=json')) return Promise.resolve(respond({}));
+      return new Promise((resolve) => {
+        pending.push({ url, resolve: (body) => resolve(respond(body)) });
+      });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    vi.stubGlobal('URL', {
+      ...URL,
+      createObjectURL: vi.fn(() => 'blob:x'),
+      revokeObjectURL: vi.fn()
+    });
+    renderModal();
+    await waitFor(() => expect(pending).toHaveLength(1));
+    fireEvent.change(screen.getByLabelText('Period'), { target: { value: '3' } });
+    await waitFor(() => expect(pending).toHaveLength(2));
+    expect(pending[0].url).toContain(`year=${year}`);
+    expect(pending[1].url).toContain(`start=${year}-03-01&end=${year}-03-31`);
+
+    const march = {
+      ...SUMMARY,
+      pass_count: 1,
+      passes_with_blank_items: 0,
+      passes: [{ ...SUMMARY.passes[0], products: ['March spray'], event_date: `${year}-03-10` }]
+    };
+    pending[1].resolve(march);
+    await screen.findByText('March spray');
+    pending[0].resolve(SUMMARY);
+    // Let the stale response settle, then check it changed nothing.
+    await new Promise((r) => setTimeout(r, 20));
+    expect(screen.getByText('March spray')).toBeTruthy();
+    expect(screen.queryByText('Cyd-X')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: /Download PDF/ }));
+    await waitFor(() =>
+      expect(String(fetchMock.mock.calls.at(-1)?.[0])).toContain(
+        `start=${year}-03-01&end=${year}-03-31&export_format=pdf`
+      )
+    );
+  });
+
+  it('lists each day of a tank whose lines hold different days', async () => {
+    stubFetch({
+      ...SUMMARY,
+      passes: [{ ...SUMMARY.passes[0], event_date: '', event_days: ['2026-06-15', '2026-06-20'] }]
+    });
+    renderModal('en-US');
+    expect(
+      await screen.findByText(/Lines recorded on different days: Jun 15, 2026, Jun 20, 2026/)
+    ).toBeTruthy();
+  });
+
   it('previews the current calendar year by default with export_format, never format', async () => {
     const fetchMock = stubFetch();
     renderModal();
