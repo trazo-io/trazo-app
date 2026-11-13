@@ -127,8 +127,8 @@ export const PerParcelCards = ({
   const fieldLabel = (field: PerParcelField) => {
     const unit = unitOf(field, form);
     return intl.formatMessage(
-      { id: `events.multiParcel.field.${field.key}` },
-      { unit: unit ? unitSymbol(unit) : '' }
+      { id: field.labelId ?? `events.multiParcel.field.${field.key}` },
+      { ...(field.labelValues ?? {}), unit: unit ? unitSymbol(unit) : '' }
     );
   };
 
