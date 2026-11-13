@@ -38,7 +38,7 @@ import {
   StandardButton,
   registerWithFocus
 } from 'components/Design/StandardComponents';
-import { passwordValidator } from 'utils/passwordValidation';
+import { passwordValidator, weakPasswordToastBody } from 'utils/passwordValidation';
 import { PasswordStrengthIndicator } from 'components/Forms/PasswordStrengthIndicator';
 import {
   useSignupWithInvitationMutation,
@@ -66,22 +66,6 @@ interface SetupPasswordFormData {
 
 // Motion components
 const MotionBox = motion(Box);
-
-/**
- * The localized reason a password was refused, for the reasons the strength indicator cannot
- * show. Matches the English messages `passwordValidator.validate()` pushes
- * (utils/passwordValidation.ts).
- */
-export function weakPasswordReasonId(errors: string[] | undefined): string {
-  const list = errors ?? [];
-  if (list.some((e) => /personal information/i.test(e))) {
-    return 'auth.invitationSetup.weakPassword.personalInfo';
-  }
-  if (list.some((e) => /too simple/i.test(e))) {
-    return 'auth.invitationSetup.weakPassword.tooSimple';
-  }
-  return 'auth.signup.toast.weakPassword.body';
-}
 
 const SetupPassword: React.FC = () => {
   const navigate = useNavigate();
@@ -227,7 +211,7 @@ const SetupPassword: React.FC = () => {
         // other reasons a password is refused (too simple, contains the person's name), so those
         // get their own localized line; anything else falls back to the generic one.
         title: intl.formatMessage({ id: 'auth.signup.toast.weakPassword.title' }),
-        description: intl.formatMessage({ id: weakPasswordReasonId(passwordValidation?.errors) }),
+        description: weakPasswordToastBody(intl, passwordValidation?.errors),
         status: 'error',
         duration: 3000,
         isClosable: true

@@ -320,7 +320,7 @@ describe('AppSignUp Component', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Password strength: Good')).toBeInTheDocument();
-      expect(screen.getByText(/common words/)).toBeInTheDocument();
+      expect(screen.getByText(/common word or an easy pattern/)).toBeInTheDocument();
     });
 
     // Test strong password, no warning

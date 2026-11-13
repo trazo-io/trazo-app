@@ -4,6 +4,7 @@ import { FaCheck, FaTimes } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import {
   passwordValidator,
+  passwordMessage,
   DEFAULT_REQUIREMENTS,
   PasswordValidationResult
 } from '../../utils/passwordValidation';
@@ -53,6 +54,11 @@ export const PasswordStrengthIndicator: React.FC<PasswordStrengthIndicatorProps>
 }) => {
   const intl = useIntl();
   if (!password || !validation) return null;
+
+  const translatePasswordMessage = (message: string) => {
+    const known = passwordMessage(message);
+    return known ? intl.formatMessage({ id: known.id }, known.values) : message;
+  };
 
   const score = validation.score;
   const colorScheme = passwordValidator.getStrengthColor(score, validation.warnings).split('.')[0];
@@ -108,7 +114,7 @@ export const PasswordStrengthIndicator: React.FC<PasswordStrengthIndicatorProps>
         {validation.warnings.length > 0 &&
           validation.warnings.map((warning, i) => (
             <Text key={i} fontSize="xs" color="orange.500" mt={1}>
-              {warning}
+              {translatePasswordMessage(warning)}
             </Text>
           ))}
       </Box>

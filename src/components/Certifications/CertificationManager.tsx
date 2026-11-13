@@ -19,7 +19,7 @@ import {
   AlertDialogOverlay
 } from '@chakra-ui/react';
 import { FaCertificate, FaPlus, FaSync, FaTrash } from 'react-icons/fa';
-import { useIntl } from 'react-intl';
+import { IntlShape, useIntl } from 'react-intl';
 import {
   useGetCertificationsQuery,
   useAddCertificationMutation,
@@ -37,6 +37,27 @@ import CertificationStatusBadge from './CertificationStatusBadge';
 import CertifyingAgentPicker from './CertifyingAgentPicker';
 import { useFarmState } from 'hooks/useMeasurementSystem';
 import { apiErrorMessage } from 'utils/apiErrorMessage';
+
+/**
+ * The verifier's note in the reader's language (settings audit, 2026-11-12). The backend stores
+ * English and serves a code beside it; a code without copy here, or a note no template wrote, falls
+ * back to the stored text rather than to nothing. Pinned by verificationNoteHasCopy.test.ts.
+ */
+export function verificationNoteText(
+  intl: IntlShape,
+  cert: Pick<
+    Certification,
+    'verification_notes' | 'verification_note_code' | 'verification_note_params'
+  >
+): string {
+  const id = cert.verification_note_code
+    ? `certification.verificationNote.${cert.verification_note_code}`
+    : null;
+  if (id && intl.messages[id]) {
+    return intl.formatMessage({ id }, cert.verification_note_params ?? {});
+  }
+  return cert.verification_notes ?? '';
+}
 
 /**
  * The one type with a verifier behind it. Mirrors `VERIFIER_REGISTRY` in
@@ -316,7 +337,7 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
                   )}
                   {cert.verification_notes && (
                     <Text fontSize="xs" color="gray.400" fontStyle="italic">
-                      {cert.verification_notes}
+                      {verificationNoteText(intl, cert)}
                     </Text>
                   )}
                 </VStack>
