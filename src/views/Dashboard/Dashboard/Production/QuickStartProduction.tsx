@@ -563,7 +563,9 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
     maxProductionsPerYear !== -1 &&
     usedProductions >= maxProductionsPerYear;
 
-  // Form setup
+  // Form setup. `type` and `production_method` start empty: each prints on certifier records
+  // (perennial vs annual decides the § 205.204(a)(4) 12-month verdict on planting stock), so the
+  // grower states them.
   const {
     control,
     handleSubmit,
@@ -580,7 +582,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
         { year: new Date().getFullYear() }
       ),
       start_date: new Date().toISOString().split('T')[0],
-      type: 'OR',
+      type: '',
       production_method: '',
       crop_type_id: ''
     }
@@ -693,7 +695,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
         expected_harvest: formatDate(expectedHarvestDate),
         description: productionData.description || '',
         production_method: productionMethod,
-        type: productionData.type || 'OR',
+        type: productionData.type || '',
         crop_type_id: cropTypeIdValue
       });
 
@@ -1557,6 +1559,11 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                         control={control}
                         render={({ field }) => (
                           <StandardSelect {...field}>
+                            <option value="" disabled>
+                              {intl.formatMessage({
+                                id: 'quickStart.field.productionType.placeholder'
+                              })}
+                            </option>
                             <option value="OR">
                               {intl.formatMessage({
                                 id: 'quickStart.field.productionType.orchard'
