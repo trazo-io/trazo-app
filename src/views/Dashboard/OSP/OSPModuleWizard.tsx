@@ -236,6 +236,17 @@ export const ModuleUploadField = ({
   );
 };
 
+/**
+ * On a phone, a bar of five or more steps cannot fit "D. Legal entity and addresses" in a fifth of 375px: the
+ * words broke mid-letter ("organismo s regulador es", browser pass 2026-11-13). There it shows the page's own
+ * letter ("D"), and the card under the bar titles the page in full. A title with no letter keeps its words.
+ */
+export const stepLetter = (title: string, pageCount: number): string | undefined => {
+  if (pageCount + 1 < 5) return undefined;
+  const match = /^([A-Z0-9]{1,3})\.\s/.exec(title);
+  return match ? match[1] : undefined;
+};
+
 const QuestionField = ({
   question,
   value,
@@ -1174,9 +1185,10 @@ const OSPModuleWizard = () => {
                     the review is the last step. */}
                 <StandardStepper
                   steps={[
-                    ...pages.map((page) => ({
-                      title: page.title ? pickText(page.title, locale) : ''
-                    })),
+                    ...pages.map((page) => {
+                      const title = page.title ? pickText(page.title, locale) : '';
+                      return { title, shortTitle: stepLetter(title, pages.length) };
+                    }),
                     { title: intl.formatMessage({ id: 'osp.wizard.reviewStepShort' }) }
                   ]}
                   currentStep={barStep}
