@@ -8457,6 +8457,7 @@
   "quickStart.field.productionType.required": "Choose perennial or annual",
   "quickStart.field.productionType.garden": "Garden (Annual Crops)",
   "quickStart.field.productionType.orchard": "Orchard (Perennial Crops)",
+  "quickStart.field.productionType.placeholder": "Choose whether this crop is perennial or annual",
   "quickStart.field.startDate": "Start Date",
   "quickStart.field.startDate.required": "Start date is required",
   "quickStart.locked.body": "Finished seasons are kept exactly as filed, so their details can't be edited. This is what keeps your records dependable for your certifier.",

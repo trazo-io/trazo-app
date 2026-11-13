@@ -649,8 +649,8 @@ const BuyerPage = () => {
             // Locally it is ALWAYS an em dash: a private/loopback IP has no location to find.
             //
             // COMMENT dropped. The endpoint accepts one, but NOTHING IN THE APP EVER SENDS ONE:
-            // `useCommentHistoryMutation` and `recordTransparencyScan` both have zero call
-            // sites, and no consumer surface has a comment input. An endpoint that accepts a
+            // the two app mutations that could have (both zero call sites) were deleted
+            // 2026-11-13, and no consumer surface has a comment input. An endpoint that accepts a
             // field is not a writer. It also made the UI worse — `w="100%"` on a column whose
             // every cell was an em dash left half the card blank.
             //
