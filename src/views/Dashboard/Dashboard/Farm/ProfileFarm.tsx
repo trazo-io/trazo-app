@@ -89,6 +89,8 @@ import { StandardImageGallery } from 'components/ImageGallery';
 import CertificationManager from 'components/Certifications/CertificationManager';
 import OperationAuditExportButton from './OperationAuditExportButton';
 import PURExportModal from 'components/PURExport/PURExportModal';
+import WASprayExportModal from 'components/WASprayExport/WASprayExportModal';
+import WASprayExportCard, { isWashingtonFarm } from 'components/WASprayExport/WASprayExportCard';
 import { normalizeState } from 'utils/usStates';
 import { fileNameFromUrl } from 'utils/fileNameFromUrl';
 import CertifierLinkCard from 'components/Certifications/CertifierLinkCard';
@@ -140,6 +142,7 @@ function ProfileFarm() {
   const [ofppDate, setOfppDate] = useState('');
   const [ofppFile, setOfppFile] = useState<File | null>(null);
   const [purModalOpen, setPurModalOpen] = useState(false);
+  const [waSprayModalOpen, setWaSprayModalOpen] = useState(false);
   // Owned here so the "Add certification" button can sit in the card header instead of
   // CertificationManager painting a second header inside an already-titled card.
   const addCertDisclosure = useDisclosure();
@@ -277,6 +280,8 @@ function ProfileFarm() {
   }
 
   const isCalifornia = normalizeState(establishmentData?.state) === 'CA';
+  // WAC 16-228-1320 binds pesticide applications in Washington; the backend 404s for any other farm.
+  const isWashington = isWashingtonFarm(establishmentData?.state);
   const crops = getCropsGrown();
   const parcelCount = Array.isArray(establishmentData.parcels)
     ? establishmentData.parcels.length
@@ -486,6 +491,15 @@ function ProfileFarm() {
                       </StandardButton>
                     </HStack>
                   </StandardCard>
+                )}
+
+                {/* WA-only: the state pesticide application record (WAC 16-228-1320), a
+                    Compliance artifact like the PUR, so it sits inside the same guard. */}
+                {canWrite && (
+                  <WASprayExportCard
+                    farmState={establishmentData?.state}
+                    onOpen={() => setWaSprayModalOpen(true)}
+                  />
                 )}
               </VStack>
             </ComplianceExportsGuard>
@@ -1302,6 +1316,15 @@ function ProfileFarm() {
         <PURExportModal
           isOpen={purModalOpen}
           onClose={() => setPurModalOpen(false)}
+          establishmentId={farmId}
+          establishmentName={establishmentData?.name}
+        />
+      )}
+
+      {farmId && isWashington && (
+        <WASprayExportModal
+          isOpen={waSprayModalOpen}
+          onClose={() => setWaSprayModalOpen(false)}
           establishmentId={farmId}
           establishmentName={establishmentData?.name}
         />
