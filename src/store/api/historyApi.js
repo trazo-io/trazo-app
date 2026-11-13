@@ -1,5 +1,4 @@
 import {
-  COMMENT_HISTORY_URL,
   CURRENT_HISTORY,
   EVENT_CREATE_URL,
   EVENT_URL,
@@ -240,15 +239,6 @@ export const historyApi = baseApi.injectEndpoints({
       }),
       providesTags: (result, error, historyId) => (result ? [{ type: 'History', historyId }] : [])
     }),
-    commentHistory: build.mutation({
-      query: ({ comment, scanId }) => ({
-        url: COMMENT_HISTORY_URL(scanId),
-        method: 'POST',
-        credentials: 'include',
-        body: { comment }
-      }),
-      invalidatesTags: (result) => (result ? ['History'] : [])
-    }),
     getScansByFarm: build.query({
       query: ({ companyId, farmId, parcelId, productId, productionId, period }) => ({
         url:
@@ -465,7 +455,6 @@ export const {
   useDeleteProductionMutation,
   useFinishCurrentHistoryMutation,
   useGetPublicHistoryQuery,
-  useCommentHistoryMutation,
   useGetScansByFarmQuery,
   useGetUserProductionScansQuery,
   useGetUserReviewsQuery,

@@ -55,7 +55,6 @@ export declare const useCreateProductionMutation: MutationHook;
 export declare const useUpdateProductionMutation: MutationHook;
 export declare const useDeleteProductionMutation: MutationHook;
 export declare const useFinishCurrentHistoryMutation: MutationHook;
-export declare const useCommentHistoryMutation: MutationHook;
 export declare const useCreateScanMutation: MutationHook;
 export declare const useUpgradeScanConsentMutation: MutationHook;
 export declare const useClaimScansMutation: MutationHook;

@@ -164,21 +164,6 @@ const transparencyQrApi = baseApi.injectEndpoints({
       })
     }),
 
-    // Legacy scan tracking (enhanced for transparency)
-    recordTransparencyScan: build.mutation<any, { production_id: string; comment?: string }>({
-      query: (scanData) => ({
-        url: `/history/public_scans/`,
-        method: 'POST',
-        body: {
-          ...scanData,
-          scan_type: 'transparency_qr' // Track as transparency-focused scan
-        }
-      }),
-      invalidatesTags: (result, error, { production_id }) => [
-        { type: 'TransparencyDetails', id: production_id }
-      ]
-    }),
-
     // Buyer/retailer supplier documentation request (public, no auth)
     createBuyerDocRequest: build.mutation<BuyerDocRequestResponse, BuyerDocRequestPayload>({
       query: (requestData) => ({
@@ -194,7 +179,6 @@ const transparencyQrApi = baseApi.injectEndpoints({
 export const {
   useGetTransparencyDetailsQuery,
   useVerifyBlockchainIntegrityQuery,
-  useRecordTransparencyScanMutation,
   useCreateBuyerDocRequestMutation
 } = transparencyQrApi;
 
