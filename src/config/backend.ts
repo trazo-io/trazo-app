@@ -90,7 +90,6 @@ export const PRODUCTION_URL = (productionId: string) =>
   productionId ? `${ROOT_URL}histories/${productionId}/` : `${ROOT_URL}histories/`;
 export const PUBLIC_HISTORY_URL = (historyId: string) =>
   `${ROOT_URL}histories/${historyId}/public_history/`;
-export const COMMENT_HISTORY_URL = (scanId: string) => `${ROOT_URL}public_scans/${scanId}/comment/`;
 export const UPLOAD_URLS_URL = `${ROOT_URL}upload-urls/`;
 
 // Certification URLs
