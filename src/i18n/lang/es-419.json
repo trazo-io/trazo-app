@@ -8457,6 +8457,7 @@
   "quickStart.field.productionType.required": "Elige perenne o anual",
   "quickStart.field.productionType.garden": "Huerta (cultivos anuales)",
   "quickStart.field.productionType.orchard": "Monte frutal (cultivos perennes)",
+  "quickStart.field.productionType.placeholder": "Elige si este cultivo es perenne o anual",
   "quickStart.field.startDate": "Fecha de inicio",
   "quickStart.field.startDate.required": "La fecha de inicio es obligatoria",
   "quickStart.locked.body": "Las temporadas terminadas se conservan tal como fueron registradas, por eso no se pueden editar. Es lo que mantiene tus registros confiables ante la certificadora.",
