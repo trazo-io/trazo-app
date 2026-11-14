@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.12.09",
+  "content_version": "2026.12.10",
   "registry": {
-    "content_version": "2026.12.09",
+    "content_version": "2026.12.10",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -390,6 +390,182 @@
                 "max_length": null
               },
               {
+                "key": "fraud_reporting_channels",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Where do you report suspected organic fraud?",
+                  "es": "¿A quién reportas una sospecha de fraude orgánico?"
+                },
+                "coaching": {
+                  "en": "Check every route you would use. A California operation can also report to the state organic program.",
+                  "es": "Marca cada vía que usarías. Una operación en California también puede reportar al programa orgánico estatal."
+                },
+                "options": [
+                  {
+                    "value": "own_certifier",
+                    "label": {
+                      "en": "Our certifying agent",
+                      "es": "Nuestra agencia certificadora"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "suppliers_certifier",
+                    "label": {
+                      "en": "The supplier's certifying agent",
+                      "es": "La agencia certificadora del proveedor"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "usda_nop",
+                    "label": {
+                      "en": "The USDA National Organic Program",
+                      "es": "El Programa Nacional Orgánico del USDA"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "state_organic_program",
+                    "label": {
+                      "en": "The California State Organic Program (CDFA), for a California operation",
+                      "es": "El Programa Orgánico Estatal de California (CDFA), para una operación en California"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otra (describe abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.201(a)(3)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "fraud_reporting_channels_other",
+                "kind": "text",
+                "label": {
+                  "en": "Where else do you report?",
+                  "es": "¿A quién más reportas?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "fraud_reporting_channels",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "fraud_reporting_triggers",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "What would you report?",
+                  "es": "¿Qué reportarías?"
+                },
+                "coaching": {
+                  "en": "The situations that would make you report, with the evidence you hold.",
+                  "es": "Las situaciones que te harían reportar, con la evidencia que tengas."
+                },
+                "options": [
+                  {
+                    "value": "positive_sample_results",
+                    "label": {
+                      "en": "Every positive residue result linked to an organic crop",
+                      "es": "Todo resultado positivo de residuos vinculado a un cultivo orgánico"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "suspected_fraud",
+                    "label": {
+                      "en": "Any activity in the supply chain that may be fraudulent",
+                      "es": "Cualquier actividad en la cadena de suministro que pueda ser fraudulenta"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "quantity_exceeds_capacity",
+                    "label": {
+                      "en": "A supplier delivering more organic product than it is known to produce",
+                      "es": "Un proveedor que entrega más producto orgánico del que se sabe que produce"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "below_market_price",
+                    "label": {
+                      "en": "Organic product offered below market price with no reasonable explanation",
+                      "es": "Producto orgánico ofrecido por debajo del precio de mercado sin una explicación razonable"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otra (describe abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.201(a)(3)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "fraud_reporting_triggers_other",
+                "kind": "text",
+                "label": {
+                  "en": "What else would you report?",
+                  "es": "¿Qué más reportarías?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "fraud_reporting_triggers",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
                 "key": "supplier_certificate_review_frequency",
                 "kind": "radio",
                 "label": {
@@ -642,6 +818,28 @@
                 "max_length": null
               },
               {
+                "key": "fraud_plan_kept_separately",
+                "kind": "boolean",
+                "label": {
+                  "en": "Do you keep a fraud prevention plan as its own document, apart from these answers?",
+                  "es": "¿Mantienes un plan de prevención del fraude como documento propio, aparte de estas respuestas?"
+                },
+                "coaching": {
+                  "en": "Your answers in this section already form the plan. Say yes only if a separate written plan exists, for instance one a buyer asked for, and attach it.",
+                  "es": "Tus respuestas en esta sección ya forman el plan. Responde que sí solo si existe un plan escrito aparte, por ejemplo uno que pidió un comprador, y adjúntalo."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
                 "key": "fraud_plan_upload",
                 "kind": "upload",
                 "label": {
@@ -654,7 +852,13 @@
                 },
                 "options": [],
                 "required": false,
-                "visible_when": [],
+                "visible_when": [
+                  {
+                    "question": "fraud_plan_kept_separately",
+                    "op": "ne",
+                    "value": false
+                  }
+                ],
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
@@ -795,6 +999,31 @@
                 "max_length": null
               },
               {
+                "key": "ofpp_team",
+                "kind": "textarea",
+                "label": {
+                  "en": "Who is on your fraud prevention team? For each person: name, job title or role, and a phone or email.",
+                  "es": "¿Quiénes forman tu equipo de prevención del fraude? Para cada persona: nombre, cargo o función, y un teléfono o correo electrónico."
+                },
+                "coaching": {
+                  "en": "The people who approve the plan, put it into practice, train staff on it and check that it works. On a small farm one person often does all four; say so.",
+                  "es": "Las personas que aprueban el plan, lo ponen en práctica, capacitan al personal y comprueban que funciona. En una finca pequeña, a menudo una sola persona hace las cuatro cosas; indícalo."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.201(a)(3)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": {
+                  "en": "e.g. Laurel Brandt, member-manager, 541-555-0134: approves and monitors the plan. Diego Ruiz, crew lead, diego@example.com: trains the crew.",
+                  "es": "p. ej. Laurel Brandt, gerente, 541-555-0134: aprueba y supervisa el plan. Diego Ruiz, responsable de cuadrilla, diego@example.com: capacita a la cuadrilla."
+                },
+                "max_length": null
+              },
+              {
                 "key": "osp_implementation_monitoring",
                 "kind": "checkbox_group",
                 "label": {
@@ -852,6 +1081,22 @@
                     "exclusive": false
                   },
                   {
+                    "value": "employee_evaluations",
+                    "label": {
+                      "en": "Staff observations and evaluations include organic practices",
+                      "es": "Las observaciones y evaluaciones del personal incluyen las prácticas orgánicas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "corrective_actions_documented",
+                    "label": {
+                      "en": "Deviations and corrective actions are written down",
+                      "es": "Las desviaciones y las acciones correctivas se dejan por escrito"
+                    },
+                    "exclusive": false
+                  },
+                  {
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
@@ -863,6 +1108,59 @@
                 "required": true,
                 "visible_when": [],
                 "nop_cite": "§ 205.201(a)(3)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "record_review_frequency",
+                "kind": "text",
+                "label": {
+                  "en": "How often are the records reviewed?",
+                  "es": "¿Con qué frecuencia se revisan los registros?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "osp_implementation_monitoring",
+                    "op": "includes",
+                    "value": "record_review"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": {
+                  "en": "e.g. weekly during harvest, monthly the rest of the year",
+                  "es": "p. ej. cada semana durante la cosecha, cada mes el resto del año"
+                },
+                "max_length": null
+              },
+              {
+                "key": "employee_evaluation_frequency",
+                "kind": "text",
+                "label": {
+                  "en": "How often are staff observed or evaluated?",
+                  "es": "¿Con qué frecuencia se observa o evalúa al personal?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "osp_implementation_monitoring",
+                    "op": "includes",
+                    "value": "employee_evaluations"
+                  }
+                ],
+                "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
@@ -883,6 +1181,940 @@
                 "visible_when": [
                   {
                     "question": "osp_implementation_monitoring",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "ofpp_training_cadence",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How are staff trained on this plan and its changes?",
+                  "es": "¿Cómo se capacita al personal sobre este plan y sus cambios?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "onboarding",
+                    "label": {
+                      "en": "New staff are trained on it when they start",
+                      "es": "El personal nuevo se capacita al empezar"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "annual_refresher",
+                    "label": {
+                      "en": "All staff take a refresher every year",
+                      "es": "Todo el personal recibe un repaso cada año"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "within_month_of_change",
+                    "label": {
+                      "en": "Staff are trained on a change to the plan within a month of it",
+                      "es": "El personal se capacita sobre un cambio del plan dentro del mes siguiente"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otra (describe abajo)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "no_staff",
+                    "label": {
+                      "en": "We have no staff; the owners do all the work",
+                      "es": "No tenemos personal; las personas propietarias hacen todo el trabajo"
+                    },
+                    "exclusive": true
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.201(a)(3)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "ofpp_training_cadence_other",
+                "kind": "text",
+                "label": {
+                  "en": "Describe the other training",
+                  "es": "Describe la otra capacitación"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "ofpp_training_cadence",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "internal_audits_conducted",
+                "kind": "boolean",
+                "label": {
+                  "en": "Do you conduct internal audits?",
+                  "es": "¿Realizas auditorías internas?"
+                },
+                "coaching": {
+                  "en": "A planned check of your own operation against this plan, by you or someone you appoint. Your certifier's inspection does not count.",
+                  "es": "Una revisión planificada de tu propia operación frente a este plan, hecha por ti o por alguien que designes. La inspección de tu certificador no cuenta."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.201(a)(3)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "internal_audit_scope",
+                "kind": "textarea",
+                "label": {
+                  "en": "What do the internal audits cover, and how often are they done?",
+                  "es": "¿Qué cubren las auditorías internas y con qué frecuencia se hacen?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "internal_audits_conducted",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "written_sops_kept",
+                "kind": "boolean",
+                "label": {
+                  "en": "Do you keep written standard operating procedures (SOPs) for organic production or handling?",
+                  "es": "¿Mantienes procedimientos operativos estándar (SOP) escritos para la producción o el manejo orgánico?"
+                },
+                "coaching": {
+                  "en": "For example how a spray decision is made, how equipment is cleaned out, or how the harvest crew keeps organic bins apart. This plan already describes your practices; say yes only if written procedures exist as well, and attach them.",
+                  "es": "Por ejemplo, cómo se decide una aplicación, cómo se limpia el equipo o cómo la cuadrilla de cosecha mantiene separados los contenedores orgánicos. Este plan ya describe tus prácticas; responde que sí solo si además existen procedimientos escritos, y adjúntalos."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "sop_upload",
+                "kind": "upload",
+                "label": {
+                  "en": "Attach your written SOPs",
+                  "es": "Adjunta tus SOP escritos"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "written_sops_kept",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "fraud_additional_notes",
+                "kind": "textarea",
+                "label": {
+                  "en": "Anything else about how you monitor this plan or prevent fraud?",
+                  "es": "¿Algo más sobre cómo supervisas este plan o previenes el fraude?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              }
+            ]
+          },
+          {
+            "key": "d_supply_chain",
+            "title": {
+              "en": "D. Supply chain and critical control points",
+              "es": "D. Cadena de suministro y puntos críticos de control"
+            },
+            "education": [
+              {
+                "en": "A critical control point is a step where fraud could enter your supply chain and where you can stop it. For each one, say what you do there and how you check that it works. For example, for transport: we confirm the shipper's clean truck procedure and file it with the receiving records, and the product is listed as organic on every record; the clean truck affidavit is checked for each load before the organic product is unloaded.",
+                "es": "Un punto crítico de control es un paso en el que el fraude podría entrar a tu cadena de suministro y en el que puedes detenerlo. Para cada uno, indica qué haces ahí y cómo compruebas que funciona. Por ejemplo, para el transporte: confirmamos el procedimiento de camión limpio del transportista y lo archivamos con los registros de recepción, y el producto figura como orgánico en cada registro; la declaración de camión limpio se revisa en cada carga antes de descargar el producto orgánico."
+              }
+            ],
+            "visible_when": [],
+            "questions": [
+              {
+                "key": "supply_chain_shown_as",
+                "kind": "radio",
+                "label": {
+                  "en": "How do you show your supply chain?",
+                  "es": "¿Cómo muestras tu cadena de suministro?"
+                },
+                "coaching": {
+                  "en": "Start with the certified operations that supply you and follow the product to your buyers. Show where each supplier is, where the product changes ownership, any importing or exporting, each step done away from the farm such as transport and storage, and mark the critical control points you name below.",
+                  "es": "Empieza por las operaciones certificadas que te abastecen y sigue el producto hasta tus compradores. Muestra dónde está cada proveedor, dónde cambia la propiedad del producto, cualquier importación o exportación, cada paso hecho fuera de la finca, como el transporte y el almacenamiento, y marca los puntos críticos de control que nombras abajo."
+                },
+                "options": [
+                  {
+                    "value": "map",
+                    "label": {
+                      "en": "We attach a map or flow chart",
+                      "es": "Adjuntamos un mapa o diagrama de flujo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "described",
+                    "label": {
+                      "en": "Our supply chain is simple, so we describe it here",
+                      "es": "Nuestra cadena de suministro es sencilla, así que la describimos aquí"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.201(a)(3)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "supply_chain_map_upload",
+                "kind": "upload",
+                "label": {
+                  "en": "Attach the map or flow chart",
+                  "es": "Adjunta el mapa o diagrama de flujo"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "supply_chain_shown_as",
+                    "op": "eq",
+                    "value": "map"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "supply_chain_description",
+                "kind": "textarea",
+                "label": {
+                  "en": "Describe your supply chain",
+                  "es": "Describe tu cadena de suministro"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "supply_chain_shown_as",
+                    "op": "eq",
+                    "value": "described"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": {
+                  "en": "e.g. Certified organic trees from Willow Drive Nursery, Ephrata WA. Our crew picks into our own bins. Columbia Packers (certified, Wenatchee WA) hauls the bins in its own trucks and owns the fruit from its dock on. No importing or exporting.",
+                  "es": "p. ej. Árboles orgánicos certificados de Willow Drive Nursery, Ephrata WA. Nuestra cuadrilla cosecha en nuestros propios contenedores. Columbia Packers (con certificación, Wenatchee WA) transporta los contenedores en sus camiones, y la fruta pasa a su propiedad en su andén. Sin importación ni exportación."
+                },
+                "max_length": null
+              },
+              {
+                "key": "critical_control_points",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Which steps in your supply chain are critical control points?",
+                  "es": "¿Qué pasos de tu cadena de suministro son puntos críticos de control?"
+                },
+                "coaching": {
+                  "en": "Weigh whether each supplier is certified or exempt, domestic or foreign; products that are high value, hard to find or in high demand; pest or disease pressure; organic and nonorganic product handled together; and how well you know the supplier.",
+                  "es": "Considera si cada proveedor está certificado o exento, si es nacional o extranjero; los productos de alto valor, difíciles de conseguir o de alta demanda; la presión de plagas o enfermedades; el manejo conjunto de producto orgánico y no orgánico; y qué tan bien conoces al proveedor."
+                },
+                "options": [
+                  {
+                    "value": "seed_stock",
+                    "label": {
+                      "en": "Buying seed, transplants or planting stock",
+                      "es": "Compra de semilla, plántulas o material de plantación"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "inputs",
+                    "label": {
+                      "en": "Buying fertilizers, soil amendments or pest control materials",
+                      "es": "Compra de fertilizantes, enmiendas del suelo o materiales para el control de plagas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "purchased_product",
+                    "label": {
+                      "en": "Buying organic crops or products from other operations",
+                      "es": "Compra de cultivos o productos orgánicos a otras operaciones"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "custom_operators",
+                    "label": {
+                      "en": "Work done under contract, such as application, harvest or hulling",
+                      "es": "Trabajo por contrato, como aplicación, cosecha o descascarado"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "transport",
+                    "label": {
+                      "en": "Transport, including by a carrier that is not certified",
+                      "es": "Transporte, incluido el que hace una empresa sin certificación"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "offsite_storage",
+                    "label": {
+                      "en": "Storage, cooling or packing away from the farm",
+                      "es": "Almacenamiento, enfriamiento o empaque fuera de la finca"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "split_handling",
+                    "label": {
+                      "en": "Steps where organic and nonorganic product share people, equipment or space",
+                      "es": "Pasos en que el producto orgánico y el no orgánico comparten personal, equipo o espacio"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "sales",
+                    "label": {
+                      "en": "Selling: invoices, bills of lading and labels that name the product organic",
+                      "es": "Venta: facturas, conocimientos de embarque y etiquetas que identifican el producto como orgánico"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "import_export",
+                    "label": {
+                      "en": "Importing or exporting",
+                      "es": "Importación o exportación"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (name it below)",
+                      "es": "Otro (nómbralo abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.201(a)(3)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "ccp_other_name",
+                "kind": "text",
+                "label": {
+                  "en": "Name the other control point",
+                  "es": "Nombra el otro punto de control"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "critical_control_points",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "ccp_seed_stock_strategy",
+                "kind": "textarea",
+                "label": {
+                  "en": "Seed and planting stock: how do you prevent fraud at this point?",
+                  "es": "Semilla y material de plantación: ¿cómo previenes el fraude en este punto?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "critical_control_points",
+                    "op": "includes",
+                    "value": "seed_stock"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "ccp_seed_stock_monitoring",
+                "kind": "textarea",
+                "label": {
+                  "en": "Seed and planting stock: how do you check that this works, and how often?",
+                  "es": "Semilla y material de plantación: ¿cómo compruebas que esto funciona y con qué frecuencia?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "critical_control_points",
+                    "op": "includes",
+                    "value": "seed_stock"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "ccp_inputs_strategy",
+                "kind": "textarea",
+                "label": {
+                  "en": "Inputs: how do you prevent fraud at this point?",
+                  "es": "Insumos: ¿cómo previenes el fraude en este punto?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "critical_control_points",
+                    "op": "includes",
+                    "value": "inputs"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "ccp_inputs_monitoring",
+                "kind": "textarea",
+                "label": {
+                  "en": "Inputs: how do you check that this works, and how often?",
+                  "es": "Insumos: ¿cómo compruebas que esto funciona y con qué frecuencia?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "critical_control_points",
+                    "op": "includes",
+                    "value": "inputs"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "ccp_purchased_product_strategy",
+                "kind": "textarea",
+                "label": {
+                  "en": "Organic product bought in: how do you prevent fraud at this point?",
+                  "es": "Producto orgánico comprado: ¿cómo previenes el fraude en este punto?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "critical_control_points",
+                    "op": "includes",
+                    "value": "purchased_product"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "ccp_purchased_product_monitoring",
+                "kind": "textarea",
+                "label": {
+                  "en": "Organic product bought in: how do you check that this works, and how often?",
+                  "es": "Producto orgánico comprado: ¿cómo compruebas que esto funciona y con qué frecuencia?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "critical_control_points",
+                    "op": "includes",
+                    "value": "purchased_product"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "ccp_custom_operators_strategy",
+                "kind": "textarea",
+                "label": {
+                  "en": "Contracted work: how do you prevent fraud at this point?",
+                  "es": "Trabajo por contrato: ¿cómo previenes el fraude en este punto?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "critical_control_points",
+                    "op": "includes",
+                    "value": "custom_operators"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "ccp_custom_operators_monitoring",
+                "kind": "textarea",
+                "label": {
+                  "en": "Contracted work: how do you check that this works, and how often?",
+                  "es": "Trabajo por contrato: ¿cómo compruebas que esto funciona y con qué frecuencia?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "critical_control_points",
+                    "op": "includes",
+                    "value": "custom_operators"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "ccp_transport_strategy",
+                "kind": "textarea",
+                "label": {
+                  "en": "Transport: how do you prevent fraud at this point?",
+                  "es": "Transporte: ¿cómo previenes el fraude en este punto?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "critical_control_points",
+                    "op": "includes",
+                    "value": "transport"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "ccp_transport_monitoring",
+                "kind": "textarea",
+                "label": {
+                  "en": "Transport: how do you check that this works, and how often?",
+                  "es": "Transporte: ¿cómo compruebas que esto funciona y con qué frecuencia?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "critical_control_points",
+                    "op": "includes",
+                    "value": "transport"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "ccp_offsite_storage_strategy",
+                "kind": "textarea",
+                "label": {
+                  "en": "Storage and packing away from the farm: how do you prevent fraud at this point?",
+                  "es": "Almacenamiento y empaque fuera de la finca: ¿cómo previenes el fraude en este punto?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "critical_control_points",
+                    "op": "includes",
+                    "value": "offsite_storage"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "ccp_offsite_storage_monitoring",
+                "kind": "textarea",
+                "label": {
+                  "en": "Storage and packing away from the farm: how do you check that this works, and how often?",
+                  "es": "Almacenamiento y empaque fuera de la finca: ¿cómo compruebas que esto funciona y con qué frecuencia?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "critical_control_points",
+                    "op": "includes",
+                    "value": "offsite_storage"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "ccp_split_handling_strategy",
+                "kind": "textarea",
+                "label": {
+                  "en": "Shared people, equipment or space: how do you prevent fraud at this point?",
+                  "es": "Personal, equipo o espacio en común: ¿cómo previenes el fraude en este punto?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "critical_control_points",
+                    "op": "includes",
+                    "value": "split_handling"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "ccp_split_handling_monitoring",
+                "kind": "textarea",
+                "label": {
+                  "en": "Shared people, equipment or space: how do you check that this works, and how often?",
+                  "es": "Personal, equipo o espacio en común: ¿cómo compruebas que esto funciona y con qué frecuencia?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "critical_control_points",
+                    "op": "includes",
+                    "value": "split_handling"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "ccp_sales_strategy",
+                "kind": "textarea",
+                "label": {
+                  "en": "Selling: how do you prevent fraud at this point?",
+                  "es": "Venta: ¿cómo previenes el fraude en este punto?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "critical_control_points",
+                    "op": "includes",
+                    "value": "sales"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "ccp_sales_monitoring",
+                "kind": "textarea",
+                "label": {
+                  "en": "Selling: how do you check that this works, and how often?",
+                  "es": "Venta: ¿cómo compruebas que esto funciona y con qué frecuencia?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "critical_control_points",
+                    "op": "includes",
+                    "value": "sales"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "ccp_import_export_strategy",
+                "kind": "textarea",
+                "label": {
+                  "en": "Importing or exporting: how do you prevent fraud at this point?",
+                  "es": "Importación o exportación: ¿cómo previenes el fraude en este punto?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "critical_control_points",
+                    "op": "includes",
+                    "value": "import_export"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "ccp_import_export_monitoring",
+                "kind": "textarea",
+                "label": {
+                  "en": "Importing or exporting: how do you check that this works, and how often?",
+                  "es": "Importación o exportación: ¿cómo compruebas que esto funciona y con qué frecuencia?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "critical_control_points",
+                    "op": "includes",
+                    "value": "import_export"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "ccp_other_strategy",
+                "kind": "textarea",
+                "label": {
+                  "en": "Other control point: how do you prevent fraud at this point?",
+                  "es": "Otro punto de control: ¿cómo previenes el fraude en este punto?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "critical_control_points",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "ccp_other_monitoring",
+                "kind": "textarea",
+                "label": {
+                  "en": "Other control point: how do you check that this works, and how often?",
+                  "es": "Otro punto de control: ¿cómo compruebas que esto funciona y con qué frecuencia?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "critical_control_points",
                     "op": "includes",
                     "value": "other"
                   }
@@ -25195,13 +26427,23 @@
       "visible_questions": [
         "fraud_risk_areas",
         "fraud_mitigation_practices",
+        "fraud_reporting_channels",
+        "fraud_reporting_triggers",
         "supplier_approval_controls",
         "supplier_approval_procedure_upload",
         "fraud_review_process",
+        "fraud_plan_kept_separately",
         "fraud_plan_upload",
         "osp_review_frequency",
         "osp_accuracy_process",
-        "osp_implementation_monitoring"
+        "ofpp_team",
+        "osp_implementation_monitoring",
+        "ofpp_training_cadence",
+        "internal_audits_conducted",
+        "written_sops_kept",
+        "fraud_additional_notes",
+        "supply_chain_shown_as",
+        "critical_control_points"
       ],
       "missing_required": [
         "fraud_risk_areas",
@@ -25234,13 +26476,23 @@
         "product_testing_detail",
         "residue_screening_method",
         "residue_detection_response",
+        "fraud_reporting_channels",
+        "fraud_reporting_triggers",
         "supplier_approval_controls",
         "supplier_approval_procedure_upload",
         "fraud_review_process",
+        "fraud_plan_kept_separately",
         "fraud_plan_upload",
         "osp_review_frequency",
         "osp_accuracy_process",
-        "osp_implementation_monitoring"
+        "ofpp_team",
+        "osp_implementation_monitoring",
+        "ofpp_training_cadence",
+        "internal_audits_conducted",
+        "written_sops_kept",
+        "fraud_additional_notes",
+        "supply_chain_shown_as",
+        "critical_control_points"
       ],
       "missing_required": [
         "fraud_risk_areas",
@@ -25270,14 +26522,24 @@
       "visible_questions": [
         "fraud_risk_areas",
         "fraud_mitigation_practices",
+        "fraud_reporting_channels",
+        "fraud_reporting_triggers",
         "supplier_certificate_review_frequency",
         "supplier_approval_controls",
         "supplier_approval_procedure_upload",
         "fraud_review_process",
+        "fraud_plan_kept_separately",
         "fraud_plan_upload",
         "osp_review_frequency",
         "osp_accuracy_process",
-        "osp_implementation_monitoring"
+        "ofpp_team",
+        "osp_implementation_monitoring",
+        "ofpp_training_cadence",
+        "internal_audits_conducted",
+        "written_sops_kept",
+        "fraud_additional_notes",
+        "supply_chain_shown_as",
+        "critical_control_points"
       ],
       "missing_required": [
         "fraud_risk_areas",
@@ -25288,6 +26550,206 @@
       ],
       "missing_required_na": [
         "fraud_risk_areas",
+        "fraud_review_process",
+        "osp_review_frequency",
+        "osp_accuracy_process",
+        "osp_implementation_monitoring"
+      ]
+    },
+    {
+      "module": "g2_0_fraud_prevention",
+      "label": "separate_plan_sops_audits",
+      "answers": {
+        "fraud_plan_kept_separately": true,
+        "written_sops_kept": true,
+        "internal_audits_conducted": true,
+        "osp_implementation_monitoring": [
+          "record_review",
+          "employee_evaluations"
+        ]
+      },
+      "visible_questions": [
+        "fraud_risk_areas",
+        "fraud_mitigation_practices",
+        "fraud_reporting_channels",
+        "fraud_reporting_triggers",
+        "supplier_approval_controls",
+        "supplier_approval_procedure_upload",
+        "fraud_review_process",
+        "fraud_plan_kept_separately",
+        "fraud_plan_upload",
+        "osp_review_frequency",
+        "osp_accuracy_process",
+        "ofpp_team",
+        "osp_implementation_monitoring",
+        "record_review_frequency",
+        "employee_evaluation_frequency",
+        "ofpp_training_cadence",
+        "internal_audits_conducted",
+        "internal_audit_scope",
+        "written_sops_kept",
+        "sop_upload",
+        "fraud_additional_notes",
+        "supply_chain_shown_as",
+        "critical_control_points"
+      ],
+      "missing_required": [
+        "fraud_risk_areas",
+        "fraud_mitigation_practices",
+        "fraud_review_process",
+        "osp_review_frequency",
+        "osp_accuracy_process"
+      ],
+      "missing_required_na": [
+        "fraud_risk_areas",
+        "fraud_mitigation_practices",
+        "fraud_review_process",
+        "osp_review_frequency",
+        "osp_accuracy_process"
+      ]
+    },
+    {
+      "module": "g2_0_fraud_prevention",
+      "label": "no_plan_no_sops",
+      "answers": {
+        "fraud_plan_kept_separately": false,
+        "written_sops_kept": false
+      },
+      "visible_questions": [
+        "fraud_risk_areas",
+        "fraud_mitigation_practices",
+        "fraud_reporting_channels",
+        "fraud_reporting_triggers",
+        "supplier_approval_controls",
+        "supplier_approval_procedure_upload",
+        "fraud_review_process",
+        "fraud_plan_kept_separately",
+        "osp_review_frequency",
+        "osp_accuracy_process",
+        "ofpp_team",
+        "osp_implementation_monitoring",
+        "ofpp_training_cadence",
+        "internal_audits_conducted",
+        "written_sops_kept",
+        "fraud_additional_notes",
+        "supply_chain_shown_as",
+        "critical_control_points"
+      ],
+      "missing_required": [
+        "fraud_risk_areas",
+        "fraud_mitigation_practices",
+        "fraud_review_process",
+        "osp_review_frequency",
+        "osp_accuracy_process",
+        "osp_implementation_monitoring"
+      ],
+      "missing_required_na": [
+        "fraud_risk_areas",
+        "fraud_mitigation_practices",
+        "fraud_review_process",
+        "osp_review_frequency",
+        "osp_accuracy_process",
+        "osp_implementation_monitoring"
+      ]
+    },
+    {
+      "module": "g2_0_fraud_prevention",
+      "label": "supply_chain_map",
+      "answers": {
+        "supply_chain_shown_as": "map",
+        "critical_control_points": [
+          "transport",
+          "other"
+        ]
+      },
+      "visible_questions": [
+        "fraud_risk_areas",
+        "fraud_mitigation_practices",
+        "fraud_reporting_channels",
+        "fraud_reporting_triggers",
+        "supplier_approval_controls",
+        "supplier_approval_procedure_upload",
+        "fraud_review_process",
+        "fraud_plan_kept_separately",
+        "fraud_plan_upload",
+        "osp_review_frequency",
+        "osp_accuracy_process",
+        "ofpp_team",
+        "osp_implementation_monitoring",
+        "ofpp_training_cadence",
+        "internal_audits_conducted",
+        "written_sops_kept",
+        "fraud_additional_notes",
+        "supply_chain_shown_as",
+        "supply_chain_map_upload",
+        "critical_control_points",
+        "ccp_other_name",
+        "ccp_transport_strategy",
+        "ccp_transport_monitoring",
+        "ccp_other_strategy",
+        "ccp_other_monitoring"
+      ],
+      "missing_required": [
+        "fraud_risk_areas",
+        "fraud_mitigation_practices",
+        "fraud_review_process",
+        "osp_review_frequency",
+        "osp_accuracy_process",
+        "osp_implementation_monitoring"
+      ],
+      "missing_required_na": [
+        "fraud_risk_areas",
+        "fraud_mitigation_practices",
+        "fraud_review_process",
+        "osp_review_frequency",
+        "osp_accuracy_process",
+        "osp_implementation_monitoring"
+      ]
+    },
+    {
+      "module": "g2_0_fraud_prevention",
+      "label": "supply_chain_described",
+      "answers": {
+        "supply_chain_shown_as": "described",
+        "critical_control_points": [
+          "sales"
+        ]
+      },
+      "visible_questions": [
+        "fraud_risk_areas",
+        "fraud_mitigation_practices",
+        "fraud_reporting_channels",
+        "fraud_reporting_triggers",
+        "supplier_approval_controls",
+        "supplier_approval_procedure_upload",
+        "fraud_review_process",
+        "fraud_plan_kept_separately",
+        "fraud_plan_upload",
+        "osp_review_frequency",
+        "osp_accuracy_process",
+        "ofpp_team",
+        "osp_implementation_monitoring",
+        "ofpp_training_cadence",
+        "internal_audits_conducted",
+        "written_sops_kept",
+        "fraud_additional_notes",
+        "supply_chain_shown_as",
+        "supply_chain_description",
+        "critical_control_points",
+        "ccp_sales_strategy",
+        "ccp_sales_monitoring"
+      ],
+      "missing_required": [
+        "fraud_risk_areas",
+        "fraud_mitigation_practices",
+        "fraud_review_process",
+        "osp_review_frequency",
+        "osp_accuracy_process",
+        "osp_implementation_monitoring"
+      ],
+      "missing_required_na": [
+        "fraud_risk_areas",
+        "fraud_mitigation_practices",
         "fraud_review_process",
         "osp_review_frequency",
         "osp_accuracy_process",
@@ -28157,13 +29619,23 @@
       "visible_questions": [
         "fraud_risk_areas",
         "fraud_mitigation_practices",
+        "fraud_reporting_channels",
+        "fraud_reporting_triggers",
         "supplier_approval_controls",
         "supplier_approval_procedure_upload",
         "fraud_review_process",
+        "fraud_plan_kept_separately",
         "fraud_plan_upload",
         "osp_review_frequency",
         "osp_accuracy_process",
-        "osp_implementation_monitoring"
+        "ofpp_team",
+        "osp_implementation_monitoring",
+        "ofpp_training_cadence",
+        "internal_audits_conducted",
+        "written_sops_kept",
+        "fraud_additional_notes",
+        "supply_chain_shown_as",
+        "critical_control_points"
       ],
       "missing_required": [
         "fraud_risk_areas",
