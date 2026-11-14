@@ -592,7 +592,7 @@
   "app.delete": "Eliminar",
   "app.deleteProduction": "Eliminar temporada",
   "app.deleteProductionConfirm": "¿Seguro que quieres eliminar esta temporada? Esta acción no se puede deshacer.",
-  "app.deleteProductionWarning": "Esto también eliminará {eventCount} actividades registradas en esta temporada.",
+  "app.deleteSeasonHasRecords": "Esta temporada tiene {eventCount, plural, one {# actividad registrada} other {# actividades registradas}}, así que no se puede eliminar entera: eso borraría registros que una operación orgánica guarda durante 5 años. Si la empezaste por error, elimina las actividades una por una mientras la temporada está abierta y después elimina la temporada vacía.",
   "app.description": "Descripción",
   "app.descriptionOfTheEvent": "Descripción del evento",
   "app.designedForFarmers": "Diseñado específicamente para productores agrícolas",
