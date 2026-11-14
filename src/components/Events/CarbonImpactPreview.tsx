@@ -27,7 +27,7 @@ import {
   formatCO2e as formatCO2eUtil,
   getImpactLevel as getImpactLevelUtil
 } from '../../utils/carbonDisplayUtils';
-import { isNotEstimated } from 'utils/carbonStatus';
+import { estimateReasonMessageIds, isNotEstimated } from 'utils/carbonStatus';
 import { APPLICATION_METHODS, WATER_SOURCES, type EnumOption } from 'config/events/enums';
 import {
   CHEMICAL_FUEL_TYPES,
@@ -85,9 +85,23 @@ interface CarbonCalculation {
         unit: string;
         source: string;
         provenance: 'published' | 'internal_estimate';
-        confidence_level: number;
+        confidence_level?: number;
       } | null;
+      /**
+       * Set on an input record's application pass estimated from the area treated and the
+       * application method: `assumed_rate` is then litres of diesel per hectare, a Trazo rate.
+       */
+      estimated_from?: 'area_and_application_method' | null;
     };
+    /**
+     * What an input figure rests on as a whole (2026-11-13): `published_factors` only when every
+     * part came from a recorded quantity and a published factor with nothing left out, else
+     * `estimate`, with the codes in `estimate_reasons`.
+     */
+    figure_basis?: 'published_factors' | 'estimate';
+    estimate_reasons?: string[];
+    manufacturing_emissions_omitted?: boolean;
+    manufacturing_omitted_code?: string;
     // Chemical application fields
     nitrogen_emissions?: number;
     phosphorus_emissions?: number;
@@ -112,7 +126,8 @@ interface CarbonCalculation {
     active_ingredient_percentage?: number;
     active_ingredient_kg?: number;
     emission_factor_kg_co2_per_kg?: number;
-    concentration_source?: 'user_provided' | 'default';
+    /** `not_recorded`: no concentration on the record, so no active-ingredient figure exists. */
+    concentration_source?: 'user_provided' | 'not_recorded' | 'aggregate_summary';
     pesticide_subtype?: string;
     herbicide_subtype?: string;
     fungicide_subtype?: string;
@@ -388,6 +403,15 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
         calculation?.breakdown?.electricity_emission_factor_kg_per_kwh
     );
 
+    /**
+     * An input figure (spray, fertilizer) that the backend calls an estimate as a whole: a part
+     * was estimated (fuel from the area, a Trazo factor, a weight from a typical density) or left
+     * out (no amount, concentration or N-P-K). It never gets the "From recorded inputs" badge or
+     * the green check, whatever factor evidence the breakdown carries (2026-11-13).
+     */
+    const isEstimate = calculation?.breakdown?.figure_basis === 'estimate';
+    const reasonIds = estimateReasonMessageIds(calculation?.breakdown?.estimate_reasons);
+
     // Handle error state from API failures
     if (calculation?.error || calculation?.calculation_unavailable) {
       return (
@@ -454,6 +478,8 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
     // Run 8 (R8-04): the record holds nothing to count from. The save stores no figure, so the
     // preview shows none either: "Not estimated", never 0 (the saved/preview mismatch Astra saw).
     if (isNotEstimated(calculation)) {
+      // An input record names what it lacks (no amount, concentration, N-P-K, fuel or area);
+      // until 2026-11-13 its zero fell to the card below, "no emissions to estimate".
       return (
         <Card bg={bgColor} borderRadius="md" borderWidth="1px" borderColor={borderColor}>
           <CardBody>
@@ -461,11 +487,21 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
               <Icon as={FaLeaf} color="gray.500" boxSize={4} mt={1} />
               <VStack spacing={1} align="start">
                 <Text fontSize="sm" fontWeight="semibold" color={textColor}>
-                  {intl.formatMessage({ id: 'carbon.notEstimated' })}
+                  {intl.formatMessage({
+                    id: reasonIds.length ? 'carbon.notEstimatedFromRecord' : 'carbon.notEstimated'
+                  })}
                 </Text>
-                <Text fontSize="xs" color="gray.600">
-                  {intl.formatMessage({ id: 'carbon.notEstimatedHint' })}
-                </Text>
+                {reasonIds.length ? (
+                  reasonIds.map((id) => (
+                    <Text key={id} fontSize="xs" color="gray.600">
+                      {intl.formatMessage({ id })}
+                    </Text>
+                  ))
+                ) : (
+                  <Text fontSize="xs" color="gray.600">
+                    {intl.formatMessage({ id: 'carbon.notEstimatedHint' })}
+                  </Text>
+                )}
               </VStack>
             </HStack>
           </CardBody>
@@ -595,27 +631,34 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                 multiplies was not, and a single badge let the citable half vouch for the
                 other. Driven by the typed `fuel_basis.measured`, never by parsing a
                 source string. */}
-            {hasPublishedFactorEvidence &&
-              (fuelBasis && !fuelBasis.measured ? (
-                <Tooltip label={intl.formatMessage({ id: 'carbon.badge.estimatedFuelTooltip' })}>
-                  <Badge colorScheme="gray" size="sm">
+            {/* An input figure that is an estimate takes "Estimated fuel" when its fuel was
+                estimated, else "Estimate"; neither is ever the blue "From recorded inputs". */}
+            {hasPublishedFactorEvidence && fuelBasis && !fuelBasis.measured ? (
+              <Tooltip label={intl.formatMessage({ id: 'carbon.badge.estimatedFuelTooltip' })}>
+                <Badge colorScheme="gray" size="sm">
+                  <Text fontSize="xs">
+                    {intl.formatMessage({ id: 'carbon.badge.estimatedFuel' })}
+                  </Text>
+                </Badge>
+              </Tooltip>
+            ) : isEstimate ? (
+              <Tooltip label={intl.formatMessage({ id: 'carbon.badge.estimateCaption' })}>
+                <Badge colorScheme="gray" size="sm">
+                  <Text fontSize="xs">{intl.formatMessage({ id: 'carbon.badge.estimate' })}</Text>
+                </Badge>
+              </Tooltip>
+            ) : hasPublishedFactorEvidence ? (
+              <Tooltip label={intl.formatMessage({ id: 'carbon.badge.epaUsdaTooltip' })}>
+                <Badge colorScheme="blue" size="sm">
+                  <HStack spacing={1}>
+                    <Icon as={FaCheckCircle} boxSize={3} />
                     <Text fontSize="xs">
-                      {intl.formatMessage({ id: 'carbon.badge.estimatedFuel' })}
+                      {intl.formatMessage({ id: 'carbon.badge.epaUsdaSourced' })}
                     </Text>
-                  </Badge>
-                </Tooltip>
-              ) : (
-                <Tooltip label={intl.formatMessage({ id: 'carbon.badge.epaUsdaTooltip' })}>
-                  <Badge colorScheme="blue" size="sm">
-                    <HStack spacing={1}>
-                      <Icon as={FaCheckCircle} boxSize={3} />
-                      <Text fontSize="xs">
-                        {intl.formatMessage({ id: 'carbon.badge.epaUsdaSourced' })}
-                      </Text>
-                    </HStack>
-                  </Badge>
-                </Tooltip>
-              ))}
+                  </HStack>
+                </Badge>
+              </Tooltip>
+            ) : null}
           </Flex>
         </CardHeader>
 
@@ -978,9 +1021,14 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                     // A non-diesel machine with nothing entered is costed in
                                     // DIESEL — saying "a US average for this activity" there
                                     // would hide which fuel we actually priced.
-                                    id: fuelBasis.assumed_fuel_is_diesel
-                                      ? 'carbon.assumedFuel.explainDieselSubstitute'
-                                      : 'carbon.assumedFuel.explain'
+                                    // An input record's pass: a Trazo litres-per-hectare rate by
+                                    // application method, always diesel, never a "US average".
+                                    id:
+                                      fuelBasis.estimated_from === 'area_and_application_method'
+                                        ? 'carbon.assumedFuel.explainApplicationPass'
+                                        : fuelBasis.assumed_fuel_is_diesel
+                                        ? 'carbon.assumedFuel.explainDieselSubstitute'
+                                        : 'carbon.assumedFuel.explain'
                                   },
                                   { rate: fuelBasis.assumed_rate.value }
                                 )}>
@@ -1272,43 +1320,48 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                         : t('na')}
                                     </Text>
                                   </HStack>
-                                  {/* Display fuel consumption if provided */}
-                                  {calculation.breakdown.application_fuel_gallons > 0 && (
-                                    <>
-                                      <HStack justify="space-between" fontSize="xs" mt={1}>
-                                        <Text color="blue.600">{t('label.applicationFuel')}</Text>
-                                        <Text color="blue.800">
-                                          {t('unit.gallons', {
-                                            value:
-                                              calculation.breakdown.application_fuel_gallons.toFixed(
-                                                1
-                                              )
-                                          })}
-                                          {Boolean(
-                                            calculation.breakdown.application_fuel_liters
-                                          ) && (
-                                            <Text as="span" color="blue.500" fontStyle="italic">
-                                              {' '}
-                                              (
-                                              {calculation.breakdown.application_fuel_liters.toFixed(
-                                                1
-                                              )}{' '}
-                                              L)
-                                            </Text>
-                                          )}
-                                        </Text>
-                                      </HStack>
-                                      <HStack justify="space-between" fontSize="xs">
-                                        <Text color="blue.600">{t('label.fuelType')}</Text>
-                                        <Text color="blue.800">
-                                          {optionLabel(
-                                            CHEMICAL_FUEL_TYPES,
-                                            calculation.breakdown.application_fuel_type || 'diesel'
-                                          )}
-                                        </Text>
-                                      </HStack>
-                                    </>
-                                  )}
+                                  {/* Fuel under "Your application" only when it was entered: an
+                                      area-based estimate (`fuel_basis.measured: false`) is not
+                                      the operator's reading, and the "Fuel was estimated" block
+                                      says what it is (2026-11-13). */}
+                                  {calculation.breakdown.application_fuel_gallons > 0 &&
+                                    fuelBasis?.measured !== false && (
+                                      <>
+                                        <HStack justify="space-between" fontSize="xs" mt={1}>
+                                          <Text color="blue.600">{t('label.applicationFuel')}</Text>
+                                          <Text color="blue.800">
+                                            {t('unit.gallons', {
+                                              value:
+                                                calculation.breakdown.application_fuel_gallons.toFixed(
+                                                  1
+                                                )
+                                            })}
+                                            {Boolean(
+                                              calculation.breakdown.application_fuel_liters
+                                            ) && (
+                                              <Text as="span" color="blue.500" fontStyle="italic">
+                                                {' '}
+                                                (
+                                                {calculation.breakdown.application_fuel_liters.toFixed(
+                                                  1
+                                                )}{' '}
+                                                L)
+                                              </Text>
+                                            )}
+                                          </Text>
+                                        </HStack>
+                                        <HStack justify="space-between" fontSize="xs">
+                                          <Text color="blue.600">{t('label.fuelType')}</Text>
+                                          <Text color="blue.800">
+                                            {optionLabel(
+                                              CHEMICAL_FUEL_TYPES,
+                                              calculation.breakdown.application_fuel_type ||
+                                                'diesel'
+                                            )}
+                                          </Text>
+                                        </HStack>
+                                      </>
+                                    )}
                                 </Box>
                               )}
 
@@ -1785,9 +1838,17 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                 !calculation.breakdown?.pest_activity &&
                                 !calculation.breakdown?.water_volume_gallons && (
                                   <VStack spacing={1} align="stretch">
-                                    {/* Active Ingredient & Emission Factor Details (2025-12-24) */}
-                                    {calculation.breakdown?.active_ingredient_percentage !=
-                                      null && (
+                                    {/* Active Ingredient & Emission Factor Details (2025-12-24).
+                                        Shown for a spray whether or not a concentration was
+                                        entered; each row only when its value exists, and no
+                                        assumed percentage ever (it printed "25% (default)"
+                                        until 2026-11-13). */}
+                                    {Boolean(
+                                      calculation.breakdown?.active_ingredient_percentage != null ||
+                                        calculation.breakdown?.pesticide_subtype ||
+                                        calculation.breakdown?.herbicide_subtype ||
+                                        calculation.breakdown?.fungicide_subtype
+                                    ) && (
                                       <>
                                         {/* Chemical Subtype with organic/biological indicator */}
                                         {(() => {
@@ -1834,20 +1895,17 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                             </>
                                           );
                                         })()}
-                                        <HStack justify="space-between" fontSize="xs">
-                                          <Text color="orange.600">
-                                            {t('chem.activeIngredient')}
-                                          </Text>
-                                          <Text color="orange.800">
-                                            {calculation.breakdown.active_ingredient_percentage}%
-                                            {calculation.breakdown.concentration_source ===
-                                              'default' && (
-                                              <Text as="span" color="orange.500" fontStyle="italic">
-                                                {t('chem.default')}
-                                              </Text>
-                                            )}
-                                          </Text>
-                                        </HStack>
+                                        {calculation.breakdown.active_ingredient_percentage !=
+                                          null && (
+                                          <HStack justify="space-between" fontSize="xs">
+                                            <Text color="orange.600">
+                                              {t('chem.activeIngredient')}
+                                            </Text>
+                                            <Text color="orange.800">
+                                              {calculation.breakdown.active_ingredient_percentage}%
+                                            </Text>
+                                          </HStack>
+                                        )}
                                         {calculation.breakdown.active_ingredient_kg != null && (
                                           <HStack justify="space-between" fontSize="xs">
                                             <Text color="orange.600">
@@ -1861,18 +1919,21 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                             </Text>
                                           </HStack>
                                         )}
+                                        {/* A factor that multiplied nothing is not shown. */}
                                         {calculation.breakdown.emission_factor_kg_co2_per_kg !=
-                                          null && (
-                                          <HStack justify="space-between" fontSize="xs">
-                                            <Text color="orange.600">{t('chem.factor')}</Text>
-                                            <Text color="orange.800">
-                                              {calculation.breakdown.emission_factor_kg_co2_per_kg.toFixed(
-                                                2
-                                              )}{' '}
-                                              kg CO₂e/kg
-                                            </Text>
-                                          </HStack>
-                                        )}
+                                          null &&
+                                          !calculation.breakdown
+                                            .manufacturing_emissions_omitted && (
+                                            <HStack justify="space-between" fontSize="xs">
+                                              <Text color="orange.600">{t('chem.factor')}</Text>
+                                              <Text color="orange.800">
+                                                {calculation.breakdown.emission_factor_kg_co2_per_kg.toFixed(
+                                                  2
+                                                )}{' '}
+                                                kg CO₂e/kg
+                                              </Text>
+                                            </HStack>
+                                          )}
                                       </>
                                     )}
 
@@ -2011,7 +2072,20 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                               borderWidth="1px"
                               borderColor="gray.200">
                               <HStack spacing={2}>
-                                {fuelBasis && !fuelBasis.measured ? (
+                                {isEstimate ? (
+                                  /* An input figure that is an estimate: what it rests on, part by
+                                     part, and no green check (2026-11-13). */
+                                  <VStack spacing={0} align="start" flex={1}>
+                                    <Text fontSize="xs" fontWeight="semibold" color="gray.700">
+                                      {intl.formatMessage({ id: 'carbon.badge.estimateCaption' })}
+                                    </Text>
+                                    {reasonIds.map((id) => (
+                                      <Text key={id} fontSize="xs" color="gray.600">
+                                        {intl.formatMessage({ id })}
+                                      </Text>
+                                    ))}
+                                  </VStack>
+                                ) : fuelBasis && !fuelBasis.measured ? (
                                   <Text fontSize="xs" color="gray.600" flex={1}>
                                     {intl.formatMessage({
                                       id: 'carbon.badge.estimatedFuelTooltip'

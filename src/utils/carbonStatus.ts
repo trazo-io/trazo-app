@@ -17,7 +17,16 @@ export interface CarbonStatusLike {
   not_estimated?: boolean;
   usda_factors_based?: boolean;
   usda_factors_used?: boolean;
+  /** Why an input figure is an estimate, as codes (`CHEMICAL_ESTIMATE_REASONS` in trazo-back). */
+  estimate_reasons?: string[] | null;
 }
+
+/**
+ * Statuses that say a figure is an estimate. `estimate` (2026-11-13) is an input figure (spray or
+ * fertilizer) with any part estimated or left out: application fuel from the area treated, a Trazo
+ * estimate factor, a weight from a typical density, or a missing amount, concentration or N-P-K.
+ */
+const ESTIMATE_STATUSES = new Set(['area_estimate', 'estimate']);
 
 export function isNotEstimated(c?: CarbonStatusLike | null): boolean {
   if (!c) return false;
@@ -26,9 +35,46 @@ export function isNotEstimated(c?: CarbonStatusLike | null): boolean {
 
 export function showsInputsBadge(c?: CarbonStatusLike | null): boolean {
   if (!c || isNotEstimated(c)) return false;
-  if (c.verification_status === 'area_estimate') return false;
+  if (ESTIMATE_STATUSES.has(String(c.verification_status || ''))) return false;
   if (typeof c.co2e !== 'number' || !(c.co2e > 0)) return false;
   return Boolean(c.usda_factors_based || c.usda_factors_used);
+}
+
+/**
+ * A positive input figure that is an estimate in some part (`verification_status: 'estimate'`).
+ * Until 2026-11-13 these were stored as published-factor figures and wore the "From recorded
+ * inputs" badge, an application pass estimated from the area included. Mutually exclusive with
+ * `showsInputsBadge` and `showsAreaEstimateLabel`.
+ */
+export function showsEstimateLabel(c?: CarbonStatusLike | null): boolean {
+  if (!c || isNotEstimated(c)) return false;
+  if (c.verification_status !== 'estimate') return false;
+  return typeof c.co2e === 'number' && c.co2e > 0;
+}
+
+/**
+ * Every reason code the backend can send. Mirrors `CHEMICAL_ESTIMATE_REASONS` in
+ * trazo-back/carbon/services/verified_emission_factors.py (parity:
+ * `chemicalEstimateReasonsHaveCopy.test.tsx`); each is worded by `carbon.estimateReason.<code>`.
+ */
+export const ESTIMATE_REASON_CODES = [
+  'application_fuel_estimated_from_area',
+  'fuel_costed_as_diesel',
+  'trazo_estimate_factor',
+  'product_mass_from_typical_density',
+  'amount_not_recorded',
+  'concentration_not_recorded',
+  'npk_not_recorded',
+  'nitrogen_not_recorded',
+  'application_not_estimated'
+] as const;
+
+/** The message ids for the reasons a payload carries, known codes only, in the order sent. */
+export function estimateReasonMessageIds(reasons?: string[] | null): string[] {
+  const known = new Set<string>(ESTIMATE_REASON_CODES);
+  return (reasons || [])
+    .filter((code) => known.has(code))
+    .map((code) => `carbon.estimateReason.${code}`);
 }
 
 /**

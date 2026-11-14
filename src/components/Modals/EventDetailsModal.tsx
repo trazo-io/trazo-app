@@ -71,10 +71,12 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { formatDateFromTimestamp } from 'utils/dateOnly';
 import {
+  estimateReasonMessageIds,
   hasNoCarbonCalculation,
   isNotEstimated,
   NO_CARBON_CALCULATION_STATUS,
   showsAreaEstimateLabel,
+  showsEstimateLabel,
   showsInputsBadge
 } from 'utils/carbonStatus';
 import { apiErrorMessage, apiErrorStatus } from 'utils/apiErrorMessage';
@@ -256,6 +258,8 @@ interface CarbonCalculationResult {
   };
   error?: string;
   usda_factors_used?: boolean;
+  /** Why an input figure is an estimate, as codes (served with `verification_status: 'estimate'`). */
+  estimate_reasons?: string[];
 }
 
 interface EventDetailsModalProps {
@@ -1379,6 +1383,13 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                     {intl.formatMessage({ id: 'carbon.badge.areaEstimate' })}
                   </Badge>
                 )}
+                {showsEstimateLabel(carbonData) && (
+                  // A spray or fertilizer figure with a part estimated or left out. It wore
+                  // "From recorded inputs" until 2026-11-13. Neutral gray, same as the area chip.
+                  <Badge variant="neutral" fontSize="xs">
+                    {intl.formatMessage({ id: 'carbon.badge.estimate' })}
+                  </Badge>
+                )}
               </HStack>
 
               {/* Weather/zero-emission events. The "why this record matters" note that
@@ -1453,6 +1464,18 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                       <Text fontSize="xs" color="gray.600">
                         {intl.formatMessage({ id: 'carbon.badge.areaEstimateCaption' })}
                       </Text>
+                    )}
+                    {showsEstimateLabel(carbonData) && (
+                      <>
+                        <Text fontSize="xs" color="gray.600">
+                          {intl.formatMessage({ id: 'carbon.badge.estimateCaption' })}
+                        </Text>
+                        {estimateReasonMessageIds(carbonData.estimate_reasons).map((id) => (
+                          <Text key={id} fontSize="xs" color="gray.600">
+                            {intl.formatMessage({ id })}
+                          </Text>
+                        ))}
+                      </>
                     )}
                   </VStack>
                 </HStack>
