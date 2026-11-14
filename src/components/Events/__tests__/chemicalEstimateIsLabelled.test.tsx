@@ -325,6 +325,25 @@ describe('form preview', () => {
     expect(screen.queryByText(en['carbonPreview.chem.factor'])).toBeNull();
   });
 
+  it('a fertilizer with no N-P-K prints no factor beside "manufacturing not included"', () => {
+    // Review of app #387: the product row was guarded but the fertilizer factor row was not.
+    preview({
+      ...NO_CONCENTRATION_WITH_FUEL,
+      breakdown: {
+        ...NO_CONCENTRATION_WITH_FUEL.breakdown,
+        chemical_type: 'FE',
+        fungicide_subtype: undefined,
+        fertilizer_subtype: 'synthetic_nitrogen',
+        emission_factor_kg_co2_per_kg: 4.2,
+        manufacturing_omitted_code: 'npk_not_recorded',
+        estimate_reasons: ['npk_not_recorded']
+      }
+    });
+    expect(screen.getByText(en['carbonPreview.chem.fertilizerType'])).toBeInTheDocument();
+    expect(screen.queryByText(en['carbonPreview.chem.factor'])).toBeNull();
+    expect(document.body.textContent).not.toMatch(/4\.20\s*kg CO₂e\/kg/);
+  });
+
   it('a figure from recorded inputs and published factors keeps its badge', () => {
     preview(FROM_RECORDED_INPUTS);
     expect(screen.getAllByText(en['carbon.badge.epaUsdaSourced']).length).toBeGreaterThan(0);

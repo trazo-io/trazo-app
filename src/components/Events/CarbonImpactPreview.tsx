@@ -1969,18 +1969,24 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                               'organic' && ''}
                                           </Text>
                                         </HStack>
+                                        {/* The same guard as the product factor row above: a
+                                            fertilizer whose manufacturing was omitted (no N-P-K)
+                                            prints no factor beside that statement (review of
+                                            app #387). */}
                                         {calculation.breakdown.emission_factor_kg_co2_per_kg !=
-                                          null && (
-                                          <HStack justify="space-between" fontSize="xs">
-                                            <Text color="orange.600">{t('chem.factor')}</Text>
-                                            <Text color="orange.800">
-                                              {calculation.breakdown.emission_factor_kg_co2_per_kg.toFixed(
-                                                2
-                                              )}{' '}
-                                              kg CO₂e/kg
-                                            </Text>
-                                          </HStack>
-                                        )}
+                                          null &&
+                                          !calculation.breakdown
+                                            .manufacturing_emissions_omitted && (
+                                            <HStack justify="space-between" fontSize="xs">
+                                              <Text color="orange.600">{t('chem.factor')}</Text>
+                                              <Text color="orange.800">
+                                                {calculation.breakdown.emission_factor_kg_co2_per_kg.toFixed(
+                                                  2
+                                                )}{' '}
+                                                kg CO₂e/kg
+                                              </Text>
+                                            </HStack>
+                                          )}
                                         {calculation.breakdown.note && (
                                           <Text
                                             fontSize="xs"
