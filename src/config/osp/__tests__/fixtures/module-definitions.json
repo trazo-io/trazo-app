@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.12.08",
+  "content_version": "2026.12.09",
   "registry": {
-    "content_version": "2026.12.08",
+    "content_version": "2026.12.09",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -23081,6 +23081,22 @@
                       "es": "Manipulación / procesamiento"
                     },
                     "exclusive": false
+                  },
+                  {
+                    "value": "transitional",
+                    "label": {
+                      "en": "Transitional",
+                      "es": "En transición"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "fungi",
+                    "label": {
+                      "en": "Mushrooms and other fungi",
+                      "es": "Hongos y setas"
+                    },
+                    "exclusive": false
                   }
                 ],
                 "required": true,
@@ -23099,6 +23115,50 @@
                 "label": {
                   "en": "Attach the signed certification contract / client agreement.",
                   "es": "Adjunta el contrato de certificación firmado / acuerdo de cliente."
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "contract_signed_by",
+                "kind": "text",
+                "label": {
+                  "en": "Who signed it? Name and title.",
+                  "es": "¿Quién lo firmó? Nombre y cargo."
+                },
+                "coaching": {
+                  "en": "Trazo does not sign for you. Sign your agency's own form, attach it above, and write who signed it. The signer must be able to bind the operation: an owner, an officer, or someone they appointed.",
+                  "es": "Trazo no firma por ti. Firma el formulario de tu agencia, adjúntalo arriba y escribe quién lo firmó. Quien firma debe tener facultad para obligar a la operación: una persona propietaria o directiva, o una persona designada para firmar."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": {
+                  "en": "e.g. Laurel Brandt, managing member",
+                  "es": "p. ej. Laurel Brandt, gerente"
+                },
+                "max_length": null
+              },
+              {
+                "key": "contract_signed_on",
+                "kind": "date",
+                "label": {
+                  "en": "Date it was signed",
+                  "es": "Fecha de la firma"
                 },
                 "coaching": null,
                 "options": [],
@@ -23173,6 +23233,81 @@
                   "en": "e.g. Oregon Tilth, March 2015 to June 2021; CCOF since 2022",
                   "es": "p. ej. Oregon Tilth, de marzo de 2015 a junio de 2021; CCOF desde 2022"
                 },
+                "max_length": null
+              },
+              {
+                "key": "history_certified_elsewhere_now",
+                "kind": "boolean",
+                "label": {
+                  "en": "Is the operation certified organic today by another certifying agency, not the one you file this plan with?",
+                  "es": "¿La operación tiene hoy una certificación orgánica de otra agencia certificadora, distinta de aquella ante la que presentas este plan?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "history_ever_certified",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.401(c)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "history_keeping_other_certification",
+                "kind": "boolean",
+                "label": {
+                  "en": "Will the operation keep that other certification?",
+                  "es": "¿La operación mantendrá esa otra certificación?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "history_certified_elsewhere_now",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "history_current_certificate_upload",
+                "kind": "upload",
+                "label": {
+                  "en": "Attach the most recent certificate from that agency, and any transfer form the agency you file with asks for.",
+                  "es": "Adjunta el certificado más reciente de esa agencia y cualquier formulario de transferencia que pida la agencia ante la que presentas el plan."
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "history_certified_elsewhere_now",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
                 "max_length": null
               },
               {
@@ -24466,6 +24601,219 @@
                     "question": "public_contact_shared",
                     "op": "includes",
                     "value": "website"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              }
+            ]
+          },
+          {
+            "key": "e_standards_regulators",
+            "title": {
+              "en": "E. Standards and regulatory agencies",
+              "es": "E. Normas y organismos reguladores"
+            },
+            "education": [],
+            "visible_when": [],
+            "questions": [
+              {
+                "key": "standards_requested",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Which standards do you want the operation assessed to?",
+                  "es": "¿Según qué normas quieres que se evalúe la operación?"
+                },
+                "coaching": {
+                  "en": "An EU or Mexico assessment needs your agency's supplement form for it. Ask your agency first: not every agency offers every standard to operations in the US.",
+                  "es": "Una evaluación para la UE o México necesita el formulario complementario de tu agencia. Pregunta antes a tu agencia: no todas ofrecen todas las normas a operaciones en EE. UU."
+                },
+                "options": [
+                  {
+                    "value": "usda_nop",
+                    "label": {
+                      "en": "USDA organic (National Organic Program)",
+                      "es": "Orgánico USDA (Programa Orgánico Nacional)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "us_canada",
+                    "label": {
+                      "en": "US-Canada organic equivalency (product that goes to Canada)",
+                      "es": "Equivalencia orgánica entre EE. UU. y Canadá (producto que va a Canadá)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "eu",
+                    "label": {
+                      "en": "European Union organic",
+                      "es": "Orgánico de la Unión Europea"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "lpo",
+                    "label": {
+                      "en": "Mexico's organic products law (LPO)",
+                      "es": "Ley de Productos Orgánicos de México (LPO)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "salmon_safe",
+                    "label": {
+                      "en": "Salmon-Safe",
+                      "es": "Salmon-Safe"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "transitional",
+                    "label": {
+                      "en": "Certified transitional",
+                      "es": "Transición certificada"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "personal_care",
+                    "label": {
+                      "en": "NSF/ANSI 305 personal care",
+                      "es": "NSF/ANSI 305 de cuidado personal"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "grass_fed",
+                    "label": {
+                      "en": "Grass-fed (Organic Plus Trust)",
+                      "es": "Alimentación con pasto (Organic Plus Trust)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "bee_better",
+                    "label": {
+                      "en": "Bee Better",
+                      "es": "Bee Better"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "gots",
+                    "label": {
+                      "en": "Global Organic Textile Standard (GOTS)",
+                      "es": "Norma Textil Orgánica Global (GOTS)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other",
+                      "es": "Otra"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "standards_requested_other",
+                "kind": "text",
+                "label": {
+                  "en": "Which other standard?",
+                  "es": "¿Qué otra norma?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "standards_requested",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "regulatory_agencies",
+                "kind": "textarea",
+                "label": {
+                  "en": "Which regulatory agencies, if any, inspect the operation? Write \"None\" if none do.",
+                  "es": "¿Qué organismos reguladores, si hay alguno, inspeccionan la operación? Escribe \"Ninguno\" si no hay."
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": {
+                  "en": "e.g. state department of agriculture (food safety), county agricultural commissioner, FDA",
+                  "es": "p. ej. departamento de agricultura del estado (inocuidad), comisionado agrícola del condado, FDA"
+                },
+                "max_length": null
+              },
+              {
+                "key": "regulatory_negative_report",
+                "kind": "boolean",
+                "label": {
+                  "en": "Has any regulatory agency ever given the operation a negative inspection report? For example the FDA, OSHA, or a state health or agriculture department.",
+                  "es": "¿Algún organismo regulador le dio alguna vez a la operación un informe de inspección negativo? Por ejemplo la FDA, OSHA o un departamento estatal de salud o de agricultura."
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "regulatory_reports_upload",
+                "kind": "upload",
+                "label": {
+                  "en": "Attach each report with the operation's written response or corrective actions.",
+                  "es": "Adjunta cada informe con la respuesta escrita o las acciones correctivas de la operación."
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "regulatory_negative_report",
+                    "op": "truthy",
+                    "value": null
                   }
                 ],
                 "nop_cite": null,
@@ -30267,6 +30615,80 @@
     },
     {
       "module": "certification_contract",
+      "label": "stale_chain:history_keeping_other_certification:history_ever_certified:truthy",
+      "answers": {
+        "history_certified_elsewhere_now": true,
+        "history_ever_certified": false
+      },
+      "visible_questions": [
+        "contract_notes",
+        "operation_contacts",
+        "contract_scopes",
+        "contract_upload",
+        "contract_signed_by",
+        "contract_signed_on",
+        "history_ever_certified",
+        "history_denied",
+        "history_withdrew_outstanding",
+        "legally_registered",
+        "legal_structure",
+        "uses_dba",
+        "legal_address_is",
+        "mailing_address_is",
+        "billing_address_is",
+        "public_contact_shared",
+        "standards_requested",
+        "regulatory_agencies",
+        "regulatory_negative_report"
+      ],
+      "missing_required": [
+        "contract_notes",
+        "contract_scopes"
+      ],
+      "missing_required_na": [
+        "contract_notes",
+        "contract_scopes"
+      ]
+    },
+    {
+      "module": "certification_contract",
+      "label": "stale_chain:history_current_certificate_upload:history_ever_certified:truthy",
+      "answers": {
+        "history_certified_elsewhere_now": true,
+        "history_ever_certified": false
+      },
+      "visible_questions": [
+        "contract_notes",
+        "operation_contacts",
+        "contract_scopes",
+        "contract_upload",
+        "contract_signed_by",
+        "contract_signed_on",
+        "history_ever_certified",
+        "history_denied",
+        "history_withdrew_outstanding",
+        "legally_registered",
+        "legal_structure",
+        "uses_dba",
+        "legal_address_is",
+        "mailing_address_is",
+        "billing_address_is",
+        "public_contact_shared",
+        "standards_requested",
+        "regulatory_agencies",
+        "regulatory_negative_report"
+      ],
+      "missing_required": [
+        "contract_notes",
+        "contract_scopes"
+      ],
+      "missing_required_na": [
+        "contract_notes",
+        "contract_scopes"
+      ]
+    },
+    {
+      "module": "certification_contract",
       "label": "stale_chain:history_not_sold_since_suspension:history_ever_certified:truthy",
       "answers": {
         "history_suspended": true,
@@ -30277,6 +30699,8 @@
         "operation_contacts",
         "contract_scopes",
         "contract_upload",
+        "contract_signed_by",
+        "contract_signed_on",
         "history_ever_certified",
         "history_denied",
         "history_withdrew_outstanding",
@@ -30286,7 +30710,10 @@
         "legal_address_is",
         "mailing_address_is",
         "billing_address_is",
-        "public_contact_shared"
+        "public_contact_shared",
+        "standards_requested",
+        "regulatory_agencies",
+        "regulatory_negative_report"
       ],
       "missing_required": [
         "contract_notes",
@@ -30309,6 +30736,8 @@
         "operation_contacts",
         "contract_scopes",
         "contract_upload",
+        "contract_signed_by",
+        "contract_signed_on",
         "history_ever_certified",
         "history_denied",
         "history_withdrew_outstanding",
@@ -30318,7 +30747,10 @@
         "legal_address_is",
         "mailing_address_is",
         "billing_address_is",
-        "public_contact_shared"
+        "public_contact_shared",
+        "standards_requested",
+        "regulatory_agencies",
+        "regulatory_negative_report"
       ],
       "missing_required": [
         "contract_notes",
@@ -30342,6 +30774,8 @@
         "operation_contacts",
         "contract_scopes",
         "contract_upload",
+        "contract_signed_by",
+        "contract_signed_on",
         "history_ever_certified",
         "history_denied",
         "history_withdrew_outstanding",
@@ -30351,7 +30785,10 @@
         "legal_address_is",
         "mailing_address_is",
         "billing_address_is",
-        "public_contact_shared"
+        "public_contact_shared",
+        "standards_requested",
+        "regulatory_agencies",
+        "regulatory_negative_report"
       ],
       "missing_required": [
         "contract_notes",
@@ -30374,6 +30811,8 @@
         "operation_contacts",
         "contract_scopes",
         "contract_upload",
+        "contract_signed_by",
+        "contract_signed_on",
         "history_ever_certified",
         "history_denied",
         "history_withdrew_outstanding",
@@ -30383,7 +30822,10 @@
         "legal_address_is",
         "mailing_address_is",
         "billing_address_is",
-        "public_contact_shared"
+        "public_contact_shared",
+        "standards_requested",
+        "regulatory_agencies",
+        "regulatory_negative_report"
       ],
       "missing_required": [
         "contract_notes",
@@ -30406,6 +30848,8 @@
         "operation_contacts",
         "contract_scopes",
         "contract_upload",
+        "contract_signed_by",
+        "contract_signed_on",
         "history_ever_certified",
         "history_denied",
         "history_withdrew_outstanding",
@@ -30415,7 +30859,10 @@
         "legal_address_is",
         "mailing_address_is",
         "billing_address_is",
-        "public_contact_shared"
+        "public_contact_shared",
+        "standards_requested",
+        "regulatory_agencies",
+        "regulatory_negative_report"
       ],
       "missing_required": [
         "contract_notes",

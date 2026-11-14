@@ -653,10 +653,21 @@ const StepperBar = ({
                 lineHeight="1.3">
                 {step.shortTitle ? (
                   <>
-                    <Box as="span" display={{ base: 'inline', md: 'none' }}>
+                    {/* The short title is what a phone shows; a screen reader still gets the full one, so a
+                        step whose short title is a bare page letter ("D") is never announced as "D, button"
+                        (review of app #385). Below md the full title is visually hidden, not display: none. */}
+                    <Box as="span" display={{ base: 'inline', md: 'none' }} aria-hidden="true">
                       {step.shortTitle}
                     </Box>
-                    <Box as="span" display={{ base: 'none', md: 'inline' }}>
+                    <Box
+                      as="span"
+                      position={{ base: 'absolute', md: 'static' }}
+                      w={{ base: '1px', md: 'auto' }}
+                      h={{ base: '1px', md: 'auto' }}
+                      m={{ base: '-1px', md: 0 }}
+                      overflow={{ base: 'hidden', md: 'visible' }}
+                      clipPath={{ base: 'inset(50%)', md: 'none' }}
+                      whiteSpace={{ base: 'nowrap', md: 'normal' }}>
                       {step.title}
                     </Box>
                   </>
