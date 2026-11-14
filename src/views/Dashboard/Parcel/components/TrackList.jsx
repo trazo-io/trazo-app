@@ -163,7 +163,11 @@ const TrackList = ({ amount }) => {
     onEventDetailsClose();
   };
 
-  const seasonHasActivities = currentHistory?.events?.length > 0;
+  // Only an OPEN season: there the remedy (delete the activities, then the season) is available.
+  // A finished season's activities are locked, and the server's own refusal reaches the toast.
+  const seasonHasActivities =
+    currentHistory?.events?.length > 0 &&
+    !(currentHistory?.finish_date || currentHistory?.published);
 
   const handleDeleteProduction = async () => {
     if (!currentHistory?.id) return;
@@ -496,10 +500,10 @@ const TrackList = ({ amount }) => {
             </AlertDialogHeader>
 
             <AlertDialogBody pb={6}>
-              {/* OV-ST-C02 (2026-11-13): the server refuses to delete a season that holds
-                  activities, finished or not, because records are kept 5 years from the day
-                  they are logged. So the dialog no longer offers a delete that takes them with
-                  it: it says why, and how to remove a season started by mistake. */}
+              {/* OV-ST-C02 (2026-11-13): the server refuses to delete an open season that holds
+                  activities, because that would erase records kept for 5 years. So the dialog no
+                  longer offers a delete that takes them with it: it says why, and how to remove a
+                  season started by mistake. */}
               {seasonHasActivities ? (
                 <Text color="gray.600" data-testid="delete-season-has-records">
                   {intl.formatMessage(
