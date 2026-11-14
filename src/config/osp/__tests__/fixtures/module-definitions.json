@@ -23272,11 +23272,6 @@
                 "required": false,
                 "visible_when": [
                   {
-                    "question": "history_ever_certified",
-                    "op": "truthy",
-                    "value": null
-                  },
-                  {
                     "question": "history_certified_elsewhere_now",
                     "op": "truthy",
                     "value": null
@@ -23301,11 +23296,6 @@
                 "options": [],
                 "required": false,
                 "visible_when": [
-                  {
-                    "question": "history_ever_certified",
-                    "op": "truthy",
-                    "value": null
-                  },
                   {
                     "question": "history_certified_elsewhere_now",
                     "op": "truthy",
@@ -30622,6 +30612,80 @@
         "mechanical_controls"
       ],
       "missing_required_na": []
+    },
+    {
+      "module": "certification_contract",
+      "label": "stale_chain:history_keeping_other_certification:history_ever_certified:truthy",
+      "answers": {
+        "history_certified_elsewhere_now": true,
+        "history_ever_certified": false
+      },
+      "visible_questions": [
+        "contract_notes",
+        "operation_contacts",
+        "contract_scopes",
+        "contract_upload",
+        "contract_signed_by",
+        "contract_signed_on",
+        "history_ever_certified",
+        "history_denied",
+        "history_withdrew_outstanding",
+        "legally_registered",
+        "legal_structure",
+        "uses_dba",
+        "legal_address_is",
+        "mailing_address_is",
+        "billing_address_is",
+        "public_contact_shared",
+        "standards_requested",
+        "regulatory_agencies",
+        "regulatory_negative_report"
+      ],
+      "missing_required": [
+        "contract_notes",
+        "contract_scopes"
+      ],
+      "missing_required_na": [
+        "contract_notes",
+        "contract_scopes"
+      ]
+    },
+    {
+      "module": "certification_contract",
+      "label": "stale_chain:history_current_certificate_upload:history_ever_certified:truthy",
+      "answers": {
+        "history_certified_elsewhere_now": true,
+        "history_ever_certified": false
+      },
+      "visible_questions": [
+        "contract_notes",
+        "operation_contacts",
+        "contract_scopes",
+        "contract_upload",
+        "contract_signed_by",
+        "contract_signed_on",
+        "history_ever_certified",
+        "history_denied",
+        "history_withdrew_outstanding",
+        "legally_registered",
+        "legal_structure",
+        "uses_dba",
+        "legal_address_is",
+        "mailing_address_is",
+        "billing_address_is",
+        "public_contact_shared",
+        "standards_requested",
+        "regulatory_agencies",
+        "regulatory_negative_report"
+      ],
+      "missing_required": [
+        "contract_notes",
+        "contract_scopes"
+      ],
+      "missing_required_na": [
+        "contract_notes",
+        "contract_scopes"
+      ]
     },
     {
       "module": "certification_contract",
