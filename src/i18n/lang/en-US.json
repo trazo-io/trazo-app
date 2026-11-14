@@ -592,7 +592,7 @@
   "app.delete": "Delete",
   "app.deleteProduction": "Delete season",
   "app.deleteProductionConfirm": "Are you sure you want to delete this season? This action cannot be undone.",
-  "app.deleteProductionWarning": "This will also delete {eventCount} activities recorded in this season.",
+  "app.deleteSeasonHasRecords": "This season has {eventCount, plural, one {# activity} other {# activities}} logged in it. Records are kept for 5 years from the day they are logged, finished season or not, so a season with activities in it can't be deleted. If you started it by mistake, delete its activities one by one first, then delete the empty season.",
   "app.description": "Description",
   "app.descriptionOfTheEvent": "Description of the event",
   "app.designedForFarmers": "Designed specifically for agricultural producers",

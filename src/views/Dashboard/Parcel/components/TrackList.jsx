@@ -11,7 +11,6 @@ import {
   useColorModeValue,
   useDisclosure,
   useToast,
-  VStack,
   HStack,
   Box,
   Badge,
@@ -163,6 +162,8 @@ const TrackList = ({ amount }) => {
     refetch();
     onEventDetailsClose();
   };
+
+  const seasonHasActivities = currentHistory?.events?.length > 0;
 
   const handleDeleteProduction = async () => {
     if (!currentHistory?.id) return;
@@ -495,21 +496,22 @@ const TrackList = ({ amount }) => {
             </AlertDialogHeader>
 
             <AlertDialogBody pb={6}>
-              <VStack align="start" spacing={3}>
+              {/* OV-ST-C02 (2026-11-13): the server refuses to delete a season that holds
+                  activities, finished or not, because records are kept 5 years from the day
+                  they are logged. So the dialog no longer offers a delete that takes them with
+                  it: it says why, and how to remove a season started by mistake. */}
+              {seasonHasActivities ? (
+                <Text color="gray.600" data-testid="delete-season-has-records">
+                  {intl.formatMessage(
+                    { id: 'app.deleteSeasonHasRecords' },
+                    { eventCount: currentHistory.events.length }
+                  )}
+                </Text>
+              ) : (
                 <Text color="gray.600">
                   {intl.formatMessage({ id: 'app.deleteProductionConfirm' })}
                 </Text>
-                {currentHistory?.events?.length > 0 && (
-                  <Box p={3} bg="red.50" borderRadius="lg" w="full">
-                    <Text fontSize="sm" color="red.700" fontWeight="medium">
-                      {intl.formatMessage(
-                        { id: 'app.deleteProductionWarning' },
-                        { eventCount: currentHistory.events.length }
-                      )}
-                    </Text>
-                  </Box>
-                )}
-              </VStack>
+              )}
             </AlertDialogBody>
 
             <AlertDialogFooter pt={4}>
@@ -522,9 +524,10 @@ const TrackList = ({ amount }) => {
                   color="gray.600"
                   borderRadius="lg"
                   _hover={{ bg: 'gray.100' }}>
-                  {intl.formatMessage({ id: 'app.cancel' })}
+                  {intl.formatMessage({ id: seasonHasActivities ? 'app.close' : 'app.cancel' })}
                 </Button>
                 <Button
+                  display={seasonHasActivities ? 'none' : undefined}
                   leftIcon={<Icon as={FaTrash} />}
                   onClick={handleDeleteProduction}
                   size="lg"
