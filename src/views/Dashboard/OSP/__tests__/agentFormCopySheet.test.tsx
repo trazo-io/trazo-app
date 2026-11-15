@@ -637,3 +637,70 @@ describe('the agent-form copy sheet', () => {
     expect(container.textContent).toBe('');
   });
 });
+
+describe('a first plan version in Trazo, the certifier holding the plan filed before Trazo', () => {
+  // Overall review 2026-11 (OV-PK-C01 / O02): there is nothing Trazo can compare against, and the
+  // rows say so instead of asking for a new plan version that would not help.
+  it('says why Step 4 and new land have no list, and leaves them to the grower', () => {
+    result = {
+      data: {
+        ...sheet,
+        rows: [
+          {
+            step: '4',
+            item: 'osp_changes',
+            kind: 'yours',
+            value: null,
+            source: '',
+            extra: { state: 'first_version', prior_version: 1, new_version: null }
+          },
+          {
+            step: '4',
+            item: 'new_land',
+            kind: 'not_recorded',
+            value: null,
+            source: '',
+            extra: { reason: 'first_version' }
+          }
+        ]
+      }
+    };
+    renderSheet();
+    expect(screen.getByTestId('agent-sheet-osp_changes')).toHaveTextContent(
+      'Your certifier holds the plan you filed before Trazo, and Trazo has no copy of it'
+    );
+    const land = screen.getByTestId('agent-sheet-new_land');
+    expect(land).toHaveTextContent('cannot tell which land is new to it');
+    expect(land).not.toHaveTextContent('creates a new plan version');
+  });
+
+  it("puts CCOF's Step 2 counts against the plan CCOF holds", () => {
+    result = {
+      data: {
+        ...sheet,
+        rows: [
+          {
+            step: '2',
+            item: 'ccof_osp_update',
+            kind: 'yours',
+            value: null,
+            source: '',
+            extra: {
+              has_filing: true,
+              first_version: true,
+              additions: 1,
+              deletions: 0,
+              application_info_changes: false,
+              osp_update_email: 'inbox@ccof.org',
+              portal: 'MyCCOF'
+            }
+          }
+        ]
+      }
+    };
+    renderSheet();
+    expect(screen.getByTestId('agent-sheet-ccof_osp_update')).toHaveTextContent(
+      'the changes in your update are your own account against that plan'
+    );
+  });
+});

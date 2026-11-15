@@ -212,3 +212,26 @@ describe('packet download control', () => {
     expect(screen.queryByRole('link')).toBeNull();
   });
 });
+
+describe('a first plan version in Trazo whose certifier holds the plan filed before Trazo', () => {
+  it('says why there is only the full packet, under the lone button', () => {
+    stale = null;
+    updates = [{ id: 1, prior_osp: 10, new_osp: null, reporting_year: 2027 }];
+    scopes = { 10: { available: false, code: 'first_version', reason: 'server sentence' } };
+    renderControl([plan(10, 1, 'active')]);
+    expect(screen.getByText('Download packet (v1)')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Full packet only: Trazo has no copy of the plan your certifier holds, so it cannot pick out the sections that changed.'
+      )
+    ).toBeInTheDocument();
+  });
+
+  it('says nothing for any other reason the server cannot compare', () => {
+    stale = null;
+    updates = [];
+    scopes = { 10: { available: false, code: 'no_new_version', reason: '' } };
+    renderControl([plan(10, 3, 'active')]);
+    expect(screen.queryByText(/Full packet only/)).toBeNull();
+  });
+});
