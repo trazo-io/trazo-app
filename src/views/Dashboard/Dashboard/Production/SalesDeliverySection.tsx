@@ -3,7 +3,7 @@
  *
  * This component used to be a full editor for the LEGACY single-sale columns
  * stored directly on History (sold_to, sale_date, quantity_sold, ...) via
- * PATCH productions/{id}/. That left TWO farmer-facing editors over one
+ * PATCH histories/{id}/. That left TWO farmer-facing editors over one
  * fact-set: this aggregate form plus the itemized SalesRecordsSection
  * (POST sales_records/). In the certifier audit export, SalesRecord rows WIN;
  * the legacy History columns are only used as fallback when a production has

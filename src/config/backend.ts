@@ -60,13 +60,11 @@ export const PRODUCT_REPUTATION_PERCENTAGE_URL = (companyId: string, farmId: str
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/rating_reviews_percentage/`;
 export const REVIEW_URL = (reviewId: string) =>
   reviewId ? `${ROOT_URL}reviews/${reviewId}/` : `${ROOT_URL}reviews/`;
-export const HISTORY_URL = (historyId: string) =>
-  historyId ? `${ROOT_URL}productions/${historyId}/` : `${ROOT_URL}productions/`;
-export const PARCEL_HISTORY_URL = (companyId: string, farmId: string, parcelId: string) =>
+export const PARCEL_PRODUCTIONS_URL = (companyId: string, farmId: string, parcelId: string) =>
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/parcels/${parcelId}/productions/`;
-export const CURRENT_HISTORY = (companyId: string, farmId: string, parcelId: string) =>
+export const CURRENT_PRODUCTION_URL = (companyId: string, farmId: string, parcelId: string) =>
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/parcels/${parcelId}/current_production/`;
-export const FINISH_HISTORY = (companyId: string, farmId: string, parcelId: string) =>
+export const FINISH_PRODUCTION_URL = (companyId: string, farmId: string, parcelId: string) =>
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/parcels/${parcelId}/finish_production/`;
 export const EVENT_URL = (
   companyId: string,

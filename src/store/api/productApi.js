@@ -1,7 +1,7 @@
 import {
   FARM_CHART_SCANS_VS_SALES_INFO_URL,
   FARM_PRODUCTS_URL,
-  PARCEL_HISTORY_URL,
+  PARCEL_PRODUCTIONS_URL,
   PARCEL_URL,
   PRODUCT_URL
 } from '../../config';
@@ -326,7 +326,7 @@ export const productApi = baseApi.injectEndpoints({
         const queryString = params.toString();
         return {
           url:
-            PARCEL_HISTORY_URL(companyId, farmId, parcelId) +
+            PARCEL_PRODUCTIONS_URL(companyId, farmId, parcelId) +
             (queryString ? `?${queryString}` : ''),
           method: 'GET',
           credentials: 'include'
