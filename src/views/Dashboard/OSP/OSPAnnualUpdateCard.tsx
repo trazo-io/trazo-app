@@ -525,20 +525,21 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
     editingId != null && (updates.find((u) => u.id === editingId)?.revision_number ?? 1) > 1;
   // A first plan version in Trazo (overall review 2026-11, OV-PK-C01): the certifier may hold the
   // plan filed before Trazo, which Trazo has no copy of, and only the grower knows. Asked when the
-  // first version has left draft; a draft first version was never sent, so the server answers it.
+  // first version has left draft. For a draft first version the server answers, and only for an
+  // operation it knows is certified (an applicant's certifier holds no plan), so the card waits for
+  // that stored answer rather than guess it (review of app #389).
   // `previous_version` is strictly null: an older backend that omits it asks nothing.
   const editingFiling = editingId != null ? updates.find((u) => u.id === editingId) : undefined;
   const basisApplies = editingFiling
     ? Boolean(editingFiling.basis_question_applies)
     : Boolean(planOnFile && planOnFile.previous_version === null && planOnFile.status !== 'draft');
-  const draftFirstVersion = editingFiling
-    ? !editingFiling.basis_question_applies && editingFiling.prior_plan_basis === 'agent_file'
-    : Boolean(planOnFile && planOnFile.previous_version === null && planOnFile.status === 'draft');
   // The year starts EMPTY and is filled by the effect below with the next unfiled year once the
   // filings are known; `emptyForm(currentYear)` would offer a year the form then refuses.
   const [form, setForm] = useState({ ...emptyForm(currentYear), reporting_year: '' });
-  // The certifier holds a plan filed before Trazo: stated by the grower, or a draft first version.
-  const agentFile = draftFirstVersion || (basisApplies && form.prior_plan_basis === 'agent_file');
+  // The certifier holds a plan filed before Trazo: the grower's answer, or the server's stored one.
+  const agentFile = basisApplies
+    ? form.prior_plan_basis === 'agent_file'
+    : editingFiling?.prior_plan_basis === 'agent_file';
   const [pending, setPending] = useState<PendingAction>(null);
   // A sign or file refused because an attested-unchanged section differs between the plan
   // versions. Shown in the row's action panel until the panel closes, not only in a toast.

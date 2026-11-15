@@ -150,12 +150,41 @@ describe('filings the question does not apply to', () => {
     expect(createUpdate.mock.calls[0]?.[0].data).not.toHaveProperty('prior_plan_basis');
   });
 
-  it('a draft first version is never asked, and says Trazo has no copy of the plan on file', () => {
+  it('a draft first version is never asked, and claims nothing before the server answers', () => {
+    // Review of app #389: an applicant's certifier holds no plan; only the server knows which it is.
     renderCard(V1_DRAFT);
     expect(screen.queryByText('Did your certifier receive this plan from Trazo?')).toBeNull();
-    expect(screen.getByTestId('annual-agent-file-hint')).toBeInTheDocument();
+    expect(screen.queryByTestId('annual-agent-file-hint')).toBeNull();
+    expect(screen.queryByText('Sections unchanged since the plan your certifier holds')).toBeNull();
     save();
     expect(createUpdate.mock.calls[0]?.[0].data).not.toHaveProperty('prior_plan_basis');
+  });
+
+  it('a saved draft filing the server answered says Trazo has no copy of the plan on file', () => {
+    rows = [
+      {
+        id: 3,
+        prior_osp: 70,
+        prior_osp_version: 1,
+        reporting_year: 2027,
+        revision_number: 1,
+        changes_summary: 'Saved draft.',
+        additions: [],
+        deletions: [],
+        signed_at: null,
+        submitted_at: null,
+        is_locked: false,
+        prior_plan_basis: 'agent_file',
+        basis_question_applies: false
+      }
+    ];
+    renderCard(V1_DRAFT);
+    expect(screen.queryByTestId('annual-agent-file-hint')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Edit', exact: true } as any));
+    expect(screen.getByTestId('annual-agent-file-hint')).toBeInTheDocument();
+    expect(
+      screen.getByText('Sections unchanged since the plan your certifier holds')
+    ).toBeInTheDocument();
   });
 
   it('a backend that sends no previous_version asks nothing', () => {
