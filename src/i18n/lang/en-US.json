@@ -9651,6 +9651,7 @@
   "app.waSpray.previewFailed": "Could not read the spray records for this period.",
   "app.waSpray.applications": "{count, plural, one {# application} other {# applications}}",
   "app.waSpray.withBlanks": "{count, plural, one {# with a blank item} other {# with blank items}}",
+  "app.waSpray.jobsPrintedAs": "{jobs, plural, one {# spray job} other {# spray jobs}}, printed as {count, plural, one {# application} other {# applications}}, one per parcel or section",
   "app.waSpray.tank": "One tank, {count} products",
   "app.waSpray.blankItems": "Not on the record: {items}",
   "app.waSpray.noBlankItems": "No item is blank on this record",

@@ -9651,6 +9651,7 @@
   "app.waSpray.previewFailed": "No pudimos leer los registros de aplicación de este período.",
   "app.waSpray.applications": "{count, plural, one {# aplicación} other {# aplicaciones}}",
   "app.waSpray.withBlanks": "{count, plural, one {# con un punto en blanco} other {# con puntos en blanco}}",
+  "app.waSpray.jobsPrintedAs": "{jobs, plural, one {# aspersión, impresa} other {# aspersiones, impresas}} como {count, plural, one {# aplicación} other {# aplicaciones}}, una por parcela o sección",
   "app.waSpray.tank": "Un tanque, {count} productos",
   "app.waSpray.blankItems": "No consta en el registro: {items}",
   "app.waSpray.noBlankItems": "Ningún punto queda en blanco en este registro",

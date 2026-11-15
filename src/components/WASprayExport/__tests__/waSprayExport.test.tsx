@@ -196,6 +196,28 @@ describe('WASprayExportModal', () => {
     );
   });
 
+  it('counts spray jobs when a job on several parcels printed as one application per parcel', async () => {
+    stubFetch({ ...SUMMARY, pass_count: 23, job_count: 10 });
+    renderModal('en-US');
+    expect(
+      await screen.findByText(
+        '10 spray jobs, printed as 23 applications, one per parcel or section'
+      )
+    ).toBeTruthy();
+  });
+
+  it('says it in Spanish too, and keeps the plain count when every job is one application', async () => {
+    stubFetch({ ...SUMMARY, pass_count: 4, job_count: 1 });
+    const { unmount } = renderModal('es-419');
+    expect(
+      await screen.findByText('1 aspersión, impresa como 4 aplicaciones, una por parcela o sección')
+    ).toBeTruthy();
+    unmount();
+    stubFetch({ ...SUMMARY, job_count: 2 });
+    renderModal('en-US');
+    expect(await screen.findByText('2 applications')).toBeTruthy();
+  });
+
   it('lists each day of a tank whose lines hold different days', async () => {
     stubFetch({
       ...SUMMARY,

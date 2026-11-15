@@ -51,6 +51,8 @@ interface WASprayPass {
 
 interface WASpraySummary {
   pass_count: number;
+  /** What was logged as one application: a spray on several blocks prints once per block. */
+  job_count?: number;
   product_line_count: number;
   passes_with_blank_items: number;
   parcels_without_map: string[];
@@ -365,10 +367,15 @@ const WASprayExportModal: React.FC<WASprayExportModalProps> = ({
           <VStack spacing={4} align="stretch">
             <HStack spacing={2} wrap="wrap">
               <Badge variant="neutral">
-                {intl.formatMessage(
-                  { id: 'app.waSpray.applications' },
-                  { count: summary.pass_count }
-                )}
+                {summary.job_count !== undefined && summary.job_count < summary.pass_count
+                  ? intl.formatMessage(
+                      { id: 'app.waSpray.jobsPrintedAs' },
+                      { jobs: summary.job_count, count: summary.pass_count }
+                    )
+                  : intl.formatMessage(
+                      { id: 'app.waSpray.applications' },
+                      { count: summary.pass_count }
+                    )}
               </Badge>
               {summary.passes_with_blank_items > 0 && (
                 <Badge variant="warning">
