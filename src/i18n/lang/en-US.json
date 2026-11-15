@@ -7012,6 +7012,7 @@
   "osp.review.finding.record_types_carried_forward": "Record types confirmed on an earlier plan and not re-stated on this one — attest the recordkeeping section unchanged on your annual update, or re-tick them",
   "osp.review.finding.record_types_evidenced_not_confirmed": "You keep these records in Trazo, but the plan does not list them yet",
   "osp.review.finding.responsible_person_missing": "No responsible person is set for the farm (set it when you edit the farm); § 205.401(b) asks for the responsible person by name",
+  "osp.review.finding.responsible_person_not_legally_responsible": "The farm's responsible person, who signs the packet, is not a contact marked legally responsible; name the person who signs in both places",
   "osp.review.finding.seasons_closed": "Seasons finished since the plan was last answered",
   "osp.review.finding.seasons_started": "Seasons started since the plan was last answered",
   "osp.review.more": "… and {n} more",

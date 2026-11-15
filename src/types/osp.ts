@@ -557,6 +557,7 @@ export interface OSPReviewFinding {
     | 'affidavits_added'
     | 'contamination_incidents'
     | 'responsible_person_missing'
+    | 'responsible_person_not_legally_responsible'
     | string;
   message: string;
   count: number;

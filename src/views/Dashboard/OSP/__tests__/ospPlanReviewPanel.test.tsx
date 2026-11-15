@@ -55,6 +55,7 @@ vi.mock('store/api/ospApi', () => ({
 }));
 
 import OSPPlanReviewPanel from '../OSPPlanReviewPanel';
+import esMessages from '../../../../i18n/lang/es-419.json';
 
 const osp: any = { id: 46, version_number: 5, status: 'draft' };
 
@@ -122,6 +123,42 @@ describe('OSPPlanReviewPanel', () => {
     renderPanel();
     expect(screen.getByText('Nothing to revisit')).toBeTruthy();
     expect(screen.getByText(/No operation changes are recorded/)).toBeTruthy();
+  });
+
+  it('names a signer who is not the legally responsible contact, in Spanish too', () => {
+    // Orchard specimen read (2026-11-15): two answers to who is responsible, and the review names
+    // both rather than picking one.
+    review = {
+      ...review,
+      is_clean: false,
+      findings: [
+        {
+          code: 'responsible_person_not_legally_responsible',
+          message: 'fallback',
+          count: 1,
+          details: [
+            'Responsible person on the farm profile, printed as the signer: Karen Tollefsen',
+            "Marked legally responsible in the operation's contacts: Dan Tollefsen"
+          ],
+          module_key: 'certification_contract'
+        }
+      ],
+      stale_modules: [],
+      parcels_not_named: []
+    };
+    render(
+      <ChakraProvider>
+        <IntlProvider locale="es-419" messages={esMessages} onError={() => {}}>
+          <OSPPlanReviewPanel companyId="1" farmId="2" osp={osp} />
+        </IntlProvider>
+      </ChakraProvider>
+    );
+    expect(
+      screen.getByText(
+        /no es un contacto marcado como responsable legal; indica en ambos lugares quién firma/
+      )
+    ).toBeTruthy();
+    expect(screen.getByText(/printed as the signer: Karen Tollefsen/)).toBeTruthy();
   });
 
   it('renders nothing on an error rather than a blank card', () => {
