@@ -1,10 +1,9 @@
 import {
-  CURRENT_HISTORY,
+  CURRENT_PRODUCTION_URL,
   EVENT_CREATE_URL,
   EVENT_URL,
-  FINISH_HISTORY,
-  HISTORY_URL,
-  PARCEL_HISTORY_URL,
+  FINISH_PRODUCTION_URL,
+  PARCEL_PRODUCTIONS_URL,
   PRODUCTION_URL,
   PUBLIC_HISTORY_URL,
   SCANS_BY_FARM_URL
@@ -16,7 +15,7 @@ export const historyApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     getCurrentHistory: build.query({
       query: ({ companyId, farmId, parcelId }) => ({
-        url: CURRENT_HISTORY(companyId, farmId, parcelId),
+        url: CURRENT_PRODUCTION_URL(companyId, farmId, parcelId),
         method: 'GET',
         credentials: 'include'
       }),
@@ -43,7 +42,7 @@ export const historyApi = baseApi.injectEndpoints({
           }
         }
         return {
-          url: FINISH_HISTORY(companyId, farmId, parcelId),
+          url: FINISH_PRODUCTION_URL(companyId, farmId, parcelId),
           method: 'POST',
           credentials: 'include',
           body: formData,
@@ -56,7 +55,7 @@ export const historyApi = baseApi.injectEndpoints({
     getParcelHistories: build.query({
       query: ({ companyId, farmId, parcelId }) => {
         return {
-          url: PARCEL_HISTORY_URL(companyId, farmId, parcelId),
+          url: PARCEL_PRODUCTIONS_URL(companyId, farmId, parcelId),
           method: 'GET',
           credentials: 'include'
         };
@@ -65,7 +64,7 @@ export const historyApi = baseApi.injectEndpoints({
     }),
     getUserProductionScans: build.query({
       query: () => ({
-        url: 'histories/my_scans/',
+        url: 'productions/my_scans/',
         method: 'GET',
         credentials: 'include'
       }),
@@ -73,7 +72,7 @@ export const historyApi = baseApi.injectEndpoints({
     }),
     getUserReviews: build.query({
       query: () => ({
-        url: 'histories/my_reviews/',
+        url: 'productions/my_reviews/',
         method: 'GET',
         credentials: 'include'
       }),
@@ -89,7 +88,7 @@ export const historyApi = baseApi.injectEndpoints({
           ...Object.fromEntries(Object.entries(filters).filter(([, v]) => v !== '' && v != null))
         });
         return {
-          url: `histories/establishment_scans_paginated/?${params}`,
+          url: `productions/establishment_scans_paginated/?${params}`,
           method: 'GET',
           credentials: 'include'
         };
@@ -98,7 +97,7 @@ export const historyApi = baseApi.injectEndpoints({
     }),
     getHistory: build.query({
       query: (historyId) => ({
-        url: HISTORY_URL(historyId),
+        url: PRODUCTION_URL(historyId),
         method: 'GET',
         credentials: 'include'
       }),
@@ -111,7 +110,7 @@ export const historyApi = baseApi.injectEndpoints({
      */
     getFarmProductions: build.query({
       query: (establishmentId) => ({
-        url: `${HISTORY_URL('')}?establishment=${establishmentId}`,
+        url: `${PRODUCTION_URL('')}?establishment=${establishmentId}`,
         method: 'GET',
         credentials: 'include'
       }),
@@ -308,7 +307,7 @@ export const historyApi = baseApi.injectEndpoints({
     // Recent chemical inputs for quick-pick prefill (distinct products, most recent first)
     getRecentInputs: build.query({
       query: ({ establishmentId }) => ({
-        url: `histories/recent-inputs/?establishment_id=${establishmentId}`,
+        url: `productions/recent-inputs/?establishment_id=${establishmentId}`,
         method: 'GET',
         credentials: 'include'
       }),
@@ -321,7 +320,7 @@ export const historyApi = baseApi.injectEndpoints({
     // for the trade-off.
     getSeedSuppliers: build.query({
       query: ({ establishmentId }) => ({
-        url: `histories/seed-suppliers/?establishment_id=${establishmentId}`,
+        url: `productions/seed-suppliers/?establishment_id=${establishmentId}`,
         method: 'GET',
         credentials: 'include'
       })

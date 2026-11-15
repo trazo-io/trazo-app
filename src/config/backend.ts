@@ -36,8 +36,6 @@ export const FARM_PARCEL_GEOMETRY_URL = (companyId: string, farmId: string) =>
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/parcel-geometry/`;
 export const FARM_PRODUCTS_URL = (companyId: string, farmId: string) =>
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/products/`;
-export const FARM_HISTORIES_URL = (companyId: string, farmId: string) =>
-  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/histories/`;
 export const FARM_CHART_SCANS_VS_SALES_INFO_URL = (companyId: string, farmId: string) =>
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/get_charts_data/`;
 export const SCANS_BY_FARM_URL = (companyId: string, farmId: string) =>
@@ -47,8 +45,6 @@ export const SCANS_BY_FARM_URL = (companyId: string, farmId: string) =>
 export const ESTABLISHMENT_URL = FARM_URL;
 /** @deprecated Use FARM_PRODUCTS_URL instead */
 export const ESTABLISHMENT_PRODUCTS_URL = FARM_PRODUCTS_URL;
-/** @deprecated Use FARM_HISTORIES_URL instead */
-export const ESTABLISHMENT_HISTORIES_URL = FARM_HISTORIES_URL;
 /** @deprecated Use FARM_CHART_SCANS_VS_SALES_INFO_URL instead */
 export const ESTABLISHMENT_CHART_SCANS_VS_SALES_INFO_URL = FARM_CHART_SCANS_VS_SALES_INFO_URL;
 /** @deprecated Use SCANS_BY_FARM_URL instead */
@@ -64,14 +60,12 @@ export const PRODUCT_REPUTATION_PERCENTAGE_URL = (companyId: string, farmId: str
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/rating_reviews_percentage/`;
 export const REVIEW_URL = (reviewId: string) =>
   reviewId ? `${ROOT_URL}reviews/${reviewId}/` : `${ROOT_URL}reviews/`;
-export const HISTORY_URL = (historyId: string) =>
-  historyId ? `${ROOT_URL}histories/${historyId}/` : `${ROOT_URL}histories/`;
-export const PARCEL_HISTORY_URL = (companyId: string, farmId: string, parcelId: string) =>
-  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/parcels/${parcelId}/histories/`;
-export const CURRENT_HISTORY = (companyId: string, farmId: string, parcelId: string) =>
-  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/parcels/${parcelId}/current_history/`;
-export const FINISH_HISTORY = (companyId: string, farmId: string, parcelId: string) =>
-  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/parcels/${parcelId}/finish_history/`;
+export const PARCEL_PRODUCTIONS_URL = (companyId: string, farmId: string, parcelId: string) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/parcels/${parcelId}/productions/`;
+export const CURRENT_PRODUCTION_URL = (companyId: string, farmId: string, parcelId: string) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/parcels/${parcelId}/current_production/`;
+export const FINISH_PRODUCTION_URL = (companyId: string, farmId: string, parcelId: string) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/parcels/${parcelId}/finish_production/`;
 export const EVENT_URL = (
   companyId: string,
   farmId: string,
@@ -87,9 +81,9 @@ export const EVENT_URL = (
 export const EVENT_CREATE_URL = (companyId: string, farmId: string) =>
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/events/`;
 export const PRODUCTION_URL = (productionId: string) =>
-  productionId ? `${ROOT_URL}histories/${productionId}/` : `${ROOT_URL}histories/`;
+  productionId ? `${ROOT_URL}productions/${productionId}/` : `${ROOT_URL}productions/`;
 export const PUBLIC_HISTORY_URL = (historyId: string) =>
-  `${ROOT_URL}histories/${historyId}/public_history/`;
+  `${ROOT_URL}productions/${historyId}/public_history/`;
 export const UPLOAD_URLS_URL = `${ROOT_URL}upload-urls/`;
 
 // Certification URLs
@@ -180,7 +174,7 @@ export const SUPPLIER_URL = (companyId: string, farmId: string, supplierId?: str
 // Which handler ONE production was sent to. Owner-side: the handler's identity is
 // supply-chain data and the public production payload deliberately omits it.
 export const PRODUCTION_HANDLER_URL = (productionId: string) =>
-  `${ROOT_URL}histories/${productionId}/post_harvest_facility/`;
+  `${ROOT_URL}productions/${productionId}/post_harvest_facility/`;
 
 // OSP URLs — Sprint 5A (7 CFR 205.201)
 export const OSP_URL = (companyId: string, farmId: string, ospId?: string | number) =>

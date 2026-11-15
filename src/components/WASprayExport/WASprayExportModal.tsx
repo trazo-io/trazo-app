@@ -2,8 +2,8 @@
  * Washington pesticide application records (WAC 16-228-1320) export modal.
  *
  * Establishment + period scoped. Backend:
- *   GET /api/histories/wa-spray-records-export/?establishment_id=&year=   (a calendar year)
- *   GET /api/histories/wa-spray-records-export/?establishment_id=&start=&end=   (a month)
+ *   GET /api/productions/wa-spray-records-export/?establishment_id=&year=   (a calendar year)
+ *   GET /api/productions/wa-spray-records-export/?establishment_id=&start=&end=   (a month)
  *   &export_format=json|pdf|csv   (`export_format`, NOT `format`: DRF reserves that param.)
  *
  * Built like PURExportModal on the design system (ResponsiveModal, StandardField,
@@ -102,7 +102,7 @@ interface Period {
 }
 
 const exportUrl = (establishmentId: number | string, period: Period, exportFormat: string) =>
-  `${config.API_BASE_URL}/histories/wa-spray-records-export/` +
+  `${config.API_BASE_URL}/productions/wa-spray-records-export/` +
   `?establishment_id=${establishmentId}&${periodParams(period.year, period.month)}` +
   `&export_format=${exportFormat}`;
 

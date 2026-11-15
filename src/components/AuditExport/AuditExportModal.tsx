@@ -94,7 +94,7 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({
 
     try {
       const url =
-        `${config.API_BASE_URL}/histories/${productionId}/audit-export/` +
+        `${config.API_BASE_URL}/productions/${productionId}/audit-export/` +
         `?certification=${certification}&export_format=${format}`;
 
       const response = await fetch(url, {

@@ -389,7 +389,7 @@ const companyApi = baseApi.injectEndpoints({
       }
     >({
       query: (productionData) => ({
-        url: 'histories/start-production/',
+        url: 'productions/start-production/',
         method: 'POST',
         body: productionData,
         credentials: 'include'

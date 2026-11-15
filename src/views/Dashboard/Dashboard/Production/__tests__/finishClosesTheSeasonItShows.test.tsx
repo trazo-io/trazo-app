@@ -136,7 +136,7 @@ describe('FinishProduction reads the season it closes', () => {
   });
 
   it('never asks for the parcel-level current season', () => {
-    // The F30 defect in one assertion. `current_history/` answers "whichever season on this
+    // The F30 defect in one assertion. `current_production/` answers "whichever season on this
     // parcel started last", which is not a question this page should be asking.
     expect(currentHistoryCalls).toEqual([]);
   });

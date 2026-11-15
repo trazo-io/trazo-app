@@ -113,7 +113,7 @@ export const consumerApi = baseApi.injectEndpoints({
       }
     >({
       query: (params) => ({
-        url: 'histories/my_scans/',
+        url: 'productions/my_scans/',
         method: 'GET',
         params: {
           include_carbon_data: true,

@@ -234,7 +234,7 @@ describe('WASprayExportModal', () => {
     renderModal();
     await screen.findByText('Cyd-X');
     const first = String(fetchMock.mock.calls[0][0]);
-    expect(first).toContain('/histories/wa-spray-records-export/');
+    expect(first).toContain('/productions/wa-spray-records-export/');
     expect(first).toContain(
       `establishment_id=160&year=${new Date().getFullYear()}&export_format=json`
     );
