@@ -50,7 +50,33 @@ vi.mock('store/api/ospAnnualUpdateApi', () => ({
   FILING_METHODS: ['agent_web_form', 'agent_portal', 'email', 'mail', 'in_person']
 }));
 
+const DEFINITIONS = {
+  content_version: 'test',
+  modules: [
+    {
+      key: 'g5_0_pest',
+      code: 'G5.0',
+      title: { en: 'Pest, Disease & Weed Management', es: 'Manejo de plagas' },
+      repeat_per_parcel: false
+    },
+    {
+      key: 'g9_0_facility_pest',
+      code: 'G9.0',
+      title: { en: 'Facility Pest Management', es: 'Plagas en instalaciones' },
+      repeat_per_parcel: false
+    }
+  ]
+};
+const refetchDefinitions = vi.fn();
+let definitions: Record<string, unknown> = {};
+vi.mock('store/api/ospApi', () => ({
+  useGetOSPModuleDefinitionsQuery: () => definitions
+}));
+
 import OSPAnnualUpdateCard from '../OSPAnnualUpdateCard';
+
+// jsdom has no scrollIntoView; a refused save scrolls to the first field it names.
+Element.prototype.scrollIntoView = vi.fn();
 
 const V1_ACTIVE = { id: 59, version_number: 1, status: 'active', previous_version: null } as any;
 const V1_DRAFT = { id: 70, version_number: 1, status: 'draft', previous_version: null } as any;
@@ -85,6 +111,13 @@ const save = () => {
 
 beforeEach(() => {
   rows = [];
+  definitions = {
+    data: DEFINITIONS,
+    isError: false,
+    isFetching: false,
+    refetch: refetchDefinitions
+  };
+  refetchDefinitions.mockClear();
   createUpdate.mockClear();
   signUpdate.mockClear();
 });
@@ -224,5 +257,169 @@ describe('signing an unanswered filing', () => {
       )
     ).toBeInTheDocument();
     expect(signUpdate).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('stating what changed against the plan the certifier holds', () => {
+  const answerNo = () =>
+    fireEvent.click(
+      screen.getByRole('radio', { name: /No, they hold the plan I filed before Trazo/ })
+    );
+
+  it('is asked only once the certifier holds the plan filed before Trazo', () => {
+    renderCard(V1_ACTIVE);
+    expect(screen.queryByTestId('annual-agent-file-statement')).toBeNull();
+    answerNo();
+    expect(screen.getByTestId('annual-agent-file-statement')).toBeInTheDocument();
+    expect(
+      screen.getByText('Which sections of your plan changed since the plan your certifier holds?')
+    ).toBeInTheDocument();
+  });
+
+  it('sends the sections ticked, and nothing changed as not stated', () => {
+    renderCard(V1_ACTIVE);
+    answerNo();
+    fireEvent.click(
+      screen.getByRole('checkbox', { name: /G5\.0 Pest, Disease & Weed Management/ })
+    );
+    save();
+    expect(createUpdate.mock.calls[0]?.[0].data).toMatchObject({
+      prior_plan_basis: 'agent_file',
+      agent_file_changed_modules: ['g5_0_pest'],
+      agent_file_nothing_changed: null
+    });
+  });
+
+  it('nothing changed clears the sections and is sent as true', () => {
+    renderCard(V1_ACTIVE);
+    answerNo();
+    fireEvent.click(screen.getByRole('checkbox', { name: /G5\.0/ }));
+    fireEvent.click(
+      screen.getByRole('checkbox', { name: 'Nothing changed since the plan my certifier holds' })
+    );
+    expect(screen.getByRole('checkbox', { name: /G5\.0/ })).not.toBeChecked();
+    save();
+    expect(createUpdate.mock.calls[0]?.[0].data).toMatchObject({
+      agent_file_changed_modules: [],
+      agent_file_nothing_changed: true
+    });
+  });
+
+  it('a plan the certifier received from Trazo clears any statement', () => {
+    renderCard(V1_ACTIVE);
+    answerNo();
+    fireEvent.click(screen.getByRole('checkbox', { name: /G5\.0/ }));
+    fireEvent.click(
+      screen.getByRole('radio', { name: /Yes, I sent them this version from Trazo/ })
+    );
+    expect(screen.queryByTestId('annual-agent-file-statement')).toBeNull();
+    save();
+    expect(createUpdate.mock.calls[0]?.[0].data).toMatchObject({
+      prior_plan_basis: 'trazo_version',
+      agent_file_changed_modules: [],
+      agent_file_nothing_changed: null
+    });
+  });
+
+  it("shows the server's refusal under the list", async () => {
+    createUpdate.mockImplementationOnce(() => ({
+      unwrap: () =>
+        Promise.reject({
+          status: 400,
+          data: {
+            agent_file_changed_modules: [
+              'These sections are stated changed, and the section of the plan each belongs to is also ticked unchanged.'
+            ]
+          }
+        })
+    }));
+    renderCard(V1_ACTIVE);
+    answerNo();
+    fireEvent.click(screen.getByRole('checkbox', { name: /G5\.0/ }));
+    save();
+    expect(
+      await screen.findByText(/stated changed, and the section of the plan each belongs to/)
+    ).toBeInTheDocument();
+  });
+
+  it('the refusal goes once the section it names is unticked', async () => {
+    createUpdate.mockImplementationOnce(() => ({
+      unwrap: () =>
+        Promise.reject({
+          status: 400,
+          data: {
+            agent_file_changed_modules: [
+              'These sections are stated changed, and the section of the plan each belongs to is also ticked unchanged.'
+            ]
+          }
+        })
+    }));
+    renderCard(V1_ACTIVE);
+    answerNo();
+    fireEvent.click(screen.getByRole('checkbox', { name: /G5\.0/ }));
+    fireEvent.click(screen.getByRole('checkbox', { name: /Practices & procedures/ }));
+    save();
+    await screen.findByText(/stated changed, and the section of the plan each belongs to/);
+    fireEvent.click(screen.getByRole('checkbox', { name: /Practices & procedures/ }));
+    expect(
+      screen.queryByText(/stated changed, and the section of the plan each belongs to/)
+    ).toBeNull();
+  });
+
+  it('offers no control while the plan sections are loading or failed to load', () => {
+    definitions = {
+      data: undefined,
+      isError: false,
+      isFetching: true,
+      refetch: refetchDefinitions
+    };
+    const { unmount } = renderCard(V1_ACTIVE);
+    answerNo();
+    expect(screen.getByTestId('annual-agent-file-statement')).toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: /Nothing changed since/ })).toBeNull();
+    unmount();
+
+    definitions = {
+      data: undefined,
+      isError: true,
+      isFetching: false,
+      refetch: refetchDefinitions
+    };
+    renderCard(V1_ACTIVE);
+    answerNo();
+    expect(screen.queryByRole('checkbox', { name: /Nothing changed since/ })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /retry|try again/i }));
+    expect(refetchDefinitions).toHaveBeenCalledTimes(1);
+  });
+
+  it("a saved draft whose answer is the server's says where to state what changed", () => {
+    const draft = {
+      id: 3,
+      prior_osp: 70,
+      prior_osp_version: 1,
+      new_osp_version: null,
+      reporting_year: 2027,
+      revision_number: 1,
+      changes_summary: 'Draft row.',
+      additions: [],
+      deletions: [],
+      signed_at: null,
+      submitted_at: null,
+      is_locked: false,
+      prior_plan_basis: 'agent_file',
+      basis_question_applies: false,
+      agent_file_changed_modules: [],
+      agent_file_nothing_changed: null
+    };
+    rows = [draft];
+    const { unmount } = renderCard(V1_DRAFT);
+    expect(screen.getByTestId('annual-statement-cue')).toHaveTextContent(
+      'Edit this update to state which sections changed since then'
+    );
+    unmount();
+
+    rows = [{ ...draft, agent_file_changed_modules: ['g5_0_pest'] }];
+    renderCard(V1_DRAFT);
+    expect(screen.queryByTestId('annual-statement-cue')).toBeNull();
   });
 });

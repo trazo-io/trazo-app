@@ -402,6 +402,10 @@ describe('annual update card: what the certifier holds is sent only where it is 
     expect(source).toContain(
       '...(basisApplies ? { prior_plan_basis: form.prior_plan_basis } : {})'
     );
+    // The statement is emptied whenever the certifier's plan is not one filed before Trazo.
+    expect(source).toContain(
+      'agent_file_changed_modules: agentFile ? form.agent_file_changed_modules : []'
+    );
     for (const key of ['basis_question_applies', 'new_osp', 'new_osp_version']) {
       expect(writesKey(source, key), `the annual update card sends ${key}`).toBe(false);
     }

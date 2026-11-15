@@ -576,6 +576,9 @@ const AgentFormCopySheet: React.FC<Props> = ({ companyId, farmId, ospId }) => {
           });
         }
         const sections = (row.value as { label: string; files: string[] }[]) || [];
+        // A first year: the list is the grower's own statement on the annual update, not a comparison.
+        if (e.stated && !sections.length)
+          return intl.formatMessage({ id: 'osp.agentSheet.detail.changes_stated_none' });
         if (!sections.length)
           return intl.formatMessage(
             {
@@ -587,14 +590,16 @@ const AgentFormCopySheet: React.FC<Props> = ({ companyId, farmId, ospId }) => {
         return (
           <VStack align="stretch" spacing={1}>
             <Text>
-              {intl.formatMessage(
-                {
-                  id: 'osp.agentSheet.detail.changes_list',
-                  defaultMessage:
-                    "Answers changed between plan v{prior} and v{next} in these sections. If these are your updates, list them on the form and attach the agent's own forms for them."
-                },
-                { prior: e.prior_version as number, next: e.new_version as number }
-              )}
+              {e.stated
+                ? intl.formatMessage({ id: 'osp.agentSheet.detail.changes_stated_list' })
+                : intl.formatMessage(
+                    {
+                      id: 'osp.agentSheet.detail.changes_list',
+                      defaultMessage:
+                        "Answers changed between plan v{prior} and v{next} in these sections. If these are your updates, list them on the form and attach the agent's own forms for them."
+                    },
+                    { prior: e.prior_version as number, next: e.new_version as number }
+                  )}
             </Text>
             {sections.map((s) => (
               <Text key={s.label} fontWeight="semibold">
