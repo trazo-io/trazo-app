@@ -18,10 +18,11 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from '@testing-library/react';
-import { IntlProvider } from 'react-intl';
+import { IntlProvider, createIntl } from 'react-intl';
 import { ChakraProvider } from '@chakra-ui/react';
 import { MemoryRouter } from 'react-router-dom';
 
+import { seasonRowDetail } from '../../../../../../components/Certifications/seasonRowMessages';
 import enUS from '../../../../../../i18n/lang/en-US.json';
 import es419 from '../../../../../../i18n/lang/es-419.json';
 
@@ -212,6 +213,29 @@ describe('season row details speak the reader language', () => {
     expect(text).not.toContain('fill before audit');
     // A code the catalogue does not know keeps the server's true English sentence.
     expect(text).toContain('A sentence the catalogue has not learned yet');
+  });
+
+  it('says the orchard read rows in Spanish: bought compost, no sale, a plan written in Trazo', () => {
+    // Orchard specimen read (2026-11-15): these rows were new and printed the English detail on
+    // the Spanish card.
+    const intl = createIntl({ locale: 'es-419', messages: es419 as Record<string, string> });
+    const say = (detail_code: string, params: Record<string, unknown>) =>
+      seasonRowDetail(intl, { detail: 'english fallback', detail_code, params });
+    expect(say('compost.supplier_documents_missing', { count: 1 })).toBe(
+      '1 registro de compost comprado no tiene en archivo la documentación del proceso del proveedor (C:N, temperaturas, volteos). Pídesela al proveedor antes de la inspección.'
+    );
+    expect(say('compost.fields_missing', { cn: 1, method: 0, temperature: 0, purchased: 2 })).toBe(
+      'Falta en los registros de compost: C:N en 1 registro. Agrégalo antes de la inspección. Compost comprado: no hay en archivo la documentación del proceso del proveedor para 2 registros.'
+    );
+    expect(say('compost.fields_missing', { cn: 1, method: 0, temperature: 0 })).toBe(
+      'Falta en los registros de compost: C:N en 1 registro. Agrégalo antes de la inspección.'
+    );
+    expect(say('sales_documentation.no_sale', {})).toBe(
+      'No hay una venta registrada para este lote.'
+    );
+    expect(say('ofpp.written_in_trazo', { date: '2026-11-15' })).toBe(
+      'Redactado en Trazo el 2026-11-15 (módulo G2.0 del OSP).'
+    );
   });
 
   it('writes the English card from the same catalogue', () => {
