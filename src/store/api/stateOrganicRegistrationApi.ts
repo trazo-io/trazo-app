@@ -13,6 +13,9 @@ export interface StateOrganicRegistration {
   establishment?: number;
   state: string;
   program_name?: string;
+  /** California agency the registration is held with: CDFA, or CDPH for processed products. */
+  registering_agency?: 'cdfa' | 'cdph';
+  registering_agency_display?: string;
   operation_type: string;
   operation_type_display?: string;
   status: string;

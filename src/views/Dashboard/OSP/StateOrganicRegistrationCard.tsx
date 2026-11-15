@@ -1,7 +1,12 @@
 /**
- * CDFA State Organic Program producer-registration card (CA Food & Ag Code
- * §§ 46000-46029). Self-contained: loads the establishment's registration, lets the
- * grower create/update it, and reports certifier-relevant currency. Mounted in OSPView.
+ * California organic registration card (CA Food & Ag Code §§ 46000-46029). Self-contained: loads the
+ * establishment's registration, lets the grower create/update it, and reports certifier-relevant
+ * currency. Mounted in OSPView.
+ *
+ * 2026-11-15: the registration names its agency, CDFA or CDPH (processed products). CCOF's contract
+ * (E1, E2) and OTCO's O1 (E-1, E-2) ask each agency's number in its own box, and the packet cover
+ * prints the number under the agency the grower chose here. The program name is the server's, set
+ * from the agency.
  */
 import React, { useEffect, useState } from 'react';
 import { Badge, HStack, Icon, SimpleGrid, useToast, VStack } from '@chakra-ui/react';
@@ -49,6 +54,7 @@ interface Props {
 }
 
 const EMPTY = {
+  registering_agency: 'cdfa',
   operation_type: 'producer',
   status: 'registered',
   registration_number: '',
@@ -72,6 +78,7 @@ const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId, stat
   useEffect(() => {
     if (existing) {
       setForm({
+        registering_agency: existing.registering_agency || 'cdfa',
         operation_type: existing.operation_type || 'producer',
         status: existing.status || 'registered',
         registration_number: existing.registration_number || '',
@@ -94,11 +101,12 @@ const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId, stat
       // Comes from the farm, not the form — a registration must never be filed
       // under a state the operation is not actually in.
       state,
-      program_name: STATE_ORGANIC_PROGRAMS[state],
+      registering_agency: form.registering_agency,
       operation_type: form.operation_type,
       status: form.status,
       registration_number: form.registration_number || null,
-      county: form.county || null,
+      // CDPH registers by state, not by county: a county left over from a CDFA row is cleared.
+      county: form.registering_agency === 'cdfa' ? form.county || null : null,
       commodities: form.commodities
         ? form.commodities
             .split(',')
@@ -147,12 +155,12 @@ const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId, stat
       titleIcon={<Icon as={FaLeaf} color="green.700" />}
       title={intl.formatMessage({
         id: 'osp.cdfa.title',
-        defaultMessage: 'State Organic Program Registration (CDFA)'
+        defaultMessage: 'State Organic Program Registration (CDFA or CDPH)'
       })}
       subtitle={intl.formatMessage({
         id: 'osp.cdfa.description',
         defaultMessage:
-          'Every California operation that produces or handles crops sold as organic registers with the CDFA State Organic Program before the first sale and renews each year (CA Food & Ag Code § 46013.1(a)). An operation under $5,000 is exempt from certification, not from registration. Distinct from CDFA OIM input-material registration.'
+          'Every California operation that produces or handles crops sold as organic registers with the CDFA State Organic Program before the first sale and renews each year (CA Food & Ag Code § 46013.1(a)). An operation that makes processed products registers them with CDPH. An operation under $5,000 is exempt from certification, not from registration. Distinct from CDFA OIM input-material registration.'
       })}
       headerAction={
         existing ? (
@@ -169,6 +177,30 @@ const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId, stat
       }>
       <VStack align="stretch" spacing={3}>
         <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+          <StandardField
+            label={intl.formatMessage({
+              id: 'osp.cdfa.agency',
+              defaultMessage: 'Registered with'
+            })}>
+            <StandardSelect
+              value={form.registering_agency}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                set('registering_agency', e.target.value)
+              }>
+              <option value="cdfa">
+                {intl.formatMessage({
+                  id: 'osp.cdfa.agency.cdfa',
+                  defaultMessage: 'CDFA: crops, post-harvest handling, produce brokers'
+                })}
+              </option>
+              <option value="cdph">
+                {intl.formatMessage({
+                  id: 'osp.cdfa.agency.cdph',
+                  defaultMessage: 'CDPH: processed products'
+                })}
+              </option>
+            </StandardSelect>
+          </StandardField>
           <StandardField
             label={intl.formatMessage({
               id: 'osp.cdfa.operationType',
@@ -203,6 +235,12 @@ const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId, stat
                   defaultMessage: 'Retailer'
                 })}
               </option>
+              <option value="processor">
+                {intl.formatMessage({
+                  id: 'osp.cdfa.operationType.processor',
+                  defaultMessage: 'Processor (CDPH processed products)'
+                })}
+              </option>
             </StandardSelect>
           </StandardField>
           <StandardField
@@ -225,7 +263,8 @@ const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId, stat
               <option value="exempt">
                 {intl.formatMessage({
                   id: 'osp.cdfa.status.exempt',
-                  defaultMessage: 'Registered, exempt from certification (under $5,000 organic sales)'
+                  defaultMessage:
+                    'Registered, exempt from certification (under $5,000 organic sales)'
                 })}
               </option>
             </StandardSelect>
@@ -240,23 +279,32 @@ const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId, stat
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 set('registration_number', e.target.value)
               }
-              placeholder={intl.formatMessage({
-                id: 'osp.cdfa.registrationNumberPlaceholder',
-                defaultMessage: 'e.g., 12-123456'
-              })}
+              placeholder={
+                form.registering_agency === 'cdph'
+                  ? intl.formatMessage({
+                      id: 'osp.cdfa.registrationNumberPlaceholderCdph',
+                      defaultMessage: 'e.g., 12345'
+                    })
+                  : intl.formatMessage({
+                      id: 'osp.cdfa.registrationNumberPlaceholder',
+                      defaultMessage: 'e.g., 12-123456'
+                    })
+              }
             />
           </StandardField>
-          <StandardField
-            label={intl.formatMessage({ id: 'osp.cdfa.county', defaultMessage: 'County' })}>
-            <StandardInput
-              value={form.county}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => set('county', e.target.value)}
-              placeholder={intl.formatMessage({
-                id: 'osp.cdfa.countyPlaceholder',
-                defaultMessage: 'e.g., Tulare'
-              })}
-            />
-          </StandardField>
+          {form.registering_agency === 'cdfa' && (
+            <StandardField
+              label={intl.formatMessage({ id: 'osp.cdfa.county', defaultMessage: 'County' })}>
+              <StandardInput
+                value={form.county}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => set('county', e.target.value)}
+                placeholder={intl.formatMessage({
+                  id: 'osp.cdfa.countyPlaceholder',
+                  defaultMessage: 'e.g., Tulare'
+                })}
+              />
+            </StandardField>
+          )}
           <StandardField
             label={intl.formatMessage({
               id: 'osp.cdfa.priorYearSales',
