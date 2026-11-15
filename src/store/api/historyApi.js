@@ -65,7 +65,7 @@ export const historyApi = baseApi.injectEndpoints({
     }),
     getUserProductionScans: build.query({
       query: () => ({
-        url: 'histories/my_scans/',
+        url: 'productions/my_scans/',
         method: 'GET',
         credentials: 'include'
       }),
@@ -73,7 +73,7 @@ export const historyApi = baseApi.injectEndpoints({
     }),
     getUserReviews: build.query({
       query: () => ({
-        url: 'histories/my_reviews/',
+        url: 'productions/my_reviews/',
         method: 'GET',
         credentials: 'include'
       }),
@@ -89,7 +89,7 @@ export const historyApi = baseApi.injectEndpoints({
           ...Object.fromEntries(Object.entries(filters).filter(([, v]) => v !== '' && v != null))
         });
         return {
-          url: `histories/establishment_scans_paginated/?${params}`,
+          url: `productions/establishment_scans_paginated/?${params}`,
           method: 'GET',
           credentials: 'include'
         };
@@ -308,7 +308,7 @@ export const historyApi = baseApi.injectEndpoints({
     // Recent chemical inputs for quick-pick prefill (distinct products, most recent first)
     getRecentInputs: build.query({
       query: ({ establishmentId }) => ({
-        url: `histories/recent-inputs/?establishment_id=${establishmentId}`,
+        url: `productions/recent-inputs/?establishment_id=${establishmentId}`,
         method: 'GET',
         credentials: 'include'
       }),
@@ -321,7 +321,7 @@ export const historyApi = baseApi.injectEndpoints({
     // for the trade-off.
     getSeedSuppliers: build.query({
       query: ({ establishmentId }) => ({
-        url: `histories/seed-suppliers/?establishment_id=${establishmentId}`,
+        url: `productions/seed-suppliers/?establishment_id=${establishmentId}`,
         method: 'GET',
         credentials: 'include'
       })

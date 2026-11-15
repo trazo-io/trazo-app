@@ -63,7 +63,7 @@ const seasonPlanApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     getSeasonPlan: build.query<SeasonPlanResponse, { historyId: number | string }>({
       query: ({ historyId }) => ({
-        url: `histories/${historyId}/season_plan/`,
+        url: `productions/${historyId}/season_plan/`,
         method: 'GET',
         credentials: 'include'
       }),
@@ -86,7 +86,7 @@ const seasonPlanApi = baseApi.injectEndpoints({
       }
     >({
       query: ({ historyId, itemId, ...body }) => ({
-        url: `histories/${historyId}/season_plan/${itemId}/`,
+        url: `productions/${historyId}/season_plan/${itemId}/`,
         method: 'PATCH',
         credentials: 'include',
         body

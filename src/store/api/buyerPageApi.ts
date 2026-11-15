@@ -38,7 +38,7 @@ const buyerPageApi = baseApi.injectEndpoints({
       { companyId: string; farmId: string }
     >({
       query: ({ farmId }) => ({
-        url: `/histories/?establishment=${farmId}`,
+        url: `/productions/?establishment=${farmId}`,
         method: 'GET',
         credentials: 'include'
       }),
@@ -54,7 +54,7 @@ const buyerPageApi = baseApi.injectEndpoints({
       { companyId: string; farmId: string; productionId: number; published: boolean }
     >({
       query: ({ productionId, published }) => ({
-        url: `/histories/${productionId}/`,
+        url: `/productions/${productionId}/`,
         method: 'PATCH',
         credentials: 'include',
         body: { published }

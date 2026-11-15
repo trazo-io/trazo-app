@@ -16,7 +16,7 @@ import type { RelatedQuantities } from 'utils/relatedQuantities';
  * `production_unit`) is frozen by the closed-record guard once a season is finished, and it
  * had no correction path at all while the events underneath it did: a farmer who finished
  * with the wrong yield could neither edit it (423) nor amend it. Header corrections go to
- * `histories/<id>/amend/` and land in the SAME table, so the packet's Documented Corrections
+ * `productions/<id>/amend/` and land in the SAME table, so the packet's Documented Corrections
  * section prints one chronological list.
  */
 export interface AmendableField {
@@ -86,7 +86,7 @@ const amendmentsApi = baseApi.injectEndpoints({
 
     getSeasonAmendments: build.query<SeasonAmendOptions, string>({
       query: (productionId) => ({
-        url: `histories/${productionId}/amend/`,
+        url: `productions/${productionId}/amend/`,
         method: 'GET',
         credentials: 'include'
       }),
@@ -98,7 +98,7 @@ const amendmentsApi = baseApi.injectEndpoints({
       { productionId: string; field_name: string; new_value: string; reason: string }
     >({
       query: ({ productionId, ...body }) => ({
-        url: `histories/${productionId}/amend/`,
+        url: `productions/${productionId}/amend/`,
         method: 'POST',
         credentials: 'include',
         body

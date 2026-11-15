@@ -772,7 +772,7 @@ function NewEventForm({ isEdit = false, eventId = null }) {
   // crops — so the backend's GPT prompt, which interpolates `Crop Type: {crop_type}` and
   // treats it as required, was told nothing useful about what was growing. The season the
   // record will actually be logged against knows: OptimizedHistoryListSerializer (the list
-  // action behind /parcels/<id>/histories/) exposes crop_type as {id, name, category, slug}.
+  // action behind /parcels/<id>/productions/) exposes crop_type as {id, name, category, slug}.
   // Post-harvest records target a finished season, so read that one when it is in play.
   const voiceCropType = useMemo(() => {
     const season = postHarvestTarget || openSeason;

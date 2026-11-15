@@ -333,7 +333,7 @@ function ProfileProduction() {
       }
 
       const response = await fetch(
-        `${config.API_BASE_URL}/histories/${downloadId}/download_qr_code/`,
+        `${config.API_BASE_URL}/productions/${downloadId}/download_qr_code/`,
         {
           credentials: 'include',
           headers: {
@@ -395,7 +395,7 @@ function ProfileProduction() {
         return;
       }
 
-      const response = await fetch(`${config.API_BASE_URL}/histories/${downloadId}/lot-tag/`, {
+      const response = await fetch(`${config.API_BASE_URL}/productions/${downloadId}/lot-tag/`, {
         credentials: 'include',
         headers: {
           'X-Requested-With': 'XMLHttpRequest'

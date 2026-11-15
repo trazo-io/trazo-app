@@ -67,7 +67,7 @@ export const EVENT_UNIT_TO_FORM_UNIT: Record<string, string> = {
 /**
  * A harvest record arrives spelled three ways depending on which serializer produced it:
  * the short subtype code `HA` (form state, timeline service), the bare verb `harvest` /
- * `harvesting`, and — from `current_history/`, which is what the Finish form actually reads —
+ * `harvesting`, and — from `current_production/`, which is what the Finish form actually reads —
  * the property path `event.production.harvesting`. Matching only `HA` made this helper offer
  * NOTHING on the real endpoint (found 2026-08-21 finishing the spinach season), which the unit
  * test could not see because it supplied short codes of its own.

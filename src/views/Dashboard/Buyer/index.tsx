@@ -295,7 +295,7 @@ const BuyerPage = () => {
   const handleQrDownload = async (productionId: number) => {
     let reason: string | null = null;
     try {
-      const res = await fetch(env.getApiUrl(`histories/${productionId}/download_qr_code/`), {
+      const res = await fetch(env.getApiUrl(`productions/${productionId}/download_qr_code/`), {
         credentials: 'include'
       });
       const data = (await res.json()) as { download_url?: string; error?: string };
@@ -531,7 +531,7 @@ const BuyerPage = () => {
                               </MenuItem>
                               <MenuItem
                                 as="a"
-                                href={env.getApiUrl(`histories/${row.id}/lot-tag/`)}
+                                href={env.getApiUrl(`productions/${row.id}/lot-tag/`)}
                                 icon={<Icon as={FaTags} />}>
                                 {intl.formatMessage({ id: 'buyer.lotTags' })}
                               </MenuItem>

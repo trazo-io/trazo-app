@@ -2,7 +2,7 @@
  * CA Pesticide Use Report (PUR / DPR-PML-017C) export modal.
  *
  * Establishment + month scoped. Backend:
- *   GET /api/histories/pur-export/?establishment_id=&month=&year=&export_format=json|csv
+ *   GET /api/productions/pur-export/?establishment_id=&month=&year=&export_format=json|csv
  * (`export_format`, NOT `format` — DRF reserves that query param; ?format=csv 404s.)
  *
  * Rebuilt 2026-09-01 on the design system instead of on its sibling. The first version
@@ -208,7 +208,7 @@ const PURExportModal: React.FC<PURExportModalProps> = ({
 
   const baseUrl = useCallback(
     (exportFormat: string) =>
-      `${config.API_BASE_URL}/histories/pur-export/` +
+      `${config.API_BASE_URL}/productions/pur-export/` +
       `?establishment_id=${establishmentId}&month=${month}&year=${year}&export_format=${exportFormat}`,
     [establishmentId, month, year]
   );

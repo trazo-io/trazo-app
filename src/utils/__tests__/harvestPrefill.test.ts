@@ -48,7 +48,7 @@ const duke2025 = [
 ];
 
 /**
- * The same season as `duke2025`, spelled the way `current_history/` actually serializes it —
+ * The same season as `duke2025`, spelled the way `current_production/` actually serializes it —
  * property paths, not short codes. The first version of this helper matched only `HA` and so
  * offered nothing at all on the real endpoint while every test here passed.
  */
