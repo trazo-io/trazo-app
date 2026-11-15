@@ -65,12 +65,28 @@ describe('NewEvent save path toasts', () => {
     expect(count(savePath, "status: 'warning'")).toBe(1);
     const warning = savePath.slice(0, savePath.indexOf("status: 'warning'"));
     expect(warning).toContain("id: 'app.phiConflictSavedTitle'");
-    expect(savePath).toContain('completenessGaps.length > 0 || phiConflicts.length > 0');
+    expect(savePath).toContain(
+      'completenessGaps.length > 0 || phiConflicts.length > 0 || manureConflicts.length > 0'
+    );
     // Review of app #273: under a "Saved." title the gaps take the inline label, never the
     // title again; and the title counts picks.
     expect(savePath).toContain("id: 'app.completenessGapsInlineLabel'");
     expect(savePath).not.toContain('`${gapsTitle} ${gapNames}`');
     expect(savePath).toContain('{ count: phiPickCount }');
+  });
+
+  it('puts a pick inside a raw manure interval in the same one warning', () => {
+    // 2026-11-15 (overall review OV-RK-C02): the save response carries `manure_conflicts` for a pick
+    // or a manure record. Still one warning; a pick inside both a PHI and a manure interval gets a
+    // title naming neither alone, and each title counts picks.
+    expect(savePath).toContain('manure_conflicts');
+    expect(count(savePath, "status: 'warning'")).toBe(1);
+    expect(savePath).toContain("id: 'app.manureConflictLine'");
+    expect(savePath).toContain("id: 'app.manureConflictSavedTitle'");
+    expect(savePath).toContain("id: 'app.harvestIntervalConflictSavedTitle'");
+    expect(savePath).toContain('{ count: manurePickCount }');
+    expect(savePath).toContain('{ count: bothPickCount }');
+    expect(savePath).toContain('interval: c.interval_days');
   });
 
   it('keeps the removed carbon-calculation fallback string out', () => {
