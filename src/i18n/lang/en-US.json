@@ -6684,6 +6684,7 @@
   "osp.annual.agentFile.legend": "Which sections of your plan changed since the plan your certifier holds?",
   "osp.annual.agentFile.help": "Trazo cannot compare your plan with the one your certifier holds, so the list below is your own statement. Your annual update and renewal packet print it as yours, and your certifier still expects the changed sections on its own forms.",
   "osp.annual.agentFile.nothingChanged": "Nothing changed since the plan my certifier holds",
+  "osp.annual.agentFile.rowCue": "Your certifier holds the plan you filed before Trazo. Edit this update to state which sections changed since then, or that nothing changed.",
   "osp.approvedAt": "Approved At",
   "osp.approvedInputs.cfr": "7 CFR 205.201(a)(2) — the input materials on this OSP. Trazo resolves what it can against OMRI, the WSDA Materials List and the National List; anything that does not resolve you can still add in your own words. Your certifier reviews the list and decides what is approved. Catalog-matched inputs also drive drift detection on chemical and soil events.",
   "osp.approvedInputs.count": "{count, plural, =0 {No inputs} one {# input} other {# inputs}}",

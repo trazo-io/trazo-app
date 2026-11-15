@@ -33,7 +33,9 @@ import {
   StandardCheckboxList,
   StandardField,
   StandardInput,
+  StandardQueryError,
   StandardSelect,
+  StandardSpinner,
   StandardTextarea
 } from 'components/Design/StandardComponents';
 import {
@@ -157,10 +159,10 @@ const FIELD_KEYS = [
   'supporting_document_ids',
   'additions',
   'deletions',
-  'application_info_changes',
-  'agent_requested_info',
   'agent_file_changed_modules',
   'agent_file_nothing_changed',
+  'application_info_changes',
+  'agent_requested_info',
   'sales_period_start',
   'sales_period_end'
 ] as const;
@@ -520,7 +522,11 @@ const AgentFileStatement: React.FC<{
   error
 }) => {
   const intl = useIntl();
-  const { data } = useGetOSPModuleDefinitionsQuery({ companyId, farmId, ospId });
+  const { data, isError, isFetching, refetch } = useGetOSPModuleDefinitionsQuery({
+    companyId,
+    farmId,
+    ospId
+  });
   const options = (data?.modules || [])
     .filter((m) => !m.repeat_per_parcel)
     .map((m) => ({
@@ -532,28 +538,38 @@ const AgentFileStatement: React.FC<{
       <Text fontSize="xs" color="gray.500" mb={2}>
         {intl.formatMessage({ id: 'osp.annual.agentFile.help' })}
       </Text>
-      <StandardCheckboxList
-        legend={intl.formatMessage({ id: 'osp.annual.agentFile.legend' })}
-        options={options}
-        value={modules}
-        onChange={(keys) => {
-          onModules(keys);
-          if (keys.length) onNothingChanged(false);
-        }}
-      />
-      <Checkbox
-        mt={2}
-        minH="44px"
-        colorScheme="green"
-        isChecked={nothingChanged}
-        onChange={(e) => {
-          onNothingChanged(e.target.checked);
-          if (e.target.checked) onModules([]);
-        }}>
-        <Text fontSize="sm">
-          {intl.formatMessage({ id: 'osp.annual.agentFile.nothingChanged' })}
-        </Text>
-      </Checkbox>
+      {/* Without the module list the only control left would be "Nothing changed", and ticking
+          it would wipe a stored list the grower cannot see (review of app #395). */}
+      {isError ? (
+        <StandardQueryError onRetry={refetch} isRetrying={isFetching} />
+      ) : !data ? (
+        <StandardSpinner />
+      ) : (
+        <>
+          <StandardCheckboxList
+            legend={intl.formatMessage({ id: 'osp.annual.agentFile.legend' })}
+            options={options}
+            value={modules}
+            onChange={(keys) => {
+              onModules(keys);
+              if (keys.length) onNothingChanged(false);
+            }}
+          />
+          <Checkbox
+            mt={2}
+            minH="44px"
+            colorScheme="green"
+            isChecked={nothingChanged}
+            onChange={(e) => {
+              onNothingChanged(e.target.checked);
+              if (e.target.checked) onModules([]);
+            }}>
+            <Text fontSize="sm">
+              {intl.formatMessage({ id: 'osp.annual.agentFile.nothingChanged' })}
+            </Text>
+          </Checkbox>
+        </>
+      )}
       {error ? (
         <Text fontSize="sm" color="red.600" mt={1} role="alert">
           {error}
@@ -771,11 +787,20 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
     return errors;
   };
 
-  const setSection = (key: string, value: boolean) =>
+  const setSection = (key: string, value: boolean) => {
     setForm((prev) => ({
       ...prev,
       sections_unchanged: { ...prev.sections_unchanged, [key]: value }
     }));
+    // The server's stated_changed_but_attested_unchanged refusal lands on the statement and says
+    // "untick that section": doing so must clear it, as editing the statement does (review of app #395).
+    setFieldErrors((prev) => {
+      if (!('agent_file_changed_modules' in prev)) return prev;
+      const next = { ...prev };
+      delete next.agent_file_changed_modules;
+      return next;
+    });
+  };
 
   /**
    * The DB enforces unique(prior_osp, reporting_year). Detect the collision from the
@@ -1251,6 +1276,22 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
                       </Text>
                     )}
                   </HStack>
+                  {/* A draft first version's answer is the server's, stored on create, so the grower
+                      who created the update never saw the statement list (review of app #395). */}
+                  {rowState(u) === 'draft' &&
+                    !u.is_locked &&
+                    editingId !== u.id &&
+                    u.prior_plan_basis === 'agent_file' &&
+                    !(u.agent_file_changed_modules || []).length &&
+                    u.agent_file_nothing_changed !== true && (
+                      <Text
+                        fontSize="xs"
+                        color="gray.600"
+                        mt={1}
+                        data-testid="annual-statement-cue">
+                        {intl.formatMessage({ id: 'osp.annual.agentFile.rowCue' })}
+                      </Text>
+                    )}
                   {/*
                   Acknowledgment is shown ONLY when it is on record, and never as a pending
                   state. Nothing in the product writes `certifier_acknowledged_at` — it is
