@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.12.12",
+  "content_version": "2026.12.13",
   "registry": {
-    "content_version": "2026.12.12",
+    "content_version": "2026.12.13",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -10988,6 +10988,199 @@
                 "max_length": null
               },
               {
+                "key": "water_verification_method",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How do you verify that your irrigation water is free of contaminants?",
+                  "es": "¿Cómo verificas que tu agua de riego está libre de contaminantes?"
+                },
+                "coaching": {
+                  "en": "Contaminants include prohibited substances and pathogens.",
+                  "es": "Los contaminantes incluyen sustancias prohibidas y patógenos."
+                },
+                "options": [
+                  {
+                    "value": "lab_testing",
+                    "label": {
+                      "en": "Laboratory testing of the water",
+                      "es": "Análisis de laboratorio del agua"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "utility_reports",
+                    "label": {
+                      "en": "The municipal utility's water quality reports",
+                      "es": "Los informes de calidad del agua del servicio municipal"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "district_statement",
+                    "label": {
+                      "en": "The irrigation district's written statement",
+                      "es": "La declaración escrita del distrito de riego"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "source_assessment",
+                    "label": {
+                      "en": "An assessment of the source, such as a sealed, deep well",
+                      "es": "Una evaluación de la fuente, como un pozo profundo y sellado"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otra (describe abajo)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "not_verified",
+                    "label": {
+                      "en": "We do not verify it",
+                      "es": "No lo verificamos"
+                    },
+                    "exclusive": true
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "irrigation_source_types",
+                    "op": "not_includes",
+                    "value": "not_irrigated"
+                  }
+                ],
+                "nop_cite": "§ 205.202",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "water_verification_method_other",
+                "kind": "text",
+                "label": {
+                  "en": "Describe the other way",
+                  "es": "Describe la otra forma"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "water_verification_method",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "water_contaminants_tested",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "What is the water tested for?",
+                  "es": "¿Para qué se analiza el agua?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "prohibited_substances",
+                    "label": {
+                      "en": "Prohibited substances, such as pesticides",
+                      "es": "Sustancias prohibidas, como plaguicidas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "pathogens",
+                    "label": {
+                      "en": "Pathogens, such as generic E. coli",
+                      "es": "Patógenos, como E. coli genérica"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "nitrates",
+                    "label": {
+                      "en": "Nitrates",
+                      "es": "Nitratos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "heavy_metals",
+                    "label": {
+                      "en": "Heavy metals",
+                      "es": "Metales pesados"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otro (describe abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "water_verification_method",
+                    "op": "includes",
+                    "value": "lab_testing"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "water_contaminants_tested_other",
+                "kind": "text",
+                "label": {
+                  "en": "What else is it tested for?",
+                  "es": "¿Para qué más se analiza?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "water_contaminants_tested",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
                 "key": "water_from_irrigation_district",
                 "kind": "boolean",
                 "label": {
@@ -11109,6 +11302,84 @@
                 "max_length": null
               },
               {
+                "key": "district_additive_types",
+                "kind": "text",
+                "label": {
+                  "en": "Which materials does the district add?",
+                  "es": "¿Qué materiales agrega el distrito?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "irrigation_district_additives",
+                    "op": "eq",
+                    "value": "yes"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "district_additive_timing",
+                "kind": "text",
+                "label": {
+                  "en": "How often and when does it add them, against your growing season?",
+                  "es": "¿Con qué frecuencia y cuándo los agrega, en relación con tu temporada de cultivo?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "irrigation_district_additives",
+                    "op": "eq",
+                    "value": "yes"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": {
+                  "en": "e.g. copper sulfate for algae in July and August, after our last irrigation set",
+                  "es": "p. ej. sulfato de cobre contra algas en julio y agosto, después de nuestro último riego"
+                },
+                "max_length": null
+              },
+              {
+                "key": "district_notifies_before_treatment",
+                "kind": "boolean",
+                "label": {
+                  "en": "Does the district contact you before it adds a prohibited material?",
+                  "es": "¿El distrito te avisa antes de agregar un material prohibido?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "irrigation_district_additives",
+                    "op": "eq",
+                    "value": "yes"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
                 "key": "irrigation_district_piping_map_upload",
                 "kind": "upload",
                 "label": {
@@ -11163,6 +11434,243 @@
                     "question": "water_from_irrigation_district",
                     "op": "truthy",
                     "value": null
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "non_district_water_additives",
+                "kind": "boolean",
+                "label": {
+                  "en": "Are you aware of any prohibited material, such as an algicide, added to irrigation water that does not come from an irrigation district?",
+                  "es": "¿Sabes de algún material prohibido, como un alguicida, que se agregue al agua de riego que no proviene de un distrito de riego?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "irrigation_source_types",
+                    "op": "includes_any",
+                    "value": [
+                      "well",
+                      "municipal",
+                      "river_stream_lake",
+                      "pond_reservoir",
+                      "catchment_cistern",
+                      "other"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.202",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "water_additive_mitigation",
+                "kind": "textarea",
+                "label": {
+                  "en": "What do you do to keep that material away from organic crops and land?",
+                  "es": "¿Qué haces para mantener ese material lejos de los cultivos y la tierra orgánicos?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "non_district_water_additives",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "materials_via_irrigation",
+                "kind": "boolean",
+                "label": {
+                  "en": "Do you apply any material through your irrigation system, on certified or other ground?",
+                  "es": "¿Aplicas algún material a través de tu sistema de riego, en tierra certificada o en otra?"
+                },
+                "coaching": {
+                  "en": "Fertigation and chemigation count, and so do line cleaners, descalers and pH adjusters. List each material on your materials list.",
+                  "es": "La fertirrigación y la quimigación cuentan, y también los limpiadores de líneas, los desincrustantes y los ajustadores de pH. Incluye cada material en tu lista de materiales."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "irrigation_source_types",
+                    "op": "not_includes",
+                    "value": "not_irrigated"
+                  }
+                ],
+                "nop_cite": "§ 205.203",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "irrigation_material_types",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "What types of material go through the irrigation system?",
+                  "es": "¿Qué tipos de material pasan por el sistema de riego?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "fertilizers",
+                    "label": {
+                      "en": "Fertilizers (fertigation)",
+                      "es": "Fertilizantes (fertirrigación)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "pesticides",
+                    "label": {
+                      "en": "Pesticides (chemigation)",
+                      "es": "Plaguicidas (quimigación)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "pre_harvest_sanitizers",
+                    "label": {
+                      "en": "Pre-harvest crop sanitizers",
+                      "es": "Desinfectantes de cultivo antes de la cosecha"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "system_cleaners",
+                    "label": {
+                      "en": "Irrigation line cleaners or descalers",
+                      "es": "Limpiadores o desincrustantes de las líneas de riego"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "ph_adjusters",
+                    "label": {
+                      "en": "pH adjusters",
+                      "es": "Ajustadores de pH"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otro (describe abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "materials_via_irrigation",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "irrigation_material_types_other",
+                "kind": "text",
+                "label": {
+                  "en": "Describe the other material",
+                  "es": "Describe el otro material"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "irrigation_material_types",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "irrigation_materials_all_approved",
+                "kind": "boolean",
+                "label": {
+                  "en": "Is every material that goes through the irrigation system approved for organic production?",
+                  "es": "¿Todos los materiales que pasan por el sistema de riego están aprobados para la producción orgánica?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "materials_via_irrigation",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.206",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "irrigation_contamination_prevention",
+                "kind": "textarea",
+                "label": {
+                  "en": "How do you keep certified crops from the materials that are not approved?",
+                  "es": "¿Cómo mantienes los cultivos certificados lejos de los materiales que no están aprobados?"
+                },
+                "coaching": {
+                  "en": "For example separate lines or injection points for certified blocks, flushing between uses, backflow prevention, and the records that show it.",
+                  "es": "Por ejemplo, líneas o puntos de inyección separados para los bloques certificados, lavado entre usos, prevención de reflujo y los registros que lo demuestran."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "irrigation_materials_all_approved",
+                    "op": "eq",
+                    "value": false
                   }
                 ],
                 "nop_cite": null,
@@ -27948,7 +28456,9 @@
         "irrigation_water_sources",
         "shared_irrigation_with_prohibited",
         "water_quality_tested",
+        "water_verification_method",
         "water_from_irrigation_district",
+        "materials_via_irrigation",
         "monitoring_method"
       ],
       "missing_required": [
@@ -28002,7 +28512,9 @@
         "irrigation_water_sources",
         "shared_irrigation_with_prohibited",
         "water_quality_tested",
+        "water_verification_method",
         "water_from_irrigation_district",
+        "materials_via_irrigation",
         "monitoring_method"
       ],
       "missing_required": [
@@ -28053,7 +28565,9 @@
         "irrigation_water_sources",
         "shared_irrigation_with_prohibited",
         "water_quality_tested",
+        "water_verification_method",
         "water_from_irrigation_district",
+        "materials_via_irrigation",
         "monitoring_method"
       ],
       "missing_required": [
@@ -28076,6 +28590,171 @@
         "irrigation_water_sources",
         "water_quality_tested",
         "water_from_irrigation_district",
+        "monitoring_method"
+      ]
+    },
+    {
+      "module": "g4_2_natural_resources",
+      "label": "well_with_materials",
+      "answers": {
+        "irrigation_source_types": [
+          "well"
+        ],
+        "materials_via_irrigation": true,
+        "irrigation_materials_all_approved": false,
+        "water_verification_method": [
+          "lab_testing"
+        ]
+      },
+      "visible_questions": [
+        "natural_resources_description",
+        "permanent_ground_cover_90pct",
+        "slope_under_10pct",
+        "soil_water_practices",
+        "irrigation_efficiency_monitoring",
+        "streams_or_channels_adjacent",
+        "habitat_biodiversity_practices",
+        "other_conservation_measures",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_source_types",
+        "irrigation_water_sources",
+        "shared_irrigation_with_prohibited",
+        "water_quality_tested",
+        "water_verification_method",
+        "water_contaminants_tested",
+        "water_from_irrigation_district",
+        "non_district_water_additives",
+        "materials_via_irrigation",
+        "irrigation_material_types",
+        "irrigation_materials_all_approved",
+        "irrigation_contamination_prevention",
+        "monitoring_method"
+      ],
+      "missing_required": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_water_sources",
+        "water_quality_tested",
+        "water_from_irrigation_district",
+        "monitoring_method"
+      ],
+      "missing_required_na": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_water_sources",
+        "water_quality_tested",
+        "water_from_irrigation_district",
+        "monitoring_method"
+      ]
+    },
+    {
+      "module": "g4_2_natural_resources",
+      "label": "district_adds_prohibited",
+      "answers": {
+        "irrigation_source_types": [
+          "irrigation_district"
+        ],
+        "water_from_irrigation_district": true,
+        "irrigation_district_additives": "yes"
+      },
+      "visible_questions": [
+        "natural_resources_description",
+        "permanent_ground_cover_90pct",
+        "slope_under_10pct",
+        "soil_water_practices",
+        "irrigation_efficiency_monitoring",
+        "streams_or_channels_adjacent",
+        "habitat_biodiversity_practices",
+        "other_conservation_measures",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_source_types",
+        "irrigation_water_sources",
+        "irrigation_source_names",
+        "shared_irrigation_with_prohibited",
+        "water_quality_tested",
+        "water_verification_method",
+        "water_from_irrigation_district",
+        "irrigation_district_additives",
+        "irrigation_district_mitigation",
+        "district_additive_types",
+        "district_additive_timing",
+        "district_notifies_before_treatment",
+        "irrigation_district_piping_map_upload",
+        "irrigation_district_documentation",
+        "materials_via_irrigation",
+        "monitoring_method"
+      ],
+      "missing_required": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_water_sources",
+        "water_quality_tested",
+        "irrigation_district_mitigation",
+        "monitoring_method"
+      ],
+      "missing_required_na": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_water_sources",
+        "water_quality_tested",
+        "irrigation_district_mitigation",
+        "monitoring_method"
+      ]
+    },
+    {
+      "module": "g4_2_natural_resources",
+      "label": "not_irrigated_stale",
+      "answers": {
+        "irrigation_source_types": [
+          "not_irrigated"
+        ],
+        "materials_via_irrigation": true
+      },
+      "visible_questions": [
+        "natural_resources_description",
+        "permanent_ground_cover_90pct",
+        "slope_under_10pct",
+        "soil_water_practices",
+        "irrigation_efficiency_monitoring",
+        "streams_or_channels_adjacent",
+        "habitat_biodiversity_practices",
+        "other_conservation_measures",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_source_types",
+        "monitoring_method"
+      ],
+      "missing_required": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "monitoring_method"
+      ],
+      "missing_required_na": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
         "monitoring_method"
       ]
     },
@@ -28108,7 +28787,9 @@
         "irrigation_water_sources",
         "shared_irrigation_with_prohibited",
         "water_quality_tested",
+        "water_verification_method",
         "water_from_irrigation_district",
+        "materials_via_irrigation",
         "monitoring_method"
       ],
       "missing_required": [
@@ -28204,7 +28885,10 @@
         "shared_irrigation_mitigation",
         "irrigation_piping_map_upload",
         "water_quality_tested",
+        "water_verification_method",
         "water_from_irrigation_district",
+        "non_district_water_additives",
+        "materials_via_irrigation",
         "monitoring_method"
       ],
       "missing_required": [
@@ -32014,7 +32698,9 @@
         "irrigation_water_sources",
         "shared_irrigation_with_prohibited",
         "water_quality_tested",
+        "water_verification_method",
         "water_from_irrigation_district",
+        "materials_via_irrigation",
         "monitoring_method"
       ],
       "missing_required": [
@@ -32067,7 +32753,9 @@
         "irrigation_water_sources",
         "shared_irrigation_with_prohibited",
         "water_quality_tested",
+        "water_verification_method",
         "water_from_irrigation_district",
+        "materials_via_irrigation",
         "monitoring_method"
       ],
       "missing_required": [
@@ -32085,6 +32773,656 @@
         "habitat_biodiversity_practices",
         "conservation_plan_agency",
         "invasive_species_practices",
+        "irrigation_water_sources",
+        "water_quality_tested",
+        "water_from_irrigation_district",
+        "monitoring_method"
+      ]
+    },
+    {
+      "module": "g4_2_natural_resources",
+      "label": "stale_chain:water_verification_method_other:irrigation_source_types:not_includes",
+      "answers": {
+        "water_verification_method": [
+          "other"
+        ],
+        "irrigation_source_types": [
+          "not_irrigated"
+        ]
+      },
+      "visible_questions": [
+        "natural_resources_description",
+        "permanent_ground_cover_90pct",
+        "slope_under_10pct",
+        "soil_water_practices",
+        "irrigation_efficiency_monitoring",
+        "streams_or_channels_adjacent",
+        "habitat_biodiversity_practices",
+        "other_conservation_measures",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_source_types",
+        "monitoring_method"
+      ],
+      "missing_required": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "monitoring_method"
+      ],
+      "missing_required_na": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "monitoring_method"
+      ]
+    },
+    {
+      "module": "g4_2_natural_resources",
+      "label": "stale_chain:water_contaminants_tested:irrigation_source_types:not_includes",
+      "answers": {
+        "water_verification_method": [
+          "lab_testing"
+        ],
+        "irrigation_source_types": [
+          "not_irrigated"
+        ]
+      },
+      "visible_questions": [
+        "natural_resources_description",
+        "permanent_ground_cover_90pct",
+        "slope_under_10pct",
+        "soil_water_practices",
+        "irrigation_efficiency_monitoring",
+        "streams_or_channels_adjacent",
+        "habitat_biodiversity_practices",
+        "other_conservation_measures",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_source_types",
+        "monitoring_method"
+      ],
+      "missing_required": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "monitoring_method"
+      ],
+      "missing_required_na": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "monitoring_method"
+      ]
+    },
+    {
+      "module": "g4_2_natural_resources",
+      "label": "stale_chain:water_contaminants_tested_other:water_verification_method:includes",
+      "answers": {
+        "water_contaminants_tested": [
+          "other"
+        ],
+        "water_verification_method": [
+          "__not_an_option__"
+        ]
+      },
+      "visible_questions": [
+        "natural_resources_description",
+        "permanent_ground_cover_90pct",
+        "slope_under_10pct",
+        "soil_water_practices",
+        "irrigation_efficiency_monitoring",
+        "streams_or_channels_adjacent",
+        "habitat_biodiversity_practices",
+        "other_conservation_measures",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_source_types",
+        "irrigation_water_sources",
+        "shared_irrigation_with_prohibited",
+        "water_quality_tested",
+        "water_verification_method",
+        "water_from_irrigation_district",
+        "materials_via_irrigation",
+        "monitoring_method"
+      ],
+      "missing_required": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_water_sources",
+        "water_quality_tested",
+        "water_from_irrigation_district",
+        "monitoring_method"
+      ],
+      "missing_required_na": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_water_sources",
+        "water_quality_tested",
+        "water_from_irrigation_district",
+        "monitoring_method"
+      ]
+    },
+    {
+      "module": "g4_2_natural_resources",
+      "label": "stale_chain:district_additive_types:irrigation_source_types:not_includes",
+      "answers": {
+        "irrigation_district_additives": "yes",
+        "irrigation_source_types": [
+          "not_irrigated"
+        ]
+      },
+      "visible_questions": [
+        "natural_resources_description",
+        "permanent_ground_cover_90pct",
+        "slope_under_10pct",
+        "soil_water_practices",
+        "irrigation_efficiency_monitoring",
+        "streams_or_channels_adjacent",
+        "habitat_biodiversity_practices",
+        "other_conservation_measures",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_source_types",
+        "monitoring_method"
+      ],
+      "missing_required": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "monitoring_method"
+      ],
+      "missing_required_na": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "monitoring_method"
+      ]
+    },
+    {
+      "module": "g4_2_natural_resources",
+      "label": "stale_chain:district_additive_types:water_from_irrigation_district:truthy",
+      "answers": {
+        "irrigation_district_additives": "yes",
+        "water_from_irrigation_district": false
+      },
+      "visible_questions": [
+        "natural_resources_description",
+        "permanent_ground_cover_90pct",
+        "slope_under_10pct",
+        "soil_water_practices",
+        "irrigation_efficiency_monitoring",
+        "streams_or_channels_adjacent",
+        "habitat_biodiversity_practices",
+        "other_conservation_measures",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_source_types",
+        "irrigation_water_sources",
+        "shared_irrigation_with_prohibited",
+        "water_quality_tested",
+        "water_verification_method",
+        "water_from_irrigation_district",
+        "materials_via_irrigation",
+        "monitoring_method"
+      ],
+      "missing_required": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_water_sources",
+        "water_quality_tested",
+        "monitoring_method"
+      ],
+      "missing_required_na": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_water_sources",
+        "water_quality_tested",
+        "monitoring_method"
+      ]
+    },
+    {
+      "module": "g4_2_natural_resources",
+      "label": "stale_chain:district_additive_timing:irrigation_source_types:not_includes",
+      "answers": {
+        "irrigation_district_additives": "yes",
+        "irrigation_source_types": [
+          "not_irrigated"
+        ]
+      },
+      "visible_questions": [
+        "natural_resources_description",
+        "permanent_ground_cover_90pct",
+        "slope_under_10pct",
+        "soil_water_practices",
+        "irrigation_efficiency_monitoring",
+        "streams_or_channels_adjacent",
+        "habitat_biodiversity_practices",
+        "other_conservation_measures",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_source_types",
+        "monitoring_method"
+      ],
+      "missing_required": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "monitoring_method"
+      ],
+      "missing_required_na": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "monitoring_method"
+      ]
+    },
+    {
+      "module": "g4_2_natural_resources",
+      "label": "stale_chain:district_additive_timing:water_from_irrigation_district:truthy",
+      "answers": {
+        "irrigation_district_additives": "yes",
+        "water_from_irrigation_district": false
+      },
+      "visible_questions": [
+        "natural_resources_description",
+        "permanent_ground_cover_90pct",
+        "slope_under_10pct",
+        "soil_water_practices",
+        "irrigation_efficiency_monitoring",
+        "streams_or_channels_adjacent",
+        "habitat_biodiversity_practices",
+        "other_conservation_measures",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_source_types",
+        "irrigation_water_sources",
+        "shared_irrigation_with_prohibited",
+        "water_quality_tested",
+        "water_verification_method",
+        "water_from_irrigation_district",
+        "materials_via_irrigation",
+        "monitoring_method"
+      ],
+      "missing_required": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_water_sources",
+        "water_quality_tested",
+        "monitoring_method"
+      ],
+      "missing_required_na": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_water_sources",
+        "water_quality_tested",
+        "monitoring_method"
+      ]
+    },
+    {
+      "module": "g4_2_natural_resources",
+      "label": "stale_chain:district_notifies_before_treatment:irrigation_source_types:not_includes",
+      "answers": {
+        "irrigation_district_additives": "yes",
+        "irrigation_source_types": [
+          "not_irrigated"
+        ]
+      },
+      "visible_questions": [
+        "natural_resources_description",
+        "permanent_ground_cover_90pct",
+        "slope_under_10pct",
+        "soil_water_practices",
+        "irrigation_efficiency_monitoring",
+        "streams_or_channels_adjacent",
+        "habitat_biodiversity_practices",
+        "other_conservation_measures",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_source_types",
+        "monitoring_method"
+      ],
+      "missing_required": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "monitoring_method"
+      ],
+      "missing_required_na": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "monitoring_method"
+      ]
+    },
+    {
+      "module": "g4_2_natural_resources",
+      "label": "stale_chain:district_notifies_before_treatment:water_from_irrigation_district:truthy",
+      "answers": {
+        "irrigation_district_additives": "yes",
+        "water_from_irrigation_district": false
+      },
+      "visible_questions": [
+        "natural_resources_description",
+        "permanent_ground_cover_90pct",
+        "slope_under_10pct",
+        "soil_water_practices",
+        "irrigation_efficiency_monitoring",
+        "streams_or_channels_adjacent",
+        "habitat_biodiversity_practices",
+        "other_conservation_measures",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_source_types",
+        "irrigation_water_sources",
+        "shared_irrigation_with_prohibited",
+        "water_quality_tested",
+        "water_verification_method",
+        "water_from_irrigation_district",
+        "materials_via_irrigation",
+        "monitoring_method"
+      ],
+      "missing_required": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_water_sources",
+        "water_quality_tested",
+        "monitoring_method"
+      ],
+      "missing_required_na": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_water_sources",
+        "water_quality_tested",
+        "monitoring_method"
+      ]
+    },
+    {
+      "module": "g4_2_natural_resources",
+      "label": "stale_chain:water_additive_mitigation:irrigation_source_types:includes_any",
+      "answers": {
+        "non_district_water_additives": true,
+        "irrigation_source_types": [
+          "__not_an_option__"
+        ]
+      },
+      "visible_questions": [
+        "natural_resources_description",
+        "permanent_ground_cover_90pct",
+        "slope_under_10pct",
+        "soil_water_practices",
+        "irrigation_efficiency_monitoring",
+        "streams_or_channels_adjacent",
+        "habitat_biodiversity_practices",
+        "other_conservation_measures",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_source_types",
+        "irrigation_water_sources",
+        "shared_irrigation_with_prohibited",
+        "water_quality_tested",
+        "water_verification_method",
+        "water_from_irrigation_district",
+        "materials_via_irrigation",
+        "monitoring_method"
+      ],
+      "missing_required": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_water_sources",
+        "water_quality_tested",
+        "water_from_irrigation_district",
+        "monitoring_method"
+      ],
+      "missing_required_na": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_water_sources",
+        "water_quality_tested",
+        "water_from_irrigation_district",
+        "monitoring_method"
+      ]
+    },
+    {
+      "module": "g4_2_natural_resources",
+      "label": "stale_chain:irrigation_material_types:irrigation_source_types:not_includes",
+      "answers": {
+        "materials_via_irrigation": true,
+        "irrigation_source_types": [
+          "not_irrigated"
+        ]
+      },
+      "visible_questions": [
+        "natural_resources_description",
+        "permanent_ground_cover_90pct",
+        "slope_under_10pct",
+        "soil_water_practices",
+        "irrigation_efficiency_monitoring",
+        "streams_or_channels_adjacent",
+        "habitat_biodiversity_practices",
+        "other_conservation_measures",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_source_types",
+        "monitoring_method"
+      ],
+      "missing_required": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "monitoring_method"
+      ],
+      "missing_required_na": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "monitoring_method"
+      ]
+    },
+    {
+      "module": "g4_2_natural_resources",
+      "label": "stale_chain:irrigation_material_types_other:materials_via_irrigation:truthy",
+      "answers": {
+        "irrigation_material_types": [
+          "other"
+        ],
+        "materials_via_irrigation": false
+      },
+      "visible_questions": [
+        "natural_resources_description",
+        "permanent_ground_cover_90pct",
+        "slope_under_10pct",
+        "soil_water_practices",
+        "irrigation_efficiency_monitoring",
+        "streams_or_channels_adjacent",
+        "habitat_biodiversity_practices",
+        "other_conservation_measures",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_source_types",
+        "irrigation_water_sources",
+        "shared_irrigation_with_prohibited",
+        "water_quality_tested",
+        "water_verification_method",
+        "water_from_irrigation_district",
+        "materials_via_irrigation",
+        "monitoring_method"
+      ],
+      "missing_required": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_water_sources",
+        "water_quality_tested",
+        "water_from_irrigation_district",
+        "monitoring_method"
+      ],
+      "missing_required_na": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_water_sources",
+        "water_quality_tested",
+        "water_from_irrigation_district",
+        "monitoring_method"
+      ]
+    },
+    {
+      "module": "g4_2_natural_resources",
+      "label": "stale_chain:irrigation_materials_all_approved:irrigation_source_types:not_includes",
+      "answers": {
+        "materials_via_irrigation": true,
+        "irrigation_source_types": [
+          "not_irrigated"
+        ]
+      },
+      "visible_questions": [
+        "natural_resources_description",
+        "permanent_ground_cover_90pct",
+        "slope_under_10pct",
+        "soil_water_practices",
+        "irrigation_efficiency_monitoring",
+        "streams_or_channels_adjacent",
+        "habitat_biodiversity_practices",
+        "other_conservation_measures",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_source_types",
+        "monitoring_method"
+      ],
+      "missing_required": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "monitoring_method"
+      ],
+      "missing_required_na": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "monitoring_method"
+      ]
+    },
+    {
+      "module": "g4_2_natural_resources",
+      "label": "stale_chain:irrigation_contamination_prevention:materials_via_irrigation:truthy",
+      "answers": {
+        "irrigation_materials_all_approved": false,
+        "materials_via_irrigation": false
+      },
+      "visible_questions": [
+        "natural_resources_description",
+        "permanent_ground_cover_90pct",
+        "slope_under_10pct",
+        "soil_water_practices",
+        "irrigation_efficiency_monitoring",
+        "streams_or_channels_adjacent",
+        "habitat_biodiversity_practices",
+        "other_conservation_measures",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_source_types",
+        "irrigation_water_sources",
+        "shared_irrigation_with_prohibited",
+        "water_quality_tested",
+        "water_verification_method",
+        "water_from_irrigation_district",
+        "materials_via_irrigation",
+        "monitoring_method"
+      ],
+      "missing_required": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_water_sources",
+        "water_quality_tested",
+        "water_from_irrigation_district",
+        "monitoring_method"
+      ],
+      "missing_required_na": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
         "irrigation_water_sources",
         "water_quality_tested",
         "water_from_irrigation_district",
