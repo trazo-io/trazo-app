@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.12.11",
+  "content_version": "2026.12.12",
   "registry": {
-    "content_version": "2026.12.11",
+    "content_version": "2026.12.12",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -5002,6 +5002,131 @@
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
+              },
+              {
+                "key": "enclosed_structure_conservation",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "What do you do to conserve resources in and around these structures?",
+                  "es": "¿Qué haces para conservar recursos en estas estructuras y a su alrededor?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "water_conservation",
+                    "label": {
+                      "en": "Water conservation",
+                      "es": "Conservación del agua"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "energy_conservation",
+                    "label": {
+                      "en": "Energy conservation",
+                      "es": "Conservación de energía"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "recycling",
+                    "label": {
+                      "en": "Recycling",
+                      "es": "Reciclaje"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "composting",
+                    "label": {
+                      "en": "Composting",
+                      "es": "Compostaje"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "outdoor_plantings",
+                    "label": {
+                      "en": "Diverse outdoor plantings",
+                      "es": "Plantaciones diversas al aire libre"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "surrounding_habitat",
+                    "label": {
+                      "en": "Surrounding habitat restoration",
+                      "es": "Restauración del hábitat circundante"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "sustainable_packaging",
+                    "label": {
+                      "en": "Sustainable packaging",
+                      "es": "Empaques sostenibles"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "greenhouse_rotation",
+                    "label": {
+                      "en": "Crop rotation within the greenhouses",
+                      "es": "Rotación de cultivos dentro de los invernaderos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otra (describe abajo)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "none",
+                    "label": {
+                      "en": "None of these",
+                      "es": "Ninguna de estas"
+                    },
+                    "exclusive": true
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.200",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "enclosed_structure_conservation_other",
+                "kind": "text",
+                "label": {
+                  "en": "Describe the other measure",
+                  "es": "Describe la otra medida"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "enclosed_structure_conservation",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
               }
             ]
           },
@@ -6504,6 +6629,34 @@
                 "max_length": null
               },
               {
+                "key": "rotation_records_kept",
+                "kind": "textarea",
+                "label": {
+                  "en": "What records do you keep of your crop rotation?",
+                  "es": "¿Qué registros llevas de tu rotación de cultivos?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "system_type",
+                    "op": "includes",
+                    "value": "annual"
+                  }
+                ],
+                "nop_cite": "§ 205.205",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": {
+                  "en": "e.g. the seasons in Trazo show what was planted in each block and when; a field map for each year",
+                  "es": "p. ej. las temporadas en Trazo muestran qué se sembró en cada bloque y cuándo; un mapa de campo de cada año"
+                },
+                "max_length": null
+              },
+              {
                 "key": "in_lieu_practices",
                 "kind": "checkbox_group",
                 "label": {
@@ -6615,6 +6768,25 @@
             "education": [],
             "visible_when": [],
             "questions": [
+              {
+                "key": "applies_fertilizers",
+                "kind": "boolean",
+                "label": {
+                  "en": "Do you apply fertilizers or other nutrients to the certified land?",
+                  "es": "¿Aplicas fertilizantes u otros nutrientes en la tierra certificada?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.203",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
               {
                 "key": "fertility_components",
                 "kind": "checkbox_group",
@@ -8980,6 +9152,44 @@
                 "max_length": null
               },
               {
+                "key": "permanent_ground_cover_90pct",
+                "kind": "boolean",
+                "label": {
+                  "en": "Is permanent ground cover, such as sod, established on at least 90% of the ground at all certified sites?",
+                  "es": "¿Hay cobertura permanente del suelo, como césped, en al menos el 90% del terreno de todos los sitios certificados?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.203(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "slope_under_10pct",
+                "kind": "boolean",
+                "label": {
+                  "en": "Is the slope of the land less than 10% at all certified sites?",
+                  "es": "¿La pendiente del terreno es menor al 10% en todos los sitios certificados?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.203(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
                 "key": "soil_water_practices",
                 "kind": "checkbox_group",
                 "label": {
@@ -9121,6 +9331,198 @@
                     "label": {
                       "en": "Micro-irrigation (drip or micro-sprinklers)",
                       "es": "Microirrigación (goteo o microaspersión)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "no_till",
+                    "label": {
+                      "en": "No-till",
+                      "es": "Siembra directa (sin labranza)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "ridge_till",
+                    "label": {
+                      "en": "Ridge till",
+                      "es": "Labranza en camellones"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "seasonal_till",
+                    "label": {
+                      "en": "Seasonal till",
+                      "es": "Labranza estacional"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "mulching",
+                    "label": {
+                      "en": "Mulching",
+                      "es": "Acolchado (mulch)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "strip_cropping",
+                    "label": {
+                      "en": "Strip-cropping",
+                      "es": "Cultivo en franjas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "conservation_cover",
+                    "label": {
+                      "en": "Conservation cover (perennial)",
+                      "es": "Cobertura de conservación (perenne)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "contour_buffer_strips",
+                    "label": {
+                      "en": "Contour buffer strips",
+                      "es": "Franjas de amortiguamiento en contorno"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "critical_area_planting",
+                    "label": {
+                      "en": "Critical area planting",
+                      "es": "Siembra en áreas críticas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "cross_wind_ridges",
+                    "label": {
+                      "en": "Cross wind ridges",
+                      "es": "Camellones transversales al viento"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "cross_wind_trap_strips",
+                    "label": {
+                      "en": "Cross wind trap strips",
+                      "es": "Franjas de captura transversales al viento"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "herbaceous_wind_barriers",
+                    "label": {
+                      "en": "Herbaceous wind barriers",
+                      "es": "Barreras herbáceas contra el viento"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "vegetative_barriers",
+                    "label": {
+                      "en": "Vegetative barriers",
+                      "es": "Barreras vegetativas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "row_arrangement",
+                    "label": {
+                      "en": "Row arrangement",
+                      "es": "Disposición de las hileras"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "filter_strip",
+                    "label": {
+                      "en": "Filter strips",
+                      "es": "Franjas filtrantes"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "lined_waterway",
+                    "label": {
+                      "en": "Lined waterway or outlet",
+                      "es": "Canal o desagüe revestido"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "pond",
+                    "label": {
+                      "en": "Pond",
+                      "es": "Estanque"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "water_sediment_basin",
+                    "label": {
+                      "en": "Water and sediment control basin",
+                      "es": "Cuenca de control de agua y sedimentos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "heavy_use_area_protection",
+                    "label": {
+                      "en": "Heavy use area protection",
+                      "es": "Protección de áreas de uso intensivo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "nutrient_management",
+                    "label": {
+                      "en": "Nutrient management",
+                      "es": "Manejo de nutrientes"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "fertilizer_metering",
+                    "label": {
+                      "en": "Fertilizer targeted and metered to prevent nutrient runoff",
+                      "es": "Fertilizante dirigido y dosificado para evitar el escurrimiento de nutrientes"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "integrated_pest_management",
+                    "label": {
+                      "en": "Integrated pest management",
+                      "es": "Manejo integrado de plagas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "agrichemical_handling_facility",
+                    "label": {
+                      "en": "Agrichemical handling facility",
+                      "es": "Instalación para el manejo de agroquímicos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "prescribed_grazing",
+                    "label": {
+                      "en": "Prescribed grazing",
+                      "es": "Pastoreo prescrito"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "water_for_wildlife",
+                    "label": {
+                      "en": "Water allocated to non-crop areas for wildlife and habitat",
+                      "es": "Agua destinada a áreas sin cultivo para la fauna y el hábitat"
                     },
                     "exclusive": false
                   },
@@ -9273,6 +9675,169 @@
                 "max_length": null
               },
               {
+                "key": "waterway_practices",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Which practices protect the streams, shorelines and channels on or next to your land?",
+                  "es": "¿Qué prácticas protegen los arroyos, las orillas y los canales en tu tierra o junto a ella?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "channel_bank_vegetation",
+                    "label": {
+                      "en": "Channel bank vegetation",
+                      "es": "Vegetación en las márgenes de los canales"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "riparian_forest_buffer",
+                    "label": {
+                      "en": "Riparian forest buffer",
+                      "es": "Franja ribereña forestal"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "riparian_herbaceous_cover",
+                    "label": {
+                      "en": "Riparian herbaceous cover",
+                      "es": "Cobertura herbácea ribereña"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "streambank_shoreline_protection",
+                    "label": {
+                      "en": "Streambank and shoreline protection",
+                      "es": "Protección de riberas y orillas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "stream_habitat_improvement",
+                    "label": {
+                      "en": "Stream habitat improvement and management",
+                      "es": "Mejora y manejo del hábitat del arroyo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "stream_crossing",
+                    "label": {
+                      "en": "Designated stream crossings",
+                      "es": "Cruces de arroyo designados"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "shallow_water_management",
+                    "label": {
+                      "en": "Shallow water development and management",
+                      "es": "Desarrollo y manejo de aguas someras"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "spring_development",
+                    "label": {
+                      "en": "Spring development",
+                      "es": "Acondicionamiento de manantiales"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "wetland_wildlife_habitat",
+                    "label": {
+                      "en": "Wetland wildlife habitat management",
+                      "es": "Manejo del hábitat de fauna en humedales"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "fish_screens",
+                    "label": {
+                      "en": "Fish screens on water diversions",
+                      "es": "Rejillas para peces en las derivaciones de agua"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "priority_species_water",
+                    "label": {
+                      "en": "Water managed for priority species (rare fish, reptiles, amphibians, birds, beavers)",
+                      "es": "Agua manejada para especies prioritarias (peces raros, reptiles, anfibios, aves, castores)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "riparian_hydrology",
+                    "label": {
+                      "en": "Natural hydrology and ecological function of riparian areas protected or improved",
+                      "es": "Hidrología natural y función ecológica de las zonas ribereñas protegidas o mejoradas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otra (describe abajo)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "none",
+                    "label": {
+                      "en": "None of these",
+                      "es": "Ninguna de estas"
+                    },
+                    "exclusive": true
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "streams_or_channels_adjacent",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.200",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "waterway_practices_other",
+                "kind": "text",
+                "label": {
+                  "en": "Describe the other waterway practice",
+                  "es": "Describe la otra práctica en cursos de agua"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "waterway_practices",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
                 "key": "habitat_biodiversity_practices",
                 "kind": "checkbox_group",
                 "label": {
@@ -9341,6 +9906,214 @@
                     "exclusive": false
                   },
                   {
+                    "value": "alley_cropping",
+                    "label": {
+                      "en": "Alley cropping",
+                      "es": "Cultivo en callejones"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "field_border",
+                    "label": {
+                      "en": "Field borders",
+                      "es": "Bordes de campo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "tree_shrub_establishment",
+                    "label": {
+                      "en": "Tree or shrub establishment",
+                      "es": "Establecimiento de árboles o arbustos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "brush_management",
+                    "label": {
+                      "en": "Brush management",
+                      "es": "Manejo de matorrales"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "early_successional_habitat",
+                    "label": {
+                      "en": "Early successional habitat",
+                      "es": "Hábitat de sucesión temprana"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "upland_wildlife_habitat",
+                    "label": {
+                      "en": "Upland wildlife habitat management",
+                      "es": "Manejo del hábitat de fauna en tierras altas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "rare_habitat_restoration",
+                    "label": {
+                      "en": "Restoration of rare or declining habitats",
+                      "es": "Restauración de hábitats raros o en declive"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "wildlife_structures",
+                    "label": {
+                      "en": "Structures for wildlife",
+                      "es": "Estructuras para la fauna silvestre"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "bird_boxes",
+                    "label": {
+                      "en": "Bird boxes",
+                      "es": "Cajas nido para aves"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "brush_piles",
+                    "label": {
+                      "en": "Brush piles",
+                      "es": "Pilas de ramas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "standing_deadwood",
+                    "label": {
+                      "en": "Standing deadwood and fallen or rotting trees left in place",
+                      "es": "Árboles muertos en pie y troncos caídos o en descomposición que se dejan en su lugar"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "clean_water_source",
+                    "label": {
+                      "en": "A clean water source for wildlife",
+                      "es": "Una fuente de agua limpia para la fauna"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "bee_diversity",
+                    "label": {
+                      "en": "Measures that support a variety of bee species",
+                      "es": "Medidas que favorecen variedad de especies de abejas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "extended_food_supply",
+                    "label": {
+                      "en": "Food for pollinators and wildlife through the season",
+                      "es": "Alimento para polinizadores y fauna durante toda la temporada"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "non_invasive_borders",
+                    "label": {
+                      "en": "Non-invasive plants allowed in non-cropped, fallow and border areas",
+                      "es": "Plantas no invasoras permitidas en áreas sin cultivo, en barbecho y en los bordes"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "layered_native_habitat",
+                    "label": {
+                      "en": "Short, medium and tall native habitat",
+                      "es": "Hábitat nativo bajo, medio y alto"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "field_activity_timing",
+                    "label": {
+                      "en": "Field work timed around wildlife, such as delayed mowing near nesting birds",
+                      "es": "Labores de campo programadas según la fauna, como retrasar la siega cerca de aves que anidan"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "undisturbed_refuge",
+                    "label": {
+                      "en": "Areas left as undisturbed habitat refuge",
+                      "es": "Áreas que se dejan como refugio de hábitat sin perturbar"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "wildlife_friendly_fences",
+                    "label": {
+                      "en": "Wildlife-friendly fences",
+                      "es": "Cercas aptas para la fauna"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "legal_conservation_areas",
+                    "label": {
+                      "en": "Legal conservation areas, such as conservation easements",
+                      "es": "Áreas de conservación legal, como servidumbres de conservación"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "restore_degraded",
+                    "label": {
+                      "en": "Degraded areas restored",
+                      "es": "Áreas degradadas restauradas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "recolonize_degraded",
+                    "label": {
+                      "en": "Degraded areas left to be recolonized by non-invasive plants and wildlife",
+                      "es": "Áreas degradadas que se dejan recolonizar por plantas no invasoras y fauna"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "grassland_protection",
+                    "label": {
+                      "en": "Grasslands preserved or restored",
+                      "es": "Pastizales preservados o restaurados"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "replace_weedy_areas",
+                    "label": {
+                      "en": "Weedy areas replaced with native plants",
+                      "es": "Áreas con malezas reemplazadas por plantas nativas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "habitat_not_converted",
+                    "label": {
+                      "en": "Native habitat not converted to farmland since certification",
+                      "es": "Hábitat nativo no convertido en tierra de cultivo desde la certificación"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "priority_species_plan",
+                    "label": {
+                      "en": "Priority species and habitat identified, with a protection plan",
+                      "es": "Especies y hábitats prioritarios identificados, con un plan de protección"
+                    },
+                    "exclusive": false
+                  },
+                  {
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
@@ -9383,6 +10156,50 @@
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
+              },
+              {
+                "key": "other_conservation_measures",
+                "kind": "boolean",
+                "label": {
+                  "en": "Do you take any other measures to conserve natural resources or biodiversity, beyond those above?",
+                  "es": "¿Tomas alguna otra medida para conservar los recursos naturales o la biodiversidad, además de las anteriores?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.200",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "other_conservation_measures_detail",
+                "kind": "textarea",
+                "label": {
+                  "en": "Describe those measures",
+                  "es": "Describe esas medidas"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "other_conservation_measures",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
               }
             ]
           },
@@ -9413,6 +10230,23 @@
                       "en": "Federal conservation agency (NRCS, FSA)",
                       "es": "Agencia federal de conservación (NRCS, FSA)"
                     },
+                    "exclusive": false,
+                    "retired": true
+                  },
+                  {
+                    "value": "nrcs",
+                    "label": {
+                      "en": "USDA Natural Resources Conservation Service (NRCS)",
+                      "es": "Servicio de Conservación de Recursos Naturales del USDA (NRCS)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "fsa",
+                    "label": {
+                      "en": "USDA Farm Service Agency (FSA)",
+                      "es": "Agencia de Servicios Agrícolas del USDA (FSA)"
+                    },
                     "exclusive": false
                   },
                   {
@@ -9440,6 +10274,22 @@
                     "exclusive": false
                   },
                   {
+                    "value": "salmon_safe",
+                    "label": {
+                      "en": "Salmon Safe",
+                      "es": "Salmon Safe"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otro (describe abajo)"
+                    },
+                    "exclusive": false
+                  },
+                  {
                     "value": "none",
                     "label": {
                       "en": "No current conservation plan or agreement",
@@ -9459,8 +10309,33 @@
                 "max_length": null
               },
               {
-                "key": "conservation_plan_detail",
+                "key": "conservation_plan_agency_other",
                 "kind": "text",
+                "label": {
+                  "en": "Which other agency or program?",
+                  "es": "¿Qué otra agencia o programa?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "conservation_plan_agency",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "conservation_plan_detail",
+                "kind": "textarea",
                 "label": {
                   "en": "Name the agency or program and what the plan covers",
                   "es": "Nombra la agencia o el programa y qué cubre el plan"
@@ -9474,9 +10349,13 @@
                     "op": "includes_any",
                     "value": [
                       "federal_agency",
+                      "nrcs",
+                      "fsa",
                       "local_district",
                       "land_trust",
-                      "stewardship_program"
+                      "stewardship_program",
+                      "salmon_safe",
+                      "other"
                     ]
                   }
                 ],
@@ -26663,6 +27542,57 @@
       ]
     },
     {
+      "module": "g3_1_container_greenhouse",
+      "label": "unanswered",
+      "answers": {},
+      "visible_questions": [
+        "structure_production_types",
+        "locations_within_certified_parcel",
+        "enclosed_structure_conservation",
+        "uses_growing_media",
+        "irrigation_effluent_management",
+        "organic_in_structures"
+      ],
+      "missing_required": [
+        "structure_production_types",
+        "locations_within_certified_parcel",
+        "uses_growing_media",
+        "irrigation_effluent_management",
+        "organic_in_structures"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g3_1_container_greenhouse",
+      "label": "greenhouse_other",
+      "answers": {
+        "structure_production_types": [
+          "annual_seedlings"
+        ],
+        "enclosed_structure_conservation": [
+          "other"
+        ]
+      },
+      "visible_questions": [
+        "structure_production_types",
+        "annual_seedlings_use",
+        "locations_within_certified_parcel",
+        "enclosed_structure_conservation",
+        "enclosed_structure_conservation_other",
+        "uses_growing_media",
+        "irrigation_effluent_management",
+        "organic_in_structures"
+      ],
+      "missing_required": [
+        "annual_seedlings_use",
+        "locations_within_certified_parcel",
+        "uses_growing_media",
+        "irrigation_effluent_management",
+        "organic_in_structures"
+      ],
+      "missing_required_na": []
+    },
+    {
       "module": "g2_0_fraud_prevention",
       "label": "unanswered",
       "answers": {},
@@ -27004,10 +27934,13 @@
       "answers": {},
       "visible_questions": [
         "natural_resources_description",
+        "permanent_ground_cover_90pct",
+        "slope_under_10pct",
         "soil_water_practices",
         "irrigation_efficiency_monitoring",
         "streams_or_channels_adjacent",
         "habitat_biodiversity_practices",
+        "other_conservation_measures",
         "conservation_plan_agency",
         "invasive_species_practices",
         "wildlife_habitat_pressure",
@@ -27043,6 +27976,166 @@
     },
     {
       "module": "g4_2_natural_resources",
+      "label": "streams_adjacent",
+      "answers": {
+        "streams_or_channels_adjacent": true,
+        "waterway_practices": [
+          "fish_screens",
+          "other"
+        ]
+      },
+      "visible_questions": [
+        "natural_resources_description",
+        "permanent_ground_cover_90pct",
+        "slope_under_10pct",
+        "soil_water_practices",
+        "irrigation_efficiency_monitoring",
+        "streams_or_channels_adjacent",
+        "waterway_practices",
+        "waterway_practices_other",
+        "habitat_biodiversity_practices",
+        "other_conservation_measures",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_source_types",
+        "irrigation_water_sources",
+        "shared_irrigation_with_prohibited",
+        "water_quality_tested",
+        "water_from_irrigation_district",
+        "monitoring_method"
+      ],
+      "missing_required": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_water_sources",
+        "water_quality_tested",
+        "water_from_irrigation_district",
+        "monitoring_method"
+      ],
+      "missing_required_na": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_water_sources",
+        "water_quality_tested",
+        "water_from_irrigation_district",
+        "monitoring_method"
+      ]
+    },
+    {
+      "module": "g4_2_natural_resources",
+      "label": "no_streams_stale",
+      "answers": {
+        "streams_or_channels_adjacent": false,
+        "waterway_practices": [
+          "fish_screens"
+        ]
+      },
+      "visible_questions": [
+        "natural_resources_description",
+        "permanent_ground_cover_90pct",
+        "slope_under_10pct",
+        "soil_water_practices",
+        "irrigation_efficiency_monitoring",
+        "streams_or_channels_adjacent",
+        "habitat_biodiversity_practices",
+        "other_conservation_measures",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_source_types",
+        "irrigation_water_sources",
+        "shared_irrigation_with_prohibited",
+        "water_quality_tested",
+        "water_from_irrigation_district",
+        "monitoring_method"
+      ],
+      "missing_required": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_water_sources",
+        "water_quality_tested",
+        "water_from_irrigation_district",
+        "monitoring_method"
+      ],
+      "missing_required_na": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_water_sources",
+        "water_quality_tested",
+        "water_from_irrigation_district",
+        "monitoring_method"
+      ]
+    },
+    {
+      "module": "g4_2_natural_resources",
+      "label": "other_agency_and_measures",
+      "answers": {
+        "conservation_plan_agency": [
+          "nrcs",
+          "other"
+        ],
+        "other_conservation_measures": true
+      },
+      "visible_questions": [
+        "natural_resources_description",
+        "permanent_ground_cover_90pct",
+        "slope_under_10pct",
+        "soil_water_practices",
+        "irrigation_efficiency_monitoring",
+        "streams_or_channels_adjacent",
+        "habitat_biodiversity_practices",
+        "other_conservation_measures",
+        "other_conservation_measures_detail",
+        "conservation_plan_agency",
+        "conservation_plan_agency_other",
+        "conservation_plan_detail",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_source_types",
+        "irrigation_water_sources",
+        "shared_irrigation_with_prohibited",
+        "water_quality_tested",
+        "water_from_irrigation_district",
+        "monitoring_method"
+      ],
+      "missing_required": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_detail",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_water_sources",
+        "water_quality_tested",
+        "water_from_irrigation_district",
+        "monitoring_method"
+      ],
+      "missing_required_na": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_detail",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_water_sources",
+        "water_quality_tested",
+        "water_from_irrigation_district",
+        "monitoring_method"
+      ]
+    },
+    {
+      "module": "g4_2_natural_resources",
       "label": "not_irrigated",
       "answers": {
         "irrigation_source_types": [
@@ -27051,10 +28144,13 @@
       },
       "visible_questions": [
         "natural_resources_description",
+        "permanent_ground_cover_90pct",
+        "slope_under_10pct",
         "soil_water_practices",
         "irrigation_efficiency_monitoring",
         "streams_or_channels_adjacent",
         "habitat_biodiversity_practices",
+        "other_conservation_measures",
         "conservation_plan_agency",
         "invasive_species_practices",
         "wildlife_habitat_pressure",
@@ -27090,10 +28186,13 @@
       },
       "visible_questions": [
         "natural_resources_description",
+        "permanent_ground_cover_90pct",
+        "slope_under_10pct",
         "soil_water_practices",
         "irrigation_efficiency_monitoring",
         "streams_or_channels_adjacent",
         "habitat_biodiversity_practices",
+        "other_conservation_measures",
         "conservation_plan_agency",
         "invasive_species_practices",
         "wildlife_habitat_pressure",
@@ -27137,6 +28236,7 @@
       "answers": {},
       "visible_questions": [
         "system_type",
+        "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
         "applies_deficiency_materials",
@@ -27171,6 +28271,52 @@
     },
     {
       "module": "g4_0_rotation_soil",
+      "label": "annual_with_fertilizer",
+      "answers": {
+        "system_type": [
+          "annual"
+        ],
+        "applies_fertilizers": true
+      },
+      "visible_questions": [
+        "system_type",
+        "rotation_plan",
+        "rotation_records_kept",
+        "applies_fertilizers",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ],
+      "missing_required": [
+        "rotation_plan",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ],
+      "missing_required_na": [
+        "rotation_plan",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ]
+    },
+    {
+      "module": "g4_0_rotation_soil",
       "label": "annual_only",
       "answers": {
         "system_type": [
@@ -27180,6 +28326,8 @@
       "visible_questions": [
         "system_type",
         "rotation_plan",
+        "rotation_records_kept",
+        "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
         "applies_deficiency_materials",
@@ -27228,6 +28376,7 @@
         "system_type",
         "in_lieu_practices",
         "in_lieu_other",
+        "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
         "applies_deficiency_materials",
@@ -27270,6 +28419,7 @@
       },
       "visible_questions": [
         "system_type",
+        "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
         "applies_deficiency_materials",
@@ -27310,6 +28460,7 @@
       },
       "visible_questions": [
         "system_type",
+        "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
         "applies_deficiency_materials",
@@ -27358,6 +28509,7 @@
       },
       "visible_questions": [
         "system_type",
+        "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
         "applies_deficiency_materials",
@@ -27407,6 +28559,7 @@
       },
       "visible_questions": [
         "system_type",
+        "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
         "applies_deficiency_materials",
@@ -27456,6 +28609,7 @@
       },
       "visible_questions": [
         "system_type",
+        "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
         "applies_deficiency_materials",
@@ -27500,6 +28654,7 @@
       },
       "visible_questions": [
         "system_type",
+        "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
         "applies_deficiency_materials",
@@ -30018,6 +31173,7 @@
       "visible_questions": [
         "structure_production_types",
         "locations_within_certified_parcel",
+        "enclosed_structure_conservation",
         "uses_growing_media",
         "irrigation_effluent_management",
         "organic_in_structures"
@@ -30042,6 +31198,7 @@
       "visible_questions": [
         "structure_production_types",
         "locations_within_certified_parcel",
+        "enclosed_structure_conservation",
         "uses_growing_media",
         "irrigation_effluent_management",
         "organic_in_structures"
@@ -30066,6 +31223,7 @@
       "visible_questions": [
         "structure_production_types",
         "locations_within_certified_parcel",
+        "enclosed_structure_conservation",
         "uses_growing_media",
         "irrigation_effluent_management",
         "organic_in_structures"
@@ -30088,6 +31246,7 @@
       "visible_questions": [
         "structure_production_types",
         "locations_within_certified_parcel",
+        "enclosed_structure_conservation",
         "uses_growing_media",
         "irrigation_effluent_management",
         "organic_in_structures"
@@ -30110,6 +31269,7 @@
       "visible_questions": [
         "structure_production_types",
         "locations_within_certified_parcel",
+        "enclosed_structure_conservation",
         "uses_growing_media",
         "irrigation_effluent_management",
         "organic_in_structures"
@@ -30134,6 +31294,7 @@
       "visible_questions": [
         "structure_production_types",
         "locations_within_certified_parcel",
+        "enclosed_structure_conservation",
         "uses_growing_media",
         "irrigation_effluent_management",
         "organic_in_structures"
@@ -30157,6 +31318,7 @@
       "visible_questions": [
         "structure_production_types",
         "locations_within_certified_parcel",
+        "enclosed_structure_conservation",
         "uses_growing_media",
         "irrigation_effluent_management",
         "organic_in_structures"
@@ -30181,6 +31343,7 @@
       "visible_questions": [
         "structure_production_types",
         "locations_within_certified_parcel",
+        "enclosed_structure_conservation",
         "uses_growing_media",
         "irrigation_effluent_management",
         "organic_in_structures"
@@ -30204,6 +31367,7 @@
       "visible_questions": [
         "structure_production_types",
         "locations_within_certified_parcel",
+        "enclosed_structure_conservation",
         "uses_growing_media",
         "irrigation_effluent_management",
         "organic_in_structures"
@@ -30228,6 +31392,7 @@
       "visible_questions": [
         "structure_production_types",
         "locations_within_certified_parcel",
+        "enclosed_structure_conservation",
         "uses_growing_media",
         "irrigation_effluent_management",
         "organic_in_structures"
@@ -30253,6 +31418,7 @@
       "visible_questions": [
         "structure_production_types",
         "locations_within_certified_parcel",
+        "enclosed_structure_conservation",
         "uses_growing_media",
         "irrigation_effluent_management",
         "organic_in_structures"
@@ -30276,6 +31442,7 @@
       "visible_questions": [
         "structure_production_types",
         "locations_within_certified_parcel",
+        "enclosed_structure_conservation",
         "uses_growing_media",
         "irrigation_effluent_management",
         "organic_in_structures"
@@ -30300,6 +31467,7 @@
       "visible_questions": [
         "structure_production_types",
         "locations_within_certified_parcel",
+        "enclosed_structure_conservation",
         "uses_growing_media",
         "irrigation_effluent_management",
         "organic_in_structures"
@@ -30323,6 +31491,7 @@
       "visible_questions": [
         "structure_production_types",
         "locations_within_certified_parcel",
+        "enclosed_structure_conservation",
         "uses_growing_media",
         "irrigation_effluent_management",
         "organic_in_structures"
@@ -30347,6 +31516,7 @@
       "visible_questions": [
         "structure_production_types",
         "locations_within_certified_parcel",
+        "enclosed_structure_conservation",
         "uses_growing_media",
         "irrigation_effluent_management",
         "organic_in_structures"
@@ -30373,6 +31543,7 @@
       },
       "visible_questions": [
         "system_type",
+        "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
         "applies_deficiency_materials",
@@ -30414,6 +31585,7 @@
       },
       "visible_questions": [
         "system_type",
+        "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
         "applies_deficiency_materials",
@@ -30457,6 +31629,7 @@
       },
       "visible_questions": [
         "system_type",
+        "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
         "applies_deficiency_materials",
@@ -30503,6 +31676,7 @@
       },
       "visible_questions": [
         "system_type",
+        "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
         "applies_deficiency_materials",
@@ -30544,6 +31718,7 @@
       },
       "visible_questions": [
         "system_type",
+        "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
         "applies_deficiency_materials",
@@ -30587,6 +31762,7 @@
       },
       "visible_questions": [
         "system_type",
+        "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
         "applies_deficiency_materials",
@@ -30630,6 +31806,7 @@
       },
       "visible_questions": [
         "system_type",
+        "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
         "applies_deficiency_materials",
@@ -30669,6 +31846,7 @@
       },
       "visible_questions": [
         "system_type",
+        "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
         "applies_deficiency_materials",
@@ -30710,6 +31888,7 @@
       },
       "visible_questions": [
         "system_type",
+        "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
         "applies_deficiency_materials",
@@ -30751,6 +31930,7 @@
       },
       "visible_questions": [
         "system_type",
+        "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
         "applies_deficiency_materials",
@@ -30811,6 +31991,57 @@
     },
     {
       "module": "g4_2_natural_resources",
+      "label": "stale_chain:waterway_practices_other:streams_or_channels_adjacent:truthy",
+      "answers": {
+        "waterway_practices": [
+          "other"
+        ],
+        "streams_or_channels_adjacent": false
+      },
+      "visible_questions": [
+        "natural_resources_description",
+        "permanent_ground_cover_90pct",
+        "slope_under_10pct",
+        "soil_water_practices",
+        "irrigation_efficiency_monitoring",
+        "streams_or_channels_adjacent",
+        "habitat_biodiversity_practices",
+        "other_conservation_measures",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_source_types",
+        "irrigation_water_sources",
+        "shared_irrigation_with_prohibited",
+        "water_quality_tested",
+        "water_from_irrigation_district",
+        "monitoring_method"
+      ],
+      "missing_required": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_water_sources",
+        "water_quality_tested",
+        "water_from_irrigation_district",
+        "monitoring_method"
+      ],
+      "missing_required_na": [
+        "soil_water_practices",
+        "habitat_biodiversity_practices",
+        "conservation_plan_agency",
+        "invasive_species_practices",
+        "wildlife_habitat_pressure",
+        "irrigation_water_sources",
+        "water_quality_tested",
+        "water_from_irrigation_district",
+        "monitoring_method"
+      ]
+    },
+    {
+      "module": "g4_2_natural_resources",
       "label": "stale_chain:wildlife_habitat_mitigation_other:wildlife_habitat_pressure:includes_any",
       "answers": {
         "wildlife_habitat_mitigation": [
@@ -30822,10 +32053,13 @@
       },
       "visible_questions": [
         "natural_resources_description",
+        "permanent_ground_cover_90pct",
+        "slope_under_10pct",
         "soil_water_practices",
         "irrigation_efficiency_monitoring",
         "streams_or_channels_adjacent",
         "habitat_biodiversity_practices",
+        "other_conservation_measures",
         "conservation_plan_agency",
         "invasive_species_practices",
         "wildlife_habitat_pressure",
