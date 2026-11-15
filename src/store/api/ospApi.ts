@@ -130,7 +130,7 @@ export interface PacketScopeModule {
 
 export interface PacketScopePreview {
   available: boolean;
-  code: '' | 'no_filing' | 'no_new_version' | 'newer_version' | 'no_changes';
+  code: '' | 'no_filing' | 'no_new_version' | 'newer_version' | 'no_changes' | 'first_version';
   reason: string;
   prior_version?: number;
   new_version?: number;

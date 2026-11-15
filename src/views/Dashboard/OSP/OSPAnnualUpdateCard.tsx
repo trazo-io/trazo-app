@@ -13,7 +13,10 @@ import {
   FormLabel,
   HStack,
   Icon,
+  Radio,
+  RadioGroup,
   SimpleGrid,
+  Stack,
   Text,
   useToast,
   VStack
@@ -37,6 +40,7 @@ import {
   FilingMethod,
   OSPAnnualUpdate,
   OSPAnnualUpdateContent,
+  PriorPlanBasis,
   useCorrectOSPAnnualUpdateMutation,
   useCreateOSPAnnualUpdateMutation,
   useFileOSPAnnualUpdateMutation,
@@ -261,6 +265,9 @@ const messageStrings = (value: unknown): string[] => {
  * reader's language, from the structured fields; the server's English sentence is the fallback.
  */
 const ATTESTED_UNCHANGED_BUT_DIFFERS = 'attested_unchanged_but_differs';
+/** The refusal code on a signing that needs `prior_plan_basis` first (`annual_update_filing.py`).
+ *  A literal here, not an import: the card's tests mock the API module wholesale. */
+const PRIOR_PLAN_BASIS_REQUIRED = 'prior_plan_basis_required';
 
 interface DifferingSection {
   section: string;
@@ -476,8 +483,17 @@ const emptyForm = (year: number) => ({
   sales_period_end: '',
   correction_note: '',
   supporting_documents: [] as SupportingDocRef[],
-  sections_unchanged: emptyAttestation()
+  sections_unchanged: emptyAttestation(),
+  prior_plan_basis: '' as PriorPlanBasis | ''
 });
+
+/** A sign refused because the filing continues a first plan version and does not say what the
+ *  certifier holds; the version it names, or null when the refusal is something else. */
+export const basisRefusal = (err: unknown): { version: number | null } | null => {
+  const data = (err as { data?: unknown })?.data as Record<string, unknown> | undefined;
+  if (!data || typeof data !== 'object' || data.code !== PRIOR_PLAN_BASIS_REQUIRED) return null;
+  return { version: typeof data.prior_osp_version === 'number' ? data.prior_osp_version : null };
+};
 
 const OSPAnnualUpdateCard: React.FC<Props> = ({
   companyId,
@@ -507,9 +523,22 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
   // A correction is any revision after the first; only a correction says what it corrects.
   const editingIsCorrection =
     editingId != null && (updates.find((u) => u.id === editingId)?.revision_number ?? 1) > 1;
+  // A first plan version in Trazo (overall review 2026-11, OV-PK-C01): the certifier may hold the
+  // plan filed before Trazo, which Trazo has no copy of, and only the grower knows. Asked when the
+  // first version has left draft; a draft first version was never sent, so the server answers it.
+  // `previous_version` is strictly null: an older backend that omits it asks nothing.
+  const editingFiling = editingId != null ? updates.find((u) => u.id === editingId) : undefined;
+  const basisApplies = editingFiling
+    ? Boolean(editingFiling.basis_question_applies)
+    : Boolean(planOnFile && planOnFile.previous_version === null && planOnFile.status !== 'draft');
+  const draftFirstVersion = editingFiling
+    ? !editingFiling.basis_question_applies && editingFiling.prior_plan_basis === 'agent_file'
+    : Boolean(planOnFile && planOnFile.previous_version === null && planOnFile.status === 'draft');
   // The year starts EMPTY and is filled by the effect below with the next unfiled year once the
   // filings are known; `emptyForm(currentYear)` would offer a year the form then refuses.
   const [form, setForm] = useState({ ...emptyForm(currentYear), reporting_year: '' });
+  // The certifier holds a plan filed before Trazo: stated by the grower, or a draft first version.
+  const agentFile = draftFirstVersion || (basisApplies && form.prior_plan_basis === 'agent_file');
   const [pending, setPending] = useState<PendingAction>(null);
   // A sign or file refused because an attested-unchanged section differs between the plan
   // versions. Shown in the row's action panel until the panel closes, not only in a toast.
@@ -735,7 +764,8 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
         public_id: d.public_id,
         title: d.title
       })),
-      sections_unchanged: { ...emptyAttestation(), ...(u.sections_unchanged_attestation || {}) }
+      sections_unchanged: { ...emptyAttestation(), ...(u.sections_unchanged_attestation || {}) },
+      prior_plan_basis: u.prior_plan_basis || ''
     });
   };
 
@@ -824,7 +854,10 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
       // The whole list, every save: an empty list detaches all on a draft.
       supporting_document_ids: form.supporting_documents.map((d) => d.public_id),
       // Only a correction says what it corrects (run 3, 2026-10-02).
-      ...(editingIsCorrection ? { correction_note: form.correction_note.trim() } : {})
+      ...(editingIsCorrection ? { correction_note: form.correction_note.trim() } : {}),
+      // Asked only of a filing that continues a first plan version; the server refuses it on a
+      // later version and answers it itself for a first version still in draft.
+      ...(basisApplies ? { prior_plan_basis: form.prior_plan_basis } : {})
     };
     try {
       if (editingId != null) {
@@ -910,6 +943,7 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
       });
     } catch (err: unknown) {
       const refused = attestationRefusal(err);
+      const basisMissing = basisRefusal(err);
       // Cleared on any other error, so a refusal from an earlier attempt never sits beside a
       // different failure (review of trazo-app #364).
       setRefusal(refused ? { id: u.id, kind, ...refused } : null);
@@ -928,6 +962,11 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
               defaultMessage:
                 'The update says a section is unchanged that differs between the plan versions. The sections are listed on the update.'
             })
+          : basisMissing
+          ? intl.formatMessage(
+              { id: 'osp.annual.basis.signRefused' },
+              { version: basisMissing.version ?? u.prior_osp_version ?? '' }
+            )
           : general ??
             intl.formatMessage({
               id: 'osp.annual.toast.errorGeneric',
@@ -1391,7 +1430,48 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
               {/* Which version this filing attaches to, said out loud. The card used to post
                   the focused version's id and show nothing, so the farmer had no way to know
                   the record named a draft their certifier has never seen. */}
-              {planOnFile ? (
+              {planOnFile && basisApplies ? (
+                <Box>
+                  <Text fontSize="sm" color="gray.700">
+                    {intl.formatMessage(
+                      { id: 'osp.annual.basis.firstVersion' },
+                      { version: planOnFile.version_number }
+                    )}
+                    {producesDraft ? (
+                      <>
+                        {' '}
+                        {intl.formatMessage(
+                          { id: 'osp.annual.producesDraft' },
+                          { version: producesDraft.version_number }
+                        )}
+                      </>
+                    ) : null}
+                  </Text>
+                  <FormLabel id="annual-basis-question" fontSize="sm" mt={3} mb={1}>
+                    {intl.formatMessage({ id: 'osp.annual.basis.question' })}
+                  </FormLabel>
+                  <Text fontSize="xs" color="gray.500" mb={1}>
+                    {intl.formatMessage({ id: 'osp.annual.basis.help' })}
+                  </Text>
+                  <RadioGroup
+                    aria-labelledby="annual-basis-question"
+                    value={form.prior_plan_basis}
+                    onChange={(v) => set('prior_plan_basis', v as PriorPlanBasis)}>
+                    <Stack spacing={0}>
+                      <Radio value="trazo_version" minH="44px" colorScheme="green">
+                        <Text fontSize="sm">
+                          {intl.formatMessage({ id: 'osp.annual.basis.trazoVersion' })}
+                        </Text>
+                      </Radio>
+                      <Radio value="agent_file" minH="44px" colorScheme="green">
+                        <Text fontSize="sm">
+                          {intl.formatMessage({ id: 'osp.annual.basis.agentFile' })}
+                        </Text>
+                      </Radio>
+                    </Stack>
+                  </RadioGroup>
+                </Box>
+              ) : planOnFile ? (
                 <Text fontSize="sm" color="gray.700">
                   {/* 🔴 2026-09-07 — "the plan your certifier holds" is only TRUE of a plan that
                       has left draft. On a first-year operation nothing has, `selectPlanOnFile`
@@ -1418,6 +1498,11 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
                       )}
                     </>
                   ) : null}
+                </Text>
+              ) : null}
+              {agentFile ? (
+                <Text fontSize="sm" color="gray.700" data-testid="annual-agent-file-hint">
+                  {intl.formatMessage({ id: 'osp.annual.basis.agentFileHint' })}
                 </Text>
               ) : null}
               <Box
@@ -1595,10 +1680,12 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
                   <Box>
                     <HStack justify="space-between" align="center" mb={2}>
                       <FormLabel fontSize="sm" mb={0}>
-                        {intl.formatMessage({
-                          id: 'osp.annual.sectionsUnchanged',
-                          defaultMessage: 'Sections unchanged since the prior OSP'
-                        })}
+                        {agentFile
+                          ? intl.formatMessage({ id: 'osp.annual.sectionsUnchangedAgentFile' })
+                          : intl.formatMessage({
+                              id: 'osp.annual.sectionsUnchanged',
+                              defaultMessage: 'Sections unchanged since the prior OSP'
+                            })}
                       </FormLabel>
                       <StandardButton
                         size="xs"

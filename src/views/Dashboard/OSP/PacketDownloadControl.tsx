@@ -82,6 +82,16 @@ const PacketDownloadControl: React.FC<Props> = ({ companyId, farmId, osps }) => 
     return scope?.available ? scope : undefined;
   };
   const anyChangedOnly = choices.some((osp) => scopeFor(osp));
+  // A first plan version in Trazo whose certifier holds the plan filed before Trazo: there is no
+  // changed-sections packet to offer, and the reason is said rather than left as a missing item.
+  const firstVersion = [workingScope, secondScope].some(
+    (scope) => scope && !scope.available && scope.code === 'first_version'
+  );
+  const firstVersionNote = firstVersion ? (
+    <Text pt={1} fontSize="xs" color="gray.600" maxW="360px">
+      {intl.formatMessage({ id: 'osp.packet.firstVersion' })}
+    </Text>
+  ) : null;
 
   const filingFor = (osp: OSPSummary) =>
     updates.find((u) => u.new_osp === osp.id) ?? updates.find((u) => u.prior_osp === osp.id);
@@ -150,6 +160,7 @@ const PacketDownloadControl: React.FC<Props> = ({ companyId, farmId, osps }) => 
             { version: working.version_number }
           )}
         </StandardButton>
+        {firstVersionNote}
       </Box>
     );
   }
@@ -197,6 +208,11 @@ const PacketDownloadControl: React.FC<Props> = ({ companyId, farmId, osps }) => 
           {anyChangedOnly ? (
             <Text px={3} pt={2} fontSize="xs" color="gray.600">
               {intl.formatMessage({ id: 'osp.packet.changedOnly.hint' })}
+            </Text>
+          ) : null}
+          {firstVersion ? (
+            <Text px={3} pt={2} fontSize="xs" color="gray.600">
+              {intl.formatMessage({ id: 'osp.packet.firstVersion' })}
             </Text>
           ) : null}
           <Text px={3} py={2} fontSize="xs" color="gray.600">

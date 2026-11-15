@@ -44,6 +44,9 @@ export interface OSPSummary {
   id: number;
   public_id: string;
   version_number: number;
+  /** The version this one was forked from; null on the operation's first plan version in Trazo.
+   *  Absent from a backend older than 2026-11-14. */
+  previous_version?: number | null;
   status: OSPStatus;
   status_display: string;
   effective_date: string | null;

@@ -392,3 +392,18 @@ describe('socialAuth mutation — the Terms acceptance reaches the server', () =
     expect(body.slice(0, body.indexOf('}')), 'socialAuth body').toMatch(/\baccept_terms\b/);
   });
 });
+
+describe('annual update card: what the certifier holds is sent only where it is asked', () => {
+  // Overall review 2026-11 (OV-PK-C01). The server refuses `prior_plan_basis` on a filing that
+  // continues a later plan version and answers it itself for a draft first version, so the card
+  // sends it only behind `basisApplies`. The two read-only fields beside it are never written.
+  it('writes prior_plan_basis behind the basisApplies gate and never the read-only fields', () => {
+    const source = read('views/Dashboard/OSP/OSPAnnualUpdateCard.tsx');
+    expect(source).toContain(
+      '...(basisApplies ? { prior_plan_basis: form.prior_plan_basis } : {})'
+    );
+    for (const key of ['basis_question_applies', 'new_osp', 'new_osp_version']) {
+      expect(writesKey(source, key), `the annual update card sends ${key}`).toBe(false);
+    }
+  });
+});

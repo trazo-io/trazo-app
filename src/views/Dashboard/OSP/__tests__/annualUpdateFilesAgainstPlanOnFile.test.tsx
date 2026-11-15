@@ -60,7 +60,7 @@ describe('annual update files against the plan on file', () => {
   it('names the version the filing continues', () => {
     renderCard();
     expect(
-      screen.getByText(/This filing continues OSP v3 — the plan your certifier holds\./)
+      screen.getByText(/This filing continues OSP v3, the plan your certifier holds\./)
     ).toBeInTheDocument();
   });
 

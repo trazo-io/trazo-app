@@ -43,6 +43,13 @@ export interface OSPAnnualUpdate {
    *  filing. */
   sales_period_start?: string | null;
   sales_period_end?: string | null;
+  /** What the certifier holds as the previous plan, asked only when `prior_osp` is the first plan
+   *  version in Trazo: `agent_file` (a plan filed before Trazo, which Trazo has no copy of) or
+   *  `trazo_version` (this version, sent from Trazo). Set by the server for a first version still
+   *  in draft. Signed with the filing once stated. */
+  prior_plan_basis?: PriorPlanBasis | '';
+  /** Read-only: whether this filing must state `prior_plan_basis` before it is signed. */
+  basis_question_applies?: boolean;
   /** Revision chain. A filed update is never edited; a correction is the next revision. */
   revision_number?: number;
   /** On a correction: what it corrects in the revision before it, in the operator's words. Printed
@@ -77,6 +84,9 @@ export interface OSPAnnualUpdate {
   updated_at?: string;
 }
 
+export const PRIOR_PLAN_BASES = ['agent_file', 'trazo_version'] as const;
+export type PriorPlanBasis = (typeof PRIOR_PLAN_BASES)[number];
+
 export const FILING_METHODS = [
   'agent_web_form',
   'agent_portal',
@@ -110,6 +120,7 @@ export type OSPAnnualUpdateContent = Pick<
   | 'sales_period_end'
   | 'correction_note'
   | 'supporting_document_ids'
+  | 'prior_plan_basis'
 >;
 
 interface UpdateArgs extends Scope {

@@ -557,6 +557,10 @@ const AgentFormCopySheet: React.FC<Props> = ({ companyId, farmId, ospId }) => {
               },
               { prior: e.prior_version as number }
             );
+          // A first plan version in Trazo, and the certifier holds the plan filed before Trazo:
+          // there is nothing Trazo can compare against (overall review 2026-11, OV-PK-O02).
+          if (state === 'first_version')
+            return intl.formatMessage({ id: 'osp.agentSheet.detail.changes_first_version' });
           if (state === 'newer_version')
             return intl.formatMessage(
               {
@@ -632,7 +636,10 @@ const AgentFormCopySheet: React.FC<Props> = ({ companyId, farmId, ospId }) => {
       case 'new_land': {
         const parts: string[] = [];
         // No second plan version this year, so there is no date to count from (review of back #218).
-        if (e.reason)
+        // In a first year a new version would not help: the certifier's plan predates Trazo.
+        if (e.reason === 'first_version')
+          parts.push(intl.formatMessage({ id: 'osp.agentSheet.detail.land_first_version' }));
+        else if (e.reason)
           parts.push(
             intl.formatMessage({
               id: 'osp.agentSheet.detail.land_not_compared',
@@ -942,7 +949,10 @@ const AgentFormCopySheet: React.FC<Props> = ({ companyId, farmId, ospId }) => {
             id: 'osp.agentSheet.detail.changes_no_filing',
             defaultMessage: "Start this year's annual update to see which sections changed."
           })} ${consequence}`;
-        return `${intl.formatMessage(
+        const firstVersion = e.first_version
+          ? `${intl.formatMessage({ id: 'osp.agentSheet.detail.ccof_first_version' })} `
+          : '';
+        return `${firstVersion}${intl.formatMessage(
           {
             id: 'osp.agentSheet.detail.ccof_osp_update',
             defaultMessage:
