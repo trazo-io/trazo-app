@@ -111,7 +111,15 @@ function valuesFor(
             { count: asCount(params[key]) }
           )
         );
-      return { parts: joinList(intl, parts, 0) };
+      const purchased = asCount(params.purchased);
+      return {
+        parts: joinList(intl, parts, 0),
+        // A bought compost's figures are the supplier's to document (7 CFR 205.203(c)(2)), so they
+        // are named apart from what the operator adds.
+        supplier: purchased
+          ? intl.formatMessage({ id: 'certifierReadiness.compostSupplier' }, { count: purchased })
+          : ''
+      };
     }
     case 'national_list_conditions.records': {
       // Each part carries its own parenthetical citation, so the parts are joined with semicolons
