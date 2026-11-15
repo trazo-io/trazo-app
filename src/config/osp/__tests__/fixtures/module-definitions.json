@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.12.10",
+  "content_version": "2026.12.11",
   "registry": {
-    "content_version": "2026.12.10",
+    "content_version": "2026.12.11",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -24342,6 +24342,31 @@
                 "max_length": null
               },
               {
+                "key": "organic_business_summary",
+                "kind": "textarea",
+                "label": {
+                  "en": "Describe your organic business in a few sentences, and any plans to change it.",
+                  "es": "Describe tu negocio orgánico en pocas frases, y cualquier plan de cambiarlo."
+                },
+                "coaching": {
+                  "en": "What you grow or handle, on how much land and where, who buys it, and anything new for the coming season. The details are in the rest of this plan.",
+                  "es": "Qué cultivas o manejas, en cuánta tierra y dónde, quién lo compra, y cualquier novedad para la próxima temporada. Los detalles están en el resto de este plan."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.401(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": {
+                  "en": "e.g. 40 acres of certified organic walnuts in Butte County, sold in-shell to one huller. We plan to add 10 acres of almonds next year.",
+                  "es": "p. ej. 40 acres de nogales orgánicos certificados en el condado de Butte, vendidos con cáscara a una descascaradora. Planeamos sumar 10 acres de almendros el próximo año."
+                },
+                "max_length": null
+              },
+              {
                 "key": "contract_upload",
                 "kind": "upload",
                 "label": {
@@ -24465,6 +24490,59 @@
                   "en": "e.g. Oregon Tilth, March 2015 to June 2021; CCOF since 2022",
                   "es": "p. ej. Oregon Tilth, de marzo de 2015 a junio de 2021; CCOF desde 2022"
                 },
+                "max_length": null
+              },
+              {
+                "key": "history_certified_by_this_agency",
+                "kind": "boolean",
+                "label": {
+                  "en": "Is the operation certified organic today by the agency you file this plan with?",
+                  "es": "¿La operación tiene hoy una certificación orgánica de la agencia ante la que presentas este plan?"
+                },
+                "coaching": {
+                  "en": "Yes for a renewal. Some agencies ask for a copy of the most recent certificate with it.",
+                  "es": "Sí, si es una renovación. Algunas agencias piden con ella una copia del certificado más reciente."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "history_ever_certified",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.404",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "history_this_agency_certificate_upload",
+                "kind": "upload",
+                "label": {
+                  "en": "Attach the most recent organic certificate that agency issued.",
+                  "es": "Adjunta el certificado orgánico más reciente que emitió esa agencia."
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "history_certified_by_this_agency",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
                 "max_length": null
               },
               {
@@ -26419,6 +26497,170 @@
         "compost_temp_logs_kept"
       ],
       "missing_required_na": []
+    },
+    {
+      "module": "certification_contract",
+      "label": "unanswered",
+      "answers": {},
+      "visible_questions": [
+        "contract_notes",
+        "operation_contacts",
+        "contract_scopes",
+        "organic_business_summary",
+        "contract_upload",
+        "contract_signed_by",
+        "contract_signed_on",
+        "history_ever_certified",
+        "history_denied",
+        "history_withdrew_outstanding",
+        "legally_registered",
+        "legal_structure",
+        "uses_dba",
+        "legal_address_is",
+        "mailing_address_is",
+        "billing_address_is",
+        "public_contact_shared",
+        "standards_requested",
+        "regulatory_agencies",
+        "regulatory_negative_report"
+      ],
+      "missing_required": [
+        "contract_notes",
+        "contract_scopes"
+      ],
+      "missing_required_na": [
+        "contract_notes",
+        "contract_scopes"
+      ]
+    },
+    {
+      "module": "certification_contract",
+      "label": "never_certified",
+      "answers": {
+        "history_ever_certified": false,
+        "history_certified_by_this_agency": true
+      },
+      "visible_questions": [
+        "contract_notes",
+        "operation_contacts",
+        "contract_scopes",
+        "organic_business_summary",
+        "contract_upload",
+        "contract_signed_by",
+        "contract_signed_on",
+        "history_ever_certified",
+        "history_denied",
+        "history_withdrew_outstanding",
+        "legally_registered",
+        "legal_structure",
+        "uses_dba",
+        "legal_address_is",
+        "mailing_address_is",
+        "billing_address_is",
+        "public_contact_shared",
+        "standards_requested",
+        "regulatory_agencies",
+        "regulatory_negative_report"
+      ],
+      "missing_required": [
+        "contract_notes",
+        "contract_scopes"
+      ],
+      "missing_required_na": [
+        "contract_notes",
+        "contract_scopes"
+      ]
+    },
+    {
+      "module": "certification_contract",
+      "label": "renewal",
+      "answers": {
+        "history_ever_certified": true,
+        "history_certified_by_this_agency": true
+      },
+      "visible_questions": [
+        "contract_notes",
+        "operation_contacts",
+        "contract_scopes",
+        "organic_business_summary",
+        "contract_upload",
+        "contract_signed_by",
+        "contract_signed_on",
+        "history_ever_certified",
+        "history_prior_agents",
+        "history_certified_by_this_agency",
+        "history_this_agency_certificate_upload",
+        "history_certified_elsewhere_now",
+        "history_suspended",
+        "history_revoked",
+        "history_surrendered_outstanding",
+        "history_outstanding_noncompliances",
+        "history_denied",
+        "history_withdrew_outstanding",
+        "legally_registered",
+        "legal_structure",
+        "uses_dba",
+        "legal_address_is",
+        "mailing_address_is",
+        "billing_address_is",
+        "public_contact_shared",
+        "standards_requested",
+        "regulatory_agencies",
+        "regulatory_negative_report"
+      ],
+      "missing_required": [
+        "contract_notes",
+        "contract_scopes"
+      ],
+      "missing_required_na": [
+        "contract_notes",
+        "contract_scopes"
+      ]
+    },
+    {
+      "module": "certification_contract",
+      "label": "not_by_this_agency",
+      "answers": {
+        "history_ever_certified": true,
+        "history_certified_by_this_agency": false
+      },
+      "visible_questions": [
+        "contract_notes",
+        "operation_contacts",
+        "contract_scopes",
+        "organic_business_summary",
+        "contract_upload",
+        "contract_signed_by",
+        "contract_signed_on",
+        "history_ever_certified",
+        "history_prior_agents",
+        "history_certified_by_this_agency",
+        "history_certified_elsewhere_now",
+        "history_suspended",
+        "history_revoked",
+        "history_surrendered_outstanding",
+        "history_outstanding_noncompliances",
+        "history_denied",
+        "history_withdrew_outstanding",
+        "legally_registered",
+        "legal_structure",
+        "uses_dba",
+        "legal_address_is",
+        "mailing_address_is",
+        "billing_address_is",
+        "public_contact_shared",
+        "standards_requested",
+        "regulatory_agencies",
+        "regulatory_negative_report"
+      ],
+      "missing_required": [
+        "contract_notes",
+        "contract_scopes"
+      ],
+      "missing_required_na": [
+        "contract_notes",
+        "contract_scopes"
+      ]
     },
     {
       "module": "g2_0_fraud_prevention",
@@ -32087,6 +32329,44 @@
     },
     {
       "module": "certification_contract",
+      "label": "stale_chain:history_this_agency_certificate_upload:history_ever_certified:truthy",
+      "answers": {
+        "history_certified_by_this_agency": true,
+        "history_ever_certified": false
+      },
+      "visible_questions": [
+        "contract_notes",
+        "operation_contacts",
+        "contract_scopes",
+        "organic_business_summary",
+        "contract_upload",
+        "contract_signed_by",
+        "contract_signed_on",
+        "history_ever_certified",
+        "history_denied",
+        "history_withdrew_outstanding",
+        "legally_registered",
+        "legal_structure",
+        "uses_dba",
+        "legal_address_is",
+        "mailing_address_is",
+        "billing_address_is",
+        "public_contact_shared",
+        "standards_requested",
+        "regulatory_agencies",
+        "regulatory_negative_report"
+      ],
+      "missing_required": [
+        "contract_notes",
+        "contract_scopes"
+      ],
+      "missing_required_na": [
+        "contract_notes",
+        "contract_scopes"
+      ]
+    },
+    {
+      "module": "certification_contract",
       "label": "stale_chain:history_keeping_other_certification:history_ever_certified:truthy",
       "answers": {
         "history_certified_elsewhere_now": true,
@@ -32096,6 +32376,7 @@
         "contract_notes",
         "operation_contacts",
         "contract_scopes",
+        "organic_business_summary",
         "contract_upload",
         "contract_signed_by",
         "contract_signed_on",
@@ -32133,6 +32414,7 @@
         "contract_notes",
         "operation_contacts",
         "contract_scopes",
+        "organic_business_summary",
         "contract_upload",
         "contract_signed_by",
         "contract_signed_on",
@@ -32170,6 +32452,7 @@
         "contract_notes",
         "operation_contacts",
         "contract_scopes",
+        "organic_business_summary",
         "contract_upload",
         "contract_signed_by",
         "contract_signed_on",
@@ -32207,6 +32490,7 @@
         "contract_notes",
         "operation_contacts",
         "contract_scopes",
+        "organic_business_summary",
         "contract_upload",
         "contract_signed_by",
         "contract_signed_on",
@@ -32245,6 +32529,7 @@
         "contract_notes",
         "operation_contacts",
         "contract_scopes",
+        "organic_business_summary",
         "contract_upload",
         "contract_signed_by",
         "contract_signed_on",
@@ -32282,6 +32567,7 @@
         "contract_notes",
         "operation_contacts",
         "contract_scopes",
+        "organic_business_summary",
         "contract_upload",
         "contract_signed_by",
         "contract_signed_on",
@@ -32319,6 +32605,7 @@
         "contract_notes",
         "operation_contacts",
         "contract_scopes",
+        "organic_business_summary",
         "contract_upload",
         "contract_signed_by",
         "contract_signed_on",

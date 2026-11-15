@@ -32,4 +32,17 @@ describe('CDFA registration wording', () => {
   it.each(Object.keys(messages))('%s gives a CDFA-shaped example number (00-000000)', (locale) => {
     expect(messages[locale]['osp.cdfa.registrationNumberPlaceholder']).toMatch(/\b\d{2}-\d{6}\b/);
   });
+
+  // CCOF Contract E2 and OTCO O1 E-2 ask the CDPH number in its own box; the card names the agency so the
+  // packet cover prints the number under the right one (2026-11-15).
+  it.each(Object.keys(messages))(
+    '%s offers CDPH beside CDFA, with a CDPH-shaped example',
+    (locale) => {
+      expect(messages[locale]['osp.cdfa.title']).toMatch(/CDFA .* CDPH/);
+      expect(messages[locale]['osp.cdfa.agency.cdfa']).toMatch(/^CDFA/);
+      expect(messages[locale]['osp.cdfa.agency.cdph']).toMatch(/^CDPH/);
+      expect(messages[locale]['osp.cdfa.description']).toContain('CDPH');
+      expect(messages[locale]['osp.cdfa.registrationNumberPlaceholderCdph']).toMatch(/\b\d{5}\b/);
+    }
+  );
 });
