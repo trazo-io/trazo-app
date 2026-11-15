@@ -704,3 +704,52 @@ describe('a first plan version in Trazo, the certifier holding the plan filed be
     );
   });
 });
+
+describe("the grower's own statement of what changed against the plan the certifier holds", () => {
+  it('lists the stated sections as the update states them, not as a comparison', () => {
+    result = {
+      data: {
+        ...sheet,
+        rows: [
+          {
+            step: '4',
+            item: 'osp_changes',
+            kind: 'value',
+            value: [{ label: 'C5 Pest, Disease & Weed Management', files: ['modules/G5_0.pdf'] }],
+            source: 'filing',
+            extra: { stated: true, prior_version: 1 }
+          }
+        ]
+      }
+    };
+    renderSheet();
+    const changes = screen.getByTestId('agent-sheet-osp_changes');
+    expect(changes).toHaveTextContent(
+      'Sections your annual update states changed against the plan your certifier holds.'
+    );
+    expect(changes).toHaveTextContent('C5 Pest, Disease & Weed Management');
+    expect(changes).not.toHaveTextContent('Answers changed between plan');
+  });
+
+  it('says the update states nothing changed', () => {
+    result = {
+      data: {
+        ...sheet,
+        rows: [
+          {
+            step: '4',
+            item: 'osp_changes',
+            kind: 'value',
+            value: [],
+            source: 'filing',
+            extra: { stated: true, prior_version: 1 }
+          }
+        ]
+      }
+    };
+    renderSheet();
+    expect(screen.getByTestId('agent-sheet-osp_changes')).toHaveTextContent(
+      'Your annual update states that nothing changed against the plan your certifier holds.'
+    );
+  });
+});

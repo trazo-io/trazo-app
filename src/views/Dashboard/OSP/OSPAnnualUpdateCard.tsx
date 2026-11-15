@@ -30,6 +30,7 @@ import {
   StandardAlert,
   StandardButton,
   StandardCard,
+  StandardCheckboxList,
   StandardField,
   StandardInput,
   StandardSelect,
@@ -49,6 +50,8 @@ import {
   useUpdateOSPAnnualUpdateMutation,
   useWithdrawOSPAnnualUpdateMutation
 } from 'store/api/ospAnnualUpdateApi';
+import { useGetOSPModuleDefinitionsQuery } from 'store/api/ospApi';
+import { pickText } from 'config/osp/types';
 import type { OSPSummary } from 'types/osp';
 
 import OSPCompanyDetailsStep from './OSPCompanyDetailsStep';
@@ -156,6 +159,8 @@ const FIELD_KEYS = [
   'deletions',
   'application_info_changes',
   'agent_requested_info',
+  'agent_file_changed_modules',
+  'agent_file_nothing_changed',
   'sales_period_start',
   'sales_period_end'
 ] as const;
@@ -484,8 +489,79 @@ const emptyForm = (year: number) => ({
   correction_note: '',
   supporting_documents: [] as SupportingDocRef[],
   sections_unchanged: emptyAttestation(),
-  prior_plan_basis: '' as PriorPlanBasis | ''
+  prior_plan_basis: '' as PriorPlanBasis | '',
+  agent_file_changed_modules: [] as string[],
+  agent_file_nothing_changed: false
 });
+
+/**
+ * What changed against the plan the certifier holds, when that plan predates Trazo (overall review
+ * 2026-11, OV-PK-O02). Its own component so the module definitions are fetched only where the
+ * question is asked. Sections, or "nothing changed": the two are exclusive, and leaving both empty
+ * says nothing.
+ */
+const AgentFileStatement: React.FC<{
+  companyId: string;
+  farmId: string;
+  ospId: number;
+  modules: string[];
+  nothingChanged: boolean;
+  onModules: (keys: string[]) => void;
+  onNothingChanged: (value: boolean) => void;
+  error?: string;
+}> = ({
+  companyId,
+  farmId,
+  ospId,
+  modules,
+  nothingChanged,
+  onModules,
+  onNothingChanged,
+  error
+}) => {
+  const intl = useIntl();
+  const { data } = useGetOSPModuleDefinitionsQuery({ companyId, farmId, ospId });
+  const options = (data?.modules || [])
+    .filter((m) => !m.repeat_per_parcel)
+    .map((m) => ({
+      value: m.key,
+      label: `${m.code ? `${m.code} ` : ''}${pickText(m.title, intl.locale)}`
+    }));
+  return (
+    <Box data-testid="annual-agent-file-statement">
+      <Text fontSize="xs" color="gray.500" mb={2}>
+        {intl.formatMessage({ id: 'osp.annual.agentFile.help' })}
+      </Text>
+      <StandardCheckboxList
+        legend={intl.formatMessage({ id: 'osp.annual.agentFile.legend' })}
+        options={options}
+        value={modules}
+        onChange={(keys) => {
+          onModules(keys);
+          if (keys.length) onNothingChanged(false);
+        }}
+      />
+      <Checkbox
+        mt={2}
+        minH="44px"
+        colorScheme="green"
+        isChecked={nothingChanged}
+        onChange={(e) => {
+          onNothingChanged(e.target.checked);
+          if (e.target.checked) onModules([]);
+        }}>
+        <Text fontSize="sm">
+          {intl.formatMessage({ id: 'osp.annual.agentFile.nothingChanged' })}
+        </Text>
+      </Checkbox>
+      {error ? (
+        <Text fontSize="sm" color="red.600" mt={1} role="alert">
+          {error}
+        </Text>
+      ) : null}
+    </Box>
+  );
+};
 
 /** A sign refused because the filing continues a first plan version and does not say what the
  *  certifier holds; the version it names, or null when the refusal is something else. */
@@ -766,7 +842,9 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
         title: d.title
       })),
       sections_unchanged: { ...emptyAttestation(), ...(u.sections_unchanged_attestation || {}) },
-      prior_plan_basis: u.prior_plan_basis || ''
+      prior_plan_basis: u.prior_plan_basis || '',
+      agent_file_changed_modules: u.agent_file_changed_modules || [],
+      agent_file_nothing_changed: u.agent_file_nothing_changed === true
     });
   };
 
@@ -858,7 +936,12 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
       ...(editingIsCorrection ? { correction_note: form.correction_note.trim() } : {}),
       // Asked only of a filing that continues a first plan version; the server refuses it on a
       // later version and answers it itself for a first version still in draft.
-      ...(basisApplies ? { prior_plan_basis: form.prior_plan_basis } : {})
+      ...(basisApplies ? { prior_plan_basis: form.prior_plan_basis } : {}),
+      // What changed against the plan the certifier holds: sent on every save, emptied whenever that
+      // plan is not one filed before Trazo, so switching the answer above never leaves a stale list
+      // the server refuses. Unticked "nothing changed" is not stated (null), never "something did".
+      agent_file_changed_modules: agentFile ? form.agent_file_changed_modules : [],
+      agent_file_nothing_changed: agentFile && form.agent_file_nothing_changed ? true : null
     };
     try {
       if (editingId != null) {
@@ -1678,6 +1761,27 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
                 free-text box makes that unverifiable per section. These per-section
                 attestations give the certifier a section-by-section answer.
               */}
+                  {agentFile && companyId && farmId && ospId != null ? (
+                    <Box
+                      ref={(el: HTMLDivElement | null) => {
+                        fieldRefs.current.agent_file_changed_modules = el;
+                        fieldRefs.current.agent_file_nothing_changed = el;
+                      }}>
+                      <AgentFileStatement
+                        companyId={companyId}
+                        farmId={farmId}
+                        ospId={ospId}
+                        modules={form.agent_file_changed_modules}
+                        nothingChanged={form.agent_file_nothing_changed}
+                        onModules={(keys) => set('agent_file_changed_modules', keys)}
+                        onNothingChanged={(value) => set('agent_file_nothing_changed', value)}
+                        error={
+                          fieldErrors.agent_file_changed_modules ||
+                          fieldErrors.agent_file_nothing_changed
+                        }
+                      />
+                    </Box>
+                  ) : null}
                   <Box>
                     <HStack justify="space-between" align="center" mb={2}>
                       <FormLabel fontSize="sm" mb={0}>

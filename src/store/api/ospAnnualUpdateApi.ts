@@ -50,6 +50,11 @@ export interface OSPAnnualUpdate {
   prior_plan_basis?: PriorPlanBasis | '';
   /** Read-only: whether this filing must state `prior_plan_basis` before it is signed. */
   basis_question_applies?: boolean;
+  /** With `agent_file` only: the plan modules the operation states changed against the plan its
+   *  certifier holds, or `agent_file_nothing_changed: true`. Never both; both empty is "not stated".
+   *  Trazo compares nothing here; 02 and 02s print it as the operation's statement. */
+  agent_file_changed_modules?: string[];
+  agent_file_nothing_changed?: boolean | null;
   /** Revision chain. A filed update is never edited; a correction is the next revision. */
   revision_number?: number;
   /** On a correction: what it corrects in the revision before it, in the operator's words. Printed
@@ -121,6 +126,8 @@ export type OSPAnnualUpdateContent = Pick<
   | 'correction_note'
   | 'supporting_document_ids'
   | 'prior_plan_basis'
+  | 'agent_file_changed_modules'
+  | 'agent_file_nothing_changed'
 >;
 
 interface UpdateArgs extends Scope {
