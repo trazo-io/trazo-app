@@ -226,6 +226,10 @@ const ORGANIC_TOOLTIP_KEYS: Record<string, string> = {
   // and the two are never spoken with one voice.
   wsda_listed: 'consumer.eventCard.organic.tooltipWsda',
   national_list_allowed: 'consumer.eventCard.organic.tooltipNationalList',
+  // A § 205.601 entry the rule allows only under a condition of use (zinc and boron with a
+  // documented deficiency, copper used so it does not build up in the soil). Before 2026-11-16 it
+  // read "Allowed input" like an entry with no condition (overall review OV-MT-C01).
+  national_list_allowed_condition: 'consumer.eventCard.organic.tooltipNationalListAllowedCondition',
   // A § 205.602 entry the CFR permits for ONE stated use (calcium chloride as a foliar spray
   // for a calcium-uptake disorder). Before 2026-08-20 the server chipped these
   // `conventional_documented`, so an organic block's bitter-pit calcium programme — the very
@@ -1162,6 +1166,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   ? serverInput.status === 'omri_listed' ||
                     serverInput.status === 'wsda_listed' ||
                     serverInput.status === 'national_list_allowed' ||
+                    serverInput.status === 'national_list_allowed_condition' ||
                     serverInput.status === 'national_list_conditional' ||
                     serverInput.status === 'organic_approved' ||
                     // Preview only, and it must render: the whole point is that the farmer sees
@@ -1191,6 +1196,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                       // an English page looks correct.
                       wsda_listed: 'consumer.eventCard.organic.wsdaListed',
                       national_list_allowed: 'consumer.eventCard.organic.nationalListAllowed',
+                      national_list_allowed_condition:
+                        'consumer.eventCard.organic.nationalListAllowedCondition',
                       national_list_conditional:
                         'consumer.eventCard.organic.nationalListConditional',
                       organic_approved: 'consumer.eventCard.organic.growerReported',
