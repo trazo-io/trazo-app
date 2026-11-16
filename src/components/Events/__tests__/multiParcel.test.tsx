@@ -95,23 +95,31 @@ const Cards = ({
   rules = chemical,
   form = galPerAcre,
   sections = {},
-  showIssues = false
+  showIssues = false,
+  timesPerParcel = false,
+  onTargets
 }: {
   initial: ParcelTarget[];
   rules?: MultiParcelRules;
   form?: Record<string, unknown>;
   sections?: Record<number, string[]>;
   showIssues?: boolean;
+  timesPerParcel?: boolean;
+  onTargets?: (targets: ParcelTarget[]) => void;
 }) => {
   const [targets, setTargets] = useState(initial);
   return (
     <PerParcelCards
       targets={targets}
-      onChange={setTargets}
+      onChange={(next) => {
+        setTargets(next);
+        onTargets?.(next);
+      }}
       rules={rules}
       form={form}
       sectionsByParcel={sections}
       showIssues={showIssues}
+      timesPerParcel={timesPerParcel}
     />
   );
 };
@@ -222,6 +230,49 @@ describe('PerParcelCards', () => {
       />
     );
     expect(screen.getByText('Use at most 2 decimals.')).toBeInTheDocument();
+  });
+
+  it('asks no start or stop on a card unless the grower said they differ by parcel', () => {
+    wrap(<Cards initial={[{ ...blockA, scope: 'all' }]} />);
+    expect(screen.queryByLabelText('Start on this parcel')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Stop on this parcel')).not.toBeInTheDocument();
+  });
+
+  it("times per parcel: each card asks its own start and stop, empty, and keeps what's typed", () => {
+    let last: ParcelTarget[] = [];
+    wrap(
+      <Cards
+        initial={[
+          { ...blockA, scope: 'all' },
+          { ...newTarget({ id: 2, name: 'Block B', area: 1 }), scope: 'all' }
+        ]}
+        timesPerParcel
+        onTargets={(next) => (last = next)}
+      />
+    );
+    const starts = screen.getAllByLabelText('Start on this parcel');
+    expect(starts).toHaveLength(2);
+    // Never filled from the shared window or another card: a job's window is not each parcel's.
+    starts.forEach((input) => expect(input).toHaveValue(''));
+    expect(screen.getAllByLabelText('Stop on this parcel')).toHaveLength(2);
+    fireEvent.change(starts[1], { target: { value: '2026-05-02T08:40' } });
+    expect(last.find((t) => t.parcelId === 2)?.times).toEqual({
+      application_start: '2026-05-02T08:40'
+    });
+    expect(last.find((t) => t.parcelId === 1)?.times).toEqual({});
+  });
+
+  it('a type with no per-parcel times asks none, even with the switch on', () => {
+    wrap(
+      <Cards
+        initial={[{ ...newTarget({ id: 3, name: 'Block C', area: 1 }), scope: 'all' }]}
+        rules={mowing}
+        form={{}}
+        timesPerParcel
+      />
+    );
+    expect(mowing.timeKeys).toEqual([]);
+    expect(screen.queryByLabelText('Start on this parcel')).not.toBeInTheDocument();
   });
 
   it('after a refused Continue, marks what each parcel is missing', () => {
