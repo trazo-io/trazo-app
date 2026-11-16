@@ -54,7 +54,8 @@ import {
   StandardCard,
   StandardField,
   StandardInput,
-  StandardSearchInput
+  StandardSearchInput,
+  StandardSelect
 } from 'components/Design/StandardComponents';
 import {
   useAddApprovedInputMutation,
@@ -69,6 +70,7 @@ import type {
   ApprovedInputKind,
   InputVerifyResult,
   OSP,
+  PlanMaterialCategory,
   PlanMaterialEntry
 } from 'types/osp';
 import { nationalListCondition } from 'components/Compliance/nationalListCondition';
@@ -182,6 +184,16 @@ interface OSPApprovedInputsPanelProps {
   osp: OSP;
 }
 
+/** The sections a material can be filed under, in the order the Materials List editor offers them. */
+const ATTACH_SECTIONS: PlanMaterialCategory[] = [
+  'fertilizer_amendment',
+  'pest_disease_weed',
+  'production_aid',
+  'post_harvest',
+  'facility_pest',
+  'other'
+];
+
 /** The server's match key for a material name: case and spacing only (`plan_materials._norm`). */
 const normName = (name: string | null | undefined): string =>
   (name || '').split(/\s+/).filter(Boolean).join(' ').toLowerCase();
@@ -208,6 +220,20 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
    */
   const [searchedTerm, setSearchedTerm] = useState('');
   const [certRef, setCertRef] = useState('');
+  /**
+   * Asked before a material goes on the list (2026-11-16): whether it is in use or intended for use,
+   * and what it is used for. Every agent's materials form asks both per row (OTCO C11's Intended Use,
+   * CCOF's sections, WSDA AGR 2196's intended purpose), and a catalog listing answers neither: it says
+   * a product is allowed, never that this operation uses it or why. Nothing is preselected; the
+   * operator picks both, and the server files them on the operator's row for the product.
+   */
+  const [attachUse, setAttachUse] = useState<'' | 'in_use' | 'planned'>('');
+  const [attachSection, setAttachSection] = useState<PlanMaterialCategory>('');
+  const useAnswered = Boolean(attachUse && attachSection);
+  const resetUse = () => {
+    setAttachUse('');
+    setAttachSection('');
+  };
   const [verify, { data: verifyResult, isFetching: searching, isUninitialized }] =
     useLazyVerifyInputQuery();
   const [addInput, { isLoading: adding }] = useAddApprovedInputMutation();
@@ -266,6 +292,9 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
   const handleSearch = async () => {
     const trimmed = query.trim();
     if (!trimmed) return;
+    // A new search is a new material: the use and section picked for the last one do not carry over
+    // (review of app #405: they did, and Add was enabled for a product nobody had answered).
+    resetUse();
     try {
       await verify({ name: trimmed }).unwrap();
       setSearchedTerm(trimmed);
@@ -290,10 +319,16 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
         // Deliberately the operator's own words and NOTHING else. The row is created with no
         // third-party listing, which is exactly what it has; the operator fills in manufacturer,
         // reason and any certifier approval from the list below.
-        body: { product_name: name, listing_basis: 'none_unlisted' }
+        body: {
+          product_name: name,
+          listing_basis: 'none_unlisted',
+          status: attachUse || undefined,
+          category: attachSection || undefined
+        }
       }).unwrap();
       setQuery('');
       setSearchedTerm('');
+      resetUse();
       toast({
         status: 'success',
         title: intl.formatMessage({ id: 'osp.approvedInputs.own.added' }, { name }),
@@ -330,7 +365,9 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
         ospId: osp.id,
         kind,
         id,
-        change_notification_reference: certRef.trim() || undefined
+        change_notification_reference: certRef.trim() || undefined,
+        status: attachUse || undefined,
+        category: attachSection || undefined
       }).unwrap();
       toast({
         status: 'success',
@@ -339,6 +376,7 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
       });
       setQuery('');
       setCertRef('');
+      resetUse();
     } catch (err: any) {
       toast({
         status: 'error',
@@ -559,6 +597,7 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
       size="sm"
       leftIcon={<FaPlus />}
       isLoading={adding}
+      isDisabled={!useAnswered}
       onClick={() => handleAdd(kind, id, label)}>
       {intl.formatMessage({ id: 'osp.approvedInputs.search.add' })}
     </StandardButton>
@@ -621,6 +660,12 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
               size="sm"
               leftIcon={<FaPlus />}
               isLoading={isAddingOwn}
+              isDisabled={!useAnswered}
+              // The Spanish label ("Agregar tal como aparece en la etiqueta") is wider than a 375px
+              // row; it wraps instead of being cut off at the card edge.
+              whiteSpace="normal"
+              h="auto"
+              py={1}
               onClick={handleAddOwnMaterial}>
               {intl.formatMessage({ id: 'osp.approvedInputs.own.addAction' })}
             </StandardButton>
@@ -1109,6 +1154,55 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
             <Text fontSize="xs" color={subtextColor} mt={1}>
               {intl.formatMessage({ id: 'osp.approvedInputs.search.hint' })}
             </Text>
+            {!isUninitialized && verifyResult && (
+              <Stack
+                direction={{ base: 'column', md: 'row' }}
+                spacing={2}
+                mt={3}
+                data-testid="attach-use">
+                <StandardField label={intl.formatMessage({ id: 'osp.approvedInputs.use.label' })}>
+                  <StandardSelect
+                    size="sm"
+                    value={attachUse}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                      setAttachUse(e.target.value as '' | 'in_use' | 'planned')
+                    }>
+                    <option value="">
+                      {intl.formatMessage({ id: 'osp.approvedInputs.use.placeholder' })}
+                    </option>
+                    <option value="in_use">
+                      {intl.formatMessage({ id: 'osp.approvedInputs.use.in_use' })}
+                    </option>
+                    <option value="planned">
+                      {intl.formatMessage({ id: 'osp.approvedInputs.use.planned' })}
+                    </option>
+                  </StandardSelect>
+                </StandardField>
+                <StandardField
+                  label={intl.formatMessage({ id: 'osp.approvedInputs.section.label' })}>
+                  <StandardSelect
+                    size="sm"
+                    value={attachSection}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                      setAttachSection(e.target.value as PlanMaterialCategory)
+                    }>
+                    <option value="">
+                      {intl.formatMessage({ id: 'osp.approvedInputs.use.placeholder' })}
+                    </option>
+                    {ATTACH_SECTIONS.map((section) => (
+                      <option key={section} value={section}>
+                        {intl.formatMessage({ id: `osp.materialsList.category.${section}` })}
+                      </option>
+                    ))}
+                  </StandardSelect>
+                </StandardField>
+              </Stack>
+            )}
+            {!isUninitialized && verifyResult && !useAnswered && (
+              <Text fontSize="xs" color={subtextColor} mt={1}>
+                {intl.formatMessage({ id: 'osp.approvedInputs.use.needed' })}
+              </Text>
+            )}
             {!isUninitialized && verifyResult && renderSearchResult(verifyResult)}
             {/*
               Cert-notification reference is placed BELOW the results so the
@@ -1166,6 +1260,11 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
                   id: 'osp.approvedInputs.removeConfirm.warning'
                 })}
               />
+              {/* The server removes the operator's answers about this product with it
+                  (`_remove_attach_answers`); left behind, they came back as a material of their own. */}
+              <Text fontSize="sm" mb={3}>
+                {intl.formatMessage({ id: 'osp.approvedInputs.removeConfirm.answers' })}
+              </Text>
               <StandardField
                 label={intl.formatMessage({ id: 'osp.approvedInputs.log.certRefLabel' })}
                 helpText={intl.formatMessage({ id: 'osp.approvedInputs.log.certRefHint' })}>

@@ -119,7 +119,8 @@ export interface ApprovedWSDAInput {
  */
 export interface ApprovedInputChangeLog {
   id: number;
-  kind: 'national_list' | 'omri' | 'wsda';
+  /** 'operator_entered' since 2026-11-16: a material put on the plan in the operator's own words. */
+  kind: 'national_list' | 'omri' | 'wsda' | 'operator_entered';
   target_name_at_change: string;
   action: 'added' | 'removed';
   changed_by_name: string | null;
@@ -324,7 +325,13 @@ export type PlanMaterialListingBasis =
 
 export type PlanMaterialCategory =
   /** Not chosen yet: the backend default since migration 0070 (back #294). */
-  '' | 'fertilizer_amendment' | 'pest_disease_weed' | 'production_aid' | 'post_harvest' | 'other';
+  | ''
+  | 'fertilizer_amendment'
+  | 'pest_disease_weed'
+  | 'production_aid'
+  | 'post_harvest'
+  | 'facility_pest'
+  | 'other';
 
 export interface PlanMaterialEntry {
   id: number;
@@ -538,6 +545,14 @@ export interface OSPMaterialListRow {
   label_document_title: string;
   /** The plan's agent asks for this product's label (OTCO C11 11.1: not OMRI or WSDA listed). */
   needs_label: boolean;
+  /**
+   * OTCO C11's review agency box this row's own record fills: its OMRI or WSDA listing, or 'other'.
+   * Only an 'other' row may name another agency; the server refuses one on an OMRI or WSDA row.
+   */
+  review_position: 'omri' | 'wsda' | 'other';
+  /** The Other review agency as the operator records it; '' when none is named. */
+  other_review_agency: string;
+  other_review_reference: string;
 }
 
 export interface OSPMaterialsListResponse {
@@ -560,6 +575,8 @@ export interface OSPMaterialAnswer {
   where_used?: string;
   /** 'true' | 'false' | '' (not stated). */
   applied_by_fumigation?: string;
+  other_review_agency?: string;
+  other_review_reference?: string;
 }
 
 /** One thing the operation's dated records did after the plan's newest answer. */

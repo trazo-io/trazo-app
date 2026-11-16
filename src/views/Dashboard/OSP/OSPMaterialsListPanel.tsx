@@ -410,6 +410,64 @@ const MaterialRowEditor: React.FC<{
         </Text>
       )}
 
+      {/* Who reviewed it, when that is neither OMRI nor WSDA (OTCO C11's OTHER box): a manufacturer's
+          verification, another agent's review. Offered only on a row whose own record is neither listing;
+          the server refuses it on one that is. Saved on blur, as the other free-text cells. */}
+      {row.review_position === 'other' && (
+        <Flex wrap="wrap" gap={2} mt={2} align="center" data-testid="materials-other-review">
+          <StandardInput
+            key={`otherAgency:${row.other_review_agency}`}
+            size="sm"
+            flex={{ base: '1 1 100%', md: '1 1 300px' }}
+            isDisabled={!isEditable}
+            defaultValue={row.other_review_agency}
+            placeholder={intl.formatMessage({
+              id: 'osp.materialsList.otherReview.agencyPlaceholder',
+              defaultMessage: 'Who reviewed it, if not OMRI or WSDA'
+            })}
+            aria-label={String(
+              intl.formatMessage(
+                {
+                  id: 'osp.materialsList.otherReview.agencyAria',
+                  defaultMessage: 'Review agency for {name}, other than OMRI or WSDA'
+                },
+                { name: row.name }
+              )
+            )}
+            onBlur={(e) => {
+              if (e.target.value !== row.other_review_agency) {
+                save(row, { other_review_agency: e.target.value });
+              }
+            }}
+          />
+          <StandardInput
+            key={`otherRef:${row.other_review_reference}`}
+            size="sm"
+            flex={{ base: '1 1 100%', md: '1 1 220px' }}
+            isDisabled={!isEditable}
+            defaultValue={row.other_review_reference}
+            placeholder={intl.formatMessage({
+              id: 'osp.materialsList.otherReview.referencePlaceholder',
+              defaultMessage: "The review's number or date"
+            })}
+            aria-label={String(
+              intl.formatMessage(
+                {
+                  id: 'osp.materialsList.otherReview.referenceAria',
+                  defaultMessage: 'Number or date of the review of {name}'
+                },
+                { name: row.name }
+              )
+            )}
+            onBlur={(e) => {
+              if (e.target.value !== row.other_review_reference) {
+                save(row, { other_review_reference: e.target.value });
+              }
+            }}
+          />
+        </Flex>
+      )}
+
       {/* The label or container photo, filed in the farm's Documents and linked to this material.
           Offered on every row; only an agent that asks for it (OTCO C11 11.1) is told one is
           missing, and only for a product its listing does not cover (`needs_label`). */}
