@@ -9750,7 +9750,7 @@
   "events.multiParcel.timesLabel": "Horas de inicio y fin",
   "events.multiParcel.timesSame": "Las mismas en todas las parcelas",
   "events.multiParcel.timesPerParcel": "Distintas en cada parcela",
-  "events.multiParcel.timesOnCards": "La tarjeta de cada parcela, más abajo, pide su propio inicio y fin. Ambos son opcionales.",
+  "events.multiParcel.timesOnCards": "La tarjeta de cada parcela, más abajo, pide el inicio y el fin de esa parcela. Ambos son opcionales.",
   "events.multiParcel.time.application_start": "Inicio en esta parcela",
   "events.multiParcel.time.application_end": "Fin en esta parcela",
   "events.multiParcel.validationTitle": "Cada parcela necesita el área y la cantidad",

@@ -1151,7 +1151,9 @@ function NewEventForm({ isEdit = false, eventId = null }) {
         ...(step0TimeNotRecorded ? { time_not_recorded: true } : {})
       },
       acceptedFiles?.length || 0,
-      multiParcelIds.length > 0 ? { parcelIds: multiParcelIds, targets: multiTargets } : undefined,
+      multiParcelIds.length > 0
+        ? { parcelIds: multiParcelIds, targets: multiTargets, timesPerParcel }
+        : undefined,
       {
         dateChosen: isOperatorChosenDate(step0Date, wizardDefaultDate),
         verbKey: activeVerbKey ?? null
@@ -1164,6 +1166,7 @@ function NewEventForm({ isEdit = false, eventId = null }) {
     saveDraft,
     multiParcelIds,
     multiTargets,
+    timesPerParcel,
     step0Date,
     step0PerformedBy,
     step0TimeNotRecorded,
@@ -1222,13 +1225,9 @@ function NewEventForm({ isEdit = false, eventId = null }) {
         kept.has(Number(t?.parcelId))
       );
       setMultiTargets(restoredTargets);
-      // Cards that held their own start or stop come back with the switch on, or the times would
-      // be hidden and left out of the save.
-      setTimesPerParcel(
-        restoredTargets.some((t) =>
-          Object.values(t?.times || {}).some((v) => String(v ?? '').trim() !== '')
-        )
-      );
+      // The switch comes back as it was saved, never guessed from the cards: "different" with
+      // every card blank, or "same" with card times still typed, are both real states.
+      setTimesPerParcel(draft.multi.timesPerParcel === true);
       setMultiParcelIds(ids);
       if (droppedNames.length > 0) {
         toast({
