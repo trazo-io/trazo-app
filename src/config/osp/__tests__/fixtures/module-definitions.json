@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.12.13",
+  "content_version": "2026.12.15",
   "registry": {
-    "content_version": "2026.12.13",
+    "content_version": "2026.12.15",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -13989,6 +13989,62 @@
                 "max_length": null
               },
               {
+                "key": "split_input_records_distinction",
+                "kind": "textarea",
+                "label": {
+                  "en": "How do your input records tell materials used on organic crops from those used on non-organic crops?",
+                  "es": "¿Cómo distinguen tus registros de insumos los materiales usados en cultivos orgánicos de los usados en cultivos no orgánicos?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "split_operation",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.103(b)(2)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": {
+                  "en": "e.g. each application record names the block, and the conventional blocks have their own block names; the same organic inputs are used on every block",
+                  "es": "p. ej. cada registro de aplicación nombra el bloque, y los bloques convencionales tienen sus propios nombres; en todos los bloques se usan los mismos insumos orgánicos"
+                },
+                "max_length": null
+              },
+              {
+                "key": "split_contamination_prevention",
+                "kind": "textarea",
+                "label": {
+                  "en": "How do you keep organic product from contact with non-organic material and prohibited substances, through production and handling?",
+                  "es": "¿Cómo evitas que el producto orgánico tenga contacto con material no orgánico y sustancias prohibidas, durante la producción y el manejo?"
+                },
+                "coaching": {
+                  "en": "Cover the field (equipment, applications) and handling after harvest (cleanout, separate runs, storage). The handling controls you named in On-Farm Handling count here too.",
+                  "es": "Incluye el campo (equipo, aplicaciones) y el manejo después de la cosecha (limpieza, corridas separadas, almacenamiento). Los controles que nombraste en Manejo en la finca también cuentan aquí."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "split_operation",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.272",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
                 "key": "harvest_transport_separation",
                 "kind": "checkbox_group",
                 "label": {
@@ -14105,6 +14161,36 @@
                   }
                 ],
                 "nop_cite": "§ 205.201(a)(5)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "split_records_distinction",
+                "kind": "textarea",
+                "label": {
+                  "en": "How do your harvest, shipping and sales records tell organic from non-organic crops?",
+                  "es": "¿Cómo distinguen tus registros de cosecha, envío y venta los cultivos orgánicos de los no orgánicos?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "split_operation",
+                    "op": "truthy",
+                    "value": null
+                  },
+                  {
+                    "question": "parallel_production",
+                    "op": "ne",
+                    "value": true
+                  }
+                ],
+                "nop_cite": "§ 205.103(b)(2)",
                 "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
@@ -14294,6 +14380,30 @@
                     "label": {
                       "en": "Physical distance or isolation from conventional fields",
                       "es": "Distancia física o aislamiento respecto a campos convencionales"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "no_buffer_crop",
+                    "label": {
+                      "en": "No crop is grown in the buffer areas",
+                      "es": "No se cultiva nada en las áreas de amortiguamiento"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "buffer_records_not_marked_organic",
+                    "label": {
+                      "en": "Buffer crop is never marked organic on crop records",
+                      "es": "El cultivo de amortiguamiento nunca se marca como orgánico en los registros de cultivo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "buffer_destroyed_or_given_away",
+                    "label": {
+                      "en": "Buffer crop is destroyed or given away",
+                      "es": "El cultivo de amortiguamiento se destruye o se regala"
                     },
                     "exclusive": false
                   },
@@ -19027,6 +19137,121 @@
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
+              },
+              {
+                "key": "inventory_system_description",
+                "kind": "textarea",
+                "label": {
+                  "en": "How do you keep track of the crop you have on hand?",
+                  "es": "¿Cómo llevas el control del cultivo que tienes en existencia?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.103(b)(2)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": {
+                  "en": "e.g. each bin is counted onto a storage sheet by lot as it goes into the cooler and counted off as it ships; the sheet is reconciled with the harvest and sales records",
+                  "es": "p. ej. cada contenedor se anota por lote en una hoja de almacenamiento al entrar a la cámara y se descuenta al despacharse; la hoja se concilia con los registros de cosecha y de venta"
+                },
+                "max_length": null
+              },
+              {
+                "key": "inventory_frequency",
+                "kind": "radio",
+                "label": {
+                  "en": "How often is inventory taken and recorded?",
+                  "es": "¿Con qué frecuencia se toma y registra el inventario?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "per_movement",
+                    "label": {
+                      "en": "Every time product moves in or out",
+                      "es": "Cada vez que el producto entra o sale"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "weekly",
+                    "label": {
+                      "en": "Weekly",
+                      "es": "Semanalmente"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "monthly",
+                    "label": {
+                      "en": "Monthly",
+                      "es": "Mensualmente"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "seasonal",
+                    "label": {
+                      "en": "Once a season",
+                      "es": "Una vez por temporada"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "annual",
+                    "label": {
+                      "en": "Once a year",
+                      "es": "Una vez al año"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otra (describe abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.103(b)(2)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "inventory_frequency_other",
+                "kind": "text",
+                "label": {
+                  "en": "How often, then?",
+                  "es": "¿Con qué frecuencia, entonces?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "inventory_frequency",
+                    "op": "eq",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
               }
             ]
           }
@@ -23103,8 +23328,8 @@
                   "es": "¿Cómo se conservan tus registros?"
                 },
                 "coaching": {
-                  "en": "Tick both if paper source documents — delivery tickets, scale tickets, handwritten spray logs — are filed as well as entered here.",
-                  "es": "Marca ambas si además conservas documentos en papel — boletas de entrega, tiquetes de báscula, registros de aplicación escritos a mano — aparte de lo que registras aquí."
+                  "en": "Tick every kind you use. Paper source documents (delivery tickets, scale tickets, handwritten spray logs) filed as well as entered here count as paper too.",
+                  "es": "Marca cada forma que uses. Los documentos en papel (boletas de entrega, tiquetes de báscula, registros de aplicación escritos a mano) que conservas además de lo que registras aquí también cuentan como papel."
                 },
                 "options": [
                   {
@@ -23122,11 +23347,68 @@
                       "es": "Copia impresa / papel"
                     },
                     "exclusive": false
+                  },
+                  {
+                    "value": "software_spreadsheet",
+                    "label": {
+                      "en": "Computer software or spreadsheet",
+                      "es": "Programa de computadora u hoja de cálculo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "phone_app",
+                    "label": {
+                      "en": "Phone app",
+                      "es": "Aplicación de teléfono"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "online_cloud",
+                    "label": {
+                      "en": "Online or cloud program",
+                      "es": "Programa en línea o en la nube"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otro (describe abajo)"
+                    },
+                    "exclusive": false
                   }
                 ],
                 "required": true,
                 "visible_when": [],
                 "nop_cite": "§ 205.103(b)(1)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "records_maintained_as_other",
+                "kind": "text",
+                "label": {
+                  "en": "How else are records kept?",
+                  "es": "¿De qué otra forma se conservan los registros?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "records_maintained_as",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
@@ -23150,6 +23432,94 @@
             ],
             "visible_when": [],
             "questions": [
+              {
+                "key": "sources_organic_products",
+                "kind": "boolean",
+                "label": {
+                  "en": "Do you source organic agricultural products, such as seed or crops, for your operation?",
+                  "es": "¿Adquieres productos agrícolas orgánicos, como semilla o cultivos, para tu operación?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.103(b)(2)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "sells_as_organic",
+                "kind": "boolean",
+                "label": {
+                  "en": "Do you sell any crops or crop products as organic?",
+                  "es": "¿Vendes algún cultivo o producto de cultivo como orgánico?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.103(b)(2)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "records_identify_organic_status",
+                "kind": "boolean",
+                "label": {
+                  "en": "Do your records identify the organic status of every crop and crop product, through harvest, storage, shipping and sale?",
+                  "es": "¿Tus registros identifican la condición orgánica de cada cultivo y producto, durante la cosecha, el almacenamiento, el envío y la venta?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "sells_as_organic",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.103(b)(2)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "records_organic_status_explanation",
+                "kind": "textarea",
+                "label": {
+                  "en": "Which records do not, and how is organic status known for them?",
+                  "es": "¿Qué registros no la identifican, y cómo se conoce la condición orgánica en esos casos?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "records_identify_organic_status",
+                    "op": "eq",
+                    "value": false
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
               {
                 "key": "lot_numbering",
                 "kind": "radio",
@@ -30294,8 +30664,11 @@
         "split_operation",
         "nonorganic_product_source",
         "split_operation_separation",
+        "split_input_records_distinction",
+        "split_contamination_prevention",
         "harvest_transport_separation",
         "parallel_production",
+        "split_records_distinction",
         "nonorganic_crops_products",
         "nonorganic_system_materials",
         "buffer_strategies",
@@ -30380,8 +30753,11 @@
         "nonorganic_product_source",
         "nonorganic_product_source_other",
         "split_operation_separation",
+        "split_input_records_distinction",
+        "split_contamination_prevention",
         "harvest_transport_separation",
         "parallel_production",
+        "split_records_distinction",
         "nonorganic_crops_products",
         "nonorganic_system_materials",
         "buffer_strategies",
@@ -30793,6 +31169,102 @@
       ]
     },
     {
+      "module": "g6_0_production",
+      "label": "split_not_parallel",
+      "answers": {
+        "split_operation": true,
+        "parallel_production": false
+      },
+      "visible_questions": [
+        "split_operation",
+        "nonorganic_product_source",
+        "split_operation_separation",
+        "split_input_records_distinction",
+        "split_contamination_prevention",
+        "harvest_transport_separation",
+        "parallel_production",
+        "split_records_distinction",
+        "nonorganic_crops_products",
+        "nonorganic_system_materials",
+        "buffer_strategies",
+        "drift_risk_present",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "borders_public_road",
+        "prohibited_materials_on_site",
+        "treated_lumber_any",
+        "uses_production_equipment"
+      ],
+      "missing_required": [
+        "split_operation_separation",
+        "nonorganic_system_materials",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ],
+      "missing_required_na": [
+        "split_operation_separation",
+        "nonorganic_system_materials",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ]
+    },
+    {
+      "module": "g6_0_production",
+      "label": "split_parallel",
+      "answers": {
+        "split_operation": true,
+        "parallel_production": true
+      },
+      "visible_questions": [
+        "split_operation",
+        "nonorganic_product_source",
+        "split_operation_separation",
+        "split_input_records_distinction",
+        "split_contamination_prevention",
+        "harvest_transport_separation",
+        "parallel_production",
+        "parallel_production_distinction",
+        "nonorganic_crops_products",
+        "nonorganic_system_materials",
+        "buffer_strategies",
+        "drift_risk_present",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "borders_public_road",
+        "prohibited_materials_on_site",
+        "treated_lumber_any",
+        "uses_production_equipment"
+      ],
+      "missing_required": [
+        "split_operation_separation",
+        "parallel_production_distinction",
+        "nonorganic_system_materials",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ],
+      "missing_required_na": [
+        "split_operation_separation",
+        "parallel_production_distinction",
+        "nonorganic_system_materials",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ]
+    },
+    {
       "module": "g6_2_storage",
       "label": "unanswered",
       "answers": {},
@@ -30802,7 +31274,9 @@
         "storage_shared_with_nonorganic",
         "storage_cleaned_before_organic",
         "storage_pest_control_materials_used",
-        "lot_identity_maintained"
+        "lot_identity_maintained",
+        "inventory_system_description",
+        "inventory_frequency"
       ],
       "missing_required": [
         "storage_locations",
@@ -30825,7 +31299,9 @@
         "storage_shared_with_nonorganic",
         "storage_cleaned_before_organic",
         "storage_pest_control_materials_used",
-        "lot_identity_maintained"
+        "lot_identity_maintained",
+        "inventory_system_description",
+        "inventory_frequency"
       ],
       "missing_required": [
         "storage_locations",
@@ -30859,7 +31335,9 @@
         "storage_shared_with_nonorganic",
         "storage_cleaned_before_organic",
         "storage_pest_control_materials_used",
-        "lot_identity_maintained"
+        "lot_identity_maintained",
+        "inventory_system_description",
+        "inventory_frequency"
       ],
       "missing_required": [
         "storage_locations",
@@ -30886,7 +31364,9 @@
         "organic_storage_area_identification",
         "storage_cleaned_before_organic",
         "storage_pest_control_materials_used",
-        "lot_identity_maintained"
+        "lot_identity_maintained",
+        "inventory_system_description",
+        "inventory_frequency"
       ],
       "missing_required": [
         "storage_locations",
@@ -30912,7 +31392,9 @@
         "on_farm_storage_table",
         "storage_cleaned_before_organic",
         "storage_pest_control_materials_used",
-        "lot_identity_maintained"
+        "lot_identity_maintained",
+        "inventory_system_description",
+        "inventory_frequency"
       ],
       "missing_required": [
         "storage_shared_with_nonorganic",
@@ -30939,7 +31421,9 @@
         "off_farm_storage_table",
         "storage_cleaned_before_organic",
         "storage_pest_control_materials_used",
-        "lot_identity_maintained"
+        "lot_identity_maintained",
+        "inventory_system_description",
+        "inventory_frequency"
       ],
       "missing_required": [
         "storage_shared_with_nonorganic",
@@ -31344,6 +31828,8 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "sources_organic_products",
+        "sells_as_organic",
         "lot_numbering",
         "trace_mechanisms",
         "audit_trail_exhibit",
@@ -31378,6 +31864,8 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "sources_organic_products",
+        "sells_as_organic",
         "lot_numbering",
         "lot_numbering_description",
         "lot_code_key",
@@ -31415,6 +31903,8 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "sources_organic_products",
+        "sells_as_organic",
         "lot_numbering",
         "lot_numbering_description",
         "lot_code_key",
@@ -31452,6 +31942,8 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "sources_organic_products",
+        "sells_as_organic",
         "lot_numbering",
         "trace_mechanisms",
         "audit_trail_exhibit",
@@ -31487,6 +31979,8 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "sources_organic_products",
+        "sells_as_organic",
         "lot_numbering",
         "trace_mechanisms",
         "trace_mechanisms_other",
@@ -31525,6 +32019,8 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "sources_organic_products",
+        "sells_as_organic",
         "lot_numbering",
         "trace_mechanisms",
         "audit_trail_exhibit",
@@ -31559,6 +32055,8 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "sources_organic_products",
+        "sells_as_organic",
         "lot_numbering",
         "trace_mechanisms",
         "audit_trail_exhibit",
@@ -31595,6 +32093,8 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "sources_organic_products",
+        "sells_as_organic",
         "lot_numbering",
         "trace_mechanisms",
         "audit_trail_exhibit",
@@ -31631,6 +32131,8 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "sources_organic_products",
+        "sells_as_organic",
         "lot_numbering",
         "trace_mechanisms",
         "audit_trail_exhibit",
@@ -31668,6 +32170,8 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "sources_organic_products",
+        "sells_as_organic",
         "lot_numbering",
         "trace_mechanisms",
         "audit_trail_exhibit",
@@ -31686,6 +32190,83 @@
         "primary_contact_records_access",
         "records_maintained_as",
         "lot_numbering"
+      ]
+    },
+    {
+      "module": "g8_0_record_keeping",
+      "label": "sells_records_short",
+      "answers": {
+        "sells_as_organic": true,
+        "records_identify_organic_status": false
+      },
+      "visible_questions": [
+        "s11_records",
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "sources_organic_products",
+        "sells_as_organic",
+        "records_identify_organic_status",
+        "records_organic_status_explanation",
+        "lot_numbering",
+        "trace_mechanisms",
+        "audit_trail_exhibit",
+        "import_export_activity"
+      ],
+      "missing_required": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "import_export_activity"
+      ],
+      "missing_required_na": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "import_export_activity"
+      ]
+    },
+    {
+      "module": "g8_0_record_keeping",
+      "label": "records_other",
+      "answers": {
+        "records_maintained_as": [
+          "phone_app",
+          "other"
+        ]
+      },
+      "visible_questions": [
+        "s11_records",
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "records_maintained_as_other",
+        "sources_organic_products",
+        "sells_as_organic",
+        "lot_numbering",
+        "trace_mechanisms",
+        "audit_trail_exhibit",
+        "import_export_activity"
+      ],
+      "missing_required": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "lot_numbering",
+        "import_export_activity"
+      ],
+      "missing_required_na": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "lot_numbering",
+        "import_export_activity"
       ]
     },
     {
@@ -34798,6 +35379,43 @@
     },
     {
       "module": "g8_0_record_keeping",
+      "label": "stale_chain:records_organic_status_explanation:sells_as_organic:truthy",
+      "answers": {
+        "records_identify_organic_status": false,
+        "sells_as_organic": false
+      },
+      "visible_questions": [
+        "s11_records",
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "sources_organic_products",
+        "sells_as_organic",
+        "lot_numbering",
+        "trace_mechanisms",
+        "audit_trail_exhibit",
+        "import_export_activity"
+      ],
+      "missing_required": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "import_export_activity"
+      ],
+      "missing_required_na": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "import_export_activity"
+      ]
+    },
+    {
+      "module": "g8_0_record_keeping",
       "label": "stale_chain:export_certificate_types_other:import_export_activity:includes",
       "answers": {
         "export_certificate_types": [
@@ -34813,6 +35431,8 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "sources_organic_products",
+        "sells_as_organic",
         "lot_numbering",
         "trace_mechanisms",
         "audit_trail_exhibit",
@@ -34850,6 +35470,8 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "sources_organic_products",
+        "sells_as_organic",
         "lot_numbering",
         "trace_mechanisms",
         "audit_trail_exhibit",
