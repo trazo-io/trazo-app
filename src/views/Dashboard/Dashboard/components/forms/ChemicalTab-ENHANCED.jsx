@@ -34,7 +34,8 @@ import {
   StandardAlert,
   CollapsibleSection,
   SectionHeader,
-  SectionBox
+  SectionBox,
+  StandardSegmentedControl
 } from 'components/Design/StandardComponents';
 import {
   FaChevronLeft,
@@ -779,6 +780,13 @@ const ChemicalTab = forwardRef(
        * edit is one product's record, and a plan item or a crew note is answered by one record.
        */
       allowTankMix = false,
+      /**
+       * With several parcels: the grower said the start and stop differ by parcel, so the parcel
+       * cards ask them and the shared inputs are not shown (the wizard owns the state, because the
+       * cards are outside this tab).
+       */
+      timesPerParcel = false,
+      onTimesPerParcelChange = () => {},
       carbonCalculation = null,
       isCalculatingCarbon = false
     },
@@ -4871,49 +4879,93 @@ const ChemicalTab = forwardRef(
                           </HStack>
                         </StandardField>
                       )}
-                      <StandardField
-                        label={intl.formatMessage({
-                          id: 'events.chemical.fields.applicationStart',
-                          defaultMessage: 'Application Start'
-                        })}
-                        helpText={
-                          isCaFarm
-                            ? intl.formatMessage({
-                                id: 'events.chemical.form.applicationStartHelp',
-                                defaultMessage: '3 CCR 6624(c)(2) / DPR box 17 — start date & time'
-                              })
-                            : intl.formatMessage({
-                                id: 'events.chemical.form.applicationStartHelpNeutral'
-                              })
-                        }>
-                        <Controller
-                          name="application_start"
-                          control={methods.control}
-                          render={({ field }) => <StandardInput {...field} type="datetime-local" />}
-                        />
-                      </StandardField>
-                      <StandardField
-                        label={intl.formatMessage({
-                          id: 'events.chemical.fields.applicationEnd',
-                          defaultMessage: 'Application End'
-                        })}
-                        helpText={
-                          isCaFarm
-                            ? intl.formatMessage({
-                                id: 'events.chemical.form.applicationEndHelp',
-                                defaultMessage:
-                                  '3 CCR 6624(c)(2) / DPR box 18 — completion date & time'
-                              })
-                            : intl.formatMessage({
-                                id: 'events.chemical.form.applicationEndHelpNeutral'
-                              })
-                        }>
-                        <Controller
-                          name="application_end"
-                          control={methods.control}
-                          render={({ field }) => <StandardInput {...field} type="datetime-local" />}
-                        />
-                      </StandardField>
+                      {/* One spray on several parcels, parcel after parcel: the grower may give each
+                          parcel its own start and stop, for the drift question "when was this
+                          parcel sprayed". Shared stays the default; "different" moves both times
+                          onto the parcel cards below, and the shared ones are not sent. */}
+                      {multiTarget && (
+                        <Box gridColumn={{ md: 'span 2' }} data-testid="times-per-parcel">
+                          <StandardField
+                            label={intl.formatMessage({ id: 'events.multiParcel.timesLabel' })}
+                            helpText={
+                              timesPerParcel
+                                ? intl.formatMessage({ id: 'events.multiParcel.timesOnCards' })
+                                : undefined
+                            }>
+                            <StandardSegmentedControl
+                              ariaLabel={intl.formatMessage({
+                                id: 'events.multiParcel.timesLabel'
+                              })}
+                              value={timesPerParcel ? 'parcel' : 'same'}
+                              onChange={(choice) => onTimesPerParcelChange(choice === 'parcel')}
+                              options={[
+                                {
+                                  key: 'same',
+                                  label: intl.formatMessage({ id: 'events.multiParcel.timesSame' })
+                                },
+                                {
+                                  key: 'parcel',
+                                  label: intl.formatMessage({
+                                    id: 'events.multiParcel.timesPerParcel'
+                                  })
+                                }
+                              ]}
+                            />
+                          </StandardField>
+                        </Box>
+                      )}
+                      {!(multiTarget && timesPerParcel) && (
+                        <>
+                          <StandardField
+                            label={intl.formatMessage({
+                              id: 'events.chemical.fields.applicationStart',
+                              defaultMessage: 'Application Start'
+                            })}
+                            helpText={
+                              isCaFarm
+                                ? intl.formatMessage({
+                                    id: 'events.chemical.form.applicationStartHelp',
+                                    defaultMessage:
+                                      '3 CCR 6624(c)(2) / DPR box 17 — start date & time'
+                                  })
+                                : intl.formatMessage({
+                                    id: 'events.chemical.form.applicationStartHelpNeutral'
+                                  })
+                            }>
+                            <Controller
+                              name="application_start"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardInput {...field} type="datetime-local" />
+                              )}
+                            />
+                          </StandardField>
+                          <StandardField
+                            label={intl.formatMessage({
+                              id: 'events.chemical.fields.applicationEnd',
+                              defaultMessage: 'Application End'
+                            })}
+                            helpText={
+                              isCaFarm
+                                ? intl.formatMessage({
+                                    id: 'events.chemical.form.applicationEndHelp',
+                                    defaultMessage:
+                                      '3 CCR 6624(c)(2) / DPR box 18 — completion date & time'
+                                  })
+                                : intl.formatMessage({
+                                    id: 'events.chemical.form.applicationEndHelpNeutral'
+                                  })
+                            }>
+                            <Controller
+                              name="application_end"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardInput {...field} type="datetime-local" />
+                              )}
+                            />
+                          </StandardField>
+                        </>
+                      )}
                     </SimpleGrid>
 
                     {/* State application facts (overall review 2026-11, OV-FJ-C11): the wind and

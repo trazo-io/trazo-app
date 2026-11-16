@@ -115,6 +115,24 @@ describe('useEventDraft', () => {
     expect(restored!.multi).toEqual(multi);
   });
 
+  it('brings back the "times differ by parcel" switch as saved, even with every card blank', () => {
+    const multi = {
+      parcelIds: [12, 13],
+      targets: [{ parcelId: 12, scope: 'all', values: {}, times: {} }],
+      timesPerParcel: true
+    };
+    const first = renderHook(() => useEventDraft({ parcelId: 231 }));
+    act(() => first.result.current.saveDraft(2, FILLED, 0, multi));
+    flushDebounce();
+
+    const second = renderHook(() => useEventDraft({ parcelId: 231 }));
+    let restored: { multi?: { timesPerParcel?: boolean } } | null = null;
+    act(() => {
+      restored = second.result.current.restoreDraft();
+    });
+    expect(restored!.multi?.timesPerParcel).toBe(true);
+  });
+
   it('a single-parcel draft carries no multi block', () => {
     const first = renderHook(() => useEventDraft({ parcelId: 232 }));
     act(() => first.result.current.saveDraft(2, FILLED, 0, { parcelIds: [], targets: [] }));
