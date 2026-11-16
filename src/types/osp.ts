@@ -444,6 +444,12 @@ export interface OSPRecordType {
    *  out of a required record: it prints as missing (OSP alignment audit T17-F1). */
   not_kept?: boolean;
   not_kept_reason?: string;
+  /** Only the operator can state how this record links to the next and previous document (a weigh
+   *  ticket, a delivery slip, their own form). Asked once confirmed; the audit trail exhibit prints it
+   *  as the operator's statement (OTCO C12 12.2-6). */
+  operator_states_link?: boolean;
+  /** That statement; '' until given. */
+  linking_element?: string;
   /** This plan's own answers require this record type, and why. */
   required?: boolean;
   required_state?: 'confirmed' | 'not_confirmed' | 'not_kept' | 'unresolved' | '';

@@ -654,6 +654,24 @@ const ospApi = baseApi.injectEndpoints({
       ]
     }),
 
+    // How a confirmed record the operation keeps outside Trazo links to the next and previous
+    // document, in the operator's words (OTCO C12 12.2-6). '' clears it.
+    setOSPRecordTypeLink: build.mutation<
+      OSPRecordTypesResponse,
+      OSPOne & { key: string; linkingElement: string }
+    >({
+      query: ({ companyId, farmId, ospId, key, linkingElement }) => ({
+        url: OSP_RECORD_TYPES_URL(companyId, farmId, ospId),
+        method: 'POST',
+        body: { keys: [key], linking_element: linkingElement },
+        credentials: 'include'
+      }),
+      invalidatesTags: (_r, _e, { ospId }) => [
+        { type: 'OSPRecordTypes', id: Number(ospId) },
+        { type: 'OSP', id: Number(ospId) }
+      ]
+    }),
+
     // Common OSP required attachments — per-workbook row + blank-cell counts. The files
     // themselves download straight from OSP_ATTACHMENTS_URL with ?workbook=, not through RTK
     // Query, because the response is an .xlsx attachment rather than JSON.
@@ -765,6 +783,7 @@ export const {
   useGetOSPReviewQuery,
   useConfirmOSPRecordTypesMutation,
   useMarkOSPRecordTypeNotKeptMutation,
+  useSetOSPRecordTypeLinkMutation,
   useLazyVerifyInputQuery
 } = ospApi;
 

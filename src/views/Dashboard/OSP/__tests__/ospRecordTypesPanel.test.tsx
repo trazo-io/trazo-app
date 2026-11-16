@@ -104,6 +104,7 @@ vi.mock('store/api/ospApi', () => ({
   }),
   useConfirmOSPRecordTypesMutation: () => [confirmRecordTypes, { isLoading: false }],
   useMarkOSPRecordTypeNotKeptMutation: () => [vi.fn(), { isLoading: false }],
+  useSetOSPRecordTypeLinkMutation: () => [vi.fn(), { isLoading: false }],
   // Attachments are RENDERED here on purpose. Their row label is the most intricate ICU string
   // in the panel — nested plurals with a `select` separator and a zero-case — and nothing
   // exercised it, so a malformed message would have thrown at runtime in front of a farmer and

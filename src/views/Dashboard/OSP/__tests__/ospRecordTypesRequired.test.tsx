@@ -87,6 +87,7 @@ vi.mock('store/api/ospApi', () => ({
   }),
   useConfirmOSPRecordTypesMutation: () => [vi.fn(), { isLoading: false }],
   useMarkOSPRecordTypeNotKeptMutation: () => [markNotKept, { isLoading: false }],
+  useSetOSPRecordTypeLinkMutation: () => [vi.fn(), { isLoading: false }],
   useGetOSPAttachmentsQuery: () => ({ data: { workbooks: [] }, isLoading: false })
 }));
 
