@@ -578,8 +578,10 @@ export const TraceChain = ({
             <Fact label={t('traceback.balance.difference')} value={tb.balance.difference} />
           </>
         )}
-        {/* Counted apart, never dropped: without this line a conventional (buffer) sale made
-            "sold" read short with nothing to say why. */}
+        {/* Inside "sold", named: a sale whose invoice does not say organic still left the lot
+            (overall review 2026-11, OV-FJ-C24: it was counted apart, and this card said the whole
+            harvest was unsold while the dossier subtracted it). Only the buffer crop's sales are
+            counted apart, on the line after. */}
         {tb.balance.sold_not_organic_count > 0 && (
           <Text fontSize="sm" mt={2} color="gray.600">
             {tb.balance.sold_not_organic
@@ -590,6 +592,16 @@ export const TraceChain = ({
               : t('traceback.balance.soldNotOrganicCount', {
                   count: tb.balance.sold_not_organic_count
                 })}
+          </Text>
+        )}
+        {tb.balance.buffer_sale_count > 0 && (
+          <Text fontSize="sm" mt={2} color="gray.600" data-testid="trace-buffer-sold">
+            {tb.balance.buffer_sold
+              ? t('traceback.balance.bufferSold', {
+                  quantity: tb.balance.buffer_sold,
+                  count: tb.balance.buffer_sale_count
+                })
+              : t('traceback.balance.bufferSoldCount', { count: tb.balance.buffer_sale_count })}
           </Text>
         )}
       </StandardCard>

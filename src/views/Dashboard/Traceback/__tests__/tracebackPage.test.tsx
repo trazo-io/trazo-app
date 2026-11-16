@@ -339,13 +339,29 @@ describe('TracebackPage', () => {
     expect(screen.getByRole('button', { name: messages['common.back'] })).toBeTruthy();
   });
 
-  it('states sales not invoiced as organic beside the balance, never drops them', () => {
+  it('names the sales not invoiced as organic inside sold, never counts them apart', () => {
+    // Overall review 2026-11, OV-FJ-C24: they left the lot, so they are part of "Sold".
     state.trace = {
       ...TRACE,
       balance: { ...TRACE.balance, sold_not_organic: '400 lb', sold_not_organic_count: 1 }
     };
     renderAt('/admin/dashboard/farm/1/traceback?sale=7');
-    expect(screen.getByText(/counted apart: 400 lb in 1 sale\./)).toBeTruthy();
+    expect(
+      screen.getByText('Of which not identified as organic on the invoice: 400 lb in 1 sale.')
+    ).toBeTruthy();
+    expect(screen.queryByText(/counted apart/)).toBeNull();
+    expect(screen.queryByTestId('trace-buffer-sold')).toBeNull();
+  });
+
+  it('states the buffer crop sales apart from the organic lot', () => {
+    state.trace = {
+      ...TRACE,
+      balance: { ...TRACE.balance, buffer_sold: '20 bins', buffer_sale_count: 1 }
+    };
+    renderAt('/admin/dashboard/farm/1/traceback?sale=7');
+    expect(screen.getByTestId('trace-buffer-sold')).toHaveTextContent(
+      'Buffer crop, counted apart from the organic lot: 20 bins sold in 1 sale.'
+    );
   });
 
   it('says the balance is so far, not a season total, while the season is open', () => {
