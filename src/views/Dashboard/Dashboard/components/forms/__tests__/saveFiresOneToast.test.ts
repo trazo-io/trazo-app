@@ -87,6 +87,9 @@ describe('NewEvent save path toasts', () => {
     expect(savePath).toContain('{ count: manurePickCount }');
     expect(savePath).toContain('{ count: bothPickCount }');
     expect(savePath).toContain('interval: c.interval_days');
+    // Review of app #399: three conflict lines in all, never three of each.
+    expect(savePath).toContain('...phiLines.slice(0, manureLines.length ? 2 : 3)');
+    expect(savePath).toMatch(/\.\.\.manureLines\s*\]\.slice\(0, 3\)/);
   });
 
   it('keeps the removed carbon-calculation fallback string out', () => {

@@ -3516,12 +3516,24 @@ function NewEventForm({ isEdit = false, eventId = null }) {
             {
               id: 'app.manureConflictLine',
               defaultMessage:
-                'Raw manure applied {applied}: picked {picked}, {days, plural, one {# day} other {# days}} after (interval {interval} days)'
+                'Raw manure applied {applied}: picked {picked}, {days, plural, one {# day} other {# days}} after (interval {interval} days){recorded_as, select, composted {; recorded as composted, with neither the § 205.203(c)(2) figures nor a supplier} processed_5006 {; recorded as processed, with no NOP 5006 documentation} other {}}'
             },
-            { applied: c.applied, picked: c.picked, days: c.days, interval: c.interval_days }
+            {
+              applied: c.applied,
+              picked: c.picked,
+              days: c.days,
+              interval: c.interval_days,
+              // How the record labels itself when it is read as raw anyway (review of back #446).
+              recorded_as: c.recorded_as || 'raw'
+            }
           )
         );
-        const conflictLines = [...phiLines, ...manureLines];
+        // Three lines in all, as before this joined the PHI lines: with both kinds, at most two PHI
+        // lines leave room for a manure one (review of app #399).
+        const conflictLines = [
+          ...phiLines.slice(0, manureLines.length ? 2 : 3),
+          ...manureLines
+        ].slice(0, 3);
         const details = conflictLines.length
           ? [...conflictLines, ...(gapNames ? [`${gapsLabel} ${gapNames}`] : [])].join(' · ')
           : gapNames;
