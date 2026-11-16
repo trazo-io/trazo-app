@@ -512,6 +512,25 @@ describe('approved-inputs: the use and the section are asked before Add', () => 
     });
   });
 
+  it("clears both on a new search, so one material's answers never go to the next", async () => {
+    renderPanel(ONE_OMRI);
+    pick('Is it in use?', 'in_use');
+    pick('What it is used for', 'pest_disease_weed');
+    expect(
+      (screen.getByRole('button', { name: /Add to OSP/i }) as HTMLButtonElement).disabled
+    ).toBe(false);
+    const box = screen.getByPlaceholderText(/search/i);
+    fireEvent.change(box, { target: { value: 'Serenade' } });
+    fireEvent.keyDown(box, { key: 'Enter' });
+    await waitFor(() =>
+      expect((screen.getByLabelText('Is it in use?') as HTMLSelectElement).value).toBe('')
+    );
+    expect((screen.getByLabelText('What it is used for') as HTMLSelectElement).value).toBe('');
+    expect(
+      (screen.getByRole('button', { name: /Add to OSP/i }) as HTMLButtonElement).disabled
+    ).toBe(true);
+  });
+
   it("asks the same before a material is added in the operator's own words", async () => {
     renderPanel({
       found: false,

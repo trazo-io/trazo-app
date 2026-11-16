@@ -292,6 +292,9 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
   const handleSearch = async () => {
     const trimmed = query.trim();
     if (!trimmed) return;
+    // A new search is a new material: the use and section picked for the last one do not carry over
+    // (review of app #405: they did, and Add was enabled for a product nobody had answered).
+    resetUse();
     try {
       await verify({ name: trimmed }).unwrap();
       setSearchedTerm(trimmed);
@@ -629,7 +632,6 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
               // row; it wraps instead of being cut off at the card edge.
               whiteSpace="normal"
               h="auto"
-              minH="32px"
               py={1}
               onClick={handleAddOwnMaterial}>
               {intl.formatMessage({ id: 'osp.approvedInputs.own.addAction' })}
