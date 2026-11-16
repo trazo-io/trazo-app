@@ -38,6 +38,8 @@ const SCREENS = [
 const KEEP: Record<string, string> = {
   'consumer.eventCard.organic.tooltipNationalList':
     '"organic crop production" is 7 CFR 205.601\'s own wording',
+  'consumer.eventCard.organic.tooltipNationalListAllowedCondition':
+    '"organic crop production" is 7 CFR 205.601\'s own wording',
   'consumer.eventCard.organic.tooltipWsda': '"organic production" is the WSDA programme\'s scope'
 };
 
