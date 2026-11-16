@@ -70,6 +70,17 @@ describe('restoring a draft in the event wizard', () => {
     expect(handler.slice(guard, reset)).toMatch(/return;/);
   });
 
+  it('saves the "times differ by parcel" switch and restores it as saved, never from the cards', () => {
+    // Review of app #402: inferred from card times, "different" with blank cards came back as
+    // "same" (the old shared window went to every parcel), and "same" with stale card times came
+    // back as "different" (the stale times were sent).
+    expect(wizard).toMatch(
+      /\{ parcelIds: multiParcelIds, targets: multiTargets, timesPerParcel \}/
+    );
+    expect(restoreHandler).toMatch(/setTimesPerParcel\(draft\.multi\.timesPerParcel === true\)/);
+    expect(restoreHandler).not.toMatch(/\.times \|\| \{\}/);
+  });
+
   it('saves step 0 fields with the draft', () => {
     expect(wizard).toMatch(/basicMethods\.watch\(\['date', 'performed_by'\]\)/);
     expect(wizard).toMatch(/performed_by: step0PerformedBy/);

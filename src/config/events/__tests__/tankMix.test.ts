@@ -361,6 +361,44 @@ describe('the tank request on several parcels', () => {
     ]);
   });
 
+  it("each parcel's own start and stop ride on its target, for every line written there", () => {
+    const timed = buildTankMixBody({
+      body: buildMultiTargetBody(
+        {
+          ...singleBody(),
+          application_rate: '6',
+          application_rate_unit: 'fl_oz_ac',
+          application_start: '2026-05-02T06:00'
+        },
+        [
+          {
+            ...north,
+            times: { application_start: '2026-05-02T06:00', application_end: '2026-05-02T07:00' }
+          },
+          { ...south, times: { application_start: '2026-05-02T07:15' } }
+        ],
+        cardRules,
+        form,
+        'unused',
+        { timesPerParcel: true }
+      ),
+      lines,
+      tankId: 'tank-3',
+      perTargetKeys: PER_TARGET
+    });
+    expect(timed).not.toHaveProperty('application_start');
+    const [n, s] = timed.targets as Record<string, unknown>[];
+    expect(n).toMatchObject({
+      application_start: '2026-05-02T06:00',
+      application_end: '2026-05-02T07:00'
+    });
+    expect(s.application_start).toBe('2026-05-02T07:15');
+    expect(s).not.toHaveProperty('application_end');
+    for (const line of timed.products as Record<string, unknown>[]) {
+      expect(line).not.toHaveProperty('application_start');
+    }
+  });
+
   it('sends no amount on a line and no group of its own', () => {
     for (const line of body.products as Record<string, unknown>[]) {
       expect(line).not.toHaveProperty('volume_applied');

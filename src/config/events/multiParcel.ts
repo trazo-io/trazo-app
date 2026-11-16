@@ -36,6 +36,8 @@ interface RawUi {
   fields_by_subtype: Record<string, PerParcelField[]>;
   /** Subtypes whose form asks no area (pollination, nesting structures): no area per parcel. */
   no_area_subtypes?: string[];
+  /** Start and stop times a card may ask when the grower says they differ by parcel. */
+  time_keys?: string[];
 }
 
 interface RawType {
@@ -77,6 +79,12 @@ export interface MultiParcelRules {
   perTargetKeys: Set<string>;
   /** Keys that may be sent once shared or once per parcel. */
   eitherKeys: Set<string>;
+  /**
+   * The start and stop times (`ui.time_keys`) a card asks when the grower says they differ by
+   * parcel; empty for a type whose times are always shared. Only `either` keys: the same times go
+   * shared by default, and per parcel only when the grower chooses.
+   */
+  timeKeys: string[];
   /** Keys refused in a multi-parcel save (top level). */
   refusedKeys: Set<string>;
   /** Keys refused inside `extra_data`. */
@@ -123,6 +131,7 @@ export const specRulesFor = (
     fields,
     perTargetKeys,
     eitherKeys: new Set(raw.either),
+    timeKeys: (raw.ui.time_keys ?? []).filter((key) => raw.either.includes(key)),
     perParcelUnitKeys: new Set(
       fields
         .map((field) => field.unit_key)

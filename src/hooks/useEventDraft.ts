@@ -31,6 +31,12 @@ const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 export interface EventDraftMulti {
   parcelIds: number[];
   targets: unknown[];
+  /**
+   * The spray form's "start and stop times differ by parcel" switch. Stored, never inferred from
+   * the cards: a grower may switch to "different" and leave every card blank, or switch back to
+   * "same" with card times still typed. Absent on drafts written before the switch existed.
+   */
+  timesPerParcel?: boolean;
 }
 
 export interface EventDraftPayload {

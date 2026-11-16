@@ -102,6 +102,11 @@ interface PerParcelCardsProps {
   sectionsByParcel?: Record<number, string[]>;
   /** After a refused Continue: mark what each parcel is missing. */
   showIssues: boolean;
+  /**
+   * The grower said the start and stop differ by parcel (the spray form's switch): each card
+   * asks its own, optional. Off, the times are the shared form's and no card asks them.
+   */
+  timesPerParcel?: boolean;
 }
 
 // The irrigation depth unit is stored as the word "inches", which read "(inches)" on a Spanish
@@ -116,7 +121,8 @@ export const PerParcelCards = ({
   rules,
   form,
   sectionsByParcel = {},
-  showIssues
+  showIssues,
+  timesPerParcel = false
 }: PerParcelCardsProps) => {
   const intl = useIntl();
   const update = (parcelId: number, patch: Partial<ParcelTarget>) =>
@@ -330,6 +336,29 @@ export const PerParcelCards = ({
                     </Box>
                   );
                 })}
+              {answered && timesPerParcel && rules.timeKeys.length > 0 && (
+                <Stack
+                  direction={{ base: 'column', md: 'row' }}
+                  spacing={3}
+                  mt={3}
+                  data-testid={`parcel-times-${target.parcelId}`}>
+                  {rules.timeKeys.map((key) => (
+                    <StandardField
+                      key={key}
+                      label={intl.formatMessage({ id: `events.multiParcel.time.${key}` })}>
+                      <StandardInput
+                        type="datetime-local"
+                        value={target.times?.[key] ?? ''}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          update(target.parcelId, {
+                            times: { ...(target.times ?? {}), [key]: e.target.value }
+                          })
+                        }
+                      />
+                    </StandardField>
+                  ))}
+                </Stack>
+              )}
               {issues.includes('scope') && (
                 <Text role="alert" mt={2} fontSize="sm" fontWeight="medium" color="red.700">
                   {intl.formatMessage({ id: 'events.multiParcel.issue.scope' })}

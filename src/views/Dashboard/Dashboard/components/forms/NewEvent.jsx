@@ -160,6 +160,7 @@ import { isEventOnBuyerPage } from 'utils/consumerDisplay';
 import { cleanEventPayload, GENERAL_MODEL_TO_FORM } from 'utils/cleanEventPayload';
 import {
   buildMultiTargetBody,
+  targetsHoldTimes,
   newApplicationGroup,
   multiParcelMode,
   newTarget,
@@ -977,6 +978,9 @@ function NewEventForm({ isEdit = false, eventId = null }) {
     setMultiTargets((prev) => pruneTankCardValues(prev, tankLines));
   }, [tankLines]);
   const [showMultiIssues, setShowMultiIssues] = useState(false);
+  // A spray on several parcels, parcel after parcel: "different on each parcel" moves the start
+  // and stop onto the cards (`cardRules.timeKeys`) and out of the shared body. Off by default.
+  const [timesPerParcel, setTimesPerParcel] = useState(false);
   // Minted once per wizard session and sent as the server's idempotency key, so a save retried
   // after a lost response returns the records already written instead of writing them again.
   const applicationGroupRef = useRef(null);
@@ -1147,7 +1151,9 @@ function NewEventForm({ isEdit = false, eventId = null }) {
         ...(step0TimeNotRecorded ? { time_not_recorded: true } : {})
       },
       acceptedFiles?.length || 0,
-      multiParcelIds.length > 0 ? { parcelIds: multiParcelIds, targets: multiTargets } : undefined,
+      multiParcelIds.length > 0
+        ? { parcelIds: multiParcelIds, targets: multiTargets, timesPerParcel }
+        : undefined,
       {
         dateChosen: isOperatorChosenDate(step0Date, wizardDefaultDate),
         verbKey: activeVerbKey ?? null
@@ -1160,6 +1166,7 @@ function NewEventForm({ isEdit = false, eventId = null }) {
     saveDraft,
     multiParcelIds,
     multiTargets,
+    timesPerParcel,
     step0Date,
     step0PerformedBy,
     step0TimeNotRecorded,
@@ -1214,7 +1221,13 @@ function NewEventForm({ isEdit = false, eventId = null }) {
     if (draft.multi?.parcelIds?.length) {
       const { ids, droppedNames } = restorableDraftParcels(draft.multi.parcelIds, farmParcels);
       const kept = new Set([Number(parcelId), ...ids]);
-      setMultiTargets((draft.multi.targets || []).filter((t) => kept.has(Number(t?.parcelId))));
+      const restoredTargets = (draft.multi.targets || []).filter((t) =>
+        kept.has(Number(t?.parcelId))
+      );
+      setMultiTargets(restoredTargets);
+      // The switch comes back as it was saved, never guessed from the cards: "different" with
+      // every card blank, or "same" with card times still typed, are both real states.
+      setTimesPerParcel(draft.multi.timesPerParcel === true);
       setMultiParcelIds(ids);
       if (droppedNames.length > 0) {
         toast({
@@ -3186,8 +3199,18 @@ function NewEventForm({ isEdit = false, eventId = null }) {
         // clears the stored mark. Ticked, the day goes at the noon placeholder whatever a voice
         // or crew-note offer wrote into the date since, and never beside a CA start or end time
         // (the server refuses that pair too; this says so before the request).
+        // Times per parcel: the shared inputs are hidden and not sent, so only the cards' own
+        // times can contradict the mark.
+        const perParcelTimes = multiActive && timesPerParcel && cardRules?.timeKeys?.length > 0;
+        if (perParcelTimes) {
+          cardRules.timeKeys.forEach((key) => delete processedEventFormData[key]);
+        }
         const timed = withTimeNotRecorded(processedEventFormData);
-        if (timed.conflict) {
+        const cardTimeConflict =
+          perParcelTimes &&
+          isAffirmativeFlag(processedEventFormData.time_not_recorded) &&
+          targetsHoldTimes(multiTargets, cardRules.timeKeys);
+        if (timed.conflict || cardTimeConflict) {
           const windowError = new Error(
             intl.formatMessage({ id: 'events.wizard.timeNotRecordedStartEnd' })
           );
@@ -3355,7 +3378,8 @@ function NewEventForm({ isEdit = false, eventId = null }) {
           multiTargets,
           cardRules,
           multiForm(eventFormData),
-          applicationGroupRef.current
+          applicationGroupRef.current,
+          { timesPerParcel }
         );
         // Several products from one tank on these parcels (config/events/tankMix.ts): the cards
         // above asked each product's amount on each parcel, and the tank id replaces the group.
@@ -5182,6 +5206,8 @@ function NewEventForm({ isEdit = false, eventId = null }) {
                       hideTypeSelect
                       multiTarget={multiActive}
                       allowTankMix={tankMixAllowed}
+                      timesPerParcel={timesPerParcel}
+                      onTimesPerParcelChange={setTimesPerParcel}
                       carbonCalculation={carbonCalculation}
                       isCalculatingCarbon={isCalculatingCarbon || isCalculating}
                     />
@@ -5253,6 +5279,7 @@ function NewEventForm({ isEdit = false, eventId = null }) {
                           form={multiForm(eventFormData)}
                           sectionsByParcel={sectionsByParcel}
                           showIssues={showMultiIssues}
+                          timesPerParcel={timesPerParcel}
                         />
                       </Box>
                     )}

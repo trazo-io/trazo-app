@@ -47,6 +47,12 @@ export interface ParcelTarget {
   section: string;
   /** What the grower typed per field key. Missing or empty means "use the derived value". */
   values: Record<string, string>;
+  /**
+   * This parcel's own start and stop (`rules.timeKeys`), as `datetime-local` text. Sent only when
+   * the grower says the times differ by parcel; never filled from the shared window or another
+   * parcel, because a job's window is not each parcel's.
+   */
+  times?: Record<string, string>;
 }
 
 export const newTarget = (parcel: {
@@ -61,7 +67,8 @@ export const newTarget = (parcel: {
   partArea: '',
   partDetail: '',
   section: '',
-  values: {}
+  values: {},
+  times: {}
 });
 
 const toNumber = (value: unknown): number | null => {
@@ -245,9 +252,22 @@ export const buildMultiTargetBody = (
   targets: ParcelTarget[],
   rules: MultiParcelRules,
   form: SharedForm,
-  applicationGroup: string
+  applicationGroup: string,
+  {
+    timesPerParcel = false
+  }: {
+    /**
+     * The grower said the start and stop differ by parcel: the shared times leave the body and
+     * each card's own go with its parcel (the server refuses a time sent both ways).
+     */
+    timesPerParcel?: boolean;
+  } = {}
 ): Record<string, unknown> => {
   const shared: Record<string, unknown> = { ...singleBody };
+  const timeKeys = timesPerParcel ? rules.timeKeys : [];
+  timeKeys.forEach((key) => {
+    delete shared[key];
+  });
   // The unit of a per-parcel amount travels WITH the amount, on the parcel that has one, when
   // the server takes it per parcel (an `either` key). Left shared, a form that only sends a unit
   // beside its amount drops it, and the model default ("gal", "inches") would stand against a
@@ -292,10 +312,18 @@ export const buildMultiTargetBody = (
           field.unit_key && unitsPerParcel.includes(field.unit_key) && unitOf(field, form);
         if (unit) body[field.unit_key!] = unit;
       }
+      for (const key of timeKeys) {
+        const typed = (target.times?.[key] ?? '').trim();
+        if (typed) body[key] = typed;
+      }
       return body;
     })
   };
 };
+
+/** True when any card holds a start or stop of its own (`rules.timeKeys`). */
+export const targetsHoldTimes = (targets: ParcelTarget[], timeKeys: string[]): boolean =>
+  targets.some((target) => timeKeys.some((key) => (target.times?.[key] ?? '').trim() !== ''));
 
 /** A UUID for `application_group`, minted once per wizard session. */
 export const newApplicationGroup = (): string => {

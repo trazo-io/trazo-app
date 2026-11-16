@@ -11,6 +11,7 @@ import {
   multiParcelMode,
   newTarget,
   restorableDraftParcels,
+  targetsHoldTimes,
   voiceFieldsAskedPerParcel,
   planAlsoSeed,
   targetArea,
@@ -206,6 +207,77 @@ describe('multiParcel: request body', () => {
     expect(irBody).not.toHaveProperty('area_covered');
     expect(irBody).toMatchObject({ irrigation_method: 'drip' });
     expect(irBody.targets).toEqual([{ parcel: 11, area_covered: '12.4', irrigation_depth: '1.5' }]);
+  });
+});
+
+describe('multiParcel: start and stop times per parcel', () => {
+  const single = {
+    event_type: 2,
+    date: '2026-05-02T06:30',
+    commercial_name: 'Entrust SC',
+    application_rate: '6',
+    application_rate_unit: 'fl_oz_ac',
+    volume_unit: 'fl_oz',
+    area_unit: 'acres',
+    application_start: '2026-05-02T06:30',
+    application_end: '2026-05-02T11:00'
+  };
+  const north = {
+    ...parcel({ scope: 'all' }),
+    times: { application_start: '2026-05-02T06:30', application_end: '2026-05-02T08:10' }
+  };
+  const south = {
+    ...newTarget({ id: 12, name: 'South', area: 2.4281 }),
+    scope: 'all' as const,
+    times: { application_start: '2026-05-02T08:20', application_end: '' }
+  };
+  const east = { ...newTarget({ id: 13, name: 'East', area: 1 }), scope: 'all' as const };
+
+  it('the spray rules name both times, and they are either keys the server takes both ways', () => {
+    expect(chemical.timeKeys).toEqual(['application_start', 'application_end']);
+    chemical.timeKeys.forEach((key) => {
+      expect(chemical.eitherKeys.has(key)).toBe(true);
+      expect(chemical.hiddenKeys.has(key)).toBe(false);
+    });
+    expect(irrigation.timeKeys).toEqual([]);
+  });
+
+  it('by default the times stay shared and no parcel carries its own', () => {
+    const body = buildMultiTargetBody(single, [north, south], chemical, single, 'g');
+    expect(body).toMatchObject({
+      application_start: '2026-05-02T06:30',
+      application_end: '2026-05-02T11:00'
+    });
+    (body.targets as Record<string, unknown>[]).forEach((target) => {
+      expect(target).not.toHaveProperty('application_start');
+      expect(target).not.toHaveProperty('application_end');
+    });
+  });
+
+  it("per parcel: the shared times leave the body and each card's own go with its parcel", () => {
+    const body = buildMultiTargetBody(single, [north, south, east], chemical, single, 'g', {
+      timesPerParcel: true
+    });
+    expect(body).not.toHaveProperty('application_start');
+    expect(body).not.toHaveProperty('application_end');
+    const [n, s, e] = body.targets as Record<string, unknown>[];
+    expect(n).toMatchObject({
+      application_start: '2026-05-02T06:30',
+      application_end: '2026-05-02T08:10'
+    });
+    // A blank stop is not sent, and a card left empty sends no window at all.
+    expect(s.application_start).toBe('2026-05-02T08:20');
+    expect(s).not.toHaveProperty('application_end');
+    expect(e).not.toHaveProperty('application_start');
+    expect(e).not.toHaveProperty('application_end');
+  });
+
+  it('targetsHoldTimes reads only typed times', () => {
+    expect(targetsHoldTimes([east], chemical.timeKeys)).toBe(false);
+    expect(targetsHoldTimes([east, south], chemical.timeKeys)).toBe(true);
+    expect(
+      targetsHoldTimes([{ ...east, times: { application_start: '  ' } }], chemical.timeKeys)
+    ).toBe(false);
   });
 });
 
