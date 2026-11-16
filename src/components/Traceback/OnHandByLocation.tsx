@@ -30,6 +30,9 @@ export type OnHandLocation = {
   units: string[];
   sold_not_organic_count: number;
   sold_not_organic: string;
+  /** Sales of the buffer crop, counted apart (absent from a backend older than 2026-11-15). */
+  buffer_sale_count?: number;
+  buffer_sold?: string;
 };
 
 export type OnHandSale = {
@@ -109,6 +112,16 @@ export const OnHandByLocation = ({ onHand }: { onHand: OnHand }) => {
                     : t('traceback.balance.soldNotOrganicCount', {
                         count: row.sold_not_organic_count
                       })}
+                </Text>
+              )}
+              {(row.buffer_sale_count ?? 0) > 0 && (
+                <Text fontSize="sm" mt={1} color="gray.600">
+                  {row.buffer_sold
+                    ? t('traceback.balance.bufferSold', {
+                        quantity: row.buffer_sold,
+                        count: row.buffer_sale_count ?? 0
+                      })
+                    : t('traceback.balance.bufferSoldCount', { count: row.buffer_sale_count ?? 0 })}
                 </Text>
               )}
             </Box>
