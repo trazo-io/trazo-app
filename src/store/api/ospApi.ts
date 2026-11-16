@@ -152,6 +152,10 @@ interface OSPApprovedInputArgs extends OSPOne {
   // Optional § 205.400(f)(1) certifier-letter citation. Stored on the change log row.
   change_notification_reference?: string;
   notes?: string;
+  // Asked with an attach (2026-11-16): whether the material is in use or intended for use, and its
+  // section. Filed on the operator's row for the product; the remove call never sends them.
+  status?: 'in_use' | 'planned';
+  category?: string;
 }
 
 interface OSPActivate extends OSPOne {
@@ -471,10 +475,20 @@ const ospApi = baseApi.injectEndpoints({
     }),
 
     addApprovedInput: build.mutation<OSP, OSPApprovedInputArgs>({
-      query: ({ companyId, farmId, ospId, kind, id, change_notification_reference, notes }) => ({
+      query: ({
+        companyId,
+        farmId,
+        ospId,
+        kind,
+        id,
+        change_notification_reference,
+        notes,
+        status,
+        category
+      }) => ({
         url: OSP_ADD_APPROVED_INPUT_URL(companyId, farmId, ospId),
         method: 'POST',
-        body: { kind, id, change_notification_reference, notes },
+        body: { kind, id, change_notification_reference, notes, status, category },
         credentials: 'include'
       }),
       invalidatesTags: (_r, _e, { ospId }) => [

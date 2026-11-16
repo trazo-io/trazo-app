@@ -46,6 +46,7 @@ const SERVER_STATUSES = [
   'omri_listed',
   'wsda_listed',
   'national_list_allowed',
+  'national_list_allowed_condition',
   'national_list_conditional',
   'organic_approved'
 ];

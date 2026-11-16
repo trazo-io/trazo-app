@@ -23,7 +23,7 @@
  */
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 import { ChakraProvider } from '@chakra-ui/react';
 
@@ -32,6 +32,8 @@ import enUS from '../../../../i18n/lang/en-US.json';
 const verifyResult: Record<string, unknown> = {};
 // Read lazily by the mock below, like `verifyResult`.
 const planRows: Record<string, unknown>[] = [];
+// What each add call was sent, read lazily by the mock below like `verifyResult`.
+const addCalls: Record<string, unknown>[] = [];
 
 // `vi.mock` is hoisted above the imports, so the factory may not close over a `const`
 // declared below it — only over one it reads lazily at call time, like `verifyResult`.
@@ -40,10 +42,16 @@ vi.mock('store/api/ospApi', () => {
   const mutation = () => [() => ({ unwrap: () => Promise.resolve({}) }), { isLoading: false }];
   return {
     useLazyVerifyInputQuery: () => [
-      () => undefined,
+      () => ({ unwrap: () => Promise.resolve(verifyResult) }),
       { data: verifyResult, isFetching: false, isUninitialized: false, error: undefined }
     ],
-    useAddApprovedInputMutation: mutation,
+    useAddApprovedInputMutation: () => [
+      (args: Record<string, unknown>) => {
+        addCalls.push(args);
+        return { unwrap: () => Promise.resolve({}) };
+      },
+      { isLoading: false }
+    ],
     useRemoveApprovedInputMutation: mutation,
     useAddPlanMaterialMutation: mutation,
     useDeletePlanMaterialMutation: mutation,
@@ -121,8 +129,11 @@ describe('the materials you entered (browser check, 2026-11-05)', () => {
       });
       expect(screen.getByText(/Materials you entered/i).textContent).toMatch(/\(1\)/);
       expect(screen.getByText('Rexius Organic Compost')).toBeTruthy();
-      // The app's own words for the section; never the server's CCOF-numbered display name.
-      expect(screen.getByText('Fertilizers and soil amendments')).toBeTruthy();
+      // The app's own words for the section; never the server's CCOF-numbered display name. The
+      // attach's section select offers the same words, so the badge is the one asserted.
+      expect(
+        screen.getAllByText('Fertilizers and soil amendments').some((el) => el.tagName === 'SPAN')
+      ).toBe(true);
       expect(screen.queryByText(/CCOF §/)).toBeNull();
       expect(screen.getByText('Your packet prints: no third-party listing on file.')).toBeTruthy();
     } finally {
@@ -308,6 +319,71 @@ describe('approved-inputs search — every match is offered, not just the winner
     expect(container.querySelectorAll('[data-restricted="true"]')).toHaveLength(1);
   });
 
+  // OV-MT-C01: a § 205.601 row the rule allows only under a condition (boron, zinc: a documented
+  // deficiency) shows that condition in the rule's words, in the search and on the plan.
+  const J7 =
+    'Micronutrients—not to be used as a defoliant, herbicide, or desiccant. Those made from nitrates or chlorides are not allowed. Micronutrient deficiency must be documented by soil or tissue testing or other documented and verifiable method as approved by the certifying agent.';
+
+  it('names a § 205.601 condition on the search row, with an ordinary Add button', () => {
+    renderPanel({
+      found: true,
+      status: 'matched',
+      omri_product_pk: null,
+      wsda_material_pk: null,
+      national_list_substance_pk: 4,
+      national_list_substance_name: 'Soluble boron products',
+      national_list_cfr_section: '205.601',
+      national_list_status: 'allowed',
+      national_list_allowed_with_condition: true,
+      national_list_rule_paragraph: '(j)(7)',
+      national_list_rule_words: J7
+    });
+    expect(screen.queryAllByRole('button', { name: /Add to OSP/i })).toHaveLength(1);
+    expect(screen.getByText(`Allowed with a condition (\u00a7 205.601(j)(7)): ${J7}`)).toBeTruthy();
+  });
+
+  it('labels a § 205.601 row with a condition on the plan', () => {
+    const { container } = renderPanel(
+      {
+        found: false,
+        status: 'not_found',
+        omri_product_pk: null,
+        national_list_substance_pk: null,
+        wsda_material_pk: null
+      },
+      {
+        ...OSP,
+        approved_national_list_substances: [
+          {
+            id: 4,
+            substance_name: 'Soluble boron products',
+            cfr_section: '205.601',
+            citation: '\u00a7 205.601(j)',
+            subsection: 'j',
+            is_national_list_entry: true,
+            status: 'allowed',
+            allowed_with_condition: true,
+            rule_paragraph: '(j)(7)',
+            rule_words: J7
+          },
+          {
+            id: 5,
+            substance_name: 'Elemental sulfur',
+            cfr_section: '205.601',
+            citation: '\u00a7 205.601',
+            subsection: 'e',
+            is_national_list_entry: true,
+            status: 'allowed',
+            allowed_with_condition: false
+          }
+        ]
+      }
+    );
+    expect(screen.getByText('Soluble boron products (with a condition)')).toBeTruthy();
+    expect(screen.getByText('Elemental sulfur')).toBeTruthy();
+    expect(container.querySelectorAll('[data-condition="true"]')).toHaveLength(1);
+  });
+
   it('never prints a WSDA identifier that is not a real WSDA Product #', () => {
     renderPanel({
       found: true,
@@ -446,5 +522,97 @@ describe('approved-inputs — a nonsynthetic substance is never presented as a N
       screen.getByText(/Nonsynthetic substances \(no National List entry\)/i).textContent || '';
     expect(nonsyn).toMatch(/\(1\)/);
     expect(screen.getByText('Spinosad')).toBeTruthy();
+  });
+});
+
+/**
+ * 2026-11-16: a material goes on the list with its use and what it is used for. Every agent's
+ * materials form asks both per row (OTCO C11's Intended Use, CCOF's sections, WSDA AGR 2196's
+ * intended purpose), and a catalog listing answers neither. Nothing is preselected: the operator
+ * picks both before Add, and the add call carries them.
+ */
+describe('approved-inputs: the use and the section are asked before Add', () => {
+  const ONE_OMRI = {
+    found: true,
+    status: 'matched',
+    omri_product_pk: 41,
+    omri_product_id: 'gus-4423',
+    omri_product_name: 'Serenade ASO',
+    omri_candidates: [{ pk: 41, omri_id: 'gus-4423', product_name: 'Serenade ASO' }],
+    omri_candidate_count: 1,
+    national_list_substance_pk: null,
+    wsda_material_pk: null
+  };
+
+  const pick = (label: string, value: string) => {
+    const select = screen.getByLabelText(label) as HTMLSelectElement;
+    fireEvent.change(select, { target: { value } });
+  };
+
+  it('keeps Add disabled until both are picked, and sends both', () => {
+    addCalls.splice(0);
+    renderPanel(ONE_OMRI);
+    expect(
+      (screen.getByRole('button', { name: /Add to OSP/i }) as HTMLButtonElement).disabled
+    ).toBe(true);
+    expect(screen.getByText(/say whether it is in use or intended for use/i)).toBeTruthy();
+    expect((screen.getByLabelText('Is it in use?') as HTMLSelectElement).value).toBe('');
+
+    // The result rows re-render with each pick, so the button is read again each time.
+    const addButton = () =>
+      screen.getByRole('button', { name: /Add to OSP/i }) as HTMLButtonElement;
+    pick('Is it in use?', 'in_use');
+    expect(addButton().disabled).toBe(true);
+    pick('What it is used for', 'pest_disease_weed');
+    expect(addButton().disabled).toBe(false);
+    expect(screen.queryByText(/say whether it is in use or intended for use/i)).toBeNull();
+
+    fireEvent.click(addButton());
+    expect(addCalls).toHaveLength(1);
+    expect(addCalls[0]).toMatchObject({
+      kind: 'omri',
+      id: 41,
+      status: 'in_use',
+      category: 'pest_disease_weed'
+    });
+  });
+
+  it("clears both on a new search, so one material's answers never go to the next", async () => {
+    renderPanel(ONE_OMRI);
+    pick('Is it in use?', 'in_use');
+    pick('What it is used for', 'pest_disease_weed');
+    expect(
+      (screen.getByRole('button', { name: /Add to OSP/i }) as HTMLButtonElement).disabled
+    ).toBe(false);
+    const box = screen.getByPlaceholderText(/search/i);
+    fireEvent.change(box, { target: { value: 'Serenade' } });
+    fireEvent.keyDown(box, { key: 'Enter' });
+    await waitFor(() =>
+      expect((screen.getByLabelText('Is it in use?') as HTMLSelectElement).value).toBe('')
+    );
+    expect((screen.getByLabelText('What it is used for') as HTMLSelectElement).value).toBe('');
+    expect(
+      (screen.getByRole('button', { name: /Add to OSP/i }) as HTMLButtonElement).disabled
+    ).toBe(true);
+  });
+
+  it("asks the same before a material is added in the operator's own words", async () => {
+    renderPanel({
+      found: false,
+      status: 'not_found',
+      omri_product_pk: null,
+      national_list_substance_pk: null,
+      wsda_material_pk: null
+    });
+    const box = screen.getByPlaceholderText(/search/i);
+    fireEvent.change(box, { target: { value: 'Rexius Organic Compost' } });
+    fireEvent.keyDown(box, { key: 'Enter' });
+    const own = () =>
+      screen.getByRole('button', { name: /Add as it appears on the label/i }) as HTMLButtonElement;
+    await waitFor(() => expect(own()).toBeTruthy());
+    expect(own().disabled).toBe(true);
+    pick('Is it in use?', 'planned');
+    pick('What it is used for', 'fertilizer_amendment');
+    expect(own().disabled).toBe(false);
   });
 });

@@ -53,7 +53,10 @@ const MATERIALS = [
     agent_review_statement: '',
     label_document: null as number | null,
     label_document_title: '',
-    needs_label: false
+    needs_label: false,
+    review_position: 'omri',
+    other_review_agency: '',
+    other_review_reference: ''
   },
   {
     name: 'Rexius Organic Compost',
@@ -74,7 +77,10 @@ const MATERIALS = [
       "on WSDA's approved materials list dated 2026-03-15 (WSDA approval email), as recorded by the operator",
     label_document: null as number | null,
     label_document_title: '',
-    needs_label: true
+    needs_label: true,
+    review_position: 'other',
+    other_review_agency: '',
+    other_review_reference: ''
   },
   {
     name: 'Terro ant bait',
@@ -97,7 +103,10 @@ const MATERIALS = [
     needs_label: false,
     facility_material_type: '',
     where_used: '',
-    applied_by_fumigation: null as boolean | null
+    applied_by_fumigation: null as boolean | null,
+    review_position: 'other',
+    other_review_agency: 'OTCO Crop Input Verification Evaluation',
+    other_review_reference: ''
   }
 ];
 
@@ -389,5 +398,45 @@ describe('OSP Materials List editor', () => {
       fireEvent.blur(where);
     });
     expect(answerMaterial.mock.calls[2][0].body).toEqual({ name: 'Terro ant bait', where_used: 'Packing shed' });
+  });
+
+  it('asks for another review agency only on a row that is neither OMRI nor WSDA, and saves it', async () => {
+    renderPanel();
+    // OTCO C11's OTHER box: the OMRI-listed Serenade fills the OMRI box, so it is not offered there.
+    expect(
+      screen.queryByLabelText('Review agency for Serenade ASO, other than OMRI or WSDA')
+    ).toBeNull();
+    expect(screen.getAllByTestId('materials-other-review')).toHaveLength(2);
+    const agency = screen.getByLabelText(
+      'Review agency for Rexius Organic Compost, other than OMRI or WSDA'
+    ) as HTMLInputElement;
+    expect(agency.value).toBe('');
+    await act(async () => {
+      fireEvent.change(agency, { target: { value: 'OTCO Crop Input Verification Evaluation' } });
+      fireEvent.blur(agency);
+    });
+    const reference = screen.getByLabelText(
+      'Number or date of the review of Rexius Organic Compost'
+    );
+    await act(async () => {
+      fireEvent.change(reference, { target: { value: 'CIVE 2291' } });
+      fireEvent.blur(reference);
+    });
+    expect(answerMaterial.mock.calls.map((call) => call[0].body)).toEqual([
+      {
+        name: 'Rexius Organic Compost',
+        other_review_agency: 'OTCO Crop Input Verification Evaluation'
+      },
+      { name: 'Rexius Organic Compost', other_review_reference: 'CIVE 2291' }
+    ]);
+    // A value already on file is shown, and blurring it unchanged sends nothing.
+    const kept = screen.getByLabelText(
+      'Review agency for Terro ant bait, other than OMRI or WSDA'
+    ) as HTMLInputElement;
+    expect(kept.value).toBe('OTCO Crop Input Verification Evaluation');
+    await act(async () => {
+      fireEvent.blur(kept);
+    });
+    expect(answerMaterial).toHaveBeenCalledTimes(2);
   });
 });

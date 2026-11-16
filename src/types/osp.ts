@@ -82,6 +82,10 @@ export interface ApprovedNationalListInput {
   is_conditionally_permitted?: boolean;
   subsection?: string | null;
   restriction_notes?: string | null;
+  /** A § 205.601 row the rule allows only under a condition of use, and the rule's words for it. */
+  allowed_with_condition?: boolean;
+  rule_paragraph?: string | null;
+  rule_words?: string | null;
 }
 
 export interface ApprovedOMRIInput {
@@ -115,7 +119,8 @@ export interface ApprovedWSDAInput {
  */
 export interface ApprovedInputChangeLog {
   id: number;
-  kind: 'national_list' | 'omri' | 'wsda';
+  /** 'operator_entered' since 2026-11-16: a material put on the plan in the operator's own words. */
+  kind: 'national_list' | 'omri' | 'wsda' | 'operator_entered';
   target_name_at_change: string;
   action: 'added' | 'removed';
   changed_by_name: string | null;
@@ -253,6 +258,16 @@ export interface InputVerifyResult {
   /** The rule's text as stored, in English. */
   national_list_restriction_notes?: string | null;
   /**
+   * A § 205.601 row the rule allows only under a condition of use: zinc and boron with a documented
+   * deficiency ((j)(7)), boric acid for structural pest control ((e)(3)). Typed by the server; never
+   * plain "allowed" (overall review OV-MT-C01). Absent from a backend older than 2026-11-16.
+   */
+  national_list_allowed_with_condition?: boolean | null;
+  /** The paragraph whose words follow, e.g. "(j)(7)". */
+  national_list_rule_paragraph?: string | null;
+  /** The rule's own words for the row's entry, verbatim and in English (eCFR). Never a paraphrase. */
+  national_list_rule_words?: string | null;
+  /**
    * Every § 205.601/602 entry the query could mean, best first. `status` travels PER ROW
    * because the catalogue holds prohibited substances alongside allowed ones and both answer
    * the same search — reading the status of whichever row ranked first would put an ordinary
@@ -268,6 +283,9 @@ export interface InputVerifyResult {
     status: string | null;
     is_conditionally_permitted?: boolean;
     restriction_notes: string | null;
+    allowed_with_condition?: boolean;
+    rule_paragraph?: string | null;
+    rule_words?: string | null;
   }[];
   national_list_candidate_count?: number;
   // WSDA Materials List — co-equal with OMRI per CCOF. Phase 1 additive fields.
@@ -307,7 +325,13 @@ export type PlanMaterialListingBasis =
 
 export type PlanMaterialCategory =
   /** Not chosen yet: the backend default since migration 0070 (back #294). */
-  '' | 'fertilizer_amendment' | 'pest_disease_weed' | 'production_aid' | 'post_harvest' | 'other';
+  | ''
+  | 'fertilizer_amendment'
+  | 'pest_disease_weed'
+  | 'production_aid'
+  | 'post_harvest'
+  | 'facility_pest'
+  | 'other';
 
 export interface PlanMaterialEntry {
   id: number;
@@ -527,6 +551,14 @@ export interface OSPMaterialListRow {
   label_document_title: string;
   /** The plan's agent asks for this product's label (OTCO C11 11.1: not OMRI or WSDA listed). */
   needs_label: boolean;
+  /**
+   * OTCO C11's review agency box this row's own record fills: its OMRI or WSDA listing, or 'other'.
+   * Only an 'other' row may name another agency; the server refuses one on an OMRI or WSDA row.
+   */
+  review_position: 'omri' | 'wsda' | 'other';
+  /** The Other review agency as the operator records it; '' when none is named. */
+  other_review_agency: string;
+  other_review_reference: string;
 }
 
 export interface OSPMaterialsListResponse {
@@ -549,6 +581,8 @@ export interface OSPMaterialAnswer {
   where_used?: string;
   /** 'true' | 'false' | '' (not stated). */
   applied_by_fumigation?: string;
+  other_review_agency?: string;
+  other_review_reference?: string;
 }
 
 /** One thing the operation's dated records did after the plan's newest answer. */

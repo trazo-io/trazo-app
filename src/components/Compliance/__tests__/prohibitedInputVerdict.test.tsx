@@ -144,3 +144,112 @@ describe('InputVerifyHelper — a § 205.602 row allowed for one use reads as th
     expect(screen.queryByText(/Allowed only for the use the rule names/i)).toBeNull();
   });
 });
+
+describe('InputVerifyHelper: a § 205.601 row allowed only under a condition says so', () => {
+  // 2026-11-16, overall review OV-MT-C01: every § 205.601 hit read "allowed". Zinc and boron need a
+  // deficiency documented by soil or tissue testing ((j)(7)); boric acid is for structural pest
+  // control with no contact with crops ((e)(3)). The server types the row
+  // (`national_list_allowed_with_condition`) and sends the rule's words verbatim.
+  const J7 =
+    'Micronutrients—not to be used as a defoliant, herbicide, or desiccant. Those made from nitrates or chlorides are not allowed. Micronutrient deficiency must be documented by soil or tissue testing or other documented and verifiable method as approved by the certifying agent.';
+  const E3 = 'Boric acid—structural pest control, no direct contact with organic food or crops.';
+  const ZINC = {
+    ...ALLOWED,
+    national_list_substance_name:
+      'Zinc/copper/iron/manganese/molybdenum/selenium/cobalt (sulfates, carbonates, oxides, silicates)',
+    national_list_citation: '§ 205.601(j)',
+    national_list_allowed_with_condition: true,
+    national_list_rule_paragraph: '(j)(7)',
+    national_list_rule_words: J7
+  };
+  const BORIC = {
+    ...ALLOWED,
+    national_list_substance_name: 'Boric acid',
+    national_list_citation: '§ 205.601(e)',
+    national_list_allowed_with_condition: true,
+    national_list_rule_paragraph: '(e)(3)',
+    national_list_rule_words: E3
+  };
+
+  it.each([
+    ['zinc', ZINC, '(j)(7)', J7],
+    ['boric acid', BORIC, '(e)(3)', E3]
+  ])(
+    '%s: the condition in the rule’s words, never plain "allowed"',
+    (_n, result, paragraph, words) => {
+      const { container } = renderWith(result);
+      expect(screen.getByText('Allowed only under the condition the rule states')).toBeTruthy();
+      const block = container.querySelector('[data-verdict="condition"]')?.textContent || '';
+      expect(block).toContain(`§ 205.601${paragraph}`);
+      expect(block).toContain('your certifier checks each application against this condition');
+      expect(screen.getByTestId('nl-rule-words').textContent).toBe(words);
+      const rows = container.querySelectorAll('[data-tone]');
+      expect(rows.length).toBe(1);
+      expect(rows[0].getAttribute('data-tone')).toBe('restricted');
+      expect(rows[0].textContent).toContain('allowed with a condition');
+      expect(screen.queryByText(/Prohibited in organic crop production/i)).toBeNull();
+    }
+  );
+
+  it('lime sulfur: its words are shown and it stays allowed', () => {
+    // "including calcium polysulfide" says what the substance is, not how it may be used.
+    const { container } = renderWith({
+      ...ALLOWED,
+      national_list_substance_name: 'Lime sulfur',
+      national_list_allowed_with_condition: false,
+      national_list_rule_paragraph: '(e)(6)',
+      national_list_rule_words: 'Lime sulfur—including calcium polysulfide.'
+    });
+    expect(container.querySelector('[data-verdict="condition"]')).toBeNull();
+    expect(container.querySelector('[data-tone]')?.getAttribute('data-tone')).toBe('allowed');
+    expect(screen.getByTestId('nl-rule-words').textContent).toBe(
+      "The rule's words (§ 205.601(e)(6)): Lime sulfur—including calcium polysulfide."
+    );
+  });
+
+  it('a flagged row with no paragraph or section still cites § 205.601, never § 205.602', () => {
+    // Review of app #403: the general fallback ends at § 205.602, the prohibited section.
+    const { container } = renderWith({
+      ...ZINC,
+      national_list_citation: null,
+      national_list_cfr_section: null,
+      national_list_rule_paragraph: null
+    });
+    const block = container.querySelector('[data-verdict="condition"]')?.textContent || '';
+    expect(block).toContain('\u00a7 205.601 allows it');
+    expect(block).not.toContain('205.602');
+  });
+
+  it('a row the server did not flag is never turned into a condition by its words', () => {
+    // The flag decides, never the prose: words with no flag stay "allowed".
+    const { container } = renderWith({ ...ZINC, national_list_allowed_with_condition: false });
+    expect(container.querySelector('[data-verdict="condition"]')).toBeNull();
+    expect(container.querySelector('[data-tone]')?.getAttribute('data-tone')).toBe('allowed');
+  });
+
+  it('in Spanish the frame is translated and the rule stays the rule’s English', async () => {
+    const es419 = (await import('../../../i18n/lang/es-419.json')).default as Record<
+      string,
+      string
+    >;
+    Object.keys(verifyResult).forEach((k) => delete verifyResult[k]);
+    Object.assign(verifyResult, ZINC);
+    const { container } = render(
+      <ChakraProvider>
+        <IntlProvider locale="es-419" messages={es419} onError={() => undefined}>
+          <InputVerifyHelper name="ash from manure burning" />
+        </IntlProvider>
+      </ChakraProvider>
+    );
+    expect(screen.getByText('Permitido solo con la condición que fija la norma')).toBeTruthy();
+    expect(container.querySelector('[data-verdict="condition"]')?.textContent).toContain(
+      'Texto de la norma, en inglés:'
+    );
+    const quote = screen.getByTestId('nl-rule-words');
+    expect(quote.textContent).toBe(J7);
+    expect(quote.getAttribute('lang')).toBe('en');
+    expect(container.querySelector('[data-tone]')?.textContent).toContain(
+      'permitido con una condición'
+    );
+  });
+});
