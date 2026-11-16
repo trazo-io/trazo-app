@@ -3461,7 +3461,12 @@ function NewEventForm({ isEdit = false, eventId = null }) {
       // the operation's own dates (`phi_check` on the server). It leads the one warning: a mistyped
       // date is best fixed now, while the grower is still here, and the record is saved either way.
       const phiConflicts = Array.isArray(savedEvent?.phi_conflicts) ? savedEvent.phi_conflicts : [];
-      if (completenessGaps.length > 0 || phiConflicts.length > 0) {
+      // The same for raw manure on the parcel (`manure_check`, 7 CFR 205.203(c)(1)): a pick sooner
+      // than the harvest interval after it. Saved either way; it joins the one warning.
+      const manureConflicts = Array.isArray(savedEvent?.manure_conflicts)
+        ? savedEvent.manure_conflicts
+        : [];
+      if (completenessGaps.length > 0 || phiConflicts.length > 0 || manureConflicts.length > 0) {
         const gapNames = completenessGaps
           .map((key) =>
             COMPLETENESS_GAP_LABELS[key]
@@ -3505,20 +3510,67 @@ function NewEventForm({ isEdit = false, eventId = null }) {
             }
           )
         );
-        const details = phiConflicts.length
-          ? [...phiLines, ...(gapNames ? [`${gapsLabel} ${gapNames}`] : [])].join(' · ')
+        const manurePickCount = new Set(manureConflicts.map((c) => c.pick_id)).size;
+        const manureLines = manureConflicts.slice(0, 3).map((c) =>
+          intl.formatMessage(
+            {
+              id: 'app.manureConflictLine',
+              defaultMessage:
+                'Raw manure applied {applied}: picked {picked}, {days, plural, one {# day} other {# days}} after (interval {interval} days){recorded_as, select, composted {; recorded as composted, with neither the § 205.203(c)(2) figures nor a supplier} processed_5006 {; recorded as processed, with no NOP 5006 documentation} other {}}'
+            },
+            {
+              applied: c.applied,
+              picked: c.picked,
+              days: c.days,
+              interval: c.interval_days,
+              // How the record labels itself when it is read as raw anyway (review of back #446).
+              recorded_as: c.recorded_as || 'raw'
+            }
+          )
+        );
+        // Three lines in all, as before this joined the PHI lines: with both kinds, at most two PHI
+        // lines leave room for a manure one (review of app #399).
+        const conflictLines = [
+          ...phiLines.slice(0, manureLines.length ? 2 : 3),
+          ...manureLines
+        ].slice(0, 3);
+        const details = conflictLines.length
+          ? [...conflictLines, ...(gapNames ? [`${gapsLabel} ${gapNames}`] : [])].join(' · ')
           : gapNames;
+        // A pick inside both a PHI and a manure interval gets one title naming neither alone.
+        const bothPickCount = new Set([...phiConflicts, ...manureConflicts].map((c) => c.pick_id))
+          .size;
+        let warningTitle = gapsTitle;
+        if (phiConflicts.length && manureConflicts.length) {
+          warningTitle = intl.formatMessage(
+            {
+              id: 'app.harvestIntervalConflictSavedTitle',
+              defaultMessage:
+                'Saved. {count, plural, one {A pick} other {# picks}} came sooner than an interval the records set:'
+            },
+            { count: bothPickCount }
+          );
+        } else if (phiConflicts.length) {
+          warningTitle = intl.formatMessage(
+            {
+              id: 'app.phiConflictSavedTitle',
+              defaultMessage:
+                'Saved. {count, plural, one {A pick} other {# picks}} came sooner after a spray than its recorded PHI:'
+            },
+            { count: phiPickCount }
+          );
+        } else if (manureConflicts.length) {
+          warningTitle = intl.formatMessage(
+            {
+              id: 'app.manureConflictSavedTitle',
+              defaultMessage:
+                'Saved. {count, plural, one {A pick} other {# picks}} came sooner after raw manure than the harvest interval:'
+            },
+            { count: manurePickCount }
+          );
+        }
         toast({
-          title: phiConflicts.length
-            ? intl.formatMessage(
-                {
-                  id: 'app.phiConflictSavedTitle',
-                  defaultMessage:
-                    'Saved. {count, plural, one {A pick} other {# picks}} came sooner after a spray than its recorded PHI:'
-                },
-                { count: phiPickCount }
-              )
-            : gapsTitle,
+          title: warningTitle,
           description: savedRecordCount > 1 ? `${savedToText} · ${details}` : details,
           status: 'warning',
           duration: 8000,
