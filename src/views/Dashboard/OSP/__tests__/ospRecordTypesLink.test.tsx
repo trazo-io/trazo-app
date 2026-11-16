@@ -15,7 +15,12 @@ import { MemoryRouter } from 'react-router-dom';
 
 import enUS from '../../../../i18n/lang/en-US.json';
 
-const setLink = vi.fn((_args: Record<string, unknown>) => ({ unwrap: () => Promise.resolve({}) }));
+const setLink = vi.fn((_args: Record<string, unknown>) => ({
+  unwrap: () => Promise.resolve({}) as Promise<unknown>
+}));
+const confirmTypes = vi.fn((_args: Record<string, unknown>) => ({
+  unwrap: () => Promise.resolve({})
+}));
 
 vi.mock('react-redux', () => ({
   useSelector: (fn: (s: unknown) => unknown) =>
@@ -92,7 +97,7 @@ vi.mock('store/api/ospApi', () => ({
     isLoading: false,
     isError: false
   }),
-  useConfirmOSPRecordTypesMutation: () => [vi.fn(), { isLoading: false }],
+  useConfirmOSPRecordTypesMutation: () => [confirmTypes, { isLoading: false }],
   useMarkOSPRecordTypeNotKeptMutation: () => [vi.fn(), { isLoading: false }],
   useSetOSPRecordTypeLinkMutation: () => [setLink, { isLoading: false }],
   useGetOSPAttachmentsQuery: () => ({ data: { workbooks: [] }, isLoading: false })
@@ -100,21 +105,21 @@ vi.mock('store/api/ospApi', () => ({
 
 const { default: OSPRecordTypesPanel } = await import('../OSPRecordTypesPanel');
 
-const renderPanel = (status = 'draft') =>
-  render(
-    <ChakraProvider>
-      <MemoryRouter>
-        <IntlProvider locale="en-US" messages={enUS as Record<string, string>}>
-          <OSPRecordTypesPanel
-            companyId="7"
-            farmId="3"
-            osp={{ id: '11', status, version_number: 1 } as never}
-            onNavigateAway={() => Promise.resolve(true)}
-          />
-        </IntlProvider>
-      </MemoryRouter>
-    </ChakraProvider>
-  );
+const panel = (status = 'draft') => (
+  <ChakraProvider>
+    <MemoryRouter>
+      <IntlProvider locale="en-US" messages={enUS as Record<string, string>}>
+        <OSPRecordTypesPanel
+          companyId="7"
+          farmId="3"
+          osp={{ id: '11', status, version_number: 1 } as never}
+          onNavigateAway={() => Promise.resolve(true)}
+        />
+      </IntlProvider>
+    </MemoryRouter>
+  </ChakraProvider>
+);
+const renderPanel = (status = 'draft') => render(panel(status));
 
 describe('the linking element of a record kept outside Trazo', () => {
   it('is asked only on a confirmed record whose link only the operator can state', () => {
@@ -155,5 +160,53 @@ describe('the linking element of a record kept outside Trazo', () => {
     renderPanel('submitted');
     expect(screen.queryByTestId('record-link-weigh_tickets')).toBeNull();
     expect(screen.getByText('Links by: Slip number on the sales record')).toBeInTheDocument();
+  });
+
+  it('goes as soon as the row is unticked on screen (review of app #406)', () => {
+    renderPanel();
+    expect(screen.getByTestId('record-link-weigh_tickets')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Weigh tickets'));
+    expect(screen.queryByTestId('record-link-weigh_tickets')).toBeNull();
+  });
+
+  it('puts the saved text back when a save fails, and a refetch never overwrites typing', async () => {
+    setLink.mockClear();
+    setLink.mockImplementationOnce(() => ({ unwrap: () => Promise.reject(new Error('400')) }));
+    const view = renderPanel();
+    const field = () =>
+      screen.getByLabelText(
+        'How Delivery slips links to the next and previous record'
+      ) as HTMLInputElement;
+    await act(async () => {
+      fireEvent.focus(field());
+      fireEvent.change(field(), { target: { value: 'Slip number and date' } });
+      fireEvent.blur(field());
+    });
+    expect(setLink).toHaveBeenCalledTimes(1);
+    expect(field().value).toBe('Slip number on the sales record');
+
+    // A save that succeeds keeps the new text on screen until the refetch brings it back as saved.
+    await act(async () => {
+      fireEvent.focus(field());
+      fireEvent.change(field(), { target: { value: 'Slip number and date' } });
+      fireEvent.blur(field());
+    });
+    expect(setLink).toHaveBeenCalledTimes(2);
+    expect(field().value).toBe('Slip number and date');
+
+    // While the operator types, a refetch carrying a new saved value leaves the draft alone (a row
+    // with no save in flight, so the field being edited is the only thing holding it).
+    const weigh = () =>
+      screen.getByLabelText(
+        'How Weigh tickets links to the next and previous record'
+      ) as HTMLInputElement;
+    fireEvent.focus(weigh());
+    fireEvent.change(weigh(), { target: { value: 'Ticket number, typed' } });
+    const row = ROWS[0] as { linking_element: string };
+    const before = row.linking_element;
+    row.linking_element = 'Changed elsewhere';
+    view.rerender(panel());
+    expect(weigh().value).toBe('Ticket number, typed');
+    row.linking_element = before;
   });
 });

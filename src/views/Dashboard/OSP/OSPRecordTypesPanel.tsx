@@ -75,6 +75,53 @@ import {
 } from 'store/api/ospApi';
 import { OSP, OSPAttachmentSummary, OSPRecordType } from 'types/osp';
 
+/**
+ * The linking element as the operator types it. Controlled, with a draft that follows the saved value
+ * only while the field is not being edited: keyed on the server value, the input remounted on every
+ * save's refetch and dropped what was typed meanwhile, and a failed save left unsaved text on screen
+ * as if it were stored (review of app #406). A failed save puts the saved value back.
+ */
+const LinkingElementInput: React.FC<{
+  saved: string;
+  ariaLabel: string;
+  placeholder: string;
+  onSave: (value: string) => Promise<boolean>;
+}> = ({ saved, ariaLabel, placeholder, onSave }) => {
+  const [draft, setDraft] = useState(saved);
+  const [focused, setFocused] = useState(false);
+  // The value a save sent, held on screen until the refetch brings it back as saved; otherwise the
+  // field would flash the old text in between.
+  const [inFlight, setInFlight] = useState<string | null>(null);
+  useEffect(() => {
+    if (focused) return;
+    if (inFlight !== null) {
+      if (saved === inFlight) setInFlight(null);
+      return;
+    }
+    setDraft(saved);
+  }, [saved, focused, inFlight]);
+  return (
+    <StandardInput
+      size="sm"
+      maxLength={LINKING_ELEMENT_MAX_LENGTH}
+      value={draft}
+      aria-label={ariaLabel}
+      placeholder={placeholder}
+      onFocus={() => setFocused(true)}
+      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDraft(e.target.value)}
+      onBlur={async () => {
+        setFocused(false);
+        const value = draft.trim();
+        setDraft(value);
+        if (value === saved) return;
+        setInFlight(value);
+        // A failed save lets go of the held value, and the effect above puts the saved text back.
+        if (!(await onSave(value))) setInFlight(null);
+      }}
+    />
+  );
+};
+
 interface OSPRecordTypesPanelProps {
   companyId: string;
   farmId: string;
@@ -368,8 +415,11 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
    * the operator can, so it is asked once the record is confirmed and saved on blur. The audit trail
    * exhibit prints it as the operator's statement.
    */
-  const renderLinkingElement = (row: OSPRecordType, inset = true) => {
-    if (!row.operator_states_link || !row.confirmed) return null;
+  const renderLinkingElement = (row: OSPRecordType, isConfirmed: boolean, inset = true) => {
+    // Shown while the row reads as confirmed on screen AND on the server: an untick hides it at once,
+    // and a fresh tick shows it once the server holds the confirmation, which is what a link is
+    // refused without (review of app #406).
+    if (!row.operator_states_link || !isConfirmed || !row.confirmed) return null;
     const label = intl.formatMessage(
       {
         id: 'osp.recordTypes.linkAria',
@@ -389,20 +439,15 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
     }
     return (
       <Box px={inset ? 3 : 0} pb={inset ? 3 : 0} data-testid={`record-link-${row.key}`}>
-        <StandardInput
-          key={`link:${row.linking_element ?? ''}`}
-          size="sm"
-          maxLength={LINKING_ELEMENT_MAX_LENGTH}
-          defaultValue={row.linking_element ?? ''}
-          aria-label={label}
+        <LinkingElementInput
+          saved={row.linking_element ?? ''}
+          ariaLabel={label}
           placeholder={intl.formatMessage({
             id: 'osp.recordTypes.linkPlaceholder',
             defaultMessage:
               'How it links to the next and previous record, e.g. ticket number copied onto the bin tag'
           })}
-          onBlur={async (e: React.FocusEvent<HTMLInputElement>) => {
-            const value = e.target.value.trim();
-            if (value === (row.linking_element ?? '')) return;
+          onSave={async (value) => {
             try {
               await setRecordTypeLink({
                 companyId,
@@ -411,8 +456,10 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
                 key: row.key,
                 linkingElement: value
               }).unwrap();
+              return true;
             } catch {
               showSaveError();
+              return false;
             }
           }}
         />
@@ -463,7 +510,7 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
                 })}
             </Text>
           )}
-          {renderLinkingElement(row, false)}
+          {renderLinkingElement(row, isConfirmed, false)}
         </Stack>
         {isEditable && (
           <HStack spacing={2} flexShrink={0} pt={{ base: 0, smd: 6 }}>
@@ -790,7 +837,7 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
                           </StandardButton>
                         )}
                       </Flex>
-                      {renderLinkingElement(row)}
+                      {renderLinkingElement(row, isConfirmed)}
                     </Box>
                   );
                 })}
