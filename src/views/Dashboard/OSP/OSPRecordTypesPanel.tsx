@@ -69,6 +69,7 @@ import {
 import {
   useConfirmOSPRecordTypesMutation,
   useMarkOSPRecordTypeNotKeptMutation,
+  useSetOSPRecordTypeLinkMutation,
   useGetOSPAttachmentsQuery,
   useGetOSPRecordTypesQuery
 } from 'store/api/ospApi';
@@ -114,6 +115,8 @@ const FLUSH_DELAY_MS = 600;
 
 /** Mirrors `common_osp_records.FREE_TEXT_LABEL_MAX` — the server refuses anything longer. */
 const FREE_TEXT_MAX_LENGTH = 200;
+/** `common_osp_records.LINKING_ELEMENT_MAX`: one cell of the exhibit's document table. */
+const LINKING_ELEMENT_MAX_LENGTH = 300;
 
 /**
  * Where in Trazo each blank attachment column is answered.
@@ -186,6 +189,7 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
     ospId: osp.id
   });
   const [confirmRecordTypes, { isLoading: isConfirming }] = useConfirmOSPRecordTypesMutation();
+  const [setRecordTypeLink] = useSetOSPRecordTypeLinkMutation();
   const [markNotKept, { isLoading: isMarkingNotKept }] = useMarkOSPRecordTypeNotKeptMutation();
   // One "we don't keep this" form at a time, opened on a required row the operator has not confirmed.
   const [notKeptFor, setNotKeptFor] = useState<string | null>(null);
@@ -358,6 +362,65 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
   };
 
   /**
+   * How a record the operation keeps outside Trazo links to the next and previous document (OTCO
+   * C12 12.2-6: "Linking element to next and previous document in chain"). Trazo states the link
+   * for the records it holds; for a weigh ticket, a delivery slip or the operation's own form only
+   * the operator can, so it is asked once the record is confirmed and saved on blur. The audit trail
+   * exhibit prints it as the operator's statement.
+   */
+  const renderLinkingElement = (row: OSPRecordType, inset = true) => {
+    if (!row.operator_states_link || !row.confirmed) return null;
+    const label = intl.formatMessage(
+      {
+        id: 'osp.recordTypes.linkAria',
+        defaultMessage: 'How {name} links to the next and previous record'
+      },
+      { name: row.custom_label || recordLabel(row) }
+    );
+    if (!isEditable) {
+      return row.linking_element ? (
+        <Text fontSize="xs" color={mutedColor} px={inset ? 3 : 0} pb={2}>
+          {intl.formatMessage(
+            { id: 'osp.recordTypes.linkStated', defaultMessage: 'Links by: {link}' },
+            { link: row.linking_element }
+          )}
+        </Text>
+      ) : null;
+    }
+    return (
+      <Box px={inset ? 3 : 0} pb={inset ? 3 : 0} data-testid={`record-link-${row.key}`}>
+        <StandardInput
+          key={`link:${row.linking_element ?? ''}`}
+          size="sm"
+          maxLength={LINKING_ELEMENT_MAX_LENGTH}
+          defaultValue={row.linking_element ?? ''}
+          aria-label={label}
+          placeholder={intl.formatMessage({
+            id: 'osp.recordTypes.linkPlaceholder',
+            defaultMessage:
+              'How it links to the next and previous record, e.g. ticket number copied onto the bin tag'
+          })}
+          onBlur={async (e: React.FocusEvent<HTMLInputElement>) => {
+            const value = e.target.value.trim();
+            if (value === (row.linking_element ?? '')) return;
+            try {
+              await setRecordTypeLink({
+                companyId,
+                farmId,
+                ospId: osp.id,
+                key: row.key,
+                linkingElement: value
+              }).unwrap();
+            } catch {
+              showSaveError();
+            }
+          }}
+        />
+      </Box>
+    );
+  };
+
+  /**
    * The "Other" line both source forms end on. It is a checkbox everywhere else in this panel and
    * a NAMED entry here, because a tick with no name is a statement with nothing under it — the
    * server refuses one, and this row must not offer the operator a control the server will reject.
@@ -400,6 +463,7 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
                 })}
             </Text>
           )}
+          {renderLinkingElement(row, false)}
         </Stack>
         {isEditable && (
           <HStack spacing={2} flexShrink={0} pt={{ base: 0, smd: 6 }}>
@@ -586,42 +650,42 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
                     return renderFreeTextRow(row, isConfirmed);
                   }
                   return (
-                    <Flex
-                      key={row.key}
-                      align="flex-start"
-                      justify="space-between"
-                      gap={3}
-                      px={3}
-                      py={3}
-                      // A suggestion keeps its tint; the dashed box it also had is gone with the
-                      // other boxes (2026-11-09).
-                      bg={isSuggested ? suggestedBg : 'transparent'}>
-                      <Checkbox
-                        isChecked={isConfirmed}
-                        onChange={() => handleToggle(row)}
-                        isDisabled={!isEditable}
-                        colorScheme="green"
-                        alignItems="flex-start">
-                        <Stack spacing={0}>
-                          <Text fontSize="sm">{recordLabel(row)}</Text>
-                          <HStack spacing={2} flexWrap="wrap">
-                            <Text fontSize="xs" color={mutedColor}>
-                              {row.cfr_cite}
-                            </Text>
-                            {row.basis && (
+                    <Box key={row.key}>
+                      <Flex
+                        align="flex-start"
+                        justify="space-between"
+                        gap={3}
+                        px={3}
+                        py={3}
+                        // A suggestion keeps its tint; the dashed box it also had is gone with the
+                        // other boxes (2026-11-09).
+                        bg={isSuggested ? suggestedBg : 'transparent'}>
+                        <Checkbox
+                          isChecked={isConfirmed}
+                          onChange={() => handleToggle(row)}
+                          isDisabled={!isEditable}
+                          colorScheme="green"
+                          alignItems="flex-start">
+                          <Stack spacing={0}>
+                            <Text fontSize="sm">{recordLabel(row)}</Text>
+                            <HStack spacing={2} flexWrap="wrap">
                               <Text fontSize="xs" color={mutedColor}>
-                                {basisLabel(row)}
+                                {row.cfr_cite}
                               </Text>
-                            )}
-                            {row.external_by_design && !row.basis && (
-                              <Text fontSize="xs" color={mutedColor}>
-                                {intl.formatMessage({
-                                  id: 'osp.recordTypes.outsideTrazo',
-                                  defaultMessage: 'Kept outside Trazo — tick it if you keep these'
-                                })}
-                              </Text>
-                            )}
-                            {/* WHEN they said it. A confirmed row with no date reads as current
+                              {row.basis && (
+                                <Text fontSize="xs" color={mutedColor}>
+                                  {basisLabel(row)}
+                                </Text>
+                              )}
+                              {row.external_by_design && !row.basis && (
+                                <Text fontSize="xs" color={mutedColor}>
+                                  {intl.formatMessage({
+                                    id: 'osp.recordTypes.outsideTrazo',
+                                    defaultMessage: 'Kept outside Trazo — tick it if you keep these'
+                                  })}
+                                </Text>
+                              )}
+                              {/* WHEN they said it. A confirmed row with no date reads as current
                               at any age, and a renewal clones these answers forward — so the
                               farmer had no way to see that a tick belonged to last year's
                               plan. The carried case says so outright rather than leaving them
@@ -631,101 +695,103 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
                               only clears 3.0 at 900 (measured in theme/components/progress.js),
                               so the warning would arrive as a contrast failure. The sentence
                               carries the meaning; colour here would be decoration. */}
-                            {isConfirmed && row.confirmed_at && (
-                              <Text fontSize="xs" color={mutedColor}>
-                                {row.carried_from_version
-                                  ? intl.formatMessage(
-                                      {
-                                        id: 'osp.recordTypes.carriedOn',
-                                        defaultMessage:
-                                          'Confirmed {date} on plan v{version} — not re-stated on this plan'
-                                      },
-                                      {
-                                        date: formatConfirmed(row.confirmed_at),
-                                        version: row.carried_from_version
-                                      }
-                                    )
-                                  : intl.formatMessage(
-                                      {
-                                        id: 'osp.recordTypes.confirmedOn',
-                                        defaultMessage: 'Confirmed {date}'
-                                      },
-                                      { date: formatConfirmed(row.confirmed_at) }
-                                    )}
-                              </Text>
-                            )}
-                            {row.required && (
-                              <Text fontSize="xs" color="gray.700" fontWeight="medium">
-                                {intl.formatMessage(
-                                  {
-                                    id: 'osp.recordTypes.requiredBecause',
-                                    defaultMessage: 'Required by your plan: {because}'
-                                  },
-                                  {
-                                    because: copy(
-                                      `osp.recordTypes.because.${row.key}`,
-                                      row.required_because ?? ''
-                                    )
-                                  }
-                                )}
-                              </Text>
-                            )}
-                            {row.not_kept && (
-                              <Text fontSize="xs" color="gray.700">
-                                {intl.formatMessage(
-                                  {
-                                    id: 'osp.recordTypes.notKeptStated',
+                              {isConfirmed && row.confirmed_at && (
+                                <Text fontSize="xs" color={mutedColor}>
+                                  {row.carried_from_version
+                                    ? intl.formatMessage(
+                                        {
+                                          id: 'osp.recordTypes.carriedOn',
+                                          defaultMessage:
+                                            'Confirmed {date} on plan v{version} — not re-stated on this plan'
+                                        },
+                                        {
+                                          date: formatConfirmed(row.confirmed_at),
+                                          version: row.carried_from_version
+                                        }
+                                      )
+                                    : intl.formatMessage(
+                                        {
+                                          id: 'osp.recordTypes.confirmedOn',
+                                          defaultMessage: 'Confirmed {date}'
+                                        },
+                                        { date: formatConfirmed(row.confirmed_at) }
+                                      )}
+                                </Text>
+                              )}
+                              {row.required && (
+                                <Text fontSize="xs" color="gray.700" fontWeight="medium">
+                                  {intl.formatMessage(
+                                    {
+                                      id: 'osp.recordTypes.requiredBecause',
+                                      defaultMessage: 'Required by your plan: {because}'
+                                    },
+                                    {
+                                      because: copy(
+                                        `osp.recordTypes.because.${row.key}`,
+                                        row.required_because ?? ''
+                                      )
+                                    }
+                                  )}
+                                </Text>
+                              )}
+                              {row.not_kept && (
+                                <Text fontSize="xs" color="gray.700">
+                                  {intl.formatMessage(
+                                    {
+                                      id: 'osp.recordTypes.notKeptStated',
+                                      defaultMessage:
+                                        'You state this record is not kept: {reason}. Your packet lists it as missing.'
+                                    },
+                                    { reason: row.not_kept_reason ?? '' }
+                                  )}
+                                </Text>
+                              )}
+                              {row.status === 'evidence_check_failed' && (
+                                <Tooltip
+                                  label={intl.formatMessage({
+                                    id: 'osp.recordTypes.checkFailedHelp',
                                     defaultMessage:
-                                      'You state this record is not kept: {reason}. Your packet lists it as missing.'
-                                  },
-                                  { reason: row.not_kept_reason ?? '' }
-                                )}
-                              </Text>
-                            )}
-                            {row.status === 'evidence_check_failed' && (
-                              <Tooltip
-                                label={intl.formatMessage({
-                                  id: 'osp.recordTypes.checkFailedHelp',
-                                  defaultMessage:
-                                    'We could not check your records for this one. That is not the same as finding none — answer from what your operation actually keeps.'
-                                })}>
-                                <Box as="span">
-                                  <Icon as={FaInfoCircle} color="red.400" boxSize={3} />
-                                </Box>
-                              </Tooltip>
-                            )}
-                          </HStack>
-                        </Stack>
-                      </Checkbox>
+                                      'We could not check your records for this one. That is not the same as finding none — answer from what your operation actually keeps.'
+                                  })}>
+                                  <Box as="span">
+                                    <Icon as={FaInfoCircle} color="red.400" boxSize={3} />
+                                  </Box>
+                                </Tooltip>
+                              )}
+                            </HStack>
+                          </Stack>
+                        </Checkbox>
 
-                      {isSuggested && isEditable && (
-                        <StandardButton
-                          size="xs"
-                          variant="outline"
-                          onClick={() => handleToggle(row)}
-                          flexShrink={0}>
-                          {intl.formatMessage({
-                            id: 'osp.recordTypes.confirm',
-                            defaultMessage: 'Confirm'
-                          })}
-                        </StandardButton>
-                      )}
-                      {row.required && !isConfirmed && !row.not_kept && isEditable && (
-                        <StandardButton
-                          size="xs"
-                          variant="ghost"
-                          flexShrink={0}
-                          onClick={() => {
-                            setNotKeptFor(row.key);
-                            setNotKeptReason('');
-                          }}>
-                          {intl.formatMessage({
-                            id: 'osp.recordTypes.notKeptAction',
-                            defaultMessage: "We don't keep this"
-                          })}
-                        </StandardButton>
-                      )}
-                    </Flex>
+                        {isSuggested && isEditable && (
+                          <StandardButton
+                            size="xs"
+                            variant="outline"
+                            onClick={() => handleToggle(row)}
+                            flexShrink={0}>
+                            {intl.formatMessage({
+                              id: 'osp.recordTypes.confirm',
+                              defaultMessage: 'Confirm'
+                            })}
+                          </StandardButton>
+                        )}
+                        {row.required && !isConfirmed && !row.not_kept && isEditable && (
+                          <StandardButton
+                            size="xs"
+                            variant="ghost"
+                            flexShrink={0}
+                            onClick={() => {
+                              setNotKeptFor(row.key);
+                              setNotKeptReason('');
+                            }}>
+                            {intl.formatMessage({
+                              id: 'osp.recordTypes.notKeptAction',
+                              defaultMessage: "We don't keep this"
+                            })}
+                          </StandardButton>
+                        )}
+                      </Flex>
+                      {renderLinkingElement(row)}
+                    </Box>
                   );
                 })}
                 {notKeptFor && rows.some((r) => r.key === notKeptFor) && (
