@@ -31265,54 +31265,6 @@
       ]
     },
     {
-      "module": "g6_0_production",
-      "label": "split_parallel_unanswered",
-      "answers": {
-        "split_operation": true
-      },
-      "visible_questions": [
-        "split_operation",
-        "nonorganic_product_source",
-        "split_operation_separation",
-        "split_input_records_distinction",
-        "split_contamination_prevention",
-        "harvest_transport_separation",
-        "parallel_production",
-        "split_records_distinction",
-        "nonorganic_crops_products",
-        "nonorganic_system_materials",
-        "buffer_strategies",
-        "drift_risk_present",
-        "drift_safeguards",
-        "drift_response_procedure",
-        "runoff_risk_present",
-        "borders_public_road",
-        "prohibited_materials_on_site",
-        "treated_lumber_any",
-        "uses_production_equipment"
-      ],
-      "missing_required": [
-        "split_operation_separation",
-        "parallel_production",
-        "nonorganic_system_materials",
-        "buffer_strategies",
-        "drift_safeguards",
-        "drift_response_procedure",
-        "runoff_risk_present",
-        "prohibited_materials_on_site"
-      ],
-      "missing_required_na": [
-        "split_operation_separation",
-        "parallel_production",
-        "nonorganic_system_materials",
-        "buffer_strategies",
-        "drift_safeguards",
-        "drift_response_procedure",
-        "runoff_risk_present",
-        "prohibited_materials_on_site"
-      ]
-    },
-    {
       "module": "g6_2_storage",
       "label": "unanswered",
       "answers": {},
