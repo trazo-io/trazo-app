@@ -1250,7 +1250,7 @@ const PestManagementTab = forwardRef(
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={6}>
                     <StandardField
                       label={intl.formatMessage({ id: 'app.pestSpecies' }) || 'Pest Species'}
-                      helpText="Name the pest as precisely as you can. § 205.206(e) requires the pest to be identified before a National List substance is applied.">
+                      helpText={intl.formatMessage({ id: 'events.pest.help.pestSpecies' })}>
                       <StandardInput
                         {...methods.register('pest_species')}
                         placeholder="e.g., Aphids, Spider mites, Thrips"
@@ -1689,7 +1689,9 @@ const PestManagementTab = forwardRef(
                     icon={FaCheckCircle}
                     title={intl.formatMessage({ id: 'events.section.pest.identification' })}
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
-                    description="Required documentation for NOP organic certification: pest identification verification and action threshold rationale (7 CFR 205.206)."
+                    description={intl.formatMessage({
+                      id: 'events.section.pest.identificationDescription'
+                    })}
                   />
 
                   {/* Identified By — PI, SC, TA, TM subtypes */}
