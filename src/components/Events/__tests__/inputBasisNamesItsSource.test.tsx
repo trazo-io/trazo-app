@@ -75,7 +75,17 @@ describe('a catalog match is attributed to Trazo and carries its limit', () => {
   const MATCHES: Array<[string, RegExp, RegExp]> = [
     ['omri_listed', /^OMRI Listed$/, /^Listado por OMRI$/],
     ['wsda_listed', /^WSDA Listed$/, /^Registrado en WSDA$/],
-    ['national_list_allowed', /National List § 205\.601/, /Lista Nacional § 205\.601/]
+    [
+      'national_list_allowed',
+      /^Allowed input · National List § 205\.601$/,
+      /^Insumo permitido · Lista Nacional § 205\.601$/
+    ],
+    // A § 205.601 entry allowed only under a condition (OV-MT-C01): its own words, same limit.
+    [
+      'national_list_allowed_condition',
+      /^Allowed with a condition · National List § 205\.601$/,
+      /^Permitido con una condición · Lista Nacional § 205\.601$/
+    ]
   ];
 
   it.each(MATCHES)('%s, English and Spanish', (status, enChip, esChip) => {

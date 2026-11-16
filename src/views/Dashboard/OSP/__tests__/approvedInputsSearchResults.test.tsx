@@ -308,6 +308,71 @@ describe('approved-inputs search — every match is offered, not just the winner
     expect(container.querySelectorAll('[data-restricted="true"]')).toHaveLength(1);
   });
 
+  // OV-MT-C01: a § 205.601 row the rule allows only under a condition (boron, zinc: a documented
+  // deficiency) shows that condition in the rule's words, in the search and on the plan.
+  const J7 =
+    'Micronutrients—not to be used as a defoliant, herbicide, or desiccant. Those made from nitrates or chlorides are not allowed. Micronutrient deficiency must be documented by soil or tissue testing or other documented and verifiable method as approved by the certifying agent.';
+
+  it('names a § 205.601 condition on the search row, with an ordinary Add button', () => {
+    renderPanel({
+      found: true,
+      status: 'matched',
+      omri_product_pk: null,
+      wsda_material_pk: null,
+      national_list_substance_pk: 4,
+      national_list_substance_name: 'Soluble boron products',
+      national_list_cfr_section: '205.601',
+      national_list_status: 'allowed',
+      national_list_allowed_with_condition: true,
+      national_list_rule_paragraph: '(j)(7)',
+      national_list_rule_words: J7
+    });
+    expect(screen.queryAllByRole('button', { name: /Add to OSP/i })).toHaveLength(1);
+    expect(screen.getByText(`Allowed with a condition (\u00a7 205.601(j)(7)): ${J7}`)).toBeTruthy();
+  });
+
+  it('labels a § 205.601 row with a condition on the plan', () => {
+    const { container } = renderPanel(
+      {
+        found: false,
+        status: 'not_found',
+        omri_product_pk: null,
+        national_list_substance_pk: null,
+        wsda_material_pk: null
+      },
+      {
+        ...OSP,
+        approved_national_list_substances: [
+          {
+            id: 4,
+            substance_name: 'Soluble boron products',
+            cfr_section: '205.601',
+            citation: '\u00a7 205.601(j)',
+            subsection: 'j',
+            is_national_list_entry: true,
+            status: 'allowed',
+            allowed_with_condition: true,
+            rule_paragraph: '(j)(7)',
+            rule_words: J7
+          },
+          {
+            id: 5,
+            substance_name: 'Elemental sulfur',
+            cfr_section: '205.601',
+            citation: '\u00a7 205.601',
+            subsection: 'e',
+            is_national_list_entry: true,
+            status: 'allowed',
+            allowed_with_condition: false
+          }
+        ]
+      }
+    );
+    expect(screen.getByText('Soluble boron products (with a condition)')).toBeTruthy();
+    expect(screen.getByText('Elemental sulfur')).toBeTruthy();
+    expect(container.querySelectorAll('[data-condition="true"]')).toHaveLength(1);
+  });
+
   it('never prints a WSDA identifier that is not a real WSDA Product #', () => {
     renderPanel({
       found: true,

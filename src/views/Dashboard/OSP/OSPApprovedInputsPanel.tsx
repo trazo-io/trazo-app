@@ -404,6 +404,25 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
         });
   };
 
+  /** "Allowed with a condition (§ 205.601(j)(7)): Micronutrients—..." for a § 205.601 row the rule
+   *  allows only under its entry's words (overall review OV-MT-C01). The words are the rule's
+   *  English, verbatim; the frame is translated. */
+  const withConditionNote = (s: {
+    cfr_section?: string | null;
+    rule_paragraph?: string | null;
+    rule_words?: string | null;
+  }) =>
+    intl.formatMessage(
+      {
+        id: 'osp.approvedInputs.withCondition',
+        defaultMessage: 'Allowed with a condition ({section}): {words}'
+      },
+      {
+        section: `\u00a7 ${s.cfr_section || '205.601'}${s.rule_paragraph || ''}`,
+        words: s.rule_words || ''
+      }
+    );
+
   const renderNationalListChip = (
     s: {
       id: number;
@@ -411,6 +430,9 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
       cfr_section?: string | null;
       subsection?: string | null;
       is_conditionally_permitted?: boolean;
+      allowed_with_condition?: boolean;
+      rule_paragraph?: string | null;
+      rule_words?: string | null;
     },
     scheme: string,
     tooltip: string | undefined
@@ -420,6 +442,8 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
       label={
         s.is_conditionally_permitted
           ? [tooltip, restrictedUseNote(s.cfr_section, s.subsection)].filter(Boolean).join(' · ')
+          : s.allowed_with_condition
+          ? [tooltip, withConditionNote(s)].filter(Boolean).join(' · ')
           : tooltip
       }
       hasArrow>
@@ -427,13 +451,22 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
         size="md"
         colorScheme={scheme}
         borderRadius="md"
-        data-restricted={s.is_conditionally_permitted ? 'true' : undefined}>
+        data-restricted={s.is_conditionally_permitted ? 'true' : undefined}
+        data-condition={s.allowed_with_condition ? 'true' : undefined}>
         <TagLabel>
           {s.is_conditionally_permitted
             ? intl.formatMessage(
                 {
                   id: 'osp.approvedInputs.restrictedChip',
                   defaultMessage: '{name} (restricted use)'
+                },
+                { name: s.substance_name }
+              )
+            : s.allowed_with_condition
+            ? intl.formatMessage(
+                {
+                  id: 'osp.approvedInputs.withConditionChip',
+                  defaultMessage: '{name} (with a condition)'
                 },
                 { name: s.substance_name }
               )
@@ -645,7 +678,10 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
               subsection: result.national_list_subsection ?? null,
               status: result.national_list_status,
               is_conditionally_permitted: result.national_list_conditional === true,
-              restriction_notes: result.national_list_restriction_notes ?? null
+              restriction_notes: result.national_list_restriction_notes ?? null,
+              allowed_with_condition: result.national_list_allowed_with_condition === true,
+              rule_paragraph: result.national_list_rule_paragraph ?? null,
+              rule_words: result.national_list_rule_words ?? null
             }
           ]
         : [];
@@ -706,6 +742,8 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
             note={
               row.is_conditionally_permitted
                 ? restrictedUseNote(row.cfr_section, row.subsection)
+                : row.allowed_with_condition
+                ? withConditionNote(row)
                 : undefined
             }
             action={

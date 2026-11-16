@@ -280,6 +280,20 @@ const ResultCard: React.FC<{
     : result.national_list_cfr_section
     ? `\u00a7 ${result.national_list_cfr_section}`
     : '\u00a7 205.602';
+  // A § 205.601 row the rule allows only under a condition of use: zinc and boron need a
+  // documented deficiency ((j)(7)), boric acid is for structural pest control with no contact with
+  // crops ((e)(3)). The server types it (`allowed_with_condition`); the client never reads it from
+  // the words. Until 2026-11-16 every one of these read "allowed" and nothing else (overall review
+  // 2026-11, OV-MT-C01), so a walnut grower looking up zinc learned nothing about the tissue test.
+  const nlWithCondition =
+    hasNL && !nlListedProhibited && result.national_list_allowed_with_condition === true;
+  // The rule's own words for the row's entry, verbatim and in English. Shown for any § 205.601 row
+  // that has them; only `nlWithCondition` turns them into a condition.
+  const nlRuleWords = hasNL ? result.national_list_rule_words || null : null;
+  const nlRuleSection =
+    result.national_list_rule_paragraph && result.national_list_cfr_section
+      ? `\u00a7 ${result.national_list_cfr_section}${result.national_list_rule_paragraph}`
+      : nlSection;
 
   if (noMatch) {
     const search = `https://www.omri.org/omri-search?query=${encodeURIComponent(query)}`;
@@ -351,6 +365,52 @@ const ResultCard: React.FC<{
                       section: nlSection
                     }
                   )}
+            </Text>
+          </VStack>
+        </Alert>
+      )}
+      {nlWithCondition && (
+        <Alert status="warning" fontSize="xs" mt={0} data-verdict="condition">
+          <AlertIcon />
+          <VStack align="start" spacing={1}>
+            <Text fontWeight="semibold">
+              {intl.formatMessage({
+                id: 'inputVerify.condition601.title',
+                defaultMessage: 'Allowed only under the condition the rule states'
+              })}
+            </Text>
+            <Text>
+              {intl.formatMessage(
+                {
+                  id: 'inputVerify.condition601.body',
+                  defaultMessage: '{name}: {section} allows it only as its entry says:'
+                },
+                {
+                  name: result.national_list_substance_name || '',
+                  section: nlRuleSection
+                }
+              )}
+            </Text>
+            {nlRuleWords && (
+              // The regulation's English, verbatim: a translation of a legal condition is a second
+              // text that can say something the rule does not. `lang` lets a screen reader on a
+              // Spanish page read it as English.
+              <Text
+                lang="en"
+                borderLeftWidth="2px"
+                borderColor="orange.300"
+                pl={2}
+                color="gray.800"
+                data-testid="nl-rule-words">
+                {nlRuleWords}
+              </Text>
+            )}
+            <Text>
+              {intl.formatMessage({
+                id: 'inputVerify.condition601.record',
+                defaultMessage:
+                  'Keep the record that shows each use met it; your certifier checks each application against this condition.'
+              })}
             </Text>
           </VStack>
         </Alert>
@@ -528,7 +588,26 @@ const ResultCard: React.FC<{
                     })
               }
               title={result.national_list_substance_name || ''}
-              tone={nlProhibited ? 'prohibited' : nlConditional ? 'restricted' : 'allowed'}
+              tone={
+                nlProhibited
+                  ? 'prohibited'
+                  : nlConditional || nlWithCondition
+                  ? 'restricted'
+                  : 'allowed'
+              }
+              detail={
+                // A § 205.601 row whose words only say what qualifies as the substance ("Lime
+                // sulfur—including calcium polysulfide"): still allowed, and its words still shown.
+                !nlWithCondition && nlRuleWords
+                  ? intl.formatMessage(
+                      {
+                        id: 'inputVerify.ruleWords',
+                        defaultMessage: "The rule's words ({section}): {words}"
+                      },
+                      { section: nlRuleSection, words: nlRuleWords }
+                    )
+                  : undefined
+              }
               subtitle={[
                 nlNonsynthetic
                   ? intl.formatMessage({
@@ -547,6 +626,11 @@ const ResultCard: React.FC<{
                   ? intl.formatMessage({
                       id: 'inputVerify.nlStatus.restricted',
                       defaultMessage: 'restricted use'
+                    })
+                  : nlWithCondition
+                  ? intl.formatMessage({
+                      id: 'inputVerify.nlStatus.allowedWithCondition',
+                      defaultMessage: 'allowed with a condition'
                     })
                   : intl.formatMessage({
                       id: 'inputVerify.nlStatus.allowed',
@@ -590,7 +674,9 @@ const MatchRow: React.FC<{
   attached?: boolean;
   /** Grower action for this row (attach / detach). Rendered after the text, never before. */
   action?: React.ReactNode;
-}> = ({ badgeLabel, title, subtitle, tone = 'allowed', attached = false, action }) => (
+  /** A second line that may run long (the rule's words); never cut to one line like `subtitle`. */
+  detail?: string;
+}> = ({ badgeLabel, title, subtitle, tone = 'allowed', attached = false, action, detail }) => (
   /*
    * A StatusRow in a StatusList (2026-11-04), not a green box per match. The old card painted
    * EVERY candidate green (green.50 ground, green border, green check) before the grower had
@@ -645,6 +731,11 @@ const MatchRow: React.FC<{
           fontWeight={tone === 'allowed' ? 'normal' : 'semibold'}
           noOfLines={1}>
           {subtitle}
+        </Text>
+      )}
+      {detail && (
+        <Text fontSize="xs" color="gray.600" data-testid="nl-rule-words">
+          {detail}
         </Text>
       )}
     </StatusRow>

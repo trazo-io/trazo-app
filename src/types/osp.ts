@@ -82,6 +82,10 @@ export interface ApprovedNationalListInput {
   is_conditionally_permitted?: boolean;
   subsection?: string | null;
   restriction_notes?: string | null;
+  /** A § 205.601 row the rule allows only under a condition of use, and the rule's words for it. */
+  allowed_with_condition?: boolean;
+  rule_paragraph?: string | null;
+  rule_words?: string | null;
 }
 
 export interface ApprovedOMRIInput {
@@ -253,6 +257,16 @@ export interface InputVerifyResult {
   /** The rule's text as stored, in English. */
   national_list_restriction_notes?: string | null;
   /**
+   * A § 205.601 row the rule allows only under a condition of use: zinc and boron with a documented
+   * deficiency ((j)(7)), boric acid for structural pest control ((e)(3)). Typed by the server; never
+   * plain "allowed" (overall review OV-MT-C01). Absent from a backend older than 2026-11-16.
+   */
+  national_list_allowed_with_condition?: boolean | null;
+  /** The paragraph whose words follow, e.g. "(j)(7)". */
+  national_list_rule_paragraph?: string | null;
+  /** The rule's own words for the row's entry, verbatim and in English (eCFR). Never a paraphrase. */
+  national_list_rule_words?: string | null;
+  /**
    * Every § 205.601/602 entry the query could mean, best first. `status` travels PER ROW
    * because the catalogue holds prohibited substances alongside allowed ones and both answer
    * the same search — reading the status of whichever row ranked first would put an ordinary
@@ -268,6 +282,9 @@ export interface InputVerifyResult {
     status: string | null;
     is_conditionally_permitted?: boolean;
     restriction_notes: string | null;
+    allowed_with_condition?: boolean;
+    rule_paragraph?: string | null;
+    rule_words?: string | null;
   }[];
   national_list_candidate_count?: number;
   // WSDA Materials List — co-equal with OMRI per CCOF. Phase 1 additive fields.
