@@ -290,10 +290,13 @@ const ResultCard: React.FC<{
   // The rule's own words for the row's entry, verbatim and in English. Shown for any § 205.601 row
   // that has them; only `nlWithCondition` turns them into a condition.
   const nlRuleWords = hasNL ? result.national_list_rule_words || null : null;
+  // Never `nlSection`'s fallback: that ends at § 205.602, the prohibited section, which would cite
+  // the rule that bans a substance as the one that allows it (review of app #403). The server only
+  // types § 205.601 rows, so § 205.601 is the honest default when a field is missing.
   const nlRuleSection =
     result.national_list_rule_paragraph && result.national_list_cfr_section
       ? `\u00a7 ${result.national_list_cfr_section}${result.national_list_rule_paragraph}`
-      : nlSection;
+      : result.national_list_citation || `\u00a7 ${result.national_list_cfr_section || '205.601'}`;
 
   if (noMatch) {
     const search = `https://www.omri.org/omri-search?query=${encodeURIComponent(query)}`;
@@ -398,7 +401,7 @@ const ResultCard: React.FC<{
               <Text
                 lang="en"
                 borderLeftWidth="2px"
-                borderColor="orange.300"
+                borderColor="amber.300"
                 pl={2}
                 color="gray.800"
                 data-testid="nl-rule-words">

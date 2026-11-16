@@ -207,6 +207,19 @@ describe('InputVerifyHelper: a § 205.601 row allowed only under a condition say
     );
   });
 
+  it('a flagged row with no paragraph or section still cites § 205.601, never § 205.602', () => {
+    // Review of app #403: the general fallback ends at § 205.602, the prohibited section.
+    const { container } = renderWith({
+      ...ZINC,
+      national_list_citation: null,
+      national_list_cfr_section: null,
+      national_list_rule_paragraph: null
+    });
+    const block = container.querySelector('[data-verdict="condition"]')?.textContent || '';
+    expect(block).toContain('\u00a7 205.601 allows it');
+    expect(block).not.toContain('205.602');
+  });
+
   it('a row the server did not flag is never turned into a condition by its words', () => {
     // The flag decides, never the prose: words with no flag stay "allowed".
     const { container } = renderWith({ ...ZINC, national_list_allowed_with_condition: false });
