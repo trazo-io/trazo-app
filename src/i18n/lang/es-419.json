@@ -3556,6 +3556,7 @@
   "drift.reason.name_wsda_not_in_osp": "“{input}” coincide con la entrada de la Lista de Materiales WSDA “{resolvedName}”, pero ese producto no está en la lista de materiales de tu plan.",
   "drift.reason.nl_not_in_osp": "“{input}” coincide con la sustancia de la Lista Nacional {substance}, pero esa sustancia no está en la lista de materiales de tu plan.",
   "drift.reason.omri_not_in_osp": "“{input}” está vinculado a un producto OMRI que no está en la lista de materiales de tu plan.",
+  "drift.reason.plan_lists_substances": "Tu plan nombra {substances} como sustancias. Si el ingrediente activo de este producto es una de ellas, escríbelo en el campo Ingrediente activo del registro tal como lo nombra el plan.",
   "drift.reason.provisional.name_nl_not_in_osp": "«{input}» coincide con la sustancia {substance} de la Lista Nacional, que aún no está en tu plan borrador. Agrégala antes de enviarlo.",
   "drift.reason.provisional.name_omri_not_in_osp": "«{input}» coincide con el producto OMRI «{resolvedName}», que aún no está en tu plan borrador. Agrégalo antes de enviarlo.",
   "drift.reason.provisional.name_wsda_not_in_osp": "«{input}» coincide con la entrada «{resolvedName}» de la Lista de Materiales de WSDA, que aún no está en tu plan borrador. Agrégala antes de enviarlo.",

@@ -3556,6 +3556,7 @@
   "drift.reason.name_wsda_not_in_osp": "“{input}” matches the WSDA Materials List entry “{resolvedName}”, but that product is not on your plan's materials list.",
   "drift.reason.nl_not_in_osp": "“{input}” matches the National List substance {substance}, but that substance is not on your plan's materials list.",
   "drift.reason.omri_not_in_osp": "“{input}” is linked to an OMRI product that is not on your plan's materials list.",
+  "drift.reason.plan_lists_substances": "Your plan lists {substances} by substance name. If this product's active ingredient is one of them, type it in the record's Active Ingredient field as the plan names it.",
   "drift.reason.provisional.name_nl_not_in_osp": "“{input}” matches the National List substance {substance}, which is not yet on your draft plan. Add it before you submit.",
   "drift.reason.provisional.name_omri_not_in_osp": "“{input}” matches the OMRI product “{resolvedName}”, which is not yet on your draft plan. Add it before you submit.",
   "drift.reason.provisional.name_wsda_not_in_osp": "“{input}” matches the WSDA Materials List entry “{resolvedName}”, which is not yet on your draft plan. Add it before you submit.",
