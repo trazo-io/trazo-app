@@ -83,7 +83,10 @@ jobs:
     name: Frontend unit tests
     if: github.event_name != 'push'
     runs-on: blacksmith-2vcpu-ubuntu-2404
-    timeout-minutes: 15
+    # 20, not 15 (2026-11-17): the job took 9 min on #411, 12 on #412 and 14 on #413, and #414 was
+    # cancelled at 15 with no test failing (vitest from 21:10 to 21:25). Still short enough that a
+    # hung test fails the run quickly.
+    timeout-minutes: 20
     env:
       # PINNED HERE, NOT IN vitest.config.ts. That file already sets `env: { TZ }`, and on a UTC
       # runner it does not take: `calendarDateRendering.test.ts` opens with its own self-check,
