@@ -17,7 +17,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Badge, Box, HStack, Icon, Stack, Text, VStack, useToast } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
-import { FiAlertTriangle, FiDownload, FiEdit2, FiFileText } from 'react-icons/fi';
+import { FiAlertTriangle, FiCheckCircle, FiDownload, FiFileText } from 'react-icons/fi';
 import { useIntl } from 'react-intl';
 import { ResponsiveModal } from 'components/Design/ResponsiveModal';
 import {
@@ -28,7 +28,10 @@ import {
   StandardField,
   StandardQueryError,
   StandardSelect,
-  StandardSpinner
+  StandardSpinner,
+  StatusList,
+  StatusRow,
+  StatusRowLink
 } from 'components/Design/StandardComponents';
 import { config } from 'config/environment';
 
@@ -393,61 +396,45 @@ const WASprayExportModal: React.FC<WASprayExportModalProps> = ({
             </HStack>
 
             {hasPasses ? (
-              <VStack spacing={2} align="stretch">
+              // Rows with hairlines, not a bordered box per pass with a coloured edge
+              // (2026-11-17), the same call as PURExportModal.
+              <StatusList testId="wa-spray-rows">
                 {summary.passes.map((pass) => {
                   const blank = pass.blank_items.length > 0;
                   return (
-                    <Box
+                    <StatusRow
                       key={pass.number}
-                      p={3}
-                      borderRadius="lg"
-                      border="1px solid"
-                      borderColor="gray.200"
-                      borderLeft="4px solid"
-                      borderLeftColor={blank ? warn.bar : 'green.600'}
-                      bg="white">
-                      <Stack
-                        direction={{ base: 'column', smd: 'row' }}
-                        justify="space-between"
-                        align={{ base: 'stretch', smd: 'flex-start' }}
-                        spacing={2}>
-                        <Box minW={0}>
-                          <Text fontSize="sm" fontWeight="semibold" color="gray.800">
-                            {pass.products.join(', ')}
-                          </Text>
-                          <Text fontSize="xs" color="gray.600">
-                            {[
-                              pass.event_date
-                                ? formatDay(pass.event_date)
-                                : intl.formatMessage(
-                                    { id: 'app.waSpray.daysDiffer' },
-                                    { days: (pass.event_days ?? []).map(formatDay).join(', ') }
-                                  ),
-                              [pass.parcel_name, pass.block].filter(Boolean).join(', '),
-                              pass.products.length > 1
-                                ? intl.formatMessage(
-                                    { id: 'app.waSpray.tank' },
-                                    { count: pass.products.length }
-                                  )
-                                : ''
-                            ]
-                              .filter(Boolean)
-                              .join(' · ')}
-                          </Text>
-                        </Box>
-                        {pass.parcel_id != null && (
-                          <StandardButton
-                            variant="outline"
-                            size="sm"
-                            leftIcon={<Icon as={FiEdit2} />}
-                            onClick={() => openEvent(pass)}
-                            flexShrink={0}
-                            alignSelf={{ base: 'flex-start', smd: 'auto' }}>
+                      tone={blank ? 'warn' : 'clear'}
+                      icon={blank ? FiAlertTriangle : FiCheckCircle}
+                      title={pass.products.join(', ')}
+                      testId="wa-spray-row"
+                      action={
+                        pass.parcel_id != null ? (
+                          <StatusRowLink onClick={() => openEvent(pass)}>
                             {intl.formatMessage({ id: 'app.waSpray.openEvent' })}
-                          </StandardButton>
-                        )}
-                      </Stack>
-                      <Text fontSize="xs" color={blank ? warn.text : 'gray.600'} mt={2}>
+                          </StatusRowLink>
+                        ) : undefined
+                      }>
+                      <Text fontSize="xs" color="gray.600">
+                        {[
+                          pass.event_date
+                            ? formatDay(pass.event_date)
+                            : intl.formatMessage(
+                                { id: 'app.waSpray.daysDiffer' },
+                                { days: (pass.event_days ?? []).map(formatDay).join(', ') }
+                              ),
+                          [pass.parcel_name, pass.block].filter(Boolean).join(', '),
+                          pass.products.length > 1
+                            ? intl.formatMessage(
+                                { id: 'app.waSpray.tank' },
+                                { count: pass.products.length }
+                              )
+                            : ''
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </Text>
+                      <Text fontSize="xs" color={blank ? warn.text : 'gray.600'}>
                         {blank
                           ? intl.formatMessage(
                               { id: 'app.waSpray.blankItems' },
@@ -455,10 +442,10 @@ const WASprayExportModal: React.FC<WASprayExportModalProps> = ({
                             )
                           : intl.formatMessage({ id: 'app.waSpray.noBlankItems' })}
                       </Text>
-                    </Box>
+                    </StatusRow>
                   );
                 })}
-              </VStack>
+              </StatusList>
             ) : (
               <StandardEmptyState
                 icon={FiFileText}

@@ -25,9 +25,9 @@ import {
   FiAlertTriangle,
   FiCheckCircle,
   FiDownload,
-  FiEdit2,
   FiExternalLink,
-  FiFileText
+  FiFileText,
+  FiInfo
 } from 'react-icons/fi';
 import { useIntl } from 'react-intl';
 import { ResponsiveModal } from 'components/Design/ResponsiveModal';
@@ -39,7 +39,10 @@ import {
   StandardField,
   StandardQueryError,
   StandardSelect,
-  StandardSpinner
+  StandardSpinner,
+  StatusList,
+  StatusRow,
+  StatusRowLink
 } from 'components/Design/StandardComponents';
 import { config } from 'config/environment';
 
@@ -542,77 +545,52 @@ const PURExportModal: React.FC<PURExportModalProps> = ({
             )}
 
             {hasApps ? (
-              // No inner maxH/overflow: the dialog body already scrolls, and the nested
-              // 220px region clipped the second row mid-sentence with no affordance.
-              <VStack spacing={2} align="stretch">
+              // Rows with hairlines, not a bordered box per record with a coloured edge
+              // (2026-11-17): the November notice pass made findings rows everywhere else, and
+              // the edge only repeated what the glyph and the words already say. No inner
+              // maxH/overflow: the dialog body already scrolls, and a nested 220px region
+              // clipped the second row mid-sentence with no affordance.
+              <StatusList testId="pur-rows">
                 {summary.rows.map((row, idx) => {
                   const incomplete = row.missing.length > 0;
                   return (
-                    <Box
+                    <StatusRow
                       key={`${row.event_id}-${idx}`}
-                      p={3}
-                      borderRadius="lg"
-                      border="1px solid"
-                      borderColor="gray.200"
-                      borderLeft="4px solid"
-                      borderLeftColor={incomplete ? warn.bar : 'green.600'}
-                      bg="white">
-                      <Stack
-                        direction={{ base: 'column', smd: 'row' }}
-                        justify="space-between"
-                        align={{ base: 'stretch', smd: 'flex-start' }}
-                        spacing={2}>
-                        <Box minW={0}>
-                          <Text fontSize="sm" fontWeight="semibold" color="gray.800">
-                            {row.product_and_manufacturer || '—'}
-                          </Text>
-                          {/* The event's own date, always — box 17 is one of the boxes that
-                              can be blank, and two "Kocide 3000-O" rows with no date were
-                              indistinguishable. */}
-                          <Text fontSize="xs" color="gray.600">
-                            {[formatEventDate(row.event_date), row.application_method]
-                              .filter(Boolean)
-                              .join(' · ')}
-                          </Text>
-                        </Box>
-                        {row.parcel_id != null && (
-                          <StandardButton
-                            variant="outline"
-                            size="sm"
-                            leftIcon={<Icon as={FiEdit2} />}
-                            onClick={() => openEvent(row)}
-                            flexShrink={0}
-                            alignSelf={{ base: 'flex-start', smd: 'auto' }}>
+                      tone={incomplete ? 'warn' : 'clear'}
+                      icon={incomplete ? FiAlertTriangle : FiCheckCircle}
+                      title={row.product_and_manufacturer || '—'}
+                      testId="pur-row"
+                      action={
+                        row.parcel_id != null ? (
+                          <StatusRowLink onClick={() => openEvent(row)}>
                             {intl.formatMessage({ id: 'app.pur.openEvent' })}
-                          </StandardButton>
-                        )}
-                      </Stack>
-                      <HStack spacing={1.5} align="flex-start" mt={2}>
-                        <Icon
-                          as={incomplete ? FiAlertTriangle : FiCheckCircle}
-                          color={incomplete ? warn.icon : 'green.700'}
-                          boxSize={3.5}
-                          mt="2px"
-                          flexShrink={0}
-                          aria-hidden="true"
-                        />
-                        <Text fontSize="xs" color={incomplete ? warn.text : 'gray.600'}>
-                          {incomplete
-                            ? `${intl.formatMessage({ id: 'app.pur.missingBoxes' })}: ${row.missing
-                                .map(labelForBox)
-                                .join(', ')}`
-                            : intl.formatMessage({ id: 'app.pur.rowComplete' })}
-                        </Text>
-                      </HStack>
+                          </StatusRowLink>
+                        ) : undefined
+                      }>
+                      {/* The event's own date, always — box 17 is one of the boxes that can be
+                          blank, and two "Kocide 3000-O" rows with no date were
+                          indistinguishable. */}
+                      <Text fontSize="xs" color="gray.600">
+                        {[formatEventDate(row.event_date), row.application_method]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </Text>
+                      <Text fontSize="xs" color={incomplete ? warn.text : 'gray.600'}>
+                        {incomplete
+                          ? `${intl.formatMessage({ id: 'app.pur.missingBoxes' })}: ${row.missing
+                              .map(labelForBox)
+                              .join(', ')}`
+                          : intl.formatMessage({ id: 'app.pur.rowComplete' })}
+                      </Text>
                       {row.flags.map((flag, i) => (
-                        <Text key={`${flag.code}-${i}`} fontSize="xs" color="gray.600" mt={1}>
+                        <Text key={`${flag.code}-${i}`} fontSize="xs" color="gray.600">
                           {labelForFlag(flag)}
                         </Text>
                       ))}
-                    </Box>
+                    </StatusRow>
                   );
                 })}
-              </VStack>
+              </StatusList>
             ) : (
               <StandardEmptyState
                 icon={FiFileText}
@@ -633,53 +611,37 @@ const PURExportModal: React.FC<PURExportModalProps> = ({
                 <Text fontSize="xs" color="gray.600">
                   {intl.formatMessage({ id: 'app.pur.pcbExcluded.help' })}
                 </Text>
-                {excluded.map((item, idx) => (
-                  <Box
-                    key={`${item.event_id}-${idx}`}
-                    p={3}
-                    borderRadius="lg"
-                    border="1px solid"
-                    borderColor="gray.200"
-                    borderLeft="4px solid"
-                    borderLeftColor="gray.300"
-                    bg="white">
-                    <Stack
-                      direction={{ base: 'column', smd: 'row' }}
-                      justify="space-between"
-                      align={{ base: 'stretch', smd: 'flex-start' }}
-                      spacing={2}>
-                      <Box minW={0}>
-                        <Text fontSize="sm" fontWeight="semibold" color="gray.800">
-                          {item.product || '—'}
-                        </Text>
-                        <Text fontSize="xs" color="gray.600">
-                          {[
-                            formatEventDate(item.event_date),
-                            item.pcb_name
-                              ? intl.formatMessage(
-                                  { id: 'app.pur.pcbExcluded.by' },
-                                  { name: item.pcb_name }
-                                )
-                              : intl.formatMessage({ id: 'app.pur.pcbExcluded.byUnknown' })
-                          ]
-                            .filter(Boolean)
-                            .join(' · ')}
-                        </Text>
-                      </Box>
-                      {item.parcel_id != null && (
-                        <StandardButton
-                          variant="outline"
-                          size="sm"
-                          leftIcon={<Icon as={FiEdit2} />}
-                          onClick={() => openExcluded(item)}
-                          flexShrink={0}
-                          alignSelf={{ base: 'flex-start', smd: 'auto' }}>
-                          {intl.formatMessage({ id: 'app.pur.openEvent' })}
-                        </StandardButton>
-                      )}
-                    </Stack>
-                  </Box>
-                ))}
+                <StatusList testId="pur-excluded-rows">
+                  {excluded.map((item, idx) => (
+                    <StatusRow
+                      key={`${item.event_id}-${idx}`}
+                      tone="neutral"
+                      icon={FiInfo}
+                      title={item.product || '—'}
+                      testId="pur-excluded-row"
+                      action={
+                        item.parcel_id != null ? (
+                          <StatusRowLink onClick={() => openExcluded(item)}>
+                            {intl.formatMessage({ id: 'app.pur.openEvent' })}
+                          </StatusRowLink>
+                        ) : undefined
+                      }>
+                      <Text fontSize="xs" color="gray.600">
+                        {[
+                          formatEventDate(item.event_date),
+                          item.pcb_name
+                            ? intl.formatMessage(
+                                { id: 'app.pur.pcbExcluded.by' },
+                                { name: item.pcb_name }
+                              )
+                            : intl.formatMessage({ id: 'app.pur.pcbExcluded.byUnknown' })
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </Text>
+                    </StatusRow>
+                  ))}
+                </StatusList>
               </VStack>
             )}
 

@@ -9,7 +9,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { MdWarning } from 'react-icons/md';
 
-import { StatusList, StatusRow } from '../StandardComponents';
+import { StatusList, StatusRow, StatusRowLink } from '../StandardComponents';
 
 const Nothing = () => null;
 
@@ -64,5 +64,25 @@ describe('StatusList', () => {
     );
     expect(getComputedStyle(screen.getByTestId('empty-list')).display).toBe('none');
     expect(getComputedStyle(screen.getByTestId('full-list')).display).not.toBe('none');
+  });
+});
+
+describe('StatusRowLink', () => {
+  it('is a button named by its words, the arrow hidden from screen readers', () => {
+    let opened = 0;
+    render(
+      <ChakraProvider>
+        <StatusRow
+          tone="warn"
+          icon={MdWarning}
+          title="Kocide 3000-O"
+          action={<StatusRowLink onClick={() => (opened += 1)}>Open activity</StatusRowLink>}
+        />
+      </ChakraProvider>
+    );
+    const link = screen.getByRole('button', { name: 'Open activity' });
+    expect(link).toHaveAttribute('type', 'button');
+    fireEvent.click(link);
+    expect(opened).toBe(1);
   });
 });

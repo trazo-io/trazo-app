@@ -49,6 +49,7 @@ import {
   CloseButton,
   Collapse,
   useDisclosure,
+  Link,
   Tabs,
   TabList,
   Tab,
@@ -2083,6 +2084,42 @@ export const StatusRow = ({
     </HStack>
   );
 };
+
+/**
+ * The action on a StatusRow ("Open activity →"): a green text link with an arrow, never an
+ * outline button (2026-11-17). An outline button per row turned a list of six records into six
+ * boxed buttons, the look Oscar rejected on the drift banner ("the position of the buttons");
+ * the readiness card and the traceback already end their rows in a text link. TOUCH_TARGET gives
+ * the 44px hit area and the one focus ring without the 44px of height.
+ *
+ * A button, for actions handled in place (open the record in its sheet).
+ */
+export const StatusRowLink = ({
+  children,
+  onClick,
+  testId
+}: {
+  children: ReactNode;
+  onClick: () => void;
+  testId?: string;
+}) => (
+  <Link
+    as="button"
+    type="button"
+    onClick={onClick}
+    data-testid={testId}
+    fontSize="sm"
+    fontWeight="semibold"
+    color="green.700"
+    textAlign="left"
+    sx={{ '@media (hover: hover)': { '&:hover': { textDecoration: 'underline' } } }}
+    {...TOUCH_TARGET}>
+    {children}
+    <Text as="span" aria-hidden="true">
+      {' →'}
+    </Text>
+  </Link>
+);
 
 /**
  * Rows split by a hairline: StatusRows, or any plain row given `py={3}` (the traceback's picks,
