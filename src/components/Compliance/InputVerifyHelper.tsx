@@ -257,6 +257,11 @@ const ResultCard: React.FC<{
   const omriAttached =
     hasOMRI && attachedOmriPk != null && attachedOmriPk === result.omri_product_pk;
   const hasWSDA = result.wsda_material_pk != null;
+  // WSDA's own Annotation column for the product ("Deficiency must be documented."). WSDA's list says
+  // registered products must be used in accordance with all noted annotations, so an annotated
+  // product is not shown as plainly listed. "" is WSDA's NONE and null is "not transcribed": neither
+  // adds a line, and neither is ever read as "no restrictions".
+  const wsdaAnnotation = (result.wsda_material_annotation || '').trim();
   const hasNL = result.national_list_substance_pk != null;
   // Nonsynthetic (spinosad, Bt, d-limonene): allowed without a National List entry, so it is never
   // badged "National List" and prints no section.
@@ -545,6 +550,28 @@ const ResultCard: React.FC<{
               badgeLabel="WSDA"
               attached={attachedWsdaPk != null && attachedWsdaPk === result.wsda_material_pk}
               title={result.wsda_material_name || ''}
+              tone={wsdaAnnotation ? 'restricted' : 'allowed'}
+              detail={
+                wsdaAnnotation
+                  ? result.wsda_list_effective_date
+                    ? intl.formatMessage(
+                        {
+                          id: 'inputVerify.wsdaAnnotation',
+                          defaultMessage:
+                            "WSDA's annotation (list of {date}): {annotation} WSDA requires use in accordance with it."
+                        },
+                        { date: result.wsda_list_effective_date, annotation: wsdaAnnotation }
+                      )
+                    : intl.formatMessage(
+                        {
+                          id: 'inputVerify.wsdaAnnotationNoDate',
+                          defaultMessage:
+                            "WSDA's annotation: {annotation} WSDA requires use in accordance with it."
+                        },
+                        { annotation: wsdaAnnotation }
+                      )
+                  : undefined
+              }
               subtitle={[
                 wsdaProductNumber(result.wsda_material_id)
                   ? intl.formatMessage(
@@ -646,6 +673,18 @@ const ResultCard: React.FC<{
           )}
         </StatusList>
       )}
+      {/* Trazo stores no OMRI restriction (OMRI's terms are an open question since 2026-10-14), so an
+          OMRI row can never say "restricted" the way a WSDA or National List row does. One line says
+          where the grower finds it instead of letting the absence read as "allowed". */}
+      {hasOMRI || omriCandidates.length > 0 ? (
+        <Text fontSize="xs" color="gray.600" data-testid="omri-restriction-pointer">
+          {intl.formatMessage({
+            id: 'inputVerify.omriRestrictionPointer',
+            defaultMessage:
+              "OMRI lists some products as Restricted, with the restriction on the product's listing. Trazo does not hold OMRI's restrictions: check the listing at omri.org before use."
+          })}
+        </Text>
+      ) : null}
       <Text fontSize="xs" color="gray.500">
         {intl.formatMessage({
           id: 'inputVerify.reminder',

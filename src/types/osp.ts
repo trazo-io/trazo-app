@@ -294,6 +294,13 @@ export interface InputVerifyResult {
   wsda_material_name?: string | null;
   wsda_material_category?: string | null;
   /**
+   * WSDA's own Annotation column for the product, verbatim and in English ("Deficiency must be
+   * documented."), with the edition it was read from. "" is WSDA's NONE, which is not "no
+   * restrictions" (the label can still restrict use); null is "not transcribed".
+   */
+  wsda_material_annotation?: string | null;
+  wsda_list_effective_date?: string | null;
+  /**
    * Same shortlist contract as `omri_candidates`, ported to WSDA on 2026-09-06. Until then
    * WSDA answered with one row, so a search for "Serenade" showed a single brand while the
    * plan's own Serenade Opti sat unreachable.
@@ -304,6 +311,7 @@ export interface InputVerifyResult {
     brand_name: string;
     manufacturer?: string | null;
     category?: string | null;
+    annotation?: string | null;
   }[];
   wsda_candidate_count?: number;
 }
@@ -725,7 +733,7 @@ export interface MaterialIdentityInput {
 
 /** OSP alignment T18 (Phase 5 slice 2b). Mirrors `certifications/services/material_restrictions.py`. */
 export type RestrictionMaterialKind = 'plan_entry' | 'omri' | 'wsda' | 'national_list';
-export type RestrictionSource = 'regulation' | 'operator_transcribed';
+export type RestrictionSource = 'regulation' | 'operator_transcribed' | 'wsda_list_annotation';
 export type RestrictionDocType =
   | 'product_label'
   | 'omri_listing'
@@ -765,6 +773,14 @@ export interface RestrictionMaterial {
   material_id: number;
   material_name: string;
   regulation_restriction: { key: string; text: string; citation: string } | null;
+  /** WSDA's own annotation for the material's WSDA listing; null when WSDA prints NONE or none is held. */
+  wsda_list_restriction?: {
+    key: string;
+    text: string;
+    citation: string;
+    edition: string | null;
+    source_url: string;
+  } | null;
   statements: RestrictionStatement[];
   history: RestrictionStatement[];
   /** Current statements on OTHER plan versions: context to restate, never this version's answer. */

@@ -5,8 +5,10 @@
  *   - A statement belongs to one material, this plan version and one identified restriction.
  *   - The restriction is either regulation wording Trazo holds (a § 205.602 condition of use, or a
  *     § 205.601 annotation held verbatim: fixed coppers, copper sulfate, magnesium sulfate,
- *     micronutrients) or wording the operator copies from its source, which prints as not verified
- *     by Trazo. The backend sends the citation; the panel prints it as given.
+ *     micronutrients), WSDA's own annotation for a WSDA-listed product (2026-11-17), or wording the
+ *     operator copies from its source, which prints as not verified by Trazo. The backend sends the
+ *     citation; the panel prints it as given. Trazo holds no OMRI restriction wording, so an OMRI
+ *     product's row says where to find it.
  *   - "How it is met" is the operator's statement, never a compliance result.
  *   - No restriction on record reads "restriction not documented", never "no restrictions".
  *   - A change of answer replaces the current statement; a statement entered by mistake (a mistyped
@@ -72,7 +74,7 @@ export const restrictionStatus = (material: RestrictionMaterial): Status => {
   if (material.statements.some((s) => s.state === 'needs_review')) return 'needs_review';
   if (material.statements.length) return 'recorded';
   if ((material.earlier_versions || []).length) return 'earlier_version';
-  if (material.regulation_restriction) return 'held';
+  if (material.regulation_restriction || material.wsda_list_restriction) return 'held';
   return 'not_documented';
 };
 
@@ -317,7 +319,9 @@ const MaterialItem: React.FC<{
     editable &&
     !!source &&
     howMet.trim().length > 0 &&
-    (source === 'regulation' || (text.trim().length > 0 && !!docType));
+    (source === 'regulation' ||
+      source === 'wsda_list_annotation' ||
+      (text.trim().length > 0 && !!docType));
 
   return (
     <Box borderWidth="1px" borderRadius="lg" data-testid="restriction-material">
@@ -361,11 +365,17 @@ const MaterialItem: React.FC<{
         <Stack spacing={3} px={4} pb={4}>
           {status === 'not_documented' ? (
             <Text fontSize="sm" color={muted}>
-              {intl.formatMessage({
-                id: 'osp.restriction.ux.notDocumentedHelp',
-                defaultMessage:
-                  "Restriction not documented in Trazo. If this material's label, listing or a certifier letter states one, add it here."
-              })}
+              {material.material_kind === 'omri'
+                ? intl.formatMessage({
+                    id: 'osp.restriction.ux.notDocumentedOmri',
+                    defaultMessage:
+                      "Restriction not documented in Trazo. Trazo does not hold OMRI's restrictions: if OMRI lists this product as Restricted, copy the restriction from its listing at omri.org and add it here."
+                  })
+                : intl.formatMessage({
+                    id: 'osp.restriction.ux.notDocumentedHelp',
+                    defaultMessage:
+                      "Restriction not documented in Trazo. If this material's label, listing or a certifier letter states one, add it here."
+                  })}
             </Text>
           ) : null}
           {material.regulation_restriction ? (
@@ -377,6 +387,27 @@ const MaterialItem: React.FC<{
                     '{citation} (regulation wording held by Trazo): "{text}" Whether it applies to this material and use is not established by Trazo.'
                 },
                 material.regulation_restriction
+              )}
+            </Text>
+          ) : null}
+          {material.wsda_list_restriction ? (
+            <Text fontSize="sm" data-testid="restriction-wsda-held">
+              {intl.formatMessage(
+                {
+                  id: 'osp.restriction.wsdaHeld',
+                  defaultMessage:
+                    'WSDA annotation, {citation} (Organic Input Material List of {edition}, WSDA\'s words): "{text}" WSDA\'s list says registered products must be used in accordance with all noted annotations.'
+                },
+                {
+                  citation: material.wsda_list_restriction.citation,
+                  text: material.wsda_list_restriction.text,
+                  edition:
+                    material.wsda_list_restriction.edition ??
+                    intl.formatMessage({
+                      id: 'osp.restriction.wsdaEditionNotHeld',
+                      defaultMessage: 'edition date not held'
+                    })
+                }
               )}
             </Text>
           ) : null}
@@ -484,6 +515,14 @@ const MaterialItem: React.FC<{
                     {intl.formatMessage({
                       id: 'osp.restriction.sourceRegulation',
                       defaultMessage: 'The regulation wording above'
+                    })}
+                  </option>
+                ) : null}
+                {material.wsda_list_restriction ? (
+                  <option value="wsda_list_annotation">
+                    {intl.formatMessage({
+                      id: 'osp.restriction.sourceWsda',
+                      defaultMessage: "WSDA's annotation above"
                     })}
                   </option>
                 ) : null}
