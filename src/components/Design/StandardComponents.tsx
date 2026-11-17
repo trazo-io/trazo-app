@@ -1988,7 +1988,18 @@ export type StatusTone = 'crit' | 'warn' | 'neutral' | 'clear';
  * a surface that must not read as a verdict (the certifier review page) uses `neutral` only,
  * and its guard bans the other two names. Urgency is never carried by colour alone: the glyph
  * SHAPE and the badge WORDS say it too.
+ *
+ * `details` (2026-11-17): the rule behind a finding (a CFR paragraph, a label citation, what to
+ * do next) goes here, behind a text link with a chevron, never as an always-open paragraph under
+ * the facts. The harvest-interval warning printed its regulation in full under each finding and
+ * two of them filled a phone screen before the record began; Oscar picked this row, explanation
+ * folded, from rendered options (StandardAlert, StandardNotice, one line). The labels are typed
+ * as required with `details`, so a toggle can never render without words.
  */
+type StatusRowDetails =
+  | { details?: undefined; showDetailsLabel?: undefined; hideDetailsLabel?: undefined }
+  | { details: ReactNode; showDetailsLabel: string; hideDetailsLabel: string };
+
 export const StatusRow = ({
   tone,
   icon,
@@ -1996,7 +2007,10 @@ export const StatusRow = ({
   badge,
   children,
   action,
-  testId
+  testId,
+  details,
+  showDetailsLabel,
+  hideDetailsLabel
 }: {
   tone: StatusTone;
   icon: React.ElementType;
@@ -2005,12 +2019,14 @@ export const StatusRow = ({
   children?: ReactNode;
   action?: ReactNode;
   testId?: string;
-}) => {
+} & StatusRowDetails) => {
   // Painted FROM the exported object, so a guard that reads STATUS_TONE_TOKENS reads what the
   // row actually renders (the GUIDANCE_NOTE_TOKENS pattern).
   const circle = useColorModeValue(STATUS_TONE_TOKENS[tone].circle, 'whiteAlpha.200');
   const glyph = STATUS_TONE_TOKENS[tone].glyph;
   const titleColor = useColorModeValue('gray.700', 'gray.200');
+  const detailColor = useColorModeValue('gray.700', 'gray.300');
+  const { isOpen, onToggle } = useDisclosure();
   return (
     <HStack align="flex-start" spacing={3} py={3} data-testid={testId}>
       <Circle size={7} bg={circle} flexShrink={0}>
@@ -2029,6 +2045,40 @@ export const StatusRow = ({
         )}
         {children}
         {action}
+        {details != null && (
+          <>
+            {/* A text link, not a padded button (the StandardNotice toggle's reasoning): a ghost
+                button wrapped onto its own line at 390px and kept a focus box after a tap.
+                TOUCH_TARGET gives it the 44px hit area without the 44px of height. */}
+            <Box
+              as="button"
+              type="button"
+              onClick={onToggle}
+              aria-expanded={isOpen}
+              display="inline-flex"
+              alignItems="center"
+              gap={1}
+              fontSize="sm"
+              fontWeight="semibold"
+              color="green.700"
+              sx={{ '@media (hover: hover)': { '&:hover': { textDecoration: 'underline' } } }}
+              {...TOUCH_TARGET}>
+              {isOpen ? hideDetailsLabel : showDetailsLabel}
+              <Icon
+                as={FaChevronDown}
+                boxSize={3}
+                transition="transform 0.2s"
+                transform={isOpen ? 'rotate(180deg)' : undefined}
+                aria-hidden
+              />
+            </Box>
+            <Collapse in={isOpen} animateOpacity unmountOnExit style={{ width: '100%' }}>
+              <Box fontSize="sm" color={detailColor} lineHeight="1.5">
+                {details}
+              </Box>
+            </Collapse>
+          </>
+        )}
       </VStack>
     </HStack>
   );
@@ -2039,11 +2089,21 @@ export const StatusRow = ({
  * inputs and matches use it that way). A CSS sibling border, so a row that renders null leaves no
  * rule. gray.200, not gray.100: the theme's gray.100 is #F8F9FA, the page background, so a
  * gray.100 rule on a white card is invisible.
+ *
+ * A list whose rows all render null is `display: none` (2026-11-17), so it takes no gap in the
+ * stack around it. The activity sheet opens on a list of notices that each fetch and decide for
+ * themselves (application group, tank mix); on most records none applies, and an empty box there
+ * would add a stack gap above the record.
  */
 export const StatusList = ({ children, testId }: { children: ReactNode; testId?: string }) => {
   const rule = useColorModeValue('gray.200', 'gray.600');
   return (
-    <Box data-testid={testId} sx={{ '& > * + *': { borderTopWidth: '1px', borderTopColor: rule } }}>
+    <Box
+      data-testid={testId}
+      sx={{
+        '&:empty': { display: 'none' },
+        '& > * + *': { borderTopWidth: '1px', borderTopColor: rule }
+      }}>
       {children}
     </Box>
   );

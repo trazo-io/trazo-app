@@ -26,8 +26,6 @@ import {
   Grid,
   AspectRatio,
   Center,
-  Alert,
-  AlertIcon,
   Wrap,
   WrapItem
 } from '@chakra-ui/react';
@@ -44,13 +42,13 @@ import {
   FaMapMarkerAlt,
   FaRoute
 } from 'react-icons/fa';
-import { MdVerified } from 'react-icons/md';
+import { MdVerified, MdVisibilityOff, MdWarning } from 'react-icons/md';
 import { useDeleteEventMutation } from 'store/api/historyApi';
 import { formatCO2e, getImpactLevel } from '../../utils/carbonDisplayUtils';
 import { ResponsiveModal } from 'components/Design/ResponsiveModal';
 import { CorrectRecordModal } from 'components/Modals/CorrectRecordModal';
 import { EventCorrections, EventDocuments } from 'components/Modals/EventRecordTrail';
-import { StandardAlert, StandardButton } from 'components/Design/StandardComponents';
+import { StandardButton, StatusList, StatusRow } from 'components/Design/StandardComponents';
 import CrewNoteProvenance from './CrewNoteProvenance';
 import { eventTypeAppearance } from 'config/events/eventTypeAppearance';
 import { eventTitle, subtypeOf as sharedSubtypeOf } from 'config/events/narrative';
@@ -996,6 +994,9 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
     </Flex>
   );
 
+  // Certifier-only subtypes (BU/SS/EM/TP): the reason they never reach the buyer page, or null.
+  const withheldReasonId = buyerPageWithheldReasonId(event as Record<string, unknown>);
+
   const header = (
     <VStack align="start" spacing={3}>
       <HStack spacing={3} align="start">
@@ -1079,49 +1080,58 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
     <>
       <ResponsiveModal isOpen={isOpen} onClose={onClose} size="4xl" header={header} footer={footer}>
         <VStack spacing={6} align="stretch">
-          {/* One application on several parcels: say so before anything else, so the record
-              is not read (or edited) as the whole application. */}
-          <ApplicationGroupNotice
-            farmId={farmId}
-            eventId={event.id}
-            eventType={event.event_type}
-            parcelName={parcelName}
-            variant="detail"
-          />
-          {/* One product of a tank mix: the tank's other products on this parcel. */}
-          <TankMixNotice
-            farmId={farmId}
-            eventId={event.id}
-            eventType={event.event_type}
-            variant="detail"
-          />
-          {/* Buyer-page visibility, stated up front. Certifier-only subtypes (BU/SS/EM/TP)
-              never reach the anonymous payload; everything else publishes, with the
-              buyer-visible fields marked individually by the field renderer below. */}
-          {(() => {
-            const reasonId = buyerPageWithheldReasonId(event as Record<string, unknown>);
-            if (reasonId) {
-              return (
-                <StandardAlert
-                  status="info"
-                  title={intl.formatMessage({ id: 'events.certifierOnly.title' })}
-                  description={intl.formatMessage({ id: reasonId })}
-                />
-              );
-            }
-
-            // AC-15: "appears on your buyer page" is true only once the season is published.
-            // Unpublished, or not known (the activity feed), says when it will appear instead.
-            return (
-              <Text fontSize="xs" color="gray.500">
-                {intl.formatMessage({
-                  id: isSeasonPublished
-                    ? 'producer.event.buyerPageFieldsHint'
-                    : 'producer.event.buyerPageFieldsHintUnpublished'
-                })}
-              </Text>
-            );
-          })()}
+          {/* What to know about this record before reading it, as ONE list of rows with
+              hairlines (2026-11-17). These were stacked blue and cream StandardAlert boxes;
+              Oscar picked rows from rendered options for the harvest-interval warning and the
+              rest of the sheet follows, so the sheet speaks one language. Each notice fetches
+              and decides for itself; a list whose rows all render null takes no space.
+              Guard: activitySheetNoticesAreRows.test.ts. */}
+          <StatusList testId="record-notices">
+            {/* One application on several parcels: say so before anything else, so the record
+                is not read (or edited) as the whole application. */}
+            <ApplicationGroupNotice
+              farmId={farmId}
+              eventId={event.id}
+              eventType={event.event_type}
+              parcelName={parcelName}
+              variant="detail"
+            />
+            {/* One product of a tank mix: the tank's other products on this parcel. */}
+            <TankMixNotice
+              farmId={farmId}
+              eventId={event.id}
+              eventType={event.event_type}
+              variant="detail"
+            />
+            {/* Buyer-page visibility, stated up front. Certifier-only subtypes (BU/SS/EM/TP)
+                never reach the anonymous payload. */}
+            {withheldReasonId && (
+              <StatusRow
+                tone="neutral"
+                icon={MdVisibilityOff}
+                title={intl.formatMessage({ id: 'events.certifierOnly.title' })}
+                testId="record-notice-certifier-only">
+                <Text fontSize="sm" color="gray.600">
+                  {intl.formatMessage({
+                    id: withheldReasonId
+                  })}
+                </Text>
+              </StatusRow>
+            )}
+          </StatusList>
+          {/* Everything else publishes, with the buyer-visible fields marked individually by
+              the field renderer below. AC-15: "appears on your buyer page" is true only once
+              the season is published. Unpublished, or not known (the activity feed), says
+              when it will appear instead. */}
+          {!withheldReasonId && (
+            <Text fontSize="xs" color="gray.500">
+              {intl.formatMessage({
+                id: isSeasonPublished
+                  ? 'producer.event.buyerPageFieldsHint'
+                  : 'producer.event.buyerPageFieldsHintUnpublished'
+              })}
+            </Text>
+          )}
           {/* The "no emissions estimated" line that sat here (2026-08-27) now lives inside
               the carbon card, where a figure would otherwise appear (AC-14). Here it ran above
               a card that said "0 kg CO2e" and "Minimal", so the screen said both. */}
@@ -1208,26 +1218,27 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                 <Text fontSize="lg" fontWeight="bold" mb={4} color={textColor}>
                   {intl.formatMessage({ id: 'events.wizard.step.photos' })}
                 </Text>
-                {/* Photo content warning for flagged AI/stock photos */}
+                {/* Photo content warning for flagged AI/stock photos: a warning row, like
+                    every other finding on this sheet, not a tinted Alert box. */}
                 {event.photo_content_flag && (
-                  <Alert status="warning" mb={4} fontSize="sm">
-                    <AlertIcon boxSize={4} />
-                    <Box>
-                      <Text fontWeight="medium">
-                        {intl.formatMessage({
-                          id:
-                            event.photo_content_flag === 'ai_generated'
-                              ? 'event.photoFlag.aiGenerated'
-                              : event.photo_content_flag === 'stock_photo'
-                              ? 'event.photoFlag.stockPhoto'
-                              : 'event.photoFlag.notAgricultural'
-                        })}
-                      </Text>
-                      <Text color="gray.600" mt={1}>
+                  <Box mt={-3} mb={2}>
+                    <StatusRow
+                      tone="warn"
+                      icon={MdWarning}
+                      title={intl.formatMessage({
+                        id:
+                          event.photo_content_flag === 'ai_generated'
+                            ? 'event.photoFlag.aiGenerated'
+                            : event.photo_content_flag === 'stock_photo'
+                            ? 'event.photoFlag.stockPhoto'
+                            : 'event.photoFlag.notAgricultural'
+                      })}
+                      testId="record-notice-photo-flag">
+                      <Text fontSize="sm" color="gray.600">
                         {intl.formatMessage({ id: 'event.photoFlag.replaceWithFieldPhoto' })}
                       </Text>
-                    </Box>
-                  </Alert>
+                    </StatusRow>
+                  </Box>
                 )}
                 <Grid
                   templateColumns={{
@@ -1393,8 +1404,8 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
               </HStack>
 
               {/* Weather/zero-emission events. The "why this record matters" note that
-                      used to live here is now a StandardAlert at the TOP of the body — see
-                      the comment there. */}
+                      used to live here moved to the top of the body, and from there into
+                      this card's no-estimate line (AC-14; see the note at the top). */}
               {/* ⛔ NO EFFICIENCY SCORE. Removed 2026-08-16, and this is the note that
                   stops it coming back a seventh time.
 

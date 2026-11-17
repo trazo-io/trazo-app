@@ -10,12 +10,18 @@
  * Reads the event detail (`group_records`, trazo-back `EventViewSet.retrieve`) through the same
  * cached query the Activities page and the edit form already make, so the parcel timeline, which
  * opens the record from list data, gets it too. Renders nothing for a single-parcel record.
+ *
+ * Two shapes (2026-11-17). On the record (`detail`) it is a neutral StatusRow: the activity sheet
+ * opens on one list of facts and findings about the record, rows with hairlines, never a stack of
+ * tinted boxes. In the edit form it stays a StandardAlert, the form's own message.
  */
 import React from 'react';
+import { Text } from '@chakra-ui/react';
+import { MdInfo } from 'react-icons/md';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 
-import { StandardAlert } from 'components/Design/StandardComponents';
+import { StandardAlert, StatusRow } from 'components/Design/StandardComponents';
 import { useGetEventQuery } from 'store/api/historyApi';
 import type { RootState } from 'store/index';
 
@@ -53,16 +59,21 @@ export const ApplicationGroupNotice = ({
   if (others.length === 0) return null;
 
   const names = others.map((record) => record.parcel_name).join(', ');
-  return (
-    <StandardAlert
-      status="info"
-      title={intl.formatMessage({ id: 'events.group.title' }, { count: others.length + 1 })}
-      description={intl.formatMessage(
-        { id: variant === 'edit' ? 'events.group.editBody' : 'events.group.detailBody' },
-        { names, parcel: parcelName ?? '' }
-      )}
-    />
+  const title = intl.formatMessage({ id: 'events.group.title' }, { count: others.length + 1 });
+  const body = intl.formatMessage(
+    { id: variant === 'edit' ? 'events.group.editBody' : 'events.group.detailBody' },
+    { names, parcel: parcelName ?? '' }
   );
+  if (variant === 'detail') {
+    return (
+      <StatusRow tone="neutral" icon={MdInfo} title={title} testId="record-notice-group">
+        <Text fontSize="sm" color="gray.600">
+          {body}
+        </Text>
+      </StatusRow>
+    );
+  }
+  return <StandardAlert status="info" title={title} description={body} />;
 };
 
 export default ApplicationGroupNotice;

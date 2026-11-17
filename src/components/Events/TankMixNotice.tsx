@@ -9,12 +9,17 @@
  *
  * Reads the event detail (`tank_mix`, trazo-back `EventViewSet.retrieve`) through the same cached
  * query as ApplicationGroupNotice. Renders nothing outside a tank.
+ *
+ * Same two shapes as ApplicationGroupNotice (2026-11-17): a neutral StatusRow on the record, a
+ * StandardAlert in the edit form.
  */
 import React from 'react';
+import { Text } from '@chakra-ui/react';
+import { MdInfo } from 'react-icons/md';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 
-import { StandardAlert } from 'components/Design/StandardComponents';
+import { StandardAlert, StatusRow } from 'components/Design/StandardComponents';
 import { useGetEventQuery } from 'store/api/historyApi';
 import type { RootState } from 'store/index';
 
@@ -94,13 +99,21 @@ export const TankMixNotice = ({ farmId, eventId, eventType, variant }: TankMixNo
     },
     { names, line: tank.line }
   );
-  return (
-    <StandardAlert
-      status="info"
-      title={intl.formatMessage({ id: 'events.tankMix.title' }, { count: tank.lines.length + 1 })}
-      description={passElsewhere ? `${body} ${passElsewhere}` : body}
-    />
+  const title = intl.formatMessage(
+    { id: 'events.tankMix.title' },
+    { count: tank.lines.length + 1 }
   );
+  const description = passElsewhere ? `${body} ${passElsewhere}` : body;
+  if (variant === 'detail') {
+    return (
+      <StatusRow tone="neutral" icon={MdInfo} title={title} testId="record-notice-tank-mix">
+        <Text fontSize="sm" color="gray.600">
+          {description}
+        </Text>
+      </StatusRow>
+    );
+  }
+  return <StandardAlert status="info" title={title} description={description} />;
 };
 
 export default TankMixNotice;
