@@ -598,6 +598,8 @@ export interface OSPReviewFinding {
     | 'contamination_incidents'
     | 'responsible_person_missing'
     | 'responsible_person_not_legally_responsible'
+    | 'planting_stock_answers_disagree'
+    | 'seed_stock_materials_not_listed'
     | string;
   message: string;
   count: number;

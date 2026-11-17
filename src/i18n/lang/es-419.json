@@ -7052,6 +7052,8 @@
   "osp.review.finding.record_types_evidenced_not_confirmed": "Llevas estos registros en Trazo, pero el plan todavía no los incluye",
   "osp.review.finding.responsible_person_missing": "La finca no tiene persona responsable (defínela al editar la finca); § 205.401(b) pide el nombre de la persona responsable",
   "osp.review.finding.responsible_person_not_legally_responsible": "La persona responsable de la finca, que firma el paquete, no es un contacto marcado como responsable legal; indica en ambos lugares quién firma",
+  "osp.review.finding.planting_stock_answers_disagree": "G3.0 y G3.0b indican de forma distinta el estado orgánico del material de plantación",
+  "osp.review.finding.seed_stock_materials_not_listed": "El plan indica que estos materiales de semilla, material de plantación o injerto todavía no están en la lista de insumos",
   "osp.review.finding.seasons_closed": "Temporadas terminadas desde la última respuesta del plan",
   "osp.review.finding.seasons_started": "Temporadas iniciadas desde la última respuesta del plan",
   "osp.review.more": "… y {n} más",
