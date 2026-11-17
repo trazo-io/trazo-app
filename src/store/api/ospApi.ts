@@ -149,7 +149,7 @@ interface OSPApprovedInputArgs extends OSPOne {
   kind: ApprovedInputKind;
   // pk of the NationalListSubstance or OMRIProduct to attach/detach.
   id: number;
-  // Optional § 205.400(f)(1) certifier-letter citation. Stored on the change log row.
+  // Optional § 205.400(f)(2) change-notification reference. Stored on the change log row.
   change_notification_reference?: string;
   notes?: string;
   // Asked with an attach (2026-11-16): whether the material is in use or intended for use, and its

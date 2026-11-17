@@ -31,7 +31,7 @@ export interface BufferZoneRow {
   adjacent_is_organic?: boolean | null;
   drift_risk?: string;
   prevention?: string;
-  /** § 205.400(f)(1) drift-notification readiness. */
+  /** Letter to this neighbor, a drift-prevention practice (§ 205.201(a)(5)). */
   neighbor_notified?: boolean | null;
   neighbor_notification_date?: string | null;
   /** ISO date the adjacent land last received a prohibited material (§ 205.202(c)). */
