@@ -98,6 +98,17 @@ const DriftFindingsBanner: React.FC<DriftFindingsBannerProps> = ({ events }) => 
         : `drift.reason.${code}`;
     if (!(intl.messages as Record<string, unknown>)[id]) return dw.reason;
     const params: Record<string, unknown> = { ...(dw.reason_params ?? {}) };
+    // Overall review 2026-11, OV-MT-C06: on a plan written by substance, a brand-name record
+    // flags until its active ingredient is on the record. The detector never guesses it; it
+    // sends the plan's substances (`planSubstances`) so the row can say how the finding clears.
+    const planSubstances = Array.isArray(params.planSubstances)
+      ? (params.planSubstances as string[])
+      : [];
+    const hintId = 'drift.reason.plan_lists_substances';
+    const withHint = (text: string): string =>
+      planSubstances.length > 0 && (intl.messages as Record<string, unknown>)[hintId]
+        ? `${text} ${intl.formatMessage({ id: hintId }, { substances: planSubstances.join(', ') })}`
+        : text;
     // Recordkeeping review F-01 (2026-10-07): the detector stores the closest listing it found
     // (`possibleMatches`); the row used to say "did not match any product … in the reference
     // catalogs" and drop it. Name it, and say it is not confirmed as the same product.
@@ -107,9 +118,14 @@ const DriftFindingsBanner: React.FC<DriftFindingsBannerProps> = ({ events }) => 
     if (code === 'unresolved' && !dw.provisional && candidates.length > 0) {
       const candidateId = 'drift.reason.unresolved_candidate';
       if ((intl.messages as Record<string, unknown>)[candidateId]) {
-        return intl.formatMessage(
-          { id: candidateId },
-          { input: String(params.input ?? dw.input_label ?? ''), candidates: candidates.join('; ') }
+        return withHint(
+          intl.formatMessage(
+            { id: candidateId },
+            {
+              input: String(params.input ?? dw.input_label ?? ''),
+              candidates: candidates.join('; ')
+            }
+          )
         );
       }
     }
@@ -124,7 +140,7 @@ const DriftFindingsBanner: React.FC<DriftFindingsBannerProps> = ({ events }) => 
         })
         .join('; ');
     }
-    return intl.formatMessage({ id }, params as Record<string, string>);
+    return withHint(intl.formatMessage({ id }, params as Record<string, string>));
   };
 
   const labelFg = useColorModeValue('gray.600', 'gray.400');
