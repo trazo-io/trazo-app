@@ -148,6 +148,27 @@ const renderTab = (initialValues: Record<string, unknown>, onSubmitHandler = vi.
 const concentrationInput = (container: HTMLElement) =>
   container.querySelector('input[name="concentration"]') as HTMLInputElement;
 
+describe('a swapped start and stop on the spray form', () => {
+  it('the save stops and the stop field says why', async () => {
+    const { ref, onSubmitHandler } = renderTab({
+      ...SPRAY,
+      concentration: '46.1%',
+      application_start: '2026-05-02T09:00',
+      application_end: '2026-05-02T06:30'
+    });
+    await waitFor(() =>
+      expect(screen.getByText(messages['events.chemical.concentration.notOnMyRecord'])).toBeTruthy()
+    );
+    await act(async () => {
+      await ref.current!.submitForm().catch(() => undefined);
+    });
+    expect(onSubmitHandler).not.toHaveBeenCalled();
+    expect(
+      await screen.findByText(messages['events.chemical.validation.stopBeforeStart'])
+    ).toBeTruthy();
+  });
+});
+
 describe('"Not on my record" on the concentration', () => {
   it('ticking clears and disables the box; unticking gives it back', async () => {
     const { container } = renderTab({ ...SPRAY, concentration: '46.1%' });

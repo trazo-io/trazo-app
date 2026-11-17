@@ -4961,6 +4961,9 @@ const ChemicalTab = forwardRef(
                               id: 'events.chemical.fields.applicationEnd',
                               defaultMessage: 'Application End'
                             })}
+                            // The schema's stop-before-start line lands here; without this prop
+                            // the save only said a field "needs attention" (review of #410).
+                            error={errors.application_end?.message}
                             helpText={
                               isCaFarm
                                 ? intl.formatMessage({
