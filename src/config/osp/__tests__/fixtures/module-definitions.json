@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.12.15",
+  "content_version": "2026.12.16",
   "registry": {
-    "content_version": "2026.12.15",
+    "content_version": "2026.12.16",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -2326,6 +2326,61 @@
                 "required": true,
                 "visible_when": [],
                 "nop_cite": "§ 205.2",
+                "prefill": {
+                  "source": "planting_stock_status"
+                },
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "other_planting_stock_used",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Planting stock other than perennial nursery stock: rhizomes, shoots, tubers, cuttings, clones or roots (for example strawberry crowns, raspberry canes, potato seed pieces)",
+                  "es": "Material de plantación distinto del material perenne de vivero: rizomas, brotes, tubérculos, esquejes, clones o raíces (por ejemplo coronas de fresa, cañas de frambuesa, trozos de papa semilla)"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "none",
+                    "label": {
+                      "en": "None of this kind",
+                      "es": "Ninguno de este tipo"
+                    },
+                    "exclusive": true
+                  },
+                  {
+                    "value": "organic",
+                    "label": {
+                      "en": "Organic",
+                      "es": "Orgánico"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "non_organic",
+                    "label": {
+                      "en": "Non-organic",
+                      "es": "No orgánico"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "planting_stock_used",
+                    "op": "includes_any",
+                    "value": [
+                      "organic",
+                      "non_organic"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.2",
                 "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
@@ -3294,6 +3349,14 @@
                       "es": "Sí — los materiales de injerto están en la lista de insumos del OSP"
                     },
                     "exclusive": false
+                  },
+                  {
+                    "value": "yes_not_listed",
+                    "label": {
+                      "en": "Yes, and not every grafting material is on the OSP inputs list yet",
+                      "es": "Sí, y todavía no todos los materiales de injerto están en la lista de insumos del OSP"
+                    },
+                    "exclusive": false
                   }
                 ],
                 "required": true,
@@ -3319,8 +3382,11 @@
                 "visible_when": [
                   {
                     "question": "grafts_stock",
-                    "op": "eq",
-                    "value": "yes"
+                    "op": "one_of",
+                    "value": [
+                      "yes",
+                      "yes_not_listed"
+                    ]
                   }
                 ],
                 "nop_cite": "§ 205.204",
@@ -4424,6 +4490,14 @@
                     "exclusive": false
                   },
                   {
+                    "value": "treated_not_listed",
+                    "label": {
+                      "en": "Yes, and not every treatment material is on our OSP inputs list yet",
+                      "es": "Sí, y todavía no todos los materiales del tratamiento están en nuestra lista de insumos del OSP"
+                    },
+                    "exclusive": false
+                  },
+                  {
                     "value": "unknown",
                     "label": {
                       "en": "Not yet confirmed with the nursery",
@@ -4480,8 +4554,11 @@
                 "visible_when": [
                   {
                     "question": "stock_treatments",
-                    "op": "eq",
-                    "value": "treated_listed"
+                    "op": "one_of",
+                    "value": [
+                      "treated_listed",
+                      "treated_not_listed"
+                    ]
                   }
                 ],
                 "nop_cite": "§ 205.204(a)",
@@ -4536,6 +4613,48 @@
                 ],
                 "required": true,
                 "visible_when": [],
+                "nop_cite": "§ 205.204(a)(4)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "resold_stock_bought_nonorganic",
+                "kind": "radio",
+                "label": {
+                  "en": "Was any of the planting stock you sell as organic bought as nonorganic stock?",
+                  "es": "¿Parte del material de plantación que vendes como orgánico se compró como material no orgánico?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "no",
+                    "label": {
+                      "en": "No",
+                      "es": "No"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "yes",
+                    "label": {
+                      "en": "Yes",
+                      "es": "Sí"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "stock_sold_as_organic",
+                    "op": "eq",
+                    "value": "sold_organic_stock"
+                  }
+                ],
                 "nop_cite": "§ 205.204(a)(4)",
                 "prefill": null,
                 "parcel_field": null,
@@ -27913,6 +28032,7 @@
         "seeds_used",
         "seedlings_used",
         "planting_stock_used",
+        "other_planting_stock_used",
         "seed_source",
         "seed_verification_method",
         "untreated_seed_documentation",
@@ -27943,6 +28063,7 @@
         "seeds_used",
         "seedlings_used",
         "planting_stock_used",
+        "other_planting_stock_used",
         "seed_source",
         "untreated_seed_documentation",
         "farm_grown_processing_contracted",
@@ -27977,6 +28098,7 @@
         "seeds_used",
         "seedlings_used",
         "planting_stock_used",
+        "other_planting_stock_used",
         "seed_source",
         "seed_verification_method",
         "untreated_seed_documentation",
@@ -28106,6 +28228,7 @@
         "seeds_used",
         "seedlings_used",
         "planting_stock_used",
+        "other_planting_stock_used",
         "seed_source",
         "farm_grown_processing_contracted",
         "ca_search_before_use",
@@ -28149,6 +28272,213 @@
       "missing_required": [
         "seedlings_used",
         "planting_stock_used"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g3_0_seeds",
+      "label": "grafts_not_listed_yet",
+      "answers": {
+        "planting_stock_used": [
+          "organic"
+        ],
+        "grafts_stock": "yes_not_listed"
+      },
+      "visible_questions": [
+        "seeds_used",
+        "seedlings_used",
+        "planting_stock_used",
+        "other_planting_stock_used",
+        "farm_grown_processing_contracted",
+        "grafts_stock",
+        "grafting_practices",
+        "seeds_additional_notes"
+      ],
+      "missing_required": [
+        "seeds_used",
+        "seedlings_used"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g3_0_seeds",
+      "label": "established_only",
+      "answers": {
+        "planting_stock_used": [
+          "established_in_place"
+        ],
+        "grafts_stock": "no"
+      },
+      "visible_questions": [
+        "seeds_used",
+        "seedlings_used",
+        "planting_stock_used",
+        "farm_grown_processing_contracted",
+        "grafts_stock",
+        "seeds_additional_notes"
+      ],
+      "missing_required": [
+        "seeds_used",
+        "seedlings_used"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g3_2_planting_stock",
+      "label": "unanswered",
+      "answers": {},
+      "visible_questions": [
+        "stock_types_established",
+        "stock_organic_status",
+        "planting_stock_description",
+        "suppliers_on_supplier_list",
+        "stock_source",
+        "stock_sold_as_organic",
+        "stock_records_kept",
+        "planting_stock_upload",
+        "planting_stock_additional_notes"
+      ],
+      "missing_required": [
+        "stock_types_established",
+        "stock_organic_status",
+        "planting_stock_description",
+        "suppliers_on_supplier_list",
+        "stock_sold_as_organic",
+        "stock_records_kept"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g3_2_planting_stock",
+      "label": "treated_not_listed",
+      "answers": {
+        "stock_organic_status": "mixed",
+        "stock_treatments": "treated_not_listed"
+      },
+      "visible_questions": [
+        "stock_types_established",
+        "stock_organic_status",
+        "planting_stock_description",
+        "suppliers_on_supplier_list",
+        "stock_source",
+        "organic_stock_verification_method",
+        "organic_stock_treatments",
+        "nonorganic_stock_justification",
+        "stock_search_records",
+        "nonorganic_stock_for_organic_crop",
+        "stock_search_method",
+        "stock_search_process",
+        "stock_gmo_documentation",
+        "stock_treatments",
+        "stock_treatment_applied_by",
+        "stock_sold_as_organic",
+        "stock_records_kept",
+        "planting_stock_upload",
+        "planting_stock_additional_notes"
+      ],
+      "missing_required": [
+        "stock_types_established",
+        "planting_stock_description",
+        "suppliers_on_supplier_list",
+        "nonorganic_stock_justification",
+        "stock_search_records",
+        "stock_sold_as_organic",
+        "stock_records_kept"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g3_2_planting_stock",
+      "label": "treated_unknown",
+      "answers": {
+        "stock_organic_status": "all_nonorganic",
+        "stock_treatments": "unknown"
+      },
+      "visible_questions": [
+        "stock_types_established",
+        "stock_organic_status",
+        "planting_stock_description",
+        "suppliers_on_supplier_list",
+        "stock_source",
+        "nonorganic_stock_justification",
+        "stock_search_records",
+        "nonorganic_stock_for_organic_crop",
+        "stock_search_method",
+        "stock_search_process",
+        "stock_gmo_documentation",
+        "stock_treatments",
+        "stock_sold_as_organic",
+        "stock_records_kept",
+        "planting_stock_upload",
+        "planting_stock_additional_notes"
+      ],
+      "missing_required": [
+        "stock_types_established",
+        "planting_stock_description",
+        "suppliers_on_supplier_list",
+        "nonorganic_stock_justification",
+        "stock_search_records",
+        "stock_sold_as_organic",
+        "stock_records_kept"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g3_2_planting_stock",
+      "label": "sells_stock",
+      "answers": {
+        "stock_sold_as_organic": "sold_organic_stock"
+      },
+      "visible_questions": [
+        "stock_types_established",
+        "stock_organic_status",
+        "planting_stock_description",
+        "suppliers_on_supplier_list",
+        "stock_source",
+        "stock_sold_as_organic",
+        "resold_stock_bought_nonorganic",
+        "organic_management_start_date",
+        "twelve_month_attestation",
+        "twelve_month_records_description",
+        "resold_stock_labeling_description",
+        "stock_records_kept",
+        "planting_stock_upload",
+        "planting_stock_additional_notes"
+      ],
+      "missing_required": [
+        "stock_types_established",
+        "stock_organic_status",
+        "planting_stock_description",
+        "suppliers_on_supplier_list",
+        "organic_management_start_date",
+        "twelve_month_attestation",
+        "stock_records_kept"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g3_2_planting_stock",
+      "label": "sells_crop_only",
+      "answers": {
+        "stock_sold_as_organic": "not_sold"
+      },
+      "visible_questions": [
+        "stock_types_established",
+        "stock_organic_status",
+        "planting_stock_description",
+        "suppliers_on_supplier_list",
+        "stock_source",
+        "stock_sold_as_organic",
+        "stock_records_kept",
+        "planting_stock_upload",
+        "planting_stock_additional_notes"
+      ],
+      "missing_required": [
+        "stock_types_established",
+        "stock_organic_status",
+        "planting_stock_description",
+        "suppliers_on_supplier_list",
+        "stock_records_kept"
       ],
       "missing_required_na": []
     },
