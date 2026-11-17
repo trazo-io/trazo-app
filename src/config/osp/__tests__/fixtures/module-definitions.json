@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.12.16",
+  "content_version": "2026.12.17",
   "registry": {
-    "content_version": "2026.12.16",
+    "content_version": "2026.12.17",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -23865,8 +23865,8 @@
             },
             "education": [
               {
-                "en": "Most operations selling only within the United States answer the first question and are done with this page. It matters for tree nuts, dried fruit, and other crops that commonly ship abroad: several trade partners require an export certificate issued by your certifier BEFORE the shipment leaves, and a shipment that departs without one cannot be corrected afterwards.",
-                "es": "La mayoría de las operaciones que venden solo dentro de Estados Unidos responden la primera pregunta y terminan con esta página. Importa para frutos secos, fruta deshidratada y otros cultivos que suelen enviarse al exterior: varios socios comerciales exigen un certificado de exportación emitido por tu certificador ANTES de que salga el envío, y un envío que parte sin él no puede corregirse después."
+                "en": "Most operations selling only within the United States answer the first question and the one about Canada, and are done with this page. It matters for tree nuts, dried fruit, and other crops that commonly ship abroad: several trade partners require an export certificate issued by your certifier BEFORE the shipment leaves, and a shipment that departs without one cannot be corrected afterwards.",
+                "es": "La mayoría de las operaciones que venden solo dentro de Estados Unidos responden la primera pregunta y la de Canadá, y terminan con esta página. Importa para frutos secos, fruta deshidratada y otros cultivos que suelen enviarse al exterior: varios socios comerciales exigen un certificado de exportación emitido por tu certificador ANTES de que salga el envío, y un envío que parte sin él no puede corregirse después."
               }
             ],
             "visible_when": [],
@@ -23904,6 +23904,14 @@
                     "label": {
                       "en": "We import, or plan to import, organic product or ingredients into the United States",
                       "es": "Importamos, o planeamos importar, producto o ingredientes orgánicos a Estados Unidos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "import_seed",
+                    "label": {
+                      "en": "We import, or plan to import, organic seed or planting stock directly from other countries for use on our farm",
+                      "es": "Importamos, o planeamos importar, semilla o material de plantación orgánico directamente de otros países para usarlo en nuestra finca"
                     },
                     "exclusive": false
                   },
@@ -24122,6 +24130,560 @@
                 "max_length": null
               },
               {
+                "key": "export_package_types",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "What types of packages and labels do you use for export markets?",
+                  "es": "¿Qué tipos de empaques y etiquetas usas para los mercados de exportación?"
+                },
+                "coaching": {
+                  "en": "Organic product must be labeled for the destination market's rules.",
+                  "es": "El producto orgánico debe etiquetarse según las reglas del mercado de destino."
+                },
+                "options": [
+                  {
+                    "value": "retail_consumer",
+                    "label": {
+                      "en": "Retail consumer packages",
+                      "es": "Empaques para venta al consumidor"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "wholesale_shipping",
+                    "label": {
+                      "en": "Wholesale shipping containers",
+                      "es": "Contenedores de envío mayorista"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "bulk",
+                    "label": {
+                      "en": "Bulk shipping or storage containers",
+                      "es": "Contenedores a granel para envío o almacenamiento"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "import_export_activity",
+                    "op": "includes",
+                    "value": "export"
+                  }
+                ],
+                "nop_cite": "§ 205.307",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "export_shipment_documents",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Which documents accompany each organic export shipment?",
+                  "es": "¿Qué documentos acompañan cada envío orgánico de exportación?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "bill_of_lading",
+                    "label": {
+                      "en": "Bill of lading",
+                      "es": "Conocimiento de embarque"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "certificate_of_analysis",
+                    "label": {
+                      "en": "Certificate of analysis",
+                      "es": "Certificado de análisis"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "eu_coi",
+                    "label": {
+                      "en": "EU Certificate of Inspection",
+                      "es": "Certificado de Inspección de la UE"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "invoice",
+                    "label": {
+                      "en": "Invoice",
+                      "es": "Factura"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "naqs",
+                    "label": {
+                      "en": "NAQS import certificate (South Korea)",
+                      "es": "Certificado de importación NAQS (Corea del Sur)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "organic_certificate",
+                    "label": {
+                      "en": "Organic certificate",
+                      "es": "Certificado orgánico"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "phytosanitary",
+                    "label": {
+                      "en": "Phytosanitary certificate",
+                      "es": "Certificado fitosanitario"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "tm11",
+                    "label": {
+                      "en": "USDA TM-11 export certificate",
+                      "es": "Certificado de exportación TM-11 del USDA"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otro (describe abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "import_export_activity",
+                    "op": "includes",
+                    "value": "export"
+                  }
+                ],
+                "nop_cite": "§ 205.103",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "export_shipment_documents_other",
+                "kind": "text",
+                "label": {
+                  "en": "Describe the other export shipment document",
+                  "es": "Describe el otro documento del envío de exportación"
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "export_shipment_documents",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "equivalency_compliance_method",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How do you make sure exported products meet the organic equivalency arrangement with the destination country?",
+                  "es": "¿Cómo te aseguras de que los productos exportados cumplan el acuerdo de equivalencia orgánica con el país de destino?"
+                },
+                "coaching": {
+                  "en": "The United States has organic equivalency arrangements with Canada, the European Union, the United Kingdom, Switzerland, Japan, South Korea and Taiwan. Each one carries its own conditions.",
+                  "es": "Estados Unidos tiene acuerdos de equivalencia orgánica con Canadá, la Unión Europea, el Reino Unido, Suiza, Japón, Corea del Sur y Taiwán. Cada uno tiene sus propias condiciones."
+                },
+                "options": [
+                  {
+                    "value": "certifier_review",
+                    "label": {
+                      "en": "Products are submitted to our certifier for review under the arrangement before export",
+                      "es": "Enviamos los productos a nuestro certificador para que los revise según el acuerdo antes de exportarlos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Another way (describe below)",
+                      "es": "De otra forma (describe abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "import_export_activity",
+                    "op": "includes",
+                    "value": "export"
+                  }
+                ],
+                "nop_cite": "§ 205.103",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "equivalency_compliance_method_other",
+                "kind": "text",
+                "label": {
+                  "en": "Describe how exported products are kept within the arrangement",
+                  "es": "Describe cómo los productos exportados se mantienen dentro del acuerdo"
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "equivalency_compliance_method",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "canada_export_possible",
+                "kind": "boolean",
+                "label": {
+                  "en": "Do you produce crops or products that may be exported to Canada, directly, by a distributor or buyer, or as an ingredient in a processed product?",
+                  "es": "¿Produces cultivos o productos que podrían exportarse a Canadá, directamente, a través de un distribuidor o comprador, o como ingrediente de un producto procesado?"
+                },
+                "coaching": {
+                  "en": "If a buyer may ship some of your crop to Canada and you cannot rule it out, answer Yes. Canada does not accept as organic the crops produced with sodium nitrate.",
+                  "es": "Si un comprador podría enviar parte de tu cosecha a Canadá y no puedes descartarlo, responde Sí. Canadá no acepta como orgánicos los cultivos producidos con nitrato de sodio."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "import_export_activity",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.103",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "sodium_nitrate_used",
+                "kind": "boolean",
+                "label": {
+                  "en": "Do you use sodium nitrate (Chilean nitrate) to produce organic crops?",
+                  "es": "¿Usas nitrato de sodio (nitrato de Chile) para producir cultivos orgánicos?"
+                },
+                "coaching": {
+                  "en": "The USDA organic regulations allow sodium nitrate up to 20% of a crop's total nitrogen requirement (§ 205.602(h)). Canada does not accept as organic the crops produced with it.",
+                  "es": "El reglamento orgánico del USDA permite el nitrato de sodio hasta el 20% del requerimiento total de nitrógeno del cultivo (§ 205.602(h)). Canadá no acepta como orgánicos los cultivos producidos con él."
+                },
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "canada_export_possible",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.602(h)",
+                "prefill": {
+                  "source": "sodium_nitrate_evidence"
+                },
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "sodium_nitrate_canada_separation",
+                "kind": "textarea",
+                "label": {
+                  "en": "How do you tell apart the organic crops produced with sodium nitrate from the organic crops eligible for export to Canada?",
+                  "es": "¿Cómo distingues los cultivos orgánicos producidos con nitrato de sodio de los cultivos orgánicos aptos para exportarse a Canadá?"
+                },
+                "coaching": {
+                  "en": "Say which fields or lots receive it, how the records and lot codes mark them, and how buyers are told those lots cannot go to Canada.",
+                  "es": "Indica qué campos o lotes lo reciben, cómo los marcan los registros y los códigos de lote, y cómo se informa a los compradores que esos lotes no pueden ir a Canadá."
+                },
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "sodium_nitrate_used",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.103",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "import_seed_countries",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Which countries do you import organic seed or planting stock from?",
+                  "es": "¿De qué países importas semilla o material de plantación orgánico?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "canada",
+                    "label": {
+                      "en": "Canada",
+                      "es": "Canadá"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "european_union",
+                    "label": {
+                      "en": "European Union",
+                      "es": "Unión Europea"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "great_britain",
+                    "label": {
+                      "en": "Great Britain",
+                      "es": "Gran Bretaña"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "india",
+                    "label": {
+                      "en": "India",
+                      "es": "India"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "israel",
+                    "label": {
+                      "en": "Israel",
+                      "es": "Israel"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "japan",
+                    "label": {
+                      "en": "Japan",
+                      "es": "Japón"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "mexico",
+                    "label": {
+                      "en": "Mexico",
+                      "es": "México"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "new_zealand",
+                    "label": {
+                      "en": "New Zealand",
+                      "es": "Nueva Zelanda"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "south_korea",
+                    "label": {
+                      "en": "South Korea",
+                      "es": "Corea del Sur"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "switzerland",
+                    "label": {
+                      "en": "Switzerland",
+                      "es": "Suiza"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (name below)",
+                      "es": "Otro (indícalo abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "import_export_activity",
+                    "op": "includes",
+                    "value": "import_seed"
+                  }
+                ],
+                "nop_cite": "§ 205.103",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "import_seed_countries_other",
+                "kind": "text",
+                "label": {
+                  "en": "Name the other countries",
+                  "es": "Indica los otros países"
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "import_seed_countries",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "import_seed_standards",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Which organic standards is the imported seed or planting stock certified to?",
+                  "es": "¿Según qué normas orgánicas está certificada la semilla o el material de plantación importado?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "usda_nop",
+                    "label": {
+                      "en": "USDA organic regulations, 7 CFR Part 205",
+                      "es": "Reglamento orgánico del USDA, 7 CFR Parte 205"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "canada_cor",
+                    "label": {
+                      "en": "Canada Organic Regime (COR), CAN/CGSB standards",
+                      "es": "Régimen Orgánico de Canadá (COR), normas CAN/CGSB"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "eu_organic",
+                    "label": {
+                      "en": "EU organic regulation: (EC) No 834/2007, replaced since 2022 by (EU) 2018/848",
+                      "es": "Reglamento orgánico de la UE: (CE) n.º 834/2007, sustituido desde 2022 por el (UE) 2018/848"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (name below)",
+                      "es": "Otra (indícala abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "import_export_activity",
+                    "op": "includes",
+                    "value": "import_seed"
+                  }
+                ],
+                "nop_cite": "§ 205.103",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "import_seed_standards_other",
+                "kind": "text",
+                "label": {
+                  "en": "Name the other standard",
+                  "es": "Indica la otra norma"
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "import_seed_standards",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
                 "key": "import_documentation",
                 "kind": "checkbox_group",
                 "label": {
@@ -24138,6 +24700,46 @@
                     "label": {
                       "en": "A current NOP Import Certificate is kept for each shipment",
                       "es": "Se conserva un Certificado de Importación NOP vigente para cada envío"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "bill_of_lading",
+                    "label": {
+                      "en": "A bill of lading is kept for each shipment",
+                      "es": "Se conserva un conocimiento de embarque para cada envío"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "certificate_of_analysis",
+                    "label": {
+                      "en": "A certificate of analysis is kept for each shipment",
+                      "es": "Se conserva un certificado de análisis para cada envío"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "invoice",
+                    "label": {
+                      "en": "An invoice is kept for each shipment",
+                      "es": "Se conserva una factura para cada envío"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "phytosanitary_certificate",
+                    "label": {
+                      "en": "A phytosanitary certificate is kept for each shipment",
+                      "es": "Se conserva un certificado fitosanitario para cada envío"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "transaction_certificate",
+                    "label": {
+                      "en": "A transaction certificate is kept for each shipment",
+                      "es": "Se conserva un certificado de transacción para cada envío"
                     },
                     "exclusive": false
                   },
@@ -24170,8 +24772,11 @@
                 "visible_when": [
                   {
                     "question": "import_export_activity",
-                    "op": "includes",
-                    "value": "import"
+                    "op": "includes_any",
+                    "value": [
+                      "import",
+                      "import_seed"
+                    ]
                   }
                 ],
                 "nop_cite": "§ 205.103",
@@ -24220,8 +24825,11 @@
                 "visible_when": [
                   {
                     "question": "import_export_activity",
-                    "op": "includes",
-                    "value": "import"
+                    "op": "includes_any",
+                    "value": [
+                      "import",
+                      "import_seed"
+                    ]
                   }
                 ],
                 "nop_cite": "§ 205.272",
@@ -24251,7 +24859,8 @@
                     "op": "includes_any",
                     "value": [
                       "export",
-                      "import"
+                      "import",
+                      "import_seed"
                     ]
                   }
                 ],
@@ -24336,7 +24945,8 @@
                     "op": "includes_any",
                     "value": [
                       "export",
-                      "import"
+                      "import",
+                      "import_seed"
                     ]
                   }
                 ],
@@ -32428,7 +33038,8 @@
         "lot_numbering",
         "trace_mechanisms",
         "audit_trail_exhibit",
-        "import_export_activity"
+        "import_export_activity",
+        "canada_export_possible"
       ],
       "missing_required": [
         "records_retention_attestation",
@@ -32467,7 +33078,8 @@
         "trace_mechanisms",
         "audit_trail_exhibit",
         "import_export_activity",
-        "export_destinations"
+        "export_destinations",
+        "canada_export_possible"
       ],
       "missing_required": [
         "records_retention_attestation",
@@ -32505,7 +33117,8 @@
         "lot_numbering",
         "trace_mechanisms",
         "audit_trail_exhibit",
-        "import_export_activity"
+        "import_export_activity",
+        "canada_export_possible"
       ],
       "missing_required": [
         "records_retention_attestation",
@@ -32597,6 +33210,236 @@
         "primary_contact_records_access",
         "lot_numbering",
         "import_export_activity"
+      ]
+    },
+    {
+      "module": "g8_0_record_keeping",
+      "label": "imports_seed_only",
+      "answers": {
+        "import_export_activity": [
+          "import_seed"
+        ],
+        "import_seed_countries": [
+          "other"
+        ]
+      },
+      "visible_questions": [
+        "s11_records",
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "sources_organic_products",
+        "sells_as_organic",
+        "lot_numbering",
+        "trace_mechanisms",
+        "audit_trail_exhibit",
+        "import_export_activity",
+        "canada_export_possible",
+        "import_seed_countries",
+        "import_seed_countries_other",
+        "import_seed_standards",
+        "import_documentation",
+        "import_integrity_verification",
+        "port_integrity_measures",
+        "import_export_records"
+      ],
+      "missing_required": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "import_seed_countries_other",
+        "import_seed_standards",
+        "import_documentation",
+        "import_integrity_verification",
+        "port_integrity_measures",
+        "import_export_records"
+      ],
+      "missing_required_na": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "import_seed_countries_other",
+        "import_seed_standards",
+        "import_documentation",
+        "import_integrity_verification",
+        "port_integrity_measures",
+        "import_export_records"
+      ]
+    },
+    {
+      "module": "g8_0_record_keeping",
+      "label": "imports_product_and_seed",
+      "answers": {
+        "import_export_activity": [
+          "import",
+          "import_seed"
+        ]
+      },
+      "visible_questions": [
+        "s11_records",
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "sources_organic_products",
+        "sells_as_organic",
+        "lot_numbering",
+        "trace_mechanisms",
+        "audit_trail_exhibit",
+        "import_export_activity",
+        "canada_export_possible",
+        "import_seed_countries",
+        "import_seed_standards",
+        "import_documentation",
+        "import_integrity_verification",
+        "port_integrity_measures",
+        "import_export_records"
+      ],
+      "missing_required": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "import_seed_countries",
+        "import_seed_standards",
+        "import_documentation",
+        "import_integrity_verification",
+        "port_integrity_measures",
+        "import_export_records"
+      ],
+      "missing_required_na": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "import_seed_countries",
+        "import_seed_standards",
+        "import_documentation",
+        "import_integrity_verification",
+        "port_integrity_measures",
+        "import_export_records"
+      ]
+    },
+    {
+      "module": "g8_0_record_keeping",
+      "label": "exports_canada_nitrate",
+      "answers": {
+        "import_export_activity": [
+          "export"
+        ],
+        "canada_export_possible": true,
+        "sodium_nitrate_used": true,
+        "export_shipment_documents": [
+          "other"
+        ],
+        "equivalency_compliance_method": [
+          "other"
+        ]
+      },
+      "visible_questions": [
+        "s11_records",
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "sources_organic_products",
+        "sells_as_organic",
+        "lot_numbering",
+        "trace_mechanisms",
+        "audit_trail_exhibit",
+        "import_export_activity",
+        "export_destinations",
+        "export_certificate_types",
+        "export_certificate_process",
+        "export_destination_requirements",
+        "export_package_types",
+        "export_shipment_documents",
+        "export_shipment_documents_other",
+        "equivalency_compliance_method",
+        "equivalency_compliance_method_other",
+        "canada_export_possible",
+        "sodium_nitrate_used",
+        "sodium_nitrate_canada_separation",
+        "port_integrity_measures",
+        "import_export_records"
+      ],
+      "missing_required": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "export_destinations",
+        "export_certificate_types",
+        "export_certificate_process",
+        "export_destination_requirements",
+        "export_shipment_documents_other",
+        "equivalency_compliance_method_other",
+        "sodium_nitrate_canada_separation",
+        "port_integrity_measures",
+        "import_export_records"
+      ],
+      "missing_required_na": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "export_destinations",
+        "export_certificate_types",
+        "export_certificate_process",
+        "export_destination_requirements",
+        "export_shipment_documents_other",
+        "equivalency_compliance_method_other",
+        "sodium_nitrate_canada_separation",
+        "port_integrity_measures",
+        "import_export_records"
+      ]
+    },
+    {
+      "module": "g8_0_record_keeping",
+      "label": "no_canada_stale_nitrate",
+      "answers": {
+        "import_export_activity": [
+          "none_no_known_export"
+        ],
+        "canada_export_possible": false,
+        "sodium_nitrate_used": true
+      },
+      "visible_questions": [
+        "s11_records",
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "sources_organic_products",
+        "sells_as_organic",
+        "lot_numbering",
+        "trace_mechanisms",
+        "audit_trail_exhibit",
+        "import_export_activity",
+        "canada_export_possible"
+      ],
+      "missing_required": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering"
+      ],
+      "missing_required_na": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering"
       ]
     },
     {
@@ -35766,6 +36609,122 @@
         "lot_numbering",
         "trace_mechanisms",
         "audit_trail_exhibit",
+        "import_export_activity",
+        "canada_export_possible"
+      ],
+      "missing_required": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering"
+      ],
+      "missing_required_na": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering"
+      ]
+    },
+    {
+      "module": "g8_0_record_keeping",
+      "label": "stale_chain:export_shipment_documents_other:import_export_activity:includes",
+      "answers": {
+        "export_shipment_documents": [
+          "other"
+        ],
+        "import_export_activity": [
+          "__not_an_option__"
+        ]
+      },
+      "visible_questions": [
+        "s11_records",
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "sources_organic_products",
+        "sells_as_organic",
+        "lot_numbering",
+        "trace_mechanisms",
+        "audit_trail_exhibit",
+        "import_export_activity",
+        "canada_export_possible"
+      ],
+      "missing_required": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering"
+      ],
+      "missing_required_na": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering"
+      ]
+    },
+    {
+      "module": "g8_0_record_keeping",
+      "label": "stale_chain:equivalency_compliance_method_other:import_export_activity:includes",
+      "answers": {
+        "equivalency_compliance_method": [
+          "other"
+        ],
+        "import_export_activity": [
+          "__not_an_option__"
+        ]
+      },
+      "visible_questions": [
+        "s11_records",
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "sources_organic_products",
+        "sells_as_organic",
+        "lot_numbering",
+        "trace_mechanisms",
+        "audit_trail_exhibit",
+        "import_export_activity",
+        "canada_export_possible"
+      ],
+      "missing_required": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering"
+      ],
+      "missing_required_na": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering"
+      ]
+    },
+    {
+      "module": "g8_0_record_keeping",
+      "label": "stale_chain:sodium_nitrate_used:import_export_activity:truthy",
+      "answers": {
+        "canada_export_possible": true,
+        "import_export_activity": false
+      },
+      "visible_questions": [
+        "s11_records",
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "sources_organic_products",
+        "sells_as_organic",
+        "lot_numbering",
+        "trace_mechanisms",
+        "audit_trail_exhibit",
         "import_export_activity"
       ],
       "missing_required": [
@@ -35785,7 +36744,124 @@
     },
     {
       "module": "g8_0_record_keeping",
-      "label": "stale_chain:import_documentation_other:import_export_activity:includes",
+      "label": "stale_chain:sodium_nitrate_canada_separation:canada_export_possible:truthy",
+      "answers": {
+        "sodium_nitrate_used": true,
+        "canada_export_possible": false
+      },
+      "visible_questions": [
+        "s11_records",
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "sources_organic_products",
+        "sells_as_organic",
+        "lot_numbering",
+        "trace_mechanisms",
+        "audit_trail_exhibit",
+        "import_export_activity"
+      ],
+      "missing_required": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "import_export_activity"
+      ],
+      "missing_required_na": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "import_export_activity"
+      ]
+    },
+    {
+      "module": "g8_0_record_keeping",
+      "label": "stale_chain:import_seed_countries_other:import_export_activity:includes",
+      "answers": {
+        "import_seed_countries": [
+          "other"
+        ],
+        "import_export_activity": [
+          "__not_an_option__"
+        ]
+      },
+      "visible_questions": [
+        "s11_records",
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "sources_organic_products",
+        "sells_as_organic",
+        "lot_numbering",
+        "trace_mechanisms",
+        "audit_trail_exhibit",
+        "import_export_activity",
+        "canada_export_possible"
+      ],
+      "missing_required": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering"
+      ],
+      "missing_required_na": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering"
+      ]
+    },
+    {
+      "module": "g8_0_record_keeping",
+      "label": "stale_chain:import_seed_standards_other:import_export_activity:includes",
+      "answers": {
+        "import_seed_standards": [
+          "other"
+        ],
+        "import_export_activity": [
+          "__not_an_option__"
+        ]
+      },
+      "visible_questions": [
+        "s11_records",
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "sources_organic_products",
+        "sells_as_organic",
+        "lot_numbering",
+        "trace_mechanisms",
+        "audit_trail_exhibit",
+        "import_export_activity",
+        "canada_export_possible"
+      ],
+      "missing_required": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering"
+      ],
+      "missing_required_na": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering"
+      ]
+    },
+    {
+      "module": "g8_0_record_keeping",
+      "label": "stale_chain:import_documentation_other:import_export_activity:includes_any",
       "answers": {
         "import_documentation": [
           "other"
@@ -35805,7 +36881,8 @@
         "lot_numbering",
         "trace_mechanisms",
         "audit_trail_exhibit",
-        "import_export_activity"
+        "import_export_activity",
+        "canada_export_possible"
       ],
       "missing_required": [
         "records_retention_attestation",
