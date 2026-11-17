@@ -17,7 +17,8 @@
  *
  * Props:
  *   events: array of any shape that may include { id, date, drift_warning }.
- *   cfrReference: overrides the displayed CFR cite (default: 7 CFR 205.400(f)(1)).
+ *   No cite prop: the cite is in the `drift.banner.*` locale strings, which
+ *   `src/i18n/__tests__/cfr-citations.test.ts` checks.
  */
 
 import React, { useMemo } from 'react';

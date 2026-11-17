@@ -115,7 +115,7 @@ export interface ApprovedWSDAInput {
  * Single entry in the approved-inputs change log.
  * Written exclusively by add/remove_approved_input viewset actions.
  * Read-only from the API — no create/update/delete endpoints exposed.
- * Satisfies § 205.400(f)(1) change-notification audit requirement.
+ * The paper trail for § 205.400(f)(2): a change to the plan's inputs list.
  */
 export interface ApprovedInputChangeLog {
   id: number;

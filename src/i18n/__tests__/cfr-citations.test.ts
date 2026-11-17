@@ -65,6 +65,27 @@ describe.each(Object.entries(LOCALES))('§ 205.400(f) citations — %s', (_local
     expect(wrong).toEqual([]);
   });
 
+  it('a letter to a neighbor cites the prevention practice, never (f)(1)', () => {
+    // (f)(1) is the operation telling its CERTIFYING AGENT about drift. A letter to a neighbor
+    // is a practice the plan describes to prevent contact, § 205.201(a)(5). Both mention drift,
+    // so the (f)(1) check above let "drift-notification letter ... (§ 205.400(f)(1))" through
+    // on the buffer form until 2026-11-17 (recordkeeping checklist run, VID-04).
+    const NEIGHBOR_LETTER =
+      /(letter|carta)\b.*\b(neighbou?r|vecino)|(neighbou?r|vecino).*\b(letter|carta)\b/i;
+    // Any part-205 cite, with or without "§": "7 CFR 205.400(f)(1)" must not slip past
+    // (review of app #408).
+    const letters = entries.filter(([, v]) => NEIGHBOR_LETTER.test(v) && /\b205\.\d/.test(v));
+    // Non-vacuity per key: losing one checkbox label from the set must fail, not shrink it.
+    expect(letters.map(([k]) => k)).toEqual(
+      expect.arrayContaining([
+        'parcel.buffer.neighborNotified',
+        'parcelApp.buffers.neighborNotified'
+      ])
+    );
+    expect(letters.filter(([, v]) => v.includes('205.400(f)(1)')).map(([k]) => k)).toEqual([]);
+    expect(letters.filter(([, v]) => !v.includes('205.201(a)(5)')).map(([k]) => k)).toEqual([]);
+  });
+
   it('is not vacuous — both limbs are actually cited somewhere', () => {
     expect(entries.filter(([, v]) => v.includes('205.400(f)(1)')).length).toBeGreaterThan(2);
     expect(entries.filter(([, v]) => v.includes('205.400(f)(2)')).length).toBeGreaterThan(2);

@@ -90,7 +90,8 @@ export interface StandardizedEventBase {
 }
 
 /**
- * Drift detector finding — 7 CFR 205.400(f)(1).
+ * Drift detector finding: an input not confirmed against the plan. 7 CFR 205.400(f)(2) on a
+ * filed plan, § 205.201(a)(2) on a draft (`cfr_reference` carries which).
  * Shape must match backend certifications.services.drift_detector.build_drift_warning.
  */
 export interface DriftWarning {
