@@ -50,6 +50,9 @@ describe('ApplicationGroupNotice', () => {
     mount('detail');
     expect(screen.getByText('One application on 3 parcels')).toBeInTheDocument();
     expect(screen.getByText(/also recorded on South, East/)).toBeInTheDocument();
+    // On the record it is a row in the sheet's list, not an alert box (2026-11-17).
+    expect(screen.getByTestId('record-notice-group')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 
   it('says, when editing, that the change is this parcel’s only', () => {
@@ -57,6 +60,9 @@ describe('ApplicationGroupNotice', () => {
     mount('edit');
     expect(screen.getByText(/apply to this parcel only/)).toBeInTheDocument();
     expect(screen.getByText(/also recorded on South/)).toBeInTheDocument();
+    // The edit form keeps its own alert.
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+    expect(screen.queryByTestId('record-notice-group')).toBeNull();
   });
 
   it('says nothing for a single-parcel record', () => {

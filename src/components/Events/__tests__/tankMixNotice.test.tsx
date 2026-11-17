@@ -56,6 +56,9 @@ describe('TankMixNotice', () => {
     expect(
       screen.getByText(/fuel of this pass is recorded on Entrust SC, line 1/)
     ).toBeInTheDocument();
+    // On the record it is a row in the sheet's list, not an alert box (2026-11-17).
+    expect(screen.getByTestId('record-notice-tank-mix')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 
   it('says, when editing, that the change is this product’s only', () => {
@@ -63,6 +66,9 @@ describe('TankMixNotice', () => {
     mount('edit');
     expect(screen.getByText(/changes this product's record only/)).toBeInTheDocument();
     expect(screen.queryByText(/fuel of this pass/)).toBeNull();
+    // The edit form keeps its own alert.
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+    expect(screen.queryByTestId('record-notice-tank-mix')).toBeNull();
   });
 
   it('speaks Spanish', () => {
