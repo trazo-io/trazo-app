@@ -7,7 +7,7 @@
  */
 import React, { useState } from 'react';
 import { describe, expect, it } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { IntlProvider } from 'react-intl';
 
@@ -260,6 +260,33 @@ describe('PerParcelCards', () => {
       application_start: '2026-05-02T08:40'
     });
     expect(last.find((t) => t.parcelId === 1)?.times).toEqual({});
+  });
+
+  it('a stop before its start is said on that card, under the stop, as soon as both are typed', () => {
+    wrap(
+      <Cards
+        initial={[
+          {
+            ...blockA,
+            scope: 'all',
+            times: { application_start: '2026-05-02T09:00', application_end: '2026-05-02T08:10' }
+          },
+          {
+            ...newTarget({ id: 2, name: 'Block B', area: 1 }),
+            scope: 'all',
+            times: { application_start: '2026-05-02T08:20', application_end: '2026-05-02T09:30' }
+          }
+        ]}
+        timesPerParcel
+      />
+    );
+    // Once, on Block A's card only.
+    expect(screen.getAllByText('The stop is before the start. Check both times.')).toHaveLength(1);
+    expect(
+      within(screen.getByTestId('parcel-times-1')).getByText(
+        'The stop is before the start. Check both times.'
+      )
+    ).toBeInTheDocument();
   });
 
   it('a type with no per-parcel times asks none, even with the switch on', () => {
