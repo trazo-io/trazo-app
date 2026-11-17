@@ -26,9 +26,10 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { describe, expect, it } from 'vitest';
 
+import { historyModelsSource } from '../../../test-utils/backendHistoryModels';
+
 const BACK = join(__dirname, '../../../../../trazo-back');
 const CERT_CONSTANTS = join(BACK, 'certifications/constants.py');
-const HISTORY_MODELS = join(BACK, 'history/models.py');
 const MANAGER = join(__dirname, '../CertificationManager.tsx');
 const TYPES = join(__dirname, '../../../types/certification.ts');
 const BUSINESS_TAB = join(
@@ -116,7 +117,7 @@ describe('Certification vocabulary — model, TS union and picker agree', () => 
 });
 
 describe('BusinessEvent vocabulary — model and activity form agree', () => {
-  const models = read(HISTORY_MODELS);
+  const models = historyModelsSource(BACK);
   const offeredBackend = pyChoices(models, 'OFFERED_CERTIFICATION_TYPE_CHOICES');
   const deprecated = pyChoices(models, 'DEPRECATED_CERTIFICATION_TYPE_CHOICES');
 

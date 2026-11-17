@@ -1,7 +1,7 @@
-import { readFileSync } from 'fs';
 import { join } from 'path';
 import { describe, expect, it } from 'vitest';
 
+import { historyModelsSource } from '../../test-utils/backendHistoryModels';
 import { specRulesFor, type MultiParcelRules } from '../../config/events/multiParcel';
 import {
   MAX_DECIMALS,
@@ -514,7 +514,7 @@ describe('voiceFieldsAskedPerParcel: a spoken value for a per-parcel field is na
 
 describe('decimal limits match the server', () => {
   // A value past the model's decimal_places came back as an English DRF error naming no field.
-  const models = readFileSync(join(__dirname, '../../../../trazo-back/history/models.py'), 'utf8');
+  const models = historyModelsSource(join(__dirname, '../../../../trazo-back'));
 
   it('every limit is the decimal_places (or integer) of every model field with that name', () => {
     for (const [key, max] of Object.entries(MAX_DECIMALS)) {
