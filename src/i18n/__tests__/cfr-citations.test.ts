@@ -72,8 +72,16 @@ describe.each(Object.entries(LOCALES))('§ 205.400(f) citations — %s', (_local
     // on the buffer form until 2026-11-17 (recordkeeping checklist run, VID-04).
     const NEIGHBOR_LETTER =
       /(letter|carta)\b.*\b(neighbou?r|vecino)|(neighbou?r|vecino).*\b(letter|carta)\b/i;
-    const letters = entries.filter(([, v]) => NEIGHBOR_LETTER.test(v) && /§\s*205\./.test(v));
-    expect(letters.length).toBeGreaterThan(0);
+    // Any part-205 cite, with or without "§": "7 CFR 205.400(f)(1)" must not slip past
+    // (review of app #408).
+    const letters = entries.filter(([, v]) => NEIGHBOR_LETTER.test(v) && /\b205\.\d/.test(v));
+    // Non-vacuity per key: losing one checkbox label from the set must fail, not shrink it.
+    expect(letters.map(([k]) => k)).toEqual(
+      expect.arrayContaining([
+        'parcel.buffer.neighborNotified',
+        'parcelApp.buffers.neighborNotified'
+      ])
+    );
     expect(letters.filter(([, v]) => v.includes('205.400(f)(1)')).map(([k]) => k)).toEqual([]);
     expect(letters.filter(([, v]) => !v.includes('205.201(a)(5)')).map(([k]) => k)).toEqual([]);
   });
