@@ -15,8 +15,10 @@ display surfaces pick it up automatically.
 
 ### Step 1: Add to Django Model
 
-In `trazo-back/history/models.py`, add the field to the appropriate event
-model class:
+In `trazo-back/history/models/`, add the field to the event model's own module
+(`chemical_event.py` for `ChemicalEvent`, `soil_management_event.py` for
+`SoilManagementEvent`, and so on; until 2026-11-17 this was the single file
+`history/models.py`):
 
 ```python
 class ChemicalEvent(CommonEvent):
