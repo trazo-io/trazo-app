@@ -1618,11 +1618,13 @@ const PestManagementTab = forwardRef(
                     fire on a trap-monitoring or beneficial-release event. Leaving this field
                     gated to SC/TA/IP would have made THAT finding the next unclearable one. */}
                 <StandardField
-                  label="Threshold Rationale"
-                  helpText="Explain why the action threshold was or was not met (NOP 7 CFR 205.206(e)) — required by the certifier export whenever you answer that the threshold WAS met">
+                  label={intl.formatMessage({ id: 'events.pest.fields.thresholdRationale' })}
+                  helpText={intl.formatMessage({ id: 'events.pest.help.thresholdRationale' })}>
                   <StandardTextarea
                     {...methods.register('threshold_rationale')}
-                    placeholder="e.g., 28 navel orangeworm across 8 traps (3.5/trap), below our 5/trap treatment threshold — no material applied..."
+                    placeholder={intl.formatMessage({
+                      id: 'events.pest.fields.thresholdRationalePlaceholder'
+                    })}
                     rows={3}
                   />
                 </StandardField>
