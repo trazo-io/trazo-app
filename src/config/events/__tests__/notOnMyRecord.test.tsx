@@ -64,6 +64,44 @@ const concentrationIssues = (data: Record<string, string>): string[] => {
     .map((issue: { message: string }) => issue.message);
 };
 
+const windowIssues = (data: Record<string, string>, options = {}): string[] => {
+  const result = buildChemicalSchema(intl, options).safeParse(data);
+  if (result.success) return [];
+  return result.error.issues
+    .filter((issue: { path: (string | number)[] }) => issue.path[0] === 'application_end')
+    .map((issue: { message: string }) => issue.message);
+};
+
+describe('the stop comes at or after the start (2026-11-17)', () => {
+  const swapped = {
+    ...SPRAY,
+    application_start: '2026-05-02T09:00',
+    application_end: '2026-05-02T06:30'
+  };
+
+  it('a stop before its start is refused on the stop', () => {
+    expect(windowIssues(swapped)).toEqual(['events.chemical.validation.stopBeforeStart']);
+    expect(windowIssues(swapped, { multiTarget: true })).toEqual([
+      'events.chemical.validation.stopBeforeStart'
+    ]);
+  });
+
+  it('equal times and one end alone pass', () => {
+    expect(
+      windowIssues({
+        ...SPRAY,
+        application_start: '2026-05-02T06:30',
+        application_end: '2026-05-02T06:30'
+      })
+    ).toEqual([]);
+    expect(windowIssues({ ...SPRAY, application_end: '2026-05-02T06:30' })).toEqual([]);
+  });
+
+  it('times asked on each parcel card: the hidden shared pair never blocks the save', () => {
+    expect(windowIssues(swapped, { multiTarget: true, timesPerParcel: true })).toEqual([]);
+  });
+});
+
 const store = () =>
   configureStore({
     reducer: {

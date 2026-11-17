@@ -165,7 +165,7 @@ const CARRIER_UNITS_REFUSED_ON_SEVERAL_PARCELS =
  *
  * Memoise on `intl` at the call site; rebuilding the schema each render remounts the resolver.
  */
-export const buildChemicalSchema = (intl, { multiTarget = false } = {}) =>
+export const buildChemicalSchema = (intl, { multiTarget = false, timesPerParcel = false } = {}) =>
   object({
     type: string().min(
       1,
@@ -555,6 +555,22 @@ export const buildChemicalSchema = (intl, { multiTarget = false } = {}) =>
         })
       });
     }
+    // The stop at or after the start (the server's `window_conflicts`; nothing checked it before
+    // 2026-11-17 and the Washington record prints both as typed). Equal passes. With the times
+    // asked on each parcel card the shared inputs are hidden and not sent, so a stale pair there
+    // must not block the save: the cards check their own (utils/multiParcel.ts targetIssues).
+    if (
+      !(multiTarget && timesPerParcel) &&
+      data.application_start &&
+      data.application_end &&
+      data.application_end < data.application_start
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['application_end'],
+        message: intl.formatMessage({ id: 'events.chemical.validation.stopBeforeStart' })
+      });
+    }
     // One tank over several parcels: a total would land on every parcel's record as its own.
     if (multiTarget && CARRIER_UNITS_REFUSED_ON_SEVERAL_PARCELS.has(data.carrier_volume_unit)) {
       ctx.addIssue({
@@ -796,8 +812,8 @@ const ChemicalTab = forwardRef(
     // Memoised on `intl`: a new schema object each render would hand zodResolver a fresh
     // resolver every time and reset the form's validation state mid-typing.
     const formSchemaMainInfo = useMemo(
-      () => buildChemicalSchema(intl, { multiTarget }),
-      [intl, multiTarget]
+      () => buildChemicalSchema(intl, { multiTarget, timesPerParcel }),
+      [intl, multiTarget, timesPerParcel]
     );
     const [hasInitialized, setHasInitialized] = useState(false);
 

@@ -15,6 +15,7 @@ import {
   voiceFieldsAskedPerParcel,
   planAlsoSeed,
   targetArea,
+  stopBeforeStart,
   targetIssues,
   type ParcelTarget
 } from '../multiParcel';
@@ -270,6 +271,30 @@ describe('multiParcel: start and stop times per parcel', () => {
     expect(s).not.toHaveProperty('application_end');
     expect(e).not.toHaveProperty('application_start');
     expect(e).not.toHaveProperty('application_end');
+  });
+
+  it('a stop before its start is a card issue only when the card asks its own times', () => {
+    const swapped = {
+      ...north,
+      times: { application_start: '2026-05-02T09:00', application_end: '2026-05-02T08:10' }
+    };
+    expect(stopBeforeStart(swapped)).toBe(true);
+    expect(stopBeforeStart(north)).toBe(false);
+    // Equal is a stated instant, not a contradiction; one end alone is fine.
+    expect(
+      stopBeforeStart({
+        ...north,
+        times: { application_start: '2026-05-02T09:00', application_end: '2026-05-02T09:00' }
+      })
+    ).toBe(false);
+    expect(stopBeforeStart(south)).toBe(false);
+    expect(targetIssues(swapped, chemical, single, { timesPerParcel: true })).toContain('times');
+    // Shared times: the card's own are not sent, so they are not checked.
+    expect(targetIssues(swapped, chemical, single)).not.toContain('times');
+    // A type with no per-parcel times never reports one.
+    expect(targetIssues(swapped, irrigation, single, { timesPerParcel: true })).not.toContain(
+      'times'
+    );
   });
 
   it('targetsHoldTimes reads only typed times', () => {

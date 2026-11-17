@@ -29,6 +29,7 @@ import {
   hasRecordedSize,
   hectaresIn,
   targetArea,
+  stopBeforeStart,
   targetIssues,
   unitOf,
   type BlockScope,
@@ -180,7 +181,7 @@ export const PerParcelCards = ({
       />
       <VStack align="stretch" spacing={3}>
         {targets.map((target) => {
-          const issues = showIssues ? targetIssues(target, rules, form) : [];
+          const issues = showIssues ? targetIssues(target, rules, form, { timesPerParcel }) : [];
           const wholeArea = hectaresIn(target.areaHa, areaUnitCode);
           // Without an area per parcel the card has nothing to ask first; with one, the rest of
           // the card waits for the whole / part answer, so no value is asked against no area.
@@ -345,7 +346,14 @@ export const PerParcelCards = ({
                   {rules.timeKeys.map((key) => (
                     <StandardField
                       key={key}
-                      label={intl.formatMessage({ id: `events.multiParcel.time.${key}` })}>
+                      label={intl.formatMessage({ id: `events.multiParcel.time.${key}` })}
+                      // Said as soon as both are typed, on the stop: the save refuses it anyway.
+                      error={
+                        key === 'application_end' &&
+                        (issues.includes('times') || stopBeforeStart(target))
+                          ? intl.formatMessage({ id: 'events.chemical.validation.stopBeforeStart' })
+                          : undefined
+                      }>
                       <StandardInput
                         type="datetime-local"
                         value={target.times?.[key] ?? ''}

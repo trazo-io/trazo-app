@@ -186,7 +186,18 @@ export const fieldValue = (
   return derivedValue(target, field, form);
 };
 
-export type TargetIssue = 'scope' | 'area' | `field:${string}` | `decimals:${string}`;
+export type TargetIssue = 'scope' | 'area' | 'times' | `field:${string}` | `decimals:${string}`;
+
+/** The spray window's two ends, as the spec's `ui.time_keys` names them. */
+const WINDOW_START = 'application_start';
+const WINDOW_END = 'application_end';
+
+/** True when this card's stop is before its start. Both are `datetime-local` text, so they order as strings. */
+export const stopBeforeStart = (target: ParcelTarget): boolean => {
+  const start = (target.times?.[WINDOW_START] ?? '').trim();
+  const end = (target.times?.[WINDOW_END] ?? '').trim();
+  return start !== '' && end !== '' && end < start;
+};
 
 /**
  * How many decimals the server keeps for a per-parcel number (the model's `decimal_places`;
@@ -215,13 +226,28 @@ const decimalsIn = (typed: string): number => {
 const tooPrecise = (key: string | null, typed: string): boolean =>
   key !== null && key in MAX_DECIMALS && decimalsIn(typed) > MAX_DECIMALS[key];
 
-/** What is still missing before this target can be saved, in the order the card asks. */
+/**
+ * What is still missing before this target can be saved, in the order the card asks.
+ *
+ * `timesPerParcel`: the card asks its own start and stop, so a stop before its start is an issue
+ * here (the server refuses it per parcel too: `application_conditions.window_conflicts`). Off,
+ * the card's times are not sent, so they are not checked.
+ */
 export const targetIssues = (
   target: ParcelTarget,
   rules: MultiParcelRules,
-  form: SharedForm
+  form: SharedForm,
+  { timesPerParcel = false }: { timesPerParcel?: boolean } = {}
 ): TargetIssue[] => {
   const issues: TargetIssue[] = [];
+  if (
+    timesPerParcel &&
+    rules.timeKeys.includes(WINDOW_START) &&
+    rules.timeKeys.includes(WINDOW_END) &&
+    stopBeforeStart(target)
+  ) {
+    issues.push('times');
+  }
   if (rules.areaKey) {
     if (target.scope === null) return ['scope'];
     if (targetArea(target, areaUnitOf(form)) === null) issues.push('area');

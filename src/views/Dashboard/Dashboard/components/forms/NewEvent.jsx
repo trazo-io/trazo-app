@@ -1897,11 +1897,19 @@ function NewEventForm({ isEdit = false, eventId = null }) {
     // the grower just entered and not the debounced copy.
     if (multiActive) {
       const form = multiForm(updatedData);
-      if (multiTargets.some((target) => targetIssues(target, cardRules, form).length > 0)) {
+      const cardIssues = multiTargets.map((target) =>
+        targetIssues(target, cardRules, form, { timesPerParcel })
+      );
+      if (cardIssues.some((issues) => issues.length > 0)) {
         setShowMultiIssues(true);
+        const onlyTimes = cardIssues.every((issues) => issues.every((i) => i === 'times'));
         toast({
-          title: intl.formatMessage({ id: 'events.multiParcel.validationTitle' }),
-          description: intl.formatMessage({ id: 'events.multiParcel.validationBody' }),
+          title: intl.formatMessage({
+            id: onlyTimes ? 'events.multiParcel.timesTitle' : 'events.multiParcel.validationTitle'
+          }),
+          description: intl.formatMessage({
+            id: onlyTimes ? 'events.multiParcel.timesBody' : 'events.multiParcel.validationBody'
+          }),
           status: 'error',
           duration: 6000,
           isClosable: true
@@ -3360,12 +3368,20 @@ function NewEventForm({ isEdit = false, eventId = null }) {
         // Step 1's Continue already refused an unanswered block; a block added afterwards (back
         // to step 0, tick another) must not reach the server as an amount of "null".
         const saveForm = multiForm(eventFormData);
-        if (multiTargets.some((target) => targetIssues(target, cardRules, saveForm).length > 0)) {
+        const cardIssues = multiTargets.map((target) =>
+          targetIssues(target, cardRules, saveForm, { timesPerParcel })
+        );
+        if (cardIssues.some((issues) => issues.length > 0)) {
           setShowMultiIssues(true);
           setActiveStep(1);
+          const onlyTimes = cardIssues.every((issues) => issues.every((i) => i === 'times'));
           toast({
-            title: intl.formatMessage({ id: 'events.multiParcel.validationTitle' }),
-            description: intl.formatMessage({ id: 'events.multiParcel.validationBody' }),
+            title: intl.formatMessage({
+              id: onlyTimes ? 'events.multiParcel.timesTitle' : 'events.multiParcel.validationTitle'
+            }),
+            description: intl.formatMessage({
+              id: onlyTimes ? 'events.multiParcel.timesBody' : 'events.multiParcel.validationBody'
+            }),
             status: 'error',
             duration: 6000,
             isClosable: true
