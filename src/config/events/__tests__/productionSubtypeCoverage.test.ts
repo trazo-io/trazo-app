@@ -20,17 +20,18 @@
  * subtype just renders one fewer option, and a missing tile renders a grid that looks
  * complete. So this asserts the sets against each other, with the BACKEND as the authority.
  */
-import { existsSync, readFileSync } from 'fs';
+import { readFileSync } from 'fs';
 import { join } from 'path';
 import { describe, expect, it } from 'vitest';
 
+import { historyModelsSource } from '../../../test-utils/backendHistoryModels';
 import { ACTIVITY_VERBS } from '../../activityVerbs';
 import { getSubtypes } from '../index';
 import enUS from '../../../i18n/lang/en-US.json';
 import es419 from '../../../i18n/lang/es-419.json';
 
 const REPO_ROOT = join(__dirname, '../../../../..');
-const BACKEND_MODELS = join(REPO_ROOT, 'trazo-back/history/models.py');
+const BACKEND = join(REPO_ROOT, 'trazo-back');
 const PRODUCTION_TAB = join(
   __dirname,
   '../../../views/Dashboard/Dashboard/components/forms/ProductionTab.jsx'
@@ -38,9 +39,9 @@ const PRODUCTION_TAB = join(
 
 /** Codes in `PRODUCTION_EVENTS = ( … )` — the authority both front-end lists answer to. */
 const backendSubtypes = (): string[] => {
-  const src = readFileSync(BACKEND_MODELS, 'utf8');
+  const src = historyModelsSource(BACKEND);
   const block = /PRODUCTION_EVENTS\s*=\s*\(([\s\S]*?)\n    \)/.exec(src);
-  if (!block) throw new Error('could not find PRODUCTION_EVENTS in history/models.py');
+  if (!block) throw new Error('could not find PRODUCTION_EVENTS in the history models');
   // Entries are `(CONSTANT, "Label")`; the code itself is on the constant's own assignment.
   const constants = [...block[1].matchAll(/\(\s*([A-Z_]+)\s*,/g)].map((m) => m[1]);
   return constants.map((name) => {
@@ -55,12 +56,8 @@ const esMessages = es419 as unknown as Record<string, string>;
 
 describe('production subtypes: backend, registry and entry grid agree', () => {
   it('reads a real backend list (guard is not vacuous)', () => {
-    expect(
-      existsSync(BACKEND_MODELS),
-      'trazo-back/history/models.py not found — if the repos were split, point this at the ' +
-        'new location rather than deleting the guard: every assertion below would otherwise ' +
-        'pass by comparing nothing'
-    ).toBe(true);
+    // historyModelsSource throws when the checkout is missing: every assertion below would
+    // otherwise pass by comparing nothing.
     expect(backendSubtypes().length).toBeGreaterThan(10);
   });
 
