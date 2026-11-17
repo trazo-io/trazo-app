@@ -7054,6 +7054,7 @@
   "osp.review.finding.responsible_person_not_legally_responsible": "La persona responsable de la finca, que firma el paquete, no es un contacto marcado como responsable legal; indica en ambos lugares quién firma",
   "osp.review.finding.planting_stock_answers_disagree": "G3.0 y G3.0b indican de forma distinta el estado orgánico del material de plantación",
   "osp.review.finding.seed_stock_materials_not_listed": "El plan indica que estos materiales de semilla, material de plantación o injerto todavía no están en la lista de insumos",
+  "osp.review.finding.international_trade_answers_disagree": "Las respuestas de G8.0 sobre la exportación a Canadá y el nitrato de sodio no coinciden con el plan o los registros",
   "osp.review.finding.seasons_closed": "Temporadas terminadas desde la última respuesta del plan",
   "osp.review.finding.seasons_started": "Temporadas iniciadas desde la última respuesta del plan",
   "osp.review.more": "… y {n} más",

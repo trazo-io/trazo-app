@@ -600,6 +600,7 @@ export interface OSPReviewFinding {
     | 'responsible_person_not_legally_responsible'
     | 'planting_stock_answers_disagree'
     | 'seed_stock_materials_not_listed'
+    | 'international_trade_answers_disagree'
     | string;
   message: string;
   count: number;

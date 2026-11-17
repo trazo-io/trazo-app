@@ -7054,6 +7054,7 @@
   "osp.review.finding.responsible_person_not_legally_responsible": "The farm's responsible person, who signs the packet, is not a contact marked legally responsible; name the person who signs in both places",
   "osp.review.finding.planting_stock_answers_disagree": "G3.0 and G3.0b state the organic status of planting stock differently",
   "osp.review.finding.seed_stock_materials_not_listed": "The plan says these seed, planting stock or grafting materials are not on the inputs list yet",
+  "osp.review.finding.international_trade_answers_disagree": "G8.0's answers on export to Canada and sodium nitrate disagree with the plan or the records",
   "osp.review.finding.seasons_closed": "Seasons finished since the plan was last answered",
   "osp.review.finding.seasons_started": "Seasons started since the plan was last answered",
   "osp.review.more": "… and {n} more",

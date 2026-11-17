@@ -967,6 +967,10 @@ const OSPModuleWizard = () => {
       const opt = question.options.find((o) => o.value === value);
       if (opt) return pickText(opt.label, locale) ?? String(value);
     }
+    // A yes/no suggestion read "true" (G4.0 restricted materials, G8.0 sodium nitrate).
+    if (typeof value === 'boolean') {
+      return intl.formatMessage({ id: value ? 'osp.wizard.yes' : 'osp.wizard.no' });
+    }
     return String(value ?? '');
   };
 

@@ -139,7 +139,9 @@ const ALLOWED = new Set([
   'entré',
   'salí',
   'seguí',
-  'viví'
+  'viví',
+  // A country's name, not a verb: the G8.0 finding about export to Canada (2026-11-17).
+  'canadá'
 ]);
 
 const SUSPECT = /(?<![A-Za-zÁÉÍÓÚáéíóúñÑ])([A-Za-zÁÉÍÓÚáéíóúñÑ]{3,}[áéí])(?![A-Za-zÁÉÍÓÚáéíóúñÑ])/g;
