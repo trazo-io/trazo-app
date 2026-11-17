@@ -39,6 +39,9 @@ const MATERIALS = [
     name: 'Serenade ASO',
     manufacturer: 'Bayer',
     reason: '',
+    // The records log it; the operator has written no reason and stated no use.
+    reason_kind: 'Disease control',
+    last_logged_on: '2026-05-04',
     status: '',
     in_use: false,
     intended_for_use: false,
@@ -62,6 +65,8 @@ const MATERIALS = [
     name: 'Rexius Organic Compost',
     manufacturer: '',
     reason: 'Soil amendment',
+    reason_kind: '',
+    last_logged_on: '2026-04-01',
     status: 'in_use',
     in_use: true,
     intended_for_use: false,
@@ -211,6 +216,27 @@ describe('OSP Materials List editor', () => {
     const select = screen.getByLabelText('How Serenade ASO is used') as HTMLSelectElement;
     expect(select.value).toBe('');
     expect(screen.getByText('1 material has no use stated yet')).toBeInTheDocument();
+  });
+
+  it('offers in use for a row the records show applied, and saves it only when taken', async () => {
+    renderPanel();
+    const offer = screen.getByTestId('materials-suggest-in-use-Serenade ASO');
+    expect(offer).toHaveTextContent('Your records show it applied on 2026-05-04.');
+    expect(answerMaterial).not.toHaveBeenCalled();
+    // Already stated in use: nothing to offer.
+    expect(screen.queryByTestId('materials-suggest-in-use-Rexius Organic Compost')).toBeNull();
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Mark in use' }));
+    });
+    expect(answerMaterial).toHaveBeenCalledTimes(1);
+    expect(answerMaterial.mock.calls[0][0].body).toEqual({ name: 'Serenade ASO', status: 'in_use' });
+  });
+
+  it("shows what the records log a material as as a hint for the reason, never as the operator's reason", () => {
+    renderPanel();
+    const reason = screen.getByLabelText('Reason Serenade ASO is used') as HTMLInputElement;
+    expect(reason.value).toBe('');
+    expect(reason.placeholder).toBe('Not stated yet. Your records log it as: Disease control');
   });
 
   it('records the use the operator picks, and only that', async () => {

@@ -50,6 +50,8 @@ import { useFormFields } from 'src/hooks/useFormFields';
 import { useDefaultUnits } from 'src/hooks/useMeasurementSystem';
 import { RegistryFormField } from 'src/components/Forms/RegistryFormField';
 import { BlockIdField } from 'components/Fields/BlockIdField';
+import { useParams } from 'react-router-dom';
+import { PlanMaterialsQuickPick } from 'components/Forms/PlanMaterialsQuickPick';
 
 // Phase 3: Fuel types with EPA-verified emission factors (matching ProductionTab pattern)
 // UPDATED 2026-02-15: All factors corrected to match EPA 40 CFR Part 98 Table C-1
@@ -646,6 +648,8 @@ const SoilManagementTab = forwardRef(
       control,
       watch
     } = methods;
+    // The farm, for the plan's own Materials List under the product name (route :farmId).
+    const { farmId } = useParams();
 
     // Watch fields that impact carbon calculations (for carbon API efficiency)
     // Core calculation fields (directly impact emissions):
@@ -1509,6 +1513,20 @@ const SoilManagementTab = forwardRef(
                           defaultMessage: 'e.g., Malibu Compost Bu’s Blend'
                         })}
                         {...register('amendment_product_name')}
+                      />
+                      {/* The plan's own Materials List (CCOF ORGB41: only listed materials may be
+                          used). Fills the name, and the maker while it is blank. */}
+                      <PlanMaterialsQuickPick
+                        establishmentId={farmId}
+                        categories={['fertilizer_amendment']}
+                        onPick={(material) => {
+                          setValue('amendment_product_name', material.name, { shouldDirty: true });
+                          if (material.manufacturer && !methods.getValues('amendment_manufacturer')) {
+                            setValue('amendment_manufacturer', material.manufacturer, {
+                              shouldDirty: true
+                            });
+                          }
+                        }}
                       />
                     </StandardField>
 

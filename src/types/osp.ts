@@ -522,6 +522,10 @@ export interface OSPMaterialListRow {
   name: string;
   manufacturer: string;
   reason: string;
+  /** The kind the records log it as ("Pest control"), only while `reason` is blank: a hint, never the answer. */
+  reason_kind?: string;
+  /** ISO date of the row's own logged application, '' when the records hold none. */
+  last_logged_on?: string;
   /** '' when the operator has not said; otherwise PlanMaterialEntry.status. */
   status: '' | 'planned' | 'in_use' | 'discontinued';
   in_use: boolean;
@@ -609,6 +613,7 @@ export interface OSPReviewFinding {
     | 'planting_stock_answers_disagree'
     | 'seed_stock_materials_not_listed'
     | 'international_trade_answers_disagree'
+    | 'materials_rows_incomplete'
     | string;
   message: string;
   count: number;

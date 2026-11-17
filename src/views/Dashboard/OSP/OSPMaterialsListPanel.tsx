@@ -173,7 +173,16 @@ const MaterialRowEditor: React.FC<{
           size="sm"
           isDisabled={!isEditable}
           defaultValue={row.reason}
-          placeholder={intl.formatMessage({ id: 'osp.materialsList.reasonPlaceholder' })}
+          // The kind the records log it as is a hint for the blank, never the answer: it printed in
+          // the reason column as if the operator had written it (CCOF ORGB41 §B, 2026-11-17).
+          placeholder={
+            row.reason_kind
+              ? intl.formatMessage(
+                  { id: 'osp.materialsList.reasonKindPlaceholder' },
+                  { kind: row.reason_kind }
+                )
+              : intl.formatMessage({ id: 'osp.materialsList.reasonPlaceholder' })
+          }
           aria-label={String(
             intl.formatMessage({ id: 'osp.materialsList.reasonAria' }, { name: row.name })
           )}
@@ -206,6 +215,27 @@ const MaterialRowEditor: React.FC<{
           }}
         />
       </Stack>
+
+      {/* The records show it applied while the row still says planned, or says nothing. An offer
+          the operator takes: "in use" is their statement, never a guess written for them. */}
+      {isEditable && row.last_logged_on && (row.status === '' || row.status === 'planned') && (
+        <Flex
+          gap={2}
+          mt={2}
+          align="center"
+          wrap="wrap"
+          data-testid={`materials-suggest-in-use-${row.name}`}>
+          <Text fontSize="xs" color={mutedColor}>
+            {intl.formatMessage(
+              { id: 'osp.materialsList.loggedSuggestInUse' },
+              { date: row.last_logged_on }
+            )}
+          </Text>
+          <StandardButton size="xs" variant="outline" onClick={() => save(row, { status: 'in_use' })}>
+            {intl.formatMessage({ id: 'osp.materialsList.markInUse' })}
+          </StandardButton>
+        </Flex>
+      )}
 
       {/* The section and the agent's review share a row that wraps. Each select is given the width
           its longest option needs plus its padding (measured 2026-11-05 at 14px: the Spanish

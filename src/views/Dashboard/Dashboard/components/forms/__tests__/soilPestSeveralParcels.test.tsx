@@ -22,7 +22,8 @@ import { MULTI_PARCEL_SPEC, specRulesFor } from 'config/events/multiParcel';
 vi.mock('store/api/historyApi', () => ({
   useGetCurrentHistoryQuery: () => ({ data: undefined, isLoading: false }),
   useGetSeedSuppliersQuery: () => ({ data: undefined, isLoading: false }),
-  useGetRecentInputsQuery: () => ({ data: undefined, isLoading: false })
+  useGetRecentInputsQuery: () => ({ data: undefined, isLoading: false }),
+  useGetPlanMaterialsQuery: () => ({ data: undefined, isLoading: false })
 }));
 vi.mock('store/api/productApi', () => ({
   useGetParcelQuery: () => ({ data: { known_block_ids: [] }, isLoading: false })

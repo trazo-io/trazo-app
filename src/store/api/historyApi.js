@@ -313,6 +313,16 @@ export const historyApi = baseApi.injectEndpoints({
       }),
       providesTags: (result) => (result ? ['Event'] : [])
     }),
+    // The materials on the plan in force, for the input and amendment forms' quick-pick (CCOF ORGB41:
+    // only materials on the OSP Materials List may be used). Offered, never filled in by itself.
+    getPlanMaterials: build.query({
+      query: ({ establishmentId }) => ({
+        url: `productions/plan-materials/?establishment_id=${establishmentId}`,
+        method: 'GET',
+        credentials: 'include'
+      }),
+      providesTags: (result) => (result ? ['OSP'] : [])
+    }),
     // Sales records per production lot (SOE traceback) — owner-gated, never public
     // USDA Form 10 Part A is a PERSISTENT supplier list — its purpose is to be referenced
     // again next season, which a free-text string retyped per event cannot do. Derived from
@@ -462,6 +472,7 @@ export const {
   useUpgradeScanConsentMutation,
   useClaimScansMutation,
   useGetRecentInputsQuery,
+  useGetPlanMaterialsQuery,
   useGetSeedSuppliersQuery,
   useGetSalesRecordsQuery,
   useGetHarvestLotsQuery,

@@ -71,6 +71,10 @@ import { CHEMICAL_FUEL_TYPES } from 'config/events/chemicalFormOptions';
 import { ReceiptDocumentSelect } from 'components/Forms/ReceiptDocumentSelect';
 import ApplicatorPicker from 'components/Forms/ApplicatorPicker';
 import InputVerifyHelper from 'components/Compliance/InputVerifyHelper';
+import {
+  PlanMaterialsQuickPick,
+  categoriesForChemicalType
+} from 'components/Forms/PlanMaterialsQuickPick';
 import { object, string, array, number } from 'zod';
 import CustomFieldsForm from './CustomFieldsForm';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -3376,6 +3380,27 @@ const ChemicalTab = forwardRef(
                             attachedWsdaPk={methods.watch('wsda_material')}
                             onAttachOmri={(pk) => attachListing('omri_product', 'omri_listed', pk)}
                             onAttachWsda={(pk) => attachListing('wsda_material', 'wsda_listed', pk)}
+                          />
+                          {/* The plan's own Materials List (CCOF ORGB41: only listed materials may
+                              be used). Fills the name, and the maker while it is blank; the listing
+                              lookup above then reads the new name. */}
+                          <PlanMaterialsQuickPick
+                            establishmentId={farmId}
+                            categories={categoriesForChemicalType(chemicalType)}
+                            onPick={(material) => {
+                              field.onChange(material.name);
+                              if (methods.getValues('omri_product') != null) {
+                                methods.setValue('omri_product', null, { shouldDirty: true });
+                              }
+                              if (methods.getValues('wsda_material') != null) {
+                                methods.setValue('wsda_material', null, { shouldDirty: true });
+                              }
+                              if (material.manufacturer && !methods.getValues('manufacturer')) {
+                                methods.setValue('manufacturer', material.manufacturer, {
+                                  shouldDirty: true
+                                });
+                              }
+                            }}
                           />
                         </>
                       )}
