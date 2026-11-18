@@ -31732,6 +31732,38 @@
     },
     {
       "module": "g5_0_pest",
+      "label": "unanswered",
+      "answers": {},
+      "visible_questions": [
+        "pests_diseases_of_concern",
+        "pest_taxa_managed",
+        "practices_weeds",
+        "practices_insects",
+        "practices_diseases",
+        "practices_vertebrates",
+        "burns_crop_residue",
+        "pest_prevention_records",
+        "plastic_mulch_used",
+        "weed_prevention_records",
+        "weed_management_additional_notes",
+        "applies_pest_weed_disease_inputs",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_methods",
+        "monitoring_records"
+      ],
+      "missing_required": [
+        "burns_crop_residue",
+        "plastic_mulch_used",
+        "applies_pest_weed_disease_inputs",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_records"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g5_0_pest",
       "label": "burn_for_disease",
       "answers": {
         "burns_crop_residue": true,
@@ -31884,6 +31916,171 @@
         "burns_crop_residue",
         "plastic_mulch_used",
         "applies_pest_weed_disease_inputs",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_records"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g5_0_pest",
+      "label": "retired_lists_answered",
+      "answers": {
+        "prevention_practices": [
+          "crop_rotation",
+          "other"
+        ],
+        "weed_management_practices": [
+          "mowing"
+        ]
+      },
+      "visible_questions": [
+        "pests_diseases_of_concern",
+        "pest_taxa_managed",
+        "practices_weeds",
+        "practices_insects",
+        "practices_diseases",
+        "practices_vertebrates",
+        "prevention_practices",
+        "prevention_practices_other",
+        "burns_crop_residue",
+        "pest_prevention_records",
+        "weed_management_practices",
+        "plastic_mulch_used",
+        "weed_prevention_records",
+        "weed_management_additional_notes",
+        "applies_pest_weed_disease_inputs",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_methods",
+        "monitoring_records"
+      ],
+      "missing_required": [
+        "prevention_practices_other",
+        "burns_crop_residue",
+        "plastic_mulch_used",
+        "applies_pest_weed_disease_inputs",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_records"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g5_0_pest",
+      "label": "typed_lists_with_other",
+      "answers": {
+        "practices_weeds": [
+          "mowing_grazing",
+          "other"
+        ],
+        "practices_vertebrates": [
+          "none"
+        ]
+      },
+      "visible_questions": [
+        "pests_diseases_of_concern",
+        "pest_taxa_managed",
+        "practices_weeds",
+        "practices_weeds_other",
+        "practices_insects",
+        "practices_diseases",
+        "practices_vertebrates",
+        "burns_crop_residue",
+        "pest_prevention_records",
+        "plastic_mulch_used",
+        "weed_prevention_records",
+        "weed_management_additional_notes",
+        "applies_pest_weed_disease_inputs",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_methods",
+        "monitoring_records"
+      ],
+      "missing_required": [
+        "burns_crop_residue",
+        "plastic_mulch_used",
+        "applies_pest_weed_disease_inputs",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_records"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g5_0_pest",
+      "label": "copper_without_inputs",
+      "answers": {
+        "applies_pest_weed_disease_inputs": false,
+        "applies_copper_materials": true,
+        "copper_accumulation_practices": [
+          "other"
+        ]
+      },
+      "visible_questions": [
+        "pests_diseases_of_concern",
+        "pest_taxa_managed",
+        "practices_weeds",
+        "practices_insects",
+        "practices_diseases",
+        "practices_vertebrates",
+        "burns_crop_residue",
+        "pest_prevention_records",
+        "plastic_mulch_used",
+        "weed_prevention_records",
+        "weed_management_additional_notes",
+        "applies_pest_weed_disease_inputs",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_methods",
+        "monitoring_records"
+      ],
+      "missing_required": [
+        "burns_crop_residue",
+        "plastic_mulch_used",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_records"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g5_0_pest",
+      "label": "copper_other_practice",
+      "answers": {
+        "applies_pest_weed_disease_inputs": true,
+        "applies_copper_materials": true,
+        "copper_accumulation_practices": [
+          "other"
+        ]
+      },
+      "visible_questions": [
+        "pests_diseases_of_concern",
+        "pest_taxa_managed",
+        "practices_weeds",
+        "practices_insects",
+        "practices_diseases",
+        "practices_vertebrates",
+        "burns_crop_residue",
+        "pest_prevention_records",
+        "plastic_mulch_used",
+        "weed_prevention_records",
+        "weed_management_additional_notes",
+        "applies_pest_weed_disease_inputs",
+        "input_use_triggers",
+        "input_use_conditions",
+        "applies_copper_materials",
+        "copper_accumulation_practices",
+        "copper_accumulation_other",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_methods",
+        "monitoring_records"
+      ],
+      "missing_required": [
+        "burns_crop_residue",
+        "plastic_mulch_used",
+        "input_use_conditions",
         "monitoring_scope",
         "monitoring_frequency",
         "monitoring_records"
