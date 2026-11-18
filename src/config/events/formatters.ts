@@ -233,6 +233,27 @@ export const UNIT_CODE_SYMBOLS: Record<string, string> = {
   oz_wt: 'oz wt'
 };
 
+/** A stored plural unit code -> its singular, for a quantity printed as exactly "1". The codes the
+ *  forms store (config/events/enums.ts), plus the spelled-out units other records carry. */
+const SINGULAR_UNIT: Record<string, string> = {
+  acres: 'acre',
+  inches: 'inch',
+  tons: 'ton',
+  bins: 'bin',
+  boxes: 'box',
+  dispensers: 'dispenser',
+  plants: 'plant',
+  seeds: 'seed',
+  miles: 'mile',
+  lbs: 'lb',
+  hectares: 'hectare',
+  gallons: 'gallon',
+  liters: 'liter',
+  pounds: 'pound',
+  kilograms: 'kilogram',
+  hours: 'hour'
+};
+
 export function makeUnitPairFormatter(
   unitFieldName: string,
   options: { skipNonPositive?: boolean } = {}
@@ -245,7 +266,10 @@ export function makeUnitPairFormatter(
     const unit = event[unitFieldName];
     const unitStr = typeof unit === 'string' ? UNIT_CODE_SYMBOLS[unit] ?? unit : '';
     const formatted = numeric.toLocaleString(undefined, { maximumFractionDigits: 2 });
-    return unitStr ? `${formatted} ${unitStr}` : formatted;
+    // "1 acres" read wrong in both languages (VID-07): one of a stored plural unit is singular.
+    // The PRINTED number decides: 1.004 prints "1" and reads "1 acre".
+    const shown = formatted === '1' ? SINGULAR_UNIT[unitStr] ?? unitStr : unitStr;
+    return shown ? `${formatted} ${shown}` : formatted;
   };
 }
 

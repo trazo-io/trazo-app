@@ -64,7 +64,7 @@ describe('activitySummary', () => {
       '4200 lbs — Scale-verified (weigh ticket) — Stored on farm'
     );
     expect(activitySummary(r, intlEs)).toBe(
-      '4200 lbs — Verificado en báscula (ticket de pesaje) — Almacenado en el campo'
+      '4200 lbs — Verificado en báscula (ticket de pesaje) — Almacenado en la finca'
     );
   });
 

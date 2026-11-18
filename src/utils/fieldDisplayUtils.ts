@@ -648,6 +648,22 @@ export function getReadableFieldValue(field: string, value: string): string {
   return fieldMappings[field]?.[value] || value;
 }
 
+/** English short month (what the registry formatters print) -> its Spanish abbreviation. */
+const ES_MONTHS_SHORT: Record<string, string> = {
+  Jan: 'ene',
+  Feb: 'feb',
+  Mar: 'mar',
+  Apr: 'abr',
+  May: 'may',
+  Jun: 'jun',
+  Jul: 'jul',
+  Aug: 'ago',
+  Sep: 'sep',
+  Oct: 'oct',
+  Nov: 'nov',
+  Dec: 'dic'
+};
+
 /**
  * R2 (2026-06-14): localize a consumer-facing enum field VALUE to es-419.
  * Field labels localize via the registry labelKey→i18n; the values are raw enum
@@ -676,26 +692,20 @@ export function localizeFieldValue(
   // page; the dynamic year can't be a FIELD_VALUE_ES key, so translate the month here.
   const md = str.match(/^([A-Z][a-z]{2}) (\d{4})$/);
   if (md) {
-    const ES_MONTHS: Record<string, string> = {
-      Jan: 'ene',
-      Feb: 'feb',
-      Mar: 'mar',
-      Apr: 'abr',
-      May: 'may',
-      Jun: 'jun',
-      Jul: 'jul',
-      Aug: 'ago',
-      Sep: 'sep',
-      Oct: 'oct',
-      Nov: 'nov',
-      Dec: 'dic'
-    };
-    const mo = ES_MONTHS[md[1]];
+    const mo = ES_MONTHS_SHORT[md[1]];
     if (mo) return `${mo} ${md[2]}`;
+  }
+  // "MMM D, YYYY" (formatDate's day form, e.g. a planned harvest "Jun 20, 2027") reads "20 jun
+  // 2027" in Spanish, the order the rest of the page uses (VID-07).
+  const mdy = str.match(/^([A-Z][a-z]{2}) (\d{1,2}), (\d{4})$/);
+  if (mdy) {
+    const mo = ES_MONTHS_SHORT[mdy[1]];
+    if (mo) return `${mdy[2]} ${mo} ${mdy[3]}`;
   }
   // "<number> <unit>" technical counts (e.g. monitoring "5 per leaf") — translate a KNOWN unit
   // suffix; unknown suffixes (farmer free-text like "5000 eggs/acre") pass through unchanged.
-  const um = str.match(/^(\d+(?:\.\d+)?)\s+(.+)$/);
+  // Thousands separators too ("1,250 gallons"), which the formatters print for large quantities.
+  const um = str.match(/^(\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)\s+(.+)$/);
   if (um) {
     const unitEs = FIELD_VALUE_ES[um[2]];
     if (unitEs) return `${um[1]} ${unitEs}`;

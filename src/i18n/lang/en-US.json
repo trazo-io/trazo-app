@@ -10442,6 +10442,7 @@
   "parcel.fieldHistory.method.fallow": "Fallow",
   "parcel.fieldHistory.method.pasture": "Pasture",
   "parcel.fieldHistory.method.other": "Other (describe in notes)",
+  "parcel.fieldHistory.update": "Update",
   "parcel.section.energy": "Irrigation energy",
   "parcel.section.energyHint": "Used only to estimate this parcel’s irrigation emissions. Your certifier does not ask for it.",
   "subscription.usage.ofLimit": "{used} of {limit}",
