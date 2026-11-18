@@ -71,6 +71,10 @@ import { CHEMICAL_FUEL_TYPES } from 'config/events/chemicalFormOptions';
 import { ReceiptDocumentSelect } from 'components/Forms/ReceiptDocumentSelect';
 import ApplicatorPicker from 'components/Forms/ApplicatorPicker';
 import InputVerifyHelper from 'components/Compliance/InputVerifyHelper';
+import {
+  PlanMaterialsQuickPick,
+  categoriesForChemicalType
+} from 'components/Forms/PlanMaterialsQuickPick';
 import { object, string, array, number } from 'zod';
 import CustomFieldsForm from './CustomFieldsForm';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -1027,6 +1031,9 @@ const ChemicalTab = forwardRef(
     const recordHolds = (...names) =>
       names.some((name) => String(initialValues?.[name] ?? '').trim() !== '');
     const heldCaFieldsRef = useRef({ purIdentity: false, permit: false });
+    // The maker the last plan-materials chip wrote, so the next chip can replace it and a chip with no
+    // maker can take it back, without overwriting one the grower typed (review of app #419).
+    const planChipMakerRef = useRef(null);
     if (
       recordHolds(
         'operator_id',
@@ -3376,6 +3383,35 @@ const ChemicalTab = forwardRef(
                             attachedWsdaPk={methods.watch('wsda_material')}
                             onAttachOmri={(pk) => attachListing('omri_product', 'omri_listed', pk)}
                             onAttachWsda={(pk) => attachListing('wsda_material', 'wsda_listed', pk)}
+                          />
+                          {/* The plan's own Materials List (CCOF ORGB41: only listed materials may
+                              be used). Fills the name, and the maker while it is blank; the listing
+                              lookup above then reads the new name. */}
+                          <PlanMaterialsQuickPick
+                            establishmentId={farmId}
+                            categories={categoriesForChemicalType(chemicalType)}
+                            onPick={(material) => {
+                              field.onChange(material.name);
+                              // Through attachListing, the one path that also takes back the
+                              // listing basis an attach gave: a new name keeps no old listing's
+                              // claim (review of app #419).
+                              if (methods.getValues('omri_product') != null) {
+                                attachListing('omri_product', 'omri_listed', null);
+                              }
+                              if (methods.getValues('wsda_material') != null) {
+                                attachListing('wsda_material', 'wsda_listed', null);
+                              }
+                              const maker = methods.getValues('manufacturer') || '';
+                              if (material.manufacturer) {
+                                methods.setValue('manufacturer', material.manufacturer, {
+                                  shouldDirty: true
+                                });
+                                planChipMakerRef.current = material.manufacturer;
+                              } else if (maker && maker === planChipMakerRef.current) {
+                                methods.setValue('manufacturer', '', { shouldDirty: true });
+                                planChipMakerRef.current = null;
+                              }
+                            }}
                           />
                         </>
                       )}

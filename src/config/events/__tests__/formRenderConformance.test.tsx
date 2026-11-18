@@ -53,7 +53,8 @@ vi.mock('store/api/historyApi', () => ({
   useGetSeedSuppliersQuery: () => ({ data: undefined, isLoading: false }),
   // ChemicalTab's "my products" quick-pick. Stubbed empty for the same reason as the others:
   // this guard inspects the real component's real markup, not what it suggests.
-  useGetRecentInputsQuery: () => ({ data: undefined, isLoading: false })
+  useGetRecentInputsQuery: () => ({ data: undefined, isLoading: false }),
+  useGetPlanMaterialsForLoggingQuery: () => ({ data: undefined, isLoading: false })
 }));
 
 // BlockIdField fetches the parcel to build its block picker. Stubbed for the same reason as

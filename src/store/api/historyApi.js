@@ -313,6 +313,26 @@ export const historyApi = baseApi.injectEndpoints({
       }),
       providesTags: (result) => (result ? ['Event'] : [])
     }),
+    // The materials on the plan in force, for the input and amendment forms' quick-pick (CCOF ORGB41:
+    // only materials on the OSP Materials List may be used). Offered, never filled in by itself.
+    // NEVER: name it `getPlanMaterials`. ospApi injects an endpoint of that name into the same baseApi,
+    // and the first injection wins, so the forms asked /osps/undefined/plan-materials/ (2026-11-17).
+    getPlanMaterialsForLogging: build.query({
+      query: ({ establishmentId }) => ({
+        url: `productions/plan-materials/?establishment_id=${establishmentId}`,
+        method: 'GET',
+        credentials: 'include'
+      }),
+      // Id-scoped, as the OSP materials mutations invalidate: a bare 'OSP' tag is never hit by
+      // { type: 'OSP', id } (review of app #419).
+      providesTags: (result) =>
+        result
+          ? [
+              { type: 'OSP', id: 'LIST' },
+              ...(result.osp_id ? [{ type: 'OSP', id: Number(result.osp_id) }] : [])
+            ]
+          : []
+    }),
     // Sales records per production lot (SOE traceback) — owner-gated, never public
     // USDA Form 10 Part A is a PERSISTENT supplier list — its purpose is to be referenced
     // again next season, which a free-text string retyped per event cannot do. Derived from
@@ -462,6 +482,7 @@ export const {
   useUpgradeScanConsentMutation,
   useClaimScansMutation,
   useGetRecentInputsQuery,
+  useGetPlanMaterialsForLoggingQuery,
   useGetSeedSuppliersQuery,
   useGetSalesRecordsQuery,
   useGetHarvestLotsQuery,
