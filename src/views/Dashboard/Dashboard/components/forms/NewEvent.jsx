@@ -180,6 +180,7 @@ import {
 } from 'config/events/templateAccelerators';
 import {
   formatDateFromTimestamp,
+  formatDateOnly,
   isOperatorChosenDate,
   nowLocalDateTimeInput
 } from 'utils/dateOnly';
@@ -784,11 +785,18 @@ function NewEventForm({ isEdit = false, eventId = null }) {
   }, [postHarvestTarget, openSeason]);
   // finish_date is a DATE-ONLY string; new Date("2026-01-15") parses as UTC midnight
   // and prints the PREVIOUS day west of Greenwich. Build the local date explicitly.
+  // In the reader's language with the month named. A numeric toLocaleDateString() followed the
+  // browser, so a Spanish page on an English browser said "terminó el 7/12/2026": read as 7
+  // December, the season ended 12 July (recordkeeping checklist run 2026-11-16, VID-07). A
+  // season's finish_date is a datetime that holds a date, so it is read as its UTC day.
   const localDateLabel = (value) => {
     if (!value) return '';
-    const m = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (m) return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString();
-    return new Date(value).toLocaleDateString();
+    const s = String(value);
+    return (
+      (/^\d{4}-\d{2}-\d{2}$/.test(s)
+        ? formatDateOnly(s, intl.locale)
+        : formatDateFromTimestamp(s, intl.locale)) || s
+    );
   };
 
   // Date AND time. The record's field is a `datetime-local` and the application time feeds
@@ -803,7 +811,11 @@ function NewEventForm({ isEdit = false, eventId = null }) {
     }
     const d = new Date(value);
     if (Number.isNaN(d.getTime())) return localDateLabel(value);
-    return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], {
+    return `${d.toLocaleDateString(intl.locale, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    })} ${d.toLocaleTimeString(intl.locale, {
       hour: '2-digit',
       minute: '2-digit'
     })}`;

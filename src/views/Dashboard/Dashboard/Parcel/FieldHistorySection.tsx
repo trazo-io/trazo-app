@@ -773,7 +773,9 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
                     {intl.formatMessage({ id: 'app.cancel' })}
                   </StandardButton>
                   <StandardButton size="sm" isLoading={isSaving} onClick={handleSave}>
-                    {editingId ? 'Update' : 'Save'}
+                    {intl.formatMessage({
+                      id: editingId ? 'parcel.fieldHistory.update' : 'app.save'
+                    })}
                   </StandardButton>
                 </HStack>
               </VStack>
