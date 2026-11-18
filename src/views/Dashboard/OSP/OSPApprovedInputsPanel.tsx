@@ -44,7 +44,7 @@ import {
   useToast,
   VStack
 } from '@chakra-ui/react';
-import { FaCheckCircle, FaExclamationTriangle, FaFlask, FaPlus } from 'react-icons/fa';
+import { FaCheckCircle, FaExclamationTriangle, FaFlask, FaMinus, FaPlus } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
 import {
@@ -55,7 +55,9 @@ import {
   StandardField,
   StandardInput,
   StandardSearchInput,
-  StandardSelect
+  StandardSelect,
+  StatusList,
+  StatusRow
 } from 'components/Design/StandardComponents';
 import {
   useAddApprovedInputMutation,
@@ -86,11 +88,14 @@ interface ChangeLogSectionProps {
  * Shows newest-first entries with action badge, date, input name, and any
  * certifier-notification reference supplied at the time of the change.
  * Satisfies § 205.400(f)(1) inspector query: "when was X added, what letter covers it?"
+ *
+ * Rows with hairlines (2026-11-17), not green/red tinted boxes with a 3px edge. The edge was
+ * "the ONLY thing distinguishing an added input from a removed one" (its own comment); now the
+ * glyph SHAPE (plus / minus) and the ADDED / REMOVED badge words say it, so nothing rests on
+ * colour. Neutral tone: a change to the list is a record, not a finding.
  */
 const ChangeLogSection: React.FC<ChangeLogSectionProps> = ({ logs, subtextColor }) => {
   const intl = useIntl();
-  const addedBg = 'green.50';
-  const removedBg = 'red.50';
 
   return (
     <>
@@ -114,35 +119,28 @@ const ChangeLogSection: React.FC<ChangeLogSectionProps> = ({ logs, subtextColor 
                 {intl.formatMessage({ id: 'osp.approvedInputs.log.empty' })}
               </Text>
             ) : (
-              <VStack align="stretch" spacing={2}>
+              <StatusList testId="approved-input-log-rows">
                 {logs.map((entry) => {
                   const isAdded = entry.action === 'added';
-                  const date = new Date(entry.changed_at).toLocaleDateString('en-US', {
+                  // The reader's locale: a hardcoded 'en-US' printed English months on es-419.
+                  const date = new Date(entry.changed_at).toLocaleDateString(intl.locale, {
                     year: 'numeric',
                     month: 'short',
                     day: 'numeric'
                   });
                   return (
-                    <Box
+                    <StatusRow
                       key={entry.id}
-                      p={2}
-                      borderRadius="md"
-                      bg={isAdded ? addedBg : removedBg}
-                      borderLeft="3px solid"
-                      /* green.600 / red.600 (4.12 / 4.23), not .400. This bar is the ONLY thing
-                          distinguishing an added input from a removed one, and green.400
-                          measures 2.01:1 on white — under the 3.0 a non-text indicator owes,
-                          and mismatched against the red it is paired with. */
-                      borderLeftColor={isAdded ? 'green.600' : 'red.600'}>
-                      <HStack spacing={2} mb={entry.change_notification_reference ? 1 : 0}>
-                        {/*
-                          Matched weights. `colorScheme` + the default `brand` variant renders
-                          GREEN as a solid pill and every other palette as a tint, so ADDED
-                          arrived as a heavy dark-green chip and REMOVED as a light red one —
-                          asymmetric styling for a symmetric pair. Both are tints now.
-                          `uppercase` is kept on purpose: it applies to both halves and is the
-                          usual convention for a diff marker.
-                        */}
+                      tone="neutral"
+                      icon={isAdded ? FaPlus : FaMinus}
+                      title={entry.target_name_at_change}
+                      testId="approved-input-log-row"
+                      badge={
+                        /* Matched weights: both halves are tints. `colorScheme` + the default
+                           `brand` variant renders GREEN as a solid pill and every other palette
+                           as a tint, so ADDED arrived as a heavy dark-green chip and REMOVED as
+                           a light red one. `uppercase` is the usual convention for a diff marker
+                           and applies to both. */
                         <Badge
                           variant={isAdded ? 'subtle' : 'danger'}
                           fontSize="11px"
@@ -153,23 +151,20 @@ const ChangeLogSection: React.FC<ChangeLogSectionProps> = ({ logs, subtextColor 
                               : 'osp.approvedInputs.log.action.removed'
                           })}
                         </Badge>
-                        <Text fontSize="xs" fontWeight="semibold" flex={1} noOfLines={1}>
-                          {entry.target_name_at_change}
-                        </Text>
-                        <Text fontSize="xs" color={subtextColor} flexShrink={0}>
-                          {date}
-                        </Text>
-                      </HStack>
+                      }>
+                      <Text fontSize="xs" color={subtextColor}>
+                        {date}
+                      </Text>
                       {entry.change_notification_reference && (
                         <Text fontSize="xs" color={subtextColor} fontStyle="italic">
                           {intl.formatMessage({ id: 'osp.approvedInputs.log.ref' })}:{' '}
                           {entry.change_notification_reference}
                         </Text>
                       )}
-                    </Box>
+                    </StatusRow>
                   );
                 })}
-              </VStack>
+              </StatusList>
             )}
           </AccordionPanel>
         </AccordionItem>
@@ -877,39 +872,37 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
             OSP filing. The diff is computed server-side and carried on the OSP
             serializer. */}
         {osp.registry_sync_diff?.has_warning && (
-          <StandardAlert status="warning" mb={0}>
-            <VStack align="start" spacing={1} flex={1}>
-              {osp.registry_sync_diff.entries_not_in_narrative.length > 0 ? (
-                <>
-                  <Text fontWeight="semibold">
-                    {intl.formatMessage(
-                      { id: 'osp.approvedInputs.syncDiff.notInNarrative' },
-                      {
-                        count: osp.registry_sync_diff.entries_not_in_narrative.length
-                      }
-                    )}
-                  </Text>
-                  <Text color={subtextColor}>
-                    {osp.registry_sync_diff.entries_not_in_narrative
-                      .slice(0, 5)
-                      .map((e) => `${e.source}: ${e.name}`)
-                      .join(' · ')}
-                    {osp.registry_sync_diff.entries_not_in_narrative.length > 5 && ' …'}
-                  </Text>
-                </>
-              ) : (
-                <Text>
-                  {intl.formatMessage(
+          // A finding about the plan, so a warning row (2026-11-17), not a cream StandardAlert
+          // slab. The two alerts above stay: they describe the editor itself (locked, not
+          // active), the form-message job StandardAlert keeps.
+          <StatusRow
+            tone="warn"
+            icon={FaExclamationTriangle}
+            testId="registry-sync-row"
+            title={
+              osp.registry_sync_diff.entries_not_in_narrative.length > 0
+                ? intl.formatMessage(
+                    { id: 'osp.approvedInputs.syncDiff.notInNarrative' },
+                    { count: osp.registry_sync_diff.entries_not_in_narrative.length }
+                  )
+                : intl.formatMessage(
                     { id: 'osp.approvedInputs.syncDiff.narrativeLongRegistryThin' },
                     {
                       chars: osp.registry_sync_diff.narrative_char_count,
                       registry: osp.registry_sync_diff.registry_total
                     }
-                  )}
-                </Text>
-              )}
-            </VStack>
-          </StandardAlert>
+                  )
+            }>
+            {osp.registry_sync_diff.entries_not_in_narrative.length > 0 && (
+              <Text fontSize="sm" color={subtextColor}>
+                {osp.registry_sync_diff.entries_not_in_narrative
+                  .slice(0, 5)
+                  .map((e) => `${e.source}: ${e.name}`)
+                  .join(' · ')}
+                {osp.registry_sync_diff.entries_not_in_narrative.length > 5 && ' …'}
+              </Text>
+            )}
+          </StatusRow>
         )}
 
         <Box>
