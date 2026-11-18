@@ -2,11 +2,12 @@
  * "This photo looks like a stock image" on the record whose photo the Vision check flagged.
  *
  * Reads `photo_content_flag` from the record's DETAIL (trazo-back
- * `EventViewSet._with_photo_content_flag`) through the cached query ApplicationGroupNotice and
- * TankMixNotice already make, so the sheet shows it whichever list opened the record. Until
- * 2026-11-17 the sheet read the flag from the list row, and no producer payload carried it, so the
- * warning never rendered. The verdict is deliberately detail-only: it is moderation state about
- * the farmer, and the shared season payload also reaches the signed-in shopper.
+ * `EventViewSet._with_photo_content_flag`; the key is present only when a photo is flagged)
+ * through the cached query ApplicationGroupNotice and TankMixNotice already make, so the sheet
+ * shows it whichever list opened the record. Until 2026-11-17 the sheet read it from the list row:
+ * the Production Profile's season payload carried it for members, but the parcel timeline and the
+ * Activities feed did not, so opened from those the warning never showed. The verdict stays off
+ * the shared season payload a signed-in shopper can read.
  *
  * A warning row, like every other finding on the sheet (#416). Renders nothing for a clean photo.
  */
