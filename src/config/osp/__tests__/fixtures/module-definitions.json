@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.12.20",
+  "content_version": "2026.12.21",
   "registry": {
-    "content_version": "2026.12.20",
+    "content_version": "2026.12.21",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -13401,6 +13401,25 @@
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
+              },
+              {
+                "key": "disease_prevention_records",
+                "kind": "textarea",
+                "label": {
+                  "en": "Describe the records you keep of your preventive disease management.",
+                  "es": "Describe los registros que llevas de tu manejo preventivo de enfermedades."
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.103",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
               }
             ]
           },
@@ -14521,6 +14540,36 @@
                     "question": "nonorganic_product_source",
                     "op": "includes",
                     "value": "other"
+                  }
+                ],
+                "nop_cite": "§ 205.2",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "bought_in_identical_to_organic",
+                "kind": "boolean",
+                "label": {
+                  "en": "Is any of the non-organic product you buy in the same crop or product as an organic one you sell?",
+                  "es": "¿Algo del producto no orgánico que compras es el mismo cultivo o producto que uno orgánico que vendes?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "split_operation",
+                    "op": "truthy",
+                    "value": null
+                  },
+                  {
+                    "question": "nonorganic_product_source",
+                    "op": "includes",
+                    "value": "bought_in_nonorganic"
                   }
                 ],
                 "nop_cite": "§ 205.2",
@@ -24677,6 +24726,25 @@
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
+              },
+              {
+                "key": "records_additional_notes",
+                "kind": "textarea",
+                "label": {
+                  "en": "Anything else about your record keeping (optional)",
+                  "es": "Cualquier otra información sobre tu mantenimiento de registros (opcional)"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
               }
             ]
           },
@@ -24980,8 +25048,8 @@
                 "key": "audit_trail_exhibit",
                 "kind": "upload",
                 "label": {
-                  "en": "Sample audit trail exhibit",
-                  "es": "Ejemplo de rastro de auditoría"
+                  "en": "Attach your own sample audit trail, if you have one: copies of an invoice, bill of lading or bin ticket with the linking elements and the organic status highlighted",
+                  "es": "Adjunta tu propio ejemplo de rastro de auditoría, si lo tienes: copias de una factura, conocimiento de embarque o boleta de recepción con los elementos de enlace y el estado orgánico resaltados"
                 },
                 "coaching": {
                   "en": "Your renewal packet already carries a generated exhibit — document 05, Audit trail exhibit: the record types you confirmed in §A with their linking elements, and one finished lot traced from harvest through storage to sale. Attach your own sample here only if you want to add to it.",
@@ -32021,6 +32089,7 @@
         "practices_vertebrates",
         "burns_crop_residue",
         "pest_prevention_records",
+        "disease_prevention_records",
         "plastic_mulch_used",
         "weed_prevention_records",
         "weed_management_additional_notes",
@@ -32062,6 +32131,7 @@
         "burn_reason",
         "burn_target_detail",
         "pest_prevention_records",
+        "disease_prevention_records",
         "plastic_mulch_used",
         "weed_prevention_records",
         "weed_management_additional_notes",
@@ -32103,6 +32173,7 @@
         "burn_reason",
         "burn_reason_other",
         "pest_prevention_records",
+        "disease_prevention_records",
         "plastic_mulch_used",
         "weed_prevention_records",
         "weed_management_additional_notes",
@@ -32139,6 +32210,7 @@
         "practices_vertebrates",
         "burns_crop_residue",
         "pest_prevention_records",
+        "disease_prevention_records",
         "plastic_mulch_used",
         "plastic_mulch_removal",
         "plastic_mulch_material",
@@ -32180,6 +32252,7 @@
         "practices_vertebrates",
         "burns_crop_residue",
         "pest_prevention_records",
+        "disease_prevention_records",
         "plastic_mulch_used",
         "weed_prevention_records",
         "weed_management_additional_notes",
@@ -32223,6 +32296,7 @@
         "prevention_practices_other",
         "burns_crop_residue",
         "pest_prevention_records",
+        "disease_prevention_records",
         "weed_management_practices",
         "plastic_mulch_used",
         "weed_prevention_records",
@@ -32266,6 +32340,7 @@
         "practices_vertebrates",
         "burns_crop_residue",
         "pest_prevention_records",
+        "disease_prevention_records",
         "plastic_mulch_used",
         "weed_prevention_records",
         "weed_management_additional_notes",
@@ -32304,6 +32379,7 @@
         "practices_vertebrates",
         "burns_crop_residue",
         "pest_prevention_records",
+        "disease_prevention_records",
         "plastic_mulch_used",
         "weed_prevention_records",
         "weed_management_additional_notes",
@@ -32341,6 +32417,7 @@
         "practices_vertebrates",
         "burns_crop_residue",
         "pest_prevention_records",
+        "disease_prevention_records",
         "plastic_mulch_used",
         "weed_prevention_records",
         "weed_management_additional_notes",
@@ -33353,6 +33430,109 @@
         "handling_records"
       ],
       "missing_required_na": []
+    },
+    {
+      "module": "g6_0_production",
+      "label": "bought_in_nonorganic",
+      "answers": {
+        "split_operation": true,
+        "nonorganic_product_source": [
+          "bought_in_nonorganic"
+        ]
+      },
+      "visible_questions": [
+        "split_operation",
+        "nonorganic_product_source",
+        "bought_in_identical_to_organic",
+        "split_operation_separation",
+        "split_input_records_distinction",
+        "split_contamination_prevention",
+        "harvest_transport_separation",
+        "parallel_production",
+        "split_records_distinction",
+        "nonorganic_crops_products",
+        "nonorganic_system_materials",
+        "buffer_strategies",
+        "drift_risk_present",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "borders_public_road",
+        "prohibited_materials_on_site",
+        "treated_lumber_any",
+        "uses_production_equipment"
+      ],
+      "missing_required": [
+        "split_operation_separation",
+        "parallel_production",
+        "nonorganic_system_materials",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ],
+      "missing_required_na": [
+        "split_operation_separation",
+        "parallel_production",
+        "nonorganic_system_materials",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ]
+    },
+    {
+      "module": "g6_0_production",
+      "label": "buffer_only_nonorganic",
+      "answers": {
+        "split_operation": true,
+        "nonorganic_product_source": [
+          "buffer_zone_crop"
+        ]
+      },
+      "visible_questions": [
+        "split_operation",
+        "nonorganic_product_source",
+        "split_operation_separation",
+        "split_input_records_distinction",
+        "split_contamination_prevention",
+        "harvest_transport_separation",
+        "parallel_production",
+        "split_records_distinction",
+        "nonorganic_crops_products",
+        "nonorganic_system_materials",
+        "buffer_strategies",
+        "drift_risk_present",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "borders_public_road",
+        "prohibited_materials_on_site",
+        "treated_lumber_any",
+        "uses_production_equipment"
+      ],
+      "missing_required": [
+        "split_operation_separation",
+        "parallel_production",
+        "nonorganic_system_materials",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ],
+      "missing_required_na": [
+        "split_operation_separation",
+        "parallel_production",
+        "nonorganic_system_materials",
+        "buffer_strategies",
+        "drift_safeguards",
+        "drift_response_procedure",
+        "runoff_risk_present",
+        "prohibited_materials_on_site"
+      ]
     },
     {
       "module": "g6_0_production",
@@ -34701,6 +34881,7 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "records_additional_notes",
         "sources_organic_products",
         "sells_as_organic",
         "lot_numbering",
@@ -34737,6 +34918,7 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "records_additional_notes",
         "sources_organic_products",
         "sells_as_organic",
         "lot_numbering",
@@ -34776,6 +34958,7 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "records_additional_notes",
         "sources_organic_products",
         "sells_as_organic",
         "lot_numbering",
@@ -34815,6 +34998,7 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "records_additional_notes",
         "sources_organic_products",
         "sells_as_organic",
         "lot_numbering",
@@ -34852,6 +35036,7 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "records_additional_notes",
         "sources_organic_products",
         "sells_as_organic",
         "lot_numbering",
@@ -34892,6 +35077,7 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "records_additional_notes",
         "sources_organic_products",
         "sells_as_organic",
         "lot_numbering",
@@ -34928,6 +35114,7 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "records_additional_notes",
         "sources_organic_products",
         "sells_as_organic",
         "lot_numbering",
@@ -34966,6 +35153,7 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "records_additional_notes",
         "sources_organic_products",
         "sells_as_organic",
         "lot_numbering",
@@ -35005,6 +35193,7 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "records_additional_notes",
         "sources_organic_products",
         "sells_as_organic",
         "lot_numbering",
@@ -35045,6 +35234,7 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "records_additional_notes",
         "sources_organic_products",
         "sells_as_organic",
         "lot_numbering",
@@ -35081,6 +35271,7 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "records_additional_notes",
         "sources_organic_products",
         "sells_as_organic",
         "records_identify_organic_status",
@@ -35123,6 +35314,7 @@
         "primary_contact_records_access",
         "records_maintained_as",
         "records_maintained_as_other",
+        "records_additional_notes",
         "sources_organic_products",
         "sells_as_organic",
         "lot_numbering",
@@ -35162,6 +35354,7 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "records_additional_notes",
         "sources_organic_products",
         "sells_as_organic",
         "lot_numbering",
@@ -35219,6 +35412,7 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "records_additional_notes",
         "sources_organic_products",
         "sells_as_organic",
         "lot_numbering",
@@ -35282,6 +35476,7 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "records_additional_notes",
         "sources_organic_products",
         "sells_as_organic",
         "lot_numbering",
@@ -35352,6 +35547,7 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "records_additional_notes",
         "sources_organic_products",
         "sells_as_organic",
         "lot_numbering",
@@ -37144,6 +37340,7 @@
         "practices_vertebrates",
         "burns_crop_residue",
         "pest_prevention_records",
+        "disease_prevention_records",
         "plastic_mulch_used",
         "weed_prevention_records",
         "weed_management_additional_notes",
@@ -37180,6 +37377,7 @@
         "practices_vertebrates",
         "burns_crop_residue",
         "pest_prevention_records",
+        "disease_prevention_records",
         "plastic_mulch_used",
         "weed_prevention_records",
         "weed_management_additional_notes",
@@ -37214,6 +37412,7 @@
         "practices_vertebrates",
         "burns_crop_residue",
         "pest_prevention_records",
+        "disease_prevention_records",
         "plastic_mulch_used",
         "weed_prevention_records",
         "weed_management_additional_notes",
@@ -37250,6 +37449,7 @@
         "practices_vertebrates",
         "burns_crop_residue",
         "pest_prevention_records",
+        "disease_prevention_records",
         "plastic_mulch_used",
         "weed_prevention_records",
         "weed_management_additional_notes",
@@ -38861,6 +39061,7 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "records_additional_notes",
         "sources_organic_products",
         "sells_as_organic",
         "lot_numbering",
@@ -38902,6 +39103,7 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "records_additional_notes",
         "sources_organic_products",
         "sells_as_organic",
         "lot_numbering",
@@ -38942,6 +39144,7 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "records_additional_notes",
         "sources_organic_products",
         "sells_as_organic",
         "lot_numbering",
@@ -38982,6 +39185,7 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "records_additional_notes",
         "sources_organic_products",
         "sells_as_organic",
         "lot_numbering",
@@ -39018,6 +39222,7 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "records_additional_notes",
         "sources_organic_products",
         "sells_as_organic",
         "lot_numbering",
@@ -39053,6 +39258,7 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "records_additional_notes",
         "sources_organic_products",
         "sells_as_organic",
         "lot_numbering",
@@ -39094,6 +39300,7 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "records_additional_notes",
         "sources_organic_products",
         "sells_as_organic",
         "lot_numbering",
@@ -39134,6 +39341,7 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "records_additional_notes",
         "sources_organic_products",
         "sells_as_organic",
         "lot_numbering",
@@ -39174,6 +39382,7 @@
         "records_location",
         "primary_contact_records_access",
         "records_maintained_as",
+        "records_additional_notes",
         "sources_organic_products",
         "sells_as_organic",
         "lot_numbering",
