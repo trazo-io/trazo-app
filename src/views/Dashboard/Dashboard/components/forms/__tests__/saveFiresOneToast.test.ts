@@ -81,12 +81,14 @@ describe('NewEvent save path toasts', () => {
     // title naming neither alone, and each title counts picks.
     expect(savePath).toContain('manure_conflicts');
     expect(count(savePath, "status: 'warning'")).toBe(1);
-    expect(savePath).toContain("id: 'app.manureConflictLine'");
+    // The lines come from the one formatter the record's notice and the timeline use (VID-03);
+    // what they say is pinned in utils/__tests__/harvestIntervalConflicts.test.ts.
+    expect(savePath).toContain('manureConflictLine(c, intl)');
+    expect(savePath).toContain('phiConflictLine(c, intl)');
     expect(savePath).toContain("id: 'app.manureConflictSavedTitle'");
     expect(savePath).toContain("id: 'app.harvestIntervalConflictSavedTitle'");
     expect(savePath).toContain('{ count: manurePickCount }');
     expect(savePath).toContain('{ count: bothPickCount }');
-    expect(savePath).toContain('interval: c.interval_days');
     // Review of app #399: three conflict lines in all, never three of each.
     expect(savePath).toContain('...phiLines.slice(0, manureLines.length ? 2 : 3)');
     expect(savePath).toMatch(/\.\.\.manureLines\s*\]\.slice\(0, 3\)/);

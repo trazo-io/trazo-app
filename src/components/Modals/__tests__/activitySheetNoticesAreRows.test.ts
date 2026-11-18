@@ -24,6 +24,7 @@ const code = (p: string) =>
 const MODAL = code('src/components/Modals/EventDetailsModal.tsx');
 const GROUP = code('src/components/Events/ApplicationGroupNotice.tsx');
 const TANK = code('src/components/Events/TankMixNotice.tsx');
+const HARVEST = code('src/components/Events/HarvestIntervalNotice.tsx');
 
 /** The branch a notice renders on the record: from `variant === 'detail'` to its return. */
 const detailBranch = (src: string) => {
@@ -36,6 +37,7 @@ describe('the activity sheet is rows, not boxes', () => {
     expect(MODAL.length).toBeGreaterThan(20_000);
     expect(GROUP).toMatch(/export const ApplicationGroupNotice/);
     expect(TANK).toMatch(/export const TankMixNotice/);
+    expect(HARVEST).toMatch(/export const HarvestIntervalNotice/);
   });
 
   it('draws no Alert box anywhere on the sheet', () => {
@@ -51,6 +53,17 @@ describe('the activity sheet is rows, not boxes', () => {
     expect(list).toMatch(/<ApplicationGroupNotice[\s\S]*?variant="detail"/);
     expect(list).toMatch(/<TankMixNotice[\s\S]*?variant="detail"/);
     expect(list).toMatch(/testId="record-notice-certifier-only"/);
+  });
+
+  it('leads with the harvest-interval warning, as warn rows with the rule folded (VID-03)', () => {
+    const start = MODAL.indexOf('<StatusList testId="record-notices">');
+    const list = MODAL.slice(start, MODAL.indexOf('</StatusList>', start));
+    const first = list.indexOf('<HarvestIntervalNotice');
+    expect(first).toBeGreaterThan(0);
+    expect(first).toBeLessThan(list.indexOf('<ApplicationGroupNotice'));
+    expect(HARVEST).not.toMatch(/StandardAlert|<Alert[\s>]|<VStack|<Box/);
+    expect(HARVEST.match(/<StatusRow\s+tone="warn"/g)).toHaveLength(2);
+    expect(HARVEST.match(/details=\{/g)).toHaveLength(2);
   });
 
   it('flags a stock or AI photo with a warning row, read from the record detail', () => {

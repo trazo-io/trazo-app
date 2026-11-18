@@ -28,7 +28,7 @@ const events: SeasonEvent[] = [
   ev(8, '2026-06-25T07:00:00Z')
 ];
 
-const wrap = (onOpen = vi.fn()) =>
+const wrap = (onOpen = vi.fn(), flaggedPicks: { manure: number[]; phi: number[] } | null = null) =>
   render(
     <ChakraProvider>
       <IntlProvider locale="en-US" messages={enUS as Record<string, string>}>
@@ -37,6 +37,7 @@ const wrap = (onOpen = vi.fn()) =>
             events={events}
             onOpen={onOpen}
             allActivitiesPath="/admin/dashboard/farm/1/activities?parcel=2&view=list"
+            flaggedPicks={flaggedPicks}
           />
         </MemoryRouter>
       </IntlProvider>
@@ -44,6 +45,22 @@ const wrap = (onOpen = vi.fn()) =>
   );
 
 describe('season timeline', () => {
+  it('flags a pick inside a raw-manure interval on its row, and only crop-work rows', () => {
+    // VID-03 (2026-11-16): once the save toast closed, the pick's row read like any other.
+    // Pick ids are crop-work (ProductionEvent) ids, so a pest record numbered 2 is not the pick 2.
+    wrap(vi.fn(), { manure: [6], phi: [2] });
+    const rows = screen.getAllByTestId('activity-timeline-row');
+    const flagged = rows.filter((r) => r.querySelector('[data-testid="activity-timeline-flag"]'));
+    expect(flagged).toHaveLength(1);
+    expect(flagged[0].textContent).toContain('Aug 20');
+    expect(flagged[0].textContent).toContain(enUS['harvestInterval.row.manure']);
+  });
+
+  it('flags nothing when the season sent no list', () => {
+    wrap();
+    expect(screen.queryAllByTestId('activity-timeline-flag')).toHaveLength(0);
+  });
+
   it('groups by month, newest month and newest activity first', () => {
     wrap();
     const months = screen.getAllByTestId('activity-timeline-month');
