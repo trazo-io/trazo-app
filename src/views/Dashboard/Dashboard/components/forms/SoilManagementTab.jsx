@@ -650,6 +650,8 @@ const SoilManagementTab = forwardRef(
     } = methods;
     // The farm, for the plan's own Materials List under the product name (route :farmId).
     const { farmId } = useParams();
+    // The maker the last plan-materials chip wrote (review of app #419): the next chip replaces it.
+    const planChipMakerRef = useRef(null);
 
     // Watch fields that impact carbon calculations (for carbon API efficiency)
     // Core calculation fields (directly impact emissions):
@@ -1521,10 +1523,15 @@ const SoilManagementTab = forwardRef(
                         categories={['fertilizer_amendment']}
                         onPick={(material) => {
                           setValue('amendment_product_name', material.name, { shouldDirty: true });
-                          if (material.manufacturer && !methods.getValues('amendment_manufacturer')) {
+                          const maker = methods.getValues('amendment_manufacturer') || '';
+                          if (material.manufacturer) {
                             setValue('amendment_manufacturer', material.manufacturer, {
                               shouldDirty: true
                             });
+                            planChipMakerRef.current = material.manufacturer;
+                          } else if (maker && maker === planChipMakerRef.current) {
+                            setValue('amendment_manufacturer', '', { shouldDirty: true });
+                            planChipMakerRef.current = null;
                           }
                         }}
                       />

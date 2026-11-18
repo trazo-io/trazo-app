@@ -323,7 +323,15 @@ export const historyApi = baseApi.injectEndpoints({
         method: 'GET',
         credentials: 'include'
       }),
-      providesTags: (result) => (result ? ['OSP'] : [])
+      // Id-scoped, as the OSP materials mutations invalidate: a bare 'OSP' tag is never hit by
+      // { type: 'OSP', id } (review of app #419).
+      providesTags: (result) =>
+        result
+          ? [
+              { type: 'OSP', id: 'LIST' },
+              ...(result.osp_id ? [{ type: 'OSP', id: Number(result.osp_id) }] : [])
+            ]
+          : []
     }),
     // Sales records per production lot (SOE traceback) — owner-gated, never public
     // USDA Form 10 Part A is a PERSISTENT supplier list — its purpose is to be referenced

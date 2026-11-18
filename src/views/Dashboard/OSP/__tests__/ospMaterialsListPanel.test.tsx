@@ -221,7 +221,8 @@ describe('OSP Materials List editor', () => {
   it('offers in use for a row the records show applied, and saves it only when taken', async () => {
     renderPanel();
     const offer = screen.getByTestId('materials-suggest-in-use-Serenade ASO');
-    expect(offer).toHaveTextContent('Your records show it applied on 2026-05-04.');
+    // A calendar date, as the locale writes it, never the raw ISO string (review of app #419).
+    expect(offer).toHaveTextContent('Your records show it applied on May 4, 2026.');
     expect(answerMaterial).not.toHaveBeenCalled();
     // Already stated in use: nothing to offer.
     expect(screen.queryByTestId('materials-suggest-in-use-Rexius Organic Compost')).toBeNull();

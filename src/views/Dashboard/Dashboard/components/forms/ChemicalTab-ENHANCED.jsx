@@ -1031,6 +1031,9 @@ const ChemicalTab = forwardRef(
     const recordHolds = (...names) =>
       names.some((name) => String(initialValues?.[name] ?? '').trim() !== '');
     const heldCaFieldsRef = useRef({ purIdentity: false, permit: false });
+    // The maker the last plan-materials chip wrote, so the next chip can replace it and a chip with no
+    // maker can take it back, without overwriting one the grower typed (review of app #419).
+    const planChipMakerRef = useRef(null);
     if (
       recordHolds(
         'operator_id',
@@ -3389,16 +3392,24 @@ const ChemicalTab = forwardRef(
                             categories={categoriesForChemicalType(chemicalType)}
                             onPick={(material) => {
                               field.onChange(material.name);
+                              // Through attachListing, the one path that also takes back the
+                              // listing basis an attach gave: a new name keeps no old listing's
+                              // claim (review of app #419).
                               if (methods.getValues('omri_product') != null) {
-                                methods.setValue('omri_product', null, { shouldDirty: true });
+                                attachListing('omri_product', 'omri_listed', null);
                               }
                               if (methods.getValues('wsda_material') != null) {
-                                methods.setValue('wsda_material', null, { shouldDirty: true });
+                                attachListing('wsda_material', 'wsda_listed', null);
                               }
-                              if (material.manufacturer && !methods.getValues('manufacturer')) {
+                              const maker = methods.getValues('manufacturer') || '';
+                              if (material.manufacturer) {
                                 methods.setValue('manufacturer', material.manufacturer, {
                                   shouldDirty: true
                                 });
+                                planChipMakerRef.current = material.manufacturer;
+                              } else if (maker && maker === planChipMakerRef.current) {
+                                methods.setValue('manufacturer', '', { shouldDirty: true });
+                                planChipMakerRef.current = null;
                               }
                             }}
                           />

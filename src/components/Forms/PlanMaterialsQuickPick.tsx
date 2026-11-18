@@ -63,7 +63,6 @@ export function PlanMaterialsQuickPick({ establishmentId, categories, onPick, li
             <StandardButton
               size="sm"
               variant="outline"
-              minH="44px"
               borderRadius="full"
               onClick={() => onPick(material)}>
               <Text as="span" fontSize="xs" noOfLines={1} maxW="200px">

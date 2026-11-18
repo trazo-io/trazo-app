@@ -34,6 +34,7 @@ import { env } from 'config/environment';
 import { useAnswerOSPMaterialMutation, useGetOSPMaterialsListQuery } from 'store/api/ospApi';
 import type { OSPMaterialListRow } from 'types/osp';
 import { apiErrorMessage } from 'utils/apiErrorMessage';
+import { formatDateOnly } from 'utils/dateOnly';
 
 interface Props {
   companyId: string;
@@ -228,7 +229,7 @@ const MaterialRowEditor: React.FC<{
           <Text fontSize="xs" color={mutedColor}>
             {intl.formatMessage(
               { id: 'osp.materialsList.loggedSuggestInUse' },
-              { date: row.last_logged_on }
+              { date: formatDateOnly(row.last_logged_on, intl.locale) ?? row.last_logged_on }
             )}
           </Text>
           <StandardButton size="xs" variant="outline" onClick={() => save(row, { status: 'in_use' })}>
