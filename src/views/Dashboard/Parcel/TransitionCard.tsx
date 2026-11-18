@@ -17,7 +17,7 @@ import { formatDateOnly } from 'utils/dateOnly';
 import { transitionState } from './transitionState';
 
 type Finding = { date?: string; description?: string };
-type TransitionPayload = {
+type NotePayload = {
   note?: string;
   note_code?: string;
   last_prohibited_date?: string | null;
@@ -37,21 +37,26 @@ const namedFindings = (rows: Finding[], locale: string): string => {
   return rest > 0 ? `${shown.join('; ')} (+${rest})` : shown.join('; ');
 };
 
-export const transitionNoteLines = (data: TransitionPayload, intl: IntlShape): string[] => {
+export const transitionNoteLines = (data: NotePayload, intl: IntlShape): string[] => {
   const code = data.note_code;
-  if (!code) return data.note ? [data.note] : [];
+  // No code (an older server) or one this screen does not know: the server's own sentence.
+  if (!code || !['none_recorded', 'elapsed', 'in_transition'].includes(code)) {
+    return data.note ? [data.note] : [];
+  }
   const lines: string[] = [];
   if (code === 'none_recorded') {
-    lines.push(intl.formatMessage({ id: 'parcelApp.transition.note.none_recorded' }));
+    lines.push(String(intl.formatMessage({ id: 'parcelApp.transition.note.none_recorded' })));
   } else if (code === 'elapsed') {
     lines.push(
-      intl.formatMessage(
-        { id: 'parcelApp.transition.note.elapsed' },
-        {
-          date: data.last_prohibited_date
-            ? formatDateOnly(data.last_prohibited_date, intl.locale) ?? data.last_prohibited_date
-            : ''
-        }
+      String(
+        intl.formatMessage(
+          { id: 'parcelApp.transition.note.elapsed' },
+          {
+            date: data.last_prohibited_date
+              ? formatDateOnly(data.last_prohibited_date, intl.locale) ?? data.last_prohibited_date
+              : ''
+          }
+        )
       )
     );
   }
@@ -60,9 +65,11 @@ export const transitionNoteLines = (data: TransitionPayload, intl: IntlShape): s
     const rows = data[kind] || [];
     if (rows.length) {
       lines.push(
-        intl.formatMessage(
-          { id: `parcelApp.transition.note.${kind}` },
-          { count: rows.length, names: namedFindings(rows, intl.locale) }
+        String(
+          intl.formatMessage(
+            { id: `parcelApp.transition.note.${kind}` },
+            { count: rows.length, names: namedFindings(rows, intl.locale) }
+          )
         )
       );
     }

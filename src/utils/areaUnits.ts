@@ -186,7 +186,7 @@ export function formatAreaWithBothUnits(
   const primary = formatAreaForDisplay(hectares, region);
   // In the reader's language when a locale is given: a Spanish parcel profile read "12.5 acres
   // (5.06 hectares)" (recordkeeping checklist run 2026-11-16, VID-07).
-  const say = (value: number | string, unit: string) =>
+  const say = (value: number | string, unit: AreaUnit) =>
     localizeFieldValue(`${value} ${getUnitDisplayName(unit)}`, locale);
 
   if (!config.showBothUnits || !config.secondary) {

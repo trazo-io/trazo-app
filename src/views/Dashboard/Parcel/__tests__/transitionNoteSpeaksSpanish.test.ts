@@ -5,6 +5,8 @@
  * `note_code` and the unclassified / unconfirmed lists, and keeps the sentence for a payload that
  * has no code.
  */
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
 import { describe, expect, it } from 'vitest';
 import { createIntl } from 'react-intl';
 
@@ -44,8 +46,22 @@ describe('transitionNoteLines', () => {
     expect(line).toContain('(+1)');
   });
 
-  it('keeps the server sentence when the payload has no code', () => {
+  it('keeps the server sentence when the payload has no code, or one it does not know', () => {
     expect(transitionNoteLines({ note: 'Legacy sentence.' }, es)).toEqual(['Legacy sentence.']);
+    expect(transitionNoteLines({ note_code: 'something_new', note: 'Server says.' }, es)).toEqual([
+      'Server says.'
+    ]);
+  });
+
+  it('refetches when the crop history or an affidavit changes (review of app #437)', () => {
+    const api = readFileSync(
+      resolve(__dirname, '../../../../store/api/parcelApplicationApi.ts'),
+      'utf8'
+    );
+    const start = api.indexOf('getParcelTransitionStatus:');
+    const query = api.slice(start, api.indexOf('getParcelApplication:', start));
+    expect(query).toContain("'ParcelCropHistory'");
+    expect(query).toContain("{ type: 'LandownerAffidavit', id: 'LIST' }");
   });
 });
 
