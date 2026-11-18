@@ -35,7 +35,7 @@ import {
   useToast,
   VStack
 } from '@chakra-ui/react';
-import { FaExchangeAlt, FaPlus, FaTrash } from 'react-icons/fa';
+import { FaExchangeAlt, FaExclamationTriangle, FaPlus, FaTrash } from 'react-icons/fa';
 import type { RootState } from 'store/index';
 import { useIntl } from 'react-intl';
 
@@ -46,7 +46,9 @@ import {
   StandardField,
   StandardInput,
   StandardSelect,
-  StandardTextarea
+  StandardTextarea,
+  StatusList,
+  StatusRow
 } from 'components/Design/StandardComponents';
 import {
   useCreateOSPChangeNotificationMutation,
@@ -302,8 +304,11 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
         defaultMessage:
           'Record any change reported to your certifier. § 205.400(f) makes both immediate duties: a prohibited-substance application or drift (f)(1), and any change to your operation that may affect its compliance (f)(2).'
       })}>
-      {/* Existing notifications */}
-      <VStack align="stretch" spacing={2} mt={3}>
+      {/* Existing notifications, as rows with hairlines (2026-11-17), not tinted boxes with a
+          3px edge: the November notice pass made records and findings rows everywhere else.
+          A § 205.400(f)(1) prohibited-substance notice keeps its weight in three ways that do
+          not depend on colour alone: the warning glyph, the red CFR badge and its words. */}
+      <Box mt={3}>
         {notifications.length === 0 ? (
           <Text fontSize="xs" color={subtextColor}>
             {intl.formatMessage({
@@ -312,115 +317,124 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
             })}
           </Text>
         ) : (
-          notifications.map((cn) => (
-            <Box
-              key={cn.id}
-              p={2}
-              borderRadius="md"
-              bg={cn.is_immediate ? 'red.50' : 'gray.50'}
-              borderLeft="3px solid"
-              /* .600 not .400 — green.400 is 2.01:1, below the non-text floor. */
-              borderLeftColor={cn.is_immediate ? 'red.600' : 'green.600'}>
-              <HStack spacing={2} mb={1} flexWrap="wrap">
-                <Badge colorScheme={cn.is_immediate ? 'red' : 'green'} fontSize="11px">
-                  {cn.cfr_reference}
-                </Badge>
-                <Text fontSize="xs" fontWeight="semibold">
-                  {cn.change_category_display}
-                </Text>
-                {cn.parcel_name && (
-                  <Badge variant="neutral" fontSize="11px">
-                    {cn.parcel_name}
-                  </Badge>
-                )}
-                {formatDateOnly(cn.date_notified) && (
-                  <Text fontSize="xs" color={subtextColor}>
-                    {formatDateOnly(cn.date_notified)}
-                  </Text>
-                )}
-                <Badge
-                  colorScheme={cn.certifier_acknowledged_at ? 'green' : 'yellow'}
-                  fontSize="11px">
-                  {cn.certifier_acknowledged_at
-                    ? intl.formatMessage({
-                        id: 'osp.changeNotifications.acked',
-                        defaultMessage: 'Certifier acknowledged'
-                      })
-                    : intl.formatMessage({
-                        id: 'osp.changeNotifications.pending',
-                        defaultMessage: 'Acknowledgment pending'
-                      })}
-                </Badge>
-                {!cn.certifier_acknowledged_at &&
-                  (pendingDeleteId === cn.id ? (
-                    <HStack spacing={1}>
-                      <StandardButton
-                        size="xs"
-                        colorScheme="red"
-                        isLoading={isDeleting}
-                        onClick={() => handleDelete(cn.id)}>
-                        {intl.formatMessage({
-                          id: 'osp.changeNotifications.withdrawConfirm',
-                          defaultMessage: 'Withdraw'
-                        })}
-                      </StandardButton>
+          <StatusList testId="change-notification-rows">
+            {notifications.map((cn) => (
+              <StatusRow
+                key={cn.id}
+                tone={cn.is_immediate ? 'crit' : 'neutral'}
+                icon={cn.is_immediate ? FaExclamationTriangle : FaExchangeAlt}
+                title={cn.change_category_display}
+                testId="change-notification-row"
+                badge={
+                  <HStack spacing={2} flexWrap="wrap">
+                    {/* Semantic variants, matched weights: (f)(1) a red tint, (f)(2) a neutral
+                        fact. It was colorScheme green, which renders the solid brand pill, so an
+                        (f)(2) change read as an approval beside a light red (f)(1). */}
+                    <Badge variant={cn.is_immediate ? 'danger' : 'neutral'} fontSize="11px">
+                      {cn.cfr_reference}
+                    </Badge>
+                    {cn.parcel_name && (
+                      <Badge variant="neutral" fontSize="11px">
+                        {cn.parcel_name}
+                      </Badge>
+                    )}
+                    {/* Done is quiet (a green tint, not the solid brand pill); pending takes
+                        the theme's warning tint. `yellow` is not a Trazo scale, so it was
+                        rendering Chakra's own palette. */}
+                    <Badge
+                      variant={cn.certifier_acknowledged_at ? 'subtle' : 'warning'}
+                      fontSize="11px">
+                      {cn.certifier_acknowledged_at
+                        ? intl.formatMessage({
+                            id: 'osp.changeNotifications.acked',
+                            defaultMessage: 'Certifier acknowledged'
+                          })
+                        : intl.formatMessage({
+                            id: 'osp.changeNotifications.pending',
+                            defaultMessage: 'Acknowledgment pending'
+                          })}
+                    </Badge>
+                  </HStack>
+                }
+                action={
+                  !cn.certifier_acknowledged_at ? (
+                    pendingDeleteId === cn.id ? (
+                      <HStack spacing={1}>
+                        <StandardButton
+                          size="xs"
+                          colorScheme="red"
+                          isLoading={isDeleting}
+                          onClick={() => handleDelete(cn.id)}>
+                          {intl.formatMessage({
+                            id: 'osp.changeNotifications.withdrawConfirm',
+                            defaultMessage: 'Withdraw'
+                          })}
+                        </StandardButton>
+                        <StandardButton
+                          size="xs"
+                          variant="ghost"
+                          onClick={() => setPendingDeleteId(null)}>
+                          {intl.formatMessage({
+                            id: 'osp.changeNotifications.withdrawCancel',
+                            defaultMessage: 'Cancel'
+                          })}
+                        </StandardButton>
+                      </HStack>
+                    ) : (
                       <StandardButton
                         size="xs"
                         variant="ghost"
-                        onClick={() => setPendingDeleteId(null)}>
+                        colorScheme="red"
+                        leftIcon={<FaTrash />}
+                        onClick={() => setPendingDeleteId(cn.id)}
+                        aria-label={intl.formatMessage(
+                          {
+                            id: 'osp.changeNotifications.withdrawAria',
+                            defaultMessage: 'Withdraw change notification: {description}'
+                          },
+                          { description: cn.description }
+                        )}>
                         {intl.formatMessage({
-                          id: 'osp.changeNotifications.withdrawCancel',
-                          defaultMessage: 'Cancel'
+                          id: 'osp.changeNotifications.withdraw',
+                          defaultMessage: 'Withdraw'
                         })}
                       </StandardButton>
-                    </HStack>
-                  ) : (
-                    <StandardButton
-                      size="xs"
-                      variant="ghost"
-                      colorScheme="red"
-                      leftIcon={<FaTrash />}
-                      onClick={() => setPendingDeleteId(cn.id)}
-                      aria-label={intl.formatMessage(
-                        {
-                          id: 'osp.changeNotifications.withdrawAria',
-                          defaultMessage: 'Withdraw change notification: {description}'
-                        },
-                        { description: cn.description }
-                      )}>
-                      {intl.formatMessage({
-                        id: 'osp.changeNotifications.withdraw',
-                        defaultMessage: 'Withdraw'
-                      })}
-                    </StandardButton>
-                  ))}
-              </HStack>
-              <Text fontSize="xs" color={subtextColor}>
-                {cn.description}
-              </Text>
-              {cn.removal_reason && (
+                    )
+                  ) : undefined
+                }>
+                {/* The reader's locale, not the helper's 'en-US' default. */}
+                {formatDateOnly(cn.date_notified, intl.locale) && (
+                  <Text fontSize="xs" color={subtextColor}>
+                    {formatDateOnly(cn.date_notified, intl.locale)}
+                  </Text>
+                )}
                 <Text fontSize="xs" color={subtextColor}>
-                  {intl.formatMessage(
-                    {
-                      id: 'osp.changeNotifications.removalReasonLabel',
-                      defaultMessage: 'Why removed: {reason}'
-                    },
-                    { reason: cn.removal_reason }
-                  )}
+                  {cn.description}
                 </Text>
-              )}
-              {cn.supporting_document && (
-                <Badge variant="neutral" fontSize="11px" mt={1}>
-                  {intl.formatMessage({
-                    id: 'osp.changeNotifications.documentAttached',
-                    defaultMessage: 'Document attached'
-                  })}
-                </Badge>
-              )}
-            </Box>
-          ))
+                {cn.removal_reason && (
+                  <Text fontSize="xs" color={subtextColor}>
+                    {intl.formatMessage(
+                      {
+                        id: 'osp.changeNotifications.removalReasonLabel',
+                        defaultMessage: 'Why removed: {reason}'
+                      },
+                      { reason: cn.removal_reason }
+                    )}
+                  </Text>
+                )}
+                {cn.supporting_document && (
+                  <Badge variant="neutral" fontSize="11px">
+                    {intl.formatMessage({
+                      id: 'osp.changeNotifications.documentAttached',
+                      defaultMessage: 'Document attached'
+                    })}
+                  </Badge>
+                )}
+              </StatusRow>
+            ))}
+          </StatusList>
         )}
-      </VStack>
+      </Box>
 
       <Divider my={3} />
 
