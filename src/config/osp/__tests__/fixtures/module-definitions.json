@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.12.18",
+  "content_version": "2026.12.19",
   "registry": {
-    "content_version": "2026.12.18",
+    "content_version": "2026.12.19",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -6825,6 +6825,54 @@
                     "exclusive": false
                   },
                   {
+                    "value": "native_vegetation",
+                    "label": {
+                      "en": "Native grasses or natural vegetation",
+                      "es": "Pastos nativos o vegetación natural"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "native_mixtures",
+                    "label": {
+                      "en": "Diverse mixtures of native trees, shrubs, grasses and forbs",
+                      "es": "Mezclas diversas de árboles, arbustos, pastos y hierbas nativos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "fencerow_plants",
+                    "label": {
+                      "en": "Non-invasive plants allowed in fencerows, ditches and the understory",
+                      "es": "Plantas no invasoras permitidas en cercos, zanjas y el sotobosque"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "windbreaks",
+                    "label": {
+                      "en": "Windbreaks",
+                      "es": "Cortavientos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "native_replacement",
+                    "label": {
+                      "en": "Weedy areas replaced with native plants",
+                      "es": "Áreas con maleza reemplazadas por plantas nativas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "flowers_to_seed",
+                    "label": {
+                      "en": "Flowers allowed to go to seed",
+                      "es": "Flores que se dejan semillar"
+                    },
+                    "exclusive": false
+                  },
+                  {
                     "value": "other",
                     "label": {
                       "en": "Other (describe below)",
@@ -6869,6 +6917,56 @@
                   }
                 ],
                 "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "in_lieu_description",
+                "kind": "textarea",
+                "label": {
+                  "en": "Describe the practices you use in lieu of rotation in your perennial or container crops.",
+                  "es": "Describe las prácticas que usas en lugar de la rotación en tus cultivos perennes o en contenedor."
+                },
+                "coaching": {
+                  "en": "Ground cover, cover cropping, alley cropping, intercropping, hedgerows, and any rotation plan for short-term perennials.",
+                  "es": "Cobertura del suelo, cultivos de cobertura, cultivo en callejones, intercultivo, cercos vivos y cualquier plan de rotación para perennes de ciclo corto."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "system_type",
+                    "op": "includes_any",
+                    "value": [
+                      "perennial",
+                      "container"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.205",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "rotation_site_specific_notes",
+                "kind": "textarea",
+                "label": {
+                  "en": "Anything site-specific about how your practices maintain soil organic matter, manage pests and nutrients, and control erosion (optional)",
+                  "es": "Cualquier aspecto propio de tu sitio sobre cómo tus prácticas mantienen la materia orgánica del suelo, manejan plagas y nutrientes y controlan la erosión (opcional)"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.205",
                 "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
@@ -8063,6 +8161,23 @@
                       "en": "Contour farming or terraces",
                       "es": "Cultivo en contorno o terrazas"
                     },
+                    "exclusive": false,
+                    "retired": true
+                  },
+                  {
+                    "value": "contour_farming",
+                    "label": {
+                      "en": "Contour farming",
+                      "es": "Cultivo en contorno"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "terraces",
+                    "label": {
+                      "en": "Terraces",
+                      "es": "Terrazas"
+                    },
                     "exclusive": false
                   },
                   {
@@ -8088,11 +8203,52 @@
                       "es": "Cortavientos"
                     },
                     "exclusive": false
+                  },
+                  {
+                    "value": "minimize_bare_ground",
+                    "label": {
+                      "en": "Minimizing bare ground through crop rotation",
+                      "es": "Minimizar el suelo desnudo mediante la rotación de cultivos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otra (describe abajo)"
+                    },
+                    "exclusive": false
                   }
                 ],
                 "required": true,
                 "visible_when": [],
                 "nop_cite": "§ 205.203(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "erosion_other",
+                "kind": "text",
+                "label": {
+                  "en": "Describe the other erosion practice",
+                  "es": "Describe la otra práctica contra la erosión"
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "erosion_practices",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
@@ -11981,6 +12137,131 @@
             "visible_when": [],
             "questions": [
               {
+                "key": "pests_diseases_of_concern",
+                "kind": "textarea",
+                "label": {
+                  "en": "Which pests and diseases threaten your crops, or could?",
+                  "es": "¿Qué plagas y enfermedades amenazan tus cultivos, o podrían hacerlo?"
+                },
+                "coaching": {
+                  "en": "Name them as you would to your inspector: codling moth, fire blight, gophers.",
+                  "es": "Nómbralas como lo harías ante tu inspector: palomilla de la manzana, tizón de fuego, tuzas."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.206",
+                "prefill": {
+                  "source": "pest_species_evidence"
+                },
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "pest_taxa_managed",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Which crop pests do you manage?",
+                  "es": "¿Qué plagas de cultivo manejas?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "insects",
+                    "label": {
+                      "en": "Insects",
+                      "es": "Insectos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "rodents",
+                    "label": {
+                      "en": "Rodents",
+                      "es": "Roedores"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "birds",
+                    "label": {
+                      "en": "Birds",
+                      "es": "Aves"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "nematodes",
+                    "label": {
+                      "en": "Nematodes",
+                      "es": "Nematodos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "mites",
+                    "label": {
+                      "en": "Mites",
+                      "es": "Ácaros"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "slugs",
+                    "label": {
+                      "en": "Slugs",
+                      "es": "Babosas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (name below)",
+                      "es": "Otras (indícalas abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.206(b)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "pest_taxa_other",
+                "kind": "text",
+                "label": {
+                  "en": "Name the other crop pests",
+                  "es": "Indica las otras plagas de cultivo"
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "pest_taxa_managed",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
                 "key": "practices_weeds",
                 "kind": "checkbox_group",
                 "label": {
@@ -13073,6 +13354,53 @@
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
+              },
+              {
+                "key": "burn_target_detail",
+                "kind": "text",
+                "label": {
+                  "en": "Name the disease suppressed or the seed germinated",
+                  "es": "Indica la enfermedad que se suprime o la semilla que se hace germinar"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "burn_reason",
+                    "op": "includes_any",
+                    "value": [
+                      "disease_suppression",
+                      "seed_germination"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.203(e)(3)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "pest_prevention_records",
+                "kind": "textarea",
+                "label": {
+                  "en": "Describe the records you keep of your preventive pest management.",
+                  "es": "Describe los registros que llevas de tu manejo preventivo de plagas."
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.103",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
               }
             ]
           },
@@ -13256,6 +13584,130 @@
                   }
                 ],
                 "nop_cite": "§ 205.206(c)(6)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "plastic_mulch_material",
+                "kind": "radio",
+                "label": {
+                  "en": "What is the plastic mulch made of?",
+                  "es": "¿De qué está hecho el acolchado plástico?"
+                },
+                "coaching": {
+                  "en": "§ 205.601(b)(2) allows plastic mulch and covers that are petroleum-based other than PVC, and biodegradable biobased mulch film as § 205.2 defines it.",
+                  "es": "El § 205.601(b)(2) permite el acolchado y las cubiertas plásticas a base de petróleo que no sean de PVC, y la película de acolchado biodegradable de base biológica según la define el § 205.2."
+                },
+                "options": [
+                  {
+                    "value": "non_pvc_plastic",
+                    "label": {
+                      "en": "Petroleum-based plastic, not PVC",
+                      "es": "Plástico a base de petróleo, que no es PVC"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "biobased_film",
+                    "label": {
+                      "en": "Biodegradable biobased mulch film",
+                      "es": "Película de acolchado biodegradable de base biológica"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "pvc",
+                    "label": {
+                      "en": "Polyvinyl chloride (PVC)",
+                      "es": "Policloruro de vinilo (PVC)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "not_known",
+                    "label": {
+                      "en": "Not known yet",
+                      "es": "Aún no se sabe"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "plastic_mulch_used",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.601(b)(2)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "plastic_mulch_perennial_condition",
+                "kind": "textarea",
+                "label": {
+                  "en": "If you use it in a perennial planting, how do you make sure the plastic stays in good enough condition that it does not break down into the soil?",
+                  "es": "Si lo usas en una plantación perenne, ¿cómo te aseguras de que el plástico se mantenga en condiciones suficientes para que no se descomponga en el suelo?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "plastic_mulch_used",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.206(c)(6)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "weed_prevention_records",
+                "kind": "textarea",
+                "label": {
+                  "en": "Describe the records you keep of your preventive weed management.",
+                  "es": "Describe los registros que llevas de tu manejo preventivo de malezas."
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": "§ 205.103",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "weed_management_additional_notes",
+                "kind": "textarea",
+                "label": {
+                  "en": "Anything else about your weed management (optional)",
+                  "es": "Cualquier otra información sobre tu manejo de malezas (opcional)"
+                },
+                "coaching": null,
+                "options": [],
+                "required": false,
+                "visible_when": [],
+                "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
@@ -30643,6 +31095,7 @@
       "answers": {},
       "visible_questions": [
         "system_type",
+        "rotation_site_specific_notes",
         "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
@@ -30678,6 +31131,181 @@
     },
     {
       "module": "g4_0_rotation_soil",
+      "label": "container_only",
+      "answers": {
+        "system_type": [
+          "container"
+        ]
+      },
+      "visible_questions": [
+        "system_type",
+        "in_lieu_description",
+        "rotation_site_specific_notes",
+        "applies_fertilizers",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ],
+      "missing_required": [
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ],
+      "missing_required_na": [
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ]
+    },
+    {
+      "module": "g4_0_rotation_soil",
+      "label": "erosion_retired_only",
+      "answers": {
+        "erosion_practices": [
+          "contour"
+        ]
+      },
+      "visible_questions": [
+        "system_type",
+        "rotation_site_specific_notes",
+        "applies_fertilizers",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ],
+      "missing_required": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ],
+      "missing_required_na": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ]
+    },
+    {
+      "module": "g4_0_rotation_soil",
+      "label": "erosion_retired_and_terraces",
+      "answers": {
+        "erosion_practices": [
+          "contour",
+          "terraces"
+        ]
+      },
+      "visible_questions": [
+        "system_type",
+        "rotation_site_specific_notes",
+        "applies_fertilizers",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices"
+      ],
+      "missing_required": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring"
+      ],
+      "missing_required_na": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring"
+      ]
+    },
+    {
+      "module": "g4_0_rotation_soil",
+      "label": "erosion_other",
+      "answers": {
+        "erosion_practices": [
+          "other"
+        ]
+      },
+      "visible_questions": [
+        "system_type",
+        "rotation_site_specific_notes",
+        "applies_fertilizers",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_practices",
+        "erosion_other"
+      ],
+      "missing_required": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_other"
+      ],
+      "missing_required_na": [
+        "system_type",
+        "fertility_components",
+        "fertility_inputs_listed",
+        "applies_deficiency_materials",
+        "applies_calcium_chloride",
+        "applies_potassium_chloride",
+        "tillage_practices",
+        "fertility_monitoring",
+        "erosion_other"
+      ]
+    },
+    {
+      "module": "g4_0_rotation_soil",
       "label": "annual_with_fertilizer",
       "answers": {
         "system_type": [
@@ -30689,6 +31317,7 @@
         "system_type",
         "rotation_plan",
         "rotation_records_kept",
+        "rotation_site_specific_notes",
         "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
@@ -30734,6 +31363,7 @@
         "system_type",
         "rotation_plan",
         "rotation_records_kept",
+        "rotation_site_specific_notes",
         "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
@@ -30783,6 +31413,8 @@
         "system_type",
         "in_lieu_practices",
         "in_lieu_other",
+        "in_lieu_description",
+        "rotation_site_specific_notes",
         "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
@@ -30826,6 +31458,7 @@
       },
       "visible_questions": [
         "system_type",
+        "rotation_site_specific_notes",
         "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
@@ -30867,6 +31500,7 @@
       },
       "visible_questions": [
         "system_type",
+        "rotation_site_specific_notes",
         "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
@@ -30916,6 +31550,7 @@
       },
       "visible_questions": [
         "system_type",
+        "rotation_site_specific_notes",
         "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
@@ -30966,6 +31601,7 @@
       },
       "visible_questions": [
         "system_type",
+        "rotation_site_specific_notes",
         "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
@@ -31016,6 +31652,7 @@
       },
       "visible_questions": [
         "system_type",
+        "rotation_site_specific_notes",
         "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
@@ -31061,6 +31698,7 @@
       },
       "visible_questions": [
         "system_type",
+        "rotation_site_specific_notes",
         "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
@@ -31097,12 +31735,17 @@
       "label": "unanswered",
       "answers": {},
       "visible_questions": [
+        "pests_diseases_of_concern",
+        "pest_taxa_managed",
         "practices_weeds",
         "practices_insects",
         "practices_diseases",
         "practices_vertebrates",
         "burns_crop_residue",
+        "pest_prevention_records",
         "plastic_mulch_used",
+        "weed_prevention_records",
+        "weed_management_additional_notes",
         "applies_pest_weed_disease_inputs",
         "monitoring_scope",
         "monitoring_frequency",
@@ -31110,6 +31753,166 @@
         "monitoring_records"
       ],
       "missing_required": [
+        "burns_crop_residue",
+        "plastic_mulch_used",
+        "applies_pest_weed_disease_inputs",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_records"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g5_0_pest",
+      "label": "burn_for_disease",
+      "answers": {
+        "burns_crop_residue": true,
+        "burn_reason": [
+          "disease_suppression"
+        ]
+      },
+      "visible_questions": [
+        "pests_diseases_of_concern",
+        "pest_taxa_managed",
+        "practices_weeds",
+        "practices_insects",
+        "practices_diseases",
+        "practices_vertebrates",
+        "burns_crop_residue",
+        "burn_crops",
+        "burn_frequency",
+        "burn_reason",
+        "burn_target_detail",
+        "pest_prevention_records",
+        "plastic_mulch_used",
+        "weed_prevention_records",
+        "weed_management_additional_notes",
+        "applies_pest_weed_disease_inputs",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_methods",
+        "monitoring_records"
+      ],
+      "missing_required": [
+        "burn_crops",
+        "plastic_mulch_used",
+        "applies_pest_weed_disease_inputs",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_records"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g5_0_pest",
+      "label": "burn_other_only",
+      "answers": {
+        "burns_crop_residue": true,
+        "burn_reason": [
+          "other"
+        ]
+      },
+      "visible_questions": [
+        "pests_diseases_of_concern",
+        "pest_taxa_managed",
+        "practices_weeds",
+        "practices_insects",
+        "practices_diseases",
+        "practices_vertebrates",
+        "burns_crop_residue",
+        "burn_crops",
+        "burn_frequency",
+        "burn_reason",
+        "burn_reason_other",
+        "pest_prevention_records",
+        "plastic_mulch_used",
+        "weed_prevention_records",
+        "weed_management_additional_notes",
+        "applies_pest_weed_disease_inputs",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_methods",
+        "monitoring_records"
+      ],
+      "missing_required": [
+        "burn_crops",
+        "burn_reason_other",
+        "plastic_mulch_used",
+        "applies_pest_weed_disease_inputs",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_records"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g5_0_pest",
+      "label": "plastic_pvc",
+      "answers": {
+        "plastic_mulch_used": true,
+        "plastic_mulch_material": "pvc"
+      },
+      "visible_questions": [
+        "pests_diseases_of_concern",
+        "pest_taxa_managed",
+        "practices_weeds",
+        "practices_insects",
+        "practices_diseases",
+        "practices_vertebrates",
+        "burns_crop_residue",
+        "pest_prevention_records",
+        "plastic_mulch_used",
+        "plastic_mulch_removal",
+        "plastic_mulch_material",
+        "plastic_mulch_perennial_condition",
+        "weed_prevention_records",
+        "weed_management_additional_notes",
+        "applies_pest_weed_disease_inputs",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_methods",
+        "monitoring_records"
+      ],
+      "missing_required": [
+        "burns_crop_residue",
+        "plastic_mulch_removal",
+        "applies_pest_weed_disease_inputs",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_records"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g5_0_pest",
+      "label": "pest_taxa_other",
+      "answers": {
+        "pest_taxa_managed": [
+          "insects",
+          "other"
+        ]
+      },
+      "visible_questions": [
+        "pests_diseases_of_concern",
+        "pest_taxa_managed",
+        "pest_taxa_other",
+        "practices_weeds",
+        "practices_insects",
+        "practices_diseases",
+        "practices_vertebrates",
+        "burns_crop_residue",
+        "pest_prevention_records",
+        "plastic_mulch_used",
+        "weed_prevention_records",
+        "weed_management_additional_notes",
+        "applies_pest_weed_disease_inputs",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_methods",
+        "monitoring_records"
+      ],
+      "missing_required": [
+        "pest_taxa_other",
         "burns_crop_residue",
         "plastic_mulch_used",
         "applies_pest_weed_disease_inputs",
@@ -31132,6 +31935,8 @@
         ]
       },
       "visible_questions": [
+        "pests_diseases_of_concern",
+        "pest_taxa_managed",
         "practices_weeds",
         "practices_insects",
         "practices_diseases",
@@ -31139,8 +31944,11 @@
         "prevention_practices",
         "prevention_practices_other",
         "burns_crop_residue",
+        "pest_prevention_records",
         "weed_management_practices",
         "plastic_mulch_used",
+        "weed_prevention_records",
+        "weed_management_additional_notes",
         "applies_pest_weed_disease_inputs",
         "monitoring_scope",
         "monitoring_frequency",
@@ -31171,13 +31979,18 @@
         ]
       },
       "visible_questions": [
+        "pests_diseases_of_concern",
+        "pest_taxa_managed",
         "practices_weeds",
         "practices_weeds_other",
         "practices_insects",
         "practices_diseases",
         "practices_vertebrates",
         "burns_crop_residue",
+        "pest_prevention_records",
         "plastic_mulch_used",
+        "weed_prevention_records",
+        "weed_management_additional_notes",
         "applies_pest_weed_disease_inputs",
         "monitoring_scope",
         "monitoring_frequency",
@@ -31205,12 +32018,17 @@
         ]
       },
       "visible_questions": [
+        "pests_diseases_of_concern",
+        "pest_taxa_managed",
         "practices_weeds",
         "practices_insects",
         "practices_diseases",
         "practices_vertebrates",
         "burns_crop_residue",
+        "pest_prevention_records",
         "plastic_mulch_used",
+        "weed_prevention_records",
+        "weed_management_additional_notes",
         "applies_pest_weed_disease_inputs",
         "monitoring_scope",
         "monitoring_frequency",
@@ -31237,12 +32055,17 @@
         ]
       },
       "visible_questions": [
+        "pests_diseases_of_concern",
+        "pest_taxa_managed",
         "practices_weeds",
         "practices_insects",
         "practices_diseases",
         "practices_vertebrates",
         "burns_crop_residue",
+        "pest_prevention_records",
         "plastic_mulch_used",
+        "weed_prevention_records",
+        "weed_management_additional_notes",
         "applies_pest_weed_disease_inputs",
         "input_use_triggers",
         "input_use_conditions",
@@ -34525,6 +35348,7 @@
       },
       "visible_questions": [
         "system_type",
+        "rotation_site_specific_notes",
         "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
@@ -34567,6 +35391,7 @@
       },
       "visible_questions": [
         "system_type",
+        "rotation_site_specific_notes",
         "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
@@ -34611,6 +35436,7 @@
       },
       "visible_questions": [
         "system_type",
+        "rotation_site_specific_notes",
         "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
@@ -34658,6 +35484,7 @@
       },
       "visible_questions": [
         "system_type",
+        "rotation_site_specific_notes",
         "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
@@ -34700,6 +35527,7 @@
       },
       "visible_questions": [
         "system_type",
+        "rotation_site_specific_notes",
         "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
@@ -34744,6 +35572,7 @@
       },
       "visible_questions": [
         "system_type",
+        "rotation_site_specific_notes",
         "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
@@ -34788,6 +35617,7 @@
       },
       "visible_questions": [
         "system_type",
+        "rotation_site_specific_notes",
         "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
@@ -34828,6 +35658,7 @@
       },
       "visible_questions": [
         "system_type",
+        "rotation_site_specific_notes",
         "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
@@ -34870,6 +35701,7 @@
       },
       "visible_questions": [
         "system_type",
+        "rotation_site_specific_notes",
         "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
@@ -34912,6 +35744,7 @@
       },
       "visible_questions": [
         "system_type",
+        "rotation_site_specific_notes",
         "applies_fertilizers",
         "fertility_components",
         "fertility_inputs_listed",
@@ -35737,12 +36570,53 @@
         "burns_crop_residue": false
       },
       "visible_questions": [
+        "pests_diseases_of_concern",
+        "pest_taxa_managed",
         "practices_weeds",
         "practices_insects",
         "practices_diseases",
         "practices_vertebrates",
         "burns_crop_residue",
+        "pest_prevention_records",
         "plastic_mulch_used",
+        "weed_prevention_records",
+        "weed_management_additional_notes",
+        "applies_pest_weed_disease_inputs",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_methods",
+        "monitoring_records"
+      ],
+      "missing_required": [
+        "plastic_mulch_used",
+        "applies_pest_weed_disease_inputs",
+        "monitoring_scope",
+        "monitoring_frequency",
+        "monitoring_records"
+      ],
+      "missing_required_na": []
+    },
+    {
+      "module": "g5_0_pest",
+      "label": "stale_chain:burn_target_detail:burns_crop_residue:truthy",
+      "answers": {
+        "burn_reason": [
+          "disease_suppression"
+        ],
+        "burns_crop_residue": false
+      },
+      "visible_questions": [
+        "pests_diseases_of_concern",
+        "pest_taxa_managed",
+        "practices_weeds",
+        "practices_insects",
+        "practices_diseases",
+        "practices_vertebrates",
+        "burns_crop_residue",
+        "pest_prevention_records",
+        "plastic_mulch_used",
+        "weed_prevention_records",
+        "weed_management_additional_notes",
         "applies_pest_weed_disease_inputs",
         "monitoring_scope",
         "monitoring_frequency",
@@ -35766,12 +36640,17 @@
         "applies_pest_weed_disease_inputs": false
       },
       "visible_questions": [
+        "pests_diseases_of_concern",
+        "pest_taxa_managed",
         "practices_weeds",
         "practices_insects",
         "practices_diseases",
         "practices_vertebrates",
         "burns_crop_residue",
+        "pest_prevention_records",
         "plastic_mulch_used",
+        "weed_prevention_records",
+        "weed_management_additional_notes",
         "applies_pest_weed_disease_inputs",
         "monitoring_scope",
         "monitoring_frequency",
@@ -35797,12 +36676,17 @@
         "applies_copper_materials": false
       },
       "visible_questions": [
+        "pests_diseases_of_concern",
+        "pest_taxa_managed",
         "practices_weeds",
         "practices_insects",
         "practices_diseases",
         "practices_vertebrates",
         "burns_crop_residue",
+        "pest_prevention_records",
         "plastic_mulch_used",
+        "weed_prevention_records",
+        "weed_management_additional_notes",
         "applies_pest_weed_disease_inputs",
         "monitoring_scope",
         "monitoring_frequency",
