@@ -266,6 +266,20 @@ const ResultCard: React.FC<{
       { date: intl.formatDate(parsed, { day: 'numeric', month: 'short', year: 'numeric' }) }
     );
   };
+  // The WSDA half (2026-11-18): WSDA rows carry the same drop date, set when a later WSDA edition no
+  // longer lists the product. Same wording rules as OMRI's: a date and a check, never "prohibited".
+  const wsdaLapse = (delistedOn?: string | null): string | undefined => {
+    const parsed = parseDateOnly(delistedOn);
+    if (!parsed) return undefined;
+    return intl.formatMessage(
+      {
+        id: 'inputVerify.wsdaListingLapsed',
+        defaultMessage:
+          "WSDA's list of {date} no longer carries this product. That does not make it prohibited; check its status with your certifier before you use it."
+      },
+      { date: intl.formatDate(parsed, { day: 'numeric', month: 'short', year: 'numeric' }) }
+    );
+  };
   const hasOMRI = result.omri_product_pk != null;
   const omriCandidates = result.omri_candidates ?? [];
   // The true match count, which the shown list may be capped below.
@@ -572,27 +586,36 @@ const ResultCard: React.FC<{
               badgeLabel="WSDA"
               attached={attachedWsdaPk != null && attachedWsdaPk === result.wsda_material_pk}
               title={result.wsda_material_name || ''}
-              tone={wsdaAnnotation ? 'restricted' : 'allowed'}
+              tone={
+                wsdaAnnotation || wsdaLapse(result.wsda_material_delisted_on)
+                  ? 'restricted'
+                  : 'allowed'
+              }
               detail={
-                wsdaAnnotation
-                  ? result.wsda_list_effective_date
-                    ? intl.formatMessage(
-                        {
-                          id: 'inputVerify.wsdaAnnotation',
-                          defaultMessage:
-                            "WSDA's annotation (list of {date}): {annotation} WSDA requires use in accordance with it."
-                        },
-                        { date: result.wsda_list_effective_date, annotation: wsdaAnnotation }
-                      )
-                    : intl.formatMessage(
-                        {
-                          id: 'inputVerify.wsdaAnnotationNoDate',
-                          defaultMessage:
-                            "WSDA's annotation: {annotation} WSDA requires use in accordance with it."
-                        },
-                        { annotation: wsdaAnnotation }
-                      )
-                  : undefined
+                [
+                  wsdaLapse(result.wsda_material_delisted_on),
+                  wsdaAnnotation
+                    ? result.wsda_list_effective_date
+                      ? intl.formatMessage(
+                          {
+                            id: 'inputVerify.wsdaAnnotation',
+                            defaultMessage:
+                              "WSDA's annotation (list of {date}): {annotation} WSDA requires use in accordance with it."
+                          },
+                          { date: result.wsda_list_effective_date, annotation: wsdaAnnotation }
+                        )
+                      : intl.formatMessage(
+                          {
+                            id: 'inputVerify.wsdaAnnotationNoDate',
+                            defaultMessage:
+                              "WSDA's annotation: {annotation} WSDA requires use in accordance with it."
+                          },
+                          { annotation: wsdaAnnotation }
+                        )
+                    : undefined
+                ]
+                  .filter(Boolean)
+                  .join(' ') || undefined
               }
               subtitle={[
                 wsdaProductNumber(result.wsda_material_id)
