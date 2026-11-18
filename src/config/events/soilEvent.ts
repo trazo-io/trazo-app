@@ -1370,16 +1370,6 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
       form: 'secondary'
     }
   },
-  {
-    name: 'carbon_sequestration_potential',
-    labelKey: 'events.soil.fields.carbonSequestration',
-    valueType: 'number',
-    carbonRelevant: true,
-    formatter: formatNumber,
-    surfaces: {
-      modal: 'secondary'
-    }
-  },
 
   // ---- Context ----
   {

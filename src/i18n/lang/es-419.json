@@ -5672,7 +5672,6 @@
   "events.soil.fields.animalsRemovedDate": "Fecha de retiro de animales",
   "events.soil.fields.animalsRemovedDateHelp": "Último día que el ganado estuvo en esta parcela — el intervalo se cuenta desde aquí",
   "events.soil.fields.areaCoveredTotal": "Área total pastoreada (temporada)",
-  "events.soil.fields.carbonSequestration": "Potencial de secuestro de carbono",
   "events.soil.fields.compostDurationDays": "Días a temperatura",
   "events.soil.fields.compostDurationDaysPlaceholder": "Ej. 21 (mínimo 15 días según NOP)",
   "events.soil.fields.compostFeedstock": "Materia prima",
