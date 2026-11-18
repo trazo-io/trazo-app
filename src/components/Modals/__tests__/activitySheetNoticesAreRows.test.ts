@@ -53,11 +53,14 @@ describe('the activity sheet is rows, not boxes', () => {
     expect(list).toMatch(/testId="record-notice-certifier-only"/);
   });
 
-  it('flags a stock or AI photo with a warning row', () => {
-    const start = MODAL.indexOf('event.photo_content_flag && (');
-    expect(start).toBeGreaterThan(0);
-    const flag = MODAL.slice(start, MODAL.indexOf('</StatusRow>', start));
-    expect(flag).toMatch(/<StatusRow\s+tone="warn"/);
+  it('flags a stock or AI photo with a warning row, read from the record detail', () => {
+    // PhotoFlagNotice reads `photo_content_flag` from the detail query; the list rows never
+    // carry it (it is detail-only on the backend, kept off the shopper's season payload).
+    expect(MODAL).toMatch(/<PhotoFlagNotice\s+farmId=\{farmId\}\s+eventId=\{event\.id\}/);
+    expect(MODAL).not.toMatch(/event\.photo_content_flag/);
+    const notice = code('src/components/Events/PhotoFlagNotice.tsx');
+    expect(notice).toMatch(/useGetEventQuery/);
+    expect(notice).toMatch(/<StatusRow\s+tone="warn"/);
   });
 
   it('renders each notice on the record as a StatusRow, and keeps the alert for the form', () => {

@@ -1,5 +1,6 @@
 import { ApplicationGroupNotice } from 'components/Events/ApplicationGroupNotice';
 import { TankMixNotice } from 'components/Events/TankMixNotice';
+import { PhotoFlagNotice } from 'components/Events/PhotoFlagNotice';
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   VStack,
@@ -42,7 +43,7 @@ import {
   FaMapMarkerAlt,
   FaRoute
 } from 'react-icons/fa';
-import { MdVerified, MdVisibilityOff, MdWarning } from 'react-icons/md';
+import { MdVerified, MdVisibilityOff } from 'react-icons/md';
 import { useDeleteEventMutation } from 'store/api/historyApi';
 import { formatCO2e, getImpactLevel } from '../../utils/carbonDisplayUtils';
 import { ResponsiveModal } from 'components/Design/ResponsiveModal';
@@ -120,7 +121,6 @@ interface Event {
     | 'photo_verified'
     | 'data_verified'
     | 'certified';
-  photo_content_flag?: 'not_agricultural' | 'ai_generated' | 'stock_photo' | null;
   // Chemical event fields (stored directly on event object)
   commercial_name?: string;
   volume?: string;
@@ -1218,28 +1218,15 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                 <Text fontSize="lg" fontWeight="bold" mb={4} color={textColor}>
                   {intl.formatMessage({ id: 'events.wizard.step.photos' })}
                 </Text>
-                {/* Photo content warning for flagged AI/stock photos: a warning row, like
-                    every other finding on this sheet, not a tinted Alert box. */}
-                {event.photo_content_flag && (
-                  <Box mt={-3} mb={2}>
-                    <StatusRow
-                      tone="warn"
-                      icon={MdWarning}
-                      title={intl.formatMessage({
-                        id:
-                          event.photo_content_flag === 'ai_generated'
-                            ? 'event.photoFlag.aiGenerated'
-                            : event.photo_content_flag === 'stock_photo'
-                            ? 'event.photoFlag.stockPhoto'
-                            : 'event.photoFlag.notAgricultural'
-                      })}
-                      testId="record-notice-photo-flag">
-                      <Text fontSize="sm" color="gray.600">
-                        {intl.formatMessage({ id: 'event.photoFlag.replaceWithFieldPhoto' })}
-                      </Text>
-                    </StatusRow>
-                  </Box>
-                )}
+                {/* The Vision verdict on these photos, read from the record's detail (the
+                    list rows never carry it: it is detail-only, see PhotoFlagNotice). */}
+                <Box mt={-3} mb={2} sx={{ '&:empty': { display: 'none' } }}>
+                  <PhotoFlagNotice
+                    farmId={farmId}
+                    eventId={event.id}
+                    eventType={event.event_type}
+                  />
+                </Box>
                 <Grid
                   templateColumns={{
                     base: 'repeat(2, 1fr)',
