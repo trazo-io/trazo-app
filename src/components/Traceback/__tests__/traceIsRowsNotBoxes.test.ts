@@ -55,6 +55,9 @@ describe('a trace is rows, not boxes', () => {
     expect(gaps).toMatch(/<StatusList>/);
     expect(gaps).toMatch(/<StatusRow/);
     expect(gaps).toMatch(/testId="trace-gap"/);
+    // The fix link is the design system's row link, not a local copy of it (2026-11-17).
+    expect(gaps).toMatch(/<StatusRowLink onClick=/);
+    expect(CHAIN).not.toMatch(/<Link\b/);
   });
 
   it("grades nothing on the reviewer's link", () => {
