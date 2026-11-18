@@ -379,6 +379,37 @@ describe('TracebackPage', () => {
     expect(screen.queryByText(/This season is still open/)).toBeNull();
   });
 
+  it('says what the figures mean: sales matched the pack-out, the gap is the pack-out (VID-10)', () => {
+    // Recordkeeping checklist run 2026-11-16: "Harvested minus sold: 3,538 lb" alone read as
+    // product unaccounted for. `reading` is trazo-back `balance_reading`, the exhibit's decision.
+    state.trace = {
+      ...TRACE,
+      balance: {
+        ...TRACE.balance,
+        harvested: '114,240 lb',
+        packed_out: '110,702 lb',
+        sold: '110,702 lb',
+        difference: '3,538 lb',
+        reading: 'packout_below_harvest',
+        reading_quantity: '3,538 lb'
+      }
+    };
+    renderAt('/admin/dashboard/farm/1/traceback?sale=7');
+    expect(screen.getByTestId('trace-balance-reading')).toHaveTextContent(
+      "Sales match the handler's pack-out. The difference is between the harvest and the pack-out: the handler packed out 3,538 lb less than was harvested."
+    );
+  });
+
+  it('adds no reading line for an open season (its own line says it) or an unknown code', () => {
+    for (const reading of ['open_unsold', 'something_new', undefined]) {
+      state.trace = { ...TRACE, balance: { ...TRACE.balance, reading, reading_quantity: '1 lb' } };
+      const { unmount } = renderAt('/admin/dashboard/farm/1/traceback?sale=7');
+      expect(screen.getByText(/Harvested minus sold/)).toBeTruthy();
+      expect(screen.queryByTestId('trace-balance-reading')).toBeNull();
+      unmount();
+    }
+  });
+
   it('opens each file through the company-scoped documents route, labelled by kind', () => {
     state.trace = {
       ...TRACE,
