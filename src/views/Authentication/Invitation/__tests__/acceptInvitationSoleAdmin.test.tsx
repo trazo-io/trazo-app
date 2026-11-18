@@ -85,6 +85,21 @@ describe('accepting an invitation as the only company admin', () => {
     expect((acceptButton() as HTMLButtonElement).disabled).toBe(false);
   });
 
+  it('speaks of several companies in the plural', () => {
+    details = {
+      ...base,
+      transfer: {
+        leaves: ['Home Orchard', 'River Block'],
+        sole_admin_of: ['Home Orchard', 'River Block']
+      }
+    };
+    page();
+    const text = screen.getByTestId('invitation-sole-admin').textContent || '';
+    expect(text).toContain('only company admin of Home Orchard, River Block');
+    expect(text).toContain('would leave their records');
+    expect(text).toContain('close those companies');
+  });
+
   it('says it in Spanish', () => {
     details = { ...base, transfer: { leaves: ['Home Orchard'], sole_admin_of: ['Home Orchard'] } };
     page('es-419');

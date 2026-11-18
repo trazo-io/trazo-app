@@ -104,7 +104,10 @@ const AcceptInvitation: React.FC = () => {
       if (error?.status === 409 && error?.data?.code === 'sole_company_admin') {
         message = intl.formatMessage(
           { id: 'auth.invitation.soleAdmin.blocked' },
-          { companies: (error?.data?.companies ?? []).join(', ') }
+          {
+            companies: (error?.data?.companies ?? []).join(', '),
+            count: (error?.data?.companies ?? []).length
+          }
         );
       } else if (error?.status === 404) {
         message = 'Invitation not found or has expired';
@@ -655,11 +658,12 @@ const AcceptInvitation: React.FC = () => {
                             {
                               id: 'auth.invitation.transfer.bodyNamed',
                               defaultMessage:
-                                'Accepting moves you to {company}. You leave {leaving} and lose access to its records; your account stays as it is.'
+                                'Accepting moves you to {company}. You leave {leaving} and lose access to {count, plural, one {its} other {their}} records; your account stays as it is.'
                             },
                             {
                               company: invitationDetails?.company_name,
-                              leaving: leaving.join(', ')
+                              leaving: leaving.join(', '),
+                              count: leaving.length
                             }
                           )
                         : intl.formatMessage(
@@ -680,7 +684,7 @@ const AcceptInvitation: React.FC = () => {
                         data-testid="invitation-sole-admin">
                         {intl.formatMessage(
                           { id: 'auth.invitation.soleAdmin.blocked' },
-                          { companies: soleAdminOf.join(', ') }
+                          { companies: soleAdminOf.join(', '), count: soleAdminOf.length }
                         )}
                       </Text>
                     ) : null}
