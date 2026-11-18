@@ -304,6 +304,8 @@ export interface InputVerifyResult {
    */
   wsda_material_annotation?: string | null;
   wsda_list_effective_date?: string | null;
+  /** Edition date of the first WSDA list that no longer carried the product; null while listed. */
+  wsda_material_delisted_on?: string | null;
   /**
    * Same shortlist contract as `omri_candidates`, ported to WSDA on 2026-09-06. Until then
    * WSDA answered with one row, so a search for "Serenade" showed a single brand while the
@@ -316,6 +318,7 @@ export interface InputVerifyResult {
     manufacturer?: string | null;
     category?: string | null;
     annotation?: string | null;
+    delisted_on?: string | null;
   }[];
   wsda_candidate_count?: number;
 }
