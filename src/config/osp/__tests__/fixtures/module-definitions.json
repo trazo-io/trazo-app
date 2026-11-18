@@ -22236,8 +22236,8 @@
                 "key": "direct_sales_venue_list_upload",
                 "kind": "upload",
                 "label": {
-                  "en": "Or attach your list of direct marketing venues.",
-                  "es": "O adjunta tu lista de lugares de venta directa."
+                  "en": "You can also attach your own list of direct marketing venues.",
+                  "es": "También puedes adjuntar tu propia lista de lugares de venta directa."
                 },
                 "coaching": null,
                 "options": [],
