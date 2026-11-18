@@ -123,10 +123,16 @@ describe('CertifyingAgentPicker', () => {
   it('says so when Trazo carries no register for the picked agent', () => {
     renderPicker();
     fireEvent.change(select(), { target: { value: 'Organic Certifiers, Inc.' } });
-    // Run 8 (R8-12): the packet borrows no agent's numbering for an agent with no register, and
+    // Run 8 (R8-12): the packet maps no document to the forms of an agent with no register, and
     // never says "the content is the same". The line says what the packet's coverage page says.
+    // OV-PK-F05 (overall review 2026-11): it used to say the packet "borrows no agent's form
+    // numbers", while every module file is headed and named with a Common OSP code (G4.1).
     const line = screen.queryByText(/holds no form register for OCI/)?.textContent || '';
-    expect(line).toMatch(/borrows no agent's form numbers/);
+    expect(line).toMatch(/maps none of its documents to OCI's forms/);
+    expect(line).toMatch(
+      /keep their Common OSP codes \(such as G4\.1\), which are not OCI's form numbers/
+    );
+    expect(line).not.toMatch(/borrows no/);
     expect(line).toMatch(/ask OCI which of its forms apply/);
     expect(line).not.toMatch(/CCOF|same/);
   });

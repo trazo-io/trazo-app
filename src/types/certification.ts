@@ -208,7 +208,8 @@ export interface OrganicClaim {
 /**
  * One entry of the certifier picker — `certifying_agents` in certifications/views.py.
  * `own_numbering`: the renewal packet lists its documents against this agent's own form
- * numbers. False means it falls back to the Common OSP (CCOF) numbering and says so.
+ * numbers. False means it maps no document to the agent's forms and says so; the plan sections
+ * keep their Common OSP (CCOF) codes, and the coverage page says whose codes those are.
  */
 export interface CertifyingAgentOption {
   slug: string;

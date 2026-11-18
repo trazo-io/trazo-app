@@ -5,8 +5,9 @@
  *        and a line saying an answer is not a review, approval or readiness for renewal.
  * R8-11  a year already signed or filed offers Create correction, not a second blank form;
  *        superseded revisions fold away; the renewal state sits above the narratives.
- * R8-12  an agent with no form register: the packet borrows no agent's numbering, and the app
- *        says the same thing the packet's coverage page says.
+ * R8-12  an agent with no form register: the packet maps no document to that agent's forms, and
+ *        the app says the same thing the packet's coverage page says. The plan sections keep
+ *        their Common OSP codes, and both say so (overall review 2026-11, OV-PK-F04, OV-PK-F05).
  * R8-26  plan membership is not approval; cleanout photo guidance is about the cleaning.
  * R8-06  "Versións" (an English plural suffix on a Spanish word) and "POS".
  */
@@ -195,6 +196,25 @@ describe('R8-12, R8-26, R8-06: wording', () => {
       expect(v).not.toMatch(/CCOF/);
       expect(v).toMatch(/\{agent\}/);
     }
+  });
+
+  it('every no-register line says the sections keep their Common OSP codes (OV-PK-F04, F05)', () => {
+    // The module files are headed and named G4.1 and the like in every packet, so a line that
+    // said the packet "borrows no agent's form numbers", or that a packet with no agent "is
+    // numbered to CCOF's forms" while its coverage page maps nothing, told the grower the opposite
+    // of what they would download.
+    const keys = [
+      'certifyingAgent.fallbackNumbering',
+      'certifyingAgent.fallbackNumberingOnSave',
+      'osp.agent.none'
+    ];
+    for (const k of keys) {
+      expect(en[k], k).toMatch(/Common OSP codes \(such as G4\.1\)/);
+      expect(en[k], k).not.toMatch(/borrows no|numbered to/);
+      expect(es[k], k).toMatch(/códigos del OSP común \(como G4\.1\)/);
+    }
+    expect(en['osp.agent.none']).toMatch(/maps its documents to no agent's forms/);
+    expect(en['osp.agent.none']).not.toMatch(/CCOF/);
   });
 
   it('plan inputs are a list, never "approved" by being on it', () => {
