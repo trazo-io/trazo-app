@@ -51,6 +51,12 @@ const AcceptInvitation: React.FC = () => {
     skip: !invitationCode
   });
 
+  // What accepting does to the invitee's other memberships, sent only to the signed-in invitee
+  // (back, OV-SEC-C11): the companies they would leave, and those where they are the only Company Admin
+  // of a company with farms. The server refuses the second case; the page says so before the click.
+  const leaving: string[] = invitationDetails?.transfer?.leaves ?? [];
+  const soleAdminOf: string[] = invitationDetails?.transfer?.sole_admin_of ?? [];
+
   // Check invitation details on load
   useEffect(() => {
     if (detailsError) {
@@ -95,7 +101,15 @@ const AcceptInvitation: React.FC = () => {
       // Enhanced error handling with specific messages
       let message = 'Failed to accept invitation';
 
-      if (error?.status === 404) {
+      if (error?.status === 409 && error?.data?.code === 'sole_company_admin') {
+        message = intl.formatMessage(
+          { id: 'auth.invitation.soleAdmin.blocked' },
+          {
+            companies: (error?.data?.companies ?? []).join(', '),
+            count: (error?.data?.companies ?? []).length
+          }
+        );
+      } else if (error?.status === 404) {
         message = 'Invitation not found or has expired';
       } else if (error?.status === 400) {
         message = error?.data?.error || error?.data?.detail || 'Invalid invitation';
@@ -548,6 +562,7 @@ const AcceptInvitation: React.FC = () => {
                 fontWeight="600"
                 borderRadius="xl"
                 isLoading={isAccepting}
+                isDisabled={soleAdminOf.length > 0}
                 loadingText="Accepting invitation..."
                 onClick={handleAcceptInvitation}
                 _hover={{
@@ -607,15 +622,16 @@ const AcceptInvitation: React.FC = () => {
               </Box>
             )}
 
-            {/* Company Transfer Warning */}
-            {isAuthenticated && currentUser?.companies?.length > 0 && (
+            {/* Company transfer: localized, naming what is left behind (OV-SEC-C11). */}
+            {isAuthenticated && (leaving.length > 0 || currentUser?.companies?.length > 0) && (
               <Box
                 bg={useColorModeValue('orange.50', 'orange.900')}
                 borderRadius="xl"
                 p={4}
                 mt={6}
                 border="1px solid"
-                borderColor={useColorModeValue('orange.200', 'orange.700')}>
+                borderColor={useColorModeValue('orange.200', 'orange.700')}
+                data-testid="invitation-transfer">
                 <HStack spacing={3} align="start">
                   <Icon
                     as={FiAlertCircle}
@@ -628,19 +644,50 @@ const AcceptInvitation: React.FC = () => {
                       fontSize="sm"
                       fontWeight="600"
                       color={useColorModeValue('orange.700', 'orange.300')}>
-                      Company Transfer
+                      {intl.formatMessage({
+                        id: 'auth.invitation.transfer.title',
+                        defaultMessage: 'Company transfer'
+                      })}
                     </Text>
                     <Text
                       fontSize="sm"
                       color={useColorModeValue('orange.700', 'orange.300')}
                       lineHeight="1.5">
-                      Accepting this invitation will transfer you from your current company to{' '}
-                      <Text as="span" fontWeight="600">
-                        {invitationDetails?.company_name}
-                      </Text>
-                      . Your account data will be preserved, but you'll lose access to your current
-                      company's data.
+                      {leaving.length > 0
+                        ? intl.formatMessage(
+                            {
+                              id: 'auth.invitation.transfer.bodyNamed',
+                              defaultMessage:
+                                'Accepting moves you to {company}. You leave {leaving} and lose access to {count, plural, one {its} other {their}} records; your account stays as it is.'
+                            },
+                            {
+                              company: invitationDetails?.company_name,
+                              leaving: leaving.join(', '),
+                              count: leaving.length
+                            }
+                          )
+                        : intl.formatMessage(
+                            {
+                              id: 'auth.invitation.transfer.body',
+                              defaultMessage:
+                                'Accepting moves you to {company}. You leave your current company and lose access to its records; your account stays as it is.'
+                            },
+                            { company: invitationDetails?.company_name }
+                          )}
                     </Text>
+                    {soleAdminOf.length > 0 ? (
+                      <Text
+                        fontSize="sm"
+                        fontWeight="600"
+                        color={useColorModeValue('orange.800', 'orange.200')}
+                        lineHeight="1.5"
+                        data-testid="invitation-sole-admin">
+                        {intl.formatMessage(
+                          { id: 'auth.invitation.soleAdmin.blocked' },
+                          { companies: soleAdminOf.join(', '), count: soleAdminOf.length }
+                        )}
+                      </Text>
+                    ) : null}
                   </VStack>
                 </HStack>
               </Box>
