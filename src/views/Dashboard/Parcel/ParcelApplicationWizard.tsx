@@ -14,7 +14,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { formatDateOnly } from 'utils/dateOnly';
 import { backToLabel } from 'utils/backToLabel';
-import { transitionState } from './transitionState';
+import { TransitionCard } from './TransitionCard';
 import CertifiedBranchCard from './CertifiedBranchCard';
 import {
   Badge,
@@ -58,7 +58,6 @@ import { pickText } from 'config/osp/types';
 import type { AnswerValue, ModuleAnswers, ModuleQuestion } from 'config/osp/types';
 import {
   useGetParcelApplicationQuery,
-  useGetParcelTransitionStatusQuery,
   useSaveParcelApplicationMutation
 } from 'store/api/parcelApplicationApi';
 import { useGetOSPsQuery } from 'store/api/ospApi';
@@ -131,79 +130,6 @@ const PAGE_STATUS_CHECK: Record<string, string[]> = {
 };
 
 const DIRECTIONS = ['North', 'South', 'East', 'West'];
-
-const TransitionCard = ({
-  companyId,
-  farmId,
-  parcelId
-}: {
-  companyId: string;
-  farmId: string;
-  parcelId: string;
-}) => {
-  const intl = useIntl();
-  const { data, isLoading } = useGetParcelTransitionStatusQuery({ companyId, farmId, parcelId });
-  if (isLoading) return <StandardPageLoading />;
-  if (!data) return null;
-  // 🔴 2026-08-21 — this read `data.status` and `data.earliest_organic_harvest_date`, neither
-  // of which the endpoint has ever emitted (`TransitionStatus.to_dict` sends `is_eligible`,
-  // `transition_complete_date`, `days_remaining`, `note`). A farm certified continuously for
-  // twenty years opened its Parcel Application and saw its § 205.202(b) status rendered as a
-  // bare "—". Wrong in both directions: an eligible parcel looked unassessed, and a parcel
-  // genuinely in transition would have shown the same dash with no date. Read what is sent.
-  const state = transitionState(data);
-  const eligible = state === 'eligible';
-  const completeDate = data.transition_complete_date;
-  const daysRemaining = data.days_remaining;
-  const note = data.note;
-  // 🔴 2026-09-30 (OSP alignment audit, T21): `is_eligible` is true by ABSENCE of a prohibited
-  // record, so the badge said "Eligible" in green over a parcel with no history and no
-  // declaration. It now states the record, in a neutral colour; eligibility under § 205.202(b)
-  // is the certifying agent's determination, never a Trazo badge. 2026-10-01: "In transition"
-  // needs a running clock (see transitionState).
-  const badgeId = `parcelApp.transition.status.${state}`;
-  return (
-    <Box
-      p={4}
-      bg={eligible ? 'gray.50' : 'amber.50'}
-      borderWidth="1px"
-      borderColor={eligible ? 'gray.200' : 'amber.200'}
-      borderRadius="md">
-      <HStack justify="space-between" mb={2}>
-        <Text fontWeight="semibold" fontSize="sm">
-          {intl.formatMessage({ id: 'parcelApp.transition.computed' })}
-        </Text>
-        <Badge variant={eligible ? 'neutral' : 'warning'} fontSize="11px">
-          {intl.formatMessage({ id: badgeId })}
-        </Badge>
-      </HStack>
-      {/* The recorded completion date shows whenever the server has one, whatever the badge
-          says: a date on record is a fact, and hiding it behind "Not established" lost it. */}
-      {completeDate ? (
-        <Text fontSize="sm" color="gray.700">
-          {intl.formatMessage(
-            { id: 'parcelApp.transition.earliest' },
-            { date: formatDateOnly(completeDate) }
-          )}
-          {typeof daysRemaining === 'number' && daysRemaining > 0
-            ? ` · ${intl.formatMessage(
-                { id: 'parcelApp.transition.daysRemaining' },
-                { days: daysRemaining }
-              )}`
-            : ''}
-        </Text>
-      ) : null}
-      {note ? (
-        <Text fontSize="sm" color="gray.700">
-          {note}
-        </Text>
-      ) : null}
-      <Text fontSize="xs" color="gray.600" mt={1}>
-        {intl.formatMessage({ id: 'parcelApp.transition.liveNote' })}
-      </Text>
-    </Box>
-  );
-};
 
 /**
  * Yes / No / not answered, for a border question the agents ask as Y/N. A checkbox cannot say

@@ -1,3 +1,5 @@
+import { localizeFieldValue } from './fieldDisplayUtils';
+
 /**
  * Professional Area Unit Conversion System for Agricultural Applications
  * Following 2025 agricultural software standards with precise conversion factors
@@ -177,13 +179,18 @@ export function formatAreaForDisplay(
  */
 export function formatAreaWithBothUnits(
   hectares: number,
-  region: keyof typeof REGIONAL_AREA_PREFERENCES = 'GLOBAL'
+  region: keyof typeof REGIONAL_AREA_PREFERENCES = 'GLOBAL',
+  locale?: string
 ): string {
   const config = REGIONAL_AREA_PREFERENCES[region];
   const primary = formatAreaForDisplay(hectares, region);
+  // In the reader's language when a locale is given: a Spanish parcel profile read "12.5 acres
+  // (5.06 hectares)" (recordkeeping checklist run 2026-11-16, VID-07).
+  const say = (value: number | string, unit: string) =>
+    localizeFieldValue(`${value} ${getUnitDisplayName(unit)}`, locale);
 
   if (!config.showBothUnits || !config.secondary) {
-    return `${primary.value} ${getUnitDisplayName(primary.unit)}`;
+    return say(primary.value, primary.unit);
   }
 
   const secondary = {
@@ -191,9 +198,7 @@ export function formatAreaWithBothUnits(
     unit: config.secondary
   };
 
-  return `${primary.value} ${getUnitDisplayName(primary.unit)} (${
-    secondary.value
-  } ${getUnitDisplayName(secondary.unit)})`;
+  return `${say(primary.value, primary.unit)} (${say(secondary.value, secondary.unit)})`;
 }
 
 /**
