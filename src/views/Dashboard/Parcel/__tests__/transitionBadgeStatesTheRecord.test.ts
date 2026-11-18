@@ -17,7 +17,7 @@ import enUS from '../../../../i18n/lang/en-US.json';
 import es419 from '../../../../i18n/lang/es-419.json';
 
 const KEY = 'parcelApp.transition.status.eligible';
-const source = readFileSync(resolve(__dirname, '../ParcelApplicationWizard.tsx'), 'utf8');
+const source = readFileSync(resolve(__dirname, '../TransitionCard.tsx'), 'utf8');
 
 describe('transition card badge', () => {
   it('states the record in both locales, not eligibility', () => {
@@ -32,10 +32,7 @@ describe('transition card badge', () => {
 
   it('does not colour the record as a pass', () => {
     // A green badge over "no record" is the grade moved into the palette.
-    const card = source.slice(
-      source.indexOf('const TransitionCard'),
-      source.indexOf('const BufferEditor')
-    );
+    const card = source.slice(source.indexOf('const TransitionCard'), source.length);
     expect(card).toContain("variant={eligible ? 'neutral' : 'warning'}");
     expect(card).not.toMatch(/eligible \? 'green\.|eligible \? 'brand'/);
   });
@@ -90,11 +87,36 @@ describe('transition card badge', () => {
 
   it('shows a recorded completion date whatever the badge says', () => {
     // A date on record is a fact; it was hidden unless the badge said "In transition".
-    const card = source.slice(
-      source.indexOf('const TransitionCard'),
-      source.indexOf('const BufferEditor')
-    );
+    const card = source.slice(source.indexOf('const TransitionCard'), source.length);
     expect(card).toContain('{completeDate ? (');
     expect(card).not.toContain('inTransition && completeDate');
+  });
+
+  it('prints the completion date in the reader’s language', () => {
+    expect(source).toContain('formatDateOnly(completeDate, intl.locale)');
+  });
+});
+
+describe('the parcel profile shows the transition status (VID-06)', () => {
+  // Recordkeeping checklist run 2026-11-16: the 36-month window and the days remaining were only
+  // on the Parcel Application page, one level below the field history they are computed from.
+  const profile = readFileSync(
+    resolve(__dirname, '../../Dashboard/Parcel/ProfileParcel.tsx'),
+    'utf8'
+  );
+  const wizard = readFileSync(resolve(__dirname, '../ParcelApplicationWizard.tsx'), 'utf8');
+
+  it('renders the shared card in the organic compliance section, before the field history', () => {
+    const start = profile.indexOf("id: 'parcel.section.organicCompliance'");
+    const section = profile.slice(start, profile.indexOf('</StandardSection>', start));
+    expect(section).toMatch(/<TransitionCard[\s\S]*?parcelId=\{parcelId\}/);
+    expect(section.indexOf('<TransitionCard')).toBeLessThan(
+      section.indexOf('<FieldHistorySection')
+    );
+  });
+
+  it('is one component, used by the wizard too', () => {
+    expect(wizard).toContain("import { TransitionCard } from './TransitionCard';");
+    expect(wizard).not.toContain('const TransitionCard');
   });
 });

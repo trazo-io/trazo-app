@@ -222,6 +222,8 @@ export interface TransitionStatus {
   // Inputs whose basis the grower recorded as "not yet confirmed": named, never a block.
   unconfirmed?: TransitionRecord[];
   note?: string;
+  /** What `note` says, as a code the screen words in the reader's language (trazo-back #498). */
+  note_code?: string;
 }
 
 /** '' is "not stated", never "not yet bearing". */
@@ -264,8 +266,13 @@ const parcelApplicationApi = baseApi.injectEndpoints({
         method: 'GET',
         credentials: 'include'
       }),
+      // Computed from the crop-history rows and the landowner affidavits, so an edit to either
+      // refetches it: the parcel profile shows this card right above both sections, under the
+      // line "updates itself as crop-history records change" (review of app #437).
       providesTags: (_r, _e, { parcelId }) => [
-        { type: 'ParcelApplication', id: `transition-${parcelId}` }
+        { type: 'ParcelApplication', id: `transition-${parcelId}` },
+        'ParcelCropHistory',
+        { type: 'LandownerAffidavit', id: 'LIST' }
       ]
     }),
     getParcelApplication: build.query<ParcelApplicationResponse, ParcelArgs>({

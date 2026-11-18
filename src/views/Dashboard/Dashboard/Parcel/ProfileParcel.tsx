@@ -84,6 +84,7 @@ import { StandardImageGallery } from 'components/ImageGallery';
 import { useGetParcelQuery } from 'store/api/productApi';
 import LocationDisclosureSetting from 'components/Parcel/LocationDisclosureSetting';
 import FieldHistorySection from './FieldHistorySection';
+import { TransitionCard } from 'views/Dashboard/Parcel/TransitionCard';
 import AdjoiningLandSection from './AdjoiningLandSection';
 import LandownerAffidavitSection from './LandownerAffidavitSection';
 import ParcelComplianceCard from './ParcelComplianceCard';
@@ -364,7 +365,7 @@ function ProfileParcel(): React.ReactElement {
   const cropLabel = formatDisplayValue(parcel?.primary_crop || parcel?.crop_type);
   // 'US', not 'METRIC'. The ICP is Californian orchards and every certifier form, PUR filing
   // and land record they touch is in acres; the page was leading with hectares.
-  const areaLabel = parcel?.area ? formatAreaWithBothUnits(parcel.area, 'US') : null;
+  const areaLabel = parcel?.area ? formatAreaWithBothUnits(parcel.area, 'US', intl.locale) : null;
 
   return (
     <StandardPage
@@ -540,6 +541,15 @@ function ProfileParcel(): React.ReactElement {
               'The land records your certifier reviews for this field — use history, boundaries and prior management.'
           })}>
           <VStack align="stretch" gap={4} w="100%">
+            {/* The 36-month window and the days remaining, here beside the field history they
+                are computed from, not only inside the Parcel Application (VID-06). */}
+            {parcelId && currentCompany?.id && farmId && (
+              <TransitionCard
+                companyId={String(currentCompany.id)}
+                farmId={farmId}
+                parcelId={parcelId}
+              />
+            )}
             {parcelId && <FieldHistorySection parcelId={parcelId} canWrite={canWrite} />}
 
             {parcelId && currentCompany?.id && farmId && (
