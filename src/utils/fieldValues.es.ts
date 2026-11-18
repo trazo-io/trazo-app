@@ -250,6 +250,8 @@ export const FIELD_VALUE_ES: Record<string, string> = {
   'N/A (composted or none)': 'N/D (compostado o ninguno)',
   // Unit words after a quantity ("6.64 hectares"), singular for exactly one (VID-07).
   acre: 'acre',
+  inch: 'pulgada',
+  ton: 'tonelada',
   hectares: 'hectáreas',
   hectare: 'hectárea',
   gallons: 'galones',

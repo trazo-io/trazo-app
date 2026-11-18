@@ -704,7 +704,8 @@ export function localizeFieldValue(
   }
   // "<number> <unit>" technical counts (e.g. monitoring "5 per leaf") — translate a KNOWN unit
   // suffix; unknown suffixes (farmer free-text like "5000 eggs/acre") pass through unchanged.
-  const um = str.match(/^(\d+(?:\.\d+)?)\s+(.+)$/);
+  // Thousands separators too ("1,250 gallons"), which the formatters print for large quantities.
+  const um = str.match(/^(\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)\s+(.+)$/);
   if (um) {
     const unitEs = FIELD_VALUE_ES[um[2]];
     if (unitEs) return `${um[1]} ${unitEs}`;

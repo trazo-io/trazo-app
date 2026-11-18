@@ -13,6 +13,7 @@ import { describe, expect, it } from 'vitest';
 import es419 from '../lang/es-419.json';
 import { makeUnitPairFormatter } from 'config/events/formatters';
 import { localizeFieldValue } from 'utils/fieldDisplayUtils';
+import { formatDateFromTimestamp } from 'utils/dateOnly';
 
 const ES = es419 as Record<string, string>;
 const read = (p: string) => readFileSync(resolve(__dirname, '../..', p), 'utf8');
@@ -30,16 +31,19 @@ describe('registry values read in Spanish on the review step', () => {
     expect(localizeFieldValue('Feb 2019', 'es-419')).toBe('feb 2019');
   });
 
-  it('translates a unit word after a quantity', () => {
+  it('translates a unit word after a quantity, thousands separators included', () => {
     expect(localizeFieldValue('6.64 hectares', 'es-419')).toBe('6.64 hectáreas');
-    expect(localizeFieldValue('12 gallons', 'es-419')).toBe('12 galones');
+    expect(localizeFieldValue('1,250 gallons', 'es-419')).toBe('1,250 galones');
   });
 
-  it('says one of a unit in the singular', () => {
+  it('says one of a stored unit in the singular, judged on the printed number', () => {
     const area = makeUnitPairFormatter('area_unit');
     expect(area(1, { area_unit: 'acres' })).toBe('1 acre');
+    expect(area(1.004, { area_unit: 'acres' })).toBe('1 acre');
     expect(area(2, { area_unit: 'acres' })).toBe('2 acres');
-    expect(area(1, { area_unit: 'hectares' })).toBe('1 hectare');
+    const depth = makeUnitPairFormatter('depth_unit');
+    expect(depth(1, { depth_unit: 'inches' })).toBe('1 inch');
+    expect(localizeFieldValue('1 inch', 'es-419')).toBe('1 pulgada');
   });
 });
 
@@ -50,12 +54,17 @@ describe('dates and labels around the activity form', () => {
     const body = src.slice(start, src.indexOf('};', start));
     expect(body).toMatch(/formatDateOnly\(s, intl\.locale\)/);
     expect(body).toMatch(/formatDateFromTimestamp\(s, intl\.locale\)/);
-    expect(body).not.toMatch(/toLocaleDateString\(\)/);
+    expect(body).not.toMatch(/toLocaleDateString\(/);
+  });
+
+  it('reads a season end stored as a UTC datetime as the day the grower typed', () => {
+    expect(formatDateFromTimestamp('2026-07-12T01:00:00Z', 'es-419')).toBe('12 jul 2026');
   });
 
   it('labels the field history save button in the reader’s language', () => {
     const src = read('views/Dashboard/Dashboard/Parcel/FieldHistorySection.tsx');
-    expect(src).not.toMatch(/'Update' : 'Save'/);
+    expect(src).not.toMatch(/['"]Update['"]|['"]Save['"]/);
+    expect(src).toMatch(/editingId \? 'parcel\.fieldHistory\.update' : 'app\.save'/);
     expect(ES['parcel.fieldHistory.update']).toBe('Actualizar');
   });
 
