@@ -129,6 +129,8 @@ import {
   verbForKey
 } from 'config/activityVerbs';
 import { formatFieldValue, getFieldConfig, getSubtypes } from 'config/events';
+import { fieldErrorLine } from 'utils/apiErrorMessage';
+import { soilFormLabelKey } from 'config/events/soilFormLabels';
 import {
   dateAfterUntick,
   dayWithoutTime,
@@ -3626,9 +3628,20 @@ function NewEventForm({ isEdit = false, eventId = null }) {
       // Parse DRF field validation errors: {"field": ["error message"]}
       let fieldErrors = '';
       if (!apiErrorMessage && error?.data && typeof error.data === 'object') {
+        // Each field by its label on this form, never the API's key (VID-08: the grower read
+        // "manure_harvest_interval: ..." on a refused save).
+        // The soil form words some fields its own way; say the one the grower saw (review of
+        // app #435), then the registry's.
+        const labelOf = (field) => {
+          const labelKey =
+            (Number(activeEventType) === 5 ? soilFormLabelKey(field, eventFormData.type) : null) ||
+            getFieldConfig(activeEventType, field)?.labelKey;
+          return labelKey ? intl.formatMessage({ id: labelKey }) : null;
+        };
         const fieldEntries = Object.entries(error.data)
           .filter(([, v]) => Array.isArray(v))
-          .map(([field, msgs]) => `${field}: ${msgs.join(', ')}`);
+          .map(([field, msgs]) => fieldErrorLine(field, msgs.join(', '), labelOf))
+          .filter(Boolean);
         if (fieldEntries.length > 0) {
           fieldErrors = fieldEntries.join('; ');
         }
