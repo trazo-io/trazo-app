@@ -289,6 +289,14 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
     }
   };
 
+  // The category in the reader's language, from its code: the same keys the form's select uses.
+  // `change_category_display` is the backend's English label, so on es-419 every row was titled
+  // in English (2026-11-17). An unknown code keeps the backend label rather than a raw key.
+  const categoryLabel = (cn: { change_category: string; change_category_display: string }) => {
+    const id = `osp.changeNotifications.category.${cn.change_category}`;
+    return intl.messages[id] ? intl.formatMessage({ id }) : cn.change_category_display;
+  };
+
   // `mt` was dropped by StandardCard for years (fixed prop list, no rest-spread) and the note
   // here recorded that. The prop now exists; spacing still comes from the preceding card's
   // `mb`, so none is passed.
@@ -323,7 +331,7 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
                 key={cn.id}
                 tone={cn.is_immediate ? 'crit' : 'neutral'}
                 icon={cn.is_immediate ? FaExclamationTriangle : FaExchangeAlt}
-                title={cn.change_category_display}
+                title={categoryLabel(cn)}
                 testId="change-notification-row"
                 badge={
                   <HStack spacing={2} flexWrap="wrap">
