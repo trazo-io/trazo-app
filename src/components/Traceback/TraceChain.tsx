@@ -33,6 +33,18 @@ import {
 } from 'components/Design/StandardComponents';
 import OnHandByLocation from './OnHandByLocation';
 
+/** The readings the trace card words (trazo-back `BALANCE_READINGS`, minus `open_unsold`, which
+ *  the season-open line already says). An unknown code prints nothing rather than a raw key. */
+export const BALANCE_READINGS = new Set([
+  'balanced',
+  'balanced_packed',
+  'packout_below_harvest',
+  'packed_not_sold',
+  'sales_exceed_packout',
+  'unaccounted',
+  'sales_exceed_harvest'
+]);
+
 export type TraceGap = {
   hop: string;
   code: string;
@@ -566,6 +578,17 @@ export const TraceChain = ({
             <Fact label={t('traceback.balance.packedOut')} value={tb.balance.packed_out} />
             <Fact label={t('traceback.balance.sold')} value={tb.balance.sold} />
             <Fact label={t('traceback.balance.difference')} value={tb.balance.difference} />
+            {/* What the figures say, decided by trazo-back `balance_reading`, the function behind
+                the exhibit's own sentence. The four figures alone left a packed crop's pack-out
+                gap reading as product unaccounted for (recordkeeping checklist run 2026-11-16,
+                VID-10). An open season is said by the line above. */}
+            {BALANCE_READINGS.has(tb.balance.reading) && (
+              <Text fontSize="sm" mt={2} color="gray.700" data-testid="trace-balance-reading">
+                {t(`traceback.balance.reading.${tb.balance.reading}`, {
+                  quantity: tb.balance.reading_quantity
+                })}
+              </Text>
+            )}
           </>
         )}
         {/* Inside "sold", named: a sale whose invoice does not say organic still left the lot
