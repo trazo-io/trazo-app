@@ -23,6 +23,8 @@ const ALLOWED: Record<string, string> = {
     'a nesting structure ("native-bee blocks"), not land',
   'events.soil.options.habitatType.nativeBeeBlock':
     'the same nesting structure, as the form option that records it',
+  'events.soil.form.desc.documentInstalledWildlifeStructuresBarnOwl':
+    'the same nesting structure, listed in the wildlife-structures section of the soil form',
   'education.detail.inspectionPrep.mapAnswer':
     "quotes the certifier's own map checklist (block identifiers)",
   'parcelApp.map.uploadHint': "quotes the certifier's own map checklist (block or lot identifiers)",

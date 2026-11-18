@@ -10,7 +10,12 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { apiErrorMessage, apiErrorStatus } from '../apiErrorMessage';
+import {
+  apiErrorMessage,
+  apiErrorStatus,
+  fieldErrorLine,
+  readableFieldName
+} from '../apiErrorMessage';
 
 const LOCKED_PLAN =
   'This plan is approved and active, so its answers are locked — it is the record ' +
@@ -38,11 +43,24 @@ describe('apiErrorMessage', () => {
     expect(apiErrorMessage({ data: { status: 'second', detail: 'first' } })).toBe('first');
   });
 
-  it('names the field for a per-field serializer error', () => {
-    // "This field is required." alone does not say WHICH field.
+  it('names the field for a per-field serializer error, in words, never the API key', () => {
+    // "This field is required." alone does not say WHICH field; "renewal_date:" is not a word a
+    // grower uses (recordkeeping checklist run 2026-11-16, VID-08).
     expect(apiErrorMessage({ data: { renewal_date: ['This field is required.'] } })).toBe(
-      'renewal_date: This field is required.'
+      'Renewal date: This field is required.'
     );
+  });
+
+  it("uses the caller's label for the field when it knows one", () => {
+    const labelOf = (f: string) =>
+      f === 'manure_harvest_interval' ? 'Intervalo estiércol-cosecha' : null;
+    expect(
+      apiErrorMessage(
+        { data: { manure_harvest_interval: ['Elige 120 días.'], other_field: ['x'] } },
+        [],
+        labelOf
+      )
+    ).toBe('Intervalo estiércol-cosecha: Elige 120 días. Other field: x');
   });
 
   it('joins multiple messages under one key', () => {
@@ -53,7 +71,7 @@ describe('apiErrorMessage', () => {
     // The wizard lists `missing` as question LABELS, so the raw keys must not repeat.
     const payload = { data: { missing: ['q_a'], complete: 'Required questions are unanswered.' } };
     expect(apiErrorMessage(payload, ['missing'])).toBe(
-      'complete: Required questions are unanswered.'
+      'Complete: Required questions are unanswered.'
     );
   });
 
@@ -85,5 +103,19 @@ describe('apiErrorStatus', () => {
   it('returns null for RTK Query string statuses', () => {
     expect(apiErrorStatus({ status: 'FETCH_ERROR' })).toBeNull();
     expect(apiErrorStatus(undefined)).toBeNull();
+  });
+});
+
+describe('fieldErrorLine', () => {
+  it('says nothing when there is no message', () => {
+    expect(fieldErrorLine('notes', '')).toBe('');
+  });
+
+  it('never prints a snake_case or dotted key as it is', () => {
+    expect(readableFieldName('manure_harvest_interval')).toBe('Manure harvest interval');
+    expect(readableFieldName('tank_lines.0.product')).toBe('Tank lines 0 product');
+    expect(fieldErrorLine('manure_harvest_interval', 'Too short.')).toBe(
+      'Manure harvest interval: Too short.'
+    );
   });
 });

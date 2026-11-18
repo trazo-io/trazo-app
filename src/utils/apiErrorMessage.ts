@@ -28,6 +28,26 @@ const flatten = (value: unknown): string => {
   return String(value);
 };
 
+/** The label a caller gives a payload key, or null when it has none. */
+export type FieldLabelOf = (field: string) => string | null | undefined;
+
+/**
+ * "manure_harvest_interval" as words ("Manure harvest interval"), for a field no label is
+ * known for. The API's key is never shown as it is: a grower read "manure_harvest_interval:
+ * Blueberries: ..." on a refused save (recordkeeping checklist run 2026-11-16, VID-08).
+ */
+export const readableFieldName = (field: string): string => {
+  const words = field.replace(/[_.]+/g, ' ').trim();
+  return words ? words.charAt(0).toUpperCase() + words.slice(1) : field;
+};
+
+/** One field's error as "<label>: <message>", "" when there is no message. */
+export const fieldErrorLine = (field: string, message: string, labelOf?: FieldLabelOf): string => {
+  if (!message) return '';
+  const label = labelOf?.(field) || readableFieldName(field);
+  return `${label}: ${message}`;
+};
+
 /**
  * The human-readable message inside an RTK Query error, or `null` when there
  * is none. Null — never `String(err)` — because a transport failure (offline,
@@ -37,8 +57,14 @@ const flatten = (value: unknown): string => {
  * @param skipKeys payload keys the caller renders itself (e.g. `missing`,
  *   which the OSP wizard already lists field by field) and so should not
  *   repeat in the toast description.
+ * @param labelOf the field's label in the reader's language, when the caller
+ *   knows its form (`fieldErrorLine`).
  */
-export const apiErrorMessage = (err: unknown, skipKeys: string[] = []): string | null => {
+export const apiErrorMessage = (
+  err: unknown,
+  skipKeys: string[] = [],
+  labelOf?: FieldLabelOf
+): string | null => {
   const payload = (err as { data?: unknown })?.data;
   if (typeof payload === 'string') return payload.trim() || null;
   if (!payload || typeof payload !== 'object') return null;
@@ -52,14 +78,11 @@ export const apiErrorMessage = (err: unknown, skipKeys: string[] = []): string |
     if (text) return text;
   }
 
-  // Field errors: prefix each with its field name, since "This field is
-  // required." alone does not say which field.
+  // Field errors: prefix each with its field, since "This field is required."
+  // alone does not say which field.
   const rest = Object.entries(record)
     .filter(([key]) => !skip.has(key) && !(PREFERRED_KEYS as readonly string[]).includes(key))
-    .map(([key, value]) => {
-      const text = flatten(value).trim();
-      return text ? `${key}: ${text}` : '';
-    })
+    .map(([key, value]) => fieldErrorLine(key, flatten(value).trim(), labelOf))
     .filter(Boolean);
 
   return rest.length ? rest.join(' ') : null;

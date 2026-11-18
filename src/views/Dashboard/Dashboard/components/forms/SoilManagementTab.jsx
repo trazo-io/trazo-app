@@ -1217,7 +1217,9 @@ const SoilManagementTab = forwardRef(
                     helpText={intl.formatMessage({ id: 'events.soil.fields.nameHelp' })}>
                     <StandardInput
                       type="text"
-                      placeholder="e.g., Spring Tillage - North Field"
+                      placeholder={intl.formatMessage({
+                        id: 'events.soil.form.placeholder.eGSpringTillageNorthField'
+                      })}
                       {...register('name')}
                     />
                   </StandardField>
@@ -1231,8 +1233,8 @@ const SoilManagementTab = forwardRef(
                         multiTarget
                           ? intl.formatMessage({ id: 'events.multiParcel.areaUnitLabel' })
                           : soilAreaIsOptional(watch('type'))
-                          ? 'Area Covered (optional)'
-                          : 'Area Covered'
+                          ? intl.formatMessage({ id: 'events.soil.form.label.areaCoveredOptional' })
+                          : intl.formatMessage({ id: 'events.soil.form.label.areaCovered' })
                       }
                       helpText={
                         multiTarget
@@ -1272,7 +1274,8 @@ const SoilManagementTab = forwardRef(
                         "working depth" for livestock grazing, hedgerows, or nesting boxes. Leaves
                         Working Depth on ST (sampling depth) and TI (tillage depth) only. */}
                   {!['PA', 'OM', 'CC', 'CO', 'GR', 'HD', 'NS'].includes(watch('type')) && (
-                    <StandardField label="Working Depth">
+                    <StandardField
+                      label={intl.formatMessage({ id: 'events.soil.form.label.workingDepth' })}>
                       <HStack spacing={2}>
                         <StandardInput
                           flex={2}
@@ -1319,8 +1322,10 @@ const SoilManagementTab = forwardRef(
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                     {/* Phase 3: Fuel Type Selector */}
                     <StandardField
-                      label="Fuel Type"
-                      helpText="Select a fuel type only if powered equipment was used. Leave blank for hand/manual operations.">
+                      label={intl.formatMessage({ id: 'events.soil.form.label.fuelType' })}
+                      helpText={intl.formatMessage({
+                        id: 'events.soil.form.help.selectAFuelTypeOnlyIf'
+                      })}>
                       <StandardSelect
                         placeholder={intl.formatMessage({
                           id: 'events.chemical.form.fuelTypePlaceholder'
@@ -1339,15 +1344,17 @@ const SoilManagementTab = forwardRef(
                         multiTarget
                           ? intl.formatMessage({ id: 'events.multiParcel.fuelUnitLabel' })
                           : watch('fuel_type') === 'electric'
-                          ? 'Energy Amount (kWh)'
-                          : 'Fuel Consumed'
+                          ? intl.formatMessage({ id: 'events.soil.form.label.energyAmountKwh' })
+                          : intl.formatMessage({ id: 'events.soil.form.label.fuelConsumed' })
                       }
                       helpText={
                         multiTarget
                           ? intl.formatMessage({ id: 'events.multiParcel.fuelUnitHelp' })
                           : watch('fuel_type') === 'electric'
-                          ? 'Energy consumption for carbon emission calculation'
-                          : 'Total fuel used for soil management equipment'
+                          ? intl.formatMessage({
+                              id: 'events.soil.form.help.energyConsumptionForCarbon'
+                            })
+                          : intl.formatMessage({ id: 'events.soil.form.help.totalFuelUsedForSoil' })
                       }>
                       <HStack spacing={2}>
                         {!multiTarget && (
@@ -1356,7 +1363,12 @@ const SoilManagementTab = forwardRef(
                             type="number"
                             step="0.1"
                             placeholder={
-                              watch('fuel_type') === 'electric' ? 'e.g., 15 kWh' : '15.5'
+                              watch('fuel_type') === 'electric'
+                                ? intl.formatMessage(
+                                    { id: 'events.soil.form.example' },
+                                    { value: '15 kWh' }
+                                  )
+                                : '15.5'
                             }
                             {...register('fuel_consumed')}
                           />
@@ -1380,8 +1392,10 @@ const SoilManagementTab = forwardRef(
 
                     {!multiTarget && (
                       <StandardField
-                        label="Equipment Hours"
-                        helpText="Total equipment operating time">
+                        label={intl.formatMessage({ id: 'events.soil.form.label.equipmentHours' })}
+                        helpText={intl.formatMessage({
+                          id: 'events.soil.form.help.totalEquipmentOperatingTime'
+                        })}>
                         <StandardInput
                           type="number"
                           step="0.1"
@@ -1413,11 +1427,15 @@ const SoilManagementTab = forwardRef(
                     </StandardField>
 
                     <StandardField
-                      label="Equipment Used"
-                      helpText="Equipment used for this operation">
+                      label={intl.formatMessage({ id: 'events.soil.form.label.equipmentUsed' })}
+                      helpText={intl.formatMessage({
+                        id: 'events.soil.form.help.equipmentUsedForThisOperation'
+                      })}>
                       <StandardInput
                         type="text"
-                        placeholder="e.g., tractor with disc harrow, soil auger"
+                        placeholder={intl.formatMessage({
+                          id: 'events.soil.form.placeholder.eGTractorWithDiscHarrow'
+                        })}
                         {...register('equipment_used')}
                       />
                     </StandardField>
@@ -1427,8 +1445,12 @@ const SoilManagementTab = forwardRef(
                     <Box mt={3}>
                       <StandardAlert
                         status="info"
-                        title="Electric Equipment"
-                        description="Enter energy consumption in kilowatt-hours (kWh). Grid electricity uses 0.365 kg CO₂e/kWh. Solar/wind powered equipment has zero emissions."
+                        title={intl.formatMessage({
+                          id: 'events.soil.form.title.electricEquipment'
+                        })}
+                        description={intl.formatMessage({
+                          id: 'events.soil.form.desc.enterEnergyConsumptionInKilowattHours'
+                        })}
                       />
                     </Box>
                   )}
@@ -1451,10 +1473,16 @@ const SoilManagementTab = forwardRef(
                     icon={FaSeedling}
                     title={intl.formatMessage({ id: 'events.section.soil.amendment' })}
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
-                    description="Document lime or soil amendment application for accurate carbon emissions calculation using IPCC 2006 methodology."
+                    description={intl.formatMessage({
+                      id: 'events.soil.form.desc.documentLimeOrSoilAmendmentApplication'
+                    })}
                   />{' '}
                   <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-                    <StandardField label="Amendment Type" helpText="Type of soil amendment applied">
+                    <StandardField
+                      label={intl.formatMessage({ id: 'events.soil.form.label.amendmentType' })}
+                      helpText={intl.formatMessage({
+                        id: 'events.soil.form.help.typeOfSoilAmendmentApplied'
+                      })}>
                       <StandardSelect
                         placeholder={intl.formatMessage({
                           id: 'events.soil.placeholders.amendmentType'
@@ -1583,12 +1611,14 @@ const SoilManagementTab = forwardRef(
                       label={
                         multiTarget
                           ? intl.formatMessage({ id: 'events.multiParcel.amountUnitLabel' })
-                          : 'Amendment Amount'
+                          : intl.formatMessage({ id: 'events.soil.form.label.amendmentAmount' })
                       }
                       helpText={
                         multiTarget
                           ? intl.formatMessage({ id: 'events.multiParcel.amountUnitHelp' })
-                          : 'Total quantity of amendment applied'
+                          : intl.formatMessage({
+                              id: 'events.soil.form.help.totalQuantityOfAmendmentApplied'
+                            })
                       }>
                       <HStack spacing={2}>
                         {!multiTarget && (
@@ -1618,8 +1648,10 @@ const SoilManagementTab = forwardRef(
                     </StandardField>
 
                     <StandardField
-                      label="Application Depth"
-                      helpText="Depth of amendment incorporation">
+                      label={intl.formatMessage({ id: 'events.soil.form.label.applicationDepth' })}
+                      helpText={intl.formatMessage({
+                        id: 'events.soil.form.help.depthOfAmendmentIncorporation'
+                      })}>
                       <HStack spacing={2}>
                         <StandardInput
                           flex={2}
@@ -1682,7 +1714,10 @@ const SoilManagementTab = forwardRef(
                           'Points your inspector at the paper record without you digging for it.'
                       })}>
                       <StandardInput
-                        placeholder="e.g., INV-20614"
+                        placeholder={intl.formatMessage(
+                          { id: 'events.soil.form.example' },
+                          { value: 'INV-20614' }
+                        )}
                         {...register('amendment_purchase_invoice')}
                       />
                     </StandardField>
@@ -1745,7 +1780,10 @@ const SoilManagementTab = forwardRef(
                         defaultMessage: 'From the bag, tote or delivery ticket.'
                       })}>
                       <StandardInput
-                        placeholder="e.g., LOT-CVC-8841"
+                        placeholder={intl.formatMessage(
+                          { id: 'events.soil.form.example' },
+                          { value: 'LOT-CVC-8841' }
+                        )}
                         {...register('amendment_lot_number')}
                       />
                     </StandardField>
@@ -1753,8 +1791,12 @@ const SoilManagementTab = forwardRef(
                   <Box mt={3}>
                     <StandardAlert
                       status="info"
-                      title="IPCC 2006 Lime Dissolution Methodology"
-                      description="Carbon emissions from lime application are calculated using IPCC 2006 guidelines. Limestone (CaCO₃) releases 0.44 kg CO₂ per kg applied, while dolomite releases 0.477 kg CO₂ per kg. Gypsum and organic amendments do not directly release CO₂."
+                      title={intl.formatMessage({
+                        id: 'events.soil.form.title.ipcc2006LimeDissolutionMethodology'
+                      })}
+                      description={intl.formatMessage({
+                        id: 'events.soil.form.desc.carbonEmissionsFromLimeApplicationAre'
+                      })}
                     />
                   </Box>
                 </SectionBox>
@@ -1897,7 +1939,10 @@ const SoilManagementTab = forwardRef(
                           step="0.01"
                           min="0"
                           max="100"
-                          placeholder="e.g., 1.0"
+                          placeholder={intl.formatMessage(
+                            { id: 'events.soil.form.example' },
+                            { value: '1.0' }
+                          )}
                           {...register('amendment_nitrogen_percentage')}
                         />
                       </StandardField>
@@ -1909,13 +1954,19 @@ const SoilManagementTab = forwardRef(
                     <>
                       <StandardAlert
                         status="info"
-                        title="Compost Process Requirements (7 CFR 205.203(c)(2))"
-                        description="Initial C:N must be 25:1–40:1. Temp must reach 131–170°F. Windrow requires 15+ days at temp with 5+ turnings; static aerated / in-vessel require 3+ days at temp. C:N outside range disqualifies the pile as NOP compost — it reverts to raw manure under (c)(1)."
+                        title={intl.formatMessage({
+                          id: 'events.soil.form.title.compostProcessRequirements7Cfr205'
+                        })}
+                        description={intl.formatMessage({
+                          id: 'events.soil.form.desc.initialCNMustBe25'
+                        })}
                       />
                       <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mt={4}>
                         <StandardField
-                          label="Compost Method"
-                          helpText="Determines required duration/turnings (7 CFR 205.203(c)(2))">
+                          label={intl.formatMessage({ id: 'events.soil.form.label.compostMethod' })}
+                          helpText={intl.formatMessage({
+                            id: 'events.soil.form.help.determinesRequiredDurationTurnings7Cfr'
+                          })}>
                           <StandardSelect
                             placeholder={intl.formatMessage({
                               id: 'events.soil.placeholders.compostMethod'
@@ -1933,52 +1984,80 @@ const SoilManagementTab = forwardRef(
                           </StandardSelect>
                         </StandardField>
                         <StandardField
-                          label="Initial C:N Ratio"
-                          helpText="Carbon-to-nitrogen ratio at start — NOP requires 25:1–40:1">
+                          label={intl.formatMessage({
+                            id: 'events.soil.form.label.initialCNRatio'
+                          })}
+                          helpText={intl.formatMessage({
+                            id: 'events.soil.form.help.carbonToNitrogenRatioAtStart'
+                          })}>
                           <StandardInput
                             type="number"
                             min="0"
                             max="999"
                             step="0.1"
-                            placeholder="e.g., 30"
+                            placeholder={intl.formatMessage(
+                              { id: 'events.soil.form.example' },
+                              { value: '30' }
+                            )}
                             {...register('compost_initial_cn_ratio')}
                           />
                         </StandardField>
                       </SimpleGrid>
                       <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4} mt={4}>
                         <StandardField
-                          label="Peak Temperature (°F)"
-                          helpText="Highest temperature reached (131–170°F required)">
+                          label={intl.formatMessage({
+                            id: 'events.soil.form.label.peakTemperatureF'
+                          })}
+                          helpText={intl.formatMessage({
+                            id: 'events.soil.form.help.highestTemperatureReached131170F'
+                          })}>
                           <StandardInput
                             type="number"
                             min="0"
                             max="250"
                             step="1"
-                            placeholder="e.g., 158"
+                            placeholder={intl.formatMessage(
+                              { id: 'events.soil.form.example' },
+                              { value: '158' }
+                            )}
                             {...register('compost_peak_temp_f')}
                           />
                         </StandardField>
                         <StandardField
-                          label="Days at Temperature"
-                          helpText="Windrow: 15+ · Static/in-vessel: 3+">
+                          label={intl.formatMessage({
+                            id: 'events.soil.form.label.daysAtTemperature'
+                          })}
+                          helpText={intl.formatMessage({
+                            id: 'events.soil.form.help.windrow15StaticInVessel3'
+                          })}>
                           <StandardInput
                             type="number"
                             min="0"
                             max="365"
                             step="1"
-                            placeholder="e.g., 21"
+                            placeholder={intl.formatMessage(
+                              { id: 'events.soil.form.example' },
+                              { value: '21' }
+                            )}
                             {...register('compost_duration_days_at_temp')}
                           />
                         </StandardField>
                         <StandardField
-                          label="Number of Turnings"
-                          helpText="Windrow only: 5+ turnings">
+                          label={intl.formatMessage({
+                            id: 'events.soil.form.label.numberOfTurnings'
+                          })}
+                          helpText={intl.formatMessage({
+                            id: 'events.soil.form.help.windrowOnly5Turnings'
+                          })}>
                           <StandardInput
                             type="number"
                             min="0"
                             max="100"
                             step="1"
-                            placeholder="e.g., 7"
+                            placeholder={intl.formatMessage(
+                              { id: 'events.soil.form.example' },
+                              { value: '7' }
+                            )}
                             {...register('compost_turning_count')}
                           />
                         </StandardField>
@@ -1997,7 +2076,9 @@ const SoilManagementTab = forwardRef(
                           defaultMessage: 'What the compost is made of — NOP 5021 source record'
                         })}>
                         <StandardInput
-                          placeholder="e.g., horse manure + straw + green waste"
+                          placeholder={intl.formatMessage({
+                            id: 'events.soil.form.placeholder.eGHorseManureStrawGreen'
+                          })}
                           {...register('compost_feedstock')}
                         />
                       </StandardField>
@@ -2016,7 +2097,9 @@ const SoilManagementTab = forwardRef(
                           defaultMessage: 'Which pile, windrow or vessel these readings belong to'
                         })}>
                         <StandardInput
-                          placeholder="e.g., Windrow 3"
+                          placeholder={intl.formatMessage({
+                            id: 'events.soil.form.placeholder.eGWindrow3'
+                          })}
                           {...register('compost_unit_id')}
                         />
                       </StandardField>
@@ -2031,7 +2114,9 @@ const SoilManagementTab = forwardRef(
                             'Where and how you take the reading — a surface reading and a core reading on the same pile disagree'
                         })}>
                         <StandardInput
-                          placeholder="e.g., probe at 36 in depth, mid-windrow"
+                          placeholder={intl.formatMessage({
+                            id: 'events.soil.form.placeholder.eGProbeAt36In'
+                          })}
                           {...register('compost_temp_reading_method')}
                         />
                       </StandardField>
@@ -2074,13 +2159,21 @@ const SoilManagementTab = forwardRef(
                     <>
                       <StandardAlert
                         status="warning"
-                        title="Raw Manure Harvest Interval (7 CFR 205.203(c)(1))"
-                        description="Raw manure: 120 days pre-harvest if edible portion contacts soil, 90 days otherwise. N/A if manure is composted."
+                        title={intl.formatMessage({
+                          id: 'events.soil.form.title.rawManureHarvestInterval7Cfr'
+                        })}
+                        description={intl.formatMessage({
+                          id: 'events.soil.form.desc.rawManure120DaysPreHarvest'
+                        })}
                       />
                       <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mt={4}>
                         <StandardField
-                          label="Manure Harvest Interval"
-                          helpText="Required wait period before harvest">
+                          label={intl.formatMessage({
+                            id: 'events.soil.form.label.manureHarvestInterval'
+                          })}
+                          helpText={intl.formatMessage({
+                            id: 'events.soil.form.help.requiredWaitPeriodBeforeHarvest'
+                          })}>
                           <StandardSelect
                             placeholder={intl.formatMessage({
                               id: 'events.soil.placeholders.manureHarvestInterval'
@@ -2248,8 +2341,12 @@ const SoilManagementTab = forwardRef(
                       {watch('type') !== 'GR' && (
                         <>
                           <StandardField
-                            label="Manure Treatment (NOP 5006)"
-                            helpText="Raw manure follows the 90/120-day interval. Composted (c)(2) and processed (NOP 5006) manure are interval-exempt when documented."
+                            label={intl.formatMessage({
+                              id: 'events.soil.form.label.manureTreatmentNop5006'
+                            })}
+                            helpText={intl.formatMessage({
+                              id: 'events.soil.form.help.rawManureFollowsThe90120'
+                            })}
                             mt={4}>
                             <StandardSelect
                               placeholder={intl.formatMessage({
@@ -2272,20 +2369,33 @@ const SoilManagementTab = forwardRef(
                           {watch('manure_treatment') === 'processed_5006' && (
                             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mt={4}>
                               <StandardField
-                                label="Processing Temperature (°F)"
-                                helpText="Peak temperature reached for pathogen reduction">
+                                label={intl.formatMessage({
+                                  id: 'events.soil.form.label.processingTemperatureF'
+                                })}
+                                helpText={intl.formatMessage({
+                                  id: 'events.soil.form.help.peakTemperatureReachedForPathogenReduction'
+                                })}>
                                 <StandardInput
                                   type="number"
                                   step="0.1"
-                                  placeholder="e.g., 150"
+                                  placeholder={intl.formatMessage(
+                                    { id: 'events.soil.form.example' },
+                                    { value: '150' }
+                                  )}
                                   {...register('processed_manure_temp_f')}
                                 />
                               </StandardField>
                               <StandardField
-                                label="Processing Attestation"
-                                helpText="OMRI / supplier documentation basis for the exemption">
+                                label={intl.formatMessage({
+                                  id: 'events.soil.form.label.processingAttestation'
+                                })}
+                                helpText={intl.formatMessage({
+                                  id: 'events.soil.form.help.omriSupplierDocumentationBasisForThe'
+                                })}>
                                 <StandardInput
-                                  placeholder="e.g., OMRI-listed heat-processed poultry pellets, PFRP"
+                                  placeholder={intl.formatMessage({
+                                    id: 'events.soil.form.placeholder.eGOmriListedHeatProcessed'
+                                  })}
                                   {...register('processed_manure_attestation')}
                                 />
                               </StandardField>
@@ -2317,7 +2427,9 @@ const SoilManagementTab = forwardRef(
                       <>
                         <StandardField
                           label={intl.formatMessage({ id: 'app.soilPH' }) || 'Soil pH'}
-                          helpText="pH affects nutrient availability">
+                          helpText={intl.formatMessage({
+                            id: 'events.soil.form.help.phAffectsNutrientAvailability'
+                          })}>
                           <StandardInput
                             type="number"
                             min="0"
@@ -2333,7 +2445,9 @@ const SoilManagementTab = forwardRef(
                             intl.formatMessage({ id: 'app.organicMatterPercentage' }) ||
                             'Organic Matter (%)'
                           }
-                          helpText="Higher organic matter improves soil carbon">
+                          helpText={intl.formatMessage({
+                            id: 'events.soil.form.help.higherOrganicMatterImprovesSoilCarbon'
+                          })}>
                           <StandardInput
                             type="number"
                             min="0"
@@ -2347,8 +2461,10 @@ const SoilManagementTab = forwardRef(
                     )}
 
                     <StandardField
-                      label="Soil Texture"
-                      helpText="Soil type affects carbon retention">
+                      label={intl.formatMessage({ id: 'events.soil.form.label.soilTexture' })}
+                      helpText={intl.formatMessage({
+                        id: 'events.soil.form.help.soilTypeAffectsCarbonRetention'
+                      })}>
                       <StandardSelect
                         placeholder={intl.formatMessage({ id: 'app.selectSoilTexture' })}
                         {...register('soil_texture')}>
@@ -2397,8 +2513,10 @@ const SoilManagementTab = forwardRef(
                   <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
                     {watch('type') === 'LA' && (
                       <StandardField
-                        label="Sample Type"
-                        helpText="What was sent to the lab"
+                        label={intl.formatMessage({ id: 'events.soil.form.label.sampleType' })}
+                        helpText={intl.formatMessage({
+                          id: 'events.soil.form.help.whatWasSentToTheLab'
+                        })}
                         required
                         error={errors.sample_matrix?.message}>
                         <StandardSelect
@@ -2427,51 +2545,89 @@ const SoilManagementTab = forwardRef(
                         </StandardSelect>
                       </StandardField>
                     )}
-                    <StandardField label="Lab Name" helpText="Testing laboratory">
+                    <StandardField
+                      label={intl.formatMessage({ id: 'events.soil.form.label.labName' })}
+                      helpText={intl.formatMessage({
+                        id: 'events.soil.form.help.testingLaboratory'
+                      })}>
                       <StandardInput
-                        placeholder="e.g., A&L Western Labs"
+                        placeholder={intl.formatMessage(
+                          { id: 'events.soil.form.example' },
+                          { value: 'A&L Western Labs' }
+                        )}
                         {...register('lab_name')}
                       />
                     </StandardField>
-                    <StandardField label="Sample / Report ID" helpText="Lab sample or report #">
-                      <StandardInput placeholder="e.g., 25-04812" {...register('lab_sample_id')} />
+                    <StandardField
+                      label={intl.formatMessage({ id: 'events.soil.form.label.sampleReportId' })}
+                      helpText={intl.formatMessage({
+                        id: 'events.soil.form.help.labSampleOrReport'
+                      })}>
+                      <StandardInput
+                        placeholder={intl.formatMessage(
+                          { id: 'events.soil.form.example' },
+                          { value: '25-04812' }
+                        )}
+                        {...register('lab_sample_id')}
+                      />
                     </StandardField>
-                    <StandardField label="Report Date">
+                    <StandardField
+                      label={intl.formatMessage({ id: 'events.soil.form.label.reportDate' })}>
                       <StandardInput type="date" {...register('lab_report_date')} />
                     </StandardField>
-                    <StandardField label="Nitrogen (ppm)" helpText="Available N">
+                    <StandardField
+                      label={intl.formatMessage({ id: 'events.soil.form.label.nitrogenPpm' })}
+                      helpText={intl.formatMessage({ id: 'events.soil.form.help.availableN' })}>
                       <StandardInput
                         type="number"
                         step="0.1"
                         min="0"
-                        placeholder="e.g., 18"
+                        placeholder={intl.formatMessage(
+                          { id: 'events.soil.form.example' },
+                          { value: '18' }
+                        )}
                         {...register('lab_nitrogen')}
                       />
                     </StandardField>
-                    <StandardField label="Phosphorus (ppm)">
+                    <StandardField
+                      label={intl.formatMessage({ id: 'events.soil.form.label.phosphorusPpm' })}>
                       <StandardInput
                         type="number"
                         step="0.1"
                         min="0"
-                        placeholder="e.g., 32"
+                        placeholder={intl.formatMessage(
+                          { id: 'events.soil.form.example' },
+                          { value: '32' }
+                        )}
                         {...register('lab_phosphorus')}
                       />
                     </StandardField>
-                    <StandardField label="Potassium (ppm)">
+                    <StandardField
+                      label={intl.formatMessage({ id: 'events.soil.form.label.potassiumPpm' })}>
                       <StandardInput
                         type="number"
                         step="0.1"
                         min="0"
-                        placeholder="e.g., 210"
+                        placeholder={intl.formatMessage(
+                          { id: 'events.soil.form.example' },
+                          { value: '210' }
+                        )}
                         {...register('lab_potassium')}
                       />
                     </StandardField>
-                    <StandardField label="CEC (meq/100g)" helpText="Cation exchange capacity">
+                    <StandardField
+                      label={intl.formatMessage({ id: 'events.soil.form.label.cecMeq100g' })}
+                      helpText={intl.formatMessage({
+                        id: 'events.soil.form.help.cationExchangeCapacity'
+                      })}>
                       <StandardInput
                         type="number"
                         step="0.1"
                         min="0"
-                        placeholder="e.g., 14.5"
+                        placeholder={intl.formatMessage(
+                          { id: 'events.soil.form.example' },
+                          { value: '14.5' }
+                        )}
                         {...register('lab_cec')}
                       />
                     </StandardField>
@@ -2483,46 +2639,61 @@ const SoilManagementTab = forwardRef(
                         actually shows and leave the rest blank. */}
                   <Box mt={5}>
                     <Text fontSize="sm" fontWeight="semibold" color="gray.700" mb={1}>
-                      Micronutrient Results (ppm)
+                      {intl.formatMessage({ id: 'events.soil.form.text.micronutrientResultsPpm' })}
                     </Text>
                     <Text fontSize="xs" color="gray.500" mb={3}>
-                      Fill in only what the report shows. These are the deficiency record for a zinc
-                      or boron application (7 CFR 205.601(j)(7)).
+                      {intl.formatMessage({ id: 'events.soil.form.text.fillInOnlyWhatTheReport' })}
                     </Text>
                     <SimpleGrid columns={{ base: 1, md: 4 }} spacing={4}>
-                      <StandardField label="Zinc (Zn)">
+                      <StandardField
+                        label={intl.formatMessage({ id: 'events.soil.form.label.zincZn' })}>
                         <StandardInput
                           type="number"
                           step="0.01"
                           min="0"
-                          placeholder="e.g., 0.8"
+                          placeholder={intl.formatMessage(
+                            { id: 'events.soil.form.example' },
+                            { value: '0.8' }
+                          )}
                           {...register('lab_zinc_ppm')}
                         />
                       </StandardField>
-                      <StandardField label="Boron (B)">
+                      <StandardField
+                        label={intl.formatMessage({ id: 'events.soil.form.label.boronB' })}>
                         <StandardInput
                           type="number"
                           step="0.01"
                           min="0"
-                          placeholder="e.g., 0.4"
+                          placeholder={intl.formatMessage(
+                            { id: 'events.soil.form.example' },
+                            { value: '0.4' }
+                          )}
                           {...register('lab_boron_ppm')}
                         />
                       </StandardField>
-                      <StandardField label="Manganese (Mn)">
+                      <StandardField
+                        label={intl.formatMessage({ id: 'events.soil.form.label.manganeseMn' })}>
                         <StandardInput
                           type="number"
                           step="0.01"
                           min="0"
-                          placeholder="e.g., 6.5"
+                          placeholder={intl.formatMessage(
+                            { id: 'events.soil.form.example' },
+                            { value: '6.5' }
+                          )}
                           {...register('lab_manganese_ppm')}
                         />
                       </StandardField>
-                      <StandardField label="Iron (Fe)">
+                      <StandardField
+                        label={intl.formatMessage({ id: 'events.soil.form.label.ironFe' })}>
                         <StandardInput
                           type="number"
                           step="0.01"
                           min="0"
-                          placeholder="e.g., 12"
+                          placeholder={intl.formatMessage(
+                            { id: 'events.soil.form.example' },
+                            { value: '12' }
+                          )}
                           {...register('lab_iron_ppm')}
                         />
                       </StandardField>
@@ -2538,12 +2709,16 @@ const SoilManagementTab = forwardRef(
                     icon={FaSeedling}
                     title={intl.formatMessage({ id: 'events.section.soil.tillage' })}
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
-                    description="Provide specific tillage details for accurate carbon impact assessment. Tillage practices significantly affect soil carbon sequestration and emissions."
+                    description={intl.formatMessage({
+                      id: 'events.soil.form.desc.provideSpecificTillageDetailsForAccurate'
+                    })}
                   />{' '}
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                     <StandardField
-                      label="Tillage Type"
-                      helpText="Primary tillage operation performed">
+                      label={intl.formatMessage({ id: 'events.soil.form.label.tillageType' })}
+                      helpText={intl.formatMessage({
+                        id: 'events.soil.form.help.primaryTillageOperationPerformed'
+                      })}>
                       <StandardSelect
                         placeholder={intl.formatMessage({ id: 'app.selectTillageType' })}
                         {...register('tillage_type')}>
@@ -2579,8 +2754,10 @@ const SoilManagementTab = forwardRef(
                     </StandardField>
 
                     <StandardField
-                      label="Tillage Intensity"
-                      helpText="Intensity affects carbon emissions">
+                      label={intl.formatMessage({ id: 'events.soil.form.label.tillageIntensity' })}
+                      helpText={intl.formatMessage({
+                        id: 'events.soil.form.help.intensityAffectsCarbonEmissions'
+                      })}>
                       <StandardSelect
                         placeholder={intl.formatMessage({ id: 'app.selectIntensity' })}
                         {...register('tillage_intensity')}>
@@ -2604,8 +2781,10 @@ const SoilManagementTab = forwardRef(
                     </StandardField>
 
                     <StandardField
-                      label="Tillage Direction"
-                      helpText="Direction affects soil erosion and carbon retention">
+                      label={intl.formatMessage({ id: 'events.soil.form.label.tillageDirection' })}
+                      helpText={intl.formatMessage({
+                        id: 'events.soil.form.help.directionAffectsSoilErosionAndCarbon'
+                      })}>
                       <StandardSelect
                         placeholder={intl.formatMessage({ id: 'app.selectDirection' })}
                         {...register('tillage_direction')}>
@@ -2633,8 +2812,10 @@ const SoilManagementTab = forwardRef(
                     </StandardField>
 
                     <StandardField
-                      label="Residue Management"
-                      helpText="Crop residue handling affects carbon sequestration">
+                      label={intl.formatMessage({ id: 'events.soil.form.label.residueManagement' })}
+                      helpText={intl.formatMessage({
+                        id: 'events.soil.form.help.cropResidueHandlingAffectsCarbonSequestration'
+                      })}>
                       <StandardSelect
                         placeholder={intl.formatMessage({ id: 'app.selectResidueManagement' })}
                         {...register('residue_management')}>
@@ -2669,8 +2850,10 @@ const SoilManagementTab = forwardRef(
                   <Box mt={3}>
                     <StandardAlert
                       status="success"
-                      title="Carbon Impact Tip"
-                      description="No-till and conservation tillage practices typically sequester more carbon and reduce emissions compared to conventional tillage. Leaving crop residues incorporated or on the surface also improves carbon retention."
+                      title={intl.formatMessage({ id: 'events.soil.form.title.carbonImpactTip' })}
+                      description={intl.formatMessage({
+                        id: 'events.soil.form.desc.noTillAndConservationTillagePractices'
+                      })}
                     />
                   </Box>
                 </SectionBox>
@@ -2683,7 +2866,9 @@ const SoilManagementTab = forwardRef(
                     icon={FaSeedling}
                     title={intl.formatMessage({ id: 'events.section.soil.grazing' })}
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
-                    description="Document grazing activities for cover crop management, weed control, and soil health."
+                    description={intl.formatMessage({
+                      id: 'events.soil.form.desc.documentGrazingActivitiesForCoverCrop'
+                    })}
                   />
 
                   {/* Grazing Summary Mode (GTM-v3) — log a whole rotation as one event,
@@ -2734,45 +2919,76 @@ const SoilManagementTab = forwardRef(
                           <SectionBox>
                             <Text fontWeight="semibold" color="green.700" mb={3}>
                               <Icon as={FaSeedling} mr={2} />
-                              Grazing Rotation Period
+                              {intl.formatMessage({
+                                id: 'events.soil.form.text.grazingRotationPeriod'
+                              })}
                             </Text>
                             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={4}>
                               <StandardField
-                                label="Period Start Date"
-                                helpText="When did this rotation begin?">
+                                label={intl.formatMessage({
+                                  id: 'events.soil.form.label.periodStartDate'
+                                })}
+                                helpText={intl.formatMessage({
+                                  id: 'events.soil.form.help.whenDidThisRotationBegin'
+                                })}>
                                 <StandardInput type="date" {...register('date_start')} />
                               </StandardField>
                               <StandardField
-                                label="Period End Date"
-                                helpText="When did this rotation end?">
+                                label={intl.formatMessage({
+                                  id: 'events.soil.form.label.periodEndDate'
+                                })}
+                                helpText={intl.formatMessage({
+                                  id: 'events.soil.form.help.whenDidThisRotationEnd'
+                                })}>
                                 <StandardInput type="date" {...register('date_end')} />
                               </StandardField>
                               <StandardField
-                                label="Number of Grazing Passes"
-                                helpText="How many grazing passes/paddocks in this rotation">
+                                label={intl.formatMessage({
+                                  id: 'events.soil.form.label.numberOfGrazingPasses'
+                                })}
+                                helpText={intl.formatMessage({
+                                  id: 'events.soil.form.help.howManyGrazingPassesPaddocksIn'
+                                })}>
                                 <StandardInput
                                   type="number"
                                   min="1"
-                                  placeholder="e.g., 4"
+                                  placeholder={intl.formatMessage(
+                                    { id: 'events.soil.form.example' },
+                                    { value: '4' }
+                                  )}
                                   {...register('event_count')}
                                 />
                               </StandardField>
                               <StandardField
-                                label="Total Grazing Days"
-                                helpText="Combined grazing days across all passes">
+                                label={intl.formatMessage({
+                                  id: 'events.soil.form.label.totalGrazingDays'
+                                })}
+                                helpText={intl.formatMessage({
+                                  id: 'events.soil.form.help.combinedGrazingDaysAcrossAllPasses'
+                                })}>
                                 <StandardInput
                                   type="number"
                                   min="1"
-                                  placeholder="e.g., 12"
+                                  placeholder={intl.formatMessage(
+                                    { id: 'events.soil.form.example' },
+                                    { value: '12' }
+                                  )}
                                   {...register('total_grazing_days')}
                                 />
                               </StandardField>
                               <StandardField
-                                label="Total Area Grazed"
-                                helpText="Combined area grazed across all passes">
+                                label={intl.formatMessage({
+                                  id: 'events.soil.form.label.totalAreaGrazed'
+                                })}
+                                helpText={intl.formatMessage({
+                                  id: 'events.soil.form.help.combinedAreaGrazedAcrossAllPasses'
+                                })}>
                                 <StandardInput
                                   type="number"
-                                  placeholder="e.g., 20"
+                                  placeholder={intl.formatMessage(
+                                    { id: 'events.soil.form.example' },
+                                    { value: '20' }
+                                  )}
                                   {...register('area_covered_total')}
                                 />
                               </StandardField>
@@ -2784,7 +3000,11 @@ const SoilManagementTab = forwardRef(
                   })()}
 
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                    <StandardField label="Animal Type" helpText="Type of animal used for grazing">
+                    <StandardField
+                      label={intl.formatMessage({ id: 'events.soil.form.label.animalType' })}
+                      helpText={intl.formatMessage({
+                        id: 'events.soil.form.help.typeOfAnimalUsedForGrazing'
+                      })}>
                       <StandardSelect
                         placeholder={intl.formatMessage({
                           id: 'events.soil.placeholders.animalType'
@@ -2817,25 +3037,41 @@ const SoilManagementTab = forwardRef(
                         </option>
                       </StandardSelect>
                     </StandardField>
-                    <StandardField label="Number of Animals" helpText="How many animals were used">
+                    <StandardField
+                      label={intl.formatMessage({ id: 'events.soil.form.label.numberOfAnimals' })}
+                      helpText={intl.formatMessage({
+                        id: 'events.soil.form.help.howManyAnimalsWereUsed'
+                      })}>
                       <StandardInput
                         type="number"
-                        placeholder="e.g., 50"
+                        placeholder={intl.formatMessage(
+                          { id: 'events.soil.form.example' },
+                          { value: '50' }
+                        )}
                         {...register('animal_count')}
                       />
                     </StandardField>
                     <StandardField
-                      label="Grazing Duration (Days)"
-                      helpText="How many days animals grazed">
+                      label={intl.formatMessage({
+                        id: 'events.soil.form.label.grazingDurationDays'
+                      })}
+                      helpText={intl.formatMessage({
+                        id: 'events.soil.form.help.howManyDaysAnimalsGrazed'
+                      })}>
                       <StandardInput
                         type="number"
-                        placeholder="e.g., 14"
+                        placeholder={intl.formatMessage(
+                          { id: 'events.soil.form.example' },
+                          { value: '14' }
+                        )}
                         {...register('grazing_duration_days')}
                       />
                     </StandardField>
                     <StandardField
-                      label="Grazing Purpose"
-                      helpText="Primary purpose of the grazing activity">
+                      label={intl.formatMessage({ id: 'events.soil.form.label.grazingPurpose' })}
+                      helpText={intl.formatMessage({
+                        id: 'events.soil.form.help.primaryPurposeOfTheGrazingActivity'
+                      })}>
                       <StandardSelect
                         placeholder={intl.formatMessage({
                           id: 'events.soil.placeholders.grazingPurpose'
@@ -2875,10 +3111,16 @@ const SoilManagementTab = forwardRef(
                     icon={FaSeedling}
                     title={intl.formatMessage({ id: 'events.section.soil.habitat' })}
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
-                    description="Document planted/established habitat — hedgerows, insectary strips, native plantings, riparian buffers, or living groundcover. Add photos as evidence."
+                    description={intl.formatMessage({
+                      id: 'events.soil.form.desc.documentPlantedEstablishedHabitatHedgerowsInsectary'
+                    })}
                   />
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                    <StandardField label="Habitat Type" helpText="What habitat was established">
+                    <StandardField
+                      label={intl.formatMessage({ id: 'events.soil.form.label.habitatType' })}
+                      helpText={intl.formatMessage({
+                        id: 'events.soil.form.help.whatHabitatWasEstablished'
+                      })}>
                       <StandardSelect
                         placeholder={intl.formatMessage({
                           id: 'events.soil.placeholders.habitatType'
@@ -2925,24 +3167,36 @@ const SoilManagementTab = forwardRef(
                       </StandardSelect>
                     </StandardField>
                     <StandardField
-                      label="Species Planted"
-                      helpText="Key species (free text, optional)">
+                      label={intl.formatMessage({ id: 'events.soil.form.label.speciesPlanted' })}
+                      helpText={intl.formatMessage({
+                        id: 'events.soil.form.help.keySpeciesFreeTextOptional'
+                      })}>
                       <StandardInput
-                        placeholder="e.g., native coyote brush, ceanothus, yarrow"
+                        placeholder={intl.formatMessage({
+                          id: 'events.soil.form.placeholder.eGNativeCoyoteBrushCeanothus'
+                        })}
                         {...register('species_planted')}
                       />
                     </StandardField>
                   </SimpleGrid>
                   <StandardField
-                    label="Established (optional)"
-                    helpText="When the habitat was first planted/established — an older hedgerow is a stronger consumer signal.">
+                    label={intl.formatMessage({ id: 'events.soil.form.label.establishedOptional' })}
+                    helpText={intl.formatMessage({
+                      id: 'events.soil.form.help.whenTheHabitatWasFirstPlanted'
+                    })}>
                     <StandardInput type="date" {...register('habitat_install_date')} />
                   </StandardField>
                   <StandardField
-                    label="Wildlife Observed (optional)"
-                    helpText="Note any beneficial insects, birds, or wildlife you've seen here. Photos are the best evidence.">
+                    label={intl.formatMessage({
+                      id: 'events.soil.form.label.wildlifeObservedOptional'
+                    })}
+                    helpText={intl.formatMessage({
+                      id: 'events.soil.form.help.noteAnyBeneficialInsectsBirdsOr'
+                    })}>
                     <StandardTextarea
-                      placeholder="e.g., abundant lady beetles and lacewings; songbirds and a resident hawk"
+                      placeholder={intl.formatMessage({
+                        id: 'events.soil.form.placeholder.eGAbundantLadyBeetlesAnd'
+                      })}
                       {...register('wildlife_observed')}
                     />
                   </StandardField>
@@ -2956,10 +3210,16 @@ const SoilManagementTab = forwardRef(
                     icon={FaSeedling}
                     title={intl.formatMessage({ id: 'events.section.soil.nesting' })}
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
-                    description="Document installed wildlife structures — barn-owl & songbird boxes, raptor perches, native-bee blocks, bat boxes, insect hotels, beetle banks. Add photos as evidence."
+                    description={intl.formatMessage({
+                      id: 'events.soil.form.desc.documentInstalledWildlifeStructuresBarnOwl'
+                    })}
                   />
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                    <StandardField label="Structure Type" helpText="What was installed">
+                    <StandardField
+                      label={intl.formatMessage({ id: 'events.soil.form.label.structureType' })}
+                      helpText={intl.formatMessage({
+                        id: 'events.soil.form.help.whatWasInstalled'
+                      })}>
                       <StandardSelect
                         placeholder={intl.formatMessage({
                           id: 'events.soil.placeholders.structureType'
@@ -3002,34 +3262,55 @@ const SoilManagementTab = forwardRef(
                       </StandardSelect>
                     </StandardField>
                     {!multiTarget && (
-                      <StandardField label="Number Installed" helpText="How many structures">
+                      <StandardField
+                        label={intl.formatMessage({ id: 'events.soil.form.label.numberInstalled' })}
+                        helpText={intl.formatMessage({
+                          id: 'events.soil.form.help.howManyStructures'
+                        })}>
                         <StandardInput
                           type="number"
                           min="1"
-                          placeholder="e.g., 6"
+                          placeholder={intl.formatMessage(
+                            { id: 'events.soil.form.example' },
+                            { value: '6' }
+                          )}
                           {...register('habitat_structure_count')}
                         />
                       </StandardField>
                     )}
                   </SimpleGrid>
                   <StandardField
-                    label="Installed (optional)"
-                    helpText="When the structures were installed.">
+                    label={intl.formatMessage({ id: 'events.soil.form.label.installedOptional' })}
+                    helpText={intl.formatMessage({
+                      id: 'events.soil.form.help.whenTheStructuresWereInstalled'
+                    })}>
                     <StandardInput type="date" {...register('habitat_install_date')} />
                   </StandardField>
                   <StandardField
-                    label="Placement / Occupancy Notes (optional)"
-                    helpText="Mounting, orientation, or whether occupied">
+                    label={intl.formatMessage({
+                      id: 'events.soil.form.label.placementOccupancyNotesOptional'
+                    })}
+                    helpText={intl.formatMessage({
+                      id: 'events.soil.form.help.mountingOrientationOrWhetherOccupied'
+                    })}>
                     <StandardInput
-                      placeholder="e.g., 12 ft poles on field margins; 4 of 6 boxes occupied"
+                      placeholder={intl.formatMessage({
+                        id: 'events.soil.form.placeholder.eG12FtPolesOn'
+                      })}
                       {...register('structure_notes')}
                     />
                   </StandardField>
                   <StandardField
-                    label="Wildlife Observed (optional)"
-                    helpText="Note any wildlife using the structures. Photos are the best evidence.">
+                    label={intl.formatMessage({
+                      id: 'events.soil.form.label.wildlifeObservedOptional'
+                    })}
+                    helpText={intl.formatMessage({
+                      id: 'events.soil.form.help.noteAnyWildlifeUsingTheStructures'
+                    })}>
                     <StandardTextarea
-                      placeholder="e.g., barn owls nesting; reduced rodent pressure"
+                      placeholder={intl.formatMessage({
+                        id: 'events.soil.form.placeholder.eGBarnOwlsNestingReduced'
+                      })}
                       {...register('wildlife_observed')}
                     />
                   </StandardField>
@@ -3116,10 +3397,12 @@ const SoilManagementTab = forwardRef(
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecordAndBuyer' })}
                 />
                 <StandardField
-                  label="Observations & Notes"
+                  label={intl.formatMessage({ id: 'events.soil.form.label.observationsNotes' })}
                   helpText={intl.formatMessage({ id: 'events.common.help.observationAudience' })}>
                   <StandardTextarea
-                    placeholder="Optional: Describe your soil management approach, goals for soil health, organic practices used, sustainability goals, etc. These details help consumers understand your farming methods."
+                    placeholder={intl.formatMessage({
+                      id: 'events.soil.form.placeholder.optionalDescribeYourSoilManagementApproach'
+                    })}
                     rows={4}
                     {...register('observation')}
                   />
