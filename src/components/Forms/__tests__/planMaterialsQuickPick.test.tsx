@@ -17,7 +17,7 @@ import enUS from '../../../i18n/lang/en-US.json';
 let MATERIALS: Array<Record<string, string>> = [];
 
 vi.mock('store/api/historyApi', () => ({
-  useGetPlanMaterialsQuery: () => ({
+  useGetPlanMaterialsForLoggingQuery: () => ({
     data: { osp_id: 11, osp_status: 'active', materials: MATERIALS }
   })
 }));

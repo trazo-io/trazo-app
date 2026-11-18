@@ -36,7 +36,7 @@ vi.mock('store/api/historyApi', () => ({
   useGetCurrentHistoryQuery: () => ({ data: undefined, isLoading: false }),
   useGetSeedSuppliersQuery: () => ({ data: undefined, isLoading: false }),
   useGetRecentInputsQuery: () => ({ data: undefined, isLoading: false }),
-  useGetPlanMaterialsQuery: () => ({ data: undefined, isLoading: false })
+  useGetPlanMaterialsForLoggingQuery: () => ({ data: undefined, isLoading: false })
 }));
 vi.mock('store/api/productApi', () => ({
   useGetParcelQuery: () => ({

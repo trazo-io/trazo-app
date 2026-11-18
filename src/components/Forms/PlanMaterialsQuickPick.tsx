@@ -12,7 +12,7 @@ import { Box, HStack, Text, Wrap, WrapItem } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
 
 import { StandardButton } from 'components/Design/StandardComponents';
-import { useGetPlanMaterialsQuery } from 'store/api/historyApi';
+import { useGetPlanMaterialsForLoggingQuery } from 'store/api/historyApi';
 
 export interface PlanMaterialOption {
   name: string;
@@ -37,7 +37,7 @@ interface Props {
 
 export function PlanMaterialsQuickPick({ establishmentId, categories, onPick, limit = 12 }: Props) {
   const intl = useIntl();
-  const { data } = useGetPlanMaterialsQuery(
+  const { data } = useGetPlanMaterialsForLoggingQuery(
     { establishmentId },
     { skip: !establishmentId, refetchOnMountOrArgChange: true }
   );

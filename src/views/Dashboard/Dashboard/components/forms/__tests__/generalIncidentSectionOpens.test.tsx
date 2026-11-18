@@ -24,7 +24,7 @@ vi.mock('store/api/historyApi', () => ({
   useGetCurrentHistoryQuery: () => ({ data: undefined, isLoading: false }),
   useGetSeedSuppliersQuery: () => ({ data: undefined, isLoading: false }),
   useGetRecentInputsQuery: () => ({ data: undefined, isLoading: false }),
-  useGetPlanMaterialsQuery: () => ({ data: undefined, isLoading: false })
+  useGetPlanMaterialsForLoggingQuery: () => ({ data: undefined, isLoading: false })
 }));
 
 // @ts-expect-error GeneralTab is a .jsx module with no type declarations.

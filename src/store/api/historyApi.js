@@ -315,7 +315,9 @@ export const historyApi = baseApi.injectEndpoints({
     }),
     // The materials on the plan in force, for the input and amendment forms' quick-pick (CCOF ORGB41:
     // only materials on the OSP Materials List may be used). Offered, never filled in by itself.
-    getPlanMaterials: build.query({
+    // NEVER: name it `getPlanMaterials`. ospApi injects an endpoint of that name into the same baseApi,
+    // and the first injection wins, so the forms asked /osps/undefined/plan-materials/ (2026-11-17).
+    getPlanMaterialsForLogging: build.query({
       query: ({ establishmentId }) => ({
         url: `productions/plan-materials/?establishment_id=${establishmentId}`,
         method: 'GET',
@@ -472,7 +474,7 @@ export const {
   useUpgradeScanConsentMutation,
   useClaimScansMutation,
   useGetRecentInputsQuery,
-  useGetPlanMaterialsQuery,
+  useGetPlanMaterialsForLoggingQuery,
   useGetSeedSuppliersQuery,
   useGetSalesRecordsQuery,
   useGetHarvestLotsQuery,
