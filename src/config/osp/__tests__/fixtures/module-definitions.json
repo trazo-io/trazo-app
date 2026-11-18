@@ -33104,14 +33104,48 @@
       "module": "g6_4_handling",
       "label": "shared_and_differs",
       "answers": {
+        "handling_activities": [
+          "packing"
+        ],
         "shares_handling_area_or_equipment": true,
         "cleaning_differs_by_status": "differs"
       },
       "visible_questions": [
-        "handling_activities"
+        "handling_activities",
+        "simple_handling_disqualifiers",
+        "products_handled",
+        "products_list_upload",
+        "facility_pest_pointer",
+        "own_products_only",
+        "handling_site",
+        "on_farm_facility_table",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "uses_water",
+        "shares_handling_area_or_equipment",
+        "cleaning_differs_by_status",
+        "cleaning_differences_detail",
+        "commingling_controls",
+        "applies_post_harvest_inputs",
+        "noncertified_only_inputs_used",
+        "packaging_pointer",
+        "handling_records",
+        "handling_records_linkage",
+        "facility_docs",
+        "handling_additional_notes"
       ],
       "missing_required": [
-        "handling_activities"
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "uses_water",
+        "cleaning_differences_detail",
+        "commingling_controls",
+        "handling_records"
       ],
       "missing_required_na": []
     },
@@ -33119,15 +33153,46 @@
       "module": "g6_4_handling",
       "label": "purging",
       "answers": {
+        "handling_activities": [
+          "packing"
+        ],
         "food_contact_cleaning_methods": [
           "purging"
         ]
       },
       "visible_questions": [
-        "handling_activities"
+        "handling_activities",
+        "simple_handling_disqualifiers",
+        "products_handled",
+        "products_list_upload",
+        "facility_pest_pointer",
+        "own_products_only",
+        "handling_site",
+        "on_farm_facility_table",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "purge_procedure_upload",
+        "uses_equipment_sanitizer_or_cleaner",
+        "uses_water",
+        "shares_handling_area_or_equipment",
+        "commingling_controls",
+        "applies_post_harvest_inputs",
+        "noncertified_only_inputs_used",
+        "packaging_pointer",
+        "handling_records",
+        "handling_records_linkage",
+        "facility_docs",
+        "handling_additional_notes"
       ],
       "missing_required": [
-        "handling_activities"
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "process_flow",
+        "uses_equipment_sanitizer_or_cleaner",
+        "uses_water",
+        "commingling_controls",
+        "handling_records"
       ],
       "missing_required_na": []
     },
@@ -33135,14 +33200,57 @@
       "module": "g6_4_handling",
       "label": "chlorine_rinse_checked",
       "answers": {
+        "handling_activities": [
+          "packing"
+        ],
+        "uses_water": true,
+        "wash_water_additives_added": true,
         "wash_water_chlorine_added": true,
         "wash_water_chlorine_final_rinse": "chlorine_at_or_below_sdwa"
       },
       "visible_questions": [
-        "handling_activities"
+        "handling_activities",
+        "simple_handling_disqualifiers",
+        "products_handled",
+        "products_list_upload",
+        "facility_pest_pointer",
+        "own_products_only",
+        "handling_site",
+        "on_farm_facility_table",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "uses_water",
+        "post_harvest_water_uses",
+        "post_harvest_water_source",
+        "water_source_sanitizer",
+        "water_treated_onsite",
+        "wash_water_additives_added",
+        "wash_water_chlorine_added",
+        "wash_water_chlorine_final_rinse",
+        "chlorine_rinse_monitoring",
+        "shares_handling_area_or_equipment",
+        "commingling_controls",
+        "applies_post_harvest_inputs",
+        "noncertified_only_inputs_used",
+        "packaging_pointer",
+        "handling_records",
+        "handling_records_linkage",
+        "facility_docs",
+        "handling_additional_notes"
       ],
       "missing_required": [
-        "handling_activities"
+        "products_handled",
+        "own_products_only",
+        "handling_site",
+        "process_flow",
+        "food_contact_cleaning_methods",
+        "uses_equipment_sanitizer_or_cleaner",
+        "post_harvest_water_uses",
+        "post_harvest_water_source",
+        "water_source_sanitizer",
+        "commingling_controls",
+        "handling_records"
       ],
       "missing_required_na": []
     },
