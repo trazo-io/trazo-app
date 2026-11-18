@@ -1,4 +1,5 @@
 import { ApplicationGroupNotice } from 'components/Events/ApplicationGroupNotice';
+import { HarvestIntervalNotice } from 'components/Events/HarvestIntervalNotice';
 import { TankMixNotice } from 'components/Events/TankMixNotice';
 import { PhotoFlagNotice } from 'components/Events/PhotoFlagNotice';
 import React, { useState, useEffect, useMemo } from 'react';
@@ -1087,6 +1088,14 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
               and decides for itself; a list whose rows all render null takes no space.
               Guard: activitySheetNoticesAreRows.test.ts. */}
           <StatusList testId="record-notices">
+            {/* A pick sooner than a raw-manure interval or a recorded PHI, on the pick and on the
+                record it pairs with. It leads: it is about whether the harvest can be sold as
+                organic, and until VID-03 the save toast was the only place it was said. */}
+            <HarvestIntervalNotice
+              farmId={farmId}
+              eventId={event.id}
+              eventType={event.event_type}
+            />
             {/* One application on several parcels: say so before anything else, so the record
                 is not read (or edited) as the whole application. */}
             <ApplicationGroupNotice

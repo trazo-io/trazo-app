@@ -139,6 +139,7 @@ import {
 } from 'config/events/saveRequiredFields';
 import { localizeFieldValue } from 'utils/fieldDisplayUtils';
 import { backToLabel } from 'utils/backToLabel';
+import { manureConflictLine, phiConflictLine } from 'utils/harvestIntervalConflicts';
 import { useFurthestStep } from 'hooks/useFurthestStep';
 import { buildVoiceFieldRequests } from 'config/events/voiceFields';
 import { ActivitySubtypeChooser } from 'components/Events/ActivitySubtypeChooser';
@@ -3529,45 +3530,11 @@ function NewEventForm({ isEdit = false, eventId = null }) {
         });
         // Picks, not lines: one pick inside two sprays' PHIs is one pick with two lines.
         const phiPickCount = new Set(phiConflicts.map((c) => c.pick_id)).size;
-        const phiLines = phiConflicts.slice(0, 3).map((c) =>
-          intl.formatMessage(
-            {
-              id: 'app.phiConflictLine',
-              defaultMessage:
-                '{product}, applied {applied}: picked {picked}, {days, plural, one {# day} other {# days}} after (PHI {phi} days)'
-            },
-            {
-              product:
-                c.product ||
-                intl.formatMessage({
-                  id: 'app.phiConflictNoProduct',
-                  defaultMessage: 'A spray with no product name'
-                }),
-              applied: c.applied,
-              picked: c.picked,
-              days: c.days,
-              phi: c.phi_days
-            }
-          )
-        );
+        // One wording with the record's own notice and the timeline row, dates in the reader's
+        // locale (VID-03: the toast printed 2026-10-01).
+        const phiLines = phiConflicts.slice(0, 3).map((c) => phiConflictLine(c, intl));
         const manurePickCount = new Set(manureConflicts.map((c) => c.pick_id)).size;
-        const manureLines = manureConflicts.slice(0, 3).map((c) =>
-          intl.formatMessage(
-            {
-              id: 'app.manureConflictLine',
-              defaultMessage:
-                'Raw manure applied {applied}: picked {picked}, {days, plural, one {# day} other {# days}} after (interval {interval} days){recorded_as, select, composted {; recorded as composted, with neither the § 205.203(c)(2) figures nor a supplier} processed_5006 {; recorded as processed, with no NOP 5006 documentation} other {}}'
-            },
-            {
-              applied: c.applied,
-              picked: c.picked,
-              days: c.days,
-              interval: c.interval_days,
-              // How the record labels itself when it is read as raw anyway (review of back #446).
-              recorded_as: c.recorded_as || 'raw'
-            }
-          )
-        );
+        const manureLines = manureConflicts.slice(0, 3).map((c) => manureConflictLine(c, intl));
         // Three lines in all, as before this joined the PHI lines: with both kinds, at most two PHI
         // lines leave room for a manure one (review of app #399).
         const conflictLines = [

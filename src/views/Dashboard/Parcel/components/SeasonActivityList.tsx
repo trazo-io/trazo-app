@@ -18,6 +18,7 @@ import { useIntl } from 'react-intl';
 import { ActivityTimelineRow, MonthTimeline } from 'components/Events/ActivityTimeline';
 import { TOUCH_TARGET } from 'components/Design/StandardComponents';
 import { getTimelineEventTitle } from 'utils/eventDescriptions';
+import { harvestIntervalRowFlag, type HarvestIntervalPicks } from 'utils/harvestIntervalConflicts';
 
 export interface SeasonEvent {
   id: number;
@@ -34,7 +35,15 @@ interface Props {
   allActivitiesPath: string;
   /** How many of the latest to show here. */
   initial?: number;
+  /**
+   * The season's picks inside a raw-manure interval or a recorded PHI (`harvest_interval_picks` on
+   * the current season). Pick ids are ProductionEvent ids, so only crop-work rows are matched.
+   */
+  flaggedPicks?: HarvestIntervalPicks | null;
 }
+
+/** `event_type` of a ProductionEvent, the model a pick is. */
+const PRODUCTION_EVENT_TYPE = 1;
 
 const firstLine = (text?: string | null) => (text ? text.split('\n')[0].trim() : '');
 
@@ -42,7 +51,8 @@ export default function SeasonActivityList({
   events,
   onOpen,
   allActivitiesPath,
-  initial = 6
+  initial = 6,
+  flaggedPicks = null
 }: Props) {
   const intl = useIntl();
 
@@ -71,6 +81,11 @@ export default function SeasonActivityList({
             subtype={typeof e.type === 'string' ? e.type : null}
             meta={firstLine(e.description)}
             timeNotRecorded={e.time_not_recorded === true}
+            flag={
+              Number(e.event_type) === PRODUCTION_EVENT_TYPE
+                ? harvestIntervalRowFlag(e.id, flaggedPicks, intl)
+                : null
+            }
             onClick={() => onOpen(e)}
           />
         )}

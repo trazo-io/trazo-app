@@ -299,6 +299,7 @@ const TrackList = ({ amount }) => {
                     events={currentHistory.events}
                     onOpen={handleEventClick}
                     allActivitiesPath={allActivitiesPath}
+                    flaggedPicks={currentHistory.harvest_interval_picks}
                   />
                 )}
                 {/* `!(x?.length > 0)`, not `!x?.length > 0`. The old form parsed as

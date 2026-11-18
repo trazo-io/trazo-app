@@ -10,9 +10,11 @@ import React from 'react';
 import { Box, Circle, Flex, Icon, Text, VStack } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
 
+import { MdWarning } from 'react-icons/md';
+
 import { iconForActivity } from 'config/activityVerbs';
 import { eventTypeTone } from 'components/Events/categoryTone';
-import { StatusList } from 'components/Design/StandardComponents';
+import { StatusList, STATUS_URGENCY_TOKENS } from 'components/Design/StandardComponents';
 import { formatDateFromTimestamp, formatWallClockTime } from 'utils/dateOnly';
 
 interface RowProps {
@@ -28,6 +30,11 @@ interface RowProps {
    * The stored noon is a placeholder, so the row says so instead of printing it.
    */
   timeNotRecorded?: boolean;
+  /**
+   * A caution that belongs to this record and outlives the save toast: a pick inside a raw-manure
+   * interval or a spray's PHI (VID-03). Words and a glyph, never colour alone.
+   */
+  flag?: string | null;
   onClick: () => void;
 }
 
@@ -38,6 +45,7 @@ export function ActivityTimelineRow({
   title,
   meta,
   timeNotRecorded = false,
+  flag = null,
   onClick
 }: RowProps) {
   const intl = useIntl();
@@ -96,6 +104,27 @@ export function ActivityTimelineRow({
           <Text fontSize="xs" color="gray.600" noOfLines={1}>
             {meta}
           </Text>
+        ) : null}
+        {flag ? (
+          // Wraps, never truncates: a warning cut at an ellipsis hides what it warns about.
+          <Flex
+            align="flex-start"
+            gap={1}
+            mt={0.5}
+            color={STATUS_URGENCY_TOKENS.warn.text}
+            data-testid="activity-timeline-flag">
+            <Icon
+              as={MdWarning}
+              boxSize={3.5}
+              mt="1px"
+              flexShrink={0}
+              color={STATUS_URGENCY_TOKENS.warn.icon}
+              aria-hidden
+            />
+            <Text fontSize="xs" fontWeight="semibold">
+              {flag}
+            </Text>
+          </Flex>
         ) : null}
       </Box>
     </Flex>
