@@ -220,6 +220,8 @@ export interface InputVerifyResult {
   omri_product_pk: number | null;
   omri_product_id: string | null;
   omri_product_name: string | null;
+  /** Edition date of the first OMRI list that no longer carried the matched product (OV-MT-C04). */
+  omri_product_delisted_on?: string | null;
   /**
    * Every catalog row the query matched, best first. One entry (or none) means the answer is
    * unambiguous; more than one means the grower must pick, because a one-tap attach on a
@@ -236,6 +238,8 @@ export interface InputVerifyResult {
      * backend rename would silently stop showing the edition with no error and no failing test.
      */
     list_edition_date?: string | null;
+    /** Edition date of the first OMRI list that no longer carried the product; null while listed. */
+    delisted_on?: string | null;
   }[];
   /**
    * How many rows matched in total. NOT `omri_candidates.length`, which is capped for display

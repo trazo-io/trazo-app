@@ -248,6 +248,24 @@ const ResultCard: React.FC<{
       : null;
     return [id, edition].filter(Boolean).join(' · ') || undefined;
   };
+  // Overall review 2026-11, OV-MT-C04: OMRI drops products between editions, and the lookup offered a
+  // dropped one as an ordinary listing. The server sends the edition date of the first list that no
+  // longer carried it. The row says so and reads as conditional; it never says "prohibited" (OMRI
+  // stopped vouching, which is not a finding about the material) and attaching stays possible, since
+  // a record from before the drop was made while the product was listed. Same date parsing as the
+  // edition above, for the same west-of-UTC reason.
+  const omriLapse = (delistedOn?: string | null): string | undefined => {
+    const parsed = parseDateOnly(delistedOn);
+    if (!parsed) return undefined;
+    return intl.formatMessage(
+      {
+        id: 'inputVerify.omriListingLapsed',
+        defaultMessage:
+          "OMRI's list of {date} no longer carries this product. That does not make it prohibited; check its status with your certifier before you use it."
+      },
+      { date: intl.formatDate(parsed, { day: 'numeric', month: 'short', year: 'numeric' }) }
+    );
+  };
   const hasOMRI = result.omri_product_pk != null;
   const omriCandidates = result.omri_candidates ?? [];
   // The true match count, which the shown list may be capped below.
@@ -494,6 +512,8 @@ const ResultCard: React.FC<{
                 attached={attachedOmriPk === candidate.pk}
                 title={candidate.product_name}
                 subtitle={omriSubtitle(candidate)}
+                tone={omriLapse(candidate.delisted_on) ? 'restricted' : 'allowed'}
+                detail={omriLapse(candidate.delisted_on)}
                 action={
                   onAttachOmri ? (
                     <AttachAction
@@ -516,6 +536,8 @@ const ResultCard: React.FC<{
               badgeLabel="OMRI"
               attached={omriAttached}
               title={result.omri_product_name || ''}
+              tone={omriLapse(result.omri_product_delisted_on) ? 'restricted' : 'allowed'}
+              detail={omriLapse(result.omri_product_delisted_on)}
               // Through `omriSubtitle`, so the UNAMBIGUOUS match carries its edition date too.
               // It used to build `OMRI #<id>` inline and print no edition, which had it exactly
               // backwards: the edition appeared only in the multi-match list, and was missing from
