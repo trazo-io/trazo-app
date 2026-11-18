@@ -1043,71 +1043,67 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
               {intl.formatMessage({ id: 'osp.approvedInputs.empty.own' })}
             </Text>
           ) : (
-            <VStack align="stretch" spacing={2}>
+            // Rows with hairlines, not a gray card per material (2026-11-17), like the rest of the
+            // panel's records (#420). Neutral: a material the operator entered is a fact, and
+            // "no third-party listing" is a legitimate answer a certifier reviews.
+            <StatusList testId="own-material-rows">
               {ownRows.map((row: PlanMaterialEntry) => (
-                <Flex
+                <StatusRow
                   key={`own-${row.id}`}
-                  p={3}
-                  bg={sectionBg}
-                  borderRadius="md"
-                  justify="space-between"
-                  align="center"
-                  gap={3}
-                  wrap="wrap">
-                  <VStack align="start" spacing={0} minW={0} flex={1}>
-                    <HStack spacing={2} wrap="wrap" maxW="100%">
-                      {/* The app's own words for the section: the server's display name is
-                          English and names CCOF's sections, which an OTCO or WSDA plan does not
-                          have. Wraps instead of running under the Remove button. */}
-                      {row.category && (
-                        <Badge
-                          colorScheme="gray"
-                          fontSize="11px"
-                          whiteSpace="normal"
-                          textTransform="none"
-                          maxW="100%">
-                          {intl.formatMessage({ id: `osp.materialsList.category.${row.category}` })}
-                        </Badge>
-                      )}
-                      {row.manufacturer && (
-                        <Text fontSize="xs" color={subtextColor}>
-                          {row.manufacturer}
-                        </Text>
-                      )}
-                    </HStack>
-                    <Text fontSize="sm" fontWeight="semibold" noOfLines={2}>
-                      {row.product_name}
-                    </Text>
-                    {/* Server-computed. Never assembled here from the basis code — the sentence
-                        a certifier reads must have one author. It is the packet's English, so it is
-                        quoted as what the packet prints, the way the Materials List editor does. */}
+                  tone="neutral"
+                  icon={FaFlask}
+                  title={row.product_name}
+                  testId="own-material-row"
+                  badge={
+                    /* The app's own words for the section: the server's display name is English
+                       and names CCOF's sections, which an OTCO or WSDA plan does not have. */
+                    row.category ? (
+                      <Badge
+                        colorScheme="gray"
+                        fontSize="11px"
+                        whiteSpace="normal"
+                        textTransform="none"
+                        maxW="100%">
+                        {intl.formatMessage({ id: `osp.materialsList.category.${row.category}` })}
+                      </Badge>
+                    ) : undefined
+                  }
+                  action={
+                    isEditable ? (
+                      <StandardButton
+                        size="xs"
+                        variant="ghost"
+                        onClick={() => handleRemoveOwnMaterial(row.id)}
+                        title={String(
+                          intl.formatMessage(
+                            { id: 'osp.approvedInputs.removeAria' },
+                            { name: row.product_name }
+                          )
+                        )}>
+                        {intl.formatMessage({ id: 'osp.approvedInputs.own.remove' })}
+                      </StandardButton>
+                    ) : undefined
+                  }>
+                  {row.manufacturer && (
                     <Text fontSize="xs" color={subtextColor}>
-                      {intl.formatMessage(
-                        {
-                          id: 'osp.materialsList.reviewPrints',
-                          defaultMessage: 'Your packet prints: {statement}.'
-                        },
-                        { statement: row.listing_statement }
-                      )}
+                      {row.manufacturer}
                     </Text>
-                  </VStack>
-                  {isEditable && (
-                    <StandardButton
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleRemoveOwnMaterial(row.id)}
-                      title={String(
-                        intl.formatMessage(
-                          { id: 'osp.approvedInputs.removeAria' },
-                          { name: row.product_name }
-                        )
-                      )}>
-                      {intl.formatMessage({ id: 'osp.approvedInputs.own.remove' })}
-                    </StandardButton>
                   )}
-                </Flex>
+                  {/* Server-computed. Never assembled here from the basis code — the sentence a
+                      certifier reads must have one author. It is the packet's English, so it is
+                      quoted as what the packet prints, the way the Materials List editor does. */}
+                  <Text fontSize="xs" color={subtextColor}>
+                    {intl.formatMessage(
+                      {
+                        id: 'osp.materialsList.reviewPrints',
+                        defaultMessage: 'Your packet prints: {statement}.'
+                      },
+                      { statement: row.listing_statement }
+                    )}
+                  </Text>
+                </StatusRow>
               ))}
-            </VStack>
+            </StatusList>
           )}
         </Box>
 

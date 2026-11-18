@@ -60,6 +60,16 @@ describe('OSP panels are rows, not boxes', () => {
     expect(log).toMatch(/toLocaleDateString\(intl\.locale/);
   });
 
+  it("lists the operator's own materials as neutral rows, not gray cards", () => {
+    const start = INPUTS.indexOf('<StatusList testId="own-material-rows">');
+    expect(start).toBeGreaterThan(0);
+    const own = INPUTS.slice(start, INPUTS.indexOf('</StatusList>', start));
+    expect(own).toMatch(/<StatusRow[\s\S]*?tone="neutral"[\s\S]*?testId="own-material-row"/);
+    expect(own).not.toMatch(/bg=\{sectionBg\}/);
+    // The remove action is a small ghost button, not an outline one per card.
+    expect(own).toMatch(/size="xs"\s+variant="ghost"/);
+  });
+
   it('states the registry-sync finding as a warning row, not an alert slab', () => {
     const start = INPUTS.indexOf('osp.registry_sync_diff?.has_warning && (');
     expect(start).toBeGreaterThan(0);

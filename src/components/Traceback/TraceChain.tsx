@@ -20,7 +20,7 @@
  *   missing, it does not grade it (the certifier review's own rule, #257).
  */
 import React, { ReactNode } from 'react';
-import { Badge, Box, HStack, Link, Text, VStack, Wrap, WrapItem } from '@chakra-ui/react';
+import { Badge, Box, HStack, Text, VStack, Wrap, WrapItem } from '@chakra-ui/react';
 import { FaArrowDown, FaExclamationTriangle, FaInfoCircle, FaPaperclip } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
@@ -29,7 +29,7 @@ import {
   StandardCard,
   StatusList,
   StatusRow,
-  TOUCH_TARGET
+  StatusRowLink
 } from 'components/Design/StandardComponents';
 import OnHandByLocation from './OnHandByLocation';
 
@@ -325,19 +325,9 @@ export const TraceChain = ({
               title={t(`traceback.gap.${g.code}`, { input: inputName(g) })}
               action={
                 to && onNavigate ? (
-                  <Link
-                    as="button"
-                    type="button"
-                    fontSize="sm"
-                    fontWeight="semibold"
-                    color="green.700"
-                    onClick={() => onNavigate(to)}
-                    {...TOUCH_TARGET}>
+                  <StatusRowLink onClick={() => onNavigate(to)}>
                     {t('traceback.gap.fix')}
-                    <Text as="span" aria-hidden="true">
-                      {' →'}
-                    </Text>
-                  </Link>
+                  </StatusRowLink>
                 ) : undefined
               }>
               {forOperation && (
