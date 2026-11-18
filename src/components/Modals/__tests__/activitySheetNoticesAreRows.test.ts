@@ -54,8 +54,8 @@ describe('the activity sheet is rows, not boxes', () => {
   });
 
   it('flags a stock or AI photo with a warning row, read from the record detail', () => {
-    // PhotoFlagNotice reads `photo_content_flag` from the detail query; the list rows never
-    // carry it (it is detail-only on the backend, kept off the shopper's season payload).
+    // PhotoFlagNotice reads `photo_content_flag` from the detail query: the parcel timeline and
+    // Activities rows never carried it, so a sheet opened from them never warned.
     expect(MODAL).toMatch(/<PhotoFlagNotice\s+farmId=\{farmId\}\s+eventId=\{event\.id\}/);
     expect(MODAL).not.toMatch(/event\.photo_content_flag/);
     const notice = code('src/components/Events/PhotoFlagNotice.tsx');
