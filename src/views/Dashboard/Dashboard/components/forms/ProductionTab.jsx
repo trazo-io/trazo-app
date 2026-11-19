@@ -68,6 +68,7 @@ import { asToggle } from 'utils/formToggle';
 // §E-5 — the cleaning-event picker needs this production's sibling EM events.
 import { useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { isAnnualCropCategory } from 'config/events/plantingStock';
 import { useGetCurrentHistoryQuery, useGetSeedSuppliersQuery } from 'store/api/historyApi';
 import { RegistryFormField } from 'src/components/Forms/RegistryFormField';
 import { BlockIdField } from 'components/Fields/BlockIdField';
@@ -619,11 +620,18 @@ const ProductionTab = forwardRef(
        * here; units stay, because the cards read them. Summary mode is off. The keys come from
        * the server's spec (`multiParcelSpec.json`, type 1).
        */
-      multiTarget = false
+      multiTarget = false,
+      /**
+       * The season's crop category (crop_type.category of the season the record is logged
+       * against). An annual crop is not asked for a rootstock and counts plants, not trees
+       * (VID-14). Unknown: the orchard fields stay.
+       */
+      seasonCropCategory = null
     },
     ref
   ) => {
     const intl = useIntl();
+    const annualCrop = isAnnualCropCategory(seasonCropCategory);
     const productionSchema = React.useMemo(() => buildProductionSchema(multiTarget), [multiTarget]);
 
     /**
@@ -3625,37 +3633,48 @@ const ProductionTab = forwardRef(
                         and until now only the variety half of it had anywhere to go. */}
                     {['PL', 'TR'].includes(productionType) && (
                       <>
-                        <StandardField
-                          label={intl.formatMessage({
-                            id: 'events.production.fields.rootstock',
-                            defaultMessage: 'Rootstock'
-                          })}
-                          helpText={intl.formatMessage({
-                            id: 'events.production.fields.rootstockHelp',
-                            defaultMessage:
-                              'Planting stock under 7 CFR 205.2 — its organic status is what § 205.204 tests.'
-                          })}>
-                          <Controller
-                            name="rootstock"
-                            control={methods.control}
-                            render={({ field }) => (
-                              <StandardInput
-                                {...field}
-                                placeholder={intl.formatMessage({
-                                  id: 'events.production.fields.rootstockPlaceholder',
-                                  defaultMessage: 'e.g., Duke 7, Dusa clonal'
-                                })}
-                              />
-                            )}
-                          />
-                        </StandardField>
+                        {/* Not on an annual crop (an onion has no rootstock), unless the record
+                            already holds one: a stored value is never hidden. */}
+                        {(!annualCrop || initialValues.rootstock) && (
+                          <StandardField
+                            label={intl.formatMessage({
+                              id: 'events.production.fields.rootstock',
+                              defaultMessage: 'Rootstock'
+                            })}
+                            helpText={intl.formatMessage({
+                              id: 'events.production.fields.rootstockHelp',
+                              defaultMessage:
+                                'Planting stock under 7 CFR 205.2 — its organic status is what § 205.204 tests.'
+                            })}>
+                            <Controller
+                              name="rootstock"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardInput
+                                  {...field}
+                                  placeholder={intl.formatMessage({
+                                    id: 'events.production.fields.rootstockPlaceholder',
+                                    defaultMessage: 'e.g., Duke 7, Dusa clonal'
+                                  })}
+                                />
+                              )}
+                            />
+                          </StandardField>
+                        )}
 
                         {!multiTarget && (
                           <StandardField
-                            label={intl.formatMessage({
-                              id: 'events.production.fields.plantsEstablished',
-                              defaultMessage: 'Trees / Plants Planted'
-                            })}
+                            label={intl.formatMessage(
+                              annualCrop
+                                ? {
+                                    id: 'events.production.fields.plantsEstablishedAnnual',
+                                    defaultMessage: 'Plants Planted'
+                                  }
+                                : {
+                                    id: 'events.production.fields.plantsEstablished',
+                                    defaultMessage: 'Trees / Plants Planted'
+                                  }
+                            )}
                             helpText={intl.formatMessage({
                               id: 'events.production.fields.plantsEstablishedHelp',
                               defaultMessage:
@@ -3682,10 +3701,17 @@ const ProductionTab = forwardRef(
                             render={({ field }) => (
                               <StandardInput
                                 {...field}
-                                placeholder={intl.formatMessage({
-                                  id: 'events.production.fields.plantSpacingPlaceholder',
-                                  defaultMessage: 'e.g., 27 ft x 22 ft or 73 trees/ac'
-                                })}
+                                placeholder={intl.formatMessage(
+                                  annualCrop
+                                    ? {
+                                        id: 'events.production.fields.plantSpacingPlaceholderAnnual',
+                                        defaultMessage: 'e.g., 4 rows per bed, 4 in apart'
+                                      }
+                                    : {
+                                        id: 'events.production.fields.plantSpacingPlaceholder',
+                                        defaultMessage: 'e.g., 27 ft x 22 ft or 73 trees/ac'
+                                      }
+                                )}
                               />
                             )}
                           />

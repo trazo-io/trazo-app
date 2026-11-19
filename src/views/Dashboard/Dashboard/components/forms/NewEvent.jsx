@@ -5190,6 +5190,7 @@ function NewEventForm({ isEdit = false, eventId = null }) {
                       onNameEdited={() => setNameOrigin('operator')}
                       carbonCalculation={carbonCalculation}
                       multiTarget={multiActive}
+                      seasonCropCategory={(postHarvestTarget || openSeason)?.crop_type?.category}
                       isCalculatingCarbon={isCalculatingCarbon || isCalculating}
                     />
                   )}
