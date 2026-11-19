@@ -490,10 +490,15 @@ export interface OSPSourcingScenario {
   label: { en: string; es: string };
   state: 'yes' | 'no' | 'not_stated';
   answered_in: string[];
+  /** For a scenario not stated, the modules whose answer would decide it. */
+  unanswered_in: string[];
 }
 
 export interface OSPSourcingScenariosResponse {
   scenarios: OSPSourcingScenario[];
+  /** G8.0 §B's "sources organic products" answer against the first two scenarios; the page's
+   *  [REVIEW] line in the packet. */
+  section_b: 'says_none' | 'says_some' | null;
 }
 
 export interface OSPRecordTypesResponse {

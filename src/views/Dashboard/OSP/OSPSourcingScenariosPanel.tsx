@@ -13,7 +13,7 @@
  */
 import React from 'react';
 import { Badge, Skeleton, Text } from '@chakra-ui/react';
-import { FaQuestion, FaStream } from 'react-icons/fa';
+import { FaExclamationTriangle, FaQuestion, FaStream } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
 import { StandardNotice, StatusList, StatusRow } from 'components/Design/StandardComponents';
@@ -52,8 +52,7 @@ const OSPSourcingScenariosPanel: React.FC<OSPSourcingScenariosPanelProps> = ({
     );
   }
 
-  const modules = (s: OSPSourcingScenario) =>
-    intl.formatList(s.answered_in, { type: 'conjunction' });
+  const list = (codes: string[]) => intl.formatList(codes, { type: 'conjunction' });
   const stateWords = (s: OSPSourcingScenario) =>
     s.state === 'yes'
       ? intl.formatMessage({ id: 'osp.sourcingScenarios.state.yes' })
@@ -83,13 +82,31 @@ const OSPSourcingScenariosPanel: React.FC<OSPSourcingScenariosPanelProps> = ({
                 {open
                   ? intl.formatMessage(
                       { id: 'osp.sourcingScenarios.notStatedHint' },
-                      { modules: modules(s) }
+                      // The module whose answer would decide it; the server names it.
+                      { modules: list(s.unanswered_in.length ? s.unanswered_in : s.answered_in) }
                     )
-                  : intl.formatMessage({ id: 'osp.sourcingScenarios.answeredIn' }, { modules: modules(s) })}
+                  : intl.formatMessage(
+                      { id: 'osp.sourcingScenarios.answeredIn' },
+                      { modules: list(s.answered_in) }
+                    )}
               </Text>
             </StatusRow>
           );
         })}
+        {data.section_b ? (
+          // The same check as the packet's [REVIEW] line, shown before a certifier reads it.
+          <StatusRow
+            testId="sourcing-section-b-row"
+            tone="warn"
+            icon={FaExclamationTriangle}
+            title={intl.formatMessage({ id: 'osp.sourcingScenarios.sectionBTitle' })}>
+            <Text fontSize="sm" color="gray.600">
+              {data.section_b === 'says_none'
+                ? intl.formatMessage({ id: 'osp.sourcingScenarios.sectionBSaysNone' })
+                : intl.formatMessage({ id: 'osp.sourcingScenarios.sectionBSaysSome' })}
+            </Text>
+          </StatusRow>
+        ) : null}
       </StatusList>
       {noneApply ? (
         <Text fontSize="sm" color="gray.600" mt={2} data-testid="sourcing-none-apply">

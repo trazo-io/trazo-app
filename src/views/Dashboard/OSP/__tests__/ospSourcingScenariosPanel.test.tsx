@@ -25,6 +25,7 @@ const row = (key: string, state: string, answered_in: string[], en: string, es: 
   key,
   state,
   answered_in,
+  unanswered_in: state === 'not_stated' ? answered_in : [],
   label: { en, es }
 });
 
@@ -71,7 +72,7 @@ const renderPanel = (locale = 'en-US') =>
 describe('OSPSourcingScenariosPanel', () => {
   beforeEach(() => {
     query = {
-      data: { scenarios: [SEED, RESALE, HANDLED, BRAND] },
+      data: { scenarios: [SEED, RESALE, HANDLED, BRAND], section_b: null },
       isLoading: false,
       isError: false
     };
@@ -99,7 +100,10 @@ describe('OSPSourcingScenariosPanel', () => {
 
   it('says none applies only when all four read No', () => {
     query = {
-      data: { scenarios: [SEED, { ...RESALE, state: 'no' }, HANDLED, { ...BRAND, state: 'no' }] },
+      data: {
+        scenarios: [SEED, { ...RESALE, state: 'no' }, HANDLED, { ...BRAND, state: 'no' }],
+        section_b: null
+      },
       isLoading: false,
       isError: false
     };
@@ -115,6 +119,38 @@ describe('OSPSourcingScenariosPanel', () => {
     expect(rows[1].textContent).toContain(RESALE.label.es);
     expect(rows[1].textContent).toContain('Sí');
     expect(rows[3].textContent).toContain('Sin responder');
+  });
+
+  it('names only the module still open, not every module the scenario reads', () => {
+    query = {
+      data: {
+        scenarios: [{ ...HANDLED, state: 'not_stated', unanswered_in: ['G6.2'] }],
+        section_b: null
+      },
+      isLoading: false,
+      isError: false
+    };
+    renderPanel();
+    expect(screen.getByTestId('sourcing-scenario-row').textContent).toContain(
+      'Answer it in G6.2 and it shows here.'
+    );
+  });
+
+  it('shows the section B disagreement the packet flags for review', () => {
+    query = {
+      data: { scenarios: [SEED, RESALE, HANDLED, BRAND], section_b: 'says_none' },
+      isLoading: false,
+      isError: false
+    };
+    renderPanel();
+    const row = screen.getByTestId('sourcing-section-b-row');
+    expect(row.textContent).toContain('Two answers disagree');
+    expect(row.textContent).toContain('says you source no organic agricultural products');
+  });
+
+  it('shows no disagreement row when section B agrees', () => {
+    renderPanel();
+    expect(screen.queryByTestId('sourcing-section-b-row')).toBeNull();
   });
 
   it('a failed load says so instead of showing an empty list', () => {
