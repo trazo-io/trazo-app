@@ -483,6 +483,19 @@ export interface OSPRecordTypesSummary {
   carried_forward: number;
 }
 
+/** One CCOF G8.0 D1 scenario as the plan's own answers state it. `not_stated` means the section it is
+ *  answered in has not been answered yet, never "no". `answered_in` holds module codes. */
+export interface OSPSourcingScenario {
+  key: string;
+  label: { en: string; es: string };
+  state: 'yes' | 'no' | 'not_stated';
+  answered_in: string[];
+}
+
+export interface OSPSourcingScenariosResponse {
+  scenarios: OSPSourcingScenario[];
+}
+
 export interface OSPRecordTypesResponse {
   summary: OSPRecordTypesSummary;
   record_types: OSPRecordType[];

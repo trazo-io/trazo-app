@@ -81,6 +81,7 @@ import OSPOperationContactsPanel from './OSPOperationContactsPanel';
 import OSPEquipmentPanel from './OSPEquipmentPanel';
 import OSPSourcedProductsPanel from './OSPSourcedProductsPanel';
 import OSPSeedlingSuppliersPanel from './OSPSeedlingSuppliersPanel';
+import OSPSourcingScenariosPanel from './OSPSourcingScenariosPanel';
 import OSPMaterialIdentityPanel from './OSPMaterialIdentityPanel';
 import OSPMaterialRestrictionsPanel from './OSPMaterialRestrictionsPanel';
 import OSPHandlerFacilitiesPanel from './OSPHandlerFacilitiesPanel';
@@ -363,6 +364,8 @@ const QuestionField = ({
                 farmId={farmId}
                 onNavigateAway={onNavigateAway}
               />
+            ) : question.embed === 'sourcing_scenarios' ? (
+              <OSPSourcingScenariosPanel companyId={companyId} farmId={farmId} ospId={osp.id} />
             ) : question.embed === 'seedling_suppliers' ? (
               <OSPSeedlingSuppliersPanel
                 companyId={companyId}
