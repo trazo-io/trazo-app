@@ -34,12 +34,18 @@ const OSPSourcingScenariosPanel: React.FC<OSPSourcingScenariosPanelProps> = ({
 }) => {
   const intl = useIntl();
   const scoped = Boolean(companyId && farmId && ospId);
-  const { data, isLoading, isError } = useGetOSPSourcingScenariosQuery(
+  // `currentData`, never `data`: while another plan's rows load, `data` still holds the previous
+  // plan's answers (review of app #440).
+  const {
+    currentData: data,
+    isFetching,
+    isError
+  } = useGetOSPSourcingScenariosQuery(
     { companyId, farmId, ospId },
     { skip: !scoped, refetchOnMountOrArgChange: true }
   );
 
-  if (isLoading) {
+  if (isFetching && !data) {
     return <Skeleton height="120px" borderRadius="md" />;
   }
   if (isError || !scoped || !data) {
@@ -53,13 +59,15 @@ const OSPSourcingScenariosPanel: React.FC<OSPSourcingScenariosPanelProps> = ({
   }
 
   const list = (codes: string[]) => intl.formatList(codes, { type: 'conjunction' });
-  const stateWords = (s: OSPSourcingScenario) =>
-    s.state === 'yes'
-      ? intl.formatMessage({ id: 'osp.sourcingScenarios.state.yes' })
-      : s.state === 'no'
-      ? intl.formatMessage({ id: 'osp.sourcingScenarios.state.no' })
-      : intl.formatMessage({ id: 'osp.sourcingScenarios.state.notStated' });
-  const noneApply = data.scenarios.length > 0 && data.scenarios.every((s) => s.state === 'no');
+  // A state the server adds later fails the type check here instead of reading as one of these.
+  const STATE_WORDS: Record<OSPSourcingScenario['state'], string> = {
+    yes: intl.formatMessage({ id: 'osp.sourcingScenarios.state.yes' }),
+    no: intl.formatMessage({ id: 'osp.sourcingScenarios.state.no' }),
+    not_stated: intl.formatMessage({ id: 'osp.sourcingScenarios.state.notStated' })
+  };
+  // Not beside a section B disagreement: the two would read as a settled answer and a flag at once.
+  const noneApply =
+    !data.section_b && data.scenarios.length > 0 && data.scenarios.every((s) => s.state === 'no');
 
   return (
     <>
@@ -75,7 +83,7 @@ const OSPSourcingScenariosPanel: React.FC<OSPSourcingScenariosPanelProps> = ({
               title={pickText(s.label, intl.locale)}
               badge={
                 <Badge variant={open ? 'warning' : 'neutral'} fontSize="11px">
-                  {stateWords(s)}
+                  {STATE_WORDS[s.state]}
                 </Badge>
               }>
               <Text fontSize="sm" color="gray.600">
@@ -87,7 +95,8 @@ const OSPSourcingScenariosPanel: React.FC<OSPSourcingScenariosPanelProps> = ({
                     )
                   : intl.formatMessage(
                       { id: 'osp.sourcingScenarios.answeredIn' },
-                      { modules: list(s.answered_in) }
+                      // Only the modules that decided it, never one the operator has not answered.
+                      { modules: list(s.decided_by.length ? s.decided_by : s.answered_in) }
                     )}
               </Text>
             </StatusRow>

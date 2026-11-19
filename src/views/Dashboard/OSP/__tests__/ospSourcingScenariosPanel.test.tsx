@@ -28,6 +28,7 @@ const row = (key: string, state: string, answered_in: string[], en: string, es: 
   state,
   answered_in,
   unanswered_in: state === 'not_stated' ? answered_in : [],
+  decided_by: state === 'not_stated' ? [] : answered_in,
   label: { en, es }
 });
 
@@ -74,8 +75,8 @@ const renderPanel = (locale = 'en-US') =>
 describe('OSPSourcingScenariosPanel', () => {
   beforeEach(() => {
     query = {
-      data: { scenarios: [SEED, RESALE, HANDLED, BRAND], section_b: null },
-      isLoading: false,
+      currentData: { scenarios: [SEED, RESALE, HANDLED, BRAND], section_b: null },
+      isFetching: false,
       isError: false
     };
   });
@@ -102,11 +103,11 @@ describe('OSPSourcingScenariosPanel', () => {
 
   it('says none applies only when all four read No', () => {
     query = {
-      data: {
+      currentData: {
         scenarios: [SEED, { ...RESALE, state: 'no' }, HANDLED, { ...BRAND, state: 'no' }],
         section_b: null
       },
-      isLoading: false,
+      isFetching: false,
       isError: false
     };
     renderPanel();
@@ -125,11 +126,11 @@ describe('OSPSourcingScenariosPanel', () => {
 
   it('names only the module still open, not every module the scenario reads', () => {
     query = {
-      data: {
+      currentData: {
         scenarios: [{ ...HANDLED, state: 'not_stated', unanswered_in: ['G6.2'] }],
         section_b: null
       },
-      isLoading: false,
+      isFetching: false,
       isError: false
     };
     renderPanel();
@@ -140,8 +141,8 @@ describe('OSPSourcingScenariosPanel', () => {
 
   it('shows the section B disagreement the packet flags for review', () => {
     query = {
-      data: { scenarios: [SEED, RESALE, HANDLED, BRAND], section_b: 'says_none' },
-      isLoading: false,
+      currentData: { scenarios: [SEED, RESALE, HANDLED, BRAND], section_b: 'says_none' },
+      isFetching: false,
       isError: false
     };
     renderPanel();
@@ -164,8 +165,48 @@ describe('OSPSourcingScenariosPanel', () => {
     expect(code).not.toMatch(/variant="subtle"|'subtle'|colorScheme="green"/);
   });
 
+  it('names only the modules that decided a yes, not every module it reads (review of app #440)', () => {
+    query = {
+      currentData: {
+        scenarios: [{ ...HANDLED, state: 'yes', decided_by: ['G6.1'] }],
+        section_b: null
+      },
+      isFetching: false,
+      isError: false
+    };
+    renderPanel();
+    const text = screen.getByTestId('sourcing-scenario-row').textContent;
+    expect(text).toContain('From your answers in G6.1');
+    expect(text).not.toContain('G6.2');
+  });
+
+  it('never says none applies beside a section B disagreement', () => {
+    query = {
+      currentData: {
+        scenarios: [SEED, { ...RESALE, state: 'no' }, HANDLED, { ...BRAND, state: 'no' }],
+        section_b: 'says_some'
+      },
+      isFetching: false,
+      isError: false
+    };
+    renderPanel();
+    expect(screen.getByTestId('sourcing-section-b-row')).toBeTruthy();
+    expect(screen.queryByTestId('sourcing-none-apply')).toBeNull();
+  });
+
+  it('shows a loading state, never the previous plan’s rows, while another plan loads', () => {
+    query = {
+      currentData: undefined,
+      data: { scenarios: [SEED], section_b: null },
+      isFetching: true,
+      isError: false
+    };
+    renderPanel();
+    expect(screen.queryByTestId('sourcing-scenario-row')).toBeNull();
+  });
+
   it('a failed load says so instead of showing an empty list', () => {
-    query = { data: undefined, isLoading: false, isError: true };
+    query = { currentData: undefined, isFetching: false, isError: true };
     renderPanel();
     expect(screen.getByText(/could not be loaded/)).toBeTruthy();
     expect(screen.queryByTestId('sourcing-scenario-row')).toBeNull();

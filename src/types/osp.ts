@@ -5,6 +5,8 @@
  * (trazo-back/certifications/models.py). Changes here require a backend change.
  */
 
+import type { TextMap } from 'config/osp/types';
+
 export const OSP_SECTION_KEYS = [
   'practices_procedures', // (a)(1)
   'inputs_list', // (a)(2)
@@ -487,11 +489,13 @@ export interface OSPRecordTypesSummary {
  *  answered in has not been answered yet, never "no". `answered_in` holds module codes. */
 export interface OSPSourcingScenario {
   key: string;
-  label: { en: string; es: string };
+  label: TextMap;
   state: 'yes' | 'no' | 'not_stated';
   answered_in: string[];
   /** For a scenario not stated, the modules whose answer would decide it. */
   unanswered_in: string[];
+  /** For a yes or a no, the modules whose answers decided it. */
+  decided_by: string[];
 }
 
 export interface OSPSourcingScenariosResponse {
