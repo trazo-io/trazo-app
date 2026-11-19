@@ -130,7 +130,7 @@ import {
   verbForKey
 } from 'config/activityVerbs';
 import { formatFieldValue, getFieldConfig, getSubtypes } from 'config/events';
-import { fieldErrorLine } from 'utils/apiErrorMessage';
+import { codedFieldMessage, fieldErrorLine } from 'utils/apiErrorMessage';
 import { soilFormLabelKey } from 'config/events/soilFormLabels';
 import {
   dateAfterUntick,
@@ -3653,7 +3653,16 @@ function NewEventForm({ isEdit = false, eventId = null }) {
         };
         const fieldEntries = Object.entries(error.data)
           .filter(([, v]) => Array.isArray(v))
-          .map(([field, msgs]) => fieldErrorLine(field, msgs.join(', '), labelOf))
+          .map(([field, msgs]) =>
+            fieldErrorLine(
+              field,
+              // A refusal the server coded is worded here, in the reader's language.
+              codedFieldMessage(error.data.error_codes, field, (id, values) =>
+                intl.formatMessage({ id }, values)
+              ) || msgs.join(', '),
+              labelOf
+            )
+          )
           .filter(Boolean);
         if (fieldEntries.length > 0) {
           fieldErrors = fieldEntries.join('; ');
@@ -3687,7 +3696,8 @@ function NewEventForm({ isEdit = false, eventId = null }) {
           )}: ${message}`,
         nameOf: placeName,
         targetText: (name, message) =>
-          intl.formatMessage({ id: 'events.multiParcel.blockFailed' }, { name, message })
+          intl.formatMessage({ id: 'events.multiParcel.blockFailed' }, { name, message }),
+        translate: (id, values) => intl.formatMessage({ id }, values)
       });
       if (severalRecordErrors) fieldErrors = severalRecordErrors;
 

@@ -8,11 +8,18 @@
  * here, because "the helper exists" is not the same as "the helper reads the key
  * this endpoint sends".
  */
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
+import { createIntl } from 'react-intl';
 import { describe, expect, it } from 'vitest';
+
+import enUS from '../../i18n/lang/en-US.json';
+import es419 from '../../i18n/lang/es-419.json';
 
 import {
   apiErrorMessage,
   apiErrorStatus,
+  codedFieldMessage,
   fieldErrorLine,
   readableFieldName
 } from '../apiErrorMessage';
@@ -117,5 +124,76 @@ describe('fieldErrorLine', () => {
     expect(fieldErrorLine('manure_harvest_interval', 'Too short.')).toBe(
       'Manure harvest interval: Too short.'
     );
+  });
+});
+
+describe('codedFieldMessage', () => {
+  const translate = (id: string, v: Record<string, string>) => `${id}|${v.crop}|${v.days}`;
+
+  it('words a known server code with its values', () => {
+    const codes = {
+      manure_harvest_interval: { code: 'manure_below_floor', crop: 'Carrots', days: '120' }
+    };
+    expect(codedFieldMessage(codes, 'manure_harvest_interval', translate)).toBe(
+      'apiErrors.manureBelowFloor|Carrots|120'
+    );
+  });
+
+  it('leaves an unknown code, a missing entry and no codes to the server sentence', () => {
+    expect(
+      codedFieldMessage(
+        { manure_harvest_interval: { code: 'new' } },
+        'manure_harvest_interval',
+        translate
+      )
+    ).toBeNull();
+    expect(codedFieldMessage({}, 'manure_harvest_interval', translate)).toBeNull();
+    expect(codedFieldMessage(undefined, 'manure_harvest_interval', translate)).toBeNull();
+  });
+
+  it('is passed over by the field-error reader, which lists only the field', () => {
+    const err = {
+      data: {
+        manure_harvest_interval: ['Carrots: the edible part touches the soil ...'],
+        error_codes: { manure_harvest_interval: { code: 'manure_below_floor', crop: 'Carrots' } }
+      }
+    };
+    expect(apiErrorMessage(err)).toBe(
+      'Manure harvest interval: Carrots: the edible part touches the soil ...'
+    );
+  });
+});
+
+describe('the coded refusal against the backend that sends it', () => {
+  // The server's code and value names, read from the sibling repo: a rename there would leave a
+  // fake-translate test green and fail at runtime in react-intl (review of app #438).
+  const backend = readFileSync(
+    resolve(__dirname, '../../../../trazo-back/history/services/manure_interval.py'),
+    'utf8'
+  );
+
+  it('maps the code the server sends', () => {
+    expect(backend).toMatch(/BELOW_MINIMUM_CODE = "manure_below_floor"/);
+  });
+
+  it('formats in both locales with exactly the values the server sends', () => {
+    const sent = backend.match(/"code": BELOW_MINIMUM_CODE,([\s\S]*?)\n\s*\}/)?.[1] || '';
+    const keys = Array.from(sent.matchAll(/"(\w+)":/g)).map((m) => m[1]);
+    expect(keys.sort()).toEqual(['crop', 'days']);
+    const values = { crop: 'Carrots', days: '120' };
+    for (const [locale, messages] of [
+      ['en-US', enUS],
+      ['es-419', es419]
+    ] as const) {
+      const intl = createIntl({ locale, messages: messages as Record<string, string> });
+      const text = codedFieldMessage(
+        { manure_harvest_interval: { code: 'manure_below_floor', ...values } },
+        'manure_harvest_interval',
+        (id, v) => intl.formatMessage({ id }, v)
+      );
+      expect(text).toContain('Carrots');
+      expect(text).toContain('120');
+      expect(text).not.toMatch(/[{}]/);
+    }
   });
 });

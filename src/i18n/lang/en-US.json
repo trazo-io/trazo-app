@@ -1498,6 +1498,7 @@
   "app.sand": "Sand",
   "app.sandyLoam": "Sandy Loam",
   "app.save": "Save",
+  "apiErrors.manureBelowFloor": "{crop}: the edible part touches the soil, so 7 CFR 205.203(c)(1)(ii) requires at least {days} days between incorporating raw manure and harvest. Choose {days} days, or record the manure as composted if it meets § 205.203(c)(2).",
   "app.save10Percent": "2 Months Free",
   "app.saveAndAddANewEvent": "SAVE AND ADD A NEW EVENT",
   "app.saving": "Saving…",

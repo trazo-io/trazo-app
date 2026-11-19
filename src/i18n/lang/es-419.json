@@ -1498,6 +1498,7 @@
   "app.sand": "Arena",
   "app.sandyLoam": "Franco arenoso",
   "app.save": "Guardar",
+  "apiErrors.manureBelowFloor": "{crop}: la parte comestible toca el suelo, así que el 7 CFR 205.203(c)(1)(ii) exige al menos {days} días entre incorporar el estiércol crudo y cosechar. Elige {days} días, o registra el estiércol como compostado si cumple el § 205.203(c)(2).",
   "app.save10Percent": "2 Meses gratis",
   "app.saveAndAddANewEvent": "GUARDAR Y AGREGAR UN NUEVO EVENTO",
   "app.saving": "Guardando…",

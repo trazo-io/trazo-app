@@ -19,7 +19,9 @@ const SOURCE = readFileSync(resolve(__dirname, '../NewEvent.jsx'), 'utf8');
 
 describe('the save error toast names the field', () => {
   it('builds field lines through fieldErrorLine with the registry label', () => {
-    expect(SOURCE).toMatch(/fieldErrorLine\(field, msgs\.join\(', '\), labelOf\)/);
+    expect(SOURCE).toMatch(/fieldErrorLine\(\s*field,/);
+    expect(SOURCE).toMatch(/codedFieldMessage\(error\.data\.error_codes, field,/);
+    expect(SOURCE).toMatch(/\|\| msgs\.join\(', '\),\s*labelOf/);
     expect(SOURCE).toMatch(/soilFormLabelKey\(field, eventFormData\.type\)/);
     expect(SOURCE).toMatch(/getFieldConfig\(activeEventType, field\)\?\.labelKey/);
     expect(SOURCE).not.toMatch(/`\$\{field\}: \$\{msgs/);
