@@ -6,6 +6,8 @@
  * names where to answer it, never "No". A failed load is never an empty list.
  */
 import React from 'react';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
@@ -151,6 +153,15 @@ describe('OSPSourcingScenariosPanel', () => {
   it('shows no disagreement row when section B agrees', () => {
     renderPanel();
     expect(screen.queryByTestId('sourcing-section-b-row')).toBeNull();
+  });
+
+  it('a stated fact wears the neutral badge, never the success green (review of app #440)', () => {
+    const code = readFileSync(
+      resolve(process.cwd(), 'src/views/Dashboard/OSP/OSPSourcingScenariosPanel.tsx'),
+      'utf8'
+    );
+    expect(code).toMatch(/variant=\{open \? 'warning' : 'neutral'\}/);
+    expect(code).not.toMatch(/variant="subtle"|'subtle'|colorScheme="green"/);
   });
 
   it('a failed load says so instead of showing an empty list', () => {

@@ -74,7 +74,7 @@ const OSPSourcingScenariosPanel: React.FC<OSPSourcingScenariosPanelProps> = ({
               icon={open ? FaQuestion : FaStream}
               title={pickText(s.label, intl.locale)}
               badge={
-                <Badge variant={open ? 'warning' : 'subtle'} fontSize="11px">
+                <Badge variant={open ? 'warning' : 'neutral'} fontSize="11px">
                   {stateWords(s)}
                 </Badge>
               }>
