@@ -400,6 +400,14 @@ export const OSP_CHANGE_NOTIFICATIONS_URL = (
 export const OSP_RECORD_TYPES_URL = (companyId: string, farmId: string, ospId: string | number) =>
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/record-types/`;
 
+// G8.0 §D (CCOF G8.0 D1): the supply-chain scenarios the plan's own answers state, read-only.
+// See certifications/services/sourcing_scenarios.py.
+export const OSP_SOURCING_SCENARIOS_URL = (
+  companyId: string,
+  farmId: string,
+  ospId: string | number
+) => `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/sourcing-scenarios/`;
+
 // Common OSP required attachments (Field & Crop Information, Crop/Livestock Product List,
 // Materials List, Supplier List). No `workbook` param returns a summary; with it, downloads xlsx.
 // Plan review — what the operation's dated records did after this plan's answers were last

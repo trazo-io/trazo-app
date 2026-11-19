@@ -5,6 +5,8 @@
  * (trazo-back/certifications/models.py). Changes here require a backend change.
  */
 
+import type { TextMap } from 'config/osp/types';
+
 export const OSP_SECTION_KEYS = [
   'practices_procedures', // (a)(1)
   'inputs_list', // (a)(2)
@@ -481,6 +483,26 @@ export interface OSPRecordTypesSummary {
   /** Confirmed on an earlier plan, not re-stated on this one. Counted separately from
    *  `confirmed` rather than deducted from it — they are confirmed answers. */
   carried_forward: number;
+}
+
+/** One CCOF G8.0 D1 scenario as the plan's own answers state it. `not_stated` means the section it is
+ *  answered in has not been answered yet, never "no". `answered_in` holds module codes. */
+export interface OSPSourcingScenario {
+  key: string;
+  label: TextMap;
+  state: 'yes' | 'no' | 'not_stated';
+  answered_in: string[];
+  /** For a scenario not stated, the modules whose answer would decide it. */
+  unanswered_in: string[];
+  /** For a yes or a no, the modules whose answers decided it. */
+  decided_by: string[];
+}
+
+export interface OSPSourcingScenariosResponse {
+  scenarios: OSPSourcingScenario[];
+  /** G8.0 §B's "sources organic products" answer against the first two scenarios; the page's
+   *  [REVIEW] line in the packet. */
+  section_b: 'says_none' | 'says_some' | null;
 }
 
 export interface OSPRecordTypesResponse {

@@ -26,6 +26,7 @@ import {
   OSP_MODULES_URL,
   OSP_NEW_VERSION_URL,
   OSP_RECORD_TYPES_URL,
+  OSP_SOURCING_SCENARIOS_URL,
   OSP_REMOVE_APPROVED_INPUT_URL,
   OSP_SUBMIT_URL,
   OSP_URL
@@ -40,6 +41,7 @@ import {
   OSPAttachmentsResponse,
   OSPReview,
   OSPRecordTypesResponse,
+  OSPSourcingScenariosResponse,
   OSPSummary,
   OSPMaterialAnswer,
   OSPMaterialsListResponse,
@@ -605,6 +607,16 @@ const ospApi = baseApi.injectEndpoints({
       ]
     }),
 
+    // Read from other modules' answers, so it carries their list tag: saving any module refetches it.
+    getOSPSourcingScenarios: build.query<OSPSourcingScenariosResponse, OSPOne>({
+      query: ({ companyId, farmId, ospId }) => ({
+        url: OSP_SOURCING_SCENARIOS_URL(companyId, farmId, ospId),
+        method: 'GET',
+        credentials: 'include'
+      }),
+      providesTags: (_r, _e, { ospId }) => [{ type: 'OSPModules', id: `list-${ospId}` }]
+    }),
+
     getOSPRecordTypes: build.query<OSPRecordTypesResponse, OSPOne>({
       query: ({ companyId, farmId, ospId }) => ({
         url: OSP_RECORD_TYPES_URL(companyId, farmId, ospId),
@@ -775,6 +787,7 @@ export const {
   useCreateOSPChangeNotificationMutation,
   useDeleteOSPChangeNotificationMutation,
   useGetOSPRecordTypesQuery,
+  useGetOSPSourcingScenariosQuery,
   useGetOSPModuleDefinitionsQuery,
   useGetOSPModulesQuery,
   useGetOSPModuleQuery,
