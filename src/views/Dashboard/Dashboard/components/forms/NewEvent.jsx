@@ -93,6 +93,7 @@ import {
 import { useCalculateEventCarbonImpactMutation } from 'store/api/carbonApi';
 import { useGetParcelQuery } from 'store/api/productApi';
 import { useGetFieldNoteQuery } from 'store/api/fieldNoteApi';
+import { plantingSeasonCategory } from 'config/events/plantingStock';
 import { isApplicationRecord, withoutInputValues } from 'config/events/crewNoteApplication';
 import { useGetSeasonPlanQuery } from 'store/api/seasonPlanApi';
 import { EventPreviewModal } from 'components/Events/EventPreviewModal';
@@ -3738,6 +3739,17 @@ function NewEventForm({ isEdit = false, eventId = null }) {
     skip: !isEdit || !existingEvent?.history
   });
   const parentIsFiled = !!(parentProduction?.finish_date || parentProduction?.published);
+  // The crop of the season this record is saved against: an annual crop is not asked for a
+  // rootstock (VID-14). Resolved in the payload's own order; see plantingSeasonCategory.
+  const plantingCropCategory = plantingSeasonCategory({
+    isEdit,
+    editSeason: parentProduction,
+    multiTarget: multiActive,
+    planHistoryId: activePlanItem ? seasonPlanData?.history_id : null,
+    productionFromUrl: planProductionIdFromUrl,
+    postHarvestTarget,
+    seasons: parcelHistories
+  });
 
   useEffect(() => {
     if (parentIsFiled && !lockedRecord) {
@@ -5190,6 +5202,7 @@ function NewEventForm({ isEdit = false, eventId = null }) {
                       onNameEdited={() => setNameOrigin('operator')}
                       carbonCalculation={carbonCalculation}
                       multiTarget={multiActive}
+                      seasonCropCategory={plantingCropCategory}
                       isCalculatingCarbon={isCalculatingCarbon || isCalculating}
                     />
                   )}

@@ -68,7 +68,11 @@ const testStore = () =>
     }
   });
 
-const fieldsFor = (subtype: string, extra: Record<string, unknown> = {}): Set<string> => {
+const renderTab = (
+  subtype: string,
+  extra: Record<string, unknown> = {},
+  props: Record<string, unknown> = {}
+): HTMLElement => {
   const { container } = render(
     <Provider store={testStore()}>
       <MemoryRouter initialEntries={['/admin/dashboard/farm/1/parcel/2/event/add']}>
@@ -82,6 +86,7 @@ const fieldsFor = (subtype: string, extra: Record<string, unknown> = {}): Set<st
                     initialValues={{ type: subtype, ...extra }}
                     hideActions
                     onSubmitHandler={() => {}}
+                    {...props}
                   />
                 </IntlProvider>
               </ChakraProvider>
@@ -94,6 +99,15 @@ const fieldsFor = (subtype: string, extra: Record<string, unknown> = {}): Set<st
   // Same reason as formRenderConformance: sections gated on watch('type') settle only after
   // the mount effect's reset, and reading straight after render() catches the earlier tree.
   act(() => {});
+  return container;
+};
+
+const fieldsFor = (
+  subtype: string,
+  extra: Record<string, unknown> = {},
+  props: Record<string, unknown> = {}
+): Set<string> => {
+  const container = renderTab(subtype, extra, props);
   const names = new Set<string>();
   container.querySelectorAll('input, select, textarea').forEach((el) => {
     const n = (el as HTMLInputElement).name;
@@ -101,6 +115,29 @@ const fieldsFor = (subtype: string, extra: Record<string, unknown> = {}): Set<st
   });
   return names;
 };
+
+describe('a planting asks orchard questions only of a crop that may be one (VID-14)', () => {
+  it('an onion transplant has no rootstock and counts plants, not trees', () => {
+    const fields = fieldsFor('TR', {}, { seasonCropCategory: 'vegetable' });
+    expect(fields.has('rootstock')).toBe(false);
+    expect(fields.has('plants_established')).toBe(true);
+    const text = renderTab('TR', {}, { seasonCropCategory: 'vegetable' }).textContent || '';
+    expect(text).toContain('Plants Planted');
+    expect(text).not.toContain('Trees / Plants Planted');
+    const spacing = renderTab('TR', {}, { seasonCropCategory: 'vegetable' }).querySelector(
+      'input[name="plant_spacing"]'
+    );
+    expect(spacing?.getAttribute('placeholder')).toBe('e.g., 4 rows per bed, 4 in apart');
+  });
+
+  it('a tree crop, an unknown crop and a stored rootstock keep the field', () => {
+    expect(fieldsFor('PL', {}, { seasonCropCategory: 'tree_fruit' }).has('rootstock')).toBe(true);
+    expect(fieldsFor('PL', {}, { seasonCropCategory: null }).has('rootstock')).toBe(true);
+    expect(
+      fieldsFor('PL', { rootstock: 'M9' }, { seasonCropCategory: 'vegetable' }).has('rootstock')
+    ).toBe(true);
+  });
+});
 
 describe('new activity subtypes ask for exactly their own fields', () => {
   it('Transport asks about the load, not the buffer rows', () => {
