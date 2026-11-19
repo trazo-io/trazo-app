@@ -525,6 +525,33 @@ describe('review of app #380', () => {
     expect(unnamed).not.toContain('99');
   });
 
+  it('never prints a coded refusal as words, and words it when it can', () => {
+    // Review of app #438: a multi-parcel save nests the serializer body, error_codes included,
+    // under each place, and the flattened toast read "..., manure_below_floor, Lettuce, 120".
+    const body = {
+      targets: {
+        '12': {
+          manure_harvest_interval: ['Lettuce: the edible part touches the soil ...'],
+          error_codes: {
+            manure_harvest_interval: { code: 'manure_below_floor', crop: 'Lettuce', days: '120' }
+          }
+        }
+      }
+    };
+    const opts = {
+      includeTargets: true,
+      lineText: (l: string, m: string) => m,
+      nameOf: () => 'North Block'
+    };
+    const english = describeSeveralRecordErrors(body, opts);
+    expect(english).toBe('North Block: Lettuce: the edible part touches the soil ...');
+    const worded = describeSeveralRecordErrors(body, {
+      ...opts,
+      translate: (id, v) => `${id}|${v.crop}|${v.days}`
+    });
+    expect(worded).toBe('North Block: apiErrors.manureBelowFloor|Lettuce|120');
+  });
+
   it('the wizard joins both and names the single-parcel tank’s parcel', () => {
     const src = readFileSync(
       join(__dirname, '../../../views/Dashboard/Dashboard/components/forms/NewEvent.jsx'),

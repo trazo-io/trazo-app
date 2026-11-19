@@ -16,6 +16,7 @@
  * tank.
  */
 import spec from './multiParcelSpec.json';
+import { codedFieldMessage } from 'utils/apiErrorMessage';
 
 interface RawTankMix {
   min_lines: number;
@@ -434,15 +435,29 @@ export const buildTankMixBody = ({
   return { ...shared, tank_mix_group: tankId, products, targets };
 };
 
-/** A server refusal's detail as one sentence: lists and objects flattened in order. */
-const flattenDetail = (detail: unknown): string =>
-  Array.isArray(detail)
-    ? detail.map(flattenDetail).join(', ')
-    : detail && typeof detail === 'object'
-    ? Object.values(detail as Record<string, unknown>)
-        .map(flattenDetail)
-        .join(', ')
-    : String(detail);
+/**
+ * A server refusal's detail as one sentence: lists and objects flattened in order.
+ *
+ * `error_codes` is data beside the prose (`{field: {code, ...values}}`, trazo-back
+ * `manure_interval.below_minimum_error`), never words: flattened, a multi-parcel save printed
+ * "..., manure_below_floor, Lettuce, 120". With `translate`, a field the server coded is worded in
+ * the reader's language instead of its English sentence.
+ */
+const flattenDetail = (detail: unknown, translate?: CodedTranslate): string => {
+  if (Array.isArray(detail)) return detail.map((d) => flattenDetail(d, translate)).join(', ');
+  if (!detail || typeof detail !== 'object') return String(detail);
+  const body = detail as Record<string, unknown>;
+  return Object.entries(body)
+    .filter(([field]) => field !== 'error_codes')
+    .map(
+      ([field, value]) =>
+        (translate && codedFieldMessage(body.error_codes, field, translate)) ||
+        flattenDetail(value, translate)
+    )
+    .join(', ');
+};
+
+type CodedTranslate = (id: string, values: Record<string, string>) => string;
 
 /**
  * Everything a several-record refusal says, line by line and place by place, joined.
@@ -458,28 +473,31 @@ export const describeSeveralRecordErrors = (
     includeTargets,
     lineText,
     nameOf,
-    targetText = (name, message) => `${name}: ${message}`
+    targetText = (name, message) => `${name}: ${message}`,
+    translate
   }: {
     includeTargets: boolean;
     lineText: (line: string, message: string) => string;
     nameOf: (key: string) => string | null;
     targetText?: (name: string, message: string) => string;
+    /** Words a refusal the server coded (`error_codes`) in the reader's language. */
+    translate?: CodedTranslate;
   }
 ): string => {
   const body = data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
   const parts: string[] = [];
   const perLine = body.products;
-  if (Array.isArray(perLine)) parts.push(flattenDetail(perLine));
+  if (Array.isArray(perLine)) parts.push(flattenDetail(perLine, translate));
   else if (perLine && typeof perLine === 'object') {
     Object.entries(perLine as Record<string, unknown>).forEach(([line, detail]) =>
-      parts.push(lineText(line, flattenDetail(detail)))
+      parts.push(lineText(line, flattenDetail(detail, translate)))
     );
   }
   const perTarget = body.targets;
   if (includeTargets && perTarget && typeof perTarget === 'object' && !Array.isArray(perTarget)) {
     Object.entries(perTarget as Record<string, unknown>).forEach(([key, detail]) => {
       const name = nameOf(key);
-      const message = flattenDetail(detail);
+      const message = flattenDetail(detail, translate);
       parts.push(name ? targetText(name, message) : message);
     });
   }

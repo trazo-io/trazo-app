@@ -3695,7 +3695,8 @@ function NewEventForm({ isEdit = false, eventId = null }) {
           )}: ${message}`,
         nameOf: placeName,
         targetText: (name, message) =>
-          intl.formatMessage({ id: 'events.multiParcel.blockFailed' }, { name, message })
+          intl.formatMessage({ id: 'events.multiParcel.blockFailed' }, { name, message }),
+        translate: (id, values) => intl.formatMessage({ id }, values)
       });
       if (severalRecordErrors) fieldErrors = severalRecordErrors;
 
