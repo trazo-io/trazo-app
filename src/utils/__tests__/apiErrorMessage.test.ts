@@ -13,6 +13,7 @@ import { describe, expect, it } from 'vitest';
 import {
   apiErrorMessage,
   apiErrorStatus,
+  codedFieldMessage,
   fieldErrorLine,
   readableFieldName
 } from '../apiErrorMessage';
@@ -116,6 +117,43 @@ describe('fieldErrorLine', () => {
     expect(readableFieldName('tank_lines.0.product')).toBe('Tank lines 0 product');
     expect(fieldErrorLine('manure_harvest_interval', 'Too short.')).toBe(
       'Manure harvest interval: Too short.'
+    );
+  });
+});
+
+describe('codedFieldMessage', () => {
+  const translate = (id: string, v: Record<string, string>) => `${id}|${v.crop}|${v.days}`;
+
+  it('words a known server code with its values', () => {
+    const codes = {
+      manure_harvest_interval: { code: 'manure_below_floor', crop: 'Carrots', days: '120' }
+    };
+    expect(codedFieldMessage(codes, 'manure_harvest_interval', translate)).toBe(
+      'apiErrors.manureBelowFloor|Carrots|120'
+    );
+  });
+
+  it('leaves an unknown code, a missing entry and no codes to the server sentence', () => {
+    expect(
+      codedFieldMessage(
+        { manure_harvest_interval: { code: 'new' } },
+        'manure_harvest_interval',
+        translate
+      )
+    ).toBeNull();
+    expect(codedFieldMessage({}, 'manure_harvest_interval', translate)).toBeNull();
+    expect(codedFieldMessage(undefined, 'manure_harvest_interval', translate)).toBeNull();
+  });
+
+  it('is passed over by the field-error reader, which lists only the field', () => {
+    const err = {
+      data: {
+        manure_harvest_interval: ['Carrots: the edible part touches the soil ...'],
+        error_codes: { manure_harvest_interval: { code: 'manure_below_floor', crop: 'Carrots' } }
+      }
+    };
+    expect(apiErrorMessage(err)).toBe(
+      'Manure harvest interval: Carrots: the edible part touches the soil ...'
     );
   });
 });

@@ -93,3 +93,30 @@ export const apiErrorStatus = (err: unknown): number | null => {
   const status = (err as { status?: unknown })?.status;
   return typeof status === 'number' ? status : null;
 };
+
+/**
+ * Server refusals the screen words itself, by code. The server sends its English sentence under the
+ * field and, beside it, `error_codes[field] = {code, ...values}` (a dict, so the field-error readers
+ * above pass over it). A Spanish grower read "Intervalo estiércol-cosecha: Carrots: the edible part
+ * touches the soil..." (recordkeeping checklist run 2026-11-16, VID-07).
+ */
+const CODED_MESSAGES: Record<string, string> = {
+  manure_below_floor: 'apiErrors.manureBelowFloor'
+};
+
+/** The field's refusal in the reader's language when the server sent a known code, else null. */
+export const codedFieldMessage = (
+  codes: unknown,
+  field: string,
+  translate: (id: string, values: Record<string, string>) => string
+): string | null => {
+  const entry = (codes as Record<string, unknown> | null | undefined)?.[field];
+  if (!entry || typeof entry !== 'object') return null;
+  const { code, ...values } = entry as Record<string, unknown>;
+  const id = typeof code === 'string' ? CODED_MESSAGES[code] : undefined;
+  if (!id) return null;
+  return translate(
+    id,
+    Object.fromEntries(Object.entries(values).map(([k, v]) => [k, String(v ?? '')]))
+  );
+};
