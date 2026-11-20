@@ -14,6 +14,7 @@ import { Box, Text } from '@chakra-ui/react';
 import { FaFlask, FaLeaf, FaMapMarkerAlt, FaRulerHorizontal, FaShieldAlt } from 'react-icons/fa';
 
 import { FieldList, InfoRow } from 'components/Design/ProfileField';
+import { STATUS_URGENCY_TOKENS } from 'components/Design/StandardComponents';
 import { ORGANIC_BASES } from 'components/Events/TankMixLines';
 import { APPLICATION_RATE_UNIT_SYMBOLS } from 'config/events/enums';
 import { UNIT_CODE_SYMBOLS } from 'config/events/formatters';
@@ -137,7 +138,10 @@ export default function SprayReview({ review, firstName, firstUnit, parcelNames 
                     product.basis ? (
                       basisLabel(product.basis)
                     ) : (
-                      <Text as="span" color="orange.700" data-testid="spray-review-no-basis">
+                      <Text
+                        as="span"
+                        color={STATUS_URGENCY_TOKENS.warn.text}
+                        data-testid="spray-review-no-basis">
                         {intl.formatMessage({ id: 'events.review.tank.noBasis' })}
                       </Text>
                     )
