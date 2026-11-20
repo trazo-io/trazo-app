@@ -24,6 +24,7 @@ import {
   tankCardFields,
   tankLineIssues,
   tankLineRequest,
+  tankReview,
   type TankLineForm
 } from '../tankMix';
 import { buildMultiTargetBody, newTarget } from '../../../utils/multiParcel';
@@ -561,5 +562,89 @@ describe('review of app #380', () => {
     expect(src).toContain('includeTargets: multiActive || tankRequested');
     expect(src).toContain('farmParcels.find((p) => String(p.id) === parcel)?.name');
     expect(src).toContain('setMultiTargets((prev) => pruneTankCardValues(prev, tankLines))');
+  });
+});
+
+describe('what the review step shows of a tank (walkthrough 2026-11-20, W2)', () => {
+  // The review read only the form's top-level values: a three-product tank on two blocks was
+  // confirmed on a screen naming one product and no amount, and the save wrote six records.
+  const rules = specRulesFor(2, null)!;
+  const lines = [kocide(), { ...dyneAmic(), organic_approved: '' }];
+  const cards = tankCardFields(lines);
+  const cardRules = { ...rules, fields: [...rules.fields, ...cards.fields] };
+  const form = {
+    volume_unit: 'fl_oz',
+    area_unit: 'acres',
+    application_rate: '6',
+    application_rate_unit: 'fl_oz_ac',
+    application_fuel_unit: 'gal',
+    ...cards.form
+  };
+  const north = {
+    ...newTarget({ id: 2, name: 'North', area: 0 }),
+    scope: 'part' as const,
+    partArea: '4'
+  };
+  const south = {
+    ...newTarget({ id: 3, name: 'South', area: 0 }),
+    scope: 'part' as const,
+    partArea: '6',
+    values: { [cards.fields[1].key]: '12' }
+  };
+  const multi = buildMultiTargetBody({}, [north, south], cardRules, form, 'review');
+
+  it('names every product after the first with the facts its record will hold', () => {
+    const { products } = tankReview({ lines, multiBody: multi });
+    expect(products.map((p) => [p.number, p.role, p.name])).toEqual([
+      [2, 'product', 'Kocide 3000-O'],
+      [3, 'adjuvant', 'Dyne-Amic']
+    ]);
+    expect(products[0]).toMatchObject({
+      rate: '1.5',
+      rateUnit: 'lb_ac',
+      concentration: '30%',
+      concentrationNotRecorded: false,
+      rei: '48',
+      phi: '0',
+      basis: 'omri_listed',
+      // Several parcels: the amount is each parcel's, never one figure for the tank.
+      amount: ''
+    });
+    expect(products[1]).toMatchObject({ concentrationNotRecorded: true, basis: '' });
+  });
+
+  it("lists each parcel's amounts as the save sends them, product 1 first", () => {
+    const review = tankReview({ lines, multiBody: multi });
+    const sent = buildTankMixBody({ body: multi, lines, tankId: 't', perTargetKeys: PER_TARGET });
+    expect(review.parcels).toEqual([
+      { parcelId: 2, amounts: ['24', '6', ''] },
+      { parcelId: 3, amounts: ['36', '9', '12'] }
+    ]);
+    // The same numbers the request carries, parcel by parcel and line by line.
+    (sent.targets as { products: { volume_applied?: string }[] }[]).forEach((target, i) => {
+      expect(target.products.map((p) => p.volume_applied ?? '')).toEqual(review.parcels[i].amounts);
+    });
+    expect(review.records).toBe(6);
+  });
+
+  it('on one parcel, each product carries its own amount and the records are one per product', () => {
+    const review = tankReview({ lines, multiBody: null });
+    expect(review.parcels).toEqual([]);
+    expect(review.products.map((p) => [p.amount, p.unit])).toEqual([
+      ['6', 'lbs'],
+      ['8', 'fl_oz']
+    ]);
+    expect(review.records).toBe(3);
+  });
+
+  it('a spray of one product on several parcels still lists each parcel', () => {
+    const plain = buildMultiTargetBody({}, [north, south], rules, form, 'review');
+    const review = tankReview({ lines: [], multiBody: plain });
+    expect(review.products).toEqual([]);
+    expect(review.parcels).toEqual([
+      { parcelId: 2, amounts: ['24'] },
+      { parcelId: 3, amounts: ['36'] }
+    ]);
+    expect(review.records).toBe(2);
   });
 });

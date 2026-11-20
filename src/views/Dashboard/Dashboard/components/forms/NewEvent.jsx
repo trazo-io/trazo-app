@@ -102,6 +102,7 @@ import { ApplicationGroupNotice } from 'components/Events/ApplicationGroupNotice
 import { TankMixNotice } from 'components/Events/TankMixNotice';
 import { AlsoAppliedTo, PerParcelCards } from 'components/Events/MultiParcel';
 import ActivityReview from 'components/Events/ActivityReview';
+import SprayReview from 'components/Events/SprayReview';
 import WizardActions from 'components/Design/WizardActions';
 import { eventTypeMayGoMulti, multiParcelRulesFor, specRulesFor } from 'config/events/multiParcel';
 import {
@@ -109,7 +110,8 @@ import {
   describeSeveralRecordErrors,
   pruneTankCardValues,
   tankCardFields,
-  tankCardLabel
+  tankCardLabel,
+  tankReview
 } from 'config/events/tankMix';
 import { useDefaultUnits } from 'hooks/useMeasurementSystem';
 import { useGetParcelGeometryQuery } from 'store/api/parcelGeometryApi';
@@ -5475,8 +5477,33 @@ function NewEventForm({ isEdit = false, eventId = null }) {
                           { type: 'conjunction' }
                         )}
                         photoCount={acceptedFiles.length}
-                        onChange={handleStepClick}
-                      />
+                        onChange={handleStepClick}>
+                        {/* The tank's other products and each parcel's amounts, from the same
+                            builders the save sends (walkthrough 2026-11-20, W2). */}
+                        {activeEventType === 2 && (tankLines.length > 0 || multiActive) && (
+                          <SprayReview
+                            review={tankReview({
+                              lines: tankLines,
+                              multiBody:
+                                multiActive && cardRules
+                                  ? buildMultiTargetBody(
+                                      {},
+                                      multiTargets,
+                                      cardRules,
+                                      multiForm(eventFormData),
+                                      'review',
+                                      { timesPerParcel }
+                                    )
+                                  : null
+                            })}
+                            firstName={String(eventFormData.commercial_name || '').trim()}
+                            firstUnit={String(multiForm(eventFormData).volume_unit || '')}
+                            parcelNames={Object.fromEntries(
+                              farmParcels.map((p) => [Number(p.id), p.name])
+                            )}
+                          />
+                        )}
+                      </ActivityReview>
                     </Box>
 
                     <WizardActions

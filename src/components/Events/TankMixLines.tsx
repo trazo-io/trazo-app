@@ -43,7 +43,7 @@ import {
 } from 'config/events/tankMix';
 
 /** The organic bases product 1 offers, in its order (ChemicalTab section 1). */
-const ORGANIC_BASES = [
+export const ORGANIC_BASES = [
   ['omri_listed', 'events.organicApproved.omriListed'],
   ['wsda_listed', 'events.organicApproved.wsdaListed'],
   ['nop_seal_on_label', 'events.organicApproved.nopSeal'],
