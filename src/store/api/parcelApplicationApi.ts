@@ -88,7 +88,16 @@ export interface ParcelApplicationResponse {
   change_notifications?: ParcelChangeNotice[];
   /** §D: contamination incidents recorded on this parcel's seasons (read-only in the wizard). */
   contamination_incidents?: ParcelContaminationIncident[];
-  status: { state: 'not_started' | 'in_progress' | 'complete'; missing: string[] };
+  status: {
+    state: 'not_started' | 'in_progress' | 'complete';
+    missing: string[];
+    /**
+     * The evidence axis (`parcel_evidence_status`): documents and geometry the answers rest on.
+     * The map lives only here since 2026-09-24. Absent from a backend older than that.
+     */
+    evidence_state?: 'complete' | 'outstanding';
+    evidence_missing?: string[];
+  };
 }
 
 export interface LandHistoryManager {

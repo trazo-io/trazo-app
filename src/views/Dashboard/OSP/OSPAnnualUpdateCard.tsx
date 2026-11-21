@@ -409,11 +409,16 @@ export const OSPRenewalSummary: React.FC<{
   farmId?: string;
   currentYear: number;
   isSetupOperator?: boolean;
-}> = ({ companyId, farmId, currentYear, isSetupOperator = false }) => {
+  /**
+   * The operation was never certified (the plan list's `never_certified`), so no annual update
+   * applies: the line says so instead of "No annual update recorded" (walkthrough 2026-11-20, W4).
+   */
+  firstApplication?: boolean;
+}> = ({ companyId, farmId, currentYear, isSetupOperator = false, firstApplication = false }) => {
   const intl = useIntl();
   const { data: updates = [] } = useGetOSPAnnualUpdatesQuery(
     { companyId: companyId || '', farmId: farmId || '' },
-    { skip: !companyId || !farmId }
+    { skip: !companyId || !farmId || firstApplication }
   );
   const newestYear = updates.reduce<number | null>(
     (max, u) => (max == null || u.reporting_year > max ? u.reporting_year : max),
@@ -429,7 +434,9 @@ export const OSPRenewalSummary: React.FC<{
       borderRadius="md"
       data-testid="osp-renewal-summary">
       <Text fontSize="sm" color="gray.700">
-        {latest
+        {firstApplication
+          ? intl.formatMessage({ id: 'osp.annual.summary.firstApplication' })
+          : latest
           ? `${intl.formatMessage(
               { id: 'osp.annual.summary.line', defaultMessage: 'Annual update {year}: {state}.' },
               {

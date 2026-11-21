@@ -427,6 +427,13 @@ const OSPView: React.FC = () => {
     return onFile ?? selectWorkingOsp(ospSummaries) ?? null;
   }, [ospSummaries]);
 
+  // Walkthrough 2026-11-20, W4: this page asked an operation that was never certified for the
+  // § 205.406(a) annual update ("Each year, a certified operation must file an update ... This
+  // filing continues OSP v1") while the packet cover told the same operation none applies. The
+  // server sends the cover's own test on every version of the plan; the strip on the farm home
+  // already left the row out for a farm with no certificate (recordkeeping review F-27).
+  const firstApplication = annualUpdateTarget?.never_certified === true;
+
   // The draft the filing will be recorded as producing, when the operator has already started
   // the next version. Server-side, `link_filing_to_open_draft` writes that link on save.
   const annualUpdateProducesDraft = useMemo(() => {
@@ -1139,6 +1146,7 @@ const OSPView: React.FC = () => {
             farmId={farmId}
             currentYear={new Date().getFullYear()}
             isSetupOperator={isSetupOperator}
+            firstApplication={firstApplication}
           />
         )}
         {/* Read at mount only: arriving from the checklist opens the section its count is short
@@ -1338,8 +1346,9 @@ const OSPView: React.FC = () => {
           CDFA registration is a California administrative record that is not part
           of § 205.201 at all. Order the page the way the work happens. */}
 
-      {/* OSP annual continuation / update (7 CFR 205.406) */}
-      {companyId && farmId && (
+      {/* OSP annual continuation / update (7 CFR 205.406). None applies to an operation that was
+          never certified; the summary line above the narratives says so (W4). */}
+      {companyId && farmId && !firstApplication && (
         <OSPAnnualUpdateCard
           companyId={companyId}
           farmId={farmId}
