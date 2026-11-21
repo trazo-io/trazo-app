@@ -1499,6 +1499,11 @@
   "app.sandyLoam": "Franco arenoso",
   "app.save": "Guardar",
   "apiErrors.manureBelowFloor": "{crop}: la parte comestible toca el suelo, así que el 7 CFR 205.203(c)(1)(ii) exige al menos {days} días entre incorporar el estiércol crudo y cosechar. Elige {days} días, o registra el estiércol como compostado si cumple el § 205.203(c)(2).",
+  "apiErrors.manureBelowFloorForCrop": "{crop}: hay estiércol crudo registrado con un intervalo hasta la cosecha de 90 días en esta temporada ({count, plural, one {# registro} other {# registros}}, con fecha {dates}). La parte comestible toca el suelo, así que el 7 CFR 205.203(c)(1)(ii) exige al menos {days} días. Corrige cada registro a {days} días, o registra el estiércol como compostado si cumple el § 205.203(c)(2), y luego elige el cultivo.",
+  "apiErrors.seasonClosed": "Esta temporada se cerró el {finish_date}, así que es un registro cerrado. Un registro con fecha dentro de ella se agrega como corrección de una actividad existente (el original se conserva junto a la corrección). El trabajo posterior a la fecha de cierre, como envíos desde almacenamiento, cultivo de cobertura o labores de poscosecha, se puede registrar aquí con su propia fecha posterior.",
+  "apiErrors.seasonAmbiguous": "Esta parcela tiene más de una temporada abierta ({seasons}), así que no está claro a cuál pertenece esta actividad. Regístrala desde la temporada que corresponde.",
+  "apiErrors.noOpenSeason": "Esta parcela no tiene una temporada abierta. Inicia una, o registra el trabajo posterior a una cosecha desde esa temporada cerrada.",
+  "apiErrors.seasonNotOnParcel": "Esa temporada no es de esta parcela. Registra la actividad desde la temporada que corresponde.",
   "app.save10Percent": "2 Meses gratis",
   "app.saveAndAddANewEvent": "GUARDAR Y AGREGAR UN NUEVO EVENTO",
   "app.saving": "Guardando…",
@@ -5414,7 +5419,7 @@
   "events.production.fields.plantSpacingPlaceholder": "ej., 27 ft x 22 ft o 73 árboles/ac",
   "events.production.fields.plantSpacingPlaceholderAnnual": "p. ej., 4 hileras por cama, a 10 cm",
   "events.production.fields.plantsEstablished": "Árboles / plantas plantados",
-  "events.production.fields.plantsEstablishedAnnual": "Plantas plantadas",
+  "events.production.fields.plantsPlanted": "Plantas plantadas",
   "events.production.fields.plantsEstablishedHelp": "La cantidad que el certificador concilia con la factura del vivero.",
   "events.production.fields.processingDurationHours": "Duración del procesamiento",
   "events.production.fields.processingType": "Tipo de procesamiento",
@@ -10612,5 +10617,10 @@
   "handler.productRows.statementTitle": "{product}, declaración de ingredientes ({facility})",
   "handler.productRows.statementOnFile": "Archivo guardado: {title}",
   "handler.productRows.statementMissingBadge": "Sin declaración",
-  "handler.productRows.statementMissing": "No hay una declaración de ingredientes para este producto con varios ingredientes. El plan lo marca para revisión."
+  "handler.productRows.statementMissing": "No hay una declaración de ingredientes para este producto con varios ingredientes. El plan lo marca para revisión.",
+  "osp.wizard.pendingOption": "Se conserva tal como la das, pero todavía no responde la pregunta: el paquete para el certificador la marca para revisión. Cámbiala aquí cuando lo sepas.",
+  "osp.wizard.pendingOptionReadOnly": "Se conserva tal como se dio, pero todavía no responde la pregunta: el paquete para el certificador la marca para revisión.",
+  "parcelApp.certificate.unnumbered": "Tu perfil de finca registra el certificado orgánico de {agent}, pero sin número. El paquete lo indica así en esta página; agrega el número en el perfil de tu finca para que se imprima.",
+  "parcelApp.certificate.unnumberedAgentFallback": "tu certificador",
+  "parcelApp.missing.site_statements": "Si la parcela produce en contenedores o invernadero, y si hay madera tratada en contacto con cultivos o suelo"
 }

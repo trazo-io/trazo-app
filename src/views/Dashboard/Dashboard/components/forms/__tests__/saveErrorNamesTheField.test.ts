@@ -20,11 +20,27 @@ const SOURCE = readFileSync(resolve(__dirname, '../NewEvent.jsx'), 'utf8');
 describe('the save error toast names the field', () => {
   it('builds field lines through fieldErrorLine with the registry label', () => {
     expect(SOURCE).toMatch(/fieldErrorLine\(\s*field,/);
-    expect(SOURCE).toMatch(/codedFieldMessage\(error\.data\.error_codes, field,/);
-    expect(SOURCE).toMatch(/\|\| msgs\.join\(', '\),\s*labelOf/);
+    expect(SOURCE).toMatch(
+      /codedFieldMessage\(error\.data\.error_codes, field, translateCoded, readerDate\)/
+    );
+    expect(SOURCE).toMatch(/\|\|\s*msgs\.join\(', '\),\s*labelOf/);
     expect(SOURCE).toMatch(/soilFormLabelKey\(field, eventFormData\.type\)/);
     expect(SOURCE).toMatch(/getFieldConfig\(activeEventType, field\)\?\.labelKey/);
     expect(SOURCE).not.toMatch(/`\$\{field\}: \$\{msgs/);
+  });
+
+  it('words a coded refusal that is not a field (a closed season) before the English sentence', () => {
+    // 2026-11-21: the closed-season 403 and "no open season" answer `detail`; the toast showed the
+    // server's English sentence ahead of everything else.
+    expect(SOURCE).toMatch(
+      /codedFieldMessage\(error\?\.data\?\.error_codes, 'detail', translateCoded, readerDate\) \|\|\s*error\?\.data\?\.detail/
+    );
+    expect(SOURCE).toMatch(/formatDateOnly\(iso, intl\.locale\)/);
+    expect(SOURCE).toMatch(/formatDate: readerDate/);
+    // The lock notice is the screen's own sentence, not the server's English one.
+    expect(SOURCE).not.toMatch(
+      /error\.data\.detail \|\| intl\.formatMessage\(\{ id: 'events\.locked\.detail' \}\)/
+    );
   });
 
   it('says the manure interval by its label in both languages', () => {

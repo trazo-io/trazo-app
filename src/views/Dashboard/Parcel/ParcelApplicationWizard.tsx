@@ -16,6 +16,7 @@ import { formatDateOnly } from 'utils/dateOnly';
 import { backToLabel } from 'utils/backToLabel';
 import { TransitionCard } from './TransitionCard';
 import CertifiedBranchCard from './CertifiedBranchCard';
+import CertifyingAgentPicker from 'components/Certifications/CertifyingAgentPicker';
 import {
   Badge,
   Box,
@@ -32,7 +33,7 @@ import {
   VStack
 } from '@chakra-ui/react';
 import { FaCheckCircle, FaMapMarkedAlt, FaPlus, FaTrash } from 'react-icons/fa';
-import { useIntl } from 'react-intl';
+import { useIntl, type IntlShape } from 'react-intl';
 import { useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -53,7 +54,12 @@ import CardWithMap from 'components/Map/CardWithMap';
 import FieldHistorySection from 'views/Dashboard/Dashboard/Parcel/FieldHistorySection';
 import { answerValue, visiblePages, visibleQuestions } from 'config/osp/conditionEval';
 import { coverageRemedyKeys } from './coverageRemedies';
-import { holdsRetiredOption, offeredOptions, toggleCheckbox } from 'config/osp/optionChoices';
+import {
+  holdsOnlyPendingOptions,
+  holdsRetiredOption,
+  offeredOptions,
+  toggleCheckbox
+} from 'config/osp/optionChoices';
 import { pickText } from 'config/osp/types';
 import type { AnswerValue, ModuleAnswers, ModuleQuestion } from 'config/osp/types';
 import {
@@ -62,6 +68,7 @@ import {
 } from 'store/api/parcelApplicationApi';
 import { useGetOSPsQuery } from 'store/api/ospApi';
 import { useGetParcelQuery } from 'store/api/productApi';
+import { useFarmState } from 'hooks/useMeasurementSystem';
 import { useGetFarmDocumentsQuery, useUploadFarmDocumentMutation } from 'store/api/documentsApi';
 import { apiErrorMessage } from 'utils/apiErrorMessage';
 import { OSP_MODULE_PDF_URL } from 'config';
@@ -98,7 +105,11 @@ const CONTAINER_STATEMENT_MESSAGES = {
   loadFailed: 'parcelApp.containerStatement.loadFailed'
 };
 import { env } from 'config/environment';
-import type { BufferZoneRow, ParcelApplicationResponse } from 'store/api/parcelApplicationApi';
+import type {
+  BufferZoneRow,
+  LandHistorySummary,
+  ParcelApplicationResponse
+} from 'store/api/parcelApplicationApi';
 import PlannedCropRows from './PlannedCropRows';
 import { useUserRole } from 'hooks/useUserRole';
 import type { RootState } from 'store/index';
@@ -119,7 +130,8 @@ const STATUS_BADGE: Record<string, string> = {
  * for organic livestock" or the section is completed).
  */
 const PAGE_STATUS_CHECK: Record<string, string[]> = {
-  a_location: ['identity'],
+  // site_statements since 2026-11-21: container production and treated lumber are null until answered.
+  a_location: ['identity', 'site_statements'],
   b_transition: ['transition'],
   c_livestock: ['livestock'],
   d_buffers: ['buffers'],
@@ -418,18 +430,57 @@ export const BufferEditor = ({
   );
 };
 
+/**
+ * The certificate card's line: the certificate of record, or one recorded on the farm profile without its
+ * number (not "no certificate": first-run audit, 2026-11-21), or none. Mirrors the parcel page's wording.
+ */
+export const certificateCardLine = (
+  intl: IntlShape,
+  landHistory?: Pick<LandHistorySummary, 'certificate' | 'certificate_unnumbered_agent'> | null
+): string => {
+  const cert = landHistory?.certificate;
+  if (cert) {
+    return intl.formatMessage(
+      { id: 'parcelApp.certificate.onFile' },
+      { number: cert.number, agent: cert.agent }
+    );
+  }
+  const unnumbered = landHistory?.certificate_unnumbered_agent;
+  if (unnumbered != null) {
+    return intl.formatMessage(
+      { id: 'parcelApp.certificate.unnumbered' },
+      {
+        agent:
+          unnumbered || intl.formatMessage({ id: 'parcelApp.certificate.unnumberedAgentFallback' })
+      }
+    );
+  }
+  return intl.formatMessage({ id: 'parcelApp.certificate.none' });
+};
+
+/**
+ * Text questions that name a certifying agent. They take the agent picker the farm profile and the plan
+ * use, so a picked name is the spelling the packet resolves (first-run audit, 2026-11-21: a grower typed
+ * "WSDA (Washington State Department of Agriculture)" here and all three parcels fell out of WSDA's
+ * routing). A name not on the list stays possible under "Other".
+ */
+const AGENT_NAME_QUESTIONS = new Set(['prior_certifier_name']);
+
 export const QuestionField = ({
   question,
   value,
   locale,
   canWrite,
-  onChange
+  onChange,
+  farmState
 }: {
   question: ModuleQuestion;
   value: AnswerValue;
   locale: string;
   canWrite: boolean;
   onChange: (value: AnswerValue) => void;
+  /** The farm's state, so the agent picker groups the agencies common there (as on the farm profile). */
+  farmState?: string | null;
 }) => {
   const intl = useIntl();
   const label = pickText(question.label, locale);
@@ -518,7 +569,15 @@ export const QuestionField = ({
       );
       break;
     default:
-      control = (
+      control = AGENT_NAME_QUESTIONS.has(question.key) ? (
+        <CertifyingAgentPicker
+          value={(value as string) ?? ''}
+          onChange={(name) => onChange(name || null)}
+          isDisabled={!canWrite}
+          ariaLabel={label}
+          state={farmState || undefined}
+        />
+      ) : (
         <StandardInput
           value={(value as string) ?? ''}
           onChange={(e) => onChange(e.target.value || null)}
@@ -555,6 +614,18 @@ export const QuestionField = ({
           mt={1}
           data-testid={`parcel-q-retired-${question.key}`}>
           {intl.formatMessage({ id: 'osp.wizard.retiredOption' })}
+        </Text>
+      ) : null}
+      {/* Same note as the module wizard: a not-yet-known answer stays open in the packet. */}
+      {holdsOnlyPendingOptions(question, value) ? (
+        <Text
+          fontSize="xs"
+          color="gray.700"
+          mt={1}
+          data-testid={`parcel-q-pending-${question.key}`}>
+          {intl.formatMessage({
+            id: canWrite ? 'osp.wizard.pendingOption' : 'osp.wizard.pendingOptionReadOnly'
+          })}
         </Text>
       ) : null}
     </Box>
@@ -684,6 +755,7 @@ const ParcelApplicationWizard = () => {
   const navigate = useNavigate();
   const { farmId, parcelId } = useParams();
   const { canWrite } = useUserRole();
+  const farmState = useFarmState(farmId);
   const currentCompany = useSelector((s: RootState) => s.company.currentCompany);
   const companyId = currentCompany?.id != null ? String(currentCompany.id) : '';
   // The parcel-application PDF is a module PDF, gated by `subscriptions/gating.py` like the rest
@@ -1047,13 +1119,8 @@ const ParcelApplicationWizard = () => {
         return (
           <Box>
             <Stack spacing={1}>
-              <Text fontSize="sm" fontWeight="600">
-                {cert
-                  ? intl.formatMessage(
-                      { id: 'parcelApp.certificate.onFile' },
-                      { number: cert.number, agent: cert.agent }
-                    )
-                  : intl.formatMessage({ id: 'parcelApp.certificate.none' })}
+              <Text fontSize="sm" fontWeight="600" data-testid="parcel-certificate-line">
+                {certificateCardLine(intl, data?.land_history)}
               </Text>
               {cert?.effective ? (
                 <Text fontSize="sm" color="gray.700">
@@ -1322,6 +1389,7 @@ const ParcelApplicationWizard = () => {
                         locale={locale}
                         canWrite={canWrite}
                         onChange={(value) => setAnswer(question.key, value)}
+                        farmState={farmState}
                       />
                       {question.embed ? <Box mt={3}>{renderEmbed(question.embed)}</Box> : null}
                     </Box>

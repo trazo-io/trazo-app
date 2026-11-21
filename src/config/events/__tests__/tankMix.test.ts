@@ -553,6 +553,27 @@ describe('review of app #380', () => {
     expect(worded).toBe('North Block: apiErrors.manureBelowFloor|Lettuce|120');
   });
 
+  it('words a closed season under a place with the date in the reader’s format', () => {
+    // The 403 sentence of one place rides as `{detail, error_codes}` inside `targets` (2026-11-21).
+    const body = {
+      targets: {
+        '12': {
+          detail:
+            'This production was finished on 2026-10-01, so its season is a closed record. ...',
+          error_codes: { detail: { code: 'season_closed', finish_date: '2026-10-01' } }
+        }
+      }
+    };
+    const worded = describeSeveralRecordErrors(body, {
+      includeTargets: true,
+      lineText: (l: string, m: string) => m,
+      nameOf: () => 'North Block',
+      translate: (id, v) => `${id}|${v.finish_date}`,
+      formatDate: (iso) => `<${iso}>`
+    });
+    expect(worded).toBe('North Block: apiErrors.seasonClosed|<2026-10-01>');
+  });
+
   it('the wizard joins both and names the single-parcel tank’s parcel', () => {
     const src = readFileSync(
       join(__dirname, '../../../views/Dashboard/Dashboard/components/forms/NewEvent.jsx'),

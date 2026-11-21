@@ -3667,7 +3667,7 @@ const ProductionTab = forwardRef(
                             label={intl.formatMessage(
                               annualCrop
                                 ? {
-                                    id: 'events.production.fields.plantsEstablishedAnnual',
+                                    id: 'events.production.fields.plantsPlanted',
                                     defaultMessage: 'Plants Planted'
                                   }
                                 : {

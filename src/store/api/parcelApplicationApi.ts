@@ -186,6 +186,8 @@ export interface LandHistorySummary {
     expiry: string | null;
     document_url: string;
   } | null;
+  /** A certificate recorded on the farm profile without its number: its agent ("" if none), else null. */
+  certificate_unnumbered_agent?: string | null;
   current_manager: LandHistoryManager;
   prior_managers: LandHistoryManager[];
   coverage: {

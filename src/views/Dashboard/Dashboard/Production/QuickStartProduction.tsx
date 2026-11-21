@@ -109,6 +109,8 @@ interface QuickStartProductionProps {
 
 // Product tour
 import { useTour } from 'hooks/useTour';
+import { codedFieldMessage, fieldErrorLine } from 'utils/apiErrorMessage';
+import { formatDateOnly } from 'utils/dateOnly';
 
 interface CropTypeOption {
   id: number;
@@ -1086,12 +1088,27 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
         } else if (typeof error.data.error === 'string') {
           description = error.data.error;
         } else if (typeof error.data === 'object') {
+          // A refusal the server coded is worded in the reader's language, and each field by the
+          // label this form shows: a grower read "crop type id: Carrots: 2 raw-manure records..."
+          const labelOf = (field: string) =>
+            field === 'crop_type_id'
+              ? intl.formatMessage({ id: 'quickStart.field.cropType' })
+              : null;
           const fieldErrors = Object.entries(error.data)
             .filter(([, msgs]) => Array.isArray(msgs))
-            .map(([field, msgs]) => {
-              const label = field.replace(/_/g, ' ');
-              return `${label}: ${(msgs as string[]).join(', ')}`;
-            });
+            .map(([field, msgs]) =>
+              fieldErrorLine(
+                field,
+                codedFieldMessage(
+                  error.data.error_codes,
+                  field,
+                  (id, values) => intl.formatMessage({ id }, values),
+                  (iso) => formatDateOnly(iso, intl.locale) || iso
+                ) || (msgs as string[]).join(', '),
+                labelOf
+              )
+            )
+            .filter(Boolean);
           if (fieldErrors.length > 0) {
             description = fieldErrors.join(' | ');
           }

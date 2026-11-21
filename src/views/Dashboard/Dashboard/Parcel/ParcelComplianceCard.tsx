@@ -48,7 +48,8 @@ interface ParcelLike {
   ca_site_id?: string;
   ca_near_schoolsite?: boolean | null;
   date_began_managing?: string;
-  treated_lumber_present?: boolean;
+  /** Null until the operator answers in the parcel application (never a default "No"). */
+  treated_lumber_present?: boolean | null;
   treated_lumber_description?: string;
   treated_lumber_install_date?: string;
   pump_efficiency_pct?: number | string;
@@ -213,9 +214,12 @@ const ParcelComplianceCard: React.FC<Props> = ({
         id: 'parcel.fields.treatedLumberPresent',
         defaultMessage: 'Treated lumber present (7 CFR 205.206(f))'
       }),
-      // Before the parcel loads there is no answer — a dash, never a default "No".
+      // Before the parcel loads there is no answer — a dash, never a default "No". A loaded parcel
+      // whose application has not answered it says so (null since 2026-11-21).
       parcel == null
         ? dash
+        : parcel.treated_lumber_present == null
+        ? intl.formatMessage({ id: 'osp.wizard.unanswered', defaultMessage: 'Not answered' })
         : parcel.treated_lumber_present
         ? intl.formatMessage({ id: 'app.yes', defaultMessage: 'Yes' })
         : intl.formatMessage({ id: 'app.no', defaultMessage: 'No' })
