@@ -18,8 +18,11 @@ import type { ModuleQuestion } from 'config/osp/types';
 
 const WSDA = 'Washington State Department of Agriculture';
 
+const agentsQuery = vi.fn();
+
 vi.mock('store/api/certificationApi', () => ({
-  useGetCertifyingAgentsQuery: () => ({
+  useGetCertifyingAgentsQuery: (state?: string) => ({
+    ...agentsQuery(state),
     data: [
       { slug: 'wsda', name: WSDA, short_name: 'WSDA', own_numbering: true, in_state_rank: 1 },
       { slug: 'ccof', name: 'CCOF', short_name: '', own_numbering: true, in_state_rank: null }
@@ -47,7 +50,7 @@ const question = (key: string): ModuleQuestion => ({
   max_length: null
 });
 
-const renderField = (key: string, value: string | null) => {
+const renderField = (key: string, value: string | null, farmState?: string) => {
   const onChange = vi.fn();
   render(
     <ChakraProvider>
@@ -58,6 +61,7 @@ const renderField = (key: string, value: string | null) => {
           locale="en-US"
           canWrite
           onChange={onChange}
+          farmState={farmState}
         />
       </IntlProvider>
     </ChakraProvider>
@@ -72,6 +76,12 @@ describe('the parcel certifier question', () => {
     expect(select).not.toBeNull();
     fireEvent.change(select as HTMLElement, { target: { value: WSDA } });
     expect(onChange).toHaveBeenCalledWith(WSDA);
+  });
+
+  it("asks for the farm's state, so the agencies common there are grouped first", () => {
+    agentsQuery.mockClear();
+    renderField('prior_certifier_name', null, 'WA');
+    expect(agentsQuery).toHaveBeenCalledWith('WA');
   });
 
   it('leaves every other text question a text box', () => {

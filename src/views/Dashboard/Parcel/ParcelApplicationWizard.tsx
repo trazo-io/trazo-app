@@ -68,6 +68,7 @@ import {
 } from 'store/api/parcelApplicationApi';
 import { useGetOSPsQuery } from 'store/api/ospApi';
 import { useGetParcelQuery } from 'store/api/productApi';
+import { useFarmState } from 'hooks/useMeasurementSystem';
 import { useGetFarmDocumentsQuery, useUploadFarmDocumentMutation } from 'store/api/documentsApi';
 import { apiErrorMessage } from 'utils/apiErrorMessage';
 import { OSP_MODULE_PDF_URL } from 'config';
@@ -427,13 +428,16 @@ export const QuestionField = ({
   value,
   locale,
   canWrite,
-  onChange
+  onChange,
+  farmState
 }: {
   question: ModuleQuestion;
   value: AnswerValue;
   locale: string;
   canWrite: boolean;
   onChange: (value: AnswerValue) => void;
+  /** The farm's state, so the agent picker groups the agencies common there (as on the farm profile). */
+  farmState?: string | null;
 }) => {
   const intl = useIntl();
   const label = pickText(question.label, locale);
@@ -528,6 +532,7 @@ export const QuestionField = ({
           onChange={(name) => onChange(name || null)}
           isDisabled={!canWrite}
           ariaLabel={label}
+          state={farmState || undefined}
         />
       ) : (
         <StandardInput
@@ -707,6 +712,7 @@ const ParcelApplicationWizard = () => {
   const navigate = useNavigate();
   const { farmId, parcelId } = useParams();
   const { canWrite } = useUserRole();
+  const farmState = useFarmState(farmId);
   const currentCompany = useSelector((s: RootState) => s.company.currentCompany);
   const companyId = currentCompany?.id != null ? String(currentCompany.id) : '';
   // The parcel-application PDF is a module PDF, gated by `subscriptions/gating.py` like the rest
@@ -1343,6 +1349,7 @@ const ParcelApplicationWizard = () => {
                         locale={locale}
                         canWrite={canWrite}
                         onChange={(value) => setAnswer(question.key, value)}
+                        farmState={farmState}
                       />
                       {question.embed ? <Box mt={3}>{renderEmbed(question.embed)}</Box> : null}
                     </Box>
