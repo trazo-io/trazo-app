@@ -271,13 +271,8 @@ describe('every coded refusal against the backend that sends it (2026-11-21)', (
 
   it('says one record and several records in both locales', () => {
     for (const [locale, messages, one, several] of [
-      ['en-US', enUS, '1 raw-manure record keeps', '2 raw-manure records keep'],
-      [
-        'es-419',
-        es419,
-        '1 registro de estiércol crudo tiene',
-        '2 registros de estiércol crudo tienen'
-      ]
+      ['en-US', enUS, '(1 record, dated', '(2 records, dated'],
+      ['es-419', es419, '(1 registro, con fecha', '(2 registros, con fecha']
     ] as const) {
       const intl = createIntl({ locale, messages: messages as Record<string, string> });
       const say = (count: string) =>
