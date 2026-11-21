@@ -125,7 +125,8 @@ const STATUS_BADGE: Record<string, string> = {
  * for organic livestock" or the section is completed).
  */
 const PAGE_STATUS_CHECK: Record<string, string[]> = {
-  a_location: ['identity'],
+  // site_statements since 2026-11-21: container production and treated lumber are null until answered.
+  a_location: ['identity', 'site_statements'],
   b_transition: ['transition'],
   c_livestock: ['livestock'],
   d_buffers: ['buffers'],

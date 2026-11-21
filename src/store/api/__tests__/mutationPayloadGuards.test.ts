@@ -67,6 +67,24 @@ describe('updateParcel mutation — §205.202 facts belong to the Parcel Applica
   });
 });
 
+describe('createParcel mutation — a new parcel answers nothing the operator did not', () => {
+  // First-run audit 2026-11-21: an unconditional `treated_lumber_present: 'false'` here answered "No"
+  // on every new parcel, and the renewal packet printed it. The backend field is null until answered.
+  it('appends each yes/no parcel statement only when the caller set it', () => {
+    const source = read('store/api/productApi.js');
+    const create = endpointSlice(source, 'createParcel', 'updateParcel');
+    for (const key of ['treated_lumber_present', 'container_production']) {
+      const lines = create.split('\n');
+      const at = lines.findIndex((l) => l.includes(`'${key}'`) && !l.trim().startsWith('//'));
+      expect(at, `createParcel no longer mentions ${key}`).toBeGreaterThan(-1);
+      const guard = lines.slice(Math.max(at - 3, 0), at).join('\n');
+      expect(guard, `${key} is appended without an undefined check`).toContain(
+        `parcelData.${key} !== undefined`
+      );
+    }
+  });
+});
+
 describe('parcel edit form — no destructive buffer filter, no wizard-owned keys', () => {
   it('AddParcel payload carries no §205.202 keys', () => {
     const source = read('views/Dashboard/Dashboard/Parcel/AddParcel.tsx');
