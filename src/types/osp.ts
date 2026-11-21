@@ -52,7 +52,9 @@ export interface OSPSummary {
   /**
    * True when nothing Trazo holds says the operation was ever certified organic: the packet
    * cover's own test (`never_certified`), so the OSP page and the cover give one answer on
-   * whether a § 205.406(a) annual update applies. Absent from a backend older than 2026-11-21.
+   * whether a § 205.406(a) annual update applies. False whenever any annual update is on record,
+   * so the OSP page never leaves out the card that lists a filing. Absent from a backend older than
+   * 2026-11-21.
    */
   never_certified?: boolean;
   status: OSPStatus;

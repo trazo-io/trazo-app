@@ -160,8 +160,12 @@ export const sectionTabState = (
   if (!status || (!checks && !ownsEvidence)) return 'none';
   const openChecks = new Set(status.missing || []);
   const answersOpen = (checks || []).some((check) => openChecks.has(check));
-  const evidenceOpen = ownsEvidence ? (status.evidence_missing || []).some(ownsEvidence) : false;
-  return answersOpen || evidenceOpen ? 'incomplete' : 'complete';
+  if (answersOpen) return 'incomplete';
+  if (!ownsEvidence) return 'complete';
+  // The evidence list absent (a backend without it) is not "nothing missing": a section that owns
+  // evidence cannot be marked complete from it, the same rule as an absent status (review of #444).
+  if (!Array.isArray(status.evidence_missing)) return 'none';
+  return status.evidence_missing.some(ownsEvidence) ? 'incomplete' : 'complete';
 };
 
 const DIRECTIONS = ['North', 'South', 'East', 'West'];

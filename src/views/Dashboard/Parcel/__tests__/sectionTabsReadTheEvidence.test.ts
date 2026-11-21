@@ -77,6 +77,16 @@ describe('sections with no evidence of their own', () => {
     expect(sectionTabState('a_location', null)).toBe('none');
   });
 
+  it('an absent evidence list marks no evidence-owning tab complete', () => {
+    const noEvidence = { state: 'complete' as const, missing: [] };
+    expect(sectionTabState('e_map', noEvidence)).toBe('none');
+    expect(sectionTabState('f_land_history', noEvidence)).toBe('none');
+    expect(sectionTabState('f_land_history', { ...noEvidence, missing: ['land_history'] })).toBe(
+      'incomplete'
+    );
+    expect(sectionTabState('a_location', noEvidence)).toBe('complete');
+  });
+
   it('a section no check owns is not marked', () => {
     expect(sectionTabState('g_unknown', status([], ['map']))).toBe('none');
   });
