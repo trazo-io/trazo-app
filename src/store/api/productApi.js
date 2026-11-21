@@ -51,10 +51,13 @@ export const productApi = baseApi.injectEndpoints({
           formData.append('section_township_range', parcelData.section_township_range);
         if (parcelData.date_began_managing)
           formData.append('date_began_managing', parcelData.date_began_managing);
-        formData.append(
-          'treated_lumber_present',
-          parcelData.treated_lumber_present ? 'true' : 'false'
-        );
+        // Only when the caller set it. An unconditional 'false' here answered "No" for every new
+        // parcel, and the renewal packet printed it (first-run audit, 2026-11-21): unanswered is null.
+        if (parcelData.treated_lumber_present !== undefined)
+          formData.append(
+            'treated_lumber_present',
+            parcelData.treated_lumber_present ? 'true' : 'false'
+          );
         if (parcelData.container_production !== undefined)
           formData.append(
             'container_production',
