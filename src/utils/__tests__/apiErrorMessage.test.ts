@@ -17,6 +17,7 @@ import enUS from '../../i18n/lang/en-US.json';
 import es419 from '../../i18n/lang/es-419.json';
 
 import {
+  CODED_REFUSALS,
   apiErrorMessage,
   apiErrorStatus,
   codedFieldMessage,
@@ -194,6 +195,107 @@ describe('the coded refusal against the backend that sends it', () => {
       expect(text).toContain('Carrots');
       expect(text).toContain('120');
       expect(text).not.toMatch(/[{}]/);
+    }
+  });
+});
+
+describe('every coded refusal against the backend that sends it (2026-11-21)', () => {
+  // Read from the sibling repo, as above: the code, and the value names each body carries.
+  const read = (path: string) =>
+    readFileSync(resolve(__dirname, '../../../../trazo-back', path), 'utf8');
+  const seasons = read('history/services/season_refusals.py');
+  const views = read('history/views.py');
+  const manure = read('history/services/manure_interval.py');
+  const constant = (source: string, name: string) =>
+    source.match(new RegExp(`^${name} = "(\\w+)"`, 'm'))?.[1];
+
+  const sent: Record<string, string[]> = {
+    [constant(manure, 'BELOW_MINIMUM_CODE')!]: ['crop', 'days'],
+    [constant(manure, 'CROP_BELOW_FLOOR_CODE')!]: ['count', 'crop', 'dates', 'days'],
+    [constant(seasons, 'SEASON_CLOSED')!]: ['finish_date'],
+    [constant(seasons, 'SEASON_AMBIGUOUS')!]: ['seasons'],
+    [constant(seasons, 'NO_OPEN_SEASON')!]: [],
+    [constant(seasons, 'SEASON_NOT_ON_PARCEL')!]: []
+  };
+
+  it('words exactly the codes the server sends', () => {
+    expect(Object.keys(sent).sort()).toEqual(Object.keys(CODED_REFUSALS).sort());
+  });
+
+  it('reads the value names where the server writes them', () => {
+    expect(seasons).toMatch(/"code": SEASON_CLOSED, "finish_date":/);
+    expect(views.match(/SEASON_AMBIGUOUS,\s*seasons=/g)?.length).toBe(2);
+    const forCrop = manure.match(/"code": CROP_BELOW_FLOOR_CODE,([\s\S]*?)\n\s*\}/)?.[1] || '';
+    expect(
+      Array.from(forCrop.matchAll(/"(\w+)":/g))
+        .map((m) => m[1])
+        .sort()
+    ).toEqual(sent.manure_below_floor_for_crop);
+  });
+
+  it('formats in both locales with the values sent, dates in the reader’s format', () => {
+    const values: Record<string, string> = {
+      count: '2',
+      crop: 'Carrots',
+      dates: '2026-03-01, 2026-03-03',
+      days: '120',
+      finish_date: '2026-10-01',
+      seasons: 'Onions 2026, Onions 2027'
+    };
+    for (const [locale, messages] of [
+      ['en-US', enUS],
+      ['es-419', es419]
+    ] as const) {
+      const intl = createIntl({ locale, messages: messages as Record<string, string> });
+      for (const [code, names] of Object.entries(sent)) {
+        const text = codedFieldMessage(
+          { f: { code, ...Object.fromEntries(names.map((n) => [n, values[n]])) } },
+          'f',
+          (id, v) => intl.formatMessage({ id }, v),
+          (iso) => `[${iso}]`
+        );
+        expect(text, `${locale} ${code}`).toBeTruthy();
+        expect(text, `${locale} ${code}`).not.toMatch(/[{}]/);
+        for (const name of names) {
+          const shown = CODED_REFUSALS[code].dates?.includes(name)
+            ? values[name]
+                .split(', ')
+                .map((d) => `[${d}]`)
+                .join(', ')
+            : values[name];
+          expect(text, `${locale} ${code} ${name}`).toContain(name === 'count' ? '2' : shown);
+        }
+      }
+    }
+  });
+
+  it('says one record and several records in both locales', () => {
+    for (const [locale, messages, one, several] of [
+      ['en-US', enUS, '1 raw-manure record keeps', '2 raw-manure records keep'],
+      [
+        'es-419',
+        es419,
+        '1 registro de estiércol crudo tiene',
+        '2 registros de estiércol crudo tienen'
+      ]
+    ] as const) {
+      const intl = createIntl({ locale, messages: messages as Record<string, string> });
+      const say = (count: string) =>
+        codedFieldMessage(
+          {
+            f: {
+              code: 'manure_below_floor_for_crop',
+              count,
+              crop: 'Carrots',
+              dates: '2026-03-01',
+              days: '120'
+            }
+          },
+          'f',
+          (id, v) => intl.formatMessage({ id }, v)
+        );
+      expect(say('1')).toContain(one);
+      expect(say('2')).toContain(several);
     }
   });
 });

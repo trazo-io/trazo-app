@@ -531,21 +531,27 @@ export const tankReview = ({
  * "..., manure_below_floor, Lettuce, 120". With `translate`, a field the server coded is worded in
  * the reader's language instead of its English sentence.
  */
-const flattenDetail = (detail: unknown, translate?: CodedTranslate): string => {
-  if (Array.isArray(detail)) return detail.map((d) => flattenDetail(d, translate)).join(', ');
+const flattenDetail = (
+  detail: unknown,
+  translate?: CodedTranslate,
+  formatDate?: FormatDate
+): string => {
+  if (Array.isArray(detail))
+    return detail.map((d) => flattenDetail(d, translate, formatDate)).join(', ');
   if (!detail || typeof detail !== 'object') return String(detail);
   const body = detail as Record<string, unknown>;
   return Object.entries(body)
     .filter(([field]) => field !== 'error_codes')
     .map(
       ([field, value]) =>
-        (translate && codedFieldMessage(body.error_codes, field, translate)) ||
-        flattenDetail(value, translate)
+        (translate && codedFieldMessage(body.error_codes, field, translate, formatDate)) ||
+        flattenDetail(value, translate, formatDate)
     )
     .join(', ');
 };
 
 type CodedTranslate = (id: string, values: Record<string, string>) => string;
+type FormatDate = (isoDate: string) => string;
 
 /**
  * Everything a several-record refusal says, line by line and place by place, joined.
@@ -562,7 +568,8 @@ export const describeSeveralRecordErrors = (
     lineText,
     nameOf,
     targetText = (name, message) => `${name}: ${message}`,
-    translate
+    translate,
+    formatDate
   }: {
     includeTargets: boolean;
     lineText: (line: string, message: string) => string;
@@ -570,22 +577,24 @@ export const describeSeveralRecordErrors = (
     targetText?: (name: string, message: string) => string;
     /** Words a refusal the server coded (`error_codes`) in the reader's language. */
     translate?: CodedTranslate;
+    /** Shows a coded refusal's ISO date in the reader's format. */
+    formatDate?: FormatDate;
   }
 ): string => {
   const body = data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
   const parts: string[] = [];
   const perLine = body.products;
-  if (Array.isArray(perLine)) parts.push(flattenDetail(perLine, translate));
+  if (Array.isArray(perLine)) parts.push(flattenDetail(perLine, translate, formatDate));
   else if (perLine && typeof perLine === 'object') {
     Object.entries(perLine as Record<string, unknown>).forEach(([line, detail]) =>
-      parts.push(lineText(line, flattenDetail(detail, translate)))
+      parts.push(lineText(line, flattenDetail(detail, translate, formatDate)))
     );
   }
   const perTarget = body.targets;
   if (includeTargets && perTarget && typeof perTarget === 'object' && !Array.isArray(perTarget)) {
     Object.entries(perTarget as Record<string, unknown>).forEach(([key, detail]) => {
       const name = nameOf(key);
-      const message = flattenDetail(detail, translate);
+      const message = flattenDetail(detail, translate, formatDate);
       parts.push(name ? targetText(name, message) : message);
     });
   }
