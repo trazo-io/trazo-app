@@ -10613,5 +10613,7 @@
   "handler.productRows.statementMissing": "No ingredient statement is on file for this multi-ingredient product. The plan marks it for review.",
   "osp.wizard.pendingOption": "Kept as you give it, but it does not answer the question yet: the certifier packet marks it for review. Change it here once you know.",
   "osp.wizard.pendingOptionReadOnly": "Kept as given, but it does not answer the question yet: the certifier packet marks it for review.",
+  "parcelApp.certificate.unnumbered": "Your farm profile records the organic certificate from {agent} without its number. The packet says so on this page; add the number on your farm profile to print it.",
+  "parcelApp.certificate.unnumberedAgentFallback": "your certifying agent",
   "parcelApp.missing.site_statements": "Whether the parcel is container or greenhouse production, and whether treated lumber touches crops or soil"
 }
