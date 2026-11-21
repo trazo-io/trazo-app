@@ -53,7 +53,12 @@ import CardWithMap from 'components/Map/CardWithMap';
 import FieldHistorySection from 'views/Dashboard/Dashboard/Parcel/FieldHistorySection';
 import { answerValue, visiblePages, visibleQuestions } from 'config/osp/conditionEval';
 import { coverageRemedyKeys } from './coverageRemedies';
-import { holdsRetiredOption, offeredOptions, toggleCheckbox } from 'config/osp/optionChoices';
+import {
+  holdsOnlyPendingOptions,
+  holdsRetiredOption,
+  offeredOptions,
+  toggleCheckbox
+} from 'config/osp/optionChoices';
 import { pickText } from 'config/osp/types';
 import type { AnswerValue, ModuleAnswers, ModuleQuestion } from 'config/osp/types';
 import {
@@ -516,6 +521,18 @@ export const QuestionField = ({
           mt={1}
           data-testid={`parcel-q-retired-${question.key}`}>
           {intl.formatMessage({ id: 'osp.wizard.retiredOption' })}
+        </Text>
+      ) : null}
+      {/* Same note as the module wizard: a not-yet-known answer stays open in the packet. */}
+      {holdsOnlyPendingOptions(question, value) ? (
+        <Text
+          fontSize="xs"
+          color="gray.700"
+          mt={1}
+          data-testid={`parcel-q-pending-${question.key}`}>
+          {intl.formatMessage({
+            id: canWrite ? 'osp.wizard.pendingOption' : 'osp.wizard.pendingOptionReadOnly'
+          })}
         </Text>
       ) : null}
     </Box>
