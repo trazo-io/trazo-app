@@ -49,6 +49,12 @@ export interface OSPSummary {
   /** The version this one was forked from; null on the operation's first plan version in Trazo.
    *  Absent from a backend older than 2026-11-14. */
   previous_version?: number | null;
+  /**
+   * True when nothing Trazo holds says the operation was ever certified organic: the packet
+   * cover's own test (`never_certified`), so the OSP page and the cover give one answer on
+   * whether a § 205.406(a) annual update applies. Absent from a backend older than 2026-11-21.
+   */
+  never_certified?: boolean;
   status: OSPStatus;
   status_display: string;
   effective_date: string | null;

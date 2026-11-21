@@ -98,7 +98,7 @@ const CONTAINER_STATEMENT_MESSAGES = {
   loadFailed: 'parcelApp.containerStatement.loadFailed'
 };
 import { env } from 'config/environment';
-import type { BufferZoneRow } from 'store/api/parcelApplicationApi';
+import type { BufferZoneRow, ParcelApplicationResponse } from 'store/api/parcelApplicationApi';
 import PlannedCropRows from './PlannedCropRows';
 import { useUserRole } from 'hooks/useUserRole';
 import type { RootState } from 'store/index';
@@ -123,10 +123,45 @@ const PAGE_STATUS_CHECK: Record<string, string[]> = {
   b_transition: ['transition'],
   c_livestock: ['livestock'],
   d_buffers: ['buffers'],
-  e_map: ['map'],
   // Two checks since 2026-09-09: the 36-month history AND the "currently certified organic?"
   // answer that decides which evidence the parcel page prints (certificate vs. history table).
   f_land_history: ['land_history', 'certification_status']
+};
+
+/**
+ * Which section owns each key of `status.evidence_missing` (`parcel_evidence_status`): the
+ * documents and geometry the answers rest on, each also a "[REVIEW]" line on the parcel's packet
+ * page. Walkthrough 2026-11-20, W6: E read `'map'` from `status.missing`, which has not carried
+ * the map since it moved to the evidence axis on 2026-09-24, so "E. Field map" showed "Section
+ * complete" over its own "No boundary drawn yet".
+ */
+const PAGE_EVIDENCE_CHECK: Record<string, (key: string) => boolean> = {
+  // `map`: no boundary and no upload; `operator_map`: a drawn boundary, no uploaded map;
+  // `map_geometry_disagrees_with_area`: the boundary's area is far from the parcel's.
+  e_map: (key) => ['map', 'operator_map', 'map_geometry_disagrees_with_area'].includes(key),
+  // An affidavit row with no signed copy, days of the 36 months no declaration covers, and what
+  // a certified parcel's route asks for (`certified_<item>`: certificate, no-lapse statement...).
+  f_land_history: (key) =>
+    ['affidavit_document', 'land_history_window'].includes(key) || key.startsWith('certified_')
+};
+
+/**
+ * One section tab's mark, from both axes of the server's status. No status on the response marks
+ * NOTHING: an absent answer is not a passed check, and "complete" is a claim about a compliance
+ * record, so the empty-Set reading would paint every section green the moment the field went
+ * missing.
+ */
+export const sectionTabState = (
+  pageKey: string,
+  status: ParcelApplicationResponse['status'] | null | undefined
+): SectionTabStatus => {
+  const checks = PAGE_STATUS_CHECK[pageKey];
+  const ownsEvidence = PAGE_EVIDENCE_CHECK[pageKey];
+  if (!status || (!checks && !ownsEvidence)) return 'none';
+  const openChecks = new Set(status.missing || []);
+  const answersOpen = (checks || []).some((check) => openChecks.has(check));
+  const evidenceOpen = ownsEvidence ? (status.evidence_missing || []).some(ownsEvidence) : false;
+  return answersOpen || evidenceOpen ? 'incomplete' : 'complete';
 };
 
 const DIRECTIONS = ['North', 'South', 'East', 'West'];
@@ -712,25 +747,15 @@ const ParcelApplicationWizard = () => {
   // go, so the nav has to say WHERE the gaps are — the header badge only grades the whole
   // record, which leaves a farmer opening all six to find the one that owes something.
   //
-  // The ONLY completion signal is status.missing, from
+  // The completion signal is the server's status, both axes (`sectionTabState`), from
   // product/services/parcel_application_status.py: it reads live model state, so it counts
   // evidence that never came through this form (a boundary drawn on the map, crop-history
   // rows, an affidavit). Deliberately NOT the module's own required flags — every question
   // in this module is required=False precisely because those checks decide completion.
-  // Same source as the header badge, so the two can never contradict each other.
+  // Same source as the header badges, so the two can never contradict each other.
   const sectionTabs = useMemo(() => {
-    // No status on the response ⇒ mark NOTHING. An absent answer is not a passed check, and
-    // "complete" is a claim about a compliance record — the empty-Set reading would paint
-    // every section green the moment the status field went missing.
-    const openChecks = status ? new Set(status.missing || []) : null;
     return pages.map((page) => {
-      const checks = PAGE_STATUS_CHECK[page.key];
-      const state: SectionTabStatus =
-        !checks || !openChecks
-          ? 'none'
-          : checks.some((check) => openChecks.has(check))
-          ? 'incomplete'
-          : 'complete';
+      const state = sectionTabState(page.key, status);
       return {
         key: page.key,
         label: pickText(page.title, locale),
@@ -1239,6 +1264,13 @@ const ParcelApplicationWizard = () => {
           {status ? (
             <Badge variant={STATUS_BADGE[status.state]} fontSize="11px">
               {intl.formatMessage({ id: `parcelApp.status.${status.state}` })}
+            </Badge>
+          ) : null}
+          {/* "Complete" means the questions are answered. Beside it, the evidence they rest on,
+              as the server asks of every surface that renders `state` (W6). */}
+          {status?.state === 'complete' && status.evidence_state === 'outstanding' ? (
+            <Badge variant="neutral" fontSize="11px" data-testid="parcel-app-evidence-badge">
+              {intl.formatMessage({ id: 'parcelApp.section.evidenceNeeded' })}
             </Badge>
           ) : null}
           {ospId != null && hasComplianceExports ? (
