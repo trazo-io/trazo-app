@@ -10612,5 +10612,7 @@
   "handler.productRows.statementMissingBadge": "Sin declaración",
   "handler.productRows.statementMissing": "No hay una declaración de ingredientes para este producto con varios ingredientes. El plan lo marca para revisión.",
   "osp.wizard.pendingOption": "Se conserva tal como la das, pero todavía no responde la pregunta: el paquete para el certificador la marca para revisión. Cámbiala aquí cuando lo sepas.",
-  "osp.wizard.pendingOptionReadOnly": "Se conserva tal como se dio, pero todavía no responde la pregunta: el paquete para el certificador la marca para revisión."
+  "osp.wizard.pendingOptionReadOnly": "Se conserva tal como se dio, pero todavía no responde la pregunta: el paquete para el certificador la marca para revisión.",
+  "parcelApp.certificate.unnumbered": "Tu perfil de finca registra el certificado orgánico de {agent}, pero sin número. El paquete lo indica así en esta página; agrega el número en el perfil de tu finca para que se imprima.",
+  "parcelApp.certificate.unnumberedAgentFallback": "tu certificador"
 }
