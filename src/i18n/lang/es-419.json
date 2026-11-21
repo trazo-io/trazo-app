@@ -5413,7 +5413,7 @@
   "events.production.fields.plantSpacingPlaceholder": "ej., 27 ft x 22 ft o 73 árboles/ac",
   "events.production.fields.plantSpacingPlaceholderAnnual": "p. ej., 4 hileras por cama, a 10 cm",
   "events.production.fields.plantsEstablished": "Árboles / plantas plantados",
-  "events.production.fields.plantsEstablishedAnnual": "Plantas plantadas",
+  "events.production.fields.plantsPlanted": "Plantas plantadas",
   "events.production.fields.plantsEstablishedHelp": "La cantidad que el certificador concilia con la factura del vivero.",
   "events.production.fields.processingDurationHours": "Duración del procesamiento",
   "events.production.fields.processingType": "Tipo de procesamiento",
