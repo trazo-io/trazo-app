@@ -44,6 +44,12 @@ interface Props {
   photoCount: number;
   /** Go back to a step to change something (0: activity and date, 1: details). */
   onChange: (step: number) => void;
+  /**
+   * What the save writes beyond this record's own fields, drawn at the end of Details: a spray's
+   * other tank products and each parcel's amounts (SprayReview). The registry reads one record's
+   * values, so without this a tank of three on three blocks was reviewed as one product.
+   */
+  children?: React.ReactNode;
 }
 
 const ChangeWord = () => {
@@ -81,7 +87,8 @@ export default function ActivityReview({
   doneBy,
   parcelsLabel,
   photoCount,
-  onChange
+  onChange,
+  children
 }: Props) {
   const intl = useIntl();
   const event = useMemo(() => ({ ...record, event_type: eventType }), [record, eventType]);
@@ -269,6 +276,7 @@ export default function ActivityReview({
               })}
             </Text>
           ) : null}
+          {children}
         </Box>
 
         <Text fontSize="sm" color="gray.700">

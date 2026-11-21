@@ -435,6 +435,94 @@ export const buildTankMixBody = ({
   return { ...shared, tank_mix_group: tankId, products, targets };
 };
 
+/** One product after the first, as "Check before you save" reads it back. */
+export interface TankReviewProduct {
+  /** Its number in the tank: 2..N (product 1 is the spray form's own product). */
+  number: number;
+  role: TankMixRole;
+  name: string;
+  rate: string;
+  rateUnit: string;
+  concentration: string;
+  concentrationNotRecorded: boolean;
+  rei: string;
+  phi: string;
+  /** The organic basis code, '' when none was chosen. */
+  basis: string;
+  /** One parcel: this product's amount. Several parcels: '' (each parcel lists its own). */
+  amount: string;
+  unit: string;
+}
+
+/** One parcel's amounts, product 1 first, as the save sends them ('' where none is sent). */
+export interface TankReviewParcel {
+  parcelId: number;
+  amounts: string[];
+}
+
+export interface TankReview {
+  products: TankReviewProduct[];
+  parcels: TankReviewParcel[];
+  /** How many records the save writes: one per product and parcel. */
+  records: number;
+}
+
+/**
+ * What the review step shows of a spray beyond product 1's own fields (walkthrough 2026-11-20, W2).
+ *
+ * The review read only the form's top-level values, so a three-product tank on three blocks was
+ * confirmed while the screen named one product and no amount, and the save then wrote nine records.
+ * Everything here comes from the builders the save itself uses: each product from
+ * `tankLineRequest`, each parcel's amounts from `buildTankMixBody` over the targets
+ * `buildMultiTargetBody` made. What the review shows and what is sent cannot drift apart.
+ *
+ * `multiBody`: the multi-parcel body (its `targets`), or null for one parcel.
+ */
+export const tankReview = ({
+  lines,
+  multiBody
+}: {
+  lines: Partial<TankLineForm>[];
+  multiBody?: Record<string, unknown> | null;
+}): TankReview => {
+  const severalParcels = Boolean(multiBody);
+  const products = lines.map((line, index): TankReviewProduct => {
+    const request = tankLineRequest(line, { severalParcels });
+    const text = (key: string) =>
+      request[key] === undefined || request[key] === null ? '' : String(request[key]);
+    return {
+      number: index + 2,
+      role: request.tank_mix_role === 'adjuvant' ? 'adjuvant' : 'product',
+      name: text('commercial_name'),
+      rate: text('application_rate'),
+      rateUnit: text('application_rate_unit'),
+      concentration: text('concentration'),
+      concentrationNotRecorded: request.concentration_not_recorded === true,
+      rei: text('rei_hours'),
+      phi: text('phi_days'),
+      basis: text('organic_approved'),
+      amount: text('volume_applied'),
+      unit: text('volume_unit')
+    };
+  });
+  let parcels: TankReviewParcel[] = [];
+  if (multiBody) {
+    const built = buildTankMixBody({
+      body: { targets: multiBody.targets },
+      lines,
+      tankId: 'review',
+      perTargetKeys: new Set()
+    });
+    parcels = ((built.targets as Record<string, unknown>[]) || []).map((target) => ({
+      parcelId: Number(target.parcel),
+      amounts: ((target.products as Record<string, unknown>[]) || []).map((product) =>
+        filled(product.volume_applied) ? String(product.volume_applied) : ''
+      )
+    }));
+  }
+  return { products, parcels, records: (lines.length + 1) * Math.max(parcels.length, 1) };
+};
+
 /**
  * A server refusal's detail as one sentence: lists and objects flattened in order.
  *
