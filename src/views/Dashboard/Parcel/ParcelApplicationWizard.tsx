@@ -530,7 +530,9 @@ export const QuestionField = ({
           color="gray.700"
           mt={1}
           data-testid={`parcel-q-pending-${question.key}`}>
-          {intl.formatMessage({ id: 'osp.wizard.pendingOption' })}
+          {intl.formatMessage({
+            id: canWrite ? 'osp.wizard.pendingOption' : 'osp.wizard.pendingOptionReadOnly'
+          })}
         </Text>
       ) : null}
     </Box>

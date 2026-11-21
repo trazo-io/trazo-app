@@ -67,7 +67,9 @@ const DEFINITION = {
       visible_when: [],
       questions: [
         radio('irrigation_district_additives', 'Does the district add anything to the water?'),
-        radio('second_district_question', 'Does the second district add anything?')
+        radio('second_district_question', 'Does the second district add anything?'),
+        // A retired question is read-only in the wizard, so its note must not say "change it".
+        { ...radio('old_district_question', 'Old district question?'), retired: true }
       ]
     }
   ]
@@ -86,7 +88,8 @@ vi.mock('store/api/ospApi', () => ({
       definition: DEFINITION,
       answers: {
         irrigation_district_additives: { value: 'unknown' },
-        second_district_question: { value: 'no_confirmed' }
+        second_district_question: { value: 'no_confirmed' },
+        old_district_question: { value: 'unknown' }
       },
       response: { not_applicable: false },
       suggestions: {}
@@ -131,8 +134,27 @@ describe('OSPModuleWizard: a not-yet-known answer', () => {
   });
 });
 
+describe('OSPModuleWizard: a not-yet-known answer the reader cannot change', () => {
+  it('keeps the note and drops the instruction to change it', () => {
+    render(
+      <ChakraProvider>
+        <IntlProvider locale="en-US" messages={enUS as Record<string, string>}>
+          <OSPModuleWizard />
+        </IntlProvider>
+      </ChakraProvider>
+    );
+    const note = screen.queryByTestId('osp-q-pending-old_district_question');
+    expect(note).not.toBeNull();
+    expect(note).toHaveTextContent('the certifier packet marks it for review');
+    expect(note?.textContent).not.toMatch(/Change it here/);
+    expect(screen.queryByTestId('osp-q-pending-irrigation_district_additives')).toHaveTextContent(
+      'Change it here once you know'
+    );
+  });
+});
+
 describe('Parcel Application: a not-yet-known answer', () => {
-  const renderParcel = (value: AnswerValue) =>
+  const renderParcel = (value: AnswerValue, canWrite = true) =>
     render(
       <ChakraProvider>
         <IntlProvider locale="es-419" messages={esLA as Record<string, string>}>
@@ -140,7 +162,7 @@ describe('Parcel Application: a not-yet-known answer', () => {
             question={radio('parcel_probe', 'Probe')}
             value={value}
             locale="es-419"
-            canWrite
+            canWrite={canWrite}
             onChange={vi.fn()}
           />
         </IntlProvider>
@@ -153,6 +175,14 @@ describe('Parcel Application: a not-yet-known answer', () => {
     expect(screen.queryByTestId('parcel-q-pending-parcel_probe')).toHaveTextContent(
       'todavía no responde la pregunta: el paquete para el certificador la marca para revisión'
     );
+  });
+
+  it('does not tell a reader who cannot change the answer to change it', () => {
+    renderParcel('unknown', false);
+    const note = screen.queryByTestId('parcel-q-pending-parcel_probe');
+    expect(note).not.toBeNull();
+    expect(note).toHaveTextContent('todavía no responde la pregunta');
+    expect(note?.textContent).not.toMatch(/Cámbiala/);
   });
 
   it('says nothing under a real answer', () => {

@@ -78,5 +78,7 @@ describe('holdsOnlyPendingOptions', () => {
     // A retired option never decides it, as in pending_answer_label (read on the current value).
     expect(holdsOnlyPendingOptions(question, ['unknown', 'old'])).toBe(true);
     expect(holdsOnlyPendingOptions(question, ['old'])).toBe(false);
+    // Nothing else is dropped: an empty entry is not a pending option, so the packet calls it answered.
+    expect(holdsOnlyPendingOptions(question, ['unknown', ''])).toBe(false);
   });
 });

@@ -10611,5 +10611,6 @@
   "handler.productRows.statementOnFile": "On file: {title}",
   "handler.productRows.statementMissingBadge": "No statement",
   "handler.productRows.statementMissing": "No ingredient statement is on file for this multi-ingredient product. The plan marks it for review.",
-  "osp.wizard.pendingOption": "Kept as you give it, but it does not answer the question yet: the certifier packet marks it for review. Change it here once you know."
+  "osp.wizard.pendingOption": "Kept as you give it, but it does not answer the question yet: the certifier packet marks it for review. Change it here once you know.",
+  "osp.wizard.pendingOptionReadOnly": "Kept as given, but it does not answer the question yet: the certifier packet marks it for review."
 }

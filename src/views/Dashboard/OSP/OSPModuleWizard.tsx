@@ -541,10 +541,13 @@ const QuestionField = ({
         </Text>
       ) : null}
       {/* "Not yet confirmed with the nursery" is saved as given, and the packet keeps the agent's
-          question open with a review line under it. Said here, where the answer is chosen. */}
+          question open with a review line under it. Said here, where the answer is chosen; a reader
+          who cannot change it is not told to. */}
       {holdsOnlyPendingOptions(question, value) ? (
         <Text fontSize="xs" color="gray.700" mt={1} data-testid={`osp-q-pending-${question.key}`}>
-          {intl.formatMessage({ id: 'osp.wizard.pendingOption' })}
+          {intl.formatMessage({
+            id: isReadOnly ? 'osp.wizard.pendingOptionReadOnly' : 'osp.wizard.pendingOption'
+          })}
         </Text>
       ) : null}
       {missing ? (
