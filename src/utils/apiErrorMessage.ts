@@ -99,24 +99,47 @@ export const apiErrorStatus = (err: unknown): number | null => {
  * field and, beside it, `error_codes[field] = {code, ...values}` (a dict, so the field-error readers
  * above pass over it). A Spanish grower read "Intervalo estiércol-cosecha: Carrots: the edible part
  * touches the soil..." (recordkeeping checklist run 2026-11-16, VID-07).
+ *
+ * `dates` names the values that are ISO dates (one, or a ", " list), shown in the reader's format.
  */
-const CODED_MESSAGES: Record<string, string> = {
-  manure_below_floor: 'apiErrors.manureBelowFloor'
+const CODED_MESSAGES: Record<string, { id: string; dates?: string[] }> = {
+  manure_below_floor: { id: 'apiErrors.manureBelowFloor' },
+  manure_below_floor_for_crop: { id: 'apiErrors.manureBelowFloorForCrop', dates: ['dates'] },
+  season_closed: { id: 'apiErrors.seasonClosed', dates: ['finish_date'] },
+  season_ambiguous: { id: 'apiErrors.seasonAmbiguous' },
+  no_open_season: { id: 'apiErrors.noOpenSeason' },
+  season_not_on_parcel: { id: 'apiErrors.seasonNotOnParcel' }
 };
 
-/** The field's refusal in the reader's language when the server sent a known code, else null. */
+/** Every code this screen words, for the test that reads the server's codes against it. */
+export const CODED_REFUSALS: Readonly<Record<string, { id: string; dates?: string[] }>> =
+  CODED_MESSAGES;
+
+/**
+ * The field's refusal in the reader's language when the server sent a known code, else null.
+ * `formatDate` turns an ISO date into the reader's format; without it a date stays as sent.
+ */
 export const codedFieldMessage = (
   codes: unknown,
   field: string,
-  translate: (id: string, values: Record<string, string>) => string
+  translate: (id: string, values: Record<string, string>) => string,
+  formatDate?: (isoDate: string) => string
 ): string | null => {
   const entry = (codes as Record<string, unknown> | null | undefined)?.[field];
   if (!entry || typeof entry !== 'object') return null;
   const { code, ...values } = entry as Record<string, unknown>;
-  const id = typeof code === 'string' ? CODED_MESSAGES[code] : undefined;
-  if (!id) return null;
-  return translate(
-    id,
-    Object.fromEntries(Object.entries(values).map(([k, v]) => [k, String(v ?? '')]))
-  );
+  const message = typeof code === 'string' ? CODED_MESSAGES[code] : undefined;
+  if (!message) return null;
+  const strings = Object.fromEntries(Object.entries(values).map(([k, v]) => [k, String(v ?? '')]));
+  if (formatDate) {
+    for (const key of message.dates || []) {
+      if (strings[key]) {
+        strings[key] = strings[key]
+          .split(', ')
+          .map((day) => formatDate(day))
+          .join(', ');
+      }
+    }
+  }
+  return translate(message.id, strings);
 };

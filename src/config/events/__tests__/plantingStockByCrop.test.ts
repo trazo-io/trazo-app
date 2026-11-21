@@ -9,6 +9,7 @@ import { describe, expect, it } from 'vitest';
 
 import enUS from '../../../i18n/lang/en-US.json';
 import es419 from '../../../i18n/lang/es-419.json';
+import { getFieldConfig } from '..';
 import { isAnnualCropCategory, plantingSeasonCategory } from '../plantingStock';
 
 const TAB = readFileSync(
@@ -71,12 +72,20 @@ describe('planting stock fields by crop', () => {
     });
   });
 
+  it('the record’s detail and the buyer’s card count plants, not trees', () => {
+    // They show the registry's label and do not know the season's crop: an onion transplant's
+    // detail read "Trees / Plants Planted" (VID-14).
+    expect(getFieldConfig(1, 'plants_established')?.labelKey).toBe(
+      'events.production.fields.plantsPlanted'
+    );
+  });
+
   it('counts plants in both languages', () => {
-    expect(
-      (enUS as Record<string, string>)['events.production.fields.plantsEstablishedAnnual']
-    ).toBe('Plants Planted');
-    expect(
-      (es419 as Record<string, string>)['events.production.fields.plantsEstablishedAnnual']
-    ).toBe('Plantas plantadas');
+    expect((enUS as Record<string, string>)['events.production.fields.plantsPlanted']).toBe(
+      'Plants Planted'
+    );
+    expect((es419 as Record<string, string>)['events.production.fields.plantsPlanted']).toBe(
+      'Plantas plantadas'
+    );
   });
 });

@@ -852,7 +852,9 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
   },
   {
     name: 'plants_established',
-    labelKey: 'events.production.fields.plantsEstablished',
+    // "Plants Planted", not the planting form's "Trees / Plants Planted": the record's detail and the
+    // buyer's card do not know the season's crop, and an onion transplant read as trees (VID-14).
+    labelKey: 'events.production.fields.plantsPlanted',
     valueType: 'number',
     visibleForSubtypes: ['PL', 'TR'],
     surfaces: {

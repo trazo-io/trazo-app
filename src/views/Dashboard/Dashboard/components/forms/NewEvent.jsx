@@ -3630,15 +3630,24 @@ function NewEventForm({ isEdit = false, eventId = null }) {
       // the way forward attached.
       if (error?.status === 423 && error?.data?.correctable) {
         setLockedRecord({
-          detail: error.data.detail || intl.formatMessage({ id: 'events.locked.detail' }),
+          // The screen's own sentence, in the reader's language: the server's says the same in
+          // English only (VID-07).
+          detail: intl.formatMessage({ id: 'events.locked.detail' }),
           productionId: error.data.production_id
         });
         return;
       }
 
-      // Surface the actual error message so users know what to fix
+      // Surface the actual error message so users know what to fix. A refusal the server coded
+      // (`error_codes`) is worded here, in the reader's language, its dates in the reader's format.
       const isValidationError = error?.isMissingRequiredFields === true;
-      const apiErrorMessage = error?.data?.detail || error?.data?.message || error?.data?.error;
+      const translateCoded = (id, values) => intl.formatMessage({ id }, values);
+      const readerDate = (iso) => formatDateOnly(iso, intl.locale) || iso;
+      const apiErrorMessage =
+        codedFieldMessage(error?.data?.error_codes, 'detail', translateCoded, readerDate) ||
+        error?.data?.detail ||
+        error?.data?.message ||
+        error?.data?.error;
 
       // Parse DRF field validation errors: {"field": ["error message"]}
       let fieldErrors = '';
@@ -3650,7 +3659,9 @@ function NewEventForm({ isEdit = false, eventId = null }) {
         const labelOf = (field) => {
           const labelKey =
             (Number(activeEventType) === 5 ? soilFormLabelKey(field, eventFormData.type) : null) ||
-            getFieldConfig(activeEventType, field)?.labelKey;
+            getFieldConfig(activeEventType, field)?.labelKey ||
+            // The season the record is filed under: no form field carries it.
+            (field === 'history' ? 'production.section.season' : null);
           return labelKey ? intl.formatMessage({ id: labelKey }) : null;
         };
         const fieldEntries = Object.entries(error.data)
@@ -3659,9 +3670,8 @@ function NewEventForm({ isEdit = false, eventId = null }) {
             fieldErrorLine(
               field,
               // A refusal the server coded is worded here, in the reader's language.
-              codedFieldMessage(error.data.error_codes, field, (id, values) =>
-                intl.formatMessage({ id }, values)
-              ) || msgs.join(', '),
+              codedFieldMessage(error.data.error_codes, field, translateCoded, readerDate) ||
+                msgs.join(', '),
               labelOf
             )
           )
@@ -3699,7 +3709,8 @@ function NewEventForm({ isEdit = false, eventId = null }) {
         nameOf: placeName,
         targetText: (name, message) =>
           intl.formatMessage({ id: 'events.multiParcel.blockFailed' }, { name, message }),
-        translate: (id, values) => intl.formatMessage({ id }, values)
+        translate: translateCoded,
+        formatDate: readerDate
       });
       if (severalRecordErrors) fieldErrors = severalRecordErrors;
 
