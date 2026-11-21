@@ -10610,5 +10610,6 @@
   "handler.productRows.statementTitle": "{product}, declaración de ingredientes ({facility})",
   "handler.productRows.statementOnFile": "Archivo guardado: {title}",
   "handler.productRows.statementMissingBadge": "Sin declaración",
-  "handler.productRows.statementMissing": "No hay una declaración de ingredientes para este producto con varios ingredientes. El plan lo marca para revisión."
+  "handler.productRows.statementMissing": "No hay una declaración de ingredientes para este producto con varios ingredientes. El plan lo marca para revisión.",
+  "osp.wizard.pendingOption": "Se conserva tal como la das, pero todavía no responde la pregunta: el paquete para el certificador la marca para revisión. Cámbiala aquí cuando lo sepas."
 }

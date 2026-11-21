@@ -4004,7 +4004,8 @@
                       "en": "Not yet confirmed with the supplier",
                       "es": "Todavía no confirmado con el proveedor"
                     },
-                    "exclusive": false
+                    "exclusive": false,
+                    "pending": true
                   }
                 ],
                 "required": false,
@@ -4503,7 +4504,8 @@
                       "en": "Not yet confirmed with the nursery",
                       "es": "Todavía no confirmado con el vivero"
                     },
-                    "exclusive": false
+                    "exclusive": false,
+                    "pending": true
                   }
                 ],
                 "required": true,
@@ -11514,7 +11516,8 @@
                       "en": "Not yet confirmed with the district",
                       "es": "Todavía no confirmado con el distrito"
                     },
-                    "exclusive": false
+                    "exclusive": false,
+                    "pending": true
                   }
                 ],
                 "required": true,
@@ -13652,7 +13655,8 @@
                       "en": "Not known yet",
                       "es": "Aún no se sabe"
                     },
-                    "exclusive": false
+                    "exclusive": false,
+                    "pending": true
                   }
                 ],
                 "required": false,
@@ -21504,7 +21508,8 @@
                       "en": "Not confirmed yet",
                       "es": "Todavía no se confirma"
                     },
-                    "exclusive": false
+                    "exclusive": false,
+                    "pending": true
                   },
                   {
                     "value": "no",

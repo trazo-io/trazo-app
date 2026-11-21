@@ -88,7 +88,12 @@ import OSPHandlerFacilitiesPanel from './OSPHandlerFacilitiesPanel';
 import OSPOwnFacilitiesPanel from './OSPOwnFacilitiesPanel';
 import OSPRecordTypesPanel from './OSPRecordTypesPanel';
 import { selectWorkingOsp } from './selectWorkingOsp';
-import { holdsRetiredOption, offeredOptions, toggleCheckbox } from 'config/osp/optionChoices';
+import {
+  holdsOnlyPendingOptions,
+  holdsRetiredOption,
+  offeredOptions,
+  toggleCheckbox
+} from 'config/osp/optionChoices';
 import { agentCaption, blankAskedKeys } from 'config/osp/agentCaption';
 import { refusedAnswerLines } from 'config/osp/answerRefusals';
 
@@ -533,6 +538,13 @@ const QuestionField = ({
       {holdsRetiredOption(question, value) ? (
         <Text fontSize="xs" color="gray.700" mt={1}>
           {intl.formatMessage({ id: 'osp.wizard.retiredOption' })}
+        </Text>
+      ) : null}
+      {/* "Not yet confirmed with the nursery" is saved as given, and the packet keeps the agent's
+          question open with a review line under it. Said here, where the answer is chosen. */}
+      {holdsOnlyPendingOptions(question, value) ? (
+        <Text fontSize="xs" color="gray.700" mt={1} data-testid={`osp-q-pending-${question.key}`}>
+          {intl.formatMessage({ id: 'osp.wizard.pendingOption' })}
         </Text>
       ) : null}
       {missing ? (

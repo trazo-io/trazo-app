@@ -34,6 +34,21 @@ export const holdsRetiredOption = (question: ModuleQuestion, stored: AnswerValue
 };
 
 /**
+ * Whether the stored answer says the operator does not know yet: every current option it holds is
+ * pending. Mirrors pending_answer_label() in packet_answers.py, read on the value without retired
+ * options, so the wizard says under the answer what the packet does with it.
+ */
+export const holdsOnlyPendingOptions = (question: ModuleQuestion, stored: AnswerValue): boolean => {
+  const pending = new Set(question.options.filter((o) => o.pending).map((o) => o.value));
+  if (!pending.size) return false;
+  const retired = new Set(question.options.filter((o) => o.retired).map((o) => o.value));
+  const held = (Array.isArray(stored) ? (stored as string[]) : [stored]).filter(
+    (v) => typeof v === 'string' && v !== '' && !retired.has(v)
+  ) as string[];
+  return held.length > 0 && held.every((v) => pending.has(v));
+};
+
+/**
  * The options to render: every current option, and a retired one only while it is the stored
  * answer, so the operator sees what they answered before and is never offered it again.
  */

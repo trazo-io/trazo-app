@@ -46,6 +46,12 @@ export interface ModuleOption {
    * replacement asks something the old option never did). Present only when true.
    */
   retired?: boolean;
+  /**
+   * The operator does not know the answer yet ("Not yet confirmed with the nursery"). Kept as given,
+   * but the certifier packet keeps the agent's question open and prints a review line under it
+   * (backend `Option.pending`). Present only when true.
+   */
+  pending?: boolean;
 }
 
 export interface ModuleQuestion {
