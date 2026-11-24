@@ -121,3 +121,123 @@ describe.each(Object.entries(LOCALES))(
     });
   }
 );
+
+/**
+ * OV-PK-CIT20 (overall review lane L4b, corrected 2026-11-24): strings that cited the right area
+ * but not the paragraph or word the rule uses. Read against the eCFR versioner API, 2026-11-01
+ * edition, and the Federal Register text of the SOE rule (88 FR 3548-3627, Jan. 19, 2023).
+ *
+ *   C20  "88 FR 3622" named the rule by the page its § 205.201/§ 205.307 amendments print on;
+ *        the rule is 88 FR 3548. Marking products organic on records is § 205.103(b)(3).
+ *   A15  § 205.401(b) asks for "the person completing the application", never "the person
+ *        responsible for the operation".
+ *   C16  § 112.161(b) requires supervisor review only for the records it lists; a pesticide
+ *        application record is not one, so the review headings carry no citation.
+ *   C23  split-operation barriers are § 205.201(a)(5); § 205.272(a) is addressed to "The handler
+ *        of an organic handling operation".
+ *   D28  substantiation ("reasonable basis") is 16 CFR 260.2; § 260.4 is general benefit claims.
+ *   D32b retention is § 205.103(b)(4), never the bare section.
+ *   D33  the duty to be certified is § 205.100(a); § 205.101 lists the exemptions.
+ *   E01  § 205.103(b)(4) is the five years only; access is (c), "during normal business hours".
+ *   B39  § 205.605(b)(12) asks for a potable rinse at or below the drinking-water limit; it does
+ *        not cap the residual in the wash water.
+ */
+describe.each(Object.entries(LOCALES))(
+  'imprecise citations, OV-PK-CIT20: %s',
+  (_locale, messages) => {
+    const entries = Object.entries(messages).filter(([, v]) => typeof v === 'string');
+    const keysWhere = (test: (v: string) => boolean) =>
+      entries.filter(([, v]) => test(v)).map(([k]) => k);
+
+    it('never names the SOE rule by page 3622', () => {
+      expect(keysWhere((v) => v.includes('88 FR 3622'))).toEqual([]);
+      expect(messages['sales.field.organicOnInvoice.tooltip']).toContain('88 FR 3548');
+      expect(messages['sales.field.organicOnInvoice.tooltip']).toContain('205.103(b)(3)');
+      expect(messages['sales.records.organicTooltip']).toContain('205.103(b)(3)');
+    });
+
+    it('§ 205.401(b) is the person completing the application', () => {
+      expect(
+        keysWhere((v) =>
+          /205\.401\(b\)\)?\s*(asks for|pide) (the |el nombre de la )?(person responsible|responsible person|persona responsable)/i.test(
+            v
+          )
+        )
+      ).toEqual([]);
+      expect(
+        keysWhere((v) =>
+          /(person responsible for the operation|persona responsable de la operación)[^.]*205\.401\(b\)/i.test(
+            v
+          )
+        )
+      ).toEqual([]);
+      for (const key of [
+        'farm.form.contactPerson.helpText',
+        'osp.review.finding.responsible_person_missing'
+      ]) {
+        expect(messages[key]).toMatch(
+          /person completing the application|persona que completa la solicitud/
+        );
+      }
+    });
+
+    it('no supervisor-review heading cites § 112.161(b)', () => {
+      expect(keysWhere((v) => v.includes('112.161(b)'))).toEqual([]);
+    });
+
+    it('a split operation is § 205.201(a)(5), never § 205.272', () => {
+      expect(keysWhere((v) => /split|dividid/i.test(v) && v.includes('205.272'))).toEqual([]);
+      expect(messages['farm.split.regulatoryNote']).toContain('205.201(a)(5)');
+    });
+
+    it('substantiation is 16 CFR 260.2', () => {
+      expect(
+        keysWhere(
+          (v) =>
+            v.includes('260.4') &&
+            /evidence|reasonable basis|respaldo|evidencia|base razonable/i.test(v)
+        )
+      ).toEqual([]);
+      expect(messages['events.noteScan.reason.benefitClaim']).toContain('16 CFR 260.2');
+    });
+
+    it('retention cites § 205.103(b)(4), never the bare section', () => {
+      expect(keysWhere((v) => RETENTION.test(v) && /205\.103(?!\()/.test(v))).toEqual([]);
+      expect(messages['sales.retention']).toContain('205.103(b)(4)');
+    });
+
+    it('the duty to be certified is § 205.100(a); § 205.101 is the exemptions', () => {
+      const DUTY = /must be certified|debe(n)? estar certificad/i;
+      const duty = keysWhere((v) => DUTY.test(v) && v.includes('205.10'));
+      expect(duty).toEqual(
+        expect.arrayContaining([
+          'osp.agentSheet.detail.facilities_2519_exempt_note',
+          'handler.agr2519.exemptionHelp'
+        ])
+      );
+      expect(
+        keysWhere((v) => DUTY.test(v) && v.includes('205.101') && !v.includes('205.100(a)'))
+      ).toEqual([]);
+    });
+
+    it('§ 205.103(b)(4) is the five years; access is (c)', () => {
+      expect(
+        keysWhere((v) => v.includes('205.103(b)(4)') && /reasonable time|plazo razonable/i.test(v))
+      ).toEqual([]);
+      expect(messages['education.detail.inspectionPrep.retentionDesc']).toContain('205.103(c)');
+    });
+
+    it('§ 205.605(b) chlorine is a rinse condition, not a residual cap on the wash water', () => {
+      expect(
+        keysWhere(
+          (v) =>
+            /205\.605\(b\)/.test(v) &&
+            /limits the residual|limita el residual|last point of product contact|último punto de contacto/i.test(
+              v
+            )
+        )
+      ).toEqual([]);
+      expect(messages['events.production.sanitation.residualHelp']).toContain('205.605(b)(12)');
+    });
+  }
+);

@@ -6369,7 +6369,7 @@ const ChemicalTab = forwardRef(
                     <Text fontSize="sm" fontWeight="semibold" color="gray.700">
                       {intl.formatMessage({
                         id: 'events.chemical.supervisorReview.heading',
-                        defaultMessage: 'Supervisor Review (FSMA § 112.161(b))'
+                        defaultMessage: 'Supervisor Review'
                       })}
                     </Text>
                     {/* textTransform is not decoration here: the theme capitalizes the green
