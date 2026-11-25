@@ -164,11 +164,13 @@ describe.each(Object.entries(LOCALES))(
           )
         )
       ).toEqual([]);
+      // Sentence-agnostic (review of app #448): the corrected strings put the citation in a
+      // second sentence, so an adjacency regex would miss the wrong phrase put back in the first.
       expect(
-        keysWhere((v) =>
-          /(person responsible for the operation|persona responsable de la operación)[^.]*205\.401\(b\)/i.test(
-            v
-          )
+        keysWhere(
+          (v) =>
+            v.includes('205.401(b)') &&
+            /person responsible for the operation|persona responsable de la operación/i.test(v)
         )
       ).toEqual([]);
       for (const key of [
