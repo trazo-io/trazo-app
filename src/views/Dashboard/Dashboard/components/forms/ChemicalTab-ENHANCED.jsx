@@ -6345,10 +6345,10 @@ const ChemicalTab = forwardRef(
 
                         Moved OUT of the PE/HE/FU block 2026-08-16. It had been nested inside
                         the pesticide-only section, so a FERTILIZER record could never be signed
-                        off — and § 112.161(b) is a RECORDS rule ("All records must be reviewed,
-                        dated, and signed... by a supervisor or responsible party"), not a
-                        pesticide rule. Soil amendments of animal origin are squarely in part 112
-                        scope (§ 112.60), so a fertilizer record is exactly the kind it covers.
+                        off. § 112.161(b) requires review only of the records it lists; the soil
+                        amendment records of § 112.60(b)(2) are among them and a pesticide
+                        application record is not (eCFR, read 2026-11-24). So a fertilizer record
+                        can be in scope, and the heading carries no citation (OV-PK-CIT20 C16).
 
                         REI, PHI, EPA registration and applicator certification stay inside that
                         block on purpose: those ARE pesticide concepts and a fertilizer has none. */}
@@ -6362,14 +6362,14 @@ const ChemicalTab = forwardRef(
                 <HStack justify="space-between" mb={3}>
                   {/* Inline sub-block rather than a SectionBox, which is why it carried no
                       destination badge while every section around it did. Both fields DO reach
-                      the certifier packet. The FSMA cite stays because it is why the field
-                      exists — but a grower should be told where the data lands, not left to
-                      infer it from a food-safety clause number. */}
+                      the certifier packet. The heading carries no FSMA cite, because
+                      § 112.161(b) does not list pesticide application records; a grower is told
+                      where the data lands instead. */}
                   <HStack spacing={2}>
                     <Text fontSize="sm" fontWeight="semibold" color="gray.700">
                       {intl.formatMessage({
                         id: 'events.chemical.supervisorReview.heading',
-                        defaultMessage: 'Supervisor Review (FSMA § 112.161(b))'
+                        defaultMessage: 'Supervisor Review'
                       })}
                     </Text>
                     {/* textTransform is not decoration here: the theme capitalizes the green

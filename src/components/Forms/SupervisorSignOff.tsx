@@ -10,10 +10,12 @@ import { StandardField, StandardInput } from 'components/Design/StandardComponen
  *
  * WHY THIS IS SHARED
  * ------------------
- * § 112.161(b): *"All records must be reviewed, dated, and signed, within a reasonable time
- * after the records are made, by a supervisor or responsible party."* It is a RECORDS rule, so
- * it applies per record — not per kind of record. The fields (`reviewed`, `reviewer_name`,
- * `review_date`) live on the shared `CommonEvent` base model for exactly that reason.
+ * § 112.161(b) says records "must be reviewed, dated, and signed, within a reasonable time after
+ * the records are made, by a supervisor or responsible party", but only the records it lists:
+ * §§ 112.7(b); 112.30(b); 112.50(b)(2), (5), (7) and (11); 112.60(b)(2); 112.140(b)(1) and (2);
+ * 112.150(b)(1), (4) and (6) (eCFR, 2026-11-01). A pesticide application record is not among
+ * them, so the UI headings carry no § 112.161(b) citation (OV-PK-CIT20 C16). The fields
+ * (`reviewed`, `reviewer_name`, `review_date`) live on the shared `CommonEvent` base model.
  *
  * They were nonetheless enterable on ONE tab. The serializers accept them on six event types,
  * so the API took a value no UI could send — the same accepts-but-cannot-write asymmetry this

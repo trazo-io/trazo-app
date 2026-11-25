@@ -1322,7 +1322,7 @@ const AgentFormCopySheet: React.FC<Props> = ({ companyId, farmId, ospId }) => {
         return intl.formatMessage({
           id: 'osp.agentSheet.detail.facilities_2519_exempt_note',
           defaultMessage:
-            'Any business in the organic supply chain must be certified, apart from narrow exemptions for retail establishments and some handlers of tamper-evident packaged products (§ 205.101). WSDA must be able to verify the exemption.'
+            'Each operation that produces or handles organic products must be certified (§ 205.100(a)) unless § 205.101 exempts it, for example a retail establishment that does not process organic products, or an operation that only handles products in sealed, tamper-evident packages. WSDA must be able to verify the exemption.'
         });
       case 'wsda_due':
         return intl.formatMessage(
