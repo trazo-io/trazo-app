@@ -1504,6 +1504,7 @@
   "apiErrors.seasonAmbiguous": "This parcel has more than one open season ({seasons}), so it is not clear which one this activity belongs to. Log it from the season you mean.",
   "apiErrors.noOpenSeason": "This parcel has no open season. Start one, or log work done after a harvest from that finished season.",
   "apiErrors.seasonNotOnParcel": "That season is not on this parcel. Log the activity from the season you mean.",
+  "apiErrors.organicBasisTransitional": "\"Transitional\" describes a farm in conversion, not this input, so it is no longer an organic basis. Choose what shows the input is allowed (OMRI Listed, WSDA Listed, NOP seal on the product label, or Reviewed and approved by my certifier), \"Not yet confirmed\" if that is still to be checked, or \"No organic basis: conventional use only\" if the input is not allowed on organic land.",
   "app.save10Percent": "2 Months Free",
   "app.saveAndAddANewEvent": "SAVE AND ADD A NEW EVENT",
   "app.saving": "Saving…",

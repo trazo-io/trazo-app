@@ -1504,6 +1504,7 @@
   "apiErrors.seasonAmbiguous": "Esta parcela tiene más de una temporada abierta ({seasons}), así que no está claro a cuál pertenece esta actividad. Regístrala desde la temporada que corresponde.",
   "apiErrors.noOpenSeason": "Esta parcela no tiene una temporada abierta. Inicia una, o registra el trabajo posterior a una cosecha desde esa temporada cerrada.",
   "apiErrors.seasonNotOnParcel": "Esa temporada no es de esta parcela. Registra la actividad desde la temporada que corresponde.",
+  "apiErrors.organicBasisTransitional": "«En transición» describe una finca en conversión, no este insumo, así que ya no es una base orgánica. Elige lo que muestra que el insumo está permitido (Listado OMRI, Listado por WSDA, Sello NOP en la etiqueta del producto o Revisado y aprobado por mi certificador), «Sin confirmar todavía» si aún falta comprobarlo, o «Sin base orgánica: solo uso convencional» si el insumo no está permitido en terreno orgánico.",
   "app.save10Percent": "2 Meses gratis",
   "app.saveAndAddANewEvent": "GUARDAR Y AGREGAR UN NUEVO EVENTO",
   "app.saving": "Guardando…",

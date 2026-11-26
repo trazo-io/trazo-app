@@ -108,7 +108,9 @@ const CODED_MESSAGES: Record<string, { id: string; dates?: string[] }> = {
   season_closed: { id: 'apiErrors.seasonClosed', dates: ['finish_date'] },
   season_ambiguous: { id: 'apiErrors.seasonAmbiguous' },
   no_open_season: { id: 'apiErrors.noOpenSeason' },
-  season_not_on_parcel: { id: 'apiErrors.seasonNotOnParcel' }
+  season_not_on_parcel: { id: 'apiErrors.seasonNotOnParcel' },
+  // M7-I1: "transitional" is no longer an organic basis (trazo-back organic_basis.py).
+  organic_basis_transitional: { id: 'apiErrors.organicBasisTransitional' }
 };
 
 /** Every code this screen words, for the test that reads the server's codes against it. */

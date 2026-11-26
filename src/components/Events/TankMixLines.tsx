@@ -42,15 +42,19 @@ import {
   type TankLineForm
 } from 'config/events/tankMix';
 
-/** The organic bases product 1 offers, in its order (ChemicalTab section 1). */
+/**
+ * The organic bases product 1 offers, in its order (ChemicalTab section 1): exactly
+ * `ORGANIC_APPROVED_OFFERED` (config/events/enums.ts), held to it by organicBasisOffered.test.ts.
+ * A tank line is always a new record, so no retired value needs an option here. NEVER
+ * `transitional` (M7-I1): it names the farm's status, and stored it restarts the 36-month clock.
+ */
 export const ORGANIC_BASES = [
   ['omri_listed', 'events.organicApproved.omriListed'],
   ['wsda_listed', 'events.organicApproved.wsdaListed'],
   ['nop_seal_on_label', 'events.organicApproved.nopSeal'],
   ['certifier_approved', 'events.organicApproved.certifierApproved'],
   ['unverified', 'events.organicApproved.unverified'],
-  ['not_organic', 'events.organicApproved.notOrganicOption'],
-  ['transitional', 'events.organicApproved.transitionalOption']
+  ['not_organic', 'events.organicApproved.notOrganicOption']
 ] as const;
 
 /** Labels of the product units a tank line offers (`TANK_LINE_VOLUME_UNITS`, config/events/tankMix). */

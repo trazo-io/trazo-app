@@ -469,15 +469,26 @@ export const ORGANIC_APPROVED: readonly EnumOption[] = [
 /**
  * The verification bases a form may OFFER today. USDA's Input Material Application Record
  * names exactly four, verbatim: OMRI or WSDA listing, the NOP seal on the label, or certifier
- * review and approval — plus the two negative answers a grower still needs.
+ * review and approval; plus the two honest answers when there is none: "not yet confirmed"
+ * (R8-08) and "no organic basis".
+ *
+ * Mirrors `ORGANIC_APPROVED_OFFERED` in trazo-back `common/field_registry.py`;
+ * `organicBasisOffered.test.ts` holds this list, that one and every select that offers a basis
+ * to each other.
+ *
+ * NEVER `transitional` again (M7-I1, 2026-11-24). "Transitional - in certification process"
+ * describes the FARM, not the input, so a grower on a transitional farm picked it in good
+ * faith; stored, it is a prohibited-substance answer, and one pick on a fish fertilizer record
+ * moved a certified parcel to "In transition, 964 days remaining". The API refuses it on new
+ * writes; a row that already holds it shows it as retired (below) and still saves untouched.
  */
 export const ORGANIC_APPROVED_OFFERED: readonly string[] = [
   'omri_listed',
   'wsda_listed',
   'nop_seal_on_label',
   'certifier_approved',
-  'not_organic',
-  'transitional'
+  'unverified',
+  'not_organic'
 ];
 
 /**
@@ -500,7 +511,9 @@ export const retiredOrganicApprovedLabelKey = (value?: string | null): string | 
     organic_equivalent: 'events.organicApproved.organicEquivalent',
     yes: 'quickAdd.fields.organicApproved.legacyYes',
     no: 'quickAdd.fields.organicApproved.legacyNo',
-    not_applicable: 'events.organicApproved.notApplicable'
+    not_applicable: 'events.organicApproved.notApplicable',
+    // M7-I1: the option's own wording, so a grower reopening the record recognises what they picked.
+    transitional: 'events.organicApproved.transitionalOption'
   };
   return keys[value] ?? null;
 };
