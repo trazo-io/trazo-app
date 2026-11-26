@@ -253,8 +253,10 @@ describe.each(Object.entries(LOCALES))(
  */
 describe.each(Object.entries(LOCALES))('buffer crop and § 205.202(c): %s', (_locale, messages) => {
   const entries = Object.entries(messages).filter(([, v]) => typeof v === 'string');
+  // The verb stem, not one conjugation: the old es-419 disposition text read "nunca se puede
+  // vender como orgánico", which "venderse" missed (review of app #451).
   const SALE_BAR =
-    /(never|cannot|can't|may not)[^.]*\bsold\b|no puede(n)? venderse|nunca (se )?puede(n)? venderse/i;
+    /(never|cannot|can't|may not)[^.]*\bsold\b|(no|nunca)\s+(se\s+)?pued(e|en)[^.]*\bvender/i;
 
   it('never attributes a sale bar to § 205.202(c)', () => {
     expect(
