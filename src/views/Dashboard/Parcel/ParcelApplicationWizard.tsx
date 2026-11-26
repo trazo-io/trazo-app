@@ -1308,7 +1308,9 @@ const ParcelApplicationWizard = () => {
                               { date: formatDateOnly(e.certifier_notification_date, intl.locale) }
                             )
                           : intl.formatMessage({ id: 'parcelApp.incidents.notified' })
-                        : intl.formatMessage({ id: 'parcelApp.incidents.notNotified' })}
+                        : e.certifier_notified === false
+                        ? intl.formatMessage({ id: 'parcelApp.incidents.notNotified' })
+                        : intl.formatMessage({ id: 'parcelApp.incidents.notificationNotAnswered' })}
                     </Text>
                   </Box>
                 ))}
