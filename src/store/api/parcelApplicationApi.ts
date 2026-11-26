@@ -56,7 +56,8 @@ export interface ParcelContaminationIncident {
   date: string | null;
   source: string;
   description: string;
-  certifier_notified: boolean;
+  /** null: the grower did not answer (OV-RK-C15). */
+  certifier_notified: boolean | null;
   certifier_notification_date: string | null;
 }
 

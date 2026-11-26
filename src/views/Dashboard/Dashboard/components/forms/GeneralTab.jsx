@@ -747,35 +747,38 @@ const GeneralTab = forwardRef(
                         </StandardField>
                       </SimpleGrid>
 
-                      <HStack
-                        justify="space-between"
-                        p={3}
-                        bg="gray.50"
-                        borderRadius="md"
-                        border="1px solid"
-                        borderColor="gray.200">
-                        <Box>
-                          <Text fontSize="sm" fontWeight="bold">
-                            {intl.formatMessage({ id: 'events.general.fields.certifierNotified' })}
-                          </Text>
-                          <Text fontSize="xs" color="gray.600">
+                      {/* Three answers, not a switch (OV-RK-C15). A switch that nobody touched
+                          read as "off", and the dossier printed "No": the certifier was not
+                          notified, an answer the grower never gave. Blank stays blank. */}
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.general.fields.certifierNotified'
+                        })}
+                        helpText={intl.formatMessage({
+                          id: 'events.general.fields.certifierNotifiedHelp'
+                        })}>
+                        <StandardSelect
+                          aria-label={intl.formatMessage({
+                            id: 'events.general.fields.certifierNotified'
+                          })}
+                          {...mainInfoMethods.register('certifier_notified')}>
+                          <option value="">
                             {intl.formatMessage({
-                              id: 'events.general.fields.certifierNotifiedHelp'
+                              id: 'events.general.options.certifierNotified.unset'
                             })}
-                          </Text>
-                        </Box>
-                        <Controller
-                          name="certifier_notified"
-                          control={mainInfoMethods.control}
-                          render={({ field }) => (
-                            <Switch
-                              isChecked={field.value === 'true'}
-                              onChange={(e) => field.onChange(e.target.checked ? 'true' : 'false')}
-                              size="lg"
-                            />
-                          )}
-                        />
-                      </HStack>
+                          </option>
+                          <option value="true">
+                            {intl.formatMessage({
+                              id: 'events.general.options.certifierNotified.yes'
+                            })}
+                          </option>
+                          <option value="false">
+                            {intl.formatMessage({
+                              id: 'events.general.options.certifierNotified.no'
+                            })}
+                          </option>
+                        </StandardSelect>
+                      </StandardField>
 
                       {isCertifierNotified && (
                         <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>

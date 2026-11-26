@@ -18,6 +18,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import { MemoryRouter } from 'react-router-dom';
 
 import baseApi from 'store/api/baseApi';
+import { cleanEventPayload } from 'utils/cleanEventPayload';
 import enUS from '../../../../../../i18n/lang/en-US.json';
 
 vi.mock('store/api/historyApi', () => ({
@@ -66,5 +67,46 @@ describe('general form: the contamination incident section', () => {
     const container = mount({ is_contamination_incident: true, certifier_notified: true });
     expect(has(container, 'contamination_affected_area')).toBe(true);
     expect(has(container, 'certifier_notification_date')).toBe(true);
+  });
+});
+
+/**
+ * OV-RK-C15 (2026-11-25): "certifier notified?" has three answers. It was a switch, and a switch
+ * nobody touched reads as off, so an unanswered question saved as false and the dossier printed
+ * "No". A blank answer must load as blank and save as null.
+ */
+describe('general form: certifier notified has three answers', () => {
+  const answer = (container: HTMLElement) =>
+    (container.querySelector('select[name="certifier_notified"]') as HTMLSelectElement | null)
+      ?.value;
+
+  it('an unanswered incident loads as not answered, never as No', () => {
+    const container = mount({ is_contamination_incident: true, certifier_notified: null });
+    expect(answer(container)).toBe('');
+  });
+
+  it('a stored No still loads as No, and a Yes as Yes', () => {
+    expect(answer(mount({ is_contamination_incident: true, certifier_notified: false }))).toBe(
+      'false'
+    );
+    expect(answer(mount({ is_contamination_incident: true, certifier_notified: true }))).toBe(
+      'true'
+    );
+  });
+
+  it('saves blank as null, and the two answers as booleans', () => {
+    const save = (certifier_notified: unknown) =>
+      cleanEventPayload(
+        {
+          is_contamination_incident: 'true',
+          contamination_source: 'spray_drift',
+          certifier_notified
+        },
+        { activeEventType: 3, isEdit: false }
+      ).certifier_notified;
+    expect(save('')).toBeNull();
+    expect(save(undefined)).toBeNull();
+    expect(save('false')).toBe(false);
+    expect(save('true')).toBe(true);
   });
 });

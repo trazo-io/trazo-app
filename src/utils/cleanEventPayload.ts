@@ -186,7 +186,10 @@ export const cleanEventPayload = (
   // Switch controllers — coerce to real booleans, and let empty date/decimal
   // fields fall through as null (backend nullable_fields also strips them).
   if (activeEventType === 3) {
-    const generalBooleanKeys = new Set(['is_contamination_incident', 'certifier_notified']);
+    const generalBooleanKeys = new Set(['is_contamination_incident']);
+    // Three states (OV-RK-C15): 'true', 'false', or unanswered. Coercing '' to false printed an
+    // unanswered question as "No" on the dossier, so blank is sent as null.
+    const generalTriStateKeys = new Set(['certifier_notified']);
     const generalNullableKeys = new Set([
       'contamination_source',
       'contamination_affected_area',
@@ -202,6 +205,15 @@ export const cleanEventPayload = (
       if (generalBooleanKeys.has(key)) {
         value = value === true || value === 'true';
         cleaned[key] = value;
+        return;
+      }
+      if (generalTriStateKeys.has(key)) {
+        cleaned[key] =
+          value === true || value === 'true'
+            ? true
+            : value === false || value === 'false'
+            ? false
+            : null;
         return;
       }
 
