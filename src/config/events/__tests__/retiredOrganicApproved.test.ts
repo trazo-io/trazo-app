@@ -11,12 +11,11 @@
  * The forms now keep a retired value selectable, labelled as retired, until the grower
  * deliberately replaces it.
  */
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { describe, expect, it } from 'vitest';
 
-import {
-  ORGANIC_APPROVED_OFFERED,
-  retiredOrganicApprovedLabelKey
-} from '../enums';
+import { ORGANIC_APPROVED_OFFERED, retiredOrganicApprovedLabelKey } from '../enums';
 
 describe('retiredOrganicApprovedLabelKey', () => {
   it.each(ORGANIC_APPROVED_OFFERED)('returns null for the offered value %s', (value) => {
@@ -28,7 +27,9 @@ describe('retiredOrganicApprovedLabelKey', () => {
     ['organic_equivalent', 'events.organicApproved.organicEquivalent'],
     ['yes', 'quickAdd.fields.organicApproved.legacyYes'],
     ['no', 'quickAdd.fields.organicApproved.legacyNo'],
-    ['not_applicable', 'events.organicApproved.notApplicable']
+    ['not_applicable', 'events.organicApproved.notApplicable'],
+    // M7-I1 (2026-11-24): no longer offered, and refused by the API on a new write.
+    ['transitional', 'events.organicApproved.transitionalOption']
   ])('keeps the retired value %s renderable', (value, key) => {
     expect(retiredOrganicApprovedLabelKey(value)).toBe(key);
   });
@@ -40,21 +41,19 @@ describe('retiredOrganicApprovedLabelKey', () => {
   });
 
   it('covers every value the backend enum can hold', async () => {
-    // Mirrors ORGANIC_APPROVED in common/field_registry.py. A value the backend accepts but
-    // this map does not know would render an option with no label.
-    const backendValues = [
-      'yes',
-      'no',
-      'not_applicable',
-      'omri_listed',
-      'wsda_listed',
-      'nop_seal_on_label',
-      'certifier_approved',
-      'usda_nop_approved',
-      'organic_equivalent',
-      'not_organic',
-      'transitional'
-    ];
+    // Read from ORGANIC_APPROVED in common/field_registry.py (it was a hand copy, and had drifted:
+    // it lacked `unverified`). A value the backend accepts but this map does not know would
+    // render an option with no label.
+    const registry = readFileSync(
+      join(__dirname, '../../../../../trazo-back/common/field_registry.py'),
+      'utf8'
+    );
+    const start = registry.indexOf('\nORGANIC_APPROVED = [');
+    expect(start, 'ORGANIC_APPROVED moved or was renamed').toBeGreaterThan(-1);
+    const block = registry.slice(start, registry.indexOf('\n]', start));
+    const backendValues = [...block.matchAll(/^\s+\("([a-z_]+)",/gm)].map((m) => m[1]);
+    expect(backendValues).toContain('transitional');
+    expect(backendValues).toContain('unverified');
     for (const value of backendValues) {
       const offered = ORGANIC_APPROVED_OFFERED.includes(value);
       const key = retiredOrganicApprovedLabelKey(value);

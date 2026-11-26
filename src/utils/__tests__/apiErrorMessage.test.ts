@@ -206,6 +206,7 @@ describe('every coded refusal against the backend that sends it (2026-11-21)', (
   const seasons = read('history/services/season_refusals.py');
   const views = read('history/views.py');
   const manure = read('history/services/manure_interval.py');
+  const organicBasis = read('history/services/organic_basis.py');
   const constant = (source: string, name: string) =>
     source.match(new RegExp(`^${name} = "(\\w+)"`, 'm'))?.[1];
 
@@ -215,7 +216,8 @@ describe('every coded refusal against the backend that sends it (2026-11-21)', (
     [constant(seasons, 'SEASON_CLOSED')!]: ['finish_date'],
     [constant(seasons, 'SEASON_AMBIGUOUS')!]: ['seasons'],
     [constant(seasons, 'NO_OPEN_SEASON')!]: [],
-    [constant(seasons, 'SEASON_NOT_ON_PARCEL')!]: []
+    [constant(seasons, 'SEASON_NOT_ON_PARCEL')!]: [],
+    [constant(organicBasis, 'TRANSITIONAL_BASIS_REFUSED')!]: []
   };
 
   it('words exactly the codes the server sends', () => {
@@ -224,6 +226,10 @@ describe('every coded refusal against the backend that sends it (2026-11-21)', (
 
   it('reads the value names where the server writes them', () => {
     expect(seasons).toMatch(/"code": SEASON_CLOSED, "finish_date":/);
+    // M7-I1: the transitional-basis refusal carries no values beside its code.
+    expect(organicBasis).toMatch(
+      /coded\(field, TRANSITIONAL_BASIS_SENTENCE, TRANSITIONAL_BASIS_REFUSED\)/
+    );
     expect(views.match(/SEASON_AMBIGUOUS,\s*seasons=/g)?.length).toBe(2);
     const forCrop = manure.match(/"code": CROP_BELOW_FLOOR_CODE,([\s\S]*?)\n\s*\}/)?.[1] || '';
     expect(

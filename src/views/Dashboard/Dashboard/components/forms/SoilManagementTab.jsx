@@ -1875,11 +1875,11 @@ const SoilManagementTab = forwardRef(
                           <option value="not_organic">
                             {intl.formatMessage({ id: 'events.organicApproved.notOrganicOption' })}
                           </option>
-                          <option value="transitional">
-                            {intl.formatMessage({
-                              id: 'events.organicApproved.transitionalOption'
-                            })}
-                          </option>
+                          {/* NEVER "Transitional - in certification process" here (M7-I1,
+                              2026-11-24). It names the FARM's status, not the amendment's basis,
+                              and stored it is a prohibited-substance answer: one pick restarted a
+                              certified parcel's 36-month clock. The API refuses it on a new write;
+                              a record already holding it shows it below, as retired. */}
                           {/* A <select> bound to a value with no matching <option> shows the
                               placeholder, and the next save writes ''. Retiring an option
                               would therefore have SILENTLY ERASED the § 205.203(b) basis on

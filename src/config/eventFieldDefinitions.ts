@@ -242,7 +242,9 @@ export const ORGANIC_APPROVED_OPTIONS: FieldOption[] = [
   { value: 'usda_nop_approved', labelKey: 'quickAdd.fields.organicApproved.usdaNopApproved' },
   { value: 'organic_equivalent', labelKey: 'quickAdd.fields.organicApproved.organicEquivalent' },
   { value: 'not_organic', labelKey: 'quickAdd.fields.organicApproved.notOrganic' },
-  { value: 'transitional', labelKey: 'quickAdd.fields.organicApproved.transitional' },
+  // NEVER 'transitional' (M7-I1, 2026-11-24): it names the farm's status, not the input's basis,
+  // and stored it is a prohibited-substance answer that restarts the 36-month clock. The API
+  // refuses it on a new write (trazo-back history/services/organic_basis.py).
   // Legacy values (backward compatible with existing events)
   { value: 'yes', labelKey: 'quickAdd.fields.organicApproved.legacyYes' },
   { value: 'no', labelKey: 'quickAdd.fields.organicApproved.legacyNo' }
