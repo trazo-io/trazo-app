@@ -71,6 +71,25 @@ function valuesFor(
           : ''
       };
     }
+    case 'contamination_prevention.combined': {
+      // One code per row reaches the card, so a row with several findings lists each part's own
+      // code and data; each is written from the sentence the catalogue already has for it.
+      const parts = Array.isArray(params.parts) ? params.parts : [];
+      return {
+        parts: parts
+          .map((part) => {
+            const p = (part ?? {}) as { code?: unknown; params?: Record<string, unknown> };
+            return typeof p.code === 'string' && has(intl, `certifierReadiness.detail.${p.code}`)
+              ? intl.formatMessage(
+                  { id: `certifierReadiness.detail.${p.code}` },
+                  valuesFor(intl, p.code, p.params ?? {})
+                )
+              : '';
+          })
+          .filter(Boolean)
+          .join(' ')
+      };
+    }
     case 'input_traceability.supplier_variants':
       return {
         names: joinList(
@@ -183,8 +202,10 @@ export function seasonRowDetail(
   const code = finding.detail_code || (finding.params ? finding.row_key : null);
   const id = code ? `certifierReadiness.detail.${code}` : '';
   if (!id || !has(intl, id)) return finding.detail;
-  return intl.formatMessage(
+  const text = intl.formatMessage(
     { id, defaultMessage: finding.detail },
     valuesFor(intl, code as string, finding.params ?? {})
   );
+  // A combined row none of whose parts the catalogue knows writes nothing: keep the server's English.
+  return text.trim() ? text : finding.detail;
 }

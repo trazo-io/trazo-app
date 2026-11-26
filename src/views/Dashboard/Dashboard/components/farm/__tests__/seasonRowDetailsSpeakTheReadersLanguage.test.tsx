@@ -244,4 +244,31 @@ describe('season row details speak the reader language', () => {
       '3 of 5 input records name a supplier. Add the missing suppliers before the audit.'
     );
   });
+
+  it('writes the contamination row in Spanish: one part, and several parts in one sentence', () => {
+    const intl = createIntl({ locale: 'es-419', messages: es419 as Record<string, string> });
+    const say = (detail_code: string, params: Record<string, unknown>) =>
+      seasonRowDetail(intl, { detail: 'ENGLISH FALLBACK', detail_code, params });
+    expect(say('contamination_prevention.register', { count: 1 })).toBe(
+      'En el registro de equipos hay 1 equipo sin uso exclusivo para producción orgánica o traídos de fuera. Confirma si se usó alguno en esta temporada y archiva su registro de limpieza.'
+    );
+    expect(say('contamination_prevention.outside_passes', { covered: 0, total: 2 })).toContain(
+      '0 de 2 pasadas'
+    );
+    const combined = say('contamination_prevention.combined', {
+      parts: [
+        { code: 'contamination_prevention.outside_passes', params: { covered: 1, total: 2 } },
+        { code: 'contamination_prevention.register', params: { count: 2 } }
+      ]
+    });
+    expect(combined).toContain('1 de 2 pasadas');
+    expect(combined).toContain('2 equipos');
+    expect(combined).not.toContain('ENGLISH FALLBACK');
+    // A combined row whose parts the catalogue does not know keeps the server's English.
+    expect(
+      say('contamination_prevention.combined', {
+        parts: [{ code: 'contamination_prevention.unheard', params: {} }]
+      })
+    ).toBe('ENGLISH FALLBACK');
+  });
 });
