@@ -1300,6 +1300,9 @@ const ParcelApplicationWizard = () => {
                         {e.description}
                       </Text>
                     )}
+                    {/* Three states (OV-RK-C15). A stored false keeps the hedged "not recorded":
+                        every row saved before history 0268 holds false whether or not the grower
+                        answered (review of #449). */}
                     <Text fontSize="xs" color="gray.600">
                       {e.certifier_notified
                         ? e.certifier_notification_date

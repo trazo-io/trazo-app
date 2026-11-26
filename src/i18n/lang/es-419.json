@@ -7929,7 +7929,7 @@
   "parcelApp.incidents.sourceUnknown": "fuente no registrada",
   "parcelApp.incidents.notified": "Certificador notificado",
   "parcelApp.incidents.notifiedOn": "Certificador notificado el {date}",
-  "parcelApp.incidents.notNotified": "No se notificó al certificador",
+  "parcelApp.incidents.notNotified": "No consta la notificación al certificador",
   "parcelApp.incidents.notificationNotAnswered": "Notificación al certificador sin responder",
   "parcelApp.buffers.adjoiningPlaceholder": "p. ej., Huerto convencional de almendros",
   "parcelApp.buffers.adjoiningUse": "Uso de la tierra colindante",

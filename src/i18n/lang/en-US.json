@@ -7929,7 +7929,7 @@
   "parcelApp.incidents.sourceUnknown": "source not recorded",
   "parcelApp.incidents.notified": "Certifier notified",
   "parcelApp.incidents.notifiedOn": "Certifier notified {date}",
-  "parcelApp.incidents.notNotified": "Certifier not notified",
+  "parcelApp.incidents.notNotified": "Certifier notification not recorded",
   "parcelApp.incidents.notificationNotAnswered": "Certifier notification not answered",
   "parcelApp.buffers.adjoiningPlaceholder": "e.g., Conventional almond orchard",
   "parcelApp.buffers.adjoiningUse": "Adjoining land use",
