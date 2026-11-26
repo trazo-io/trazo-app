@@ -243,3 +243,35 @@ describe.each(Object.entries(LOCALES))(
     });
   }
 );
+
+/**
+ * OV-PK-CIT19 (2026-11-26): "Buffer-row crop can never be sold as organic (7 CFR 205.202(c))".
+ * (c) requires distinct, defined boundaries and buffer zones and says nothing of the crop grown in
+ * one. Keeping that crop out of the organic crop is buffer management the plan describes and the
+ * certifier checks (WSDA AGR 3025, Nov. 2024: "Diverting harvested crop from inside the site
+ * boundaries to the nonorganic market").
+ */
+describe.each(Object.entries(LOCALES))('buffer crop and § 205.202(c): %s', (_locale, messages) => {
+  const entries = Object.entries(messages).filter(([, v]) => typeof v === 'string');
+  // The verb stem, not one conjugation: the old es-419 disposition text read "nunca se puede
+  // vender como orgánico", which "venderse" missed (review of app #451).
+  const SALE_BAR =
+    /(never|cannot|can't|may not)[^.]*\bsold\b|(no|nunca)\s+(se\s+)?pued(e|en)[^.]*\bvender/i;
+
+  it('never attributes a sale bar to § 205.202(c)', () => {
+    expect(
+      entries.filter(([, v]) => v.includes('205.202(c)') && SALE_BAR.test(v)).map(([k]) => k)
+    ).toEqual([]);
+  });
+
+  it('says what happens to buffer crop without calling it a rule of (c)', () => {
+    for (const key of [
+      'production.bufferDispositionHelp',
+      'education.detail.farmEvents.bufferUseDesc',
+      'education.detail.bufferZones.disposition'
+    ]) {
+      expect(messages[key]).not.toMatch(SALE_BAR);
+      expect(messages[key]).toMatch(/kept out of|se mantiene fuera/i);
+    }
+  });
+});
